@@ -52,3 +52,6 @@ CodeCoverage/
 *.VisualState.xml
 TestResult.xml
 nunit-*.xml
+
+**/.idea/workspace.xml 
+**/.idea/tasks.xml
