@@ -1,5 +1,5 @@
-using FinTree.Domain.Account;
-using FinTree.Domain.Currency;
+using FinTree.Domain.Accounts;
+using FinTree.Domain.Currencies;
 using FinTree.Domain.Identity;
 using FinTree.Domain.Transactions;
 using Microsoft.EntityFrameworkCore;

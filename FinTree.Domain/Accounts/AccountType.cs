@@ -1,4 +1,4 @@
-namespace FinTree.Domain.Account;
+namespace FinTree.Domain.Accounts;
 
 public enum AccountType
 {

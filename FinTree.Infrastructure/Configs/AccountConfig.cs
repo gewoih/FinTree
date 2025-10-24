@@ -1,8 +1,8 @@
-using FinTree.Domain.Account;
+using FinTree.Domain.Accounts;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
-namespace FinTree.Infrastructure;
+namespace FinTree.Infrastructure.Configs;
 
 public class AccountConfig : IEntityTypeConfiguration<Account>
 {

@@ -1,5 +1,10 @@
+using System.ComponentModel.DataAnnotations;
+using System.Text.Json;
+using FinTree.Application.Accounts;
+using FinTree.Application.Exceptions;
 using FinTree.Application.Transactions;
 using FinTree.Infrastructure;
+using Microsoft.AspNetCore.Diagnostics;
 using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -16,6 +21,7 @@ builder.Services.AddDbContextPool<AppDbContext>(options =>
 });
 
 builder.Services.AddScoped<TransactionsService>();
+builder.Services.AddScoped<AccountsService>();
 
 var app = builder.Build();
 if (app.Environment.IsDevelopment())
@@ -26,5 +32,27 @@ if (app.Environment.IsDevelopment())
 
 app.UseHttpsRedirection();
 app.MapControllers();
+
+app.UseExceptionHandler(b =>
+{
+    b.Run(async context =>
+    {
+        var error = context.Features.Get<IExceptionHandlerFeature>()?.Error;
+        context.Response.ContentType = "application/json";
+
+        context.Response.StatusCode = error switch
+        {
+            NotFoundException => StatusCodes.Status404NotFound,
+            ValidationException => StatusCodes.Status400BadRequest,
+            _ => StatusCodes.Status500InternalServerError
+        };
+
+        await context.Response.WriteAsync(JsonSerializer.Serialize(new { error = error?.Message }));
+    });
+});
+
+var scope = app.Services.CreateScope();
+var appDbContext = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+await appDbContext.Database.MigrateAsync();
 
 await app.RunAsync();

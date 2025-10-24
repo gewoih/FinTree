@@ -1,6 +1,6 @@
 using FinTree.Domain.Base;
 
-namespace FinTree.Domain.Currency;
+namespace FinTree.Domain.Currencies;
 
 public sealed class Currency : Entity
 {

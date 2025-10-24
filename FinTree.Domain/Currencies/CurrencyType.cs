@@ -1,4 +1,4 @@
-namespace FinTree.Domain.Currency;
+namespace FinTree.Domain.Currencies;
 
 public enum CurrencyType
 {
