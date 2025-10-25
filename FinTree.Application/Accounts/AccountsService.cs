@@ -28,17 +28,4 @@ public sealed class AccountsService(AppDbContext context)
         
         return account.Id;
     }
-
-    public async Task MarkAsMainAsync(UpdateMainAccount command, CancellationToken ct = default)
-    {
-        var user = await context.Users
-            .Include(u => u.Accounts)
-            .SingleOrDefaultAsync(x => x.Id == command.UserId, ct);
-        
-        if (user is null)
-            throw new NotFoundException(nameof(User), command.AccountId);
-        
-        user.SetMainAccount(command.AccountId);
-        await context.SaveChangesAsync(ct);
-    }
 }

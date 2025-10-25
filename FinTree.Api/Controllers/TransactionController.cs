@@ -1,4 +1,5 @@
 using FinTree.Application.Transactions;
+using FinTree.Application.Transactions.Dto;
 using Microsoft.AspNetCore.Mvc;
 
 namespace FinTree.Api.Controllers;
@@ -12,13 +13,6 @@ public class TransactionController(TransactionsService transactionsService) : Co
     {
         var transactionId = await transactionsService.CreateAsync(command, ct);
         return Ok(transactionId);
-    }
-
-    [HttpPost("category")]
-    public async Task<IActionResult> Post([FromBody] CreateTransactionCategory command, CancellationToken ct)
-    {
-        var categoryId = await transactionsService.CreateCategoryAsync(command, ct);
-        return Ok(categoryId);
     }
 
     [HttpPatch("category")]

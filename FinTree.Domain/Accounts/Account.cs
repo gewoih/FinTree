@@ -17,17 +17,12 @@ public sealed class Account : Entity
     public bool IsArchived { get; private set; }
     public IReadOnlyCollection<Transaction> Transactions => _transactions.AsReadOnly();
 
-    private Account()
-    {
-    }
-
     internal Account(Guid userId, string name, Guid currencyId, AccountType type)
     {
         ArgumentOutOfRangeException.ThrowIfEqual(userId, Guid.Empty, nameof(userId));
         ArgumentOutOfRangeException.ThrowIfEqual(currencyId, Guid.Empty, nameof(currencyId));
         ArgumentException.ThrowIfNullOrWhiteSpace(name, nameof(name));
 
-        Id = Guid.NewGuid();
         UserId = userId;
         Name = name;
         CurrencyId = currencyId;

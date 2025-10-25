@@ -16,8 +16,8 @@ public sealed class TransactionCategory : Entity
         ArgumentException.ThrowIfNullOrWhiteSpace(color);
 
         UserId = userId;
-        Name = name;
-        Color = color;
+        Name = name.Trim();
+        Color = color.Trim();
         IsDefault = isDefault;
     }
 
@@ -34,5 +34,14 @@ public sealed class TransactionCategory : Entity
     public static TransactionCategory CreateUser(Guid userId, string name, string color)
     {
         return new TransactionCategory(name, color, false, userId);
+    }
+
+    public void Update(string? name = null, string? color = null)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(name);
+        ArgumentException.ThrowIfNullOrWhiteSpace(color);
+        
+        Name = name.Trim();
+        Color = color.Trim();
     }
 }

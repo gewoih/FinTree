@@ -23,7 +23,6 @@ public sealed class User : Entity
         ArgumentOutOfRangeException.ThrowIfEqual(baseCurrencyId, Guid.Empty, nameof(baseCurrencyId));
         ArgumentException.ThrowIfNullOrWhiteSpace(name, nameof(name));
         
-        Id = Guid.NewGuid();
         Name = name;
         BaseCurrencyId = baseCurrencyId;
     }

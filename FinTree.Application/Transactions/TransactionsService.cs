@@ -1,4 +1,5 @@
 using FinTree.Application.Exceptions;
+using FinTree.Application.Transactions.Dto;
 using FinTree.Domain.Transactions;
 using FinTree.Infrastructure.Database;
 using Microsoft.EntityFrameworkCore;
@@ -18,28 +19,6 @@ public sealed class TransactionsService(AppDbContext context)
         await context.SaveChangesAsync(ct);
 
         return newTransaction.Id;
-    }
-
-    public async Task<Guid> CreateCategoryAsync(CreateTransactionCategory command, CancellationToken ct)
-    {
-        var user = await context.Users.FirstOrDefaultAsync(u => u.Id == command.UserId, ct);
-        if (user is null)
-            throw new AccessViolationException("Пользователь не найден");
-
-        var transactionCategory = user.AddTransactionCategory(command.Name, command.Color);
-        await context.SaveChangesAsync(ct);
-
-        return transactionCategory.Id;
-    }
-
-    public async Task<List<TransactionCategoryDto>> GetUserCategoriesAsync(Guid userId, CancellationToken ct)
-    {
-        var categories = await context.TransactionCategories
-            .Where(tc => tc.UserId == userId || tc.UserId == null)
-            .Select(tc => new TransactionCategoryDto(tc.Id, tc.Name, tc.Color, tc.IsSystem))
-            .ToListAsync(ct);
-        
-        return categories;
     }
 
     public async Task<(IReadOnlyList<Transaction> Items, int Total)> GetTransactionsAsync(Guid accountId,

@@ -3,7 +3,7 @@ using System.Text.Json;
 using FinTree.Application.Accounts;
 using FinTree.Application.Exceptions;
 using FinTree.Application.Transactions;
-using FinTree.Infrastructure;
+using FinTree.Application.Users;
 using FinTree.Infrastructure.Database;
 using Microsoft.AspNetCore.Diagnostics;
 using Microsoft.EntityFrameworkCore;
@@ -21,8 +21,10 @@ builder.Services.AddDbContextPool<AppDbContext>(options =>
     options.EnableSensitiveDataLogging();
 });
 
+builder.Services.AddScoped<TransactionCategoryService>();
 builder.Services.AddScoped<TransactionsService>();
 builder.Services.AddScoped<AccountsService>();
+builder.Services.AddScoped<UserService>();
 
 var app = builder.Build();
 if (app.Environment.IsDevelopment())

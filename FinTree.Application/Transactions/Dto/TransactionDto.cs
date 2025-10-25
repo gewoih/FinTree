@@ -1,4 +1,4 @@
-namespace FinTree.Application.Transactions;
+namespace FinTree.Application.Transactions.Dto;
 
 public sealed record TransactionDto(
     Guid Id,
