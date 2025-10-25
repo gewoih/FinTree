@@ -1,11 +1,11 @@
 using FinTree.Domain.Accounts;
-using FinTree.Domain.Base;
 using FinTree.Domain.Currencies;
 using FinTree.Domain.Transactions;
+using Microsoft.AspNetCore.Identity;
 
 namespace FinTree.Domain.Identity;
 
-public sealed class User : Entity
+public sealed class User : IdentityUser<Guid>
 {
     private readonly List<Account> _accounts = [];
     private readonly List<TransactionCategory> _transactionCategories = [];

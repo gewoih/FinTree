@@ -1,16 +1,17 @@
 using FinTree.Application.Exceptions;
+using FinTree.Application.Identity;
 using FinTree.Domain.Identity;
 using FinTree.Infrastructure.Database;
 using Microsoft.EntityFrameworkCore;
 
 namespace FinTree.Application.Accounts;
 
-public sealed class AccountsService(AppDbContext context)
+public sealed class AccountsService(AppDbContext context, ICurrentUser currentUser)
 {
-    public async Task<List<AccountDto>> GetAccounts(Guid userId, CancellationToken ct = default)
+    public async Task<List<AccountDto>> GetAccounts(CancellationToken ct = default)
     {
         var accounts = await context.Accounts
-            .Where(a => a.UserId == userId)
+            .Where(a => a.UserId == currentUser.Id)
             .Select(a => new AccountDto(a.Id, a.Name, a.Type))
             .ToListAsync(ct);
         
