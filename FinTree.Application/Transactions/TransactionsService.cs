@@ -1,14 +1,13 @@
-using FinTree.Application.Dto;
-using FinTree.Domain;
+using FinTree.Application.Exceptions;
 using FinTree.Domain.Transactions;
-using FinTree.Infrastructure;
+using FinTree.Infrastructure.Database;
 using Microsoft.EntityFrameworkCore;
 
 namespace FinTree.Application.Transactions;
 
 public sealed class TransactionsService(AppDbContext context)
 {
-    public async Task<Guid> CreateAsync(CreateTransaction command, CancellationToken ct = default)
+    public async Task<Guid> CreateAsync(CreateTransaction command, CancellationToken ct)
     {
         var account = await context.Accounts.FirstOrDefaultAsync(a => a.Id == command.AccountId, ct) ??
                       throw new InvalidOperationException("Счет не найден.");
@@ -19,6 +18,28 @@ public sealed class TransactionsService(AppDbContext context)
         await context.SaveChangesAsync(ct);
 
         return newTransaction.Id;
+    }
+
+    public async Task<Guid> CreateCategoryAsync(CreateTransactionCategory command, CancellationToken ct)
+    {
+        var user = await context.Users.FirstOrDefaultAsync(u => u.Id == command.UserId, ct);
+        if (user is null)
+            throw new AccessViolationException("Пользователь не найден");
+
+        var transactionCategory = user.AddTransactionCategory(command.Name, command.Color);
+        await context.SaveChangesAsync(ct);
+
+        return transactionCategory.Id;
+    }
+
+    public async Task<List<TransactionCategoryDto>> GetUserCategoriesAsync(Guid userId, CancellationToken ct)
+    {
+        var categories = await context.TransactionCategories
+            .Where(tc => tc.UserId == userId || tc.UserId == null)
+            .Select(tc => new TransactionCategoryDto(tc.Id, tc.Name, tc.Color, tc.IsSystem))
+            .ToListAsync(ct);
+        
+        return categories;
     }
 
     public async Task<(IReadOnlyList<Transaction> Items, int Total)> GetTransactionsAsync(Guid accountId,
@@ -52,12 +73,12 @@ public sealed class TransactionsService(AppDbContext context)
         return (items, total);
     }
 
-    public async Task AssignCategoryAsync(Guid txId, Guid categoryId, CancellationToken ct = default)
+    public async Task AssignCategoryAsync(AssignCategory command, CancellationToken ct)
     {
-        var tx = await context.Transactions.FirstOrDefaultAsync(t => t.Id == txId, ct) ??
-                 throw new InvalidOperationException("Transaction not found");
+        var transaction = await context.Transactions.FirstOrDefaultAsync(t => t.Id == command.TransactionId, ct) ??
+                          throw new NotFoundException("Transaction not found", command.TransactionId);
 
-        tx.AssignCategory(categoryId);
+        transaction.AssignCategory(command.CategoryId);
         await context.SaveChangesAsync(ct);
     }
 }

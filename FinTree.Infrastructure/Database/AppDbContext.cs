@@ -4,7 +4,7 @@ using FinTree.Domain.Identity;
 using FinTree.Domain.Transactions;
 using Microsoft.EntityFrameworkCore;
 
-namespace FinTree.Infrastructure;
+namespace FinTree.Infrastructure.Database;
 
 public sealed class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(options)
 {

@@ -13,8 +13,8 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace FinTree.Infrastructure.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    [Migration("20251024132953_User_MainAccountId_Added")]
-    partial class User_MainAccountId_Added
+    [Migration("20251025064802_dev1")]
+    partial class dev1
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -160,6 +160,10 @@ namespace FinTree.Infrastructure.Migrations
                     b.Property<Guid?>("MainAccountId")
                         .HasColumnType("uuid");
 
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasColumnType("text");
+
                     b.Property<string>("TelegramUserId")
                         .HasColumnType("text");
 
@@ -251,7 +255,7 @@ namespace FinTree.Infrastructure.Migrations
                     b.Property<DateTime?>("UpdatedAt")
                         .HasColumnType("timestamp with time zone");
 
-                    b.Property<Guid>("UserId")
+                    b.Property<Guid?>("UserId")
                         .HasColumnType("uuid");
 
                     b.HasKey("Id");
@@ -312,9 +316,7 @@ namespace FinTree.Infrastructure.Migrations
                 {
                     b.HasOne("FinTree.Domain.Identity.User", null)
                         .WithMany("TransactionCategories")
-                        .HasForeignKey("UserId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
+                        .HasForeignKey("UserId");
                 });
 
             modelBuilder.Entity("FinTree.Domain.Accounts.Account", b =>

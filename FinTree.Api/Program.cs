@@ -4,6 +4,7 @@ using FinTree.Application.Accounts;
 using FinTree.Application.Exceptions;
 using FinTree.Application.Transactions;
 using FinTree.Infrastructure;
+using FinTree.Infrastructure.Database;
 using Microsoft.AspNetCore.Diagnostics;
 using Microsoft.EntityFrameworkCore;
 
@@ -54,5 +55,9 @@ app.UseExceptionHandler(b =>
 var scope = app.Services.CreateScope();
 var appDbContext = scope.ServiceProvider.GetRequiredService<AppDbContext>();
 await appDbContext.Database.MigrateAsync();
+
+await Initializer.SeedCurrencies(appDbContext);
+await Initializer.SeedTransactionCategories(appDbContext);
+await Initializer.SeedTestUser(appDbContext);
 
 await app.RunAsync();

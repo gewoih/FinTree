@@ -1,12 +1,22 @@
 using FinTree.Application.Exceptions;
 using FinTree.Domain.Identity;
-using FinTree.Infrastructure;
+using FinTree.Infrastructure.Database;
 using Microsoft.EntityFrameworkCore;
 
 namespace FinTree.Application.Accounts;
 
 public sealed class AccountsService(AppDbContext context)
 {
+    public async Task<List<AccountDto>> GetAccounts(Guid userId, CancellationToken ct = default)
+    {
+        var accounts = await context.Accounts
+            .Where(a => a.UserId == userId)
+            .Select(a => new AccountDto(a.Id, a.Name, a.Type))
+            .ToListAsync(ct);
+        
+        return accounts;
+    }
+    
     public async Task<Guid> CreateAsync(CreateAccount command, CancellationToken ct = default)
     {
         var user = await context.Users.SingleOrDefaultAsync(x => x.Id == command.UserId, ct);
@@ -19,16 +29,16 @@ public sealed class AccountsService(AppDbContext context)
         return account.Id;
     }
 
-    public async Task MarkAsMainAsync(Guid accountId, CancellationToken ct = default)
+    public async Task MarkAsMainAsync(UpdateMainAccount command, CancellationToken ct = default)
     {
         var user = await context.Users
             .Include(u => u.Accounts)
-            .SingleOrDefaultAsync(x => x.Id == accountId, ct);
+            .SingleOrDefaultAsync(x => x.Id == command.UserId, ct);
         
         if (user is null)
-            throw new NotFoundException(nameof(User), accountId);
+            throw new NotFoundException(nameof(User), command.AccountId);
         
-        user.SetMainAccount(accountId);
+        user.SetMainAccount(command.AccountId);
         await context.SaveChangesAsync(ct);
     }
 }

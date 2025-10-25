@@ -1,7 +1,6 @@
-using FinTree.Domain;
 using FinTree.Domain.Transactions;
 
-namespace FinTree.Application.Dto;
+namespace FinTree.Application.Transactions;
 
 public record struct CreateTransaction(
     TransactionType Type,

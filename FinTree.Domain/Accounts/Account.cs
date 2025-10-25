@@ -1,5 +1,6 @@
 using FinTree.Domain.Base;
 using FinTree.Domain.Currencies;
+using FinTree.Domain.Identity;
 using FinTree.Domain.Transactions;
 
 namespace FinTree.Domain.Accounts;
