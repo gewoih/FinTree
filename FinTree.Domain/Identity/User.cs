@@ -51,6 +51,18 @@ public sealed class User : IdentityUser<Guid>
         MainAccountId = accountId;
     }
 
+    public void LinkTelegramAccount(string telegramUserId)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(telegramUserId, nameof(telegramUserId));
+
+        TelegramUserId = telegramUserId.Trim();
+    }
+
+    public void UnlinkTelegramAccount()
+    {
+        TelegramUserId = null;
+    }
+    
     public TransactionCategory AddTransactionCategory(string name, string color)
     {
         if (_transactionCategories.Any(t => string.Equals(t.Name, name, StringComparison.CurrentCultureIgnoreCase)))

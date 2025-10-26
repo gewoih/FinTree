@@ -49,6 +49,7 @@ public static class Initializer
         var user = new User("Тестовый пользователь", rubId);
         user.AddAccount(rubId, AccountType.Bank, "Дебетовая карта");
         user.AddAccount(rubId, AccountType.Cash, "Наличка");
+        user.LinkTelegramAccount("gewoih");
         
         await context.Users.AddAsync(user);
         await context.SaveChangesAsync();

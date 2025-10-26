@@ -8,12 +8,15 @@ using FinTree.Application.Identity;
 using FinTree.Application.Transactions;
 using FinTree.Domain.Identity;
 using FinTree.Infrastructure.Database;
+using FinTree.Infrastructure.Telegram;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Diagnostics;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
 using Serilog;
+using Telegram.Bot;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -80,11 +83,15 @@ builder.Services.AddDbContextPool<AppDbContext>(options =>
     options.EnableSensitiveDataLogging();
 });
 
+builder.Services.AddSingleton<TelegramBotClient>(_ => new TelegramBotClient("8320550185:AAHAOWsd3jUUz_Ko0YkBAZgHKp8GFkDXbrU"));
+
 builder.Services.AddScoped<TransactionCategoryService>();
 builder.Services.AddScoped<TransactionsService>();
 builder.Services.AddScoped<AccountsService>();
 builder.Services.AddScoped<UserService>();
 builder.Services.AddScoped<ICurrentUser, HttpCurrentUser>();
+
+builder.Services.AddHostedService<TelegramBotHostedService>();
 
 var app = builder.Build();
 if (app.Environment.IsDevelopment())
