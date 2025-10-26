@@ -9,7 +9,6 @@ import { NAVIGATION_ITEMS } from './constants';
 // PrimeVue Components
 import Button from 'primevue/button';
 import Toast from 'primevue/toast';
-import Menubar from 'primevue/menubar';
 import Panel from 'primevue/panel';
 
 const store = useFinanceStore();
@@ -17,11 +16,7 @@ const store = useFinanceStore();
 const showExpenseDialog = ref(false);
 const activeTab = ref('home');
 
-const menuItems = NAVIGATION_ITEMS.map(item => ({
-  label: item.label,
-  icon: item.icon,
-  command: () => activeTab.value = item.id
-}));
+const menuItems = NAVIGATION_ITEMS;
 
 onMounted(() => {
   // Загрузка начальных данных при старте приложения
@@ -48,11 +43,51 @@ const netFlow = computed(() => totalIncome.value - totalExpenses.value);
 const transactionsCount = computed(() => store.transactions.length);
 const accountsCount = computed(() => store.accounts.length);
 const categoriesCount = computed(() => store.categories.length);
+
+const selectTab = (id: string) => {
+  activeTab.value = id;
+};
 </script>
 
 <template>
   <div class="app-shell">
     <Toast />
+
+    <header class="top-nav">
+      <div class="brand">
+        <span class="brand-icon">
+          <i class="pi pi-tree"></i>
+        </span>
+        <div>
+          <p class="brand-kicker">FinTree</p>
+          <small>осознанные финансы</small>
+        </div>
+      </div>
+
+      <nav class="main-menu">
+        <button
+          v-for="item in menuItems"
+          :key="item.id"
+          type="button"
+          class="menu-button"
+          :class="{ active: activeTab === item.id }"
+          @click="selectTab(item.id)"
+        >
+          <i :class="item.icon"></i>
+          <span>{{ item.label }}</span>
+        </button>
+      </nav>
+
+      <Button
+        label="Добавить расход"
+        icon="pi pi-plus"
+        severity="success"
+        size="small"
+        @click="showExpenseDialog = true"
+        :disabled="buttonDisabled"
+        :loading="store.isLoading"
+      />
+    </header>
 
     <header class="app-hero mb-4">
       <div class="hero-left">
@@ -65,7 +100,6 @@ const categoriesCount = computed(() => store.categories.length);
           в одном экране без лишнего шума.
         </p>
         <div class="hero-actions">
-          <Menubar :model="menuItems" class="navigation-menu" />
           <Button
             label="Добавить расход"
             icon="pi pi-plus"
@@ -219,6 +253,72 @@ const categoriesCount = computed(() => store.categories.length);
   padding: 2rem 1.5rem 3rem;
 }
 
+.top-nav {
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.75rem 1.5rem;
+  margin-bottom: 1.5rem;
+  border-radius: 16px;
+  background: rgba(255, 255, 255, 0.9);
+  box-shadow: 0 12px 32px rgba(15, 23, 42, 0.08);
+  backdrop-filter: blur(8px);
+}
+
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.brand-icon {
+  width: 40px;
+  height: 40px;
+  border-radius: 12px;
+  background: rgba(99, 102, 241, 0.12);
+  color: #4f46e5;
+  display: grid;
+  place-items: center;
+  font-size: 1.1rem;
+}
+
+.brand-kicker {
+  margin: 0;
+  font-weight: 600;
+  color: var(--text-color);
+}
+
+.main-menu {
+  display: flex;
+  gap: 0.5rem;
+  background: var(--surface-100);
+  padding: 0.4rem;
+  border-radius: 999px;
+}
+
+.menu-button {
+  border: none;
+  background: transparent;
+  color: var(--text-color-secondary);
+  font-weight: 500;
+  padding: 0.35rem 0.9rem;
+  border-radius: 999px;
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.menu-button.active {
+  background: var(--surface-card);
+  box-shadow: 0 8px 14px rgba(15, 23, 42, 0.1);
+  color: var(--text-color);
+}
+
 .app-hero {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
@@ -277,6 +377,7 @@ const categoriesCount = computed(() => store.categories.length);
   flex-wrap: wrap;
   gap: 1rem;
   align-items: center;
+  justify-content: flex-start;
 }
 
 .navigation-menu {

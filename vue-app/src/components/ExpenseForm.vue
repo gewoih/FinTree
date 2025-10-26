@@ -64,6 +64,8 @@ const isAmountValid = computed(() =>
   amount.value >= VALIDATION_RULES.minAmount && 
   amount.value <= VALIDATION_RULES.maxAmount
 );
+const formattedAmount = computed(() => formatCurrency(Math.abs(amount.value ?? 0), currency.value));
+const submitDisabled = computed(() => !isAmountValid.value || !selectedCategory.value || !selectedAccount.value);
 
 // --- Отправка формы ---
 const handleSubmit = async () => {
@@ -117,131 +119,136 @@ onMounted(() => {
 <template>
   <Dialog
       :visible="props.visible"
-      header="Добавить расход"
+      header="Быстрый расход"
       :modal="true"
       @update:visible="val => emit('update:visible', val)"
-      :style="{ width: '500px' }"
+      :style="{ width: '560px' }"
       :closable="true"
       :dismissableMask="true"
+      class="expense-dialog"
   >
-    <form @submit.prevent="handleSubmit" class="p-fluid">
-      <!-- Выбор счета -->
-      <div class="field">
-        <label for="account" class="font-medium">Счет *</label>
-        <Select
-            id="account"
-            v-model="selectedAccount"
-            :options="store.accounts"
-            option-label="name"
-            placeholder="Выберите счет"
-            required
-            class="w-full"
-        >
-          <template #option="slotProps">
-            <div class="flex align-items-center justify-content-between w-full">
-              <div class="flex align-items-center">
-                <i class="pi pi-credit-card mr-2 text-primary"></i>
+    <form @submit.prevent="handleSubmit" class="expense-form">
+      <div class="form-header">
+        <div>
+          <p class="dialog-kicker">Запишите покупку за минуту</p>
+          <h3>Новый расход</h3>
+          <p class="helper-text">Выберите счет и категорию — остальное мы подскажем.</p>
+        </div>
+        <div class="amount-preview">
+          <span>Списываем</span>
+          <strong>{{ formattedAmount }}</strong>
+          <small>{{ selectedAccount?.name || 'Счет не выбран' }}</small>
+        </div>
+      </div>
+
+      <div class="field-grid">
+        <div class="field-block">
+          <label for="account">Счет *</label>
+          <Select
+              id="account"
+              v-model="selectedAccount"
+              :options="store.accounts"
+              option-label="name"
+              placeholder="Выберите счет"
+              required
+              class="w-full"
+          >
+            <template #option="slotProps">
+              <div class="option-line">
+                <div class="option-name">
+                  <i class="pi pi-credit-card"></i>
+                  <span>{{ slotProps.option.name }}</span>
+                </div>
+                <div class="option-balance">
+                  {{ formatCurrency(slotProps.option.balance, slotProps.option.currency) }}
+                </div>
+              </div>
+            </template>
+          </Select>
+          <small>Списываемые средства будут учтены сразу.</small>
+        </div>
+
+        <div class="field-block">
+          <label for="category">Категория *</label>
+          <Select
+              id="category"
+              v-model="selectedCategory"
+              :options="sortedCategories"
+              option-label="name"
+              placeholder="Выберите категорию"
+              required
+              class="w-full"
+          >
+            <template #option="slotProps">
+              <div class="option-name">
+                <span class="category-dot" :style="{ backgroundColor: slotProps.option.color }"></span>
                 <span>{{ slotProps.option.name }}</span>
               </div>
-              <div class="text-sm text-500">
-                {{ formatCurrency(slotProps.option.balance, slotProps.option.currency) }}
-              </div>
-            </div>
-          </template>
-        </Select>
-        <small class="text-500">Выберите счет для списания средств</small>
-      </div>
+            </template>
+          </Select>
+          <small>Часто используемая категория подсвечена автоматически.</small>
+        </div>
 
-      <!-- Категория -->
-      <div class="field">
-        <label for="category" class="font-medium">Категория *</label>
-        <Select
-            id="category"
-            v-model="selectedCategory"
-            :options="sortedCategories"
-            option-label="name"
-            placeholder="Выбрать категорию"
-            required
-            class="w-full"
-        >
-          <template #option="slotProps">
-            <div class="flex align-items-center">
-              <div 
-                class="category-color-indicator mr-2" 
-                :style="{ backgroundColor: slotProps.option.color }"
-              ></div>
-              {{ slotProps.option.name }}
-            </div>
-          </template>
-        </Select>
-        <small class="text-500">Автоматически выбрана самая популярная категория</small>
-      </div>
+        <div class="field-block">
+          <label for="amount">Сумма *</label>
+          <div class="amount-input">
+            <InputNumber
+                id="amount"
+                v-model="amount"
+                mode="decimal"
+                :minFractionDigits="2"
+                :maxFractionDigits="2"
+                :min="VALIDATION_RULES.minAmount"
+                autofocus
+                placeholder="0.00"
+                required
+                :class="{ 'p-invalid': !isAmountValid }"
+            />
+            <span class="currency-chip">{{ currency }}</span>
+          </div>
+          <small v-if="!isAmountValid && amount !== null" class="text-red-500">
+            Сумма должна быть от {{ VALIDATION_RULES.minAmount }} до {{ VALIDATION_RULES.maxAmount }}
+          </small>
+        </div>
 
-      <!-- Сумма -->
-      <div class="field">
-        <label for="amount" class="font-medium">Сумма расхода *</label>
-        <div class="p-inputgroup">
-          <InputNumber
-              id="amount"
-              v-model="amount"
-              mode="decimal"
-              :minFractionDigits="2"
-              :maxFractionDigits="2"
-              :min="VALIDATION_RULES.minAmount"
-              autofocus
-              placeholder="0.00"
+        <div class="field-block">
+          <label for="date">Дата операции</label>
+          <DatePicker
+              id="date"
+              v-model="date"
+              dateFormat="dd.mm.yy"
+              :showIcon="true"
               required
-              :class="{ 'p-invalid': !isAmountValid }"
               class="w-full"
           />
-          <span class="p-inputgroup-addon font-semibold">{{ currency }}</span>
+          <small>По умолчанию — сегодняшняя дата.</small>
         </div>
-        <small v-if="!isAmountValid && amount !== null" class="text-red-500">
-          Сумма должна быть от {{ VALIDATION_RULES.minAmount }} до {{ VALIDATION_RULES.maxAmount }}
-        </small>
-      </div>
 
-      <!-- Дата -->
-      <div class="field">
-        <label for="date" class="font-medium">Дата</label>
-        <DatePicker
-            id="date"
-            v-model="date"
-            dateFormat="dd.mm.yy"
-            :showIcon="true"
-            required
+        <div class="field-block full">
+          <label for="description">Примечание</label>
+          <InputText 
+            id="description" 
+            v-model="description" 
+            placeholder="Например: кофе с собой" 
             class="w-full"
-        />
-        <small class="text-500">По умолчанию установлена сегодняшняя дата</small>
+          />
+        </div>
       </div>
 
-      <!-- Примечание -->
-      <div class="field">
-        <label for="description" class="font-medium">Примечание</label>
-        <InputText 
-          id="description" 
-          v-model="description" 
-          placeholder="Описание покупки (необязательно)" 
-          class="w-full"
-        />
-      </div>
-
-      <!-- Кнопки -->
-      <div class="flex gap-2 mt-4">
+      <div class="form-actions">
         <Button
             type="button"
             label="Отмена"
             icon="pi pi-times"
             severity="secondary"
+            outlined
             @click="emit('update:visible', false)"
-            class="flex-1"
         />
         <Button
             type="submit"
-            label="Добавить Расход"
+            label="Сохранить расход"
             icon="pi pi-check"
-            :disabled="!isAmountValid || !selectedCategory || !selectedAccount"
-            class="flex-1"
+            :disabled="submitDisabled"
         />
       </div>
     </form>
@@ -249,16 +256,151 @@ onMounted(() => {
 </template>
 
 <style scoped>
-/* ExpenseForm specific styles */
-.account-info {
-  background: var(--surface-100);
-  border: 1px solid var(--surface-border);
+.expense-dialog :deep(.p-dialog-content) {
+  padding: 0;
 }
 
-.category-color-indicator {
+.expense-form {
+  padding: 1.5rem 1.5rem 1.75rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.form-header {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  flex-wrap: wrap;
+  border-bottom: 1px solid var(--surface-border);
+  padding-bottom: 1rem;
+}
+
+.dialog-kicker {
+  margin: 0;
+  font-size: 0.85rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--text-color-secondary);
+}
+
+.helper-text {
+  margin: 0.35rem 0 0;
+  color: var(--text-color-secondary);
+  font-size: 0.95rem;
+}
+
+.amount-preview {
+  background: var(--surface-100);
+  border-radius: 16px;
+  padding: 0.85rem 1.2rem;
+  min-width: 180px;
+  text-align: right;
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+}
+
+.amount-preview strong {
+  font-size: 1.4rem;
+}
+
+.field-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 1rem 1.25rem;
+}
+
+.field-block {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+
+.field-block.full {
+  grid-column: 1 / -1;
+}
+
+.field-block label {
+  font-weight: 600;
+  font-size: 0.95rem;
+}
+
+.field-block small {
+  color: var(--text-color-secondary);
+}
+
+.amount-input {
+  display: flex;
+  gap: 0.5rem;
+  align-items: stretch;
+}
+
+.amount-input :deep(.p-inputnumber) {
+  flex: 1;
+}
+
+.currency-chip {
+  border-radius: 12px;
+  background: var(--surface-100);
+  padding: 0.5rem 0.9rem;
+  font-weight: 600;
+  display: inline-flex;
+  align-items: center;
+}
+
+.option-line {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+}
+
+.option-name {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.option-balance {
+  font-size: 0.85rem;
+  color: var(--text-color-secondary);
+}
+
+.category-dot {
   width: 12px;
   height: 12px;
   border-radius: 50%;
   display: inline-block;
+}
+
+.form-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.75rem;
+  border-top: 1px solid var(--surface-border);
+  padding-top: 1rem;
+}
+
+@media (max-width: 600px) {
+  .expense-dialog :deep(.p-dialog-content) {
+    padding: 0;
+  }
+
+  .form-header {
+    flex-direction: column;
+  }
+
+  .amount-preview {
+    text-align: left;
+  }
+
+  .form-actions {
+    flex-direction: column-reverse;
+  }
+
+  .form-actions :deep(.p-button) {
+    width: 100%;
+  }
 }
 </style>
