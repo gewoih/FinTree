@@ -15,6 +15,7 @@ export interface AccountDto {
     id: string; // Guid
     name: string;
     type: AccountType;
+    isMain: boolean;
 }
 
 export interface TransactionCategoryDto {
@@ -29,7 +30,6 @@ export interface Account extends AccountDto {
     // Additional fields for frontend
     currency: string;
     balance: number;
-    isPrimary: boolean;
 }
 
 export interface Category extends TransactionCategoryDto {
@@ -46,6 +46,7 @@ export interface Transaction {
     description: string | null;
     isMandatory?: boolean;
     type?: TransactionType;
+    currencyId?: string;
 }
 
 export interface NewTransactionPayload {
@@ -55,4 +56,36 @@ export interface NewTransactionPayload {
     occurredAt: string;
     description: string | null;
     isMandatory?: boolean;
+}
+
+export interface CreateAccountPayload {
+    userId: string;
+    currencyId: string;
+    type: AccountType;
+    name: string;
+}
+
+export interface AccountFormPayload {
+    name: string;
+    type: AccountType;
+    currencyId: string;
+    currencyCode: string;
+}
+
+export interface CreateCategoryPayload {
+    userId: string;
+    name: string;
+    color: string;
+}
+
+export interface CategoryFormPayload {
+    id?: string | null;
+    name: string;
+    color: string;
+}
+
+export interface UpdateCategoryPayload {
+    id: string;
+    name: string;
+    color: string;
 }

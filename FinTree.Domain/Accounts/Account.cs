@@ -1,6 +1,7 @@
 using System.ComponentModel.DataAnnotations;
 using FinTree.Domain.Base;
 using FinTree.Domain.Currencies;
+using FinTree.Domain.Identity;
 using FinTree.Domain.Transactions;
 
 namespace FinTree.Domain.Accounts;
@@ -12,10 +13,12 @@ public sealed class Account : Entity
     [MaxLength(50)] public string Name { get; private set; }
 
     public Guid UserId { get; private set; }
+    public User User { get; private set; }
     public Guid CurrencyId { get; private set; }
     public Currency Currency { get; private set; }
     public AccountType Type { get; private set; }
     public bool IsArchived { get; private set; }
+    public bool IsMain => User.MainAccountId == Id;
     public IReadOnlyCollection<Transaction> Transactions => _transactions.AsReadOnly();
 
     internal Account(Guid userId, string name, Guid currencyId, AccountType type)

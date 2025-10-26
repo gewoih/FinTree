@@ -1,6 +1,5 @@
 using FinTree.Application.Exceptions;
 using FinTree.Application.Transactions.Dto;
-using FinTree.Domain.Transactions;
 using FinTree.Infrastructure.Database;
 using Microsoft.EntityFrameworkCore;
 

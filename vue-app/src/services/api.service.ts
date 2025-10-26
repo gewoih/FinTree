@@ -1,6 +1,14 @@
 // src/services/api.service.ts
 import axios from 'axios';
-import type { AccountDto, TransactionCategoryDto, Transaction, NewTransactionPayload } from '../types.ts';
+import type {
+    AccountDto,
+    TransactionCategoryDto,
+    Transaction,
+    NewTransactionPayload,
+    CreateAccountPayload,
+    CreateCategoryPayload,
+    UpdateCategoryPayload
+} from '../types.ts';
 import { TRANSACTION_TYPE } from '../types.ts';
 
 // Используем базовый URL /api, который будет проксирован через Vite на https://localhost:5001
@@ -45,5 +53,31 @@ export const apiService = {
         };
         const response = await apiClient.post<string>('/Transaction', expensePayload);
         return response.data;
+    },
+
+    // Работа со счетами
+    async createAccount(payload: CreateAccountPayload): Promise<string> {
+        const response = await apiClient.post<string>('/accounts', payload);
+        return response.data;
+    },
+
+    async setPrimaryAccount(accountId: string): Promise<void> {
+        await apiClient.patch('/users/main-account', JSON.stringify(accountId), {
+            headers: { 'Content-Type': 'application/json' },
+        });
+    },
+
+    // Работа с категориями
+    async createCategory(payload: CreateCategoryPayload): Promise<string> {
+        const response = await apiClient.post<string>('/TransactionCategory', payload);
+        return response.data;
+    },
+
+    async updateCategory(payload: UpdateCategoryPayload): Promise<void> {
+        await apiClient.patch('/TransactionCategory', payload);
+    },
+
+    async deleteCategory(id: string): Promise<void> {
+        await apiClient.delete('/TransactionCategory', { params: { id } });
     },
 };

@@ -5,11 +5,14 @@ import ExpenseForm from './components/ExpenseForm.vue';
 import TransactionList from './components/TransactionList.vue';
 import { formatCurrency } from './utils/formatters';
 import { NAVIGATION_ITEMS } from './constants';
+import AccountManager from './components/AccountManager.vue';
+import CategoryManager from './components/CategoryManager.vue';
 
 // PrimeVue Components
 import Button from 'primevue/button';
 import Toast from 'primevue/toast';
 import Panel from 'primevue/panel';
+import ConfirmDialog from 'primevue/confirmdialog';
 
 const store = useFinanceStore();
 
@@ -52,6 +55,7 @@ const selectTab = (id: string) => {
 <template>
   <div class="app-shell">
     <Toast />
+    <ConfirmDialog />
 
     <header class="top-nav">
       <div class="brand">
@@ -224,6 +228,11 @@ const selectTab = (id: string) => {
               </li>
             </ul>
           </Panel>
+        </div>
+
+        <div class="management-grid">
+          <AccountManager />
+          <CategoryManager />
         </div>
       </div>
 
@@ -551,6 +560,13 @@ const selectTab = (id: string) => {
   margin-top: 1.5rem;
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 1.5rem;
+}
+
+.management-grid {
+  margin-top: 1.5rem;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
   gap: 1.5rem;
 }
 

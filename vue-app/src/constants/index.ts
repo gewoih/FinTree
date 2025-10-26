@@ -57,3 +57,10 @@ export const TOAST_CONFIG = {
     bottom: 'bottom-right'
   }
 } as const;
+
+export const CURRENT_USER_ID = 'e8f7ff88-d7f9-4f7a-a7ce-dae7e191c89c';
+
+export const ACCOUNT_TYPE_OPTIONS = [
+  { label: 'Банковский счет', value: 0 },
+  { label: 'Наличные', value: 1 }
+] as const;
