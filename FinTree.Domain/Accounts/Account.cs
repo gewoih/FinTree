@@ -1,6 +1,6 @@
+using System.ComponentModel.DataAnnotations;
 using FinTree.Domain.Base;
 using FinTree.Domain.Currencies;
-using FinTree.Domain.Identity;
 using FinTree.Domain.Transactions;
 
 namespace FinTree.Domain.Accounts;
@@ -8,8 +8,9 @@ namespace FinTree.Domain.Accounts;
 public sealed class Account : Entity
 {
     private readonly List<Transaction> _transactions = [];
-    
-    public string Name { get; private set; }
+
+    [MaxLength(50)] public string Name { get; private set; }
+
     public Guid UserId { get; private set; }
     public Guid CurrencyId { get; private set; }
     public Currency Currency { get; private set; }

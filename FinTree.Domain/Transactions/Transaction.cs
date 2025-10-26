@@ -1,3 +1,4 @@
+using System.ComponentModel.DataAnnotations;
 using FinTree.Domain.Base;
 
 namespace FinTree.Domain.Transactions;
@@ -8,7 +9,7 @@ public abstract class Transaction : Entity
     public Guid CategoryId { get; private set; }
     public decimal Amount { get; private set; }
     public DateTime OccurredAt { get; private set; }
-    public string? Description { get; private set; }
+    [MaxLength(100)] public string? Description { get; private set; }
 
     protected Transaction()
     {

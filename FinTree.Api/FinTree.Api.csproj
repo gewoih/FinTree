@@ -31,11 +31,4 @@
       <ProjectReference Include="..\FinTree.Application\FinTree.Application.csproj" />
     </ItemGroup>
 
-    <ItemGroup>
-      <Folder Include="Areas\TransactionCategoryController\Controllers\" />
-      <Folder Include="Areas\TransactionCategoryController\Data\" />
-      <Folder Include="Areas\TransactionCategoryController\Models\" />
-      <Folder Include="Areas\TransactionCategoryController\Views\" />
-    </ItemGroup>
-
 </Project>
