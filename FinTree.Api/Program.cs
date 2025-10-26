@@ -94,7 +94,6 @@ if (app.Environment.IsDevelopment())
 }
 
 app.UseHttpsRedirection();
-app.MapControllers();
 app.UseAuthentication();
 app.UseAuthorization();
 
@@ -117,6 +116,8 @@ app.UseExceptionHandler(b =>
 });
 
 app.UseCors("VueFrontend");
+
+app.MapControllers();
 
 var scope = app.Services.CreateScope();
 var appDbContext = scope.ServiceProvider.GetRequiredService<AppDbContext>();

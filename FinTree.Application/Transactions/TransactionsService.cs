@@ -21,32 +21,35 @@ public sealed class TransactionsService(AppDbContext context)
         return newTransaction.Id;
     }
 
-    public async Task<(IReadOnlyList<Transaction> Items, int Total)> GetTransactionsAsync(Guid accountId,
-        TxFilter filter, CancellationToken ct = default)
+    public async Task<(List<TransactionDto> Items, int Total)> GetTransactionsAsync(Guid? accountId,
+        TxFilter? filter, CancellationToken ct = default)
     {
-        var q = context.Transactions
-            .AsNoTracking()
-            .Where(t => t.AccountId == accountId);
+        var q = context.Transactions.AsNoTracking();
+            
+        if (accountId.HasValue)
+            q = q.Where(t => t.AccountId == accountId);
 
-        if (filter.AccountId is { } acc)
+        if (filter?.AccountId is { } acc)
             q = q.Where(t => t.AccountId == acc);
 
-        if (filter.From is { } from)
+        if (filter?.From is { } from)
             q = q.Where(t => DateOnly.FromDateTime(t.OccurredAt) >= from);
 
-        if (filter.To is { } to)
+        if (filter?.To is { } to)
             q = q.Where(t => DateOnly.FromDateTime(t.OccurredAt) <= to);
 
-        if (!string.IsNullOrWhiteSpace(filter.Search))
+        if (!string.IsNullOrWhiteSpace(filter?.Search))
+        {
             q = q.Where(t => t.Description != null &&
                              EF.Functions.Like(t.Description, $"%{filter.Search}%"));
+        }
 
         var total = await q.CountAsync(ct);
 
         var items = await q.OrderByDescending(t => t.OccurredAt)
-            .ThenByDescending(t => t.Id)
-            .Skip((filter.Page - 1) * filter.Size)
-            .Take(filter.Size)
+            .Select(t =>
+                new TransactionDto(t.Id, t.AccountId, t.Amount, t.Account.CurrencyId, t.CategoryId, t.Description,
+                    t.OccurredAt))
             .ToListAsync(ct);
 
         return (items, total);

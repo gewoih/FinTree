@@ -2,8 +2,9 @@ namespace FinTree.Application.Transactions.Dto;
 
 public sealed record TransactionDto(
     Guid Id,
+    Guid AccountId,
     decimal Amount,
-    string Currency,
-    Guid? CategoryId,
+    Guid CurrencyId,
+    Guid CategoryId,
     string? Description,
-    DateOnly OccuredAt);
+    DateTime OccuredAt);
