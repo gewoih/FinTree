@@ -37,6 +37,13 @@ export interface Category extends TransactionCategoryDto {
     frequency: number; // For sorting by popularity
 }
 
+export interface Currency {
+    code: string;
+    name: string;
+    symbol: string;
+    id?: string;
+}
+
 export interface Transaction {
     id: string;
     accountId: string;

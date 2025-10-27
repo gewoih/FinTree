@@ -3,6 +3,7 @@ using System.Text;
 using System.Text.Json;
 using FinTree.Api;
 using FinTree.Application.Accounts;
+using FinTree.Application.Currencies;
 using FinTree.Application.Exceptions;
 using FinTree.Application.Identity;
 using FinTree.Application.Transactions;
@@ -87,10 +88,11 @@ builder.Services.AddSingleton<TelegramBotClient>(_ => new TelegramBotClient("832
 
 builder.Services.AddScoped<TransactionCategoryService>();
 builder.Services.AddScoped<TransactionsService>();
+builder.Services.AddScoped<CurrenciesService>();
 builder.Services.AddScoped<AccountsService>();
 builder.Services.AddScoped<UserService>();
 builder.Services.AddScoped<ICurrentUser, HttpCurrentUser>();
-
+    
 builder.Services.AddHostedService<TelegramBotHostedService>();
 
 var app = builder.Build();

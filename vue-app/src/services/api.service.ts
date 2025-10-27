@@ -7,7 +7,8 @@ import type {
     NewTransactionPayload,
     CreateAccountPayload,
     CreateCategoryPayload,
-    UpdateCategoryPayload
+    UpdateCategoryPayload,
+    Currency
 } from '../types.ts';
 import { TRANSACTION_TYPE } from '../types.ts';
 
@@ -20,6 +21,12 @@ const apiClient = axios.create({
 });
 
 export const apiService = {
+    // Получение списка валют
+    async getCurrencies(): Promise<Currency[]> {
+        const response = await apiClient.get<Currency[]>('/currencies');
+        return response.data;
+    },
+
     // Получение счетов пользователя
     async getAccounts(): Promise<AccountDto[]> {
         const response = await apiClient.get<AccountDto[]>('/users/accounts');

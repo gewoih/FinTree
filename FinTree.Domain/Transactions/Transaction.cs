@@ -15,10 +15,6 @@ public abstract class Transaction : Entity
     
     public Guid CurrencyId => Account.CurrencyId;
 
-    protected Transaction()
-    {
-    }
-
     protected internal Transaction(Guid accountId, Guid categoryId, decimal amount, DateTime occurredAt,
         string? description = null)
     {
