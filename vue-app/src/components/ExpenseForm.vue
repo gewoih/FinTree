@@ -127,21 +127,6 @@ onMounted(() => {
       @update:visible="val => emit('update:visible', val)"
   >
     <form class="expense-form" @submit.prevent="handleSubmit">
-      <header class="form-hero">
-        <div>
-          <span class="ft-kicker">Быстрый расход</span>
-          <h3 class="form-title ft-display ft-display--section">Фиксируем операцию</h3>
-          <p class="ft-text ft-text--muted">
-            Укажите счет, категорию и сумму. Мы автоматически применим валюту и сохранём операцию в ленте.
-          </p>
-        </div>
-        <div class="form-summary">
-          <span class="summary-label">Списание</span>
-          <strong>{{ formattedAmount }}</strong>
-          <small>{{ selectedAccount?.name || 'Счет не выбран' }}</small>
-        </div>
-      </header>
-
       <section class="form-fields">
         <div class="field">
           <label for="account">Счет *</label>

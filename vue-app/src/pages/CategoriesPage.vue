@@ -4,15 +4,7 @@ import CategoryManager from '../components/CategoryManager.vue';
 
 <template>
   <div class="page sectioned ft-section">
-    <header class="page-head ft-card ft-card--glass">
-      <span class="ft-kicker">Категории</span>
-      <h1 class="ft-display ft-display--section">Структурируйте расходы и доходы под себя</h1>
-      <p class="ft-text ft-text--muted">
-        Системные категории остаются безопасными, а пользовательские можно добавлять и редактировать за секунды.
-      </p>
-    </header>
-
-    <CategoryManager />
+    <CategoryManager/>
   </div>
 </template>
 

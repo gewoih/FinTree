@@ -4,15 +4,7 @@ import AccountManager from '../components/AccountManager.vue';
 
 <template>
   <div class="page sectioned ft-section">
-    <header class="page-head ft-card ft-card--glass">
-      <span class="ft-kicker">Счета</span>
-      <h1 class="ft-display ft-display--section">Управляйте всеми счетами из одного места</h1>
-      <p class="ft-text ft-text--muted">
-        Создавайте новые счета, отмечайте главный и следите за валютой — данные синхронизируются с сервером автоматически.
-      </p>
-    </header>
-
-    <AccountManager />
+    <AccountManager/>
   </div>
 </template>
 
