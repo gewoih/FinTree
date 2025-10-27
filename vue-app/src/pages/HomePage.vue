@@ -34,16 +34,16 @@ const features = [
 </script>
 
 <template>
-  <div class="page home">
-    <section class="hero">
-      <div class="hero__copy">
-        <span class="hero__tag">Для личного и семейного бюджета</span>
-        <h1>Финансы под контролем без бесконечных таблиц.</h1>
-        <p>
+  <div class="page home ft-section">
+    <section class="ft-hero">
+      <div class="ft-hero__content">
+        <span class="ft-kicker">Для личного и семейного бюджета</span>
+        <h1 class="ft-display ft-display--hero">Финансы под контролем без бесконечных таблиц.</h1>
+        <p class="ft-text ft-text--muted">
           FinTree объединяет счета, категории и операции в одном месте.
           Добавляйте расходы за пару кликов, а остальную рутину мы возьмем на себя.
         </p>
-        <div class="hero__actions">
+        <div class="ft-hero__actions">
           <Button
             label="Начать учет"
             icon="pi pi-play"
@@ -61,8 +61,8 @@ const features = [
         </div>
       </div>
 
-      <div class="hero__panel">
-        <Card class="hero-card">
+      <div class="hero-card-wrapper">
+        <Card class="ft-card ft-card--glass hero-card">
           <template #title>
             <span class="hero-card__title">Что внутри?</span>
           </template>
@@ -78,104 +78,83 @@ const features = [
       </div>
     </section>
 
-    <section class="stats">
-      <article class="stat-tile">
-        <p class="stat-tile__label">Активные счета</p>
-        <h3>{{ stats.accounts }}</h3>
-        <small>Все счета подтягиваются из API — никаких моков.</small>
-      </article>
-      <article class="stat-tile">
-        <p class="stat-tile__label">Категории</p>
-        <h3>{{ stats.categories }}</h3>
-        <small>Системные и пользовательские — управляются отдельно.</small>
-      </article>
-      <article class="stat-tile">
-        <p class="stat-tile__label">Транзакции</p>
-        <h3>{{ stats.transactions }}</h3>
-        <small>Фильтруются по счетам, датам и тексту без задержек.</small>
-      </article>
+    <section class="ft-section">
+      <div class="ft-section__head">
+        <span class="ft-kicker">Ключевые цифры</span>
+        <h2 class="ft-display ft-display--section">Пульс вашего бюджета</h2>
+        <p class="ft-text ft-text--muted">
+          Живые данные подтягиваются из API. Контролируйте динамику счетов, категорий и операций.
+        </p>
+      </div>
+
+      <div class="ft-stat-grid">
+        <article class="ft-stat">
+          <p class="ft-stat__label">Активные счета</p>
+          <p class="ft-stat__value">{{ stats.accounts }}</p>
+          <p class="ft-stat__meta">Без моков — только реальные данные из сервера.</p>
+        </article>
+        <article class="ft-stat">
+          <p class="ft-stat__label">Категории</p>
+          <p class="ft-stat__value">{{ stats.categories }}</p>
+          <p class="ft-stat__meta">Системные и пользовательские списки с гибкой настройкой.</p>
+        </article>
+        <article class="ft-stat">
+          <p class="ft-stat__label">Транзакции</p>
+          <p class="ft-stat__value">{{ stats.transactions }}</p>
+          <p class="ft-stat__meta">Все операции доступны мгновенно с фильтрами и поиском.</p>
+        </article>
+      </div>
     </section>
 
-    <section class="features">
-      <article v-for="feature in features" :key="feature.title" class="feature-card">
-        <div class="feature-card__icon">
-          <i :class="feature.icon" />
-        </div>
-        <h4>{{ feature.title }}</h4>
-        <p>{{ feature.caption }}</p>
-      </article>
+    <section class="ft-section">
+      <div class="ft-section__head">
+        <span class="ft-kicker">Основные возможности</span>
+        <h2 class="ft-display ft-display--section">Что дает FinTree</h2>
+      </div>
+
+      <div class="ft-grid ft-grid--auto">
+        <article v-for="feature in features" :key="feature.title" class="ft-card feature-card">
+          <div class="feature-card__icon">
+            <i :class="feature.icon" />
+          </div>
+          <h4>{{ feature.title }}</h4>
+          <p>{{ feature.caption }}</p>
+        </article>
+      </div>
     </section>
   </div>
 </template>
 
 <style scoped>
 .page.home {
-  display: flex;
-  flex-direction: column;
-  gap: 3rem;
-  padding-bottom: 4rem;
+  gap: clamp(2.5rem, 3vw, 3.5rem);
 }
 
-.hero {
-  display: grid;
-  gap: 2rem;
-  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-  align-items: stretch;
-}
-
-.hero__copy {
-  background: linear-gradient(135deg, rgba(59, 130, 246, 0.08), rgba(37, 99, 235, 0.08));
-  border-radius: 28px;
-  padding: 2.5rem 2.75rem;
-  box-shadow: 0 26px 48px rgba(15, 23, 42, 0.08);
-  display: flex;
-  flex-direction: column;
-  gap: 1.25rem;
-}
-
-.hero__tag {
-  text-transform: uppercase;
-  font-size: 0.75rem;
-  letter-spacing: 0.18em;
-  color: var(--ft-accent);
-  font-weight: 600;
-}
-
-.hero__copy h1 {
-  margin: 0;
-  font-size: clamp(2.2rem, 3vw, 2.9rem);
-  line-height: 1.1;
-  color: var(--ft-heading);
-}
-
-.hero__copy p {
-  margin: 0;
-  color: var(--ft-text);
-  font-size: 1.05rem;
-}
-
-.hero__actions {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.75rem;
-}
-
-.hero__panel {
+.hero-card-wrapper {
   display: flex;
   align-items: stretch;
 }
 
 .hero-card {
   width: 100%;
-  border-radius: 28px;
-  border: none;
-  background: var(--ft-surface-elevated);
-  box-shadow: 0 20px 40px rgba(15, 23, 42, 0.12);
+  position: relative;
+  overflow: hidden;
+}
+
+.hero-card::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(circle at top right, rgba(56, 189, 248, 0.28), transparent 60%);
+  opacity: 0.6;
 }
 
 .hero-card__title {
-  font-size: 1.25rem;
+  font-size: 1.2rem;
   font-weight: 600;
+  color: var(--ft-heading);
+  position: relative;
+  z-index: 1;
 }
 
 .hero-card__list {
@@ -185,6 +164,8 @@ const features = [
   display: grid;
   gap: 0.75rem;
   color: var(--ft-text-strong);
+  position: relative;
+  z-index: 1;
 }
 
 .hero-card__list li {
@@ -197,83 +178,46 @@ const features = [
   color: var(--ft-success);
 }
 
-.stats {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-  gap: 1rem;
-}
-
-.stat-tile {
-  background: var(--ft-surface-elevated);
-  border-radius: 20px;
-  padding: 1.75rem;
-  border: 1px solid var(--ft-border-soft);
-  box-shadow: 0 16px 32px rgba(15, 23, 42, 0.08);
-  display: flex;
-  flex-direction: column;
-  gap: 0.5rem;
-}
-
-.stat-tile__label {
-  margin: 0;
-  text-transform: uppercase;
-  letter-spacing: 0.12em;
-  font-size: 0.8rem;
-  color: var(--ft-text-muted);
-}
-
-.stat-tile h3 {
-  margin: 0;
-  font-size: 2rem;
-  color: var(--ft-heading);
-}
-
-.stat-tile small {
-  color: var(--ft-text-muted);
-}
-
-.features {
-  display: grid;
-  gap: 1.25rem;
-  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+.ft-stat__meta {
+  max-width: 260px;
 }
 
 .feature-card {
-  background: var(--ft-surface-elevated);
-  border-radius: 20px;
-  padding: 1.8rem;
-  border: 1px solid var(--ft-border-soft);
-  box-shadow: 0 14px 28px rgba(15, 23, 42, 0.06);
-  display: flex;
-  flex-direction: column;
-  gap: 0.75rem;
+  gap: var(--ft-space-sm);
+  position: relative;
+  overflow: hidden;
+}
+
+.feature-card::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(circle at 20% 20%, rgba(56, 189, 248, 0.16), transparent 45%);
+  pointer-events: none;
 }
 
 .feature-card__icon {
   width: 46px;
   height: 46px;
   border-radius: 14px;
-  background: rgba(37, 99, 235, 0.12);
+  background: rgba(56, 189, 248, 0.18);
   display: grid;
   place-items: center;
   color: var(--ft-accent);
   font-size: 1.25rem;
+  z-index: 1;
 }
 
 .feature-card h4 {
   margin: 0;
-  font-size: 1.1rem;
+  font-size: 1.12rem;
   color: var(--ft-heading);
+  z-index: 1;
 }
 
 .feature-card p {
   margin: 0;
   color: var(--ft-text-muted);
-}
-
-@media (max-width: 768px) {
-  .hero__copy {
-    padding: 2rem;
-  }
+  z-index: 1;
 }
 </style>

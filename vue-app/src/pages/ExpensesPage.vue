@@ -57,16 +57,16 @@ const scrollToFilters = () => {
 </script>
 
 <template>
-  <div class="page expenses">
-    <section class="expenses-hero">
-      <div class="hero-copy">
-        <span class="hero-tag">Расходы</span>
-        <h1>Контроль движения средств без лишних экранов</h1>
-        <p>
+  <div class="page expenses ft-section">
+    <section class="expenses-hero ft-hero">
+      <div class="ft-hero__content">
+        <span class="ft-kicker">Расходы</span>
+        <h1 class="ft-display ft-display--hero">Контроль движения средств без лишних экранов</h1>
+        <p class="ft-text ft-text--muted">
           Вся история операций доступна на одном экране. Настраивайте фильтры по счетам, категориям и датам,
           а новые траты создавайте в пару кликов.
         </p>
-        <div class="hero-actions">
+        <div class="ft-hero__actions">
           <Button
             label="Добавить расход"
             icon="pi pi-plus"
@@ -84,22 +84,22 @@ const scrollToFilters = () => {
         </div>
       </div>
 
-      <div class="hero-stats">
-        <article v-for="tile in statTiles" :key="tile.label" class="hero-stat" :class="tile.tone">
-          <p class="hero-stat__label">{{ tile.label }}</p>
-          <h3>{{ tile.value }}</h3>
-          <small v-if="tile.helper">{{ tile.helper }}</small>
+      <div class="hero-stats ft-stat-grid">
+        <article v-for="tile in statTiles" :key="tile.label" class="ft-stat" :class="tile.tone">
+          <p class="ft-stat__label">{{ tile.label }}</p>
+          <p class="ft-stat__value">{{ tile.value }}</p>
+          <p v-if="tile.helper" class="ft-stat__meta">{{ tile.helper }}</p>
         </article>
       </div>
     </section>
 
-    <section class="history-card">
+    <section class="history-card ft-card">
       <header class="history-head">
         <div>
-          <p class="section-kicker">Лента операций</p>
-          <h2>Сводная история расходов и поступлений</h2>
-          <p class="muted">
-            Пользуйтесь поиском и фильтрами сверху, чтобы находить нужные операции. Все обновления происходят без перезагрузки страницы.
+          <span class="ft-kicker">Лента операций</span>
+          <h2 class="ft-display ft-display--section">Сводная история расходов и поступлений</h2>
+          <p class="ft-text ft-text--muted">
+            Пользуйтесь фильтрами и поиском, чтобы находить нужные операции. Все обновления происходят без перезагрузки страницы.
           </p>
         </div>
         <Button label="Новый расход" icon="pi pi-pencil" severity="success" @click="showExpenseDialog = true" />
@@ -114,106 +114,23 @@ const scrollToFilters = () => {
 
 <style scoped>
 .page.expenses {
-  display: flex;
-  flex-direction: column;
-  gap: 2.5rem;
+  gap: clamp(2.5rem, 3vw, 3.5rem);
 }
 
-.expenses-hero {
-  display: grid;
-  gap: 2rem;
-  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-  align-items: stretch;
+.hero-stats .ft-stat {
+  gap: var(--ft-space-xs);
 }
 
-.hero-copy {
-  border-radius: 28px;
-  padding: 2.4rem;
-  background: linear-gradient(135deg, rgba(37, 99, 235, 0.18), rgba(59, 130, 246, 0.1));
-  box-shadow: 0 28px 56px rgba(15, 23, 42, 0.12);
-  display: flex;
-  flex-direction: column;
-  gap: 1.1rem;
-}
-
-.hero-tag {
-  text-transform: uppercase;
-  letter-spacing: 0.16em;
-  font-size: 0.75rem;
-  color: var(--ft-accent);
-  font-weight: 600;
-}
-
-.hero-copy h1 {
-  margin: 0;
-  font-size: clamp(1.9rem, 2.8vw, 2.5rem);
-  color: var(--ft-heading);
-}
-
-.hero-copy p {
-  margin: 0;
-  color: var(--ft-text-muted);
-}
-
-.hero-actions {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.75rem;
-  margin-top: 0.35rem;
-}
-
-.hero-stats {
-  display: grid;
-  gap: 1rem;
-  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-}
-
-.hero-stat {
-  background: var(--ft-surface-elevated);
-  border-radius: 22px;
-  padding: 1.6rem;
-  border: 1px solid var(--ft-border-soft);
-  box-shadow: 0 20px 40px rgba(15, 23, 42, 0.12);
-  display: flex;
-  flex-direction: column;
-  gap: 0.5rem;
-}
-
-.hero-stat.positive h3 {
+.ft-stat.positive .ft-stat__value {
   color: #059669;
 }
 
-.hero-stat.negative h3 {
+.ft-stat.negative .ft-stat__value {
   color: #dc2626;
 }
 
-.hero-stat__label {
-  margin: 0;
-  text-transform: uppercase;
-  letter-spacing: 0.1em;
-  font-size: 0.75rem;
-  color: var(--ft-text-muted);
-}
-
-.hero-stat h3 {
-  margin: 0;
-  font-size: 1.75rem;
-  color: var(--ft-heading);
-}
-
-.hero-stat small {
-  color: var(--ft-text-muted);
-}
-
 .history-card {
-  border-radius: 28px;
-  padding: 2rem 2.2rem;
-  background: var(--ft-surface-elevated);
-  border: 1px solid var(--ft-border-soft);
-  box-shadow: 0 24px 48px rgba(15, 23, 42, 0.12);
-  display: flex;
-  flex-direction: column;
-  gap: 1.75rem;
+  gap: clamp(1.5rem, 2vw, 2rem);
 }
 
 .history-head {
@@ -224,30 +141,12 @@ const scrollToFilters = () => {
   align-items: flex-start;
 }
 
-.section-kicker {
-  margin: 0;
-  font-size: 0.8rem;
-  letter-spacing: 0.16em;
-  text-transform: uppercase;
-  color: var(--ft-text-muted);
-  font-weight: 600;
-}
-
 .history-head h2 {
-  margin: 0.4rem 0 0;
-  color: var(--ft-heading);
-  font-size: clamp(1.6rem, 2.3vw, 2.1rem);
+  margin: 0.35rem 0 0;
 }
 
-.muted {
-  margin: 0.75rem 0 0;
-  color: var(--ft-text-muted);
+.history-head .ft-text {
+  margin-top: 0.75rem;
   max-width: 640px;
-}
-
-@media (max-width: 768px) {
-  .history-card {
-    padding: 1.6rem;
-  }
 }
 </style>

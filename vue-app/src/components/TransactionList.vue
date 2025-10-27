@@ -116,20 +116,20 @@ watch(selectedAccount, account => {
 <template>
   <div class="transaction-history">
     <!-- Фильтры -->
-    <div class="filters-panel p-3 mb-4 border-round surface-100">
-      <div class="grid">
-        <div class="col-12 md:col-3">
-          <label class="block text-sm font-medium mb-2">Поиск</label>
-          <InputText 
-            v-model="searchText" 
+    <div class="filters-panel ft-card ft-card--muted">
+      <div class="filters-grid">
+        <div class="filter-field filter-field--wide">
+          <label>Поиск</label>
+          <InputText
+            v-model="searchText"
             placeholder="Поиск по категории, счету или примечанию..."
             class="w-full"
           />
         </div>
-        <div class="col-12 md:col-2">
-          <label class="block text-sm font-medium mb-2">Категория</label>
-          <Select 
-            v-model="selectedCategory" 
+        <div class="filter-field">
+          <label>Категория</label>
+          <Select
+            v-model="selectedCategory"
             :options="categoryOptions"
             option-label="label"
             option-value="value"
@@ -137,10 +137,10 @@ watch(selectedAccount, account => {
             class="w-full"
           />
         </div>
-        <div class="col-12 md:col-2">
-          <label class="block text-sm font-medium mb-2">Счет</label>
-          <Select 
-            v-model="selectedAccount" 
+        <div class="filter-field">
+          <label>Счет</label>
+          <Select
+            v-model="selectedAccount"
             :options="accountOptions"
             option-label="label"
             option-value="value"
@@ -148,22 +148,23 @@ watch(selectedAccount, account => {
             class="w-full"
           />
         </div>
-        <div class="col-12 md:col-3">
-          <label class="block text-sm font-medium mb-2">Период</label>
-          <DatePicker 
-            v-model="dateRange" 
-            selectionMode="range" 
+        <div class="filter-field">
+          <label>Период</label>
+          <DatePicker
+            v-model="dateRange"
+            selectionMode="range"
             :manualInput="false"
             placeholder="Выберите период"
             class="w-full"
           />
         </div>
-        <div class="col-12 md:col-2">
-          <label class="block text-sm font-medium mb-2">&nbsp;</label>
-          <Button 
-            label="Сбросить" 
-            icon="pi pi-refresh" 
+        <div class="filter-field filter-field--compact">
+          <label class="sr-only">Сбросить фильтры</label>
+          <Button
+            label="Сбросить"
+            icon="pi pi-refresh"
             severity="secondary"
+            outlined
             @click="clearFilters"
             class="w-full"
           />
@@ -172,12 +173,12 @@ watch(selectedAccount, account => {
     </div>
 
     <!-- Таблица транзакций -->
-    <div v-if="transactionsLoading" class="text-center p-4">
+    <div v-if="transactionsLoading" class="loading-state">
       <ProgressSpinner style="width: 50px; height: 50px" strokeWidth="8" animationDuration=".5s" />
-      <p class="mt-2">Загрузка данных...</p>
+      <p>Загрузка данных...</p>
     </div>
 
-    <div v-else-if="filteredTransactions.length === 0" class="empty-state">
+    <div v-else-if="filteredTransactions.length === 0" class="ft-empty">
       <i class="pi pi-database"></i>
       <p>Транзакции не найдены. Попробуйте изменить фильтры или добавить новый расход.</p>
     </div>
@@ -196,13 +197,13 @@ watch(selectedAccount, account => {
         :globalFilterFields="['categoryName', 'accountName', 'description']"
         responsiveLayout="scroll"
     >
-      <Column field="occuredAt" header="Дата" :sortable="true" style="min-width: 100px">
+      <Column field="occuredAt" header="Дата" :sortable="true" style="min-width: 110px">
         <template #body="slotProps">
-          <div class="font-medium">{{ formatDate(slotProps.data.occuredAt) }}</div>
+          <div class="date-cell">{{ formatDate(slotProps.data.occuredAt) }}</div>
         </template>
       </Column>
-      
-      <Column field="signedAmount" header="Сумма" :sortable="true" style="min-width: 140px">
+
+      <Column field="signedAmount" header="Сумма" :sortable="true" style="min-width: 150px">
         <template #body="slotProps">
           <div class="amount-cell" :class="{ negative: slotProps.data.signedAmount < 0 }">
             <span class="amount-value">
@@ -215,31 +216,31 @@ watch(selectedAccount, account => {
           </div>
         </template>
       </Column>
-      
-      <Column field="categoryName" header="Категория" :sortable="true" style="min-width: 120px">
+
+      <Column field="categoryName" header="Категория" :sortable="true" style="min-width: 140px">
         <template #body="slotProps">
-          <Tag 
-            :value="slotProps.data.categoryName" 
+          <Tag
+            :value="slotProps.data.categoryName"
             :style="{ backgroundColor: slotProps.data.categoryColor, color: 'white' }"
           />
         </template>
       </Column>
-      
-      <Column field="accountName" header="Счет" :sortable="true" style="min-width: 100px">
+
+      <Column field="accountName" header="Счет" :sortable="true" style="min-width: 130px">
         <template #body="slotProps">
-          <div class="flex align-items-center">
-            <i class="pi pi-credit-card mr-2 text-500"></i>
-            {{ slotProps.data.accountName }}
+          <div class="account-cell">
+            <i class="pi pi-credit-card"></i>
+            <span>{{ slotProps.data.accountName }}</span>
           </div>
         </template>
       </Column>
-      
-      <Column field="description" header="Примечание" style="min-width: 150px">
+
+      <Column field="description" header="Примечание" style="min-width: 160px">
         <template #body="slotProps">
-          <span v-if="slotProps.data.description" class="text-600">
+          <span v-if="slotProps.data.description" class="description-text">
             {{ slotProps.data.description }}
           </span>
-          <span v-else class="text-400 italic">—</span>
+          <span v-else class="description-empty">—</span>
         </template>
       </Column>
     </DataTable>
@@ -248,27 +249,57 @@ watch(selectedAccount, account => {
 </template>
 
 <style scoped>
+.transaction-history {
+  display: flex;
+  flex-direction: column;
+  gap: clamp(1.5rem, 2vw, 2rem);
+}
+
 .filters-panel {
-  background: rgba(248, 250, 252, 0.72);
-  border: 1px solid var(--ft-border-soft);
-  border-radius: 18px;
-  box-shadow: 0 12px 32px rgba(15, 23, 42, 0.08);
+  gap: clamp(1rem, 1.5vw, 1.35rem);
 }
 
-.empty-state {
-  border: 1px dashed var(--surface-border);
-  border-radius: 16px;
-  padding: 2rem;
-  text-align: center;
-  color: var(--text-color-secondary);
+.filters-grid {
   display: grid;
-  gap: 0.5rem;
-  place-items: center;
+  grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
+  gap: clamp(0.85rem, 1.2vw, 1.3rem);
 }
 
-.empty-state i {
-  font-size: 2rem;
-  color: var(--text-color-secondary);
+.filter-field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.filter-field label {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--ft-text-muted);
+}
+
+.filter-field--wide {
+  grid-column: span 2;
+}
+
+.filter-field--compact :deep(.p-button) {
+  height: 100%;
+}
+
+.loading-state {
+  display: grid;
+  place-items: center;
+  gap: 0.6rem;
+  padding: 2rem;
+  color: var(--ft-text-muted);
+}
+
+.loading-state p {
+  margin: 0;
+}
+
+.date-cell {
+  font-weight: 600;
+  color: var(--ft-heading);
 }
 
 .amount-cell {
@@ -293,5 +324,31 @@ watch(selectedAccount, account => {
   text-transform: uppercase;
   letter-spacing: 0.08em;
   color: var(--ft-text-muted);
+}
+
+.account-cell {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  color: var(--ft-heading);
+}
+
+.account-cell i {
+  color: var(--ft-text-muted);
+}
+
+.description-text {
+  color: var(--ft-text);
+}
+
+.description-empty {
+  color: var(--ft-text-muted);
+  font-style: italic;
+}
+
+@media (max-width: 768px) {
+  .filter-field--wide {
+    grid-column: span 1;
+  }
 }
 </style>

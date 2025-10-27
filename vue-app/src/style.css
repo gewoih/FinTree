@@ -8,26 +8,26 @@
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 
-  --ft-bg-start: #f5f8ff;
-  --ft-bg-end: #ecf4ff;
-  --ft-surface: rgba(255, 255, 255, 0.72);
-  --ft-surface-elevated: #ffffff;
-  --ft-border-soft: rgba(15, 23, 42, 0.08);
-  --ft-heading: #0f172a;
-  --ft-text: #1e293b;
-  --ft-text-muted: #64748b;
-  --ft-text-strong: #1f2937;
-  --ft-accent: #2563eb;
-  --ft-accent-soft: rgba(37, 99, 235, 0.16);
-  --ft-success: #10b981;
+  --ft-bg-start: #020817;
+  --ft-bg-end: #0b1222;
+  --ft-surface: rgba(13, 22, 43, 0.68);
+  --ft-surface-elevated: #111d33;
+  --ft-border-soft: rgba(148, 163, 184, 0.2);
+  --ft-heading: #f8fafc;
+  --ft-text: #e2e8f0;
+  --ft-text-muted: #94a3b8;
+  --ft-text-strong: #f1f5f9;
+  --ft-accent: #38bdf8;
+  --ft-accent-soft: rgba(56, 189, 248, 0.22);
+  --ft-success: #34d399;
 
   /* Legacy tokens kept for component compatibility */
   --text-color: var(--ft-text);
   --text-color-secondary: var(--ft-text-muted);
-  --surface-100: rgba(15, 23, 42, 0.05);
+  --surface-100: rgba(148, 163, 184, 0.12);
   --surface-border: var(--ft-border-soft);
   --surface-card: var(--ft-surface-elevated);
-  --surface-section: rgba(255, 255, 255, 0.86);
+  --surface-section: rgba(17, 29, 51, 0.92);
   --primary-color: var(--ft-accent);
 
   background-color: var(--ft-bg-end);
@@ -42,9 +42,10 @@
 body {
   margin: 0;
   min-height: 100vh;
-  background: radial-gradient(circle at 0% 0%, rgba(59, 130, 246, 0.12), transparent 45%),
-    radial-gradient(circle at 100% 0%, rgba(59, 130, 246, 0.12), transparent 35%),
-    linear-gradient(135deg, var(--ft-bg-start), var(--ft-bg-end));
+  background:
+    radial-gradient(circle at 10% -10%, rgba(56, 189, 248, 0.28), transparent 45%),
+    radial-gradient(circle at 110% 0%, rgba(14, 116, 144, 0.22), transparent 40%),
+    linear-gradient(140deg, var(--ft-bg-start), var(--ft-bg-end));
   color: var(--ft-text);
 }
 

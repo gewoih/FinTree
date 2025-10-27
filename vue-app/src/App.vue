@@ -23,100 +23,111 @@ onMounted(() => {
     <ConfirmDialog />
 
     <header class="app-header">
-      <RouterLink class="brand" to="/">
-        <span class="brand__icon">
-          <i class="pi pi-tree" />
-        </span>
-        <span>
-          <strong>FinTree</strong>
-          <small>управление личными финансами</small>
-        </span>
-      </RouterLink>
-
-      <nav class="app-nav">
-        <RouterLink
-          v-for="item in NAVIGATION_ITEMS"
-          :key="item.id"
-          :to="item.route"
-          class="nav-link"
-          :class="{ active: activeRouteId === item.id }"
-        >
-          <i :class="item.icon" />
-          <span>{{ item.label }}</span>
+      <div class="header-inner">
+        <RouterLink class="brand" to="/">
+          <span class="brand__icon">
+            <i class="pi pi-tree" />
+          </span>
+          <span class="brand__text">
+            <strong>FinTree</strong>
+            <small>управление личными финансами</small>
+          </span>
         </RouterLink>
-      </nav>
 
-      <Button
-        label="Добавить расход"
-        icon="pi pi-plus"
-        severity="success"
-        size="small"
-        @click="$router.push({ name: 'expenses' })"
-      />
+        <nav class="app-nav" aria-label="Основная навигация">
+          <RouterLink
+            v-for="item in NAVIGATION_ITEMS"
+            :key="item.id"
+            :to="item.route"
+            class="nav-link"
+            :class="{ active: activeRouteId === item.id }"
+          >
+            <i :class="item.icon" class="nav-link__icon" />
+            <span class="nav-link__label">{{ item.label }}</span>
+          </RouterLink>
+        </nav>
+
+        <Button
+          label="Добавить расход"
+          icon="pi pi-plus"
+          severity="success"
+          size="small"
+          @click="$router.push({ name: 'expenses' })"
+        />
+      </div>
     </header>
 
     <main class="app-main">
-      <RouterView />
+      <div class="app-shell">
+        <RouterView />
+      </div>
     </main>
   </div>
 </template>
 
 <style scoped>
 .app {
-  max-width: 1200px;
-  margin: 0 auto;
-  padding: 2.5rem 1.5rem 3rem;
+  min-height: 100vh;
   display: flex;
   flex-direction: column;
-  gap: 2rem;
 }
 
 .app-header {
   position: sticky;
-  top: 18px;
-  z-index: 20;
+  top: 0;
+  z-index: 50;
+  backdrop-filter: blur(16px);
+  background: linear-gradient(180deg, rgba(8, 15, 34, 0.92), rgba(8, 15, 34, 0.78));
+  border-bottom: 1px solid rgba(148, 163, 184, 0.22);
+}
+
+.header-inner {
+  width: min(1280px, 100% - clamp(1.5rem, 4vw, 4rem));
+  margin: 0 auto;
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 1.5rem;
-  padding: 1rem 1.5rem;
-  border-radius: 22px;
-  background: rgba(255, 255, 255, 0.9);
-  backdrop-filter: blur(12px);
-  box-shadow: 0 18px 42px rgba(15, 23, 42, 0.12);
+  gap: clamp(1rem, 2vw, 1.75rem);
+  padding: clamp(1rem, 1.8vw, 1.4rem) 0;
 }
 
 .brand {
-  display: flex;
+  display: inline-flex;
   align-items: center;
   gap: 0.85rem;
   text-decoration: none;
   color: inherit;
 }
 
-.brand strong {
-  font-size: 1.25rem;
-  color: var(--ft-heading);
-}
-
-.brand small {
-  display: block;
-  margin-top: 0.15rem;
-  font-size: 0.75rem;
-  text-transform: uppercase;
-  letter-spacing: 0.16em;
-  color: var(--ft-text-muted);
-}
-
 .brand__icon {
-  width: 44px;
-  height: 44px;
+  width: 42px;
+  height: 42px;
   border-radius: 14px;
-  background: linear-gradient(135deg, rgba(37, 99, 235, 0.18), rgba(59, 130, 246, 0.12));
+  background: linear-gradient(135deg, rgba(56, 189, 248, 0.22), rgba(125, 211, 252, 0.12));
   display: grid;
   place-items: center;
   color: var(--ft-accent);
-  font-size: 1.3rem;
+  font-size: 1.2rem;
+  box-shadow: inset 0 0 0 1px rgba(56, 189, 248, 0.24);
+}
+
+.brand__text {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+}
+
+.brand__text strong {
+  font-size: 1.2rem;
+  letter-spacing: 0.02em;
+  color: var(--ft-heading);
+}
+
+.brand__text small {
+  font-size: 0.7rem;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: var(--ft-text-muted);
 }
 
 .app-nav {
@@ -128,8 +139,8 @@ onMounted(() => {
 .nav-link {
   display: inline-flex;
   align-items: center;
-  gap: 0.4rem;
-  padding: 0.45rem 0.95rem;
+  gap: 0.45rem;
+  padding: 0.48rem 1rem;
   border-radius: 999px;
   color: var(--ft-text-muted);
   text-decoration: none;
@@ -138,8 +149,12 @@ onMounted(() => {
   border: 1px solid transparent;
 }
 
+.nav-link__icon {
+  font-size: 0.95rem;
+}
+
 .nav-link:hover {
-  border-color: rgba(37, 99, 235, 0.2);
+  border-color: rgba(56, 189, 248, 0.32);
   color: var(--ft-heading);
 }
 
@@ -147,21 +162,28 @@ onMounted(() => {
   background: var(--ft-accent-soft);
   color: var(--ft-heading);
   border-color: transparent;
-  box-shadow: inset 0 0 0 1px rgba(37, 99, 235, 0.2);
+  box-shadow: inset 0 0 0 1px rgba(56, 189, 248, 0.32);
 }
 
 .app-main {
-  min-height: 60vh;
+  flex: 1;
+  display: flex;
+  padding-bottom: clamp(2.5rem, 4vw, 4rem);
+}
+
+.app-shell {
+  width: min(1280px, 100% - clamp(1.5rem, 4vw, 4rem));
+  margin: 0 auto;
   display: flex;
   flex-direction: column;
-  gap: 2rem;
+  gap: clamp(2rem, 3vw, 3.25rem);
+  padding-top: clamp(2rem, 3vw, 3.5rem);
 }
 
 @media (max-width: 768px) {
-  .app-header {
+  .header-inner {
     flex-direction: column;
     align-items: stretch;
-    gap: 1rem;
   }
 
   .app-nav {

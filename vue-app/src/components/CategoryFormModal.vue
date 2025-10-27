@@ -129,36 +129,40 @@ const handleSubmit = async () => {
 .category-form {
   display: flex;
   flex-direction: column;
-  gap: 1rem;
+  gap: clamp(0.85rem, 1vw, 1.1rem);
 }
 
 .field {
   display: flex;
   flex-direction: column;
-  gap: 0.4rem;
+  gap: 0.45rem;
 }
 
 label {
   font-weight: 600;
-}
-
-.color-field input[type='color'] {
-  width: 42px;
-  height: 42px;
-  border: none;
-  background: transparent;
-  padding: 0;
+  color: var(--ft-heading);
 }
 
 .color-picker {
   display: flex;
   align-items: center;
-  gap: 0.5rem;
+  gap: 0.6rem;
+}
+
+.color-field input[type='color'] {
+  width: 42px;
+  height: 42px;
+  border: 1px solid rgba(15, 23, 42, 0.1);
+  border-radius: var(--ft-radius-sm);
+  padding: 0;
+  background: transparent;
+  cursor: pointer;
 }
 
 .actions {
   display: flex;
   justify-content: flex-end;
   gap: 0.75rem;
+  margin-top: 0.5rem;
 }
 </style>

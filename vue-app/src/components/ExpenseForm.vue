@@ -129,9 +129,9 @@ onMounted(() => {
     <form class="expense-form" @submit.prevent="handleSubmit">
       <header class="form-hero">
         <div>
-          <span class="form-tag">Быстрый расход</span>
-          <h3>Фиксируем операцию</h3>
-          <p>
+          <span class="ft-kicker">Быстрый расход</span>
+          <h3 class="form-title ft-display ft-display--section">Фиксируем операцию</h3>
+          <p class="ft-text ft-text--muted">
             Укажите счет, категорию и сумму. Мы автоматически применим валюту и сохранём операцию в ленте.
           </p>
         </div>
@@ -206,7 +206,7 @@ onMounted(() => {
                 required
                 :class="{ 'p-invalid': !isAmountValid }"
             />
-            <span class="currency-chip">{{ currencySymbol || currencyCode }}</span>
+            <span class="currency-chip ft-pill">{{ currencySymbol || currencyCode }}</span>
           </div>
           <small v-if="!isAmountValid && amount !== null" class="error-text">
             Сумма должна быть от {{ VALIDATION_RULES.minAmount }} до {{ VALIDATION_RULES.maxAmount }}
@@ -260,7 +260,7 @@ onMounted(() => {
 <style scoped>
 .expense-dialog :deep(.p-dialog-content) {
   padding: 0;
-  border-radius: 28px;
+  border-radius: var(--ft-radius-xl);
   overflow: hidden;
 }
 
@@ -271,8 +271,8 @@ onMounted(() => {
 .expense-form {
   display: flex;
   flex-direction: column;
-  gap: 1.75rem;
-  padding: 2.1rem;
+  gap: clamp(1.5rem, 2vw, 2.1rem);
+  padding: clamp(1.8rem, 2.2vw, 2.3rem);
   background: var(--ft-surface-elevated);
 }
 
@@ -280,57 +280,47 @@ onMounted(() => {
   display: flex;
   justify-content: space-between;
   align-items: flex-start;
-  gap: 1.5rem;
+  gap: clamp(1.1rem, 1.5vw, 1.6rem);
   flex-wrap: wrap;
-  border-radius: 22px;
-  padding: 1.6rem;
-  background: linear-gradient(135deg, rgba(37, 99, 235, 0.12), rgba(59, 130, 246, 0.08));
-  box-shadow: inset 0 0 0 1px rgba(37, 99, 235, 0.12);
+  border-radius: var(--ft-radius-xl);
+  padding: clamp(1.4rem, 1.8vw, 1.75rem);
+  background: linear-gradient(135deg, rgba(56, 189, 248, 0.16), rgba(14, 165, 233, 0.08));
+  box-shadow: inset 0 0 0 1px rgba(56, 189, 248, 0.24);
 }
 
-.form-tag {
-  display: inline-block;
-  margin-bottom: 0.4rem;
-  text-transform: uppercase;
-  letter-spacing: 0.14em;
-  font-size: 0.75rem;
-  color: var(--ft-accent);
-  font-weight: 600;
-}
-
-.form-hero h3 {
+.form-title {
   margin: 0;
-  font-size: 1.5rem;
+  font-size: clamp(1.6rem, 2.2vw, 1.9rem);
   color: var(--ft-heading);
 }
 
-.form-hero p {
-  margin: 0.5rem 0 0;
-  color: var(--ft-text-muted);
+.form-hero .ft-text {
+  margin: 0.35rem 0 0;
   max-width: 360px;
 }
 
 .form-summary {
-  border-radius: 18px;
-  background: linear-gradient(135deg, rgba(37, 99, 235, 0.18), rgba(59, 130, 246, 0.28));
+  border-radius: var(--ft-radius-md);
+  background: linear-gradient(135deg, rgba(56, 189, 248, 0.28), rgba(14, 165, 233, 0.35));
   color: var(--ft-heading);
   padding: 1rem 1.3rem;
   display: flex;
   flex-direction: column;
-  gap: 0.2rem;
+  gap: 0.25rem;
   min-width: 200px;
-  box-shadow: inset 0 0 0 1px rgba(37, 99, 235, 0.22);
+  box-shadow: inset 0 0 0 1px rgba(56, 189, 248, 0.28);
 }
 
 .summary-label {
   text-transform: uppercase;
-  letter-spacing: 0.1em;
-  font-size: 0.7rem;
+  letter-spacing: 0.12em;
+  font-size: 0.72rem;
   color: var(--ft-accent);
+  font-weight: 600;
 }
 
 .form-summary strong {
-  font-size: 1.7rem;
+  font-size: clamp(1.65rem, 2vw, 1.85rem);
   font-weight: 600;
   color: var(--ft-heading);
 }
@@ -342,7 +332,7 @@ onMounted(() => {
 .form-fields {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-  gap: 1.2rem 1.4rem;
+  gap: clamp(1rem, 1.4vw, 1.35rem) clamp(1rem, 1.4vw, 1.5rem);
 }
 
 .field {
@@ -377,13 +367,7 @@ onMounted(() => {
 }
 
 .currency-chip {
-  border-radius: 12px;
-  background: var(--ft-accent-soft);
-  padding: 0.5rem 0.9rem;
-  font-weight: 600;
-  color: var(--ft-accent);
-  display: inline-flex;
-  align-items: center;
+  box-shadow: inset 0 0 0 1px rgba(56, 189, 248, 0.24);
 }
 
 .option-line {
@@ -422,7 +406,7 @@ onMounted(() => {
 .form-actions {
   display: flex;
   justify-content: flex-end;
-  gap: 0.8rem;
+  gap: 0.9rem;
 }
 
 @media (max-width: 640px) {

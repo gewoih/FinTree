@@ -1,6 +1,7 @@
-import './style.css'
-import './styles/utilities.css'
-import './styles/prime-overrides.css'
+import './style.css';
+import './styles/theme.css';
+import './styles/utilities.css';
+import './styles/prime-overrides.css';
 import { createApp } from 'vue';
 import { createPinia } from 'pinia';
 import App from './App.vue';

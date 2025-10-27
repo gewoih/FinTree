@@ -66,18 +66,18 @@ const handleDelete = (category: Category) => {
 </script>
 
 <template>
-  <section class="manager-card">
+  <section class="manager-card ft-card ft-card--muted">
     <header class="manager-head">
-      <div>
-        <p class="section-kicker">Категории</p>
+      <div class="ft-section__head">
+        <span class="ft-kicker">Категории</span>
         <h3>Категории расходов</h3>
-        <p class="muted">Настройте списки, чтобы быстрее находить операции.</p>
+        <p class="ft-text ft-text--muted">Настройте списки, чтобы быстрее находить операции.</p>
       </div>
       <Button label="Добавить категорию" icon="pi pi-plus" size="small" @click="openModal()" />
     </header>
 
-    <div v-if="categories.length === 0" class="empty-state">
-      <p>Категории не найдены. Создайте свою первую.</p>
+    <div v-if="categories.length === 0" class="ft-empty">
+      <p class="ft-text ft-text--muted">Категории не найдены. Создайте свою первую.</p>
     </div>
 
     <ul v-else class="category-list">
@@ -89,7 +89,7 @@ const handleDelete = (category: Category) => {
               {{ category.name }}
               <Tag v-if="category.isSystem" value="Системная" severity="info" />
             </p>
-            <small class="muted" v-if="category.isSystem">
+            <small v-if="category.isSystem" class="ft-text ft-text--muted">
               Системная категория защищена от изменений
             </small>
           </div>
@@ -122,14 +122,7 @@ const handleDelete = (category: Category) => {
 
 <style scoped>
 .manager-card {
-  border-radius: 22px;
-  background: var(--ft-surface-elevated);
-  padding: 1.75rem;
-  border: 1px solid var(--ft-border-soft);
-  box-shadow: 0 22px 48px rgba(15, 23, 42, 0.12);
-  display: flex;
-  flex-direction: column;
-  gap: 1.5rem;
+  gap: clamp(1.5rem, 2vw, 2rem);
 }
 
 .manager-head {
@@ -137,19 +130,7 @@ const handleDelete = (category: Category) => {
   justify-content: space-between;
   gap: 1.5rem;
   flex-wrap: wrap;
-}
-
-.section-kicker {
-  margin: 0;
-  font-size: 0.8rem;
-  letter-spacing: 0.18em;
-  text-transform: uppercase;
-  color: var(--ft-text-muted);
-  font-weight: 600;
-}
-
-.muted {
-  color: var(--ft-text-muted);
+  align-items: flex-start;
 }
 
 .category-list {
@@ -158,18 +139,19 @@ const handleDelete = (category: Category) => {
   padding: 0;
   display: flex;
   flex-direction: column;
-  gap: 1rem;
+  gap: clamp(0.85rem, 1.2vw, 1.2rem);
 }
 
 .category-item {
   border: 1px solid var(--ft-border-soft);
-  border-radius: 18px;
-  padding: 1rem 1.25rem;
+  border-radius: var(--ft-radius-lg);
+  padding: clamp(0.95rem, 1.2vw, 1.2rem) clamp(1.1rem, 1.6vw, 1.4rem);
   display: flex;
   justify-content: space-between;
   align-items: center;
-  gap: 1rem;
-  background: rgba(248, 250, 252, 0.65);
+  gap: clamp(0.75rem, 1vw, 1rem);
+  background: rgba(13, 22, 43, 0.8);
+  box-shadow: 0 18px 40px rgba(8, 15, 34, 0.4);
 }
 
 .category-info {
@@ -198,14 +180,5 @@ const handleDelete = (category: Category) => {
 .actions {
   display: flex;
   gap: 0.6rem;
-}
-
-.empty-state {
-  padding: 1.25rem;
-  border-radius: 14px;
-  background: rgba(248, 250, 252, 0.7);
-  border: 1px dashed var(--ft-border-soft);
-  text-align: center;
-  color: var(--ft-text-muted);
 }
 </style>

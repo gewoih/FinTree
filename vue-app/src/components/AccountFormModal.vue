@@ -223,10 +223,10 @@ const handleSubmit = async () => {
             class="w-full"
             :disabled="isCurrencyLoading && !currencyOptions.length"
         />
-        <small v-if="isCurrencyLoading" class="muted">Загружаем список валют…</small>
-        <small v-else-if="currencyLoadError" class="error">{{ currencyLoadError }}</small>
-        <small v-else-if="currencySummary" class="muted">{{ currencySummary }}</small>
-        <small v-else class="muted">Выберите валюту для нового счета.</small>
+        <small v-if="isCurrencyLoading" class="helper-text ft-text ft-text--muted">Загружаем список валют…</small>
+        <small v-else-if="currencyLoadError" class="helper-text error">{{ currencyLoadError }}</small>
+        <small v-else-if="currencySummary" class="helper-text ft-text ft-text--muted">{{ currencySummary }}</small>
+        <small v-else class="helper-text ft-text ft-text--muted">Выберите валюту для нового счета.</small>
       </div>
 
       <div class="field" v-if="needsManualCurrencyId">
@@ -238,7 +238,7 @@ const handleSubmit = async () => {
             required
             class="w-full"
         />
-        <small class="muted">
+        <small class="helper-text ft-text ft-text--muted">
           Временно требуется указать GUID валюты. Его можно получить из БД или API.
         </small>
       </div>
@@ -267,21 +267,22 @@ const handleSubmit = async () => {
 .form-grid {
   display: flex;
   flex-direction: column;
-  gap: 1rem;
+  gap: clamp(0.85rem, 1vw, 1.1rem);
 }
 
 .field {
   display: flex;
   flex-direction: column;
-  gap: 0.4rem;
+  gap: 0.45rem;
 }
 
 label {
   font-weight: 600;
+  color: var(--ft-heading);
 }
 
-.muted {
-  color: var(--text-color-secondary);
+.helper-text {
+  font-size: 0.85rem;
 }
 
 .error {
@@ -292,6 +293,6 @@ label {
   display: flex;
   justify-content: flex-end;
   gap: 0.75rem;
-  margin-top: 0.5rem;
+  margin-top: 0.75rem;
 }
 </style>
