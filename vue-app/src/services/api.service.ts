@@ -3,7 +3,7 @@ import axios from 'axios';
 import type {
     AccountDto,
     TransactionCategoryDto,
-    Transaction,
+    TransactionDto,
     NewTransactionPayload,
     CreateAccountPayload,
     CreateCategoryPayload,
@@ -40,8 +40,8 @@ export const apiService = {
     },
 
     // Получение всех транзакций по счету
-    async getTransactions(accountId?: string): Promise<Transaction[]> {
-        const response = await apiClient.get<Transaction[]>('/accounts/transactions', {
+    async getTransactions(accountId?: string): Promise<TransactionDto[]> {
+        const response = await apiClient.get<TransactionDto[]>('/accounts/transactions', {
             params: accountId ? { accountId } : {},
         });
         return response.data;

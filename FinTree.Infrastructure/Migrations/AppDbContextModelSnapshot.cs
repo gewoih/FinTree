@@ -63,7 +63,7 @@ namespace FinTree.Infrastructure.Migrations
 
                     b.HasIndex("UserId");
 
-                    b.ToTable("Accounts");
+                    b.ToTable("Accounts", (string)null);
                 });
 
             modelBuilder.Entity("FinTree.Domain.Currencies.Currency", b =>
@@ -92,7 +92,7 @@ namespace FinTree.Infrastructure.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("Currencies");
+                    b.ToTable("Currencies", (string)null);
                 });
 
             modelBuilder.Entity("FinTree.Domain.Currencies.FxUsdRate", b =>
@@ -126,7 +126,7 @@ namespace FinTree.Infrastructure.Migrations
 
                     b.HasIndex("CurrencyId");
 
-                    b.ToTable("FxUsdRates");
+                    b.ToTable("FxUsdRates", (string)null);
                 });
 
             modelBuilder.Entity("FinTree.Domain.Identity.User", b =>
@@ -194,7 +194,7 @@ namespace FinTree.Infrastructure.Migrations
 
                     b.HasIndex("BaseCurrencyId");
 
-                    b.ToTable("Users");
+                    b.ToTable("Users", (string)null);
                 });
 
             modelBuilder.Entity("FinTree.Domain.Transactions.Transaction", b =>
@@ -240,7 +240,7 @@ namespace FinTree.Infrastructure.Migrations
 
                     b.HasIndex("AccountId");
 
-                    b.ToTable("Transactions");
+                    b.ToTable("Transactions", (string)null);
 
                     b.HasDiscriminator().HasValue("Transaction");
 
@@ -283,7 +283,7 @@ namespace FinTree.Infrastructure.Migrations
 
                     b.HasIndex("UserId");
 
-                    b.ToTable("TransactionCategories");
+                    b.ToTable("TransactionCategories", (string)null);
                 });
 
             modelBuilder.Entity("FinTree.Domain.Transactions.ExpenseTransaction", b =>

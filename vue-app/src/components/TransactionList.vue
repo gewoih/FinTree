@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { useFinanceStore } from '../stores/finance';
-import { computed, ref } from 'vue';
+import { computed, ref, watch, onMounted } from 'vue';
 import { PAGINATION_OPTIONS } from '../constants';
 import type { Account, Category } from '../types.ts';
 
@@ -23,21 +23,28 @@ const selectedCategory = ref<Category | null>(null);
 const selectedAccount = ref<Account | null>(null);
 const dateRange = ref<Date[] | null>(null);
 
+const transactionsLoading = computed(() => store.isTransactionsLoading);
+
 // Транзакции, обогащенные именем счета и категории
-const enrichedTransactions = computed(() => {
-  return store.transactions.map(txn => {
-    const account = store.accounts.find(a => a.id === txn.accountId);
-    const category = store.categories.find(c => c.id === txn.categoryId);
+const enrichedTransactions = computed(() =>
+  store.transactions.map(txn => {
+    const account = txn.account ?? store.accounts.find(a => a.id === txn.accountId) ?? null;
+    const category = txn.category ?? store.categories.find(c => c.id === txn.categoryId) ?? null;
+
+    const baseAmount = Number(txn.amount);
+    const signedAmount = baseAmount > 0 ? -Math.abs(baseAmount) : baseAmount;
 
     return {
       ...txn,
-      accountName: account?.name || 'Неизвестный Счет',
-      categoryName: category?.name || 'Нет Категории',
-      currency: account?.currency || 'KZT',
-      categoryColor: category?.color || '#6c757d'
+      accountName: account?.name ?? 'Неизвестный счет',
+      accountCurrency: account?.currency?.code ?? 'KZT',
+      accountSymbol: account?.currency?.symbol ?? '',
+      categoryName: category?.name ?? 'Нет категории',
+      categoryColor: category?.color ?? '#6c757d',
+      signedAmount,
     };
-  });
-});
+  })
+);
 
 // Отфильтрованные транзакции
 const filteredTransactions = computed(() => {
@@ -46,7 +53,7 @@ const filteredTransactions = computed(() => {
   // Поиск по тексту
   if (searchText.value) {
     const search = searchText.value.toLowerCase();
-    filtered = filtered.filter(txn => 
+    filtered = filtered.filter(txn =>
       txn.categoryName.toLowerCase().includes(search) ||
       txn.accountName.toLowerCase().includes(search) ||
       (txn.description && txn.description.toLowerCase().includes(search))
@@ -92,54 +99,24 @@ const clearFilters = () => {
   selectedCategory.value = null;
   selectedAccount.value = null;
   dateRange.value = null;
+  store.fetchTransactions();
 };
 
-// Статистика
-const totalExpenses = computed(() => {
-  return filteredTransactions.value
-    .filter(txn => txn.amount < 0)
-    .reduce((sum, txn) => sum + Math.abs(txn.amount), 0);
+onMounted(() => {
+  if (!store.transactions.length) {
+    store.fetchTransactions();
+  }
 });
 
-const totalIncome = computed(() => {
-  return filteredTransactions.value
-    .filter(txn => txn.amount > 0)
-    .reduce((sum, txn) => sum + txn.amount, 0);
+watch(selectedAccount, account => {
+  store.fetchTransactions(account?.id);
 });
 </script>
 
 <template>
   <div class="transaction-history">
-    <!-- Статистика -->
-    <div v-if="!store.isLoading && enrichedTransactions.length > 0" class="grid mb-4">
-      <div class="col-12 md:col-4">
-        <div class="stat-card p-3 border-round bg-green-50">
-          <div class="text-green-600 font-semibold">Доходы</div>
-          <div class="text-2xl font-bold text-green-700">
-            {{ formatCurrency(totalIncome, 'KZT') }}
-          </div>
-        </div>
-      </div>
-      <div class="col-12 md:col-4">
-        <div class="stat-card p-3 border-round bg-red-50">
-          <div class="text-red-600 font-semibold">Расходы</div>
-          <div class="text-2xl font-bold text-red-700">
-            {{ formatCurrency(totalExpenses, 'KZT') }}
-          </div>
-        </div>
-      </div>
-      <div class="col-12 md:col-4">
-        <div class="stat-card p-3 border-round bg-blue-50">
-          <div class="text-blue-600 font-semibold">Баланс</div>
-          <div class="text-2xl font-bold text-blue-700">
-            {{ formatCurrency(totalIncome - totalExpenses, 'KZT') }}
-          </div>
-        </div>
-      </div>
-    </div>
-
     <!-- Фильтры -->
-    <div v-if="!store.isLoading && enrichedTransactions.length > 0" class="filters-panel p-3 mb-4 border-round surface-100">
+    <div class="filters-panel p-3 mb-4 border-round surface-100">
       <div class="grid">
         <div class="col-12 md:col-3">
           <label class="block text-sm font-medium mb-2">Поиск</label>
@@ -195,9 +172,14 @@ const totalIncome = computed(() => {
     </div>
 
     <!-- Таблица транзакций -->
-    <div v-if="store.isLoading" class="text-center p-4">
+    <div v-if="transactionsLoading" class="text-center p-4">
       <ProgressSpinner style="width: 50px; height: 50px" strokeWidth="8" animationDuration=".5s" />
       <p class="mt-2">Загрузка данных...</p>
+    </div>
+
+    <div v-else-if="filteredTransactions.length === 0" class="empty-state">
+      <i class="pi pi-database"></i>
+      <p>Транзакции не найдены. Попробуйте изменить фильтры или добавить новый расход.</p>
     </div>
 
     <DataTable
@@ -220,12 +202,16 @@ const totalIncome = computed(() => {
         </template>
       </Column>
       
-      <Column field="amount" header="Сумма" :sortable="true" style="min-width: 120px">
+      <Column field="signedAmount" header="Сумма" :sortable="true" style="min-width: 140px">
         <template #body="slotProps">
-          <div class="text-right">
-            <span :class="slotProps.data.amount < 0 ? 'text-red-600 font-bold' : 'text-green-600 font-bold'">
-              {{ slotProps.data.amount < 0 ? '-' : '+' }}{{ formatCurrency(Math.abs(slotProps.data.amount), slotProps.data.currency) }}
+          <div class="amount-cell" :class="{ negative: slotProps.data.signedAmount < 0 }">
+            <span class="amount-value">
+              {{ slotProps.data.signedAmount < 0 ? '−' : '+' }}
+              {{ formatCurrency(Math.abs(slotProps.data.signedAmount), slotProps.data.accountCurrency) }}
             </span>
+            <small class="amount-currency">
+              {{ slotProps.data.accountSymbol || slotProps.data.accountCurrency }}
+            </small>
           </div>
         </template>
       </Column>
@@ -258,35 +244,54 @@ const totalIncome = computed(() => {
       </Column>
     </DataTable>
 
-    <!-- Пустое состояние -->
-    <div v-if="!store.isLoading && enrichedTransactions.length === 0" class="text-center p-6">
-      <i class="pi pi-inbox text-6xl text-400 mb-3"></i>
-      <h3 class="text-500 mb-2">Нет транзакций</h3>
-      <p class="text-400">Добавьте первую транзакцию, чтобы начать ведение учета</p>
-    </div>
-    
-    <div v-else-if="!store.isLoading && filteredTransactions.length === 0 && enrichedTransactions.length > 0" class="text-center p-6">
-      <i class="pi pi-search text-6xl text-400 mb-3"></i>
-      <h3 class="text-500 mb-2">Транзакции не найдены</h3>
-      <p class="text-400">Попробуйте изменить фильтры поиска</p>
-    </div>
   </div>
 </template>
 
 <style scoped>
-/* TransactionList specific styles */
-.stat-card {
-  border: 1px solid var(--surface-border);
-  transition: all 0.2s;
-}
-
-.stat-card:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-}
-
 .filters-panel {
-  background: var(--surface-50);
-  border: 1px solid var(--surface-border);
+  background: rgba(248, 250, 252, 0.72);
+  border: 1px solid var(--ft-border-soft);
+  border-radius: 18px;
+  box-shadow: 0 12px 32px rgba(15, 23, 42, 0.08);
+}
+
+.empty-state {
+  border: 1px dashed var(--surface-border);
+  border-radius: 16px;
+  padding: 2rem;
+  text-align: center;
+  color: var(--text-color-secondary);
+  display: grid;
+  gap: 0.5rem;
+  place-items: center;
+}
+
+.empty-state i {
+  font-size: 2rem;
+  color: var(--text-color-secondary);
+}
+
+.amount-cell {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 0.25rem;
+  font-weight: 600;
+  color: #16a34a;
+}
+
+.amount-cell.negative {
+  color: #dc2626;
+}
+
+.amount-value {
+  font-size: 1rem;
+}
+
+.amount-currency {
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--ft-text-muted);
 }
 </style>

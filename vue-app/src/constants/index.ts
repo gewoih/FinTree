@@ -15,15 +15,21 @@ export const NAVIGATION_ITEMS = [
     route: '/'
   },
   {
-    id: 'analytics',
-    label: 'Аналитика',
-    icon: 'pi pi-chart-line',
-    route: '/analytics'
+    id: 'accounts',
+    label: 'Счета',
+    icon: 'pi pi-wallet',
+    route: '/accounts'
+  },
+  {
+    id: 'categories',
+    label: 'Категории',
+    icon: 'pi pi-tags',
+    route: '/categories'
   },
   {
     id: 'expenses',
     label: 'Расходы',
-    icon: 'pi pi-list',
+    icon: 'pi pi-arrow-circle-down',
     route: '/expenses'
   }
 ] as const;

@@ -14,7 +14,7 @@ public sealed class AccountsService(AppDbContext context, ICurrentUser currentUs
             .AsNoTracking()
             .Include(a => a.User)
             .Where(a => a.UserId == currentUser.Id)
-            .Select(a => new AccountDto(a.Id, a.Name, a.Type, a.IsMain))
+            .Select(a => new AccountDto(a.Id, a.CurrencyId, a.Name, a.Type, a.IsMain))
             .ToListAsync(ct);
         
         return accounts;

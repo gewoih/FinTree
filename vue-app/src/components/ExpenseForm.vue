@@ -31,18 +31,8 @@ const date = ref<Date>(new Date());
 const selectedCategory = ref<Category | null>(null);
 
 // --- Вычисляемые значения ---
-const sortedCategories = computed(() => {
-  // Сортировка категорий в алфавитном порядке
-  return [...store.categories].sort((a, b) => a.name.localeCompare(b.name));
-});
-
-const mostFrequentCategory = computed(() => {
-  // Находим категорию с максимальной частотой
-  if (store.categories.length === 0) return null;
-  return store.categories.reduce((prev, current) =>
-      (prev.frequency > current.frequency) ? prev : current
-  );
-});
+const sortedCategories = computed(() => [...store.categories].sort((a, b) => a.name.localeCompare(b.name)));
+const defaultCategory = computed(() => sortedCategories.value[0] ?? null);
 
 // --- Логика флоу ---
 
@@ -50,21 +40,31 @@ const mostFrequentCategory = computed(() => {
 watch(() => props.visible, (newVal) => {
   if (newVal) {
     selectedAccount.value = store.primaryAccount || store.accounts[0] || null;
-    selectedCategory.value = mostFrequentCategory.value;
+    selectedCategory.value = defaultCategory.value;
     date.value = new Date();
     amount.value = null;
     description.value = '';
   }
 });
 
+watch(
+  () => store.accounts,
+  accounts => {
+    if (!selectedAccount.value && accounts.length) {
+      selectedAccount.value = store.primaryAccount || accounts[0] || null;
+    }
+  }
+);
+
 // 4. Валидация суммы и форматирование валюты
-const currency = computed(() => selectedAccount.value?.currency || 'KZT');
+const currencyCode = computed(() => selectedAccount.value?.currency?.code ?? 'KZT');
+const currencySymbol = computed(() => selectedAccount.value?.currency?.symbol ?? '');
 const isAmountValid = computed(() => 
   amount.value !== null && 
   amount.value >= VALIDATION_RULES.minAmount && 
   amount.value <= VALIDATION_RULES.maxAmount
 );
-const formattedAmount = computed(() => formatCurrency(Math.abs(amount.value ?? 0), currency.value));
+const formattedAmount = computed(() => formatCurrency(Math.abs(amount.value ?? 0), currencyCode.value));
 const submitDisabled = computed(() => !isAmountValid.value || !selectedCategory.value || !selectedAccount.value);
 
 // --- Отправка формы ---
@@ -112,37 +112,38 @@ const handleSubmit = async () => {
 
 onMounted(() => {
   // Инициализация популярной категории при первом монтировании
-  selectedCategory.value = mostFrequentCategory.value;
+  selectedCategory.value = defaultCategory.value;
 });
 </script>
 
 <template>
   <Dialog
       :visible="props.visible"
-      header="Быстрый расход"
       :modal="true"
-      @update:visible="val => emit('update:visible', val)"
-      :style="{ width: '560px' }"
+      :style="{ width: '620px' }"
+      class="expense-dialog"
       :closable="true"
       :dismissableMask="true"
-      class="expense-dialog"
+      @update:visible="val => emit('update:visible', val)"
   >
-    <form @submit.prevent="handleSubmit" class="expense-form">
-      <div class="form-header">
+    <form class="expense-form" @submit.prevent="handleSubmit">
+      <header class="form-hero">
         <div>
-          <p class="dialog-kicker">Запишите покупку за минуту</p>
-          <h3>Новый расход</h3>
-          <p class="helper-text">Выберите счет и категорию — остальное мы подскажем.</p>
+          <span class="form-tag">Быстрый расход</span>
+          <h3>Фиксируем операцию</h3>
+          <p>
+            Укажите счет, категорию и сумму. Мы автоматически применим валюту и сохранём операцию в ленте.
+          </p>
         </div>
-        <div class="amount-preview">
-          <span>Списываем</span>
+        <div class="form-summary">
+          <span class="summary-label">Списание</span>
           <strong>{{ formattedAmount }}</strong>
           <small>{{ selectedAccount?.name || 'Счет не выбран' }}</small>
         </div>
-      </div>
+      </header>
 
-      <div class="field-grid">
-        <div class="field-block">
+      <section class="form-fields">
+        <div class="field">
           <label for="account">Счет *</label>
           <Select
               id="account"
@@ -159,16 +160,17 @@ onMounted(() => {
                   <i class="pi pi-credit-card"></i>
                   <span>{{ slotProps.option.name }}</span>
                 </div>
-                <div class="option-balance">
-                  {{ formatCurrency(slotProps.option.balance, slotProps.option.currency) }}
-                </div>
+                <span class="option-currency">
+                  {{ slotProps.option.currency?.symbol ?? '' }}
+                  {{ slotProps.option.currency?.code ?? '—' }}
+                </span>
               </div>
             </template>
           </Select>
-          <small>Списываемые средства будут учтены сразу.</small>
+          <small>Средства будут списаны с указанного счета.</small>
         </div>
 
-        <div class="field-block">
+        <div class="field">
           <label for="category">Категория *</label>
           <Select
               id="category"
@@ -186,10 +188,10 @@ onMounted(() => {
               </div>
             </template>
           </Select>
-          <small>Часто используемая категория подсвечена автоматически.</small>
+          <small>По умолчанию используется первая категория в списке.</small>
         </div>
 
-        <div class="field-block">
+        <div class="field">
           <label for="amount">Сумма *</label>
           <div class="amount-input">
             <InputNumber
@@ -204,14 +206,14 @@ onMounted(() => {
                 required
                 :class="{ 'p-invalid': !isAmountValid }"
             />
-            <span class="currency-chip">{{ currency }}</span>
+            <span class="currency-chip">{{ currencySymbol || currencyCode }}</span>
           </div>
-          <small v-if="!isAmountValid && amount !== null" class="text-red-500">
+          <small v-if="!isAmountValid && amount !== null" class="error-text">
             Сумма должна быть от {{ VALIDATION_RULES.minAmount }} до {{ VALIDATION_RULES.maxAmount }}
           </small>
         </div>
 
-        <div class="field-block">
+        <div class="field">
           <label for="date">Дата операции</label>
           <DatePicker
               id="date"
@@ -221,21 +223,21 @@ onMounted(() => {
               required
               class="w-full"
           />
-          <small>По умолчанию — сегодняшняя дата.</small>
+          <small>По умолчанию — текущая дата.</small>
         </div>
 
-        <div class="field-block full">
+        <div class="field full">
           <label for="description">Примечание</label>
-          <InputText 
-            id="description" 
-            v-model="description" 
-            placeholder="Например: кофе с собой" 
-            class="w-full"
+          <InputText
+              id="description"
+              v-model="description"
+              placeholder="Например: кофе с собой"
+              class="w-full"
           />
         </div>
-      </div>
+      </section>
 
-      <div class="form-actions">
+      <footer class="form-actions">
         <Button
             type="button"
             label="Отмена"
@@ -250,7 +252,7 @@ onMounted(() => {
             icon="pi pi-check"
             :disabled="submitDisabled"
         />
-      </div>
+      </footer>
     </form>
   </Dialog>
 </template>
@@ -258,82 +260,116 @@ onMounted(() => {
 <style scoped>
 .expense-dialog :deep(.p-dialog-content) {
   padding: 0;
+  border-radius: 28px;
+  overflow: hidden;
+}
+
+.expense-dialog :deep(.p-dialog-header) {
+  display: none;
 }
 
 .expense-form {
-  padding: 1.5rem 1.5rem 1.75rem;
   display: flex;
   flex-direction: column;
-  gap: 1.5rem;
+  gap: 1.75rem;
+  padding: 2.1rem;
+  background: var(--ft-surface-elevated);
 }
 
-.form-header {
+.form-hero {
   display: flex;
   justify-content: space-between;
-  gap: 1rem;
+  align-items: flex-start;
+  gap: 1.5rem;
   flex-wrap: wrap;
-  border-bottom: 1px solid var(--surface-border);
-  padding-bottom: 1rem;
+  border-radius: 22px;
+  padding: 1.6rem;
+  background: linear-gradient(135deg, rgba(37, 99, 235, 0.12), rgba(59, 130, 246, 0.08));
+  box-shadow: inset 0 0 0 1px rgba(37, 99, 235, 0.12);
 }
 
-.dialog-kicker {
-  margin: 0;
-  font-size: 0.85rem;
+.form-tag {
+  display: inline-block;
+  margin-bottom: 0.4rem;
   text-transform: uppercase;
-  letter-spacing: 0.08em;
-  color: var(--text-color-secondary);
+  letter-spacing: 0.14em;
+  font-size: 0.75rem;
+  color: var(--ft-accent);
+  font-weight: 600;
 }
 
-.helper-text {
-  margin: 0.35rem 0 0;
-  color: var(--text-color-secondary);
-  font-size: 0.95rem;
+.form-hero h3 {
+  margin: 0;
+  font-size: 1.5rem;
+  color: var(--ft-heading);
 }
 
-.amount-preview {
-  background: var(--surface-100);
-  border-radius: 16px;
-  padding: 0.85rem 1.2rem;
-  min-width: 180px;
-  text-align: right;
+.form-hero p {
+  margin: 0.5rem 0 0;
+  color: var(--ft-text-muted);
+  max-width: 360px;
+}
+
+.form-summary {
+  border-radius: 18px;
+  background: linear-gradient(135deg, rgba(37, 99, 235, 0.18), rgba(59, 130, 246, 0.28));
+  color: var(--ft-heading);
+  padding: 1rem 1.3rem;
   display: flex;
   flex-direction: column;
-  gap: 0.15rem;
+  gap: 0.2rem;
+  min-width: 200px;
+  box-shadow: inset 0 0 0 1px rgba(37, 99, 235, 0.22);
 }
 
-.amount-preview strong {
-  font-size: 1.4rem;
+.summary-label {
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  font-size: 0.7rem;
+  color: var(--ft-accent);
 }
 
-.field-grid {
+.form-summary strong {
+  font-size: 1.7rem;
+  font-weight: 600;
+  color: var(--ft-heading);
+}
+
+.form-summary small {
+  color: var(--ft-text-muted);
+}
+
+.form-fields {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-  gap: 1rem 1.25rem;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 1.2rem 1.4rem;
 }
 
-.field-block {
+.field {
   display: flex;
   flex-direction: column;
-  gap: 0.4rem;
+  gap: 0.5rem;
 }
 
-.field-block.full {
+.field.full {
   grid-column: 1 / -1;
 }
 
-.field-block label {
+.field label {
   font-weight: 600;
   font-size: 0.95rem;
+  color: var(--ft-heading);
 }
 
-.field-block small {
-  color: var(--text-color-secondary);
+.field small {
+  color: var(--ft-text-muted);
+  font-size: 0.85rem;
 }
 
 .amount-input {
   display: flex;
-  gap: 0.5rem;
-  align-items: stretch;
+  gap: 0.6rem;
+  align-items: center;
 }
 
 .amount-input :deep(.p-inputnumber) {
@@ -342,29 +378,34 @@ onMounted(() => {
 
 .currency-chip {
   border-radius: 12px;
-  background: var(--surface-100);
+  background: var(--ft-accent-soft);
   padding: 0.5rem 0.9rem;
   font-weight: 600;
+  color: var(--ft-accent);
   display: inline-flex;
   align-items: center;
 }
 
 .option-line {
   display: flex;
-  align-items: center;
   justify-content: space-between;
+  align-items: center;
   gap: 0.75rem;
 }
 
 .option-name {
   display: flex;
   align-items: center;
-  gap: 0.5rem;
+  gap: 0.55rem;
 }
 
-.option-balance {
+.option-name i {
+  color: var(--ft-accent);
+}
+
+.option-currency {
   font-size: 0.85rem;
-  color: var(--text-color-secondary);
+  color: var(--ft-text-muted);
 }
 
 .category-dot {
@@ -374,25 +415,19 @@ onMounted(() => {
   display: inline-block;
 }
 
+.error-text {
+  color: #dc2626;
+}
+
 .form-actions {
   display: flex;
   justify-content: flex-end;
-  gap: 0.75rem;
-  border-top: 1px solid var(--surface-border);
-  padding-top: 1rem;
+  gap: 0.8rem;
 }
 
-@media (max-width: 600px) {
-  .expense-dialog :deep(.p-dialog-content) {
-    padding: 0;
-  }
-
-  .form-header {
-    flex-direction: column;
-  }
-
-  .amount-preview {
-    text-align: left;
+@media (max-width: 640px) {
+  .expense-form {
+    padding: 1.5rem;
   }
 
   .form-actions {

@@ -43,6 +43,17 @@ const handleSubmit = async () => {
   isSubmitting.value = true;
   let success = false;
 
+  if (props.category?.isSystem) {
+    toast.add({
+      severity: 'warn',
+      summary: 'Системная категория',
+      detail: 'Редактирование встроенных категорий недоступно.',
+      life: 2500,
+    });
+    isSubmitting.value = false;
+    return;
+  }
+
   if (props.category) {
     success = await store.updateCategory({
       id: props.category.id,

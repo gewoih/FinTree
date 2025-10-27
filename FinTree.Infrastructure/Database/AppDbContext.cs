@@ -1,4 +1,5 @@
 using FinTree.Domain.Accounts;
+using FinTree.Domain.Base;
 using FinTree.Domain.Currencies;
 using FinTree.Domain.Identity;
 using FinTree.Domain.Transactions;
@@ -18,6 +19,8 @@ public sealed class AppDbContext(DbContextOptions<AppDbContext> options) : DbCon
     
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
+        base.OnModelCreating(modelBuilder);
+        
         var assemblyWithConfigurations = GetType().Assembly;
         modelBuilder.ApplyConfigurationsFromAssembly(assemblyWithConfigurations);
     }
