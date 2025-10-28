@@ -3,7 +3,6 @@ using System.Text;
 using System.Text.Json;
 using FinTree.Api;
 using FinTree.Application.Accounts;
-using FinTree.Application.Currencies;
 using FinTree.Application.Exceptions;
 using FinTree.Application.Identity;
 using FinTree.Application.Transactions;
@@ -14,7 +13,6 @@ using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Diagnostics;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
 using Serilog;
 using Telegram.Bot;
@@ -88,7 +86,6 @@ builder.Services.AddSingleton<TelegramBotClient>(_ => new TelegramBotClient("832
 
 builder.Services.AddScoped<TransactionCategoryService>();
 builder.Services.AddScoped<TransactionsService>();
-builder.Services.AddScoped<CurrenciesService>();
 builder.Services.AddScoped<AccountsService>();
 builder.Services.AddScoped<UserService>();
 builder.Services.AddScoped<ICurrentUser, HttpCurrentUser>();
@@ -132,7 +129,6 @@ var scope = app.Services.CreateScope();
 var appDbContext = scope.ServiceProvider.GetRequiredService<AppDbContext>();
 await appDbContext.Database.MigrateAsync();
 
-await Initializer.SeedCurrencies(appDbContext);
 await Initializer.SeedTransactionCategories(appDbContext);
 await Initializer.SeedTestUser(appDbContext);
 

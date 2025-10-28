@@ -1,3 +1,5 @@
+using FinTree.Domain.ValueObjects;
+
 namespace FinTree.Domain.Transactions;
 
 public sealed class ExpenseTransaction : Transaction
@@ -6,12 +8,14 @@ public sealed class ExpenseTransaction : Transaction
 
     internal ExpenseTransaction(Guid accountId,
         Guid categoryId,
-        decimal amount,
+        Money money,
         DateTime occurredAt,
         string? description = null,
-        bool isMandatory = false) : base(accountId, categoryId, amount, occurredAt,
+        bool isMandatory = false) : base(accountId, categoryId, money, occurredAt,
         description)
     {
         IsMandatory = isMandatory;
     }
+    
+    private ExpenseTransaction() {}
 }

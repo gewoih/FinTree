@@ -1,6 +1,5 @@
-using FinTree.Domain.Currencies;
+using FinTree.Domain.ValueObjects;
 using FinTree.Infrastructure.Database;
-using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Hosting;
 using Newtonsoft.Json.Linq;
 
@@ -13,7 +12,7 @@ public class FxLoader(AppDbContext context, HttpClient httpClient) : BackgroundS
     
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
-        var currencies = await context.Currencies.ToListAsync(cancellationToken: stoppingToken);
+        var currencies = Currency.All;
         var currencyCodes = string.Join(',', currencies.Select(c => c.Code));
         var url = string.Format(_url, currencyCodes);
         

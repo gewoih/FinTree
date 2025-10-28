@@ -24,7 +24,7 @@ public sealed class TransactionsService(AppDbContext context)
         TxFilter? filter, CancellationToken ct = default)
     {
         var q = context.Transactions.AsNoTracking();
-            
+
         if (accountId.HasValue)
             q = q.Where(t => t.AccountId == accountId);
 
@@ -46,9 +46,7 @@ public sealed class TransactionsService(AppDbContext context)
         var total = await q.CountAsync(ct);
 
         var items = await q.OrderByDescending(t => t.OccurredAt)
-            .Select(t =>
-                new TransactionDto(t.Id, t.AccountId, t.Amount, t.Account.CurrencyId, t.CategoryId, t.Description,
-                    t.OccurredAt))
+            .Select(t => new TransactionDto(t.Id, t.AccountId, t.Money, t.CategoryId, t.Description, t.OccurredAt))
             .ToListAsync(ct);
 
         return (items, total);

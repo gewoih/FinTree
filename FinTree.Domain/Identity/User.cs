@@ -1,6 +1,7 @@
+using System.ComponentModel.DataAnnotations.Schema;
 using FinTree.Domain.Accounts;
-using FinTree.Domain.Currencies;
 using FinTree.Domain.Transactions;
+using FinTree.Domain.ValueObjects;
 using Microsoft.AspNetCore.Identity;
 
 namespace FinTree.Domain.Identity;
@@ -9,34 +10,33 @@ public sealed class User : IdentityUser<Guid>
 {
     private readonly List<Account> _accounts = [];
     private readonly List<TransactionCategory> _transactionCategories = [];
-    
+
     public string Name { get; private set; }
-    public Guid BaseCurrencyId { get; private set; }
-    public Currency BaseCurrency { get; private set; }
+    public string BaseCurrencyCode { get; private set; }
     public string? TelegramUserId { get; private set; }
     public Guid? MainAccountId { get; private set; }
+    [NotMapped] public Currency BaseCurrency => Currency.FromCode(BaseCurrencyCode);
     public IReadOnlyCollection<Account> Accounts => _accounts;
     public IReadOnlyCollection<TransactionCategory> TransactionCategories => _transactionCategories;
 
-    public User(string name, Guid baseCurrencyId)
+    public User(string name, string baseCurrencyCode)
     {
-        ArgumentOutOfRangeException.ThrowIfEqual(baseCurrencyId, Guid.Empty, nameof(baseCurrencyId));
         ArgumentException.ThrowIfNullOrWhiteSpace(name, nameof(name));
-        
+
         Name = name;
-        BaseCurrencyId = baseCurrencyId;
+        SetBaseCurrency(baseCurrencyCode);
     }
 
-    public void SetBaseCurrency(Guid currencyId)
+    public void SetBaseCurrency(string currencyCode)
     {
-        ArgumentOutOfRangeException.ThrowIfEqual(currencyId, Guid.Empty, nameof(currencyId));
-        
-        BaseCurrencyId = currencyId;
+        ArgumentException.ThrowIfNullOrWhiteSpace(currencyCode, nameof(currencyCode));
+
+        BaseCurrencyCode = currencyCode;
     }
-    
-    public Account AddAccount(Guid currencyId, AccountType type, string name)
+
+    public Account AddAccount(string currencyCode, AccountType type, string name)
     {
-        var account = new Account(Id, name, currencyId, type);
+        var account = new Account(Id, name, currencyCode, type);
         _accounts.Add(account);
 
         return account;
@@ -62,7 +62,7 @@ public sealed class User : IdentityUser<Guid>
     {
         TelegramUserId = null;
     }
-    
+
     public TransactionCategory AddTransactionCategory(string name, string color)
     {
         if (_transactionCategories.Any(t => string.Equals(t.Name, name, StringComparison.CurrentCultureIgnoreCase)))

@@ -30,9 +30,9 @@ public class UsersController(AccountsService accountsService, UserService userSe
     }
 
     [HttpPatch("base-currency")]
-    public async Task<IActionResult> UpdateBaseCurrency([FromBody] Guid currencyId, CancellationToken ct)
+    public async Task<IActionResult> UpdateBaseCurrency([FromBody] string currencyCode, CancellationToken ct)
     {
-        await userService.UpdateBaseCurrency(currencyId, ct);
+        await userService.UpdateBaseCurrency(currencyCode, ct);
         return Ok();
     }
 }

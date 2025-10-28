@@ -14,7 +14,7 @@ public sealed class AccountsService(AppDbContext context, ICurrentUser currentUs
             .AsNoTracking()
             .Include(a => a.User)
             .Where(a => a.UserId == currentUser.Id)
-            .Select(a => new AccountDto(a.Id, a.CurrencyId, a.Name, a.Type, a.IsMain))
+            .Select(a => new AccountDto(a.Id, a.Currency.Code, a.Name, a.Type, a.IsMain))
             .ToListAsync(ct);
         
         return accounts;
@@ -26,7 +26,7 @@ public sealed class AccountsService(AppDbContext context, ICurrentUser currentUs
         if (user is null)
             throw new NotFoundException(nameof(User), command.UserId);
         
-        var account = user.AddAccount(command.CurrencyId, command.Type, command.Name);
+        var account = user.AddAccount(command.CurrencyCode, command.Type, command.Name);
         await context.SaveChangesAsync(ct);
         
         return account.Id;

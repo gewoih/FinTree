@@ -8,13 +8,13 @@ namespace FinTree.Application.Identity;
 
 public sealed class UserService(AppDbContext context, ICurrentUser currentUser)
 {
-    public async Task UpdateBaseCurrency(Guid currencyId, CancellationToken ct)
+    public async Task UpdateBaseCurrency(string currencyCode, CancellationToken ct)
     {
         var user = await context.Users.FirstOrDefaultAsync(u => u.Id == currentUser.Id, ct);
         if (user == null)
             throw new NotFoundException(nameof(User), currentUser.Id);
         
-        user.SetBaseCurrency(currencyId);
+        user.SetBaseCurrency(currencyCode);
         await context.SaveChangesAsync(ct);
     }
     

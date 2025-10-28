@@ -1,8 +1,9 @@
 using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
 using FinTree.Domain.Base;
-using FinTree.Domain.Currencies;
 using FinTree.Domain.Identity;
 using FinTree.Domain.Transactions;
+using FinTree.Domain.ValueObjects;
 
 namespace FinTree.Domain.Accounts;
 
@@ -14,22 +15,22 @@ public sealed class Account : Entity
 
     public Guid UserId { get; private set; }
     public User User { get; private set; }
-    public Guid CurrencyId { get; private set; }
-    public Currency Currency { get; private set; }
+    [MaxLength(3)] public string CurrencyCode { get; private set; }
+    [NotMapped] public Currency Currency => Currency.FromCode(CurrencyCode);
     public AccountType Type { get; private set; }
     public bool IsArchived { get; private set; }
     public bool IsMain => User.MainAccountId == Id;
     public IReadOnlyCollection<Transaction> Transactions => _transactions.AsReadOnly();
 
-    internal Account(Guid userId, string name, Guid currencyId, AccountType type)
+    internal Account(Guid userId, string name, string currencyCode, AccountType type)
     {
         ArgumentOutOfRangeException.ThrowIfEqual(userId, Guid.Empty, nameof(userId));
-        ArgumentOutOfRangeException.ThrowIfEqual(currencyId, Guid.Empty, nameof(currencyId));
+        ArgumentException.ThrowIfNullOrWhiteSpace(currencyCode, nameof(currencyCode));
         ArgumentException.ThrowIfNullOrWhiteSpace(name, nameof(name));
 
         UserId = userId;
         Name = name;
-        CurrencyId = currencyId;
+        CurrencyCode = currencyCode;
         Type = type;
         IsArchived = false;
     }
@@ -41,7 +42,8 @@ public sealed class Account : Entity
         if (IsArchived)
             throw new InvalidOperationException("Невозможно добавить транзакцию в заархивированный счет.");
 
-        var transaction = new ExpenseTransaction(Id, categoryId, amount, occuredAt, description, isMandatory);
+        var money = new Money(CurrencyCode, amount);
+        var transaction = new ExpenseTransaction(Id, categoryId, money, occuredAt, description, isMandatory);
         _transactions.Add(transaction);
 
         return transaction;
