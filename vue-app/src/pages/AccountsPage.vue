@@ -1,5 +1,14 @@
 <script setup lang="ts">
+import { onMounted } from 'vue';
+import { useFinanceStore } from '../stores/finance';
 import AccountManager from '../components/AccountManager.vue';
+
+const store = useFinanceStore();
+
+onMounted(() => {
+  store.fetchCurrencies();
+  store.fetchAccounts();
+});
 </script>
 
 <template>

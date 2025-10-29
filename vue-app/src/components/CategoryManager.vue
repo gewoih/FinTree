@@ -17,6 +17,7 @@ const editingCategory = ref<Category | null>(null);
 const busyId = ref<string | null>(null);
 
 const categories = computed(() => store.categories);
+const areCategoriesLoading = computed(() => store.areCategoriesLoading);
 
 const openModal = (category?: Category) => {
   if (category?.isSystem) {
@@ -76,7 +77,11 @@ const handleDelete = (category: Category) => {
       <Button label="Добавить категорию" icon="pi pi-plus" size="small" @click="openModal()" />
     </header>
 
-    <div v-if="categories.length === 0" class="ft-empty">
+    <div v-if="areCategoriesLoading" class="ft-empty">
+      <p class="ft-text ft-text--muted">Загружаем категории...</p>
+    </div>
+
+    <div v-else-if="categories.length === 0" class="ft-empty">
       <p class="ft-text ft-text--muted">Категории не найдены. Создайте свою первую.</p>
     </div>
 

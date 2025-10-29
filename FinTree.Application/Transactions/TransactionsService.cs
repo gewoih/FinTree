@@ -46,7 +46,8 @@ public sealed class TransactionsService(AppDbContext context)
         var total = await q.CountAsync(ct);
 
         var items = await q.OrderByDescending(t => t.OccurredAt)
-            .Select(t => new TransactionDto(t.Id, t.AccountId, t.Money, t.CategoryId, t.Description, t.OccurredAt))
+            .Select(t =>
+                new TransactionDto(t.Id, t.AccountId, t.Money.Amount, t.CategoryId, t.Description, t.OccurredAt))
             .ToListAsync(ct);
 
         return (items, total);

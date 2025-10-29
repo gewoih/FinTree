@@ -13,7 +13,7 @@ const modalVisible = ref(false);
 const loadingAccountId = ref<string | null>(null);
 
 const accounts = computed(() => store.accounts);
-const isLoading = computed(() => store.isLoading);
+const areAccountsLoading = computed(() => store.areAccountsLoading);
 
 const openModal = () => {
   modalVisible.value = true;
@@ -43,7 +43,7 @@ const handleSetPrimary = async (accountId: string) => {
       <Button label="Новый счет" icon="pi pi-plus" size="small" @click="openModal" />
     </header>
 
-    <div v-if="isLoading" class="ft-empty">
+    <div v-if="areAccountsLoading" class="ft-empty">
       <p class="ft-text ft-text--muted">Загружаем счета...</p>
     </div>
 
@@ -63,8 +63,7 @@ const handleSetPrimary = async (accountId: string) => {
           </div>
           <div class="account-meta">
             <span class="currency-chip ft-pill">
-              {{ account.currency?.symbol ?? '' }}
-              {{ account.currency?.code ?? '—' }}
+              {{ account.currency?.symbol ?? '' }} {{ account.currency?.code ?? account.currencyCode ?? '—' }}
             </span>
           </div>
         </div>

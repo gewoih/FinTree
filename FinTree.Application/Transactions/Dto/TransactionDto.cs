@@ -1,11 +1,9 @@
-using FinTree.Domain.ValueObjects;
-
 namespace FinTree.Application.Transactions.Dto;
 
 public sealed record TransactionDto(
     Guid Id,
     Guid AccountId,
-    Money Money,
+    decimal Amount,
     Guid CategoryId,
     string? Description,
     DateTime OccuredAt);

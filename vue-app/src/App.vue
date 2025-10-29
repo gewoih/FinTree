@@ -1,20 +1,14 @@
 <script setup lang="ts">
-import { computed, onMounted } from 'vue';
+import { computed } from 'vue';
 import { RouterLink, RouterView, useRoute } from 'vue-router';
 import Toast from 'primevue/toast';
 import ConfirmDialog from 'primevue/confirmdialog';
 import Button from 'primevue/button';
 import { NAVIGATION_ITEMS } from './constants';
-import { useFinanceStore } from './stores/finance';
 
 const route = useRoute();
-const store = useFinanceStore();
 
 const activeRouteId = computed(() => (typeof route.name === 'string' ? route.name : route.name?.toString() ?? ''));
-
-onMounted(() => {
-  store.fetchInitialData();
-});
 </script>
 
 <template>

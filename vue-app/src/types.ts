@@ -13,7 +13,7 @@ export type TransactionType = typeof TRANSACTION_TYPE[keyof typeof TRANSACTION_T
 // DTOs from backend
 export interface AccountDto {
     id: string; // Guid
-    currencyId: string;
+    currencyCode: string;
     name: string;
     type: AccountType;
     isMain: boolean;
@@ -36,7 +36,6 @@ export interface Category extends TransactionCategoryDto {
 }
 
 export interface Currency {
-    id?: string;
     code: string;
     name: string;
     symbol: string;
@@ -46,7 +45,7 @@ export interface TransactionDto {
     id: string;
     accountId: string;
     amount: number;
-    currencyId: string;
+    currencyCode: string;
     categoryId: string;
     occuredAt: string; // ISO дата (как возвращает API)
     description: string | null;
@@ -68,7 +67,7 @@ export interface NewTransactionPayload {
 
 export interface CreateAccountPayload {
     userId: string;
-    currencyId: string;
+    currencyCode: string;
     type: AccountType;
     name: string;
 }
@@ -76,7 +75,6 @@ export interface CreateAccountPayload {
 export interface AccountFormPayload {
     name: string;
     type: AccountType;
-    currencyId: string;
     currencyCode: string;
 }
 

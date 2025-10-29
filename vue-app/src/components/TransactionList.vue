@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { useFinanceStore } from '../stores/finance';
-import { computed, ref, watch, onMounted } from 'vue';
+import { computed, ref, watch } from 'vue';
 import { PAGINATION_OPTIONS } from '../constants';
 import type { Account, Category } from '../types.ts';
 
@@ -37,7 +37,7 @@ const enrichedTransactions = computed(() =>
     return {
       ...txn,
       accountName: account?.name ?? 'Неизвестный счет',
-      accountCurrency: account?.currency?.code ?? 'KZT',
+      accountCurrency: account?.currency?.code ?? account?.currencyCode ?? 'KZT',
       accountSymbol: account?.currency?.symbol ?? '',
       categoryName: category?.name ?? 'Нет категории',
       categoryColor: category?.color ?? '#6c757d',
@@ -101,12 +101,6 @@ const clearFilters = () => {
   dateRange.value = null;
   store.fetchTransactions();
 };
-
-onMounted(() => {
-  if (!store.transactions.length) {
-    store.fetchTransactions();
-  }
-});
 
 watch(selectedAccount, account => {
   store.fetchTransactions(account?.id);

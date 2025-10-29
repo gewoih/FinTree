@@ -2,7 +2,6 @@
 import { ref, computed, watch, onMounted } from 'vue';
 import { useFinanceStore } from '../stores/finance.ts';
 import type { Account, Category, NewTransactionPayload } from '../types.ts';
-import { formatCurrency } from '../utils/formatters';
 import { VALIDATION_RULES, TOAST_CONFIG } from '../constants';
 
 // PrimeVue Components
@@ -57,14 +56,15 @@ watch(
 );
 
 // 4. Валидация суммы и форматирование валюты
-const currencyCode = computed(() => selectedAccount.value?.currency?.code ?? 'KZT');
+const currencyCode = computed(
+  () => selectedAccount.value?.currency?.code ?? selectedAccount.value?.currencyCode ?? 'KZT'
+);
 const currencySymbol = computed(() => selectedAccount.value?.currency?.symbol ?? '');
 const isAmountValid = computed(() => 
   amount.value !== null && 
   amount.value >= VALIDATION_RULES.minAmount && 
   amount.value <= VALIDATION_RULES.maxAmount
 );
-const formattedAmount = computed(() => formatCurrency(Math.abs(amount.value ?? 0), currencyCode.value));
 const submitDisabled = computed(() => !isAmountValid.value || !selectedCategory.value || !selectedAccount.value);
 
 // --- Отправка формы ---
@@ -146,8 +146,7 @@ onMounted(() => {
                   <span>{{ slotProps.option.name }}</span>
                 </div>
                 <span class="option-currency">
-                  {{ slotProps.option.currency?.symbol ?? '' }}
-                  {{ slotProps.option.currency?.code ?? '—' }}
+                  {{ slotProps.option.currency?.symbol ?? '' }} {{ slotProps.option.currency?.code ?? slotProps.option.currencyCode ?? '—' }}
                 </span>
               </div>
             </template>

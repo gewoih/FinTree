@@ -28,7 +28,6 @@ const toast = useToast();
 
 const name = ref('');
 const accountType = ref<AccountType>(ACCOUNT_TYPE_OPTIONS[0].value);
-const currencyId = ref('');
 const selectedCurrencyCode = ref<string | null>(CURRENCY_CONFIG.default);
 const currencies = ref<Currency[]>([]);
 const isCurrencyLoading = ref(false);
@@ -60,15 +59,9 @@ const selectedCurrency = computed(() => {
   return availableCurrencies.value.find(currency => currency.code === selectedCurrencyCode.value) ?? null;
 });
 
-const resolvedCurrencyId = computed(() => selectedCurrency.value?.id ?? currencyId.value.trim());
+const currencyCodeForSubmit = computed(() => selectedCurrency.value?.code ?? selectedCurrencyCode.value ?? '');
 
-const currencyCodeForDisplay = computed(
-  () => selectedCurrency.value?.code ?? selectedCurrencyCode.value ?? CURRENCY_CONFIG.default
-);
-
-const isFormReady = computed(() => Boolean(name.value.trim()) && Boolean(resolvedCurrencyId.value));
-
-const needsManualCurrencyId = computed(() => !selectedCurrency.value?.id);
+const isFormReady = computed(() => Boolean(name.value.trim()) && Boolean(currencyCodeForSubmit.value));
 
 const currencySummary = computed(() => {
   if (!selectedCurrency.value) return '';
@@ -83,16 +76,6 @@ watch(
     ensureCurrenciesLoaded();
   }
 );
-
-watch(selectedCurrencyCode, code => {
-  if (!code) {
-    currencyId.value = '';
-    return;
-  }
-
-  const currency = currencies.value.find(item => item.code === code);
-  currencyId.value = currency?.id ?? '';
-});
 
 function getDefaultCurrencyCode(list: Currency[]): string {
   if (!list.length) return CURRENCY_CONFIG.default;
@@ -115,10 +98,6 @@ async function ensureCurrenciesLoaded() {
         ? previousCode
         : getDefaultCurrencyCode(data);
     selectedCurrencyCode.value = nextCode;
-    const defaultCurrency = data.find(currency => currency.code === nextCode);
-    if (defaultCurrency?.id) {
-      currencyId.value = defaultCurrency.id;
-    }
   } catch (error) {
     console.error('Не удалось загрузить справочник валют', error);
     currencyLoadError.value = 'Не удалось загрузить список валют. Доступен локальный список.';
@@ -136,12 +115,11 @@ async function ensureCurrenciesLoaded() {
 function resetForm() {
   name.value = '';
   accountType.value = ACCOUNT_TYPE_OPTIONS[0].value;
-  currencyId.value = '';
   selectedCurrencyCode.value = getDefaultCurrencyCode(availableCurrencies.value);
 }
 
 const handleSubmit = async () => {
-  if (!name.value.trim() || !resolvedCurrencyId.value) {
+  if (!name.value.trim() || !currencyCodeForSubmit.value) {
     toast.add({
       severity: 'warn',
       summary: 'Поля обязательны',
@@ -155,8 +133,7 @@ const handleSubmit = async () => {
   const success = await store.createAccount({
     name: name.value.trim(),
     type: accountType.value,
-    currencyId: resolvedCurrencyId.value,
-    currencyCode: currencyCodeForDisplay.value,
+    currencyCode: currencyCodeForSubmit.value,
   });
   isSubmitting.value = false;
 
@@ -227,20 +204,6 @@ const handleSubmit = async () => {
         <small v-else-if="currencyLoadError" class="helper-text error">{{ currencyLoadError }}</small>
         <small v-else-if="currencySummary" class="helper-text ft-text ft-text--muted">{{ currencySummary }}</small>
         <small v-else class="helper-text ft-text ft-text--muted">Выберите валюту для нового счета.</small>
-      </div>
-
-      <div class="field" v-if="needsManualCurrencyId">
-        <label for="currencyId">Идентификатор валюты</label>
-        <InputText
-            id="currencyId"
-            v-model="currencyId"
-            placeholder="GUID валюты из бэкенда"
-            required
-            class="w-full"
-        />
-        <small class="helper-text ft-text ft-text--muted">
-          Временно требуется указать GUID валюты. Его можно получить из БД или API.
-        </small>
       </div>
 
       <div class="actions">

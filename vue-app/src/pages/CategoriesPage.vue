@@ -1,5 +1,13 @@
 <script setup lang="ts">
+import { onMounted } from 'vue';
+import { useFinanceStore } from '../stores/finance';
 import CategoryManager from '../components/CategoryManager.vue';
+
+const store = useFinanceStore();
+
+onMounted(() => {
+  store.fetchCategories();
+});
 </script>
 
 <template>

@@ -1,10 +1,21 @@
 <script setup lang="ts">
-import { ref } from 'vue';
+import { onMounted, ref } from 'vue';
 import Button from 'primevue/button';
 import TransactionList from '../components/TransactionList.vue';
 import ExpenseForm from '../components/ExpenseForm.vue';
+import { useFinanceStore } from '../stores/finance';
 
 const showExpenseDialog = ref(false);
+const store = useFinanceStore();
+
+onMounted(async () => {
+  await Promise.all([
+    store.fetchCurrencies(),
+    store.fetchAccounts(),
+    store.fetchCategories(),
+  ]);
+  await store.fetchTransactions();
+});
 
 </script>
 

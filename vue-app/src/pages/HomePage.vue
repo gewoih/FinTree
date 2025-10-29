@@ -1,18 +1,9 @@
 <script setup lang="ts">
-import { computed } from 'vue';
 import Button from 'primevue/button';
 import Card from 'primevue/card';
 import { useRouter } from 'vue-router';
-import { useFinanceStore } from '../stores/finance';
 
 const router = useRouter();
-const store = useFinanceStore();
-
-const stats = computed(() => ({
-  accounts: store.accounts.length,
-  categories: store.categories.length,
-  transactions: store.transactions.length,
-}));
 
 const features = [
   {
@@ -75,34 +66,6 @@ const features = [
             </ul>
           </template>
         </Card>
-      </div>
-    </section>
-
-    <section class="ft-section">
-      <div class="ft-section__head">
-        <span class="ft-kicker">Ключевые цифры</span>
-        <h2 class="ft-display ft-display--section">Пульс вашего бюджета</h2>
-        <p class="ft-text ft-text--muted">
-          Живые данные подтягиваются из API. Контролируйте динамику счетов, категорий и операций.
-        </p>
-      </div>
-
-      <div class="ft-stat-grid">
-        <article class="ft-stat">
-          <p class="ft-stat__label">Активные счета</p>
-          <p class="ft-stat__value">{{ stats.accounts }}</p>
-          <p class="ft-stat__meta">Без моков — только реальные данные из сервера.</p>
-        </article>
-        <article class="ft-stat">
-          <p class="ft-stat__label">Категории</p>
-          <p class="ft-stat__value">{{ stats.categories }}</p>
-          <p class="ft-stat__meta">Системные и пользовательские списки с гибкой настройкой.</p>
-        </article>
-        <article class="ft-stat">
-          <p class="ft-stat__label">Транзакции</p>
-          <p class="ft-stat__value">{{ stats.transactions }}</p>
-          <p class="ft-stat__meta">Все операции доступны мгновенно с фильтрами и поиском.</p>
-        </article>
       </div>
     </section>
 
@@ -176,10 +139,6 @@ const features = [
 
 .hero-card__list i {
   color: var(--ft-success);
-}
-
-.ft-stat__meta {
-  max-width: 260px;
 }
 
 .feature-card {

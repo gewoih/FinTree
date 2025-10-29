@@ -1,5 +1,5 @@
 import { defineStore } from 'pinia';
-import { computed, ref } from 'vue';
+import { computed, ref, watch } from 'vue';
 import { apiService } from '../services/api.service.ts';
 import type {
     Account,
@@ -20,26 +20,34 @@ export const useFinanceStore = defineStore('finance', () => {
     const categories = ref<Category[]>([]);
     const transactions = ref<Transaction[]>([]);
     const currencies = ref<Currency[]>([]);
-    const isLoading = ref(false);
+    const areAccountsLoading = ref(false);
+    const areCategoriesLoading = ref(false);
+    const areCurrenciesLoading = ref(false);
     const isTransactionsLoading = ref(false);
     const currentTransactionsAccountId = ref<string | null>(null);
 
-    const currencyById = computed(() => {
+    const currencyByCode = computed(() => {
         const map = new Map<string, Currency>();
         currencies.value.forEach(currency => {
-            if (currency.id) {
-                map.set(currency.id, currency);
-            }
+            map.set(currency.code, currency);
         });
         return map;
     });
 
     const primaryAccount = computed(() => accounts.value.find(a => a.isMain) ?? null);
 
+    watch(currencies, () => {
+        const map = currencyByCode.value;
+        accounts.value = accounts.value.map(account => ({
+            ...account,
+            currency: map.get(account.currencyCode) ?? null,
+        }));
+    });
+
     function mapAccount(dto: AccountDto): Account {
         return {
             ...dto,
-            currency: currencyById.value.get(dto.currencyId) ?? null,
+            currency: currencyByCode.value.get(dto.currencyCode) ?? null,
         };
     }
 
@@ -62,33 +70,51 @@ export const useFinanceStore = defineStore('finance', () => {
         };
     }
 
-    async function fetchCurrencies() {
+    async function fetchCurrencies(force = false) {
+        if (areCurrenciesLoading.value) return;
+        if (currencies.value.length && !force) return;
+
+        areCurrenciesLoading.value = true;
         try {
             const data = await apiService.getCurrencies();
             currencies.value = data;
         } catch (error) {
             console.error('Ошибка загрузки валют:', error);
             currencies.value = [];
+        } finally {
+            areCurrenciesLoading.value = false;
         }
     }
 
-    async function fetchAccounts() {
+    async function fetchAccounts(force = false) {
+        if (areAccountsLoading.value) return;
+        if (accounts.value.length && !force) return;
+
+        areAccountsLoading.value = true;
         try {
             const data = await apiService.getAccounts();
             accounts.value = data.map(mapAccount);
         } catch (error) {
             console.error('Ошибка загрузки счетов:', error);
             accounts.value = [];
+        } finally {
+            areAccountsLoading.value = false;
         }
     }
 
-    async function fetchCategories() {
+    async function fetchCategories(force = false) {
+        if (areCategoriesLoading.value) return;
+        if (categories.value.length && !force) return;
+
+        areCategoriesLoading.value = true;
         try {
             const data = await apiService.getCategories();
             categories.value = data.map(mapCategory);
         } catch (error) {
             console.error('Ошибка загрузки категорий:', error);
             categories.value = [];
+        } finally {
+            areCategoriesLoading.value = false;
         }
     }
 
@@ -103,30 +129,6 @@ export const useFinanceStore = defineStore('finance', () => {
             transactions.value = [];
         } finally {
             isTransactionsLoading.value = false;
-        }
-    }
-
-    async function fetchInitialData() {
-        isLoading.value = true;
-        try {
-            const [currenciesData, accountsData, categoriesData] = await Promise.all([
-                apiService.getCurrencies(),
-                apiService.getAccounts(),
-                apiService.getCategories(),
-            ]);
-
-            currencies.value = currenciesData;
-            accounts.value = accountsData.map(mapAccount);
-            categories.value = categoriesData.map(mapCategory);
-
-            await fetchTransactions();
-        } catch (error) {
-            console.error('Ошибка загрузки данных:', error);
-            accounts.value = [];
-            categories.value = [];
-            transactions.value = [];
-        } finally {
-            isLoading.value = false;
         }
     }
 
@@ -145,12 +147,12 @@ export const useFinanceStore = defineStore('finance', () => {
         try {
             await apiService.createAccount({
                 userId: CURRENT_USER_ID,
-                currencyId: payload.currencyId,
+                currencyCode: payload.currencyCode,
                 type: payload.type,
                 name: payload.name,
             });
 
-            await fetchAccounts();
+            await fetchAccounts(true);
             return true;
         } catch (error) {
             console.error('Не удалось создать счет', error);
@@ -164,7 +166,7 @@ export const useFinanceStore = defineStore('finance', () => {
             accounts.value = accounts.value.map(acc => ({
                 ...acc,
                 isMain: acc.id === accountId,
-                currency: currencyById.value.get(acc.currencyId) ?? null,
+                currency: currencyByCode.value.get(acc.currencyCode) ?? null,
             }));
             return true;
         } catch (error) {
@@ -181,7 +183,7 @@ export const useFinanceStore = defineStore('finance', () => {
                 color: payload.color,
             });
 
-            await fetchCategories();
+            await fetchCategories(true);
             return true;
         } catch (error) {
             console.error('Не удалось создать категорию', error);
@@ -203,7 +205,7 @@ export const useFinanceStore = defineStore('finance', () => {
                 color: payload.color,
             });
 
-            await fetchCategories();
+            await fetchCategories(true);
             return true;
         } catch (error) {
             console.error('Не удалось обновить категорию', error);
@@ -220,7 +222,7 @@ export const useFinanceStore = defineStore('finance', () => {
 
         try {
             await apiService.deleteCategory(categoryId);
-            await fetchCategories();
+            await fetchCategories(true);
             return true;
         } catch (error) {
             console.error('Не удалось удалить категорию', error);
@@ -233,12 +235,13 @@ export const useFinanceStore = defineStore('finance', () => {
         categories,
         transactions,
         currencies,
-        isLoading,
+        areAccountsLoading,
+        areCategoriesLoading,
+        areCurrenciesLoading,
         isTransactionsLoading,
         primaryAccount,
-        currencyById,
+        currencyByCode,
         currentTransactionsAccountId,
-        fetchInitialData,
         fetchTransactions,
         fetchAccounts,
         fetchCategories,
