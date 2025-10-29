@@ -12,14 +12,33 @@ public static class Initializer
         if (await context.TransactionCategories.AnyAsync())
             return;
 
-        var unknownCategory = TransactionCategory.CreateDefault("Без категории", "#000000");
-        var groceries = TransactionCategory.CreateSystem("Продукты", "#8fce00");
-        var restaurants = TransactionCategory.CreateSystem("Кафе/Рестораны", "#c90076");
-        var health = TransactionCategory.CreateSystem("Здоровье", "#cc0000");
+        var categories = new[]
+        {
+            TransactionCategory.CreateDefault("Без категории", "#000000"),
+            TransactionCategory.CreateSystem("Продукты", "#8fce00"),
+            TransactionCategory.CreateSystem("Кафе и рестораны", "#c90076"),
+            TransactionCategory.CreateSystem("Здоровье", "#cc0000"),
+            TransactionCategory.CreateSystem("Транспорт", "#0078d7"),
+            TransactionCategory.CreateSystem("Жильё и коммуналка", "#8e7cc3"),
+            TransactionCategory.CreateSystem("Развлечения", "#ff9900"),
+            TransactionCategory.CreateSystem("Покупки и одежда", "#b45f06"),
+            TransactionCategory.CreateSystem("Подписки и сервисы", "#674ea7"),
+            TransactionCategory.CreateSystem("Образование", "#3d85c6"),
+            TransactionCategory.CreateSystem("Путешествия", "#45818e"),
+            TransactionCategory.CreateSystem("Животные", "#a61c00"),
+            TransactionCategory.CreateSystem("Подарки", "#e69138"),
+            TransactionCategory.CreateSystem("Семья и дети", "#6aa84f"),
+            TransactionCategory.CreateSystem("Красота и уход", "#a64d79"),
+            TransactionCategory.CreateSystem("Налоги и сборы", "#351c75"),
+            TransactionCategory.CreateSystem("Благотворительность", "#741b47"),
+            TransactionCategory.CreateSystem("Работа и бизнес", "#134f5c"),
+            TransactionCategory.CreateSystem("Прочее", "#666666")
+        };
 
-        await context.TransactionCategories.AddRangeAsync(unknownCategory, groceries, restaurants, health);
+        await context.TransactionCategories.AddRangeAsync(categories);
         await context.SaveChangesAsync();
     }
+
 
     public static async Task SeedTestUser(AppDbContext context)
     {

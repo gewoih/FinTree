@@ -7,6 +7,7 @@ using FinTree.Application.Exceptions;
 using FinTree.Application.Identity;
 using FinTree.Application.Transactions;
 using FinTree.Domain.Identity;
+using FinTree.Infrastructure;
 using FinTree.Infrastructure.Database;
 using FinTree.Infrastructure.Telegram;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
@@ -74,6 +75,7 @@ builder.Services.AddAuthentication(options =>
 builder.Services.AddAuthorization();
 
 builder.Services.AddHttpContextAccessor();
+builder.Services.AddHttpClient();
 
 var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
 builder.Services.AddDbContext<AppDbContext>(options =>
@@ -91,6 +93,7 @@ builder.Services.AddScoped<UserService>();
 builder.Services.AddScoped<ICurrentUser, HttpCurrentUser>();
     
 builder.Services.AddHostedService<TelegramBotHostedService>();
+builder.Services.AddHostedService<FxLoader>();
 
 var app = builder.Build();
 if (app.Environment.IsDevelopment())

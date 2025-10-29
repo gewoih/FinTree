@@ -62,7 +62,7 @@ export interface NewTransactionPayload {
     amount: number;
     occurredAt: string;
     description: string | null;
-    isMandatory?: boolean;
+    isMandatory: boolean;
 }
 
 export interface CreateAccountPayload {

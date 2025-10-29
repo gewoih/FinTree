@@ -11,6 +11,7 @@ import InputNumber from 'primevue/inputnumber';
 import InputText from 'primevue/inputtext';
 import DatePicker from 'primevue/datepicker';
 import Button from 'primevue/button';
+import Checkbox from 'primevue/checkbox';
 import { useToast } from 'primevue/usetoast';
 
 const store = useFinanceStore();
@@ -27,6 +28,7 @@ const selectedAccount = ref<Account | null>(null);
 const amount = ref<number | null>(null);
 const description = ref<string>('');
 const date = ref<Date>(new Date());
+const isMandatory = ref<boolean>(false);
 const selectedCategory = ref<Category | null>(null);
 
 // --- Вычисляемые значения ---
@@ -85,6 +87,7 @@ const handleSubmit = async () => {
     amount: amount.value!, // Валидация гарантирует, что это число
     occurredAt: date.value.toISOString(),
     description: description.value ? description.value.trim() : null,
+    isMandatory: isMandatory.value,
   };
 
   const success = await store.addExpense(payload);
@@ -208,6 +211,11 @@ onMounted(() => {
               class="w-full"
           />
           <small>По умолчанию — текущая дата.</small>
+        </div>
+
+        <div class="field">
+          <label for="isMandatory">Обязательный расход</label>
+          <Checkbox id="isMandatory" v-model="isMandatory" binary />
         </div>
 
         <div class="field full">
