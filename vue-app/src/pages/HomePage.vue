@@ -2,13 +2,8 @@
 import { onMounted } from 'vue';
 import Button from 'primevue/button';
 import Card from 'primevue/card';
-import DataTable from 'primevue/datatable';
-import Column from 'primevue/column';
-import Tag from 'primevue/tag';
 import { useRouter } from 'vue-router';
 import { useFinanceStore } from '../stores/finance';
-import { formatDate, formatCurrency } from '../utils/formatters';
-import SkeletonLoader from '../components/SkeletonLoader.vue';
 
 const router = useRouter();
 const store = useFinanceStore();
@@ -39,26 +34,6 @@ onMounted(async () => {
   await store.fetchTransactions();
 });
 
-// Последние 5 транзакций
-const recentTransactions = () => {
-  return store.transactions
-    .slice()
-    .sort((a, b) => new Date(b.occurredAt).getTime() - new Date(a.occurredAt).getTime())
-    .slice(0, 5)
-    .map(txn => {
-      const baseAmount = Number(txn.amount);
-      const signedAmount = baseAmount > 0 ? -Math.abs(baseAmount) : baseAmount;
-      return {
-        ...txn,
-        accountName: txn.account?.name ?? 'Неизвестный счет',
-        accountCurrency: txn.account?.currency?.code ?? txn.account?.currencyCode ?? 'KZT',
-        accountSymbol: txn.account?.currency?.symbol ?? '',
-        categoryName: txn.category?.name ?? 'Нет категории',
-        categoryColor: txn.category?.color ?? '#6c757d',
-        signedAmount,
-      };
-    });
-};
 </script>
 
 <template>
@@ -104,95 +79,6 @@ const recentTransactions = () => {
           </template>
         </Card>
       </div>
-    </section>
-
-    <!-- Последние транзакции -->
-    <section class="ft-section">
-      <div class="ft-section__head">
-        <div>
-          <span class="ft-kicker">Ваши финансы</span>
-          <h2 class="ft-display ft-display--section">Последние операции</h2>
-        </div>
-        <Button
-          label="Все транзакции"
-          icon="pi pi-arrow-right"
-          outlined
-          @click="router.push({ name: 'expenses' })"
-        />
-      </div>
-
-      <!-- Скелетон при загрузке -->
-      <Card v-if="store.isTransactionsLoading" class="ft-card">
-        <template #content>
-          <SkeletonLoader type="table" />
-        </template>
-      </Card>
-
-      <!-- Пустое состояние -->
-      <Card v-else-if="!recentTransactions().length" class="ft-card">
-        <template #content>
-          <div class="ft-empty">
-            <i class="pi pi-inbox" />
-            <h3>Транзакций пока нет</h3>
-            <p>Начните вести учёт — добавьте первый расход</p>
-            <Button
-              label="Добавить расход"
-              icon="pi pi-plus"
-              severity="success"
-              @click="router.push({ name: 'expenses' })"
-            />
-          </div>
-        </template>
-      </Card>
-
-      <!-- Таблица транзакций -->
-      <Card v-else class="ft-card transactions-card">
-        <template #content>
-          <DataTable
-            :value="recentTransactions()"
-            stripedRows
-            responsiveLayout="scroll"
-          >
-            <Column field="occurredAt" header="Дата" style="min-width: 110px">
-              <template #body="slotProps">
-                <div class="date-cell">{{ formatDate(slotProps.data.occurredAt) }}</div>
-              </template>
-            </Column>
-
-            <Column field="categoryName" header="Категория" style="min-width: 140px">
-              <template #body="slotProps">
-                <Tag
-                  :value="slotProps.data.categoryName"
-                  :style="{ backgroundColor: slotProps.data.categoryColor, color: 'white' }"
-                />
-              </template>
-            </Column>
-
-            <Column field="signedAmount" header="Сумма" style="min-width: 130px">
-              <template #body="slotProps">
-                <div class="amount-cell" :class="{ negative: slotProps.data.signedAmount < 0 }">
-                  <span class="amount-value">
-                    {{ slotProps.data.signedAmount < 0 ? '−' : '+' }}
-                    {{ formatCurrency(Math.abs(slotProps.data.signedAmount), slotProps.data.accountCurrency) }}
-                  </span>
-                  <small class="amount-currency">
-                    {{ slotProps.data.accountSymbol || slotProps.data.accountCurrency }}
-                  </small>
-                </div>
-              </template>
-            </Column>
-
-            <Column field="accountName" header="Счет" style="min-width: 130px">
-              <template #body="slotProps">
-                <div class="account-cell">
-                  <i class="pi pi-credit-card" />
-                  <span>{{ slotProps.data.accountName }}</span>
-                </div>
-              </template>
-            </Column>
-          </DataTable>
-        </template>
-      </Card>
     </section>
 
     <!-- Возможности -->

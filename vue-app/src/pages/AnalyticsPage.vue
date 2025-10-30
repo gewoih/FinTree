@@ -314,14 +314,6 @@ onMounted(async () => {
     fetchMonthlyExpenses(),
   ]);
 });
-
-// Статистика
-const stats = computed(() => ({
-  totalBalance: 1280000,
-  monthlyExpenses: 228000,
-  monthlyIncome: 320000,
-  savingsRate: ((320000 - 228000) / 320000 * 100).toFixed(1)
-}));
 </script>
 
 <template>
@@ -334,33 +326,6 @@ const stats = computed(() => ({
         <p class="ft-text ft-text--muted">
           Визуализация доходов, расходов и баланса. Данные обновляются в реальном времени.
         </p>
-      </div>
-
-      <!-- Статистические карточки -->
-      <div class="ft-stat-grid">
-        <div class="ft-stat">
-          <p class="ft-stat__label">Общий баланс</p>
-          <p class="ft-stat__value">{{ stats.totalBalance.toLocaleString('ru-RU') }} ₸</p>
-          <p class="ft-stat__meta">На всех счетах</p>
-        </div>
-
-        <div class="ft-stat">
-          <p class="ft-stat__label">Расходы за октябрь</p>
-          <p class="ft-stat__value expense">{{ stats.monthlyExpenses.toLocaleString('ru-RU') }} ₸</p>
-          <p class="ft-stat__meta">↓ 5.8% меньше прошлого месяца</p>
-        </div>
-
-        <div class="ft-stat">
-          <p class="ft-stat__label">Доходы за октябрь</p>
-          <p class="ft-stat__value income">{{ stats.monthlyIncome.toLocaleString('ru-RU') }} ₸</p>
-          <p class="ft-stat__meta">↑ 8.5% больше прошлого месяца</p>
-        </div>
-
-        <div class="ft-stat">
-          <p class="ft-stat__label">Норма сбережений</p>
-          <p class="ft-stat__value savings">{{ stats.savingsRate }}%</p>
-          <p class="ft-stat__meta">От дохода</p>
-        </div>
       </div>
     </section>
 
