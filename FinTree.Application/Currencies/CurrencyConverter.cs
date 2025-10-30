@@ -44,7 +44,7 @@ public sealed class CurrencyConverter(AppDbContext context, IMemoryCache cache)
             return cached;
 
         var rate = await context.FxUsdRates
-            .Where(r => r.CurrencyCode == currency && r.EffectiveDate <= dateUtc)
+            .Where(r => r.CurrencyCode == currency)
             .OrderByDescending(r => r.EffectiveDate)
             .Select(r => (decimal?)r.Rate)
             .FirstOrDefaultAsync(ct);

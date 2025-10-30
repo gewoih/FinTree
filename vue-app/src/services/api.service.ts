@@ -8,7 +8,9 @@ import type {
     CreateAccountPayload,
     CreateCategoryPayload,
     UpdateCategoryPayload,
-    Currency
+    Currency,
+    MonthlyExpenseDto,
+    CurrentUserDto
 } from '../types.ts';
 import { TRANSACTION_TYPE } from '../types.ts';
 
@@ -139,5 +141,17 @@ export const apiService = {
 
     async deleteCategory(id: string): Promise<void> {
         await apiClient.delete('/TransactionCategory', { params: { id } });
+    },
+
+    // Аналитика: расходы по месяцам
+    async getMonthlyExpenses(): Promise<MonthlyExpenseDto[]> {
+        const response = await apiClient.get<MonthlyExpenseDto[]>('/analytics/monthly-expenses');
+        return response.data;
+    },
+
+    // Текущий пользователь
+    async getCurrentUser(): Promise<CurrentUserDto> {
+        const response = await apiClient.get<CurrentUserDto>('/users/me');
+        return response.data;
     },
 };

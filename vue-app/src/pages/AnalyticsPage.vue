@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, computed } from 'vue';
+import { ref, computed, onMounted } from 'vue';
 import { Line, Pie, Bar } from 'vue-chartjs';
 import {
   Chart as ChartJS,
@@ -16,6 +16,10 @@ import {
 } from 'chart.js';
 import Select from 'primevue/select';
 import Card from 'primevue/card';
+import { useFinanceStore } from '../stores/finance';
+import { apiService } from '../services/api.service.ts';
+import type { MonthlyExpenseDto } from '../types.ts';
+import { formatCurrency } from '../utils/formatters';
 
 // Регистрируем компоненты Chart.js
 ChartJS.register(
@@ -30,6 +34,58 @@ ChartJS.register(
   Legend,
   Filler
 );
+
+const financeStore = useFinanceStore();
+const monthlyExpenses = ref<MonthlyExpenseDto[]>([]);
+const baseCurrencyCode = ref<string | null>(null);
+
+const analyticsCurrencyCode = computed(() => {
+  if (baseCurrencyCode.value) {
+    return baseCurrencyCode.value;
+  }
+  return (
+    financeStore.primaryAccount?.currency?.code ??
+    financeStore.primaryAccount?.currencyCode ??
+    null
+  );
+});
+
+const monthNameFormatter = new Intl.DateTimeFormat('ru-RU', { month: 'long' });
+
+function capitalize(value: string): string {
+  if (!value) {
+    return value;
+  }
+  return value.charAt(0).toLocaleUpperCase('ru-RU') + value.slice(1);
+}
+
+function formatMonthLabel(year: number, month: number): string {
+  const date = new Date(year, month - 1, 1);
+  const monthName = capitalize(monthNameFormatter.format(date));
+  return `${monthName} ${year}`;
+}
+
+async function fetchMonthlyExpenses(): Promise<void> {
+  try {
+    const data = await apiService.getMonthlyExpenses();
+    monthlyExpenses.value = Array.isArray(data) ? data : [];
+  } catch (error) {
+    console.error('Ошибка загрузки ежемесячных расходов:', error);
+    monthlyExpenses.value = [];
+  }
+}
+
+async function fetchCurrentUser(): Promise<void> {
+  try {
+    const user = await apiService.getCurrentUser();
+    if (user?.baseCurrencyCode) {
+      baseCurrencyCode.value = user.baseCurrencyCode;
+    }
+  } catch (error) {
+    console.error('Не удалось получить данные пользователя:', error);
+    baseCurrencyCode.value = null;
+  }
+}
 
 // Моковые данные для демонстрации
 const months = ['Январь', 'Февраль', 'Март', 'Апрель', 'Май', 'Июнь', 'Июль', 'Август', 'Сентябрь', 'Октябрь'];
@@ -77,28 +133,29 @@ const categoryChartData = computed(() => ({
   ]
 }));
 
+const sortedMonthlyExpenses = computed(() =>
+  monthlyExpenses.value
+    .slice()
+    .sort((a, b) => (a.year === b.year ? a.month - b.month : a.year - b.year))
+);
+
 // Столбчатая диаграмма - расходы по месяцам
-const expensesChartData = computed(() => ({
-  labels: months,
-  datasets: [
-    {
-      label: 'Расходы',
-      data: [180000, 210000, 195000, 225000, 198000, 215000, 235000, 208000, 242000, 228000],
-      backgroundColor: 'rgba(239, 68, 68, 0.7)',
-      borderColor: 'rgba(239, 68, 68, 1)',
-      borderWidth: 2,
-      borderRadius: 8,
-    },
-    {
-      label: 'Доходы',
-      data: [250000, 280000, 270000, 260000, 290000, 300000, 285000, 310000, 295000, 320000],
-      backgroundColor: 'rgba(16, 185, 129, 0.7)',
-      borderColor: 'rgba(16, 185, 129, 1)',
-      borderWidth: 2,
-      borderRadius: 8,
-    }
-  ]
-}));
+const expensesChartData = computed(() => {
+  const points = sortedMonthlyExpenses.value;
+  return {
+    labels: points.map(item => formatMonthLabel(item.year, item.month)),
+    datasets: [
+      {
+        label: 'Расходы',
+        data: points.map(item => item.amount),
+        backgroundColor: 'rgba(239, 68, 68, 0.7)',
+        borderColor: 'rgba(239, 68, 68, 1)',
+        borderWidth: 2,
+        borderRadius: 8,
+      }
+    ]
+  };
+});
 
 // Опции для графиков
 const balanceChartOptions = {
@@ -198,51 +255,76 @@ const categoryChartOptions = {
   }
 };
 
-const expensesChartOptions = {
-  responsive: true,
-  maintainAspectRatio: true,
-  plugins: {
-    legend: {
-      display: true,
-      position: 'top' as const,
-      labels: {
-        color: '#e2e8f0',
-        font: { size: 14 },
-        padding: 20,
-        usePointStyle: true,
+const expensesChartOptions = computed(() => {
+  const currencyCode = analyticsCurrencyCode.value;
+  return {
+    responsive: true,
+    maintainAspectRatio: true,
+    plugins: {
+      legend: {
+        display: true,
+        position: 'top' as const,
+        labels: {
+          color: '#e2e8f0',
+          font: { size: 14 },
+          padding: 20,
+          usePointStyle: true,
+        }
+      },
+      tooltip: {
+        backgroundColor: 'rgba(15, 23, 42, 0.95)',
+        titleColor: '#f8fafc',
+        bodyColor: '#e2e8f0',
+        padding: 12,
+        borderColor: 'rgba(56, 189, 248, 0.3)',
+        borderWidth: 1,
+        callbacks: {
+          label(context: any) {
+            const value = context.parsed?.y ?? 0;
+            const safeValue = Math.max(value, 0);
+            if (!currencyCode) {
+              return `${context.dataset.label}: ${safeValue.toLocaleString('ru-RU')}`;
+            }
+            return `${context.dataset.label}: ${formatCurrency(safeValue, currencyCode)}`;
+          }
+        }
       }
     },
-    tooltip: {
-      backgroundColor: 'rgba(15, 23, 42, 0.95)',
-      titleColor: '#f8fafc',
-      bodyColor: '#e2e8f0',
-      padding: 12,
-      borderColor: 'rgba(56, 189, 248, 0.3)',
-      borderWidth: 1,
-      callbacks: {
-        label: function(context: any) {
-          return `${context.dataset.label}: ${context.parsed.y.toLocaleString('ru-RU')} ₸`;
+    scales: {
+      x: {
+        grid: { color: 'rgba(148, 163, 184, 0.1)' },
+        ticks: { color: '#94a3b8', font: { size: 12 } }
+      },
+      y: {
+        grid: { color: 'rgba(148, 163, 184, 0.1)' },
+        ticks: {
+          color: '#94a3b8',
+          font: { size: 12 },
+          callback(value: string | number) {
+            const numericValue = typeof value === 'number' ? value : Number(value);
+            if (!Number.isFinite(numericValue)) {
+              return typeof value === 'string' ? value : String(value);
+            }
+            if (!currencyCode) {
+              return numericValue.toLocaleString('ru-RU');
+            }
+            return formatCurrency(numericValue, currencyCode);
+          }
         }
       }
     }
-  },
-  scales: {
-    x: {
-      grid: { color: 'rgba(148, 163, 184, 0.1)' },
-      ticks: { color: '#94a3b8', font: { size: 12 } }
-    },
-    y: {
-      grid: { color: 'rgba(148, 163, 184, 0.1)' },
-      ticks: {
-        color: '#94a3b8',
-        font: { size: 12 },
-        callback: function(value: any) {
-          return value.toLocaleString('ru-RU') + ' ₸';
-        }
-      }
-    }
-  }
-};
+  };
+});
+
+onMounted(async () => {
+  await Promise.all([
+    financeStore.fetchCurrencies(),
+    financeStore.fetchAccounts(),
+    financeStore.fetchCategories(),
+    fetchCurrentUser(),
+    fetchMonthlyExpenses(),
+  ]);
+});
 
 // Статистика
 const stats = computed(() => ({

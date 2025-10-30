@@ -96,3 +96,17 @@ export interface UpdateCategoryPayload {
     name: string;
     color: string;
 }
+
+export interface MonthlyExpenseDto {
+    year: number;
+    month: number;
+    amount: number;
+}
+
+export interface CurrentUserDto {
+    id: string;
+    name: string;
+    email: string | null;
+    telegramUsername: string | null;
+    baseCurrencyCode: string;
+}
