@@ -41,10 +41,20 @@ const defaultCategory = computed(() => sortedCategories.value[0] ?? null);
 watch(() => props.visible, (newVal) => {
   if (newVal) {
     selectedAccount.value = store.primaryAccount || store.accounts[0] || null;
-    selectedCategory.value = defaultCategory.value;
+
+    // Пытаемся восстановить последнюю использованную категорию
+    const lastCategoryId = localStorage.getItem('lastUsedCategoryId');
+    if (lastCategoryId) {
+      const lastCategory = store.categories.find(c => c.id === lastCategoryId);
+      selectedCategory.value = lastCategory || defaultCategory.value;
+    } else {
+      selectedCategory.value = defaultCategory.value;
+    }
+
     date.value = new Date();
     amount.value = null;
     description.value = '';
+    isMandatory.value = false;
   }
 });
 
@@ -93,6 +103,10 @@ const handleSubmit = async () => {
 
   const success = await handleFormSubmit();
   if (success) {
+    // Сохраняем последнюю использованную категорию
+    if (selectedCategory.value) {
+      localStorage.setItem('lastUsedCategoryId', selectedCategory.value.id);
+    }
     emit('update:visible', false);
   }
 };

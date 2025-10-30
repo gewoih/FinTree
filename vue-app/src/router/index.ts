@@ -3,6 +3,7 @@ import HomePage from '../pages/HomePage.vue';
 import AccountsPage from '../pages/AccountsPage.vue';
 import CategoriesPage from '../pages/CategoriesPage.vue';
 import ExpensesPage from '../pages/ExpensesPage.vue';
+import AnalyticsPage from '../pages/AnalyticsPage.vue';
 
 export const router = createRouter({
   history: createWebHistory(),
@@ -30,6 +31,12 @@ export const router = createRouter({
       name: 'expenses',
       component: ExpensesPage,
       meta: { title: 'Расходы' },
+    },
+    {
+      path: '/analytics',
+      name: 'analytics',
+      component: AnalyticsPage,
+      meta: { title: 'Аналитика' },
     },
     {
       path: '/:pathMatch(.*)*',

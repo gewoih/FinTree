@@ -36,6 +36,25 @@
 
 .p-button:not(.p-button-link) {
   border-radius: 14px;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.p-button:not(.p-button-link):hover:not(:disabled) {
+  transform: translateY(-1px);
+  box-shadow: 0 6px 16px rgba(56, 189, 248, 0.25);
+}
+
+.p-button:not(.p-button-link):active:not(:disabled) {
+  transform: translateY(0);
+  transition-duration: 0.1s;
+}
+
+.p-button-success:hover:not(:disabled) {
+  box-shadow: 0 6px 16px rgba(16, 185, 129, 0.3);
+}
+
+.p-button-danger:hover:not(:disabled) {
+  box-shadow: 0 6px 16px rgba(239, 68, 68, 0.3);
 }
 
 .p-dialog .p-dialog-content {
@@ -92,6 +111,15 @@
   border-bottom: 1px solid rgba(148, 163, 184, 0.16);
 }
 
+.p-datatable .p-datatable-tbody > tr {
+  transition: background-color 0.2s ease, transform 0.15s ease;
+}
+
+.p-datatable .p-datatable-tbody > tr:hover {
+  background: rgba(56, 189, 248, 0.08) !important;
+  cursor: pointer;
+}
+
 .p-tag {
   border-radius: 999px !important;
   padding: 0.35rem 0.75rem !important;
@@ -99,4 +127,27 @@
 
 .p-datepicker .p-datepicker-calendar table td > span {
   border-radius: 12px !important;
+}
+
+/* Accessibility improvements */
+*:focus-visible {
+  outline: 2px solid var(--ft-accent);
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+.p-button:focus-visible {
+  outline-offset: 3px;
+}
+
+/* Card animations */
+.ft-card,
+.p-card {
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.ft-card:hover,
+.p-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 28px 58px rgba(8, 15, 34, 0.48);
 }

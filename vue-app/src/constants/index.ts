@@ -15,6 +15,12 @@ export const NAVIGATION_ITEMS = [
     route: '/'
   },
   {
+    id: 'analytics',
+    label: 'Аналитика',
+    icon: 'pi pi-chart-line',
+    route: '/analytics'
+  },
+  {
     id: 'accounts',
     label: 'Счета',
     icon: 'pi pi-wallet',

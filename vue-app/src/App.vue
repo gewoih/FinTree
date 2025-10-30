@@ -1,14 +1,16 @@
 <script setup lang="ts">
-import { computed } from 'vue';
+import { computed, ref } from 'vue';
 import { RouterLink, RouterView, useRoute } from 'vue-router';
 import Toast from 'primevue/toast';
 import ConfirmDialog from 'primevue/confirmdialog';
 import Button from 'primevue/button';
+import ExpenseForm from './components/ExpenseForm.vue';
 import { NAVIGATION_ITEMS } from './constants';
 
 const route = useRoute();
 
 const activeRouteId = computed(() => (typeof route.name === 'string' ? route.name : route.name?.toString() ?? ''));
+const isExpenseFormVisible = ref(false);
 </script>
 
 <template>
@@ -46,7 +48,7 @@ const activeRouteId = computed(() => (typeof route.name === 'string' ? route.nam
           icon="pi pi-plus"
           severity="success"
           size="small"
-          @click="$router.push({ name: 'expenses' })"
+          @click="isExpenseFormVisible = true"
         />
       </div>
     </header>
@@ -56,6 +58,9 @@ const activeRouteId = computed(() => (typeof route.name === 'string' ? route.nam
         <RouterView />
       </div>
     </main>
+
+    <!-- Global Expense Form Modal -->
+    <ExpenseForm v-model:visible="isExpenseFormVisible" />
   </div>
 </template>
 
