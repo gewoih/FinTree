@@ -2,7 +2,9 @@
 import { ref, computed, watch, onMounted } from 'vue';
 import { useFinanceStore } from '../stores/finance.ts';
 import type { Account, Category, NewTransactionPayload } from '../types.ts';
-import { VALIDATION_RULES, TOAST_CONFIG } from '../constants';
+import { VALIDATION_RULES } from '../constants';
+import { useFormModal } from '../composables/useFormModal';
+import { validators } from '../services/validation.service';
 
 // PrimeVue Components
 import Dialog from 'primevue/dialog';
@@ -12,10 +14,8 @@ import InputText from 'primevue/inputtext';
 import DatePicker from 'primevue/datepicker';
 import Button from 'primevue/button';
 import Checkbox from 'primevue/checkbox';
-import { useToast } from 'primevue/usetoast';
 
 const store = useFinanceStore();
-const toast = useToast();
 
 const props = defineProps<{
   visible: boolean;
@@ -62,54 +62,38 @@ const currencyCode = computed(
   () => selectedAccount.value?.currency?.code ?? selectedAccount.value?.currencyCode ?? 'KZT'
 );
 const currencySymbol = computed(() => selectedAccount.value?.currency?.symbol ?? '');
-const isAmountValid = computed(() => 
-  amount.value !== null && 
-  amount.value >= VALIDATION_RULES.minAmount && 
-  amount.value <= VALIDATION_RULES.maxAmount
-);
+const isAmountValid = computed(() => validators.isAmountValid(amount.value));
 const submitDisabled = computed(() => !isAmountValid.value || !selectedCategory.value || !selectedAccount.value);
 
 // --- Отправка формы ---
+const { isSubmitting, handleSubmit: handleFormSubmit, showWarning } = useFormModal(
+  async () => {
+    const payload: NewTransactionPayload = {
+      accountId: selectedAccount.value!.id,
+      categoryId: selectedCategory.value!.id,
+      amount: amount.value!,
+      occurredAt: date.value.toISOString(),
+      description: description.value ? description.value.trim() : null,
+      isMandatory: isMandatory.value,
+    };
+
+    return await store.addExpense(payload);
+  },
+  {
+    successMessage: 'Расход успешно добавлен!',
+    errorMessage: 'Не удалось сохранить расход.',
+  }
+);
+
 const handleSubmit = async () => {
   if (!isAmountValid.value || !selectedAccount.value || !selectedCategory.value) {
-    toast.add({ 
-      severity: 'error', 
-      summary: 'Ошибка', 
-      detail: 'Проверьте все обязательные поля: счет, категорию и сумму.', 
-      life: TOAST_CONFIG.duration 
-    });
+    showWarning('Проверьте все обязательные поля: счет, категорию и сумму.');
     return;
   }
 
-  const payload: NewTransactionPayload = {
-    accountId: selectedAccount.value.id,
-    categoryId: selectedCategory.value.id,
-    amount: amount.value!, // Валидация гарантирует, что это число
-    occurredAt: date.value.toISOString(),
-    description: description.value ? description.value.trim() : null,
-    isMandatory: isMandatory.value,
-  };
-
-  const success = await store.addExpense(payload);
-
+  const success = await handleFormSubmit();
   if (success) {
-    // 6. Уведомление об успехе
-    toast.add({ 
-      severity: 'success', 
-      summary: 'Успех', 
-      detail: 'Расход успешно добавлен!', 
-      life: TOAST_CONFIG.duration 
-    });
-
-    // Закрываем форму
     emit('update:visible', false);
-  } else {
-    toast.add({ 
-      severity: 'error', 
-      summary: 'Ошибка API', 
-      detail: 'Не удалось сохранить расход.', 
-      life: TOAST_CONFIG.duration 
-    });
   }
 };
 
@@ -243,6 +227,7 @@ onMounted(() => {
             label="Сохранить расход"
             icon="pi pi-check"
             :disabled="submitDisabled"
+            :loading="isSubmitting"
         />
       </footer>
     </form>

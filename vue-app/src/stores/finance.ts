@@ -3,17 +3,20 @@ import { computed, ref, watch } from 'vue';
 import { apiService } from '../services/api.service.ts';
 import type {
     Account,
-    AccountDto,
     AccountFormPayload,
     Category,
     CategoryFormPayload,
     Currency,
     NewTransactionPayload,
-    Transaction,
-    TransactionCategoryDto,
-    TransactionDto
+    Transaction
 } from '../types.ts';
 import { CURRENT_USER_ID } from '../constants';
+import {
+    mapAccounts,
+    mapCategories,
+    mapTransactions,
+    createCurrencyMap
+} from '../utils/mappers';
 
 export const useFinanceStore = defineStore('finance', () => {
     const accounts = ref<Account[]>([]);
@@ -26,50 +29,37 @@ export const useFinanceStore = defineStore('finance', () => {
     const isTransactionsLoading = ref(false);
     const currentTransactionsAccountId = ref<string | null>(null);
 
-    const currencyByCode = computed(() => {
-        const map = new Map<string, Currency>();
-        currencies.value.forEach(currency => {
-            map.set(currency.code, currency);
-        });
-        return map;
-    });
+    /**
+     * Computed map of currencies indexed by code for quick lookups
+     */
+    const currencyByCode = computed(() => createCurrencyMap(currencies.value));
 
+    /**
+     * Computed primary/main account for the user
+     */
     const primaryAccount = computed(() => accounts.value.find(a => a.isMain) ?? null);
 
+    /**
+     * Watch for currency updates and re-enrich accounts with currency data
+     */
     watch(currencies, () => {
         const map = currencyByCode.value;
-        accounts.value = accounts.value.map(account => ({
-            ...account,
-            currency: map.get(account.currencyCode) ?? null,
-        }));
+        accounts.value = mapAccounts(
+            accounts.value.map(acc => ({
+                id: acc.id,
+                currencyCode: acc.currencyCode,
+                name: acc.name,
+                type: acc.type,
+                isMain: acc.isMain
+            })),
+            map
+        );
     });
 
-    function mapAccount(dto: AccountDto): Account {
-        return {
-            ...dto,
-            currency: currencyByCode.value.get(dto.currencyCode) ?? null,
-        };
-    }
-
-    function mapCategory(dto: TransactionCategoryDto): Category {
-        return {
-            ...dto,
-        };
-    }
-
-    function mapTransaction(dto: TransactionDto): Transaction {
-        const account = accounts.value.find(acc => acc.id === dto.accountId) ?? null;
-        const category = categories.value.find(cat => cat.id === dto.categoryId) ?? null;
-
-        return {
-            ...dto,
-            amount: Number(dto.amount),
-            description: dto.description ?? null,
-            account: account ?? undefined,
-            category,
-        };
-    }
-
+    /**
+     * Fetches available currencies from the API
+     * @param force - Force refresh even if data exists
+     */
     async function fetchCurrencies(force = false) {
         if (areCurrenciesLoading.value) return;
         if (currencies.value.length && !force) return;
@@ -86,6 +76,10 @@ export const useFinanceStore = defineStore('finance', () => {
         }
     }
 
+    /**
+     * Fetches user accounts from the API
+     * @param force - Force refresh even if data exists
+     */
     async function fetchAccounts(force = false) {
         if (areAccountsLoading.value) return;
         if (accounts.value.length && !force) return;
@@ -93,7 +87,7 @@ export const useFinanceStore = defineStore('finance', () => {
         areAccountsLoading.value = true;
         try {
             const data = await apiService.getAccounts();
-            accounts.value = data.map(mapAccount);
+            accounts.value = mapAccounts(data, currencyByCode.value);
         } catch (error) {
             console.error('Ошибка загрузки счетов:', error);
             accounts.value = [];
@@ -102,6 +96,10 @@ export const useFinanceStore = defineStore('finance', () => {
         }
     }
 
+    /**
+     * Fetches transaction categories from the API
+     * @param force - Force refresh even if data exists
+     */
     async function fetchCategories(force = false) {
         if (areCategoriesLoading.value) return;
         if (categories.value.length && !force) return;
@@ -109,7 +107,7 @@ export const useFinanceStore = defineStore('finance', () => {
         areCategoriesLoading.value = true;
         try {
             const data = await apiService.getCategories();
-            categories.value = data.map(mapCategory);
+            categories.value = mapCategories(data);
         } catch (error) {
             console.error('Ошибка загрузки категорий:', error);
             categories.value = [];
@@ -118,12 +116,16 @@ export const useFinanceStore = defineStore('finance', () => {
         }
     }
 
+    /**
+     * Fetches transactions, optionally filtered by account
+     * @param accountId - Optional account ID to filter transactions
+     */
     async function fetchTransactions(accountId?: string) {
         isTransactionsLoading.value = true;
         currentTransactionsAccountId.value = accountId ?? null;
         try {
             const data = await apiService.getTransactions(accountId);
-            transactions.value = data.map(mapTransaction);
+            transactions.value = mapTransactions(data, accounts.value, categories.value);
         } catch (error) {
             console.error('Ошибка загрузки транзакций:', error);
             transactions.value = [];
@@ -132,6 +134,11 @@ export const useFinanceStore = defineStore('finance', () => {
         }
     }
 
+    /**
+     * Creates a new expense transaction
+     * @param payload - Transaction data
+     * @returns Success status
+     */
     async function addExpense(payload: NewTransactionPayload) {
         try {
             await apiService.createExpense(payload);
@@ -143,6 +150,11 @@ export const useFinanceStore = defineStore('finance', () => {
         }
     }
 
+    /**
+     * Creates a new account
+     * @param payload - Account data
+     * @returns Success status
+     */
     async function createAccount(payload: AccountFormPayload) {
         try {
             await apiService.createAccount({
@@ -160,6 +172,11 @@ export const useFinanceStore = defineStore('finance', () => {
         }
     }
 
+    /**
+     * Sets an account as the primary/main account
+     * @param accountId - ID of account to set as primary
+     * @returns Success status
+     */
     async function setPrimaryAccount(accountId: string) {
         try {
             await apiService.setPrimaryAccount(accountId);
@@ -175,6 +192,11 @@ export const useFinanceStore = defineStore('finance', () => {
         }
     }
 
+    /**
+     * Creates a new transaction category
+     * @param payload - Category data
+     * @returns Success status
+     */
     async function createCategory(payload: CategoryFormPayload) {
         try {
             await apiService.createCategory({
@@ -191,6 +213,12 @@ export const useFinanceStore = defineStore('finance', () => {
         }
     }
 
+    /**
+     * Updates an existing category
+     * System categories cannot be updated
+     * @param payload - Updated category data including ID
+     * @returns Success status
+     */
     async function updateCategory(payload: CategoryFormPayload & { id: string }) {
         const existing = categories.value.find(cat => cat.id === payload.id);
         if (existing?.isSystem) {
@@ -213,6 +241,12 @@ export const useFinanceStore = defineStore('finance', () => {
         }
     }
 
+    /**
+     * Deletes a category
+     * System categories cannot be deleted
+     * @param categoryId - ID of category to delete
+     * @returns Success status
+     */
     async function deleteCategory(categoryId: string) {
         const existing = categories.value.find(cat => cat.id === categoryId);
         if (existing?.isSystem) {

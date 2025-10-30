@@ -47,7 +47,7 @@ export interface TransactionDto {
     amount: number;
     currencyCode: string;
     categoryId: string;
-    occuredAt: string; // ISO дата (как возвращает API)
+    occurredAt: string; // ISO дата (как возвращает API)
     description: string | null;
 }
 

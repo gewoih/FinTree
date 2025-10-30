@@ -34,11 +34,6 @@ export const NAVIGATION_ITEMS = [
   }
 ] as const;
 
-export const CURRENCY_CONFIG = {
-  default: 'KZT',
-  supported: ['KZT', 'USD', 'EUR', 'RUB'] as const
-} as const;
-
 export const DATE_FORMATS = {
   display: 'dd.mm.yy',
   api: 'yyyy-mm-dd',

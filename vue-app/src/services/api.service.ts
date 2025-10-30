@@ -1,5 +1,5 @@
 // src/services/api.service.ts
-import axios from 'axios';
+import axios, { type AxiosError } from 'axios';
 import type {
     AccountDto,
     TransactionCategoryDto,
@@ -12,13 +12,66 @@ import type {
 } from '../types.ts';
 import { TRANSACTION_TYPE } from '../types.ts';
 
-// Используем базовый URL /api, который будет проксирован через Vite на https://localhost:5001
+/**
+ * Axios client instance configured for the FinTree API
+ * Base URL is proxied through Vite to https://localhost:5001
+ */
 const apiClient = axios.create({
     baseURL: '/api',
     headers: {
         'Content-Type': 'application/json',
     },
 });
+
+/**
+ * Response interceptor for centralized error handling
+ */
+apiClient.interceptors.response.use(
+    response => response,
+    (error: AxiosError) => {
+        // Log error details for debugging
+        console.error('API Error:', {
+            message: error.message,
+            status: error.response?.status,
+            data: error.response?.data,
+            url: error.config?.url
+        });
+
+        // Enhance error object with user-friendly message
+        const enhancedError = {
+            ...error,
+            userMessage: getUserFriendlyErrorMessage(error)
+        };
+
+        return Promise.reject(enhancedError);
+    }
+);
+
+/**
+ * Converts technical API errors into user-friendly messages
+ */
+function getUserFriendlyErrorMessage(error: AxiosError): string {
+    if (!error.response) {
+        return 'Не удалось подключиться к серверу. Проверьте интернет-соединение.';
+    }
+
+    switch (error.response.status) {
+        case 400:
+            return 'Некорректные данные. Проверьте введенную информацию.';
+        case 401:
+            return 'Требуется авторизация.';
+        case 403:
+            return 'Доступ запрещен.';
+        case 404:
+            return 'Ресурс не найден.';
+        case 500:
+            return 'Ошибка сервера. Попробуйте позже.';
+        case 503:
+            return 'Сервис временно недоступен.';
+        default:
+            return 'Произошла ошибка при выполнении запроса.';
+    }
+}
 
 export const apiService = {
     // Получение списка валют

@@ -1,35 +1,29 @@
 <script setup lang="ts">
 import { useFinanceStore } from '../stores/finance';
-import { computed, ref, watch } from 'vue';
+import { computed, watch } from 'vue';
 import { PAGINATION_OPTIONS } from '../constants';
-import type { Account, Category } from '../types.ts';
+import { useTransactionFilters } from '../composables/useTransactionFilters';
 
-// PrimeVue Components
+// Components
+import TransactionFilters from './TransactionFilters.vue';
 import DataTable from 'primevue/datatable';
 import Column from 'primevue/column';
 import Tag from 'primevue/tag';
 import ProgressSpinner from 'primevue/progressspinner';
-import InputText from 'primevue/inputtext';
-import Select from 'primevue/select';
-import DatePicker from 'primevue/datepicker';
-import Button from 'primevue/button';
 import { formatDate, formatCurrency } from '../utils/formatters';
 
 const store = useFinanceStore();
 
-// Фильтры
-const searchText = ref('');
-const selectedCategory = ref<Category | null>(null);
-const selectedAccount = ref<Account | null>(null);
-const dateRange = ref<Date[] | null>(null);
-
 const transactionsLoading = computed(() => store.isTransactionsLoading);
 
-// Транзакции, обогащенные именем счета и категории
+/**
+ * Enriched transactions with computed display values
+ * Note: Store already provides enriched data with account and category objects
+ */
 const enrichedTransactions = computed(() =>
   store.transactions.map(txn => {
-    const account = txn.account ?? store.accounts.find(a => a.id === txn.accountId) ?? null;
-    const category = txn.category ?? store.categories.find(c => c.id === txn.categoryId) ?? null;
+    const account = txn.account;
+    const category = txn.category;
 
     const baseAmount = Number(txn.amount);
     const signedAmount = baseAmount > 0 ? -Math.abs(baseAmount) : baseAmount;
@@ -46,62 +40,23 @@ const enrichedTransactions = computed(() =>
   })
 );
 
-// Отфильтрованные транзакции
-const filteredTransactions = computed(() => {
-  let filtered = enrichedTransactions.value;
+// Use the transaction filters composable
+const {
+  searchText,
+  selectedCategory,
+  selectedAccount,
+  dateRange,
+  filteredTransactions,
+  clearFilters: clearFiltersComposable
+} = useTransactionFilters(() => enrichedTransactions.value);
 
-  // Поиск по тексту
-  if (searchText.value) {
-    const search = searchText.value.toLowerCase();
-    filtered = filtered.filter(txn =>
-      txn.categoryName.toLowerCase().includes(search) ||
-      txn.accountName.toLowerCase().includes(search) ||
-      (txn.description && txn.description.toLowerCase().includes(search))
-    );
-  }
-
-  // Фильтр по категории
-  if (selectedCategory.value) {
-    filtered = filtered.filter(txn => txn.categoryId === selectedCategory.value!.id);
-  }
-
-  // Фильтр по счету
-  if (selectedAccount.value) {
-    filtered = filtered.filter(txn => txn.accountId === selectedAccount.value!.id);
-  }
-
-  // Фильтр по дате
-  if (dateRange.value && dateRange.value.length === 2) {
-    const [startDate, endDate] = dateRange.value as [Date, Date];
-    filtered = filtered.filter(txn => {
-      const txnDate = new Date(txn.occuredAt);
-      return txnDate >= startDate && txnDate <= endDate;
-    });
-  }
-
-  return filtered;
-});
-
-// Опции для фильтров
-const categoryOptions = computed(() => [
-  { label: 'Все категории', value: null },
-  ...store.categories.map(cat => ({ label: cat.name, value: cat }))
-]);
-
-const accountOptions = computed(() => [
-  { label: 'Все счета', value: null },
-  ...store.accounts.map(acc => ({ label: acc.name, value: acc }))
-]);
-
-// Сброс фильтров
+// Clear filters and refetch all transactions
 const clearFilters = () => {
-  searchText.value = '';
-  selectedCategory.value = null;
-  selectedAccount.value = null;
-  dateRange.value = null;
+  clearFiltersComposable();
   store.fetchTransactions();
 };
 
+// Watch for account selection changes and refetch transactions
 watch(selectedAccount, account => {
   store.fetchTransactions(account?.id);
 });
@@ -110,61 +65,15 @@ watch(selectedAccount, account => {
 <template>
   <div class="transaction-history">
     <!-- Фильтры -->
-    <div class="filters-panel ft-card ft-card--muted">
-      <div class="filters-grid">
-        <div class="filter-field filter-field--wide">
-          <label>Поиск</label>
-          <InputText
-            v-model="searchText"
-            placeholder="Поиск по категории, счету или примечанию..."
-            class="w-full"
-          />
-        </div>
-        <div class="filter-field">
-          <label>Категория</label>
-          <Select
-            v-model="selectedCategory"
-            :options="categoryOptions"
-            option-label="label"
-            option-value="value"
-            placeholder="Все категории"
-            class="w-full"
-          />
-        </div>
-        <div class="filter-field">
-          <label>Счет</label>
-          <Select
-            v-model="selectedAccount"
-            :options="accountOptions"
-            option-label="label"
-            option-value="value"
-            placeholder="Все счета"
-            class="w-full"
-          />
-        </div>
-        <div class="filter-field">
-          <label>Период</label>
-          <DatePicker
-            v-model="dateRange"
-            selectionMode="range"
-            :manualInput="false"
-            placeholder="Выберите период"
-            class="w-full"
-          />
-        </div>
-        <div class="filter-field filter-field--compact">
-          <label class="sr-only">Сбросить фильтры</label>
-          <Button
-            label="Сбросить"
-            icon="pi pi-refresh"
-            severity="secondary"
-            outlined
-            @click="clearFilters"
-            class="w-full"
-          />
-        </div>
-      </div>
-    </div>
+    <TransactionFilters
+      v-model:search-text="searchText"
+      v-model:selected-category="selectedCategory"
+      v-model:selected-account="selectedAccount"
+      v-model:date-range="dateRange"
+      :categories="store.categories"
+      :accounts="store.accounts"
+      @clear-filters="clearFilters"
+    />
 
     <!-- Таблица транзакций -->
     <div v-if="transactionsLoading" class="loading-state">
@@ -191,9 +100,9 @@ watch(selectedAccount, account => {
         :globalFilterFields="['categoryName', 'accountName', 'description']"
         responsiveLayout="scroll"
     >
-      <Column field="occuredAt" header="Дата" :sortable="true" style="min-width: 110px">
+      <Column field="occurredAt" header="Дата" :sortable="true" style="min-width: 110px">
         <template #body="slotProps">
-          <div class="date-cell">{{ formatDate(slotProps.data.occuredAt) }}</div>
+          <div class="date-cell">{{ formatDate(slotProps.data.occurredAt) }}</div>
         </template>
       </Column>
 
@@ -247,36 +156,6 @@ watch(selectedAccount, account => {
   display: flex;
   flex-direction: column;
   gap: clamp(1.5rem, 2vw, 2rem);
-}
-
-.filters-panel {
-  gap: clamp(1rem, 1.5vw, 1.35rem);
-}
-
-.filters-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
-  gap: clamp(0.85rem, 1.2vw, 1.3rem);
-}
-
-.filter-field {
-  display: flex;
-  flex-direction: column;
-  gap: 0.5rem;
-}
-
-.filter-field label {
-  font-size: 0.85rem;
-  font-weight: 600;
-  color: var(--ft-text-muted);
-}
-
-.filter-field--wide {
-  grid-column: span 2;
-}
-
-.filter-field--compact :deep(.p-button) {
-  height: 100%;
 }
 
 .loading-state {
@@ -338,11 +217,5 @@ watch(selectedAccount, account => {
 .description-empty {
   color: var(--ft-text-muted);
   font-style: italic;
-}
-
-@media (max-width: 768px) {
-  .filter-field--wide {
-    grid-column: span 1;
-  }
 }
 </style>
