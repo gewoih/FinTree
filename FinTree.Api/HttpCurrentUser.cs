@@ -1,5 +1,5 @@
 using System.Security.Claims;
-using FinTree.Application.Identity;
+using FinTree.Application.Users;
 
 namespace FinTree.Api;
 

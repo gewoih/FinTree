@@ -4,10 +4,21 @@ using FinTree.Domain.Identity;
 using FinTree.Infrastructure.Database;
 using Microsoft.EntityFrameworkCore;
 
-namespace FinTree.Application.Identity;
+namespace FinTree.Application.Users;
 
 public sealed class UserService(AppDbContext context, ICurrentUser currentUser)
 {
+    public async Task<MeDto> GetCurrentUserDataAsync(CancellationToken ct)
+    {
+        var currentUserId = currentUser.Id;
+        var userData = await context.Users
+            .Where(u => u.Id == currentUserId)
+            .Select(u => new MeDto(u.Id, u.Name, u.Email, u.TelegramUserId, u.BaseCurrencyCode))
+            .SingleOrDefaultAsync(cancellationToken: ct);
+
+        return userData;
+    }
+    
     public async Task UpdateBaseCurrency(string currencyCode, CancellationToken ct)
     {
         var user = await context.Users.FirstOrDefaultAsync(u => u.Id == currentUser.Id, ct);

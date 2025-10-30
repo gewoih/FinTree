@@ -1,5 +1,5 @@
 using FinTree.Application.Accounts;
-using FinTree.Application.Identity;
+using FinTree.Application.Users;
 using Microsoft.AspNetCore.Mvc;
 
 namespace FinTree.Api.Controllers;
@@ -8,6 +8,13 @@ namespace FinTree.Api.Controllers;
 [ApiController]
 public class UsersController(AccountsService accountsService, UserService userService) : ControllerBase
 {
+    [HttpGet("me")]
+    public async Task<IActionResult> GetMeAsync(CancellationToken ct)
+    {
+        var userData = await userService.GetCurrentUserDataAsync(ct);
+        return Ok(userData);
+    }
+    
     [HttpGet("accounts")]
     public async Task<IActionResult> Get(CancellationToken ct)
     {

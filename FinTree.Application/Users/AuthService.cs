@@ -1,4 +1,4 @@
-namespace FinTree.Application.Identity;
+namespace FinTree.Application.Users;
 
 public sealed class AuthService
 {

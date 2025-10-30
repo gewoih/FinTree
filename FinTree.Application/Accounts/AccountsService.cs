@@ -1,5 +1,5 @@
 using FinTree.Application.Exceptions;
-using FinTree.Application.Identity;
+using FinTree.Application.Users;
 using FinTree.Domain.Identity;
 using FinTree.Infrastructure.Database;
 using Microsoft.EntityFrameworkCore;

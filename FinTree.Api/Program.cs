@@ -3,9 +3,11 @@ using System.Text;
 using System.Text.Json;
 using FinTree.Api;
 using FinTree.Application.Accounts;
+using FinTree.Application.Analytics;
+using FinTree.Application.Currencies;
 using FinTree.Application.Exceptions;
-using FinTree.Application.Identity;
 using FinTree.Application.Transactions;
+using FinTree.Application.Users;
 using FinTree.Domain.Identity;
 using FinTree.Infrastructure;
 using FinTree.Infrastructure.Database;
@@ -13,6 +15,7 @@ using FinTree.Infrastructure.Telegram;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Diagnostics;
 using Microsoft.AspNetCore.Identity;
+using Microsoft.CodeAnalysis.Diagnostics;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Serilog;
@@ -76,6 +79,7 @@ builder.Services.AddAuthorization();
 
 builder.Services.AddHttpContextAccessor();
 builder.Services.AddHttpClient();
+builder.Services.AddMemoryCache();
 
 var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
 builder.Services.AddDbContext<AppDbContext>(options =>
@@ -91,6 +95,8 @@ builder.Services.AddScoped<TransactionsService>();
 builder.Services.AddScoped<AccountsService>();
 builder.Services.AddScoped<UserService>();
 builder.Services.AddScoped<ICurrentUser, HttpCurrentUser>();
+builder.Services.AddScoped<AnalyticsService>();
+builder.Services.AddScoped<CurrencyConverter>();
     
 builder.Services.AddHostedService<TelegramBotHostedService>();
 builder.Services.AddHostedService<FxLoader>();
