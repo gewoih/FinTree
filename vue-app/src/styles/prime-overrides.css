@@ -18,6 +18,26 @@
   background-color: var(--ft-surface-elevated) !important;
   color: var(--ft-heading) !important;
   border-color: var(--ft-border-soft) !important;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease, background-color 0.2s ease !important;
+}
+
+.p-inputtext:hover:not(:disabled),
+.p-select:hover:not(:disabled),
+.p-dropdown:hover:not(:disabled),
+.p-calendar:hover:not(:disabled),
+.p-inputnumber:hover:not(:disabled),
+.p-inputtextarea:hover:not(:disabled) {
+  border-color: rgba(148, 163, 184, 0.35) !important;
+}
+
+.p-inputtext:focus,
+.p-select:focus-within,
+.p-dropdown:focus-within,
+.p-calendar:focus-within,
+.p-inputnumber:focus-within,
+.p-inputtextarea:focus {
+  border-color: var(--ft-accent) !important;
+  box-shadow: 0 0 0 3px rgba(56, 189, 248, 0.12) !important;
 }
 
 .p-inputtext::placeholder,
@@ -112,12 +132,17 @@
 }
 
 .p-datatable .p-datatable-tbody > tr {
-  transition: background-color 0.2s ease, transform 0.15s ease;
+  transition: background-color 0.2s cubic-bezier(0.4, 0, 0.2, 1), transform 0.15s ease;
 }
 
 .p-datatable .p-datatable-tbody > tr:hover {
-  background: rgba(56, 189, 248, 0.08) !important;
+  background: rgba(56, 189, 248, 0.10) !important;
   cursor: pointer;
+}
+
+.p-datatable .p-datatable-tbody > tr:active {
+  background: rgba(56, 189, 248, 0.15) !important;
+  transition-duration: 0.05s;
 }
 
 .p-tag {

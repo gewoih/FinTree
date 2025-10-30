@@ -72,6 +72,7 @@
   letter-spacing: 0.16em;
   font-weight: 600;
   color: var(--ft-accent);
+  transition: color 0.2s ease;
 }
 
 .ft-kicker::before {
@@ -80,6 +81,12 @@
   height: 2px;
   background: currentColor;
   border-radius: 999px;
+  transition: width 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.ft-section:hover .ft-kicker::before,
+.ft-hero:hover .ft-kicker::before {
+  width: 32px;
 }
 
 .ft-display {
@@ -114,9 +121,18 @@
   color: var(--ft-accent);
   font-weight: 600;
   padding: 0.35rem 0.75rem;
+  font-size: 0.875rem;
   display: inline-flex;
   align-items: center;
   gap: var(--ft-space-2xs);
+  border: 1px solid rgba(56, 189, 248, 0.15);
+  transition: background 0.2s ease, border-color 0.2s ease, transform 0.15s ease;
+}
+
+.ft-pill:hover {
+  background: rgba(56, 189, 248, 0.28);
+  border-color: rgba(56, 189, 248, 0.3);
+  transform: translateY(-1px);
 }
 
 .ft-hero {
@@ -153,10 +169,35 @@
   border: 1px solid var(--ft-border-soft);
   border-radius: var(--ft-radius-lg);
   box-shadow: var(--ft-shadow-soft);
-  padding: 1.6rem;
+  padding: clamp(1.4rem, 2vw, 1.6rem);
   display: flex;
   flex-direction: column;
   gap: var(--ft-space-xs);
+  position: relative;
+  overflow: hidden;
+  transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
+}
+
+.ft-stat:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 22px 48px rgba(8, 15, 34, 0.5);
+  border-color: rgba(148, 163, 184, 0.28);
+}
+
+.ft-stat::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 3px;
+  background: linear-gradient(90deg, var(--ft-accent), rgba(56, 189, 248, 0.4));
+  opacity: 0;
+  transition: opacity 0.2s ease;
+}
+
+.ft-stat:hover::before {
+  opacity: 1;
 }
 
 .ft-stat__label {
@@ -192,18 +233,42 @@
 .ft-empty {
   border-radius: var(--ft-radius-md);
   border: 1px dashed rgba(148, 163, 184, 0.2);
-  padding: 2rem;
+  padding: clamp(2rem, 3vw, 3rem);
   text-align: center;
   color: var(--ft-text-muted);
   display: grid;
-  gap: var(--ft-space-xs);
+  gap: var(--ft-space-md);
   place-items: center;
+  transition: border-color 0.2s ease;
+}
+
+.ft-empty:hover {
+  border-color: rgba(148, 163, 184, 0.3);
 }
 
 .ft-empty i {
-  font-size: 2rem;
+  font-size: clamp(2rem, 3vw, 2.5rem);
   color: var(--ft-accent);
   opacity: 0.7;
+  transition: transform 0.2s ease, opacity 0.2s ease;
+}
+
+.ft-empty:hover i {
+  transform: scale(1.05);
+  opacity: 0.9;
+}
+
+.ft-empty h3 {
+  margin: 0;
+  font-size: clamp(1.1rem, 1.5vw, 1.25rem);
+  font-weight: 600;
+  color: var(--ft-heading);
+}
+
+.ft-empty p {
+  margin: 0;
+  font-size: 0.95rem;
+  max-width: 32ch;
 }
 
 @media (max-width: 640px) {

@@ -360,17 +360,4 @@ const recentTransactions = () => {
 .account-cell i {
   color: var(--ft-text-muted);
 }
-
-.ft-empty {
-  padding: 3rem 1rem;
-}
-
-.ft-empty h3 {
-  margin: 0.5rem 0;
-  color: var(--ft-heading);
-}
-
-.ft-empty p {
-  margin: 0 0 1.5rem;
-}
 </style>
