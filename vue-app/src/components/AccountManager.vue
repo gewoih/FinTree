@@ -106,15 +106,21 @@ const handleSetPrimary = async (accountId: string) => {
 }
 
 .account-item {
-  border: 1px solid var(--ft-border-soft);
-  border-radius: var(--ft-radius-lg);
-  padding: clamp(0.95rem, 1.2vw, 1.2rem) clamp(1.1rem, 1.6vw, 1.4rem);
+  border-bottom: 1px solid var(--ft-border-soft);
+  padding: clamp(1rem, 1.4vw, 1.25rem) 0;
   display: flex;
   justify-content: space-between;
   align-items: center;
   gap: clamp(0.75rem, 1vw, 1rem);
-  background: rgba(13, 22, 43, 0.8);
-  box-shadow: 0 18px 40px rgba(8, 15, 34, 0.4);
+  transition: background-color 0.2s ease;
+}
+
+.account-item:first-child {
+  border-top: 1px solid var(--ft-border-soft);
+}
+
+.account-item:hover {
+  background: rgba(56, 189, 248, 0.04);
 }
 
 .account-info {

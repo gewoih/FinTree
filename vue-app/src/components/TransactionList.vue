@@ -36,6 +36,7 @@ const enrichedTransactions = computed(() =>
       categoryName: category?.name ?? 'Нет категории',
       categoryColor: category?.color ?? '#6c757d',
       signedAmount,
+      isMandatory: txn.isMandatory ?? false,
     };
   })
 );
@@ -89,7 +90,7 @@ watch(selectedAccount, account => {
     <DataTable
         v-else
         :value="filteredTransactions"
-        sortField="occuredAt"
+        sortField="occurredAt"
         :sortOrder="-1"
         stripedRows
         :paginator="true"
@@ -122,10 +123,17 @@ watch(selectedAccount, account => {
 
       <Column field="categoryName" header="Категория" :sortable="true" style="min-width: 140px">
         <template #body="slotProps">
-          <Tag
-            :value="slotProps.data.categoryName"
-            :style="{ backgroundColor: slotProps.data.categoryColor, color: 'white' }"
-          />
+          <div style="display: flex; align-items: center; gap: 0.5rem;">
+            <Tag
+              :value="slotProps.data.categoryName"
+              :style="{ backgroundColor: slotProps.data.categoryColor, color: 'white' }"
+            />
+            <i
+              v-if="slotProps.data.isMandatory"
+              class="pi pi-lock mandatory-icon"
+              title="Обязательный платеж"
+            />
+          </div>
         </template>
       </Column>
 
@@ -217,5 +225,11 @@ watch(selectedAccount, account => {
 .description-empty {
   color: var(--ft-text-muted);
   font-style: italic;
+}
+
+.mandatory-icon {
+  color: var(--ft-accent);
+  font-size: 0.85rem;
+  opacity: 0.8;
 }
 </style>

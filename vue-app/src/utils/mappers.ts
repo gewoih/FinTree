@@ -49,17 +49,22 @@ export function mapCategory(dto: TransactionCategoryDto): Category {
  * @returns Enriched Transaction object
  */
 export function mapTransaction(
-  dto: TransactionDto,
+  dto: any, // Use any to handle API inconsistency with occurredAt/occuredAt
   accounts: Account[],
   categories: Category[]
 ): Transaction {
   const account = accounts.find(acc => acc.id === dto.accountId) ?? null;
   const category = categories.find(cat => cat.id === dto.categoryId) ?? null;
 
+  // Handle API inconsistency: occuredAt (wrong) vs occurredAt (correct)
+  const occurredAt = dto.occurredAt || dto.occuredAt;
+
   return {
     ...dto,
+    occurredAt,
     amount: Number(dto.amount),
     description: dto.description ?? null,
+    isMandatory: dto.isMandatory ?? false,
     account: account ?? undefined,
     category,
   };

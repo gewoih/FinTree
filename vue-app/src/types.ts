@@ -49,6 +49,7 @@ export interface TransactionDto {
     categoryId: string;
     occurredAt: string; // ISO дата (как возвращает API)
     description: string | null;
+    isMandatory: boolean;
 }
 
 export interface Transaction extends TransactionDto {

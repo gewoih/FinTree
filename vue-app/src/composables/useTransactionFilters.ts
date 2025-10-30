@@ -51,9 +51,17 @@ export function useTransactionFilters(
     // Filter by date range
     if (dateRange.value && dateRange.value.length === 2) {
       const [startDate, endDate] = dateRange.value as [Date, Date];
+
+      // Set time to start and end of day for accurate comparison
+      const startOfDay = new Date(startDate);
+      startOfDay.setHours(0, 0, 0, 0);
+
+      const endOfDay = new Date(endDate);
+      endOfDay.setHours(23, 59, 59, 999);
+
       filtered = filtered.filter(txn => {
         const txnDate = new Date(txn.occurredAt);
-        return txnDate >= startDate && txnDate <= endDate;
+        return txnDate >= startOfDay && txnDate <= endOfDay;
       });
     }
 

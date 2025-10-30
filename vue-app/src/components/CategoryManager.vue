@@ -19,6 +19,10 @@ const busyId = ref<string | null>(null);
 const categories = computed(() => store.categories);
 const areCategoriesLoading = computed(() => store.areCategoriesLoading);
 
+// Separate system and user categories
+const systemCategories = computed(() => categories.value.filter(c => c.isSystem));
+const userCategories = computed(() => categories.value.filter(c => !c.isSystem));
+
 const openModal = (category?: Category) => {
   if (category?.isSystem) {
     toast.add({
@@ -85,41 +89,66 @@ const handleDelete = (category: Category) => {
       <p class="ft-text ft-text--muted">Категории не найдены. Создайте свою первую.</p>
     </div>
 
-    <ul v-else class="category-list">
-      <li v-for="category in categories" :key="category.id" class="category-item">
-        <div class="category-info">
-          <span class="color-dot" :style="{ backgroundColor: category.color }"></span>
-          <div>
-            <p class="category-name">
-              {{ category.name }}
-              <Tag v-if="category.isSystem" value="Системная" severity="info" />
-            </p>
-            <small v-if="category.isSystem" class="ft-text ft-text--muted">
-              Системная категория защищена от изменений
-            </small>
-          </div>
-        </div>
+    <div v-else class="categories-container">
+      <!-- User Categories Section -->
+      <div v-if="userCategories.length > 0" class="category-section">
+        <h4 class="section-title">
+          <i class="pi pi-user"></i>
+          Пользовательские категории
+        </h4>
+        <ul class="category-list">
+          <li v-for="category in userCategories" :key="category.id" class="category-item">
+            <div class="category-info">
+              <span class="color-dot" :style="{ backgroundColor: category.color }"></span>
+              <div>
+                <p class="category-name">{{ category.name }}</p>
+              </div>
+            </div>
 
-        <div class="actions">
-          <Button
-              label="Изменить"
-              size="small"
-              text
-              @click="openModal(category)"
-              :disabled="category.isSystem"
-          />
-          <Button
-              label="Удалить"
-              size="small"
-              text
-              severity="danger"
-              :disabled="category.isSystem"
-              :loading="busyId === category.id"
-              @click="handleDelete(category)"
-          />
-        </div>
-      </li>
-    </ul>
+            <div class="actions">
+              <Button
+                  label="Изменить"
+                  size="small"
+                  text
+                  @click="openModal(category)"
+              />
+              <Button
+                  label="Удалить"
+                  size="small"
+                  text
+                  severity="danger"
+                  :loading="busyId === category.id"
+                  @click="handleDelete(category)"
+              />
+            </div>
+          </li>
+        </ul>
+      </div>
+
+      <!-- System Categories Section -->
+      <div v-if="systemCategories.length > 0" class="category-section">
+        <h4 class="section-title">
+          <i class="pi pi-lock"></i>
+          Системные категории
+        </h4>
+        <ul class="category-list">
+          <li v-for="category in systemCategories" :key="category.id" class="category-item category-item--system">
+            <div class="category-info">
+              <span class="color-dot" :style="{ backgroundColor: category.color }"></span>
+              <div>
+                <p class="category-name">
+                  {{ category.name }}
+                  <Tag value="Системная" severity="info" rounded />
+                </p>
+                <small class="ft-text ft-text--muted">
+                  Защищена от изменений
+                </small>
+              </div>
+            </div>
+          </li>
+        </ul>
+      </div>
+    </div>
 
     <CategoryFormModal v-model:visible="modalVisible" :category="editingCategory" />
   </section>
@@ -136,6 +165,35 @@ const handleDelete = (category: Category) => {
   gap: 1.5rem;
   flex-wrap: wrap;
   align-items: flex-start;
+}
+
+.categories-container {
+  display: flex;
+  flex-direction: column;
+  gap: clamp(2rem, 3vw, 2.5rem);
+}
+
+.category-section {
+  display: flex;
+  flex-direction: column;
+  gap: clamp(1rem, 1.5vw, 1.25rem);
+}
+
+.section-title {
+  margin: 0;
+  font-size: clamp(1rem, 1.2vw, 1.1rem);
+  font-weight: 600;
+  color: var(--ft-heading);
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding-bottom: 0.5rem;
+  border-bottom: 1px solid var(--ft-border-soft);
+}
+
+.section-title i {
+  font-size: 0.9rem;
+  color: var(--ft-accent);
 }
 
 .category-list {
@@ -157,6 +215,17 @@ const handleDelete = (category: Category) => {
   gap: clamp(0.75rem, 1vw, 1rem);
   background: rgba(13, 22, 43, 0.8);
   box-shadow: 0 18px 40px rgba(8, 15, 34, 0.4);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.category-item:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 20px 44px rgba(8, 15, 34, 0.48);
+}
+
+.category-item--system {
+  background: rgba(13, 22, 43, 0.5);
+  opacity: 0.85;
 }
 
 .category-info {

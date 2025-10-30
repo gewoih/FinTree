@@ -84,7 +84,9 @@ const accountOptions = computed(() => [
           @update:model-value="(val) => emit('update:dateRange', val as Date[] | null)"
           selectionMode="range"
           :manualInput="false"
+          dateFormat="dd.mm.yy"
           placeholder="Выберите период"
+          showButtonBar
           class="w-full"
         />
       </div>
