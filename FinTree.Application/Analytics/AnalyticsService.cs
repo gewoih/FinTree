@@ -17,7 +17,7 @@ public sealed class AnalyticsService(
         var baseCurrencyCode = await context.Users
             .Where(u => u.Id == currentUserId)
             .Select(u => u.BaseCurrencyCode)
-            .FirstOrDefaultAsync(ct) ?? "RUB";
+            .SingleAsync(ct);
 
         var transactionsQuery = context.ExpenseTransactions.Where(t => t.Account.UserId == currentUserId);
 
@@ -31,27 +31,35 @@ public sealed class AnalyticsService(
             .Select(t => new { t.Money, t.OccurredAt })
             .ToListAsync(cancellationToken: ct);
 
-        var converted = await Task.WhenAll(transactionDatas.Select(async r =>
+        var totals = new Dictionary<(int Year, int Month), decimal>();
+        foreach (var r in transactionDatas)
         {
+            ct.ThrowIfCancellationRequested();
+
+            // Нормализуем дату в UTC (если Kind не задан — считаем, что это уже UTC)
+            var dt = r.OccurredAt;
+            var occurredUtc = (dt.Kind == DateTimeKind.Unspecified
+                ? DateTime.SpecifyKind(dt, DateTimeKind.Utc)
+                : dt).ToUniversalTime();
+
             var valueBase = await currencyConverter.ConvertAsync(
                 money: r.Money,
                 toCurrencyCode: baseCurrencyCode,
-                atUtc: r.OccurredAt,
+                atUtc: occurredUtc,
                 ct: ct);
 
-            var dt = r.OccurredAt;
-            var d = (dt.Kind == DateTimeKind.Unspecified ? DateTime.SpecifyKind(dt, DateTimeKind.Utc) : dt)
-                .ToUniversalTime();
+            var key = (occurredUtc.Year, occurredUtc.Month);
+            if (totals.TryGetValue(key, out var sum))
+                totals[key] = sum + valueBase;
+            else
+                totals[key] = valueBase;
+        }
 
-            return new { d.Year, d.Month, AmountBase = valueBase };
-        }));
-
-        var result = converted
-            .GroupBy(x => new { x.Year, x.Month })
-            .Select(g => new MonthlyExpensesDto(
-                Year: g.Key.Year,
-                Month: g.Key.Month,
-                Amount: g.Sum(x => x.AmountBase)))
+        var result = totals
+            .Select(kv => new MonthlyExpensesDto(
+                Year: kv.Key.Year,
+                Month: kv.Key.Month,
+                Amount: kv.Value))
             .OrderBy(x => x.Year)
             .ThenBy(x => x.Month)
             .ToList();

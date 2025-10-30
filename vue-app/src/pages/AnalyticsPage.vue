@@ -17,6 +17,7 @@ import {
 import Select from 'primevue/select';
 import Card from 'primevue/card';
 import { useFinanceStore } from '../stores/finance';
+import { useUserStore } from '../stores/user';
 import { apiService } from '../services/api.service.ts';
 import type { MonthlyExpenseDto } from '../types.ts';
 import { formatCurrency } from '../utils/formatters';
@@ -36,12 +37,12 @@ ChartJS.register(
 );
 
 const financeStore = useFinanceStore();
+const userStore = useUserStore();
 const monthlyExpenses = ref<MonthlyExpenseDto[]>([]);
-const baseCurrencyCode = ref<string | null>(null);
 
 const analyticsCurrencyCode = computed(() => {
-  if (baseCurrencyCode.value) {
-    return baseCurrencyCode.value;
+  if (userStore.baseCurrencyCode) {
+    return userStore.baseCurrencyCode;
   }
   return (
     financeStore.primaryAccount?.currency?.code ??
@@ -72,18 +73,6 @@ async function fetchMonthlyExpenses(): Promise<void> {
   } catch (error) {
     console.error('Ошибка загрузки ежемесячных расходов:', error);
     monthlyExpenses.value = [];
-  }
-}
-
-async function fetchCurrentUser(): Promise<void> {
-  try {
-    const user = await apiService.getCurrentUser();
-    if (user?.baseCurrencyCode) {
-      baseCurrencyCode.value = user.baseCurrencyCode;
-    }
-  } catch (error) {
-    console.error('Не удалось получить данные пользователя:', error);
-    baseCurrencyCode.value = null;
   }
 }
 
@@ -321,7 +310,7 @@ onMounted(async () => {
     financeStore.fetchCurrencies(),
     financeStore.fetchAccounts(),
     financeStore.fetchCategories(),
-    fetchCurrentUser(),
+    userStore.fetchCurrentUser(),
     fetchMonthlyExpenses(),
   ]);
 });

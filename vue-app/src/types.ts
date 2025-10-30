@@ -110,3 +110,8 @@ export interface CurrentUserDto {
     telegramUsername: string | null;
     baseCurrencyCode: string;
 }
+
+export interface UpdateUserProfilePayload {
+    baseCurrencyCode: string;
+    telegramUsername: string;
+}

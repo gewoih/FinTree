@@ -4,6 +4,7 @@ import AccountsPage from '../pages/AccountsPage.vue';
 import CategoriesPage from '../pages/CategoriesPage.vue';
 import ExpensesPage from '../pages/ExpensesPage.vue';
 import AnalyticsPage from '../pages/AnalyticsPage.vue';
+import ProfilePage from '../pages/ProfilePage.vue';
 
 export const router = createRouter({
   history: createWebHistory(),
@@ -37,6 +38,12 @@ export const router = createRouter({
       name: 'analytics',
       component: AnalyticsPage,
       meta: { title: 'Аналитика' },
+    },
+    {
+      path: '/profile',
+      name: 'profile',
+      component: ProfilePage,
+      meta: { title: 'Профиль' },
     },
     {
       path: '/:pathMatch(.*)*',

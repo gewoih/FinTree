@@ -10,7 +10,8 @@ import type {
     UpdateCategoryPayload,
     Currency,
     MonthlyExpenseDto,
-    CurrentUserDto
+    CurrentUserDto,
+    UpdateUserProfilePayload
 } from '../types.ts';
 import { TRANSACTION_TYPE } from '../types.ts';
 
@@ -152,6 +153,11 @@ export const apiService = {
     // Текущий пользователь
     async getCurrentUser(): Promise<CurrentUserDto> {
         const response = await apiClient.get<CurrentUserDto>('/users/me');
+        return response.data;
+    },
+
+    async updateUserProfile(payload: UpdateUserProfilePayload): Promise<CurrentUserDto> {
+        const response = await apiClient.patch<CurrentUserDto>('/users/me', payload);
         return response.data;
     },
 };

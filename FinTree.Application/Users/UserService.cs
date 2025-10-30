@@ -19,16 +19,6 @@ public sealed class UserService(AppDbContext context, ICurrentUser currentUser)
         return userData;
     }
     
-    public async Task UpdateBaseCurrency(string currencyCode, CancellationToken ct)
-    {
-        var user = await context.Users.FirstOrDefaultAsync(u => u.Id == currentUser.Id, ct);
-        if (user == null)
-            throw new NotFoundException(nameof(User), currentUser.Id);
-        
-        user.SetBaseCurrency(currencyCode);
-        await context.SaveChangesAsync(ct);
-    }
-    
     public async Task MarkAsMainAsync(Guid accountId, CancellationToken ct = default)
     {
         var user = await context.Users
@@ -40,6 +30,25 @@ public sealed class UserService(AppDbContext context, ICurrentUser currentUser)
         
         user.SetMainAccount(accountId);
         await context.SaveChangesAsync(ct);
+    }
+    
+    public async Task<MeDto> UpdateProfileAsync(UpdateUserProfileRequest request, CancellationToken ct)
+    {
+        var user = await context.Users.FirstOrDefaultAsync(u => u.Id == currentUser.Id, ct);
+        if (user == null)
+            throw new NotFoundException(nameof(User), currentUser.Id);
+
+        user.SetBaseCurrency(request.BaseCurrencyCode);
+        
+        var telegramUsername = request.TelegramUsername;
+        if (!string.IsNullOrWhiteSpace(telegramUsername))
+            user.LinkTelegramAccount(telegramUsername);
+        else 
+            user.UnlinkTelegramAccount(); 
+        
+        await context.SaveChangesAsync(ct);
+
+        return new MeDto(user.Id, user.Name, user.Email, user.TelegramUserId, user.BaseCurrencyCode);
     }
     
     public async Task<List<TransactionCategoryDto>> GetUserCategoriesAsync(CancellationToken ct)

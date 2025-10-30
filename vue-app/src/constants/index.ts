@@ -37,6 +37,12 @@ export const NAVIGATION_ITEMS = [
     label: 'Расходы',
     icon: 'pi pi-arrow-circle-down',
     route: '/expenses'
+  },
+  {
+    id: 'profile',
+    label: 'Профиль',
+    icon: 'pi pi-user',
+    route: '/profile'
   }
 ] as const;
 
