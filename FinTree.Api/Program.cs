@@ -48,7 +48,7 @@ builder.Services.AddCors(options =>
 builder.Services.AddIdentity<User, Role>(o =>
     {
         o.User.RequireUniqueEmail = true;
-        o.SignIn.RequireConfirmedEmail = true;
+        o.SignIn.RequireConfirmedEmail = false;
         o.Password.RequireNonAlphanumeric = false;
         o.Password.RequiredUniqueChars = 4;
         o.Password.RequiredLength = 8;
@@ -94,6 +94,7 @@ builder.Services.AddScoped<TransactionCategoryService>();
 builder.Services.AddScoped<TransactionsService>();
 builder.Services.AddScoped<AccountsService>();
 builder.Services.AddScoped<UserService>();
+builder.Services.AddScoped<AuthService>();
 builder.Services.AddScoped<ICurrentUser, HttpCurrentUser>();
 builder.Services.AddScoped<AnalyticsService>();
 builder.Services.AddScoped<CurrencyConverter>();

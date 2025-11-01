@@ -46,11 +46,11 @@ public static class Initializer
             return;
 
         const string rubCode = "RUB";
-        var user = new User("Тестовый пользователь", rubCode);
+        var user = new User("Тестовый пользователь", "test@example.com", rubCode);
         user.AddAccount(rubCode, AccountType.Bank, "Дебетовая карта");
         user.AddAccount(rubCode, AccountType.Cash, "Наличка");
         user.LinkTelegramAccount("gewoih");
-        
+
         await context.Users.AddAsync(user);
         await context.SaveChangesAsync();
     }

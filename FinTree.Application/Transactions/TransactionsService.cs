@@ -1,11 +1,12 @@
 using FinTree.Application.Exceptions;
 using FinTree.Application.Transactions.Dto;
+using FinTree.Application.Users;
 using FinTree.Infrastructure.Database;
 using Microsoft.EntityFrameworkCore;
 
 namespace FinTree.Application.Transactions;
 
-public sealed class TransactionsService(AppDbContext context)
+public sealed class TransactionsService(AppDbContext context, ICurrentUser currentUser)
 {
     public async Task<Guid> CreateAsync(CreateTransaction command, CancellationToken ct)
     {
@@ -23,7 +24,10 @@ public sealed class TransactionsService(AppDbContext context)
     public async Task<(List<TransactionDto> Items, int Total)> GetTransactionsAsync(Guid? accountId,
         TxFilter? filter, CancellationToken ct = default)
     {
-        var q = context.Transactions.AsNoTracking();
+        var currentUserId = currentUser.Id;
+        var q = context.Transactions
+            .AsNoTracking()
+            .Where(t => t.Account.UserId == currentUserId);
 
         if (accountId.HasValue)
             q = q.Where(t => t.AccountId == accountId);

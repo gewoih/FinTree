@@ -1,9 +1,11 @@
 using FinTree.Application.Transactions;
 using FinTree.Application.Transactions.Dto;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace FinTree.Api.Controllers;
 
+[Authorize]
 [Route("api/[controller]")]
 [ApiController]
 public class TransactionController(TransactionsService transactionsService) : ControllerBase

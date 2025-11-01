@@ -11,7 +11,6 @@ public sealed class User : IdentityUser<Guid>
     private readonly List<Account> _accounts = [];
     private readonly List<TransactionCategory> _transactionCategories = [];
 
-    public string Name { get; private set; }
     public string BaseCurrencyCode { get; private set; }
     public string? TelegramUserId { get; private set; }
     public Guid? MainAccountId { get; private set; }
@@ -19,11 +18,17 @@ public sealed class User : IdentityUser<Guid>
     public IReadOnlyCollection<Account> Accounts => _accounts;
     public IReadOnlyCollection<TransactionCategory> TransactionCategories => _transactionCategories;
 
-    public User(string name, string baseCurrencyCode)
+    private User()
     {
-        ArgumentException.ThrowIfNullOrWhiteSpace(name, nameof(name));
+    }
+    
+    public User(string username, string email, string baseCurrencyCode)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(username, nameof(username));
+        ArgumentException.ThrowIfNullOrWhiteSpace(email, nameof(email));
 
-        Name = name;
+        UserName = username;
+        Email = email;
         SetBaseCurrency(baseCurrencyCode);
     }
 

@@ -27,6 +27,20 @@ const apiClient = axios.create({
 });
 
 /**
+ * Request interceptor to add JWT token to requests
+ */
+apiClient.interceptors.request.use(
+    config => {
+        const token = localStorage.getItem('fintree_jwt_token');
+        if (token) {
+            config.headers.Authorization = `Bearer ${token}`;
+        }
+        return config;
+    },
+    error => Promise.reject(error)
+);
+
+/**
  * Response interceptor for centralized error handling
  */
 apiClient.interceptors.response.use(
@@ -39,6 +53,15 @@ apiClient.interceptors.response.use(
             data: error.response?.data,
             url: error.config?.url
         });
+
+        // If 401 Unauthorized, clear auth and redirect to login
+        if (error.response?.status === 401) {
+            localStorage.removeItem('fintree_jwt_token');
+            localStorage.removeItem('fintree_user_email');
+            if (window.location.pathname !== '/login') {
+                window.location.href = '/login';
+            }
+        }
 
         // Enhance error object with user-friendly message
         const enhancedError = {

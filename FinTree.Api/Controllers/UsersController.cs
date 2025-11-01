@@ -1,9 +1,11 @@
 using FinTree.Application.Accounts;
 using FinTree.Application.Users;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace FinTree.Api.Controllers;
 
+[Authorize]
 [Route("api/[controller]")]
 [ApiController]
 public class UsersController(AccountsService accountsService, UserService userService) : ControllerBase

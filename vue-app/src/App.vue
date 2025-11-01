@@ -1,16 +1,26 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue';
-import { RouterLink, RouterView, useRoute } from 'vue-router';
+import { RouterLink, RouterView, useRoute, useRouter } from 'vue-router';
 import Toast from 'primevue/toast';
 import ConfirmDialog from 'primevue/confirmdialog';
 import Button from 'primevue/button';
 import ExpenseForm from './components/ExpenseForm.vue';
 import { NAVIGATION_ITEMS } from './constants';
+import { useAuthStore } from './stores/auth';
 
 const route = useRoute();
+const router = useRouter();
+const authStore = useAuthStore();
 
 const activeRouteId = computed(() => (typeof route.name === 'string' ? route.name : route.name?.toString() ?? ''));
 const isExpenseFormVisible = ref(false);
+
+const showHeader = computed(() => authStore.isAuthenticated && !route.meta.public);
+
+function handleLogout() {
+  authStore.logout();
+  router.push('/login');
+}
 </script>
 
 <template>
@@ -18,7 +28,7 @@ const isExpenseFormVisible = ref(false);
     <Toast />
     <ConfirmDialog />
 
-    <header class="app-header">
+    <header v-if="showHeader" class="app-header">
       <div class="header-inner">
         <RouterLink class="brand" to="/">
           <span class="brand__icon">
@@ -43,13 +53,23 @@ const isExpenseFormVisible = ref(false);
           </RouterLink>
         </nav>
 
-        <Button
-          label="Добавить расход"
-          icon="pi pi-plus"
-          severity="success"
-          size="small"
-          @click="isExpenseFormVisible = true"
-        />
+        <div class="header-actions">
+          <Button
+            label="Добавить расход"
+            icon="pi pi-plus"
+            severity="success"
+            size="small"
+            @click="isExpenseFormVisible = true"
+          />
+          <Button
+            label="Выход"
+            icon="pi pi-sign-out"
+            severity="secondary"
+            size="small"
+            outlined
+            @click="handleLogout"
+          />
+        </div>
       </div>
     </header>
 
@@ -60,7 +80,7 @@ const isExpenseFormVisible = ref(false);
     </main>
 
     <!-- Global Expense Form Modal -->
-    <ExpenseForm v-model:visible="isExpenseFormVisible" />
+    <ExpenseForm v-if="showHeader" v-model:visible="isExpenseFormVisible" />
   </div>
 </template>
 
@@ -88,6 +108,12 @@ const isExpenseFormVisible = ref(false);
   justify-content: space-between;
   gap: clamp(1rem, 2vw, 1.75rem);
   padding: clamp(1rem, 1.8vw, 1.4rem) 0;
+}
+
+.header-actions {
+  display: flex;
+  gap: 0.75rem;
+  align-items: center;
 }
 
 .brand {

@@ -13,7 +13,7 @@ public sealed class UserService(AppDbContext context, ICurrentUser currentUser)
         var currentUserId = currentUser.Id;
         var userData = await context.Users
             .Where(u => u.Id == currentUserId)
-            .Select(u => new MeDto(u.Id, u.Name, u.Email, u.TelegramUserId, u.BaseCurrencyCode))
+            .Select(u => new MeDto(u.Id, u.Email, u.TelegramUserId, u.BaseCurrencyCode))
             .SingleOrDefaultAsync(cancellationToken: ct);
 
         return userData;
@@ -48,7 +48,7 @@ public sealed class UserService(AppDbContext context, ICurrentUser currentUser)
         
         await context.SaveChangesAsync(ct);
 
-        return new MeDto(user.Id, user.Name, user.Email, user.TelegramUserId, user.BaseCurrencyCode);
+        return new MeDto(user.Id, user.Email, user.TelegramUserId, user.BaseCurrencyCode);
     }
     
     public async Task<List<TransactionCategoryDto>> GetUserCategoriesAsync(CancellationToken ct)
