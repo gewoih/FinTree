@@ -27,13 +27,13 @@ const emit = defineEmits([
 
 // Category options with "All" option
 const categoryOptions = computed(() => [
-  { label: 'Все категории', value: null },
+  { label: 'All categories', value: null },
   ...props.categories.map(cat => ({ label: cat.name, value: cat }))
 ]);
 
 // Account options with "All" option
 const accountOptions = computed(() => [
-  { label: 'Все счета', value: null },
+  { label: 'All accounts', value: null },
   ...props.accounts.map(acc => ({ label: acc.name, value: acc }))
 ]);
 </script>
@@ -42,59 +42,59 @@ const accountOptions = computed(() => [
   <div class="filters-panel ft-card ft-card--muted">
     <div class="filters-grid">
       <div class="filter-field filter-field--wide">
-        <label>Поиск</label>
+        <label>Search</label>
         <InputText
           :model-value="props.searchText"
           @update:model-value="(val) => emit('update:searchText', val)"
-          placeholder="Поиск по категории, счету или примечанию..."
+          placeholder="Search by category, account, or note…"
           class="w-full"
         />
       </div>
 
       <div class="filter-field">
-        <label>Категория</label>
+        <label>Category</label>
         <Select
           :model-value="props.selectedCategory"
           @update:model-value="(val) => emit('update:selectedCategory', val)"
           :options="categoryOptions"
           option-label="label"
           option-value="value"
-          placeholder="Все категории"
+          placeholder="All categories"
           class="w-full"
         />
       </div>
 
       <div class="filter-field">
-        <label>Счет</label>
+        <label>Account</label>
         <Select
           :model-value="props.selectedAccount"
           @update:model-value="(val) => emit('update:selectedAccount', val)"
           :options="accountOptions"
           option-label="label"
           option-value="value"
-          placeholder="Все счета"
+          placeholder="All accounts"
           class="w-full"
         />
       </div>
 
       <div class="filter-field">
-        <label>Период</label>
+        <label>Date range</label>
         <DatePicker
           :model-value="props.dateRange"
           @update:model-value="(val) => emit('update:dateRange', val as Date[] | null)"
           selectionMode="range"
           :manualInput="false"
           dateFormat="dd.mm.yy"
-          placeholder="Выберите период"
+          placeholder="Select date range"
           showButtonBar
           class="w-full"
         />
       </div>
 
       <div class="filter-field filter-field--compact">
-        <label class="sr-only">Сбросить фильтры</label>
+        <label class="sr-only">Clear filters</label>
         <Button
-          label="Сбросить"
+          label="Reset"
           icon="pi pi-refresh"
           severity="secondary"
           outlined

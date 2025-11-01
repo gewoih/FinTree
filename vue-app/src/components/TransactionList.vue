@@ -1,47 +1,45 @@
 <script setup lang="ts">
-import { useFinanceStore } from '../stores/finance';
-import { computed, watch } from 'vue';
-import { PAGINATION_OPTIONS } from '../constants';
-import { useTransactionFilters } from '../composables/useTransactionFilters';
+import { computed, watch } from 'vue'
+import DataTable from 'primevue/datatable'
+import Column from 'primevue/column'
+import Tag from 'primevue/tag'
+import Skeleton from 'primevue/skeleton'
+import { useFinanceStore } from '../stores/finance'
+import { PAGINATION_OPTIONS } from '../constants'
+import { useTransactionFilters } from '../composables/useTransactionFilters'
+import TransactionFilters from './TransactionFilters.vue'
+import { formatCurrency, formatDate } from '../utils/formatters'
+import type { Transaction } from '../types'
 
-// Components
-import TransactionFilters from './TransactionFilters.vue';
-import DataTable from 'primevue/datatable';
-import Column from 'primevue/column';
-import Tag from 'primevue/tag';
-import ProgressSpinner from 'primevue/progressspinner';
-import { formatDate, formatCurrency } from '../utils/formatters';
+const emit = defineEmits<{
+  (e: 'add-transaction'): void
+}>()
 
-const store = useFinanceStore();
+const store = useFinanceStore()
 
-const transactionsLoading = computed(() => store.isTransactionsLoading);
+const transactionsLoading = computed(() => store.isTransactionsLoading)
 
-/**
- * Enriched transactions with computed display values
- * Note: Store already provides enriched data with account and category objects
- */
 const enrichedTransactions = computed(() =>
-  store.transactions.map(txn => {
-    const account = txn.account;
-    const category = txn.category;
+  store.transactions.map((txn: Transaction) => {
+    const account = txn.account
+    const category = txn.category
 
-    const baseAmount = Number(txn.amount);
-    const signedAmount = baseAmount > 0 ? -Math.abs(baseAmount) : baseAmount;
+    const baseAmount = Number(txn.amount)
+    const signedAmount = baseAmount > 0 ? -Math.abs(baseAmount) : baseAmount
 
     return {
       ...txn,
-      accountName: account?.name ?? 'Неизвестный счет',
+      accountName: account?.name ?? 'Unknown account',
       accountCurrency: account?.currency?.code ?? account?.currencyCode ?? 'KZT',
       accountSymbol: account?.currency?.symbol ?? '',
-      categoryName: category?.name ?? 'Нет категории',
+      categoryName: category?.name ?? 'Uncategorized',
       categoryColor: category?.color ?? '#6c757d',
       signedAmount,
-      isMandatory: txn.isMandatory ?? false,
-    };
+      isMandatory: txn.isMandatory ?? false
+    }
   })
-);
+)
 
-// Use the transaction filters composable
 const {
   searchText,
   selectedCategory,
@@ -49,23 +47,24 @@ const {
   dateRange,
   filteredTransactions,
   clearFilters: clearFiltersComposable
-} = useTransactionFilters(() => enrichedTransactions.value);
+} = useTransactionFilters(() => enrichedTransactions.value)
 
-// Clear filters and refetch all transactions
 const clearFilters = () => {
-  clearFiltersComposable();
-  store.fetchTransactions();
-};
+  clearFiltersComposable()
+  store.fetchTransactions()
+}
 
-// Watch for account selection changes and refetch transactions
 watch(selectedAccount, account => {
-  store.fetchTransactions(account?.id);
-});
+  store.fetchTransactions(account?.id)
+})
+
+const isEmptyState = computed(
+  () => !transactionsLoading.value && filteredTransactions.value.length === 0
+)
 </script>
 
 <template>
   <div class="transaction-history">
-    <!-- Фильтры -->
     <TransactionFilters
       v-model:search-text="searchText"
       v-model:selected-category="selectedCategory"
@@ -76,38 +75,53 @@ watch(selectedAccount, account => {
       @clear-filters="clearFilters"
     />
 
-    <!-- Таблица транзакций -->
-    <div v-if="transactionsLoading" class="loading-state">
-      <ProgressSpinner style="width: 50px; height: 50px" strokeWidth="8" animationDuration=".5s" />
-      <p>Загрузка данных...</p>
+    <div v-if="transactionsLoading" class="table-skeleton">
+      <Skeleton v-for="i in 6" :key="i" height="54px" />
     </div>
 
-    <div v-else-if="filteredTransactions.length === 0" class="ft-empty">
-      <i class="pi pi-database"></i>
-      <p>Транзакции не найдены. Попробуйте изменить фильтры или добавить новый расход.</p>
-    </div>
+    <EmptyState
+      v-else-if="isEmptyState"
+      icon="pi-database"
+      title="No transactions found"
+      description="Adjust filters or add your first transaction to see activity here."
+      action-label="Add transaction"
+      action-icon="pi pi-plus"
+      @action="emit('add-transaction')"
+    />
 
     <DataTable
-        v-else
-        :value="filteredTransactions"
-        sortField="occurredAt"
-        :sortOrder="-1"
-        stripedRows
-        :paginator="true"
-        :rows="PAGINATION_OPTIONS.defaultRows"
-        :rowsPerPageOptions="[...PAGINATION_OPTIONS.options]"
-        paginatorTemplate="FirstPageLink PrevPageLink PageLinks NextPageLink LastPageLink CurrentPageReport RowsPerPageDropdown"
-        currentPageReportTemplate="Показано {first} - {last} из {totalRecords} записей"
-        :globalFilterFields="['categoryName', 'accountName', 'description']"
-        responsiveLayout="scroll"
+      v-else
+      :value="filteredTransactions"
+      sortField="occurredAt"
+      :sortOrder="-1"
+      stripedRows
+      showGridlines
+      responsiveLayout="scroll"
+      :paginator="true"
+      :rows="PAGINATION_OPTIONS.defaultRows"
+      :rowsPerPageOptions="[...PAGINATION_OPTIONS.options]"
+      paginatorTemplate="FirstPageLink PrevPageLink PageLinks NextPageLink LastPageLink CurrentPageReport RowsPerPageDropdown"
+      currentPageReportTemplate="Showing {first} - {last} of {totalRecords}"
+      :globalFilterFields="['categoryName', 'accountName', 'description']"
+      tableStyle="min-width: 760px"
     >
-      <Column field="occurredAt" header="Дата" :sortable="true" style="min-width: 110px">
+      <template #header>
+        <div class="table-caption">
+          <h3>Transaction History</h3>
+          <p>
+            {{ filteredTransactions.length }} transaction<span v-if="filteredTransactions.length !== 1">s</span>
+            across {{ store.accounts.length }} account<span v-if="store.accounts.length !== 1">s</span>
+          </p>
+        </div>
+      </template>
+
+      <Column field="occurredAt" header="Date" :sortable="true" style="min-width: 120px">
         <template #body="slotProps">
-          <div class="date-cell">{{ formatDate(slotProps.data.occurredAt) }}</div>
+          <span class="date-cell">{{ formatDate(slotProps.data.occurredAt) }}</span>
         </template>
       </Column>
 
-      <Column field="signedAmount" header="Сумма" :sortable="true" style="min-width: 150px">
+      <Column field="signedAmount" header="Amount" :sortable="true" style="min-width: 160px">
         <template #body="slotProps">
           <div class="amount-cell" :class="{ negative: slotProps.data.signedAmount < 0 }">
             <span class="amount-value">
@@ -121,32 +135,32 @@ watch(selectedAccount, account => {
         </template>
       </Column>
 
-      <Column field="categoryName" header="Категория" :sortable="true" style="min-width: 140px">
+      <Column field="categoryName" header="Category" :sortable="true" style="min-width: 180px">
         <template #body="slotProps">
-          <div style="display: flex; align-items: center; gap: 0.5rem;">
+          <div class="category-cell">
             <Tag
               :value="slotProps.data.categoryName"
-              :style="{ backgroundColor: slotProps.data.categoryColor, color: 'white' }"
+              :style="{ backgroundColor: slotProps.data.categoryColor, color: '#fff' }"
             />
             <i
               v-if="slotProps.data.isMandatory"
               class="pi pi-lock mandatory-icon"
-              title="Обязательный платеж"
+              title="Mandatory payment"
             />
           </div>
         </template>
       </Column>
 
-      <Column field="accountName" header="Счет" :sortable="true" style="min-width: 130px">
+      <Column field="accountName" header="Account" :sortable="true" style="min-width: 160px">
         <template #body="slotProps">
           <div class="account-cell">
-            <i class="pi pi-credit-card"></i>
+            <i class="pi pi-credit-card" aria-hidden="true" />
             <span>{{ slotProps.data.accountName }}</span>
           </div>
         </template>
       </Column>
 
-      <Column field="description" header="Примечание" style="min-width: 160px">
+      <Column field="description" header="Notes" style="min-width: 220px">
         <template #body="slotProps">
           <span v-if="slotProps.data.description" class="description-text">
             {{ slotProps.data.description }}
@@ -155,7 +169,6 @@ watch(selectedAccount, account => {
         </template>
       </Column>
     </DataTable>
-
   </div>
 </template>
 
@@ -163,23 +176,37 @@ watch(selectedAccount, account => {
 .transaction-history {
   display: flex;
   flex-direction: column;
-  gap: clamp(1.5rem, 2vw, 2rem);
+  gap: var(--ft-space-5);
 }
 
-.loading-state {
+.table-skeleton {
   display: grid;
-  place-items: center;
-  gap: 0.6rem;
-  padding: 2rem;
-  color: var(--ft-text-muted);
+  gap: var(--ft-space-2);
 }
 
-.loading-state p {
+.table-caption {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--ft-space-3);
+  padding: var(--ft-space-3) var(--ft-space-4);
+}
+
+.table-caption h3 {
   margin: 0;
+  font-size: var(--ft-text-lg);
+  font-weight: var(--ft-font-semibold);
+  color: var(--ft-heading);
+}
+
+.table-caption p {
+  margin: 0;
+  color: var(--ft-text-muted);
+  font-size: var(--ft-text-sm);
 }
 
 .date-cell {
-  font-weight: 600;
+  font-weight: var(--ft-font-semibold);
   color: var(--ft-heading);
 }
 
@@ -187,31 +214,36 @@ watch(selectedAccount, account => {
   display: flex;
   flex-direction: column;
   align-items: flex-end;
-  gap: 0.25rem;
-  font-weight: 600;
-  color: #16a34a;
+  gap: var(--ft-space-1);
+  font-weight: var(--ft-font-semibold);
+  color: var(--ft-success-600);
 }
 
 .amount-cell.negative {
-  color: #dc2626;
+  color: var(--ft-danger-600);
 }
 
 .amount-value {
-  font-size: 1rem;
+  font-size: var(--ft-text-base);
 }
 
 .amount-currency {
-  font-size: 0.75rem;
-  text-transform: uppercase;
-  letter-spacing: 0.08em;
+  font-size: var(--ft-text-xs);
   color: var(--ft-text-muted);
 }
 
-.account-cell {
-  display: inline-flex;
+.category-cell {
+  display: flex;
   align-items: center;
-  gap: 0.5rem;
+  gap: var(--ft-space-2);
+}
+
+.account-cell {
+  display: flex;
+  align-items: center;
+  gap: var(--ft-space-2);
   color: var(--ft-heading);
+  font-weight: var(--ft-font-medium);
 }
 
 .account-cell i {
@@ -224,12 +256,31 @@ watch(selectedAccount, account => {
 
 .description-empty {
   color: var(--ft-text-muted);
-  font-style: italic;
 }
 
 .mandatory-icon {
-  color: var(--ft-accent);
-  font-size: 0.85rem;
-  opacity: 0.8;
+  color: var(--ft-warning-500);
+  font-size: var(--ft-text-sm);
+}
+
+:deep(.p-datatable .p-datatable-tbody > tr > td) {
+  padding: var(--ft-space-3);
+  vertical-align: middle;
+}
+
+:deep(.p-datatable .p-datatable-thead > tr > th) {
+  font-size: var(--ft-text-sm);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--ft-text-muted);
+}
+
+:deep(.p-datatable .p-paginator-bottom) {
+  border-top: 1px solid var(--ft-border-soft);
+  padding: var(--ft-space-3);
+}
+
+:deep(.p-datatable .p-paginator .p-dropdown) {
+  min-width: 6.5rem;
 }
 </style>

@@ -34,7 +34,7 @@ const handleSubmit = async () => {
   if (!name.value) {
     toast.add({
       severity: 'warn',
-      summary: 'Название обязательно',
+      summary: 'Name is required',
       life: 2500,
     });
     return;
@@ -46,8 +46,8 @@ const handleSubmit = async () => {
   if (props.category?.isSystem) {
     toast.add({
       severity: 'warn',
-      summary: 'Системная категория',
-      detail: 'Редактирование встроенных категорий недоступно.',
+      summary: 'System category',
+      detail: 'Built-in categories cannot be edited.',
       life: 2500,
     });
     isSubmitting.value = false;
@@ -71,7 +71,7 @@ const handleSubmit = async () => {
 
   toast.add({
     severity: success ? 'success' : 'error',
-    summary: success ? 'Категория сохранена' : 'Ошибка',
+    summary: success ? 'Category saved' : 'Something went wrong',
     life: 2500,
   });
 
@@ -82,24 +82,24 @@ const handleSubmit = async () => {
 <template>
   <Dialog
       :visible="props.visible"
-      :header="props.category ? 'Редактировать категорию' : 'Новая категория'"
+      :header="props.category ? 'Edit category' : 'New category'"
       :modal="true"
       :style="{ width: '420px' }"
       @update:visible="val => emit('update:visible', val)"
   >
     <form @submit.prevent="handleSubmit" class="category-form">
       <div class="field">
-        <label for="category-name">Название</label>
+        <label for="category-name">Name</label>
         <InputText
             id="category-name"
             v-model="name"
-            placeholder="Например, «Транспорт»"
+            placeholder="For example, “Transport”"
             class="w-full"
         />
       </div>
 
       <div class="field color-field">
-        <label for="category-color">Цвет</label>
+        <label for="category-color">Color</label>
         <div class="color-picker">
           <input id="category-color" v-model="color" type="color" />
           <InputText v-model="color" class="w-full" />
@@ -109,14 +109,14 @@ const handleSubmit = async () => {
       <div class="actions">
         <Button
             type="button"
-            label="Отмена"
+            label="Cancel"
             severity="secondary"
             outlined
             @click="emit('update:visible', false)"
         />
         <Button
             type="submit"
-            :label="props.category ? 'Сохранить' : 'Добавить'"
+            :label="props.category ? 'Save' : 'Add'"
             icon="pi pi-check"
             :loading="isSubmitting"
         />

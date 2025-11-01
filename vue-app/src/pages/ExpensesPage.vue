@@ -1,59 +1,61 @@
 <script setup lang="ts">
-import { onMounted } from 'vue';
-import TransactionList from '../components/TransactionList.vue';
-import { useFinanceStore } from '../stores/finance';
+import { onMounted, ref } from 'vue'
+import { useFinanceStore } from '../stores/finance'
+import TransactionList from '../components/TransactionList.vue'
+import ExpenseForm from '../components/ExpenseForm.vue'
 
-const store = useFinanceStore();
+const financeStore = useFinanceStore()
+const expenseDialogVisible = ref(false)
+
+const openExpenseDialog = () => {
+  expenseDialogVisible.value = true
+}
 
 onMounted(async () => {
   await Promise.all([
-    store.fetchCurrencies(),
-    store.fetchAccounts(),
-    store.fetchCategories(),
-  ]);
-  await store.fetchTransactions();
-});
-
+    financeStore.fetchCurrencies(),
+    financeStore.fetchAccounts(),
+    financeStore.fetchCategories()
+  ])
+  await financeStore.fetchTransactions()
+})
 </script>
 
 <template>
-  <div class="page expenses ft-section">
-    <!-- Transactions History -->
-    <section class="history-card ft-card">
-      <header class="history-head">
-        <span class="ft-kicker">Лента операций</span>
-        <h2 class="ft-display ft-display--section">Сводная история расходов и поступлений</h2>
-        <p class="ft-text ft-text--muted">
-          Пользуйтесь фильтрами и поиском, чтобы находить нужные операции. Все обновления происходят без перезагрузки страницы.
-        </p>
-      </header>
+  <div class="transactions page">
+    <PageHeader
+      title="Transactions"
+      subtitle="Filter, explore, and manage every expense and income entry"
+      :breadcrumbs="[
+        { label: 'Home', to: '/dashboard' },
+        { label: 'Transactions' }
+      ]"
+    >
+      <template #actions>
+        <Button
+          label="Add Transaction"
+          icon="pi pi-plus"
+          @click="openExpenseDialog"
+        />
+      </template>
+    </PageHeader>
 
-      <TransactionList />
+    <section class="transactions__content">
+      <TransactionList @add-transaction="openExpenseDialog" />
     </section>
+
+    <ExpenseForm v-model:visible="expenseDialogVisible" />
   </div>
 </template>
 
 <style scoped>
-.page.expenses {
-  gap: clamp(2.5rem, 3vw, 3.5rem);
+.transactions {
+  gap: var(--ft-space-8);
 }
 
-.history-card {
-  gap: clamp(1.5rem, 2vw, 2rem);
-}
-
-.history-head {
+.transactions__content {
   display: flex;
   flex-direction: column;
-  gap: 0.5rem;
-}
-
-.history-head h2 {
-  margin: 0.35rem 0 0;
-}
-
-.history-head .ft-text {
-  margin-top: 0.75rem;
-  max-width: 640px;
+  gap: var(--ft-space-6);
 }
 </style>

@@ -47,7 +47,7 @@ export const useAuthStore = defineStore('auth', () => {
             return true;
         } catch (err: any) {
             console.error('Login failed:', err);
-            error.value = err.response?.data?.error || 'Ошибка входа. Проверьте email и пароль.';
+            error.value = err.response?.data?.error || 'Unable to sign in. Check your email and password.';
             return false;
         } finally {
             isLoading.value = false;
@@ -71,7 +71,7 @@ export const useAuthStore = defineStore('auth', () => {
             return true;
         } catch (err: any) {
             console.error('Registration failed:', err);
-            error.value = err.response?.data?.error || 'Ошибка регистрации. Попробуйте еще раз.';
+            error.value = err.response?.data?.error || 'Registration failed. Please try again.';
             return false;
         } finally {
             isLoading.value = false;

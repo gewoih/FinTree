@@ -1,32 +1,53 @@
 <script setup lang="ts">
-import { onMounted } from 'vue';
-import { useFinanceStore } from '../stores/finance';
-import CategoryManager from '../components/CategoryManager.vue';
+import { onMounted, ref } from 'vue'
+import CategoryManager from '../components/CategoryManager.vue'
+import { useFinanceStore } from '../stores/finance'
 
-const store = useFinanceStore();
+const financeStore = useFinanceStore()
+const managerRef = ref<InstanceType<typeof CategoryManager> | null>(null)
+
+const handleCreateCategory = () => {
+  managerRef.value?.openModal()
+}
 
 onMounted(() => {
-  store.fetchCategories();
-});
+  financeStore.fetchCategories()
+})
 </script>
 
 <template>
-  <div class="page sectioned ft-section">
-    <CategoryManager/>
+  <div class="categories page">
+    <PageHeader
+      title="Categories"
+      subtitle="Customise how transactions are grouped for better insights"
+      :breadcrumbs="[
+        { label: 'Home', to: '/dashboard' },
+        { label: 'Categories' }
+      ]"
+    >
+      <template #actions>
+        <Button
+          label="Create category"
+          icon="pi pi-plus"
+          @click="handleCreateCategory"
+        />
+      </template>
+    </PageHeader>
+
+    <section class="categories__content">
+      <CategoryManager ref="managerRef" />
+    </section>
   </div>
 </template>
 
 <style scoped>
-.page.sectioned {
-  gap: clamp(2rem, 2.5vw, 2.75rem);
+.categories {
+  gap: var(--ft-space-8);
 }
 
-.page-head {
-  gap: var(--ft-space-sm);
-}
-
-.page-head p {
-  margin: 0;
-  max-width: 640px;
+.categories__content {
+  display: flex;
+  flex-direction: column;
+  gap: var(--ft-space-6);
 }
 </style>

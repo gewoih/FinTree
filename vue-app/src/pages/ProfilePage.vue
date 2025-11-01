@@ -90,8 +90,8 @@ async function handleSubmit() {
   if (!form.baseCurrencyCode) {
     toast.add({
       severity: 'warn',
-      summary: 'Выберите валюту',
-      detail: 'Укажите базовую валюту прежде чем обновлять профиль.',
+      summary: 'Select a currency',
+      detail: 'Choose a base currency before updating your profile.',
       life: 2500,
     });
     return;
@@ -105,16 +105,16 @@ async function handleSubmit() {
   if (success) {
     toast.add({
       severity: 'success',
-      summary: 'Профиль обновлён',
-      detail: 'Изменения успешно применены.',
+      summary: 'Profile updated',
+      detail: 'Your changes have been applied.',
       life: 2500,
     });
     resetForm();
   } else {
     toast.add({
       severity: 'error',
-      summary: 'Ошибка сохранения',
-      detail: 'Не удалось обновить профиль. Попробуйте ещё раз.',
+      summary: 'Save failed',
+      detail: 'Unable to update the profile. Please try again.',
       life: 3000,
     });
   }
@@ -127,22 +127,21 @@ function handleClearTelegram() {
 
 <template>
   <div class="page profile-page">
-    <section class="ft-section">
-      <div class="ft-section__head">
-        <span class="ft-kicker">Профиль</span>
-        <h1 class="ft-display ft-display--section">Личные настройки</h1>
-        <p class="ft-text ft-text--muted">
-          Обновите базовую валюту и Telegram-аккаунт — эти параметры влияют на аналитику и уведомления.
-        </p>
-      </div>
-    </section>
+    <PageHeader
+      title="Profile"
+      subtitle="Update your base currency and Telegram handle for smarter insights"
+      :breadcrumbs="[
+        { label: 'Home', to: '/dashboard' },
+        { label: 'Profile' }
+      ]"
+    />
 
     <Card class="ft-card profile-card">
       <template #title>
         <div class="card-header">
           <div>
-            <h3 class="card-title">Ваши данные</h3>
-            <p class="card-subtitle">Редактируйте настройки прямо здесь, без дополнительных диалогов.</p>
+            <h3 class="card-title">Account details</h3>
+            <p class="card-subtitle">Manage profile preferences without leaving the page.</p>
           </div>
         </div>
       </template>
@@ -151,7 +150,7 @@ function handleClearTelegram() {
         <form class="profile-form" @submit.prevent="handleSubmit">
           <div class="profile-grid">
             <div class="profile-row">
-              <label>Имя</label>
+              <label>Name</label>
               <p>{{ currentUser?.name ?? '—' }}</p>
             </div>
 
@@ -161,7 +160,7 @@ function handleClearTelegram() {
             </div>
 
             <div class="profile-row">
-              <label>ID пользователя</label>
+              <label>User ID</label>
               <p class="muted">{{ currentUser?.id ?? '—' }}</p>
             </div>
           </div>
@@ -170,25 +169,25 @@ function handleClearTelegram() {
 
           <div class="profile-grid editable">
             <div class="profile-row">
-              <label for="profileCurrency">Базовая валюта</label>
+              <label for="profileCurrency">Base currency</label>
               <Select
                 id="profileCurrency"
                 v-model="form.baseCurrencyCode"
                 :options="currencyOptions"
                 option-label="label"
                 option-value="value"
-                placeholder="Выберите валюту"
+                placeholder="Select currency"
                 class="w-full"
                 :disabled="isLoading"
               />
               <small v-if="isLoading" class="helper-text ft-text ft-text--muted">
-                Загружаем доступные валюты…
+                Loading available currencies…
               </small>
               <small v-else-if="selectedCurrencySummary" class="helper-text ft-text ft-text--muted">
                 {{ selectedCurrencySummary }}
               </small>
               <small v-else class="helper-text ft-text ft-text--muted">
-                Эта валюта используется по умолчанию в аналитике и отчётах.
+                This currency is used for analytics and reports.
               </small>
             </div>
 
@@ -205,7 +204,7 @@ function handleClearTelegram() {
                 />
                 <Button
                   type="button"
-                  label="Очистить"
+                  label="Clear"
                   text
                   severity="secondary"
                   :disabled="!form.telegramHandle || isSaving"
@@ -213,7 +212,7 @@ function handleClearTelegram() {
                 />
               </div>
               <small class="helper-text ft-text ft-text--muted">
-                Укажите ник без пробелов. Оставьте поле пустым, чтобы отвязать Telegram.
+                Enter a handle without spaces. Leave blank to unlink Telegram.
               </small>
             </div>
           </div>
@@ -221,7 +220,7 @@ function handleClearTelegram() {
           <div class="actions">
             <Button
               type="button"
-              label="Сбросить изменения"
+              label="Reset changes"
               outlined
               severity="secondary"
               :disabled="!hasChanges || isSaving"
@@ -229,7 +228,7 @@ function handleClearTelegram() {
             />
             <Button
               type="submit"
-              label="Обновить профиль"
+              label="Update profile"
               icon="pi pi-check"
               :loading="isSaving"
               :disabled="!canSubmit"

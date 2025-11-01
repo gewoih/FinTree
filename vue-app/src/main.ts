@@ -1,6 +1,8 @@
+import './assets/design-tokens.css';
 import './style.css';
 import './styles/theme.css';
 import './styles/prime-overrides.css';
+import './primevue-theme.css';
 import { createApp } from 'vue';
 import { createPinia } from 'pinia';
 import App from './App.vue';
@@ -11,6 +13,7 @@ import Aura from '@primeuix/themes/aura';
 import "primeicons/primeicons.css";
 import ToastService from 'primevue/toastservice';
 import ConfirmationService from 'primevue/confirmationservice';
+import { registerComponents } from './components';
 
 const app = createApp(App);
 
@@ -21,8 +24,17 @@ app.use(router);
 
 app.use(PrimeVue, {
     theme: {
-        preset: Aura
+        preset: Aura,
+        options: {
+            darkModeSelector: '.dark-mode',
+            cssLayer: {
+                name: 'primevue',
+                order: 'reset, primevue'
+            }
+        }
     }
 });
+
+registerComponents(app);
 
 app.mount('#app')

@@ -1,258 +1,303 @@
 <script setup lang="ts">
-import { ref, computed } from 'vue';
-import Button from 'primevue/button';
-import Tag from 'primevue/tag';
-import { useConfirm } from 'primevue/useconfirm';
-import { useToast } from 'primevue/usetoast';
-import { useFinanceStore } from '../stores/finance';
-import CategoryFormModal from './CategoryFormModal.vue';
-import type { Category } from '../types';
+import { computed, ref } from 'vue'
+import Button from 'primevue/button'
+import Tag from 'primevue/tag'
+import Skeleton from 'primevue/skeleton'
+import { useConfirm } from 'primevue/useconfirm'
+import { useToast } from 'primevue/usetoast'
+import { useFinanceStore } from '../stores/finance'
+import CategoryFormModal from './CategoryFormModal.vue'
+import type { Category } from '../types'
 
-const store = useFinanceStore();
-const toast = useToast();
-const confirm = useConfirm();
+const financeStore = useFinanceStore()
+const toast = useToast()
+const confirm = useConfirm()
 
-const modalVisible = ref(false);
-const editingCategory = ref<Category | null>(null);
-const busyId = ref<string | null>(null);
+const modalVisible = ref(false)
+const editingCategory = ref<Category | null>(null)
+const pendingCategoryId = ref<string | null>(null)
 
-const categories = computed(() => store.categories);
-const areCategoriesLoading = computed(() => store.areCategoriesLoading);
+const categories = computed<Category[]>(() => financeStore.categories ?? [])
+const loadingCategories = computed(() => financeStore.areCategoriesLoading)
 
-// Separate system and user categories
-const systemCategories = computed(() => categories.value.filter(c => c.isSystem));
-const userCategories = computed(() => categories.value.filter(c => !c.isSystem));
+const systemCategories = computed(() => categories.value.filter((category: Category) => category.isSystem))
+const userCategories = computed(() => categories.value.filter((category: Category) => !category.isSystem))
 
 const openModal = (category?: Category) => {
   if (category?.isSystem) {
     toast.add({
       severity: 'info',
-      summary: 'Системная категория',
-      detail: 'Встроенные категории недоступны для редактирования.',
-      life: 2500,
-    });
-    return;
+      summary: 'System category',
+      detail: 'Built-in categories cannot be edited.',
+      life: 2500
+    })
+    return
   }
 
-  editingCategory.value = category ?? null;
-  modalVisible.value = true;
-};
+  editingCategory.value = category ?? null
+  modalVisible.value = true
+}
 
 const handleDelete = (category: Category) => {
   if (category.isSystem) {
     toast.add({
       severity: 'warn',
-      summary: 'Системная категория',
-      detail: 'Нельзя удалять встроенные категории.',
-      life: 2500,
-    });
-    return;
+      summary: 'Protected category',
+      detail: 'System categories cannot be removed.',
+      life: 2500
+    })
+    return
   }
 
   confirm.require({
-    message: `Удалить категорию «${category.name}»?`,
-    header: 'Подтверждение',
-    acceptLabel: 'Удалить',
-    rejectLabel: 'Отмена',
+    message: `Delete category “${category.name}”?`,
+    header: 'Confirm deletion',
+    acceptLabel: 'Delete',
+    rejectLabel: 'Cancel',
     icon: 'pi pi-exclamation-triangle',
     acceptClass: 'p-button-danger',
     accept: async () => {
-      busyId.value = category.id;
-      const success = await store.deleteCategory(category.id);
-      busyId.value = null;
+      pendingCategoryId.value = category.id
+      const success = await financeStore.deleteCategory(category.id)
+      pendingCategoryId.value = null
       toast.add({
         severity: success ? 'success' : 'error',
-        summary: success ? 'Категория удалена' : 'Ошибка',
-        life: 2500,
-      });
-    },
-  });
-};
+        summary: success ? 'Category removed' : 'Delete failed',
+        detail: success ? 'The category is no longer available.' : 'Please try again later.',
+        life: 2500
+      })
+    }
+  })
+}
+
+defineExpose({
+  openModal
+})
 </script>
 
 <template>
-  <section class="manager-card ft-card ft-card--muted">
-    <header class="manager-head">
-      <div class="ft-section__head">
-        <span class="ft-kicker">Категории</span>
-        <h3>Категории расходов</h3>
-        <p class="ft-text ft-text--muted">Настройте списки, чтобы быстрее находить операции.</p>
+  <section class="categories ft-card">
+    <header class="categories__header">
+      <div>
+        <h3>Categories</h3>
+        <p>Organise expenses into meaningful groups for faster analytics.</p>
       </div>
-      <Button label="Добавить категорию" icon="pi pi-plus" size="small" @click="openModal()" />
+      <Button
+        label="Create category"
+        icon="pi pi-plus"
+        @click="openModal()"
+      />
     </header>
 
-    <div v-if="areCategoriesLoading" class="ft-empty">
-      <p class="ft-text ft-text--muted">Загружаем категории...</p>
+    <div v-if="loadingCategories" class="categories__skeleton">
+      <Skeleton v-for="i in 3" :key="i" height="68px" />
     </div>
 
-    <div v-else-if="categories.length === 0" class="ft-empty">
-      <p class="ft-text ft-text--muted">Категории не найдены. Создайте свою первую.</p>
-    </div>
+    <EmptyState
+      v-else-if="categories.length === 0"
+      icon="pi-tags"
+      title="No categories created"
+      description="Add your first category to start grouping transactions."
+      action-label="Create category"
+      action-icon="pi pi-plus"
+      @action="openModal()"
+    />
 
-    <div v-else class="categories-container">
-      <!-- User Categories Section -->
-      <div v-if="userCategories.length > 0" class="category-section">
-        <h4 class="section-title">
-          <i class="pi pi-user"></i>
-          Пользовательские категории
+    <div v-else class="categories__sections">
+      <div v-if="userCategories.length" class="category-section">
+        <h4>
+          <i class="pi pi-user" aria-hidden="true" />
+          Personal categories
         </h4>
+
         <ul class="category-list">
-          <li v-for="category in userCategories" :key="category.id" class="category-item">
+          <li
+            v-for="category in userCategories"
+            :key="category.id"
+            class="category-item"
+          >
             <div class="category-info">
-              <span class="color-dot" :style="{ backgroundColor: category.color }"></span>
-              <div>
-                <p class="category-name">{{ category.name }}</p>
-              </div>
+              <span class="color-dot" :style="{ backgroundColor: category.color }" />
+              <span class="category-name">{{ category.name }}</span>
             </div>
 
-            <div class="actions">
+            <div class="category-actions">
               <Button
-                  label="Изменить"
-                  size="small"
-                  text
-                  @click="openModal(category)"
+                label="Edit"
+                text
+                @click="openModal(category)"
               />
               <Button
-                  label="Удалить"
-                  size="small"
-                  text
-                  severity="danger"
-                  :loading="busyId === category.id"
-                  @click="handleDelete(category)"
+                label="Delete"
+                text
+                severity="danger"
+                :loading="pendingCategoryId === category.id"
+                @click="handleDelete(category)"
               />
             </div>
           </li>
         </ul>
       </div>
 
-      <!-- System Categories Section -->
-      <div v-if="systemCategories.length > 0" class="category-section">
-        <h4 class="section-title">
-          <i class="pi pi-lock"></i>
-          Системные категории
+      <div v-if="systemCategories.length" class="category-section">
+        <h4>
+          <i class="pi pi-lock" aria-hidden="true" />
+          System categories
         </h4>
+
         <ul class="category-list">
-          <li v-for="category in systemCategories" :key="category.id" class="category-item category-item--system">
+          <li
+            v-for="category in systemCategories"
+            :key="category.id"
+            class="category-item category-item--system"
+          >
             <div class="category-info">
-              <span class="color-dot" :style="{ backgroundColor: category.color }"></span>
-              <div>
-                <p class="category-name">
-                  {{ category.name }}
-                  <Tag value="Системная" severity="info" rounded />
-                </p>
-                <small class="ft-text ft-text--muted">
-                  Защищена от изменений
-                </small>
-              </div>
+              <span class="color-dot" :style="{ backgroundColor: category.color }" />
+              <span class="category-name">
+                {{ category.name }}
+                <Tag value="System" severity="info" rounded />
+              </span>
             </div>
+            <span class="category-note">Protected · cannot edit or delete</span>
           </li>
         </ul>
       </div>
     </div>
 
-    <CategoryFormModal v-model:visible="modalVisible" :category="editingCategory" />
+    <CategoryFormModal
+      v-model:visible="modalVisible"
+      :category="editingCategory"
+    />
   </section>
 </template>
 
 <style scoped>
-.manager-card {
-  gap: clamp(1.5rem, 2vw, 2rem);
+.categories {
+  gap: var(--ft-space-5);
 }
 
-.manager-head {
+.categories__header {
   display: flex;
   justify-content: space-between;
-  gap: 1.5rem;
-  flex-wrap: wrap;
   align-items: flex-start;
+  gap: var(--ft-space-4);
 }
 
-.categories-container {
+.categories__header h3 {
+  margin: 0;
+  font-size: var(--ft-text-xl);
+  color: var(--ft-heading);
+}
+
+.categories__header p {
+  margin: var(--ft-space-1) 0 0;
+  color: var(--ft-text-muted);
+  font-size: var(--ft-text-sm);
+}
+
+.categories__skeleton {
+  display: grid;
+  gap: var(--ft-space-3);
+}
+
+.categories__sections {
   display: flex;
   flex-direction: column;
-  gap: clamp(2rem, 3vw, 2.5rem);
+  gap: var(--ft-space-6);
 }
 
 .category-section {
   display: flex;
   flex-direction: column;
-  gap: clamp(1rem, 1.5vw, 1.25rem);
+  gap: var(--ft-space-3);
 }
 
-.section-title {
+.category-section h4 {
   margin: 0;
-  font-size: clamp(1rem, 1.2vw, 1.1rem);
-  font-weight: 600;
+  font-size: var(--ft-text-base);
+  font-weight: var(--ft-font-semibold);
   color: var(--ft-heading);
   display: flex;
   align-items: center;
-  gap: 0.5rem;
-  padding-bottom: 0.5rem;
-  border-bottom: 1px solid var(--ft-border-soft);
+  gap: var(--ft-space-2);
 }
 
-.section-title i {
-  font-size: 0.9rem;
-  color: var(--ft-accent);
+.category-section h4 i {
+  color: var(--ft-primary-500);
 }
 
 .category-list {
   list-style: none;
-  margin: 0;
-  padding: 0;
   display: flex;
   flex-direction: column;
-  gap: clamp(0.85rem, 1.2vw, 1.2rem);
+  gap: var(--ft-space-2);
+  margin: 0;
+  padding: 0;
 }
 
 .category-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--ft-space-3);
   border: 1px solid var(--ft-border-soft);
   border-radius: var(--ft-radius-lg);
-  padding: clamp(0.95rem, 1.2vw, 1.2rem) clamp(1.1rem, 1.6vw, 1.4rem);
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  gap: clamp(0.75rem, 1vw, 1rem);
-  background: rgba(13, 22, 43, 0.8);
-  box-shadow: 0 18px 40px rgba(8, 15, 34, 0.4);
-  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  background: var(--ft-surface-soft);
+  transition: transform var(--ft-transition-fast), box-shadow var(--ft-transition-fast), border-color var(--ft-transition-fast);
 }
 
 .category-item:hover {
-  transform: translateY(-1px);
-  box-shadow: 0 20px 44px rgba(8, 15, 34, 0.48);
+  transform: translateY(-2px);
+  box-shadow: var(--ft-shadow-soft);
+  border-color: var(--ft-border-default);
 }
 
 .category-item--system {
-  background: rgba(13, 22, 43, 0.5);
-  opacity: 0.85;
+  cursor: not-allowed;
 }
 
 .category-info {
   display: flex;
-  gap: 0.85rem;
   align-items: center;
+  gap: var(--ft-space-3);
 }
 
 .color-dot {
-  width: 18px;
-  height: 18px;
+  width: 14px;
+  height: 14px;
   border-radius: 50%;
-  border: 3px solid rgba(255, 255, 255, 0.8);
-  box-shadow: 0 0 0 3px rgba(15, 23, 42, 0.06);
+  border: 2px solid rgba(0, 0, 0, 0.08);
 }
 
 .category-name {
-  margin: 0;
-  font-weight: 600;
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
+  font-weight: var(--ft-font-medium);
   color: var(--ft-heading);
+  display: inline-flex;
+  align-items: center;
+  gap: var(--ft-space-2);
 }
 
-.actions {
+.category-note {
+  font-size: var(--ft-text-xs);
+  color: var(--ft-text-muted);
+}
+
+.category-actions {
   display: flex;
-  gap: 0.6rem;
+  align-items: center;
+  gap: var(--ft-space-1);
+}
+
+@media (max-width: 600px) {
+  .category-item {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: var(--ft-space-3);
+  }
+
+  .category-actions {
+    width: 100%;
+    justify-content: flex-start;
+  }
 }
 </style>

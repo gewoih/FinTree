@@ -23,7 +23,7 @@ const props = defineProps<{
 
 const emit = defineEmits(['update:visible']);
 
-// --- Состояние формы ---
+// --- Form state ---
 const selectedAccount = ref<Account | null>(null);
 const amount = ref<number | null>(null);
 const description = ref<string>('');
@@ -31,18 +31,18 @@ const date = ref<Date>(new Date());
 const isMandatory = ref<boolean>(false);
 const selectedCategory = ref<Category | null>(null);
 
-// --- Вычисляемые значения ---
+// --- Computed helpers ---
 const sortedCategories = computed(() => [...store.categories].sort((a, b) => a.name.localeCompare(b.name)));
 const defaultCategory = computed(() => sortedCategories.value[0] ?? null);
 
-// --- Логика флоу ---
+// --- Flow logic ---
 
-// 2. Устанавливаем значения по умолчанию при открытии формы
+// Initialise defaults when the modal opens
 watch(() => props.visible, (newVal) => {
   if (newVal) {
     selectedAccount.value = store.primaryAccount || store.accounts[0] || null;
 
-    // Пытаемся восстановить последнюю использованную категорию
+    // Restore the last used category if available
     const lastCategoryId = localStorage.getItem('lastUsedCategoryId');
     if (lastCategoryId) {
       const lastCategory = store.categories.find(c => c.id === lastCategoryId);
@@ -67,7 +67,7 @@ watch(
   }
 );
 
-// 4. Валидация суммы и форматирование валюты
+// Validate amount and format currency helpers
 const currencyCode = computed(
   () => selectedAccount.value?.currency?.code ?? selectedAccount.value?.currencyCode ?? 'KZT'
 );
@@ -75,7 +75,7 @@ const currencySymbol = computed(() => selectedAccount.value?.currency?.symbol ??
 const isAmountValid = computed(() => validators.isAmountValid(amount.value));
 const submitDisabled = computed(() => !isAmountValid.value || !selectedCategory.value || !selectedAccount.value);
 
-// --- Отправка формы ---
+// --- Submit handler ---
 const { isSubmitting, handleSubmit: handleFormSubmit, showWarning } = useFormModal(
   async () => {
     const payload: NewTransactionPayload = {
@@ -90,29 +90,29 @@ const { isSubmitting, handleSubmit: handleFormSubmit, showWarning } = useFormMod
     return await store.addExpense(payload);
   },
   {
-    successMessage: 'Расход успешно добавлен!',
-    errorMessage: 'Не удалось сохранить расход.',
+    successMessage: 'Transaction added successfully.',
+    errorMessage: 'Unable to save the transaction.',
   }
 );
 
 const handleSubmit = async () => {
   if (!isAmountValid.value || !selectedAccount.value || !selectedCategory.value) {
-    showWarning('Проверьте все обязательные поля: счет, категорию и сумму.');
+    showWarning('Fill in account, category, and amount before saving.');
     return;
   }
 
   const success = await handleFormSubmit();
   if (success) {
-    // Сохраняем последнюю использованную категорию
-    if (selectedCategory.value) {
-      localStorage.setItem('lastUsedCategoryId', selectedCategory.value.id);
-    }
+  // Persist the most recently used category
+  if (selectedCategory.value) {
+    localStorage.setItem('lastUsedCategoryId', selectedCategory.value.id);
+  }
     emit('update:visible', false);
   }
 };
 
 onMounted(() => {
-  // Инициализация популярной категории при первом монтировании
+  // Initialise default category on mount
   selectedCategory.value = defaultCategory.value;
 });
 </script>
@@ -130,13 +130,13 @@ onMounted(() => {
     <form class="expense-form" @submit.prevent="handleSubmit">
       <section class="form-fields">
         <div class="field">
-          <label for="account">Счет *</label>
+          <label for="account">Account *</label>
           <Select
               id="account"
               v-model="selectedAccount"
               :options="store.accounts"
               option-label="name"
-              placeholder="Выберите счет"
+              placeholder="Select account"
               required
               class="w-full"
           >
@@ -152,17 +152,17 @@ onMounted(() => {
               </div>
             </template>
           </Select>
-          <small>Средства будут списаны с указанного счета.</small>
+          <small>Funds will be withdrawn from the selected account.</small>
         </div>
 
         <div class="field">
-          <label for="category">Категория *</label>
+          <label for="category">Category *</label>
           <Select
               id="category"
               v-model="selectedCategory"
               :options="sortedCategories"
               option-label="name"
-              placeholder="Выберите категорию"
+              placeholder="Select category"
               required
               class="w-full"
           >
@@ -173,11 +173,11 @@ onMounted(() => {
               </div>
             </template>
           </Select>
-          <small>По умолчанию используется первая категория в списке.</small>
+          <small>The first category in the list is used by default.</small>
         </div>
 
         <div class="field">
-          <label for="amount">Сумма *</label>
+          <label for="amount">Amount *</label>
           <div class="amount-input">
             <InputNumber
                 id="amount"
@@ -194,12 +194,12 @@ onMounted(() => {
             <span class="currency-chip ft-pill">{{ currencySymbol || currencyCode }}</span>
           </div>
           <small v-if="!isAmountValid && amount !== null" class="error-text">
-            Сумма должна быть от {{ VALIDATION_RULES.minAmount }} до {{ VALIDATION_RULES.maxAmount }}
+            Amount must be between {{ VALIDATION_RULES.minAmount }} and {{ VALIDATION_RULES.maxAmount }}
           </small>
-        </div>
+      </div>
 
-        <div class="field">
-          <label for="date">Дата операции</label>
+      <div class="field">
+        <label for="date">Transaction date</label>
           <DatePicker
               id="date"
               v-model="date"
@@ -208,29 +208,29 @@ onMounted(() => {
               required
               class="w-full"
           />
-          <small>По умолчанию — текущая дата.</small>
-        </div>
+          <small>Defaults to today.</small>
+      </div>
 
-        <div class="field">
-          <label for="isMandatory">Обязательный расход</label>
-          <Checkbox id="isMandatory" v-model="isMandatory" binary />
-        </div>
+      <div class="field">
+        <label for="isMandatory">Recurring expense</label>
+        <Checkbox id="isMandatory" v-model="isMandatory" binary />
+      </div>
 
-        <div class="field full">
-          <label for="description">Примечание</label>
-          <InputText
-              id="description"
-              v-model="description"
-              placeholder="Например: кофе с собой"
-              class="w-full"
-          />
-        </div>
+      <div class="field full">
+        <label for="description">Note</label>
+        <InputText
+            id="description"
+            v-model="description"
+            placeholder="For example: morning coffee"
+            class="w-full"
+        />
+      </div>
       </section>
 
       <footer class="form-actions">
         <Button
             type="button"
-            label="Отмена"
+            label="Cancel"
             icon="pi pi-times"
             severity="secondary"
             outlined
@@ -238,7 +238,7 @@ onMounted(() => {
         />
         <Button
             type="submit"
-            label="Сохранить расход"
+            label="Save transaction"
             icon="pi pi-check"
             :disabled="submitDisabled"
             :loading="isSubmitting"

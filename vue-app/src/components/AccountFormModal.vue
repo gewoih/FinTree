@@ -108,14 +108,14 @@ const { isSubmitting, handleSubmit: handleFormSubmit, showWarning } = useFormMod
     });
   },
   {
-    successMessage: 'Новый счет добавлен в список.',
-    errorMessage: 'Не удалось создать счет. Проверьте данные и повторите попытку.',
+    successMessage: 'Account created successfully.',
+    errorMessage: 'Unable to create account. Please check the details and try again.',
   }
 );
 
 const handleSubmit = async () => {
   if (!name.value.trim() || !currencyCodeForSubmit.value) {
-    showWarning('Введите название счета и выберите валюту.');
+    showWarning('Enter an account name and select a currency.');
     return;
   }
 
@@ -129,25 +129,25 @@ const handleSubmit = async () => {
 <template>
   <Dialog
       :visible="props.visible"
-      header="Новый счет"
+      header="Add account"
       :modal="true"
       @update:visible="val => emit('update:visible', val)"
       :style="{ width: '480px' }"
   >
     <form @submit.prevent="handleSubmit" class="form-grid">
       <div class="field">
-        <label for="name">Название</label>
+        <label for="name">Account name</label>
         <InputText
             id="name"
             v-model="name"
-            placeholder="Например, «Основная карта»"
+            placeholder="For example, “Primary card”"
             required
             class="w-full"
         />
       </div>
 
       <div class="field">
-        <label for="type">Тип счета</label>
+        <label for="type">Account type</label>
         <Select
             id="type"
             v-model="accountType"
@@ -159,34 +159,34 @@ const handleSubmit = async () => {
       </div>
 
       <div class="field">
-        <label for="currency">Валюта</label>
+        <label for="currency">Currency</label>
         <Select
             id="currency"
             v-model="selectedCurrencyCode"
             :options="currencyOptions"
             option-label="label"
             option-value="value"
-            placeholder="Выберите валюту"
+            placeholder="Select currency"
             class="w-full"
             :disabled="store.areCurrenciesLoading || !currencyOptions.length"
         />
-        <small v-if="store.areCurrenciesLoading" class="helper-text ft-text ft-text--muted">Загружаем список валют…</small>
-        <small v-else-if="!currencyOptions.length" class="helper-text error">Не удалось загрузить валюты. Проверьте подключение.</small>
+        <small v-if="store.areCurrenciesLoading" class="helper-text ft-text ft-text--muted">Loading currencies…</small>
+        <small v-else-if="!currencyOptions.length" class="helper-text error">Unable to load currencies. Check your connection.</small>
         <small v-else-if="currencySummary" class="helper-text ft-text ft-text--muted">{{ currencySummary }}</small>
-        <small v-else class="helper-text ft-text ft-text--muted">Выберите валюту для нового счета.</small>
+        <small v-else class="helper-text ft-text ft-text--muted">Select a currency for the new account.</small>
       </div>
 
       <div class="actions">
         <Button
             type="button"
-            label="Отмена"
+            label="Cancel"
             severity="secondary"
             outlined
             @click="emit('update:visible', false)"
         />
         <Button
             type="submit"
-            label="Создать"
+            label="Create"
             icon="pi pi-plus"
             :loading="isSubmitting"
             :disabled="!isFormReady || isSubmitting"

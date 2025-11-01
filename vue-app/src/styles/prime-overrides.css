@@ -1,4 +1,8 @@
 :root {
+  color-scheme: light;
+}
+
+.dark-mode {
   color-scheme: dark;
 }
 
@@ -15,10 +19,27 @@
 .p-inputtextarea,
 .p-autocomplete-input,
 .p-password-input {
-  background-color: var(--ft-surface-elevated) !important;
-  color: var(--ft-heading) !important;
-  border-color: var(--ft-border-soft) !important;
-  transition: border-color 0.2s ease, box-shadow 0.2s ease, background-color 0.2s ease !important;
+  background-color: var(--ft-surface-base) !important;
+  color: var(--ft-text-primary) !important;
+  border-color: var(--ft-border-subtle) !important;
+  transition: border-color var(--ft-transition-fast), box-shadow var(--ft-transition-fast), background-color var(--ft-transition-fast) !important;
+}
+
+.dark-mode .p-component,
+.dark-mode .p-inputtext,
+.dark-mode .p-select,
+.dark-mode .p-dropdown,
+.dark-mode .p-multiselect,
+.dark-mode .p-select-label,
+.dark-mode .p-select-trigger,
+.dark-mode .p-datepicker input,
+.dark-mode .p-calendar input,
+.dark-mode .p-inputnumber-input,
+.dark-mode .p-inputtextarea,
+.dark-mode .p-autocomplete-input,
+.dark-mode .p-password-input {
+  background-color: var(--ft-surface-base) !important;
+  border-color: var(--ft-border-default) !important;
 }
 
 .p-inputtext:hover:not(:disabled),
@@ -27,7 +48,7 @@
 .p-calendar:hover:not(:disabled),
 .p-inputnumber:hover:not(:disabled),
 .p-inputtextarea:hover:not(:disabled) {
-  border-color: rgba(148, 163, 184, 0.35) !important;
+  border-color: var(--ft-border-default) !important;
 }
 
 .p-inputtext:focus,
@@ -36,14 +57,14 @@
 .p-calendar:focus-within,
 .p-inputnumber:focus-within,
 .p-inputtextarea:focus {
-  border-color: var(--ft-accent) !important;
-  box-shadow: 0 0 0 3px rgba(56, 189, 248, 0.12) !important;
+  border-color: var(--ft-interactive-hover) !important;
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.16) !important;
 }
 
 .p-inputtext::placeholder,
 .p-inputtextarea::placeholder {
   color: var(--ft-text-muted) !important;
-  opacity: 0.7 !important;
+  opacity: 0.8 !important;
 }
 
 .p-dropdown,
@@ -51,60 +72,45 @@
 .p-calendar,
 .p-inputnumber,
 .p-multiselect {
-  border-radius: 14px !important;
+  border-radius: var(--ft-radius-lg) !important;
+  min-height: var(--ft-input-height-md);
 }
 
 .p-button:not(.p-button-link) {
-  border-radius: 14px;
-  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  border-radius: var(--ft-radius-lg);
+  transition: transform var(--ft-transition-fast), box-shadow var(--ft-transition-fast);
 }
 
 .p-button:not(.p-button-link):hover:not(:disabled) {
   transform: translateY(-1px);
-  box-shadow: 0 6px 16px rgba(56, 189, 248, 0.25);
+  box-shadow: 0 8px 20px rgba(37, 99, 235, 0.25);
 }
 
 .p-button:not(.p-button-link):active:not(:disabled) {
   transform: translateY(0);
-  transition-duration: 0.1s;
 }
 
-.p-button-success:hover:not(:disabled) {
-  box-shadow: 0 6px 16px rgba(16, 185, 129, 0.3);
-}
-
-.p-button-danger:hover:not(:disabled) {
-  box-shadow: 0 6px 16px rgba(239, 68, 68, 0.3);
-}
-
-.p-dialog .p-dialog-content {
-  background: var(--ft-surface-elevated);
-}
-
+.p-dialog .p-dialog-content,
 .p-dialog .p-dialog-header {
-  background: var(--ft-surface-elevated);
+  background: var(--ft-surface-soft);
 }
 
 .p-datepicker,
 .p-select-panel,
 .p-dropdown-panel,
 .p-multiselect-panel {
-  background: rgba(13, 22, 43, 0.94) !important;
-  border-radius: 16px !important;
+  background: var(--ft-surface-soft) !important;
+  border-radius: var(--ft-radius-card) !important;
   border: 1px solid var(--ft-border-soft) !important;
-  box-shadow: 0 22px 48px rgba(8, 15, 34, 0.45) !important;
+  box-shadow: var(--ft-shadow-card) !important;
 }
 
 .p-datatable {
-  background: transparent;
-  color: var(--ft-heading);
-}
-
-.p-datatable-wrapper {
-  border-radius: 22px;
-  overflow: hidden;
+  background: var(--ft-surface-soft);
+  color: var(--ft-text-primary);
+  border-radius: var(--ft-radius-card);
   border: 1px solid var(--ft-border-soft);
-  background: rgba(15, 23, 42, 0.65);
+  overflow: hidden;
 }
 
 .p-datatable table {
@@ -112,67 +118,68 @@
 }
 
 .p-datatable .p-datatable-thead > tr > th {
-  background: rgba(15, 23, 42, 0.82) !important;
-  color: var(--ft-heading) !important;
+  background: var(--ft-surface-muted) !important;
+  color: var(--ft-text-secondary) !important;
   border-bottom: 1px solid var(--ft-border-soft);
   padding-block: 0.85rem;
+  position: sticky;
+  top: 0;
+  z-index: 1;
 }
 
 .p-datatable .p-datatable-tbody > tr {
-  background: rgba(12, 20, 36, 0.85) !important;
-  color: var(--ft-heading) !important;
+  background: var(--ft-surface-soft) !important;
+  color: var(--ft-text-primary) !important;
+  transition: background-color var(--ft-transition-fast), transform var(--ft-transition-fast);
 }
 
 .p-datatable .p-datatable-tbody > tr:nth-child(even) {
-  background: rgba(13, 22, 43, 0.78) !important;
+  background: rgba(37, 99, 235, 0.04) !important;
 }
 
-.p-datatable .p-datatable-tbody > tr > td {
-  border-bottom: 1px solid rgba(148, 163, 184, 0.16);
-}
-
-.p-datatable .p-datatable-tbody > tr {
-  transition: background-color 0.2s cubic-bezier(0.4, 0, 0.2, 1), transform 0.15s ease;
+.dark-mode .p-datatable .p-datatable-tbody > tr:nth-child(even) {
+  background: rgba(37, 99, 235, 0.1) !important;
 }
 
 .p-datatable .p-datatable-tbody > tr:hover {
-  background: rgba(56, 189, 248, 0.10) !important;
-  cursor: pointer;
+  background: rgba(37, 99, 235, 0.08) !important;
 }
 
-.p-datatable .p-datatable-tbody > tr:active {
-  background: rgba(56, 189, 248, 0.15) !important;
-  transition-duration: 0.05s;
+.dark-mode .p-datatable .p-datatable-tbody > tr:hover {
+  background: rgba(37, 99, 235, 0.18) !important;
+}
+
+.p-datatable .p-datatable-tbody > tr > td {
+  border-bottom: 1px solid var(--ft-border-soft);
 }
 
 .p-tag {
   border-radius: 999px !important;
   padding: 0.35rem 0.75rem !important;
+  font-weight: var(--ft-font-medium) !important;
 }
 
 .p-datepicker .p-datepicker-calendar table td > span {
-  border-radius: 12px !important;
+  border-radius: var(--ft-radius-md) !important;
 }
 
-/* Accessibility improvements */
 *:focus-visible {
-  outline: 2px solid var(--ft-accent);
-  outline-offset: 2px;
-  border-radius: 4px;
+  outline: 2px solid var(--ft-focus-ring);
+  outline-offset: 3px;
+  border-radius: 6px;
 }
 
 .p-button:focus-visible {
-  outline-offset: 3px;
+  outline-offset: 4px;
 }
 
-/* Card animations */
 .ft-card,
 .p-card {
-  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  transition: transform var(--ft-transition-fast), box-shadow var(--ft-transition-fast);
 }
 
 .ft-card:hover,
 .p-card:hover {
   transform: translateY(-2px);
-  box-shadow: 0 28px 58px rgba(8, 15, 34, 0.48);
+  box-shadow: var(--ft-shadow-soft);
 }

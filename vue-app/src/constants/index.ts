@@ -2,7 +2,7 @@
 
 export const APP_CONFIG = {
   name: 'FinTree',
-  description: 'Приложение для полноценного ведения личного капитала',
+  description: 'Modern personal finance tracking with insightful analytics',
   version: '1.0.0',
   author: 'FinTree Team'
 } as const;
@@ -10,37 +10,37 @@ export const APP_CONFIG = {
 export const NAVIGATION_ITEMS = [
   {
     id: 'home',
-    label: 'Главная',
+    label: 'Home',
     icon: 'pi pi-home',
     route: '/'
   },
   {
     id: 'analytics',
-    label: 'Аналитика',
+    label: 'Analytics',
     icon: 'pi pi-chart-line',
     route: '/analytics'
   },
   {
     id: 'accounts',
-    label: 'Счета',
+    label: 'Accounts',
     icon: 'pi pi-wallet',
     route: '/accounts'
   },
   {
     id: 'categories',
-    label: 'Категории',
+    label: 'Categories',
     icon: 'pi pi-tags',
     route: '/categories'
   },
   {
     id: 'expenses',
-    label: 'Расходы',
+    label: 'Transactions',
     icon: 'pi pi-arrow-circle-down',
     route: '/expenses'
   },
   {
     id: 'profile',
-    label: 'Профиль',
+    label: 'Profile',
     icon: 'pi pi-user',
     route: '/profile'
   }
@@ -74,6 +74,6 @@ export const TOAST_CONFIG = {
 export const CURRENT_USER_ID = 'e8f7ff88-d7f9-4f7a-a7ce-dae7e191c89c';
 
 export const ACCOUNT_TYPE_OPTIONS = [
-  { label: 'Банковский счет', value: 0 },
-  { label: 'Наличные', value: 1 }
+  { label: 'Bank account', value: 0 },
+  { label: 'Cash wallet', value: 1 }
 ] as const;

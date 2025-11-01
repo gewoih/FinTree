@@ -1,4 +1,5 @@
 import { createRouter, createWebHistory } from 'vue-router';
+import LandingPage from '../pages/LandingPage.vue';
 import HomePage from '../pages/HomePage.vue';
 import AccountsPage from '../pages/AccountsPage.vue';
 import CategoriesPage from '../pages/CategoriesPage.vue';
@@ -12,52 +13,58 @@ export const router = createRouter({
   history: createWebHistory(),
   routes: [
     {
+      path: '/',
+      name: 'landing',
+      component: LandingPage,
+      meta: { title: 'Smart Personal Finance Tracking', public: true },
+    },
+    {
       path: '/login',
       name: 'login',
       component: LoginPage,
-      meta: { title: 'Вход', public: true },
+      meta: { title: 'Sign In', public: true },
     },
     {
       path: '/register',
       name: 'register',
       component: RegisterPage,
-      meta: { title: 'Регистрация', public: true },
+      meta: { title: 'Sign Up', public: true },
     },
     {
-      path: '/',
-      name: 'home',
+      path: '/dashboard',
+      name: 'dashboard',
       component: HomePage,
-      meta: { title: 'Главная', requiresAuth: true },
+      meta: { title: 'Dashboard', requiresAuth: true },
     },
     {
       path: '/accounts',
       name: 'accounts',
       component: AccountsPage,
-      meta: { title: 'Счета', requiresAuth: true },
+      meta: { title: 'Accounts', requiresAuth: true },
     },
     {
       path: '/categories',
       name: 'categories',
       component: CategoriesPage,
-      meta: { title: 'Категории', requiresAuth: true },
+      meta: { title: 'Categories', requiresAuth: true },
     },
     {
       path: '/expenses',
       name: 'expenses',
       component: ExpensesPage,
-      meta: { title: 'Расходы', requiresAuth: true },
+      meta: { title: 'Transactions', requiresAuth: true },
     },
     {
       path: '/analytics',
       name: 'analytics',
       component: AnalyticsPage,
-      meta: { title: 'Аналитика', requiresAuth: true },
+      meta: { title: 'Analytics', requiresAuth: true },
     },
     {
       path: '/profile',
       name: 'profile',
       component: ProfilePage,
-      meta: { title: 'Профиль', requiresAuth: true },
+      meta: { title: 'Profile', requiresAuth: true },
     },
     {
       path: '/:pathMatch(.*)*',
@@ -70,7 +77,7 @@ export const router = createRouter({
 });
 
 // Navigation guard to check authentication
-router.beforeEach((to, from, next) => {
+router.beforeEach((to, _from, next) => {
   const token = localStorage.getItem('fintree_jwt_token');
   const isAuthenticated = !!token;
 
@@ -78,9 +85,9 @@ router.beforeEach((to, from, next) => {
   if (to.meta.requiresAuth && !isAuthenticated) {
     next('/login');
   }
-  // If user is authenticated and trying to access public routes, redirect to home
-  else if (to.meta.public && isAuthenticated) {
-    next('/');
+  // If user is authenticated and trying to access login/register, redirect to dashboard
+  else if ((to.name === 'login' || to.name === 'register') && isAuthenticated) {
+    next('/dashboard');
   }
   // Otherwise, proceed
   else {

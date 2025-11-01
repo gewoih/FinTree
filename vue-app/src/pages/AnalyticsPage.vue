@@ -22,7 +22,7 @@ import { apiService } from '../services/api.service.ts';
 import type { MonthlyExpenseDto } from '../types.ts';
 import { formatCurrency } from '../utils/formatters';
 
-// Регистрируем компоненты Chart.js
+// Register Chart.js components
 ChartJS.register(
   CategoryScale,
   LinearScale,
@@ -51,13 +51,22 @@ const analyticsCurrencyCode = computed(() => {
   );
 });
 
-const monthNameFormatter = new Intl.DateTimeFormat('ru-RU', { month: 'long' });
+const formatAmount = (value: number) => {
+  const currencyCode = analyticsCurrencyCode.value ?? 'USD'
+  return new Intl.NumberFormat('en-US', {
+    style: 'currency',
+    currency: currencyCode,
+    minimumFractionDigits: 2
+  }).format(Math.max(value, 0))
+}
+
+const monthNameFormatter = new Intl.DateTimeFormat('en-US', { month: 'long' });
 
 function capitalize(value: string): string {
   if (!value) {
     return value;
   }
-  return value.charAt(0).toLocaleUpperCase('ru-RU') + value.slice(1);
+  return value.charAt(0).toLocaleUpperCase('en-US') + value.slice(1);
 }
 
 function formatMonthLabel(year: number, month: number): string {
@@ -71,22 +80,22 @@ async function fetchMonthlyExpenses(): Promise<void> {
     const data = await apiService.getMonthlyExpenses();
     monthlyExpenses.value = Array.isArray(data) ? data : [];
   } catch (error) {
-    console.error('Ошибка загрузки ежемесячных расходов:', error);
+    console.error('Failed to load monthly expenses:', error);
     monthlyExpenses.value = [];
   }
 }
 
-// Моковые данные для демонстрации
-const months = ['Январь', 'Февраль', 'Март', 'Апрель', 'Май', 'Июнь', 'Июль', 'Август', 'Сентябрь', 'Октябрь'];
-const selectedMonth = ref('Октябрь');
+// Mock data for demo purposes
+const months = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October'];
+const selectedMonth = ref('October');
 const monthOptions = months.map(m => ({ label: m, value: m }));
 
-// График баланса по месяцам
+// Balance chart configuration
 const balanceChartData = computed(() => ({
   labels: months,
   datasets: [
     {
-      label: 'Общий баланс',
+      label: 'Total balance',
       data: [850000, 920000, 1050000, 980000, 1120000, 1180000, 1150000, 1250000, 1200000, 1280000],
       borderColor: 'rgba(56, 189, 248, 1)',
       backgroundColor: 'rgba(56, 189, 248, 0.1)',
@@ -101,20 +110,20 @@ const balanceChartData = computed(() => ({
   ]
 }));
 
-// Круговая диаграмма - расходы по категориям
+// Pie chart — spend by category
 const categoryChartData = computed(() => ({
-  labels: ['Продукты', 'Транспорт', 'Развлечения', 'Здоровье', 'Одежда', 'Жильё', 'Прочее'],
+  labels: ['Groceries', 'Transport', 'Entertainment', 'Health', 'Apparel', 'Housing', 'Other'],
   datasets: [
     {
       data: [85000, 42000, 28000, 35000, 22000, 95000, 35000],
       backgroundColor: [
-        'rgba(56, 189, 248, 0.8)',  // Голубой
-        'rgba(167, 139, 250, 0.8)', // Фиолетовый
-        'rgba(251, 146, 60, 0.8)',  // Оранжевый
-        'rgba(16, 185, 129, 0.8)',  // Зелёный
-        'rgba(244, 114, 182, 0.8)', // Розовый
-        'rgba(45, 212, 191, 0.8)',  // Бирюзовый
-        'rgba(148, 163, 184, 0.8)', // Серый
+        'rgba(56, 189, 248, 0.8)',  // Sky
+        'rgba(167, 139, 250, 0.8)', // Indigo
+        'rgba(251, 146, 60, 0.8)',  // Amber
+        'rgba(16, 185, 129, 0.8)',  // Emerald
+        'rgba(244, 114, 182, 0.8)', // Pink
+        'rgba(45, 212, 191, 0.8)',  // Teal
+        'rgba(148, 163, 184, 0.8)', // Slate
       ],
       borderColor: 'rgba(15, 23, 42, 0.8)',
       borderWidth: 2,
@@ -128,14 +137,14 @@ const sortedMonthlyExpenses = computed(() =>
     .sort((a, b) => (a.year === b.year ? a.month - b.month : a.year - b.year))
 );
 
-// Столбчатая диаграмма - расходы по месяцам
+// Bar chart — expenses by month
 const expensesChartData = computed(() => {
   const points = sortedMonthlyExpenses.value;
   return {
     labels: points.map(item => formatMonthLabel(item.year, item.month)),
     datasets: [
       {
-        label: 'Расходы',
+        label: 'Expenses',
         data: points.map(item => item.amount),
         backgroundColor: 'rgba(239, 68, 68, 0.7)',
         borderColor: 'rgba(239, 68, 68, 1)',
@@ -146,7 +155,7 @@ const expensesChartData = computed(() => {
   };
 });
 
-// Опции для графиков
+// Chart options
 const balanceChartOptions = {
   responsive: true,
   maintainAspectRatio: true,
@@ -171,7 +180,7 @@ const balanceChartOptions = {
       displayColors: true,
       callbacks: {
         label: function(context: any) {
-          return `${context.dataset.label}: ${context.parsed.y.toLocaleString('ru-RU')} ₸`;
+          return `${context.dataset.label}: ${formatAmount(context.parsed.y ?? 0)}`;
         }
       }
     }
@@ -187,7 +196,7 @@ const balanceChartOptions = {
         color: '#94a3b8',
         font: { size: 12 },
         callback: function(value: any) {
-          return value.toLocaleString('ru-RU') + ' ₸';
+          return formatAmount(value);
         }
       }
     }
@@ -237,7 +246,7 @@ const categoryChartOptions = {
         label: function(context: any) {
           const total = context.dataset.data.reduce((a: number, b: number) => a + b, 0);
           const percentage = ((context.parsed / total) * 100).toFixed(1);
-          return `${context.label}: ${context.parsed.toLocaleString('ru-RU')} ₸ (${percentage}%)`;
+          return `${context.label}: ${formatAmount(context.parsed ?? 0)} (${percentage}%)`;
         }
       }
     }
@@ -272,7 +281,7 @@ const expensesChartOptions = computed(() => {
             const value = context.parsed?.y ?? 0;
             const safeValue = Math.max(value, 0);
             if (!currencyCode) {
-              return `${context.dataset.label}: ${safeValue.toLocaleString('ru-RU')}`;
+          return `${context.dataset.label}: ${formatAmount(safeValue)}`;
             }
             return `${context.dataset.label}: ${formatCurrency(safeValue, currencyCode)}`;
           }
@@ -295,7 +304,7 @@ const expensesChartOptions = computed(() => {
               return typeof value === 'string' ? value : String(value);
             }
             if (!currencyCode) {
-              return numericValue.toLocaleString('ru-RU');
+              return numericValue.toLocaleString('en-US');
             }
             return formatCurrency(numericValue, currencyCode);
           }
@@ -317,26 +326,23 @@ onMounted(async () => {
 </script>
 
 <template>
-  <div class="page analytics-page">
-    <!-- Заголовок -->
-    <section class="ft-section">
-      <div class="ft-section__head">
-        <span class="ft-kicker">Финансовая аналитика</span>
-        <h1 class="ft-display ft-display--section">Обзор ваших финансов</h1>
-        <p class="ft-text ft-text--muted">
-          Визуализация доходов, расходов и баланса. Данные обновляются в реальном времени.
-        </p>
-      </div>
-    </section>
+  <div class="analytics page">
+    <PageHeader
+      title="Analytics"
+      subtitle="Visualise balance trends, spending categories, and monthly cash flow"
+      :breadcrumbs="[
+        { label: 'Home', to: '/dashboard' },
+        { label: 'Analytics' }
+      ]"
+    />
 
-    <!-- График баланса -->
-    <section class="ft-section">
-      <Card class="ft-card chart-card">
+    <section class="analytics__primary">
+      <Card class="chart-card ft-card">
         <template #title>
-          <div class="card-header">
+          <div class="chart-header">
             <div>
-              <h3 class="chart-title">Динамика общего баланса</h3>
-              <p class="chart-subtitle">Изменение баланса по месяцам</p>
+              <h3>Balance trend</h3>
+              <p>Month-over-month change in total balance</p>
             </div>
           </div>
         </template>
@@ -348,15 +354,13 @@ onMounted(async () => {
       </Card>
     </section>
 
-    <!-- Расходы и категории -->
-    <div class="charts-grid">
-      <!-- Круговая диаграмма категорий -->
-      <Card class="ft-card chart-card">
+    <section class="analytics__grid">
+      <Card class="chart-card ft-card">
         <template #title>
-          <div class="card-header">
+          <div class="chart-header">
             <div>
-              <h3 class="chart-title">Расходы по категориям</h3>
-              <p class="chart-subtitle">За выбранный месяц</p>
+              <h3>Spending by category</h3>
+              <p>Distribution for the selected month</p>
             </div>
             <Select
               v-model="selectedMonth"
@@ -374,13 +378,12 @@ onMounted(async () => {
         </template>
       </Card>
 
-      <!-- Столбчатая диаграмма расходов -->
-      <Card class="ft-card chart-card">
+      <Card class="chart-card">
         <template #title>
-          <div class="card-header">
+          <div class="chart-header">
             <div>
-              <h3 class="chart-title">Доходы и расходы</h3>
-              <p class="chart-subtitle">Сравнение по месяцам</p>
+              <h3>Monthly expenses</h3>
+              <p>Compare spending month over month</p>
             </div>
           </div>
         </template>
@@ -390,79 +393,57 @@ onMounted(async () => {
           </div>
         </template>
       </Card>
-    </div>
+    </section>
   </div>
 </template>
 
 <style scoped>
-.analytics-page {
-  gap: clamp(2rem, 2.5vw, 2.5rem);
+.analytics {
+  gap: var(--ft-space-8);
 }
 
-.ft-stat-grid {
-  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+.analytics__primary,
+.analytics__grid {
+  display: flex;
+  flex-direction: column;
+  gap: var(--ft-space-5);
 }
 
-.ft-stat__value.expense {
-  color: #ef4444;
-}
-
-.ft-stat__value.income {
-  color: var(--ft-success);
-}
-
-.ft-stat__value.savings {
-  color: var(--ft-accent);
-}
-
-.charts-grid {
+.analytics__grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(min(100%, 500px), 1fr));
-  gap: clamp(1.5rem, 2vw, 2rem);
+  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+  gap: var(--ft-space-5);
 }
+
 
 .chart-card {
   position: relative;
   overflow: hidden;
 }
 
-.chart-card::after {
-  content: '';
-  position: absolute;
-  top: -50%;
-  right: -20%;
-  width: 400px;
-  height: 400px;
-  background: radial-gradient(circle, rgba(56, 189, 248, 0.08), transparent 70%);
-  pointer-events: none;
-  z-index: 0;
-}
-
 .chart-card :deep(.p-card-content) {
-  position: relative;
-  z-index: 1;
-  padding-top: 1rem;
+  padding-top: var(--ft-space-3);
 }
 
-.card-header {
+.chart-header {
   display: flex;
   justify-content: space-between;
   align-items: flex-start;
-  gap: 1rem;
+  gap: var(--ft-space-3);
   flex-wrap: wrap;
 }
 
-.chart-title {
+.chart-header h3 {
   margin: 0;
-  font-size: 1.25rem;
-  font-weight: 600;
+  font-size: var(--ft-text-lg);
+  font-weight: var(--ft-font-semibold);
   color: var(--ft-heading);
 }
 
-.chart-subtitle {
-  margin: 0.25rem 0 0;
-  font-size: 0.875rem;
+.chart-header p {
+  margin: var(--ft-space-1) 0 0;
   color: var(--ft-text-muted);
+  font-size: var(--ft-text-sm);
 }
 
 .month-selector {
@@ -491,11 +472,11 @@ onMounted(async () => {
     height: 350px;
   }
 
-  .charts-grid {
+  .analytics__grid {
     grid-template-columns: 1fr;
   }
 
-  .card-header {
+  .chart-header {
     flex-direction: column;
   }
 
