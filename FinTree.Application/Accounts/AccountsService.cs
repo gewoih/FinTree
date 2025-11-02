@@ -22,9 +22,10 @@ public sealed class AccountsService(AppDbContext context, ICurrentUser currentUs
     
     public async Task<Guid> CreateAsync(CreateAccount command, CancellationToken ct = default)
     {
-        var user = await context.Users.SingleOrDefaultAsync(x => x.Id == command.UserId, ct);
+        var currentUserId = currentUser.Id;
+        var user = await context.Users.SingleOrDefaultAsync(x => x.Id == currentUserId, ct);
         if (user is null)
-            throw new NotFoundException(nameof(User), command.UserId);
+            throw new NotFoundException(nameof(User), currentUserId);
         
         var account = user.AddAccount(command.CurrencyCode, command.Type, command.Name);
         await context.SaveChangesAsync(ct);

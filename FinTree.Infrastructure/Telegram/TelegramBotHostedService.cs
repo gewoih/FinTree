@@ -97,7 +97,6 @@ public class TelegramBotHostedService(
         // Резолвим пользователя домена
         var user = await context.Users
             .Include(u => u.Accounts)
-            .ThenInclude(u => u.Currency)
             .Where(u => u.TelegramUserId == msg.From.Username)
             .FirstOrDefaultAsync(cancellationToken: ct);
         
