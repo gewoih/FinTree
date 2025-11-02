@@ -17,6 +17,13 @@ public class TransactionController(TransactionsService transactionsService) : Co
         return Ok(transactionId);
     }
 
+    [HttpPatch]
+    public async Task<IActionResult> Update([FromBody] UpdateTransaction command, CancellationToken ct)
+    {
+        await transactionsService.UpdateAsync(command, ct);
+        return Ok();
+    }
+
     [HttpPatch("category")]
     public async Task<IActionResult> Patch([FromBody] AssignCategory command, CancellationToken ct)
     {

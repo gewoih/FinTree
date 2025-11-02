@@ -1,13 +1,21 @@
 <script setup lang="ts">
 import { onMounted, ref } from 'vue'
 import { useFinanceStore } from '../stores/finance'
+import type { Transaction } from '../types'
 import TransactionList from '../components/TransactionList.vue'
 import ExpenseForm from '../components/ExpenseForm.vue'
 
 const financeStore = useFinanceStore()
 const expenseDialogVisible = ref(false)
+const editingTransaction = ref<Transaction | null>(null)
 
 const openExpenseDialog = () => {
+  editingTransaction.value = null
+  expenseDialogVisible.value = true
+}
+
+const handleEditTransaction = (transaction: Transaction) => {
+  editingTransaction.value = transaction
   expenseDialogVisible.value = true
 }
 
@@ -41,10 +49,16 @@ onMounted(async () => {
     </PageHeader>
 
     <section class="transactions__content">
-      <TransactionList @add-transaction="openExpenseDialog" />
+      <TransactionList
+        @add-transaction="openExpenseDialog"
+        @edit-transaction="handleEditTransaction"
+      />
     </section>
 
-    <ExpenseForm v-model:visible="expenseDialogVisible" />
+    <ExpenseForm
+      v-model:visible="expenseDialogVisible"
+      :transaction="editingTransaction"
+    />
   </div>
 </template>
 

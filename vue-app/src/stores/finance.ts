@@ -8,6 +8,7 @@ import type {
     CategoryFormPayload,
     Currency,
     NewTransactionPayload,
+    UpdateTransactionPayload,
     Transaction
 } from '../types.ts';
 import { CURRENT_USER_ID } from '../constants';
@@ -151,6 +152,22 @@ export const useFinanceStore = defineStore('finance', () => {
     }
 
     /**
+     * Updates an existing transaction
+     * @param payload - Updated transaction data including ID
+     * @returns Success status
+     */
+    async function updateTransaction(payload: UpdateTransactionPayload) {
+        try {
+            await apiService.updateTransaction(payload);
+            await fetchTransactions(currentTransactionsAccountId.value ?? undefined);
+            return true;
+        } catch (error) {
+            console.error('Ошибка при обновлении транзакции:', error);
+            return false;
+        }
+    }
+
+    /**
      * Creates a new account
      * @param payload - Account data
      * @returns Success status
@@ -281,6 +298,7 @@ export const useFinanceStore = defineStore('finance', () => {
         fetchCategories,
         fetchCurrencies,
         addExpense,
+        updateTransaction,
         createAccount,
         setPrimaryAccount,
         createCategory,

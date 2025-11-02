@@ -66,6 +66,16 @@ export interface NewTransactionPayload {
     isMandatory: boolean;
 }
 
+export interface UpdateTransactionPayload {
+    id: string;
+    accountId: string;
+    categoryId: string;
+    amount: number;
+    occurredAt: string;
+    description: string | null;
+    isMandatory: boolean;
+}
+
 export interface CreateAccountPayload {
     userId: string;
     currencyCode: string;

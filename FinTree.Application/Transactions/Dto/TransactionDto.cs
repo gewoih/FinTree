@@ -6,4 +6,5 @@ public sealed record TransactionDto(
     decimal Amount,
     Guid CategoryId,
     string? Description,
-    DateTime OccuredAt);
+    DateTime OccuredAt,
+    bool IsMandatory = false);

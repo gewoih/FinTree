@@ -5,6 +5,7 @@ import type {
     TransactionCategoryDto,
     TransactionDto,
     NewTransactionPayload,
+    UpdateTransactionPayload,
     CreateAccountPayload,
     CreateCategoryPayload,
     UpdateCategoryPayload,
@@ -139,6 +140,20 @@ export const apiService = {
         };
         const response = await apiClient.post<string>('/Transaction', expensePayload);
         return response.data;
+    },
+
+    // Обновление существующей транзакции
+    async updateTransaction(payload: UpdateTransactionPayload): Promise<void> {
+        const updatePayload = {
+            id: payload.id,
+            accountId: payload.accountId,
+            categoryId: payload.categoryId,
+            amount: Math.abs(payload.amount),
+            occurredAt: payload.occurredAt,
+            description: payload.description,
+            isMandatory: payload.isMandatory ?? false,
+        };
+        await apiClient.patch('/Transaction', updatePayload);
     },
 
     // Работа со счетами

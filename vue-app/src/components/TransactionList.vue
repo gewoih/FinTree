@@ -3,6 +3,7 @@ import { computed, watch } from 'vue'
 import DataTable from 'primevue/datatable'
 import Column from 'primevue/column'
 import Tag from 'primevue/tag'
+import Button from 'primevue/button'
 import Skeleton from 'primevue/skeleton'
 import { useFinanceStore } from '../stores/finance'
 import { PAGINATION_OPTIONS } from '../constants'
@@ -13,6 +14,7 @@ import type { Transaction } from '../types'
 
 const emit = defineEmits<{
   (e: 'add-transaction'): void
+  (e: 'edit-transaction', transaction: Transaction): void
 }>()
 
 const store = useFinanceStore()
@@ -168,6 +170,19 @@ const isEmptyState = computed(
             {{ slotProps.data.description }}
           </span>
           <span v-else class="description-empty">—</span>
+        </template>
+      </Column>
+
+      <Column header="Действия" style="min-width: 120px">
+        <template #body="slotProps">
+          <Button
+            icon="pi pi-pencil"
+            text
+            rounded
+            severity="secondary"
+            @click="emit('edit-transaction', slotProps.data)"
+            aria-label="Редактировать транзакцию"
+          />
         </template>
       </Column>
     </DataTable>

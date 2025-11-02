@@ -1,6 +1,7 @@
 using FinTree.Application.Exceptions;
 using FinTree.Application.Transactions.Dto;
 using FinTree.Application.Users;
+using FinTree.Domain.ValueObjects;
 using FinTree.Infrastructure.Database;
 using Microsoft.EntityFrameworkCore;
 
@@ -51,7 +52,7 @@ public sealed class TransactionsService(AppDbContext context, ICurrentUser curre
 
         var items = await q.OrderByDescending(t => t.OccurredAt)
             .Select(t =>
-                new TransactionDto(t.Id, t.AccountId, t.Money.Amount, t.CategoryId, t.Description, t.OccurredAt))
+                new TransactionDto(t.Id, t.AccountId, t.Money.Amount, t.CategoryId, t.Description, t.OccurredAt, t.IsMandatory))
             .ToListAsync(ct);
 
         return (items, total);
@@ -63,6 +64,32 @@ public sealed class TransactionsService(AppDbContext context, ICurrentUser curre
                           throw new NotFoundException("Transaction not found", command.TransactionId);
 
         transaction.AssignCategory(command.CategoryId);
+        await context.SaveChangesAsync(ct);
+    }
+
+    public async Task UpdateAsync(UpdateTransaction command, CancellationToken ct)
+    {
+        var transaction = await context.ExpenseTransactions
+            .Include(t => t.Account)
+            .FirstOrDefaultAsync(t => t.Id == command.Id, ct) ??
+                          throw new NotFoundException("Транзакция не найдена", command.Id);
+
+        // Verify the transaction belongs to the current user
+        if (transaction.Account.UserId != currentUser.Id)
+            throw new InvalidOperationException("Доступ запрещен");
+
+        // Get the new account to determine currency
+        var newAccount = await context.Accounts.FirstOrDefaultAsync(a => a.Id == command.AccountId, ct) ??
+                         throw new InvalidOperationException("Счет не найден");
+
+        // Verify the new account also belongs to the current user
+        if (newAccount.UserId != currentUser.Id)
+            throw new InvalidOperationException("Доступ запрещен");
+
+        var money = new Money(newAccount.CurrencyCode, command.Amount);
+        transaction.UpdateExpense(command.AccountId, command.CategoryId, money, command.OccurredAt,
+            command.Description, command.IsMandatory);
+
         await context.SaveChangesAsync(ct);
     }
 }

@@ -16,6 +16,12 @@ public sealed class ExpenseTransaction : Transaction
     {
         IsMandatory = isMandatory;
     }
-    
+
     private ExpenseTransaction() {}
+
+    public void UpdateExpense(Guid accountId, Guid categoryId, Money money, DateTime occurredAt, string? description, bool isMandatory)
+    {
+        Update(accountId, categoryId, money, occurredAt, description);
+        IsMandatory = isMandatory;
+    }
 }

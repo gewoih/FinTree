@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { ref, computed, watch, onMounted } from 'vue';
 import { useFinanceStore } from '../stores/finance.ts';
-import type { Account, Category, NewTransactionPayload } from '../types.ts';
+import type { Account, Category, NewTransactionPayload, UpdateTransactionPayload, Transaction } from '../types.ts';
 import { VALIDATION_RULES } from '../constants';
 import { useFormModal } from '../composables/useFormModal';
 import { validators } from '../services/validation.service';
@@ -19,9 +19,12 @@ const store = useFinanceStore();
 
 const props = defineProps<{
   visible: boolean;
+  transaction?: Transaction | null;
 }>();
 
 const emit = defineEmits(['update:visible']);
+
+const isEditMode = computed(() => !!props.transaction);
 
 // --- Form state ---
 const selectedAccount = ref<Account | null>(null);
@@ -40,21 +43,33 @@ const defaultCategory = computed(() => sortedCategories.value[0] ?? null);
 // Initialise defaults when the modal opens
 watch(() => props.visible, (newVal) => {
   if (newVal) {
-    selectedAccount.value = store.primaryAccount || store.accounts[0] || null;
-
-    // Restore the last used category if available
-    const lastCategoryId = localStorage.getItem('lastUsedCategoryId');
-    if (lastCategoryId) {
-      const lastCategory = store.categories.find(c => c.id === lastCategoryId);
-      selectedCategory.value = lastCategory || defaultCategory.value;
+    if (isEditMode.value && props.transaction) {
+      // Edit mode: populate with existing transaction data
+      const txn = props.transaction;
+      selectedAccount.value = txn.account || store.accounts.find(a => a.id === txn.accountId) || null;
+      selectedCategory.value = txn.category || store.categories.find(c => c.id === txn.categoryId) || null;
+      amount.value = Math.abs(Number(txn.amount));
+      description.value = txn.description || '';
+      date.value = new Date(txn.occurredAt);
+      isMandatory.value = txn.isMandatory;
     } else {
-      selectedCategory.value = defaultCategory.value;
-    }
+      // Create mode: use defaults
+      selectedAccount.value = store.primaryAccount || store.accounts[0] || null;
 
-    date.value = new Date();
-    amount.value = null;
-    description.value = '';
-    isMandatory.value = false;
+      // Restore the last used category if available
+      const lastCategoryId = localStorage.getItem('lastUsedCategoryId');
+      if (lastCategoryId) {
+        const lastCategory = store.categories.find(c => c.id === lastCategoryId);
+        selectedCategory.value = lastCategory || defaultCategory.value;
+      } else {
+        selectedCategory.value = defaultCategory.value;
+      }
+
+      date.value = new Date();
+      amount.value = null;
+      description.value = '';
+      isMandatory.value = false;
+    }
   }
 });
 
@@ -78,35 +93,51 @@ const submitDisabled = computed(() => !isAmountValid.value || !selectedCategory.
 // --- Submit handler ---
 const { isSubmitting, handleSubmit: handleFormSubmit, showWarning } = useFormModal(
   async () => {
-    const payload: NewTransactionPayload = {
-      accountId: selectedAccount.value!.id,
-      categoryId: selectedCategory.value!.id,
-      amount: amount.value!,
-      occurredAt: date.value.toISOString(),
-      description: description.value ? description.value.trim() : null,
-      isMandatory: isMandatory.value,
-    };
+    if (isEditMode.value && props.transaction) {
+      // Update existing transaction
+      const payload: UpdateTransactionPayload = {
+        id: props.transaction.id,
+        accountId: selectedAccount.value!.id,
+        categoryId: selectedCategory.value!.id,
+        amount: amount.value!,
+        occurredAt: date.value.toISOString(),
+        description: description.value ? description.value.trim() : null,
+        isMandatory: isMandatory.value,
+      };
 
-    return await store.addExpense(payload);
+      return await store.updateTransaction(payload);
+    } else {
+      // Create new transaction
+      const payload: NewTransactionPayload = {
+        accountId: selectedAccount.value!.id,
+        categoryId: selectedCategory.value!.id,
+        amount: amount.value!,
+        occurredAt: date.value.toISOString(),
+        description: description.value ? description.value.trim() : null,
+        isMandatory: isMandatory.value,
+      };
+
+      return await store.addExpense(payload);
+    }
   },
   {
-    successMessage: 'Transaction added successfully.',
-    errorMessage: 'Unable to save the transaction.',
+    successMessage: isEditMode.value ? 'Транзакция обновлена успешно.' : 'Транзакция добавлена успешно.',
+    errorMessage: isEditMode.value ? 'Не удалось обновить транзакцию.' : 'Не удалось сохранить транзакцию.',
   }
 );
 
 const handleSubmit = async () => {
   if (!isAmountValid.value || !selectedAccount.value || !selectedCategory.value) {
-    showWarning('Fill in account, category, and amount before saving.');
+    showWarning('Заполните счет, категорию и сумму перед сохранением.');
     return;
   }
 
   const success = await handleFormSubmit();
   if (success) {
-  // Persist the most recently used category
-  if (selectedCategory.value) {
-    localStorage.setItem('lastUsedCategoryId', selectedCategory.value.id);
-  }
+    // Persist the most recently used category (only in create mode)
+    if (!isEditMode.value && selectedCategory.value) {
+      localStorage.setItem('lastUsedCategoryId', selectedCategory.value.id);
+    }
     emit('update:visible', false);
   }
 };
@@ -130,13 +161,13 @@ onMounted(() => {
     <form class="expense-form" @submit.prevent="handleSubmit">
       <section class="form-fields">
         <div class="field">
-          <label for="account">Account *</label>
+          <label for="account">Счет *</label>
           <Select
               id="account"
               v-model="selectedAccount"
               :options="store.accounts"
               option-label="name"
-              placeholder="Select account"
+              placeholder="Выберите счет"
               required
               class="w-full"
           >
@@ -152,17 +183,17 @@ onMounted(() => {
               </div>
             </template>
           </Select>
-          <small>Funds will be withdrawn from the selected account.</small>
+          <small>Средства будут сняты с выбранного счета.</small>
         </div>
 
         <div class="field">
-          <label for="category">Category *</label>
+          <label for="category">Категория *</label>
           <Select
               id="category"
               v-model="selectedCategory"
               :options="sortedCategories"
               option-label="name"
-              placeholder="Select category"
+              placeholder="Выберите категорию"
               required
               class="w-full"
           >
@@ -173,11 +204,11 @@ onMounted(() => {
               </div>
             </template>
           </Select>
-          <small>The first category in the list is used by default.</small>
+          <small>Первая категория в списке используется по умолчанию.</small>
         </div>
 
         <div class="field">
-          <label for="amount">Amount *</label>
+          <label for="amount">Сумма *</label>
           <div class="amount-input">
             <InputNumber
                 id="amount"
@@ -194,12 +225,12 @@ onMounted(() => {
             <span class="currency-chip ft-pill">{{ currencySymbol || currencyCode }}</span>
           </div>
           <small v-if="!isAmountValid && amount !== null" class="error-text">
-            Amount must be between {{ VALIDATION_RULES.minAmount }} and {{ VALIDATION_RULES.maxAmount }}
+            Сумма должна быть между {{ VALIDATION_RULES.minAmount }} и {{ VALIDATION_RULES.maxAmount }}
           </small>
       </div>
 
       <div class="field">
-        <label for="date">Transaction date</label>
+        <label for="date">Дата транзакции</label>
           <DatePicker
               id="date"
               v-model="date"
@@ -208,20 +239,20 @@ onMounted(() => {
               required
               class="w-full"
           />
-          <small>Defaults to today.</small>
+          <small>По умолчанию сегодня.</small>
       </div>
 
       <div class="field">
-        <label for="isMandatory">Recurring expense</label>
+        <label for="isMandatory">Повторяющийся расход</label>
         <Checkbox id="isMandatory" v-model="isMandatory" binary />
       </div>
 
       <div class="field full">
-        <label for="description">Note</label>
+        <label for="description">Заметка</label>
         <InputText
             id="description"
             v-model="description"
-            placeholder="For example: morning coffee"
+            placeholder="Например: утренний кофе"
             class="w-full"
         />
       </div>
@@ -230,7 +261,7 @@ onMounted(() => {
       <footer class="form-actions">
         <Button
             type="button"
-            label="Cancel"
+            label="Отмена"
             icon="pi pi-times"
             severity="secondary"
             outlined
@@ -238,7 +269,7 @@ onMounted(() => {
         />
         <Button
             type="submit"
-            label="Save transaction"
+            :label="isEditMode ? 'Обновить транзакцию' : 'Сохранить транзакцию'"
             icon="pi pi-check"
             :disabled="submitDisabled"
             :loading="isSubmitting"

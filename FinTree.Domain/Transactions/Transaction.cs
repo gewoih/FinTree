@@ -35,4 +35,17 @@ public abstract class Transaction : Entity
         ArgumentOutOfRangeException.ThrowIfEqual(categoryId, Guid.Empty, nameof(categoryId));
         CategoryId = categoryId;
     }
+
+    public void Update(Guid accountId, Guid categoryId, Money money, DateTime occurredAt, string? description)
+    {
+        ArgumentOutOfRangeException.ThrowIfEqual(categoryId, Guid.Empty, nameof(categoryId));
+        ArgumentOutOfRangeException.ThrowIfEqual(accountId, Guid.Empty, nameof(accountId));
+        ArgumentOutOfRangeException.ThrowIfGreaterThan(occurredAt, DateTime.UtcNow, nameof(occurredAt));
+
+        AccountId = accountId;
+        CategoryId = categoryId;
+        Money = money;
+        OccurredAt = occurredAt;
+        Description = description;
+    }
 }
