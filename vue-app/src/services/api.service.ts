@@ -11,6 +11,8 @@ import type {
     UpdateCategoryPayload,
     Currency,
     MonthlyExpenseDto,
+    CategoryExpenseDto,
+    NetWorthSnapshotDto,
     CurrentUserDto,
     UpdateUserProfilePayload
 } from '../types.ts';
@@ -185,6 +187,35 @@ export const apiService = {
     // Аналитика: расходы по месяцам
     async getMonthlyExpenses(): Promise<MonthlyExpenseDto[]> {
         const response = await apiClient.get<MonthlyExpenseDto[]>('/analytics/monthly-expenses');
+        return response.data;
+    },
+
+    async getExpensesByCategory(year: number, month: number): Promise<CategoryExpenseDto[]> {
+        const response = await apiClient.get<CategoryExpenseDto[]>('/analytics/expenses-by-category', {
+            params: { year, month }
+        });
+        return response.data;
+    },
+
+    async getExpensesByCategoryByDateRange(from: Date, to: Date): Promise<CategoryExpenseDto[]> {
+        const response = await apiClient.get<CategoryExpenseDto[]>('/analytics/expenses-by-category-range', {
+            params: {
+                from: from.toISOString(),
+                to: to.toISOString()
+            }
+        });
+        return response.data;
+    },
+
+    async getExpensesByGranularity(granularity: 'days' | 'weeks' | 'months'): Promise<MonthlyExpenseDto[]> {
+        const response = await apiClient.get<MonthlyExpenseDto[]>('/analytics/expenses-by-granularity', {
+            params: { granularity }
+        });
+        return response.data;
+    },
+
+    async getNetWorthTrend(): Promise<NetWorthSnapshotDto[]> {
+        const response = await apiClient.get<NetWorthSnapshotDto[]>('/analytics/networth-trend');
         return response.data;
     },
 

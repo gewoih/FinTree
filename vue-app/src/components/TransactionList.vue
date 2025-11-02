@@ -31,13 +31,13 @@ const enrichedTransactions = computed(() =>
 
     return {
       ...txn,
-      accountName: account?.name ?? 'Unknown account',
-      accountCurrency: account?.currency?.code ?? account?.currencyCode ?? 'KZT',
+      accountName: account?.name,
+      accountCurrency: account?.currency?.code ?? account?.currencyCode,
       accountSymbol: account?.currency?.symbol ?? '',
-      categoryName: category?.name ?? 'Uncategorized',
-      categoryColor: category?.color ?? '#6c757d',
+      categoryName: category?.name,
+      categoryColor: category?.color,
       signedAmount,
-      isMandatory: txn.isMandatory ?? false
+      isMandatory: txn.isMandatory
     }
   })
 )

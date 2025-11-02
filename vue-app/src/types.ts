@@ -110,7 +110,22 @@ export interface UpdateCategoryPayload {
 export interface MonthlyExpenseDto {
     year: number;
     month: number;
+    day?: number | null;
+    week?: number | null;
     amount: number;
+}
+
+export interface CategoryExpenseDto {
+    id: string; // Guid from backend
+    name: string;
+    color: string;
+    amount: number;
+}
+
+export interface NetWorthSnapshotDto {
+    year: number;
+    month: number;
+    totalBalance: number;
 }
 
 export interface CurrentUserDto {

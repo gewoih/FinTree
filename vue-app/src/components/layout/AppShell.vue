@@ -13,7 +13,7 @@ const userMenuRef = ref<{ toggle: (event: Event) => void } | null>(null)
 
 const { darkMode, toggleTheme, initTheme } = useTheme()
 
-const userEmail = computed(() => authStore.userEmail ?? 'Account')
+const userEmail = computed(() => authStore.userEmail ?? 'Аккаунт')
 
 const navigationItems = [
   { label: 'Дашборд', icon: 'pi-home', to: '/dashboard' },
@@ -21,14 +21,14 @@ const navigationItems = [
   { label: 'Транзакции', icon: 'pi-list', to: '/expenses' },
   { label: 'Категории', icon: 'pi-tags', to: '/categories' },
   { label: 'Аналитика', icon: 'pi-chart-line', to: '/analytics' },
-  { label: 'Настройки', icon: 'pi-cog', to: '/profile' }
+  { label: 'Профиль', icon: 'pi-cog', to: '/profile' }
 ]
 
 const userMenuItems = [
   { label: 'Профиль', icon: 'pi pi-user', command: () => router.push('/profile') },
   { label: 'Настройки', icon: 'pi pi-cog', command: () => router.push('/profile') },
   { separator: true },
-  { label: 'Выход', icon: 'pi pi-sign-out', command: () => handleLogout() }
+  { label: 'Выйти', icon: 'pi pi-sign-out', command: () => handleLogout() }
 ]
 
 const handleUserMenuToggle = (event: Event) => {
@@ -58,7 +58,7 @@ onMounted(() => {
 
 <template>
   <div class="app-shell">
-    <a class="app-shell__skip-link" href="#main-content">Skip to main content</a>
+    <a class="app-shell__skip-link" href="#main-content">Перейти к основному содержимому</a>
 
     <!-- Top Navigation -->
     <div class="app-shell__topnav">
@@ -81,7 +81,7 @@ onMounted(() => {
           :icon="darkMode ? 'pi pi-sun' : 'pi pi-moon'"
           text
           rounded
-          :aria-label="darkMode ? 'Switch to light mode' : 'Switch to dark mode'"
+          :aria-label="darkMode ? 'Переключиться на светлую тему' : 'Переключиться на тёмную тему'"
           @click="toggleTheme"
         />
 

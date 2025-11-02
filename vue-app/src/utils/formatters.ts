@@ -1,5 +1,9 @@
-export const formatCurrency = (amount: number, currency: string = 'KZT'): string => {
-    return new Intl.NumberFormat('ru-RU', {
+export const formatCurrency = (
+    amount: number,
+    currency: string,
+    locale: string = 'ru-RU'
+): string => {
+    return new Intl.NumberFormat(locale, {
         style: 'currency',
         currency,
         minimumFractionDigits: 2,
