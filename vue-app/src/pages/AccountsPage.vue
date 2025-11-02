@@ -24,10 +24,10 @@ const handleSetPrimary = async (accountId: string) => {
     const success = await financeStore.setPrimaryAccount(accountId)
     toast.add({
       severity: success ? 'success' : 'error',
-      summary: success ? 'Primary account updated' : 'Unable to update account',
+      summary: success ? 'Основной счет обновлен' : 'Не удалось обновить счет',
       detail: success
-        ? 'This account is now used as the default for analytics.'
-        : 'Please try again in a moment.',
+        ? 'Этот счет теперь используется по умолчанию для аналитики.'
+        : 'Пожалуйста, попробуйте еще раз.',
       life: 3000
     })
   } finally {
@@ -36,7 +36,7 @@ const handleSetPrimary = async (accountId: string) => {
 }
 
 const accountTypeLabel = (type: number) =>
-  type === 0 ? 'Bank account' : 'Cash wallet'
+  type === 0 ? 'Банковский счет' : 'Наличные'
 
 onMounted(async () => {
   await Promise.all([
@@ -49,16 +49,16 @@ onMounted(async () => {
 <template>
   <div class="accounts page">
     <PageHeader
-      title="Accounts"
-      subtitle="Connect and manage every bank account and wallet in one place"
+      title="Счета"
+      subtitle="Управляйте всеми банковскими счетами и кошельками в одном месте"
       :breadcrumbs="[
-        { label: 'Home', to: '/dashboard' },
-        { label: 'Accounts' }
+        { label: 'Главная', to: '/dashboard' },
+        { label: 'Счета' }
       ]"
     >
       <template #actions>
         <Button
-          label="Add Account"
+          label="Добавить счет"
           icon="pi pi-plus"
           @click="openModal"
         />
@@ -76,9 +76,9 @@ onMounted(async () => {
       <EmptyState
         v-else-if="accounts.length === 0"
         icon="pi-wallet"
-        title="No accounts connected"
-        description="Add a bank account or cash wallet to start tracking your finances."
-        action-label="Add account"
+        title="Нет подключенных счетов"
+        description="Добавьте банковский счет или кошелек, чтобы начать отслеживать ваши финансы."
+        action-label="Добавить счет"
         action-icon="pi pi-plus"
         @action="openModal"
       />
@@ -96,7 +96,7 @@ onMounted(async () => {
             </div>
             <StatusBadge
               v-if="account.isMain"
-              label="Primary"
+              label="Основной"
               severity="success"
               dot
             />
@@ -104,7 +104,7 @@ onMounted(async () => {
 
           <dl class="account-card__meta">
             <div class="meta-row">
-              <dt>Currency</dt>
+              <dt>Валюта</dt>
               <dd>
                 <span class="currency-chip">
                   {{ account.currency?.symbol ?? '' }} {{ account.currency?.code ?? account.currencyCode }}
@@ -113,7 +113,7 @@ onMounted(async () => {
             </div>
 
             <div class="meta-row">
-              <dt>Account ID</dt>
+              <dt>ID счета</dt>
               <dd>
                 <code>{{ account.id.slice(0, 8) }}…</code>
               </dd>
@@ -123,7 +123,7 @@ onMounted(async () => {
           <footer class="account-card__actions">
             <Button
               v-if="!account.isMain"
-              label="Set as primary"
+              label="Сделать основным"
               icon="pi pi-star"
               text
               :loading="pendingPrimaryId === account.id"
@@ -131,7 +131,7 @@ onMounted(async () => {
             />
             <StatusBadge
               v-else
-              label="Default analytics account"
+              label="Основной счет для аналитики"
               severity="info"
               size="sm"
             />

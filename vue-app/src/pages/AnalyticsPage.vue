@@ -60,7 +60,7 @@ const formatAmount = (value: number) => {
   }).format(Math.max(value, 0))
 }
 
-const monthNameFormatter = new Intl.DateTimeFormat('en-US', { month: 'long' });
+const monthNameFormatter = new Intl.DateTimeFormat('ru-RU', { month: 'long' });
 
 function capitalize(value: string): string {
   if (!value) {
@@ -86,8 +86,8 @@ async function fetchMonthlyExpenses(): Promise<void> {
 }
 
 // Mock data for demo purposes
-const months = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October'];
-const selectedMonth = ref('October');
+const months = ['Январь', 'Февраль', 'Март', 'Апрель', 'Май', 'Июнь', 'Июль', 'Август', 'Сентябрь', 'Октябрь'];
+const selectedMonth = ref('Октябрь');
 const monthOptions = months.map(m => ({ label: m, value: m }));
 
 // Balance chart configuration
@@ -95,7 +95,7 @@ const balanceChartData = computed(() => ({
   labels: months,
   datasets: [
     {
-      label: 'Total balance',
+      label: 'Общий баланс',
       data: [850000, 920000, 1050000, 980000, 1120000, 1180000, 1150000, 1250000, 1200000, 1280000],
       borderColor: 'rgba(56, 189, 248, 1)',
       backgroundColor: 'rgba(56, 189, 248, 0.1)',
@@ -112,7 +112,7 @@ const balanceChartData = computed(() => ({
 
 // Pie chart — spend by category
 const categoryChartData = computed(() => ({
-  labels: ['Groceries', 'Transport', 'Entertainment', 'Health', 'Apparel', 'Housing', 'Other'],
+  labels: ['Продукты', 'Транспорт', 'Развлечения', 'Здоровье', 'Одежда', 'Жилье', 'Другое'],
   datasets: [
     {
       data: [85000, 42000, 28000, 35000, 22000, 95000, 35000],
@@ -144,7 +144,7 @@ const expensesChartData = computed(() => {
     labels: points.map(item => formatMonthLabel(item.year, item.month)),
     datasets: [
       {
-        label: 'Expenses',
+        label: 'Расходы',
         data: points.map(item => item.amount),
         backgroundColor: 'rgba(239, 68, 68, 0.7)',
         borderColor: 'rgba(239, 68, 68, 1)',
@@ -328,11 +328,11 @@ onMounted(async () => {
 <template>
   <div class="analytics page">
     <PageHeader
-      title="Analytics"
-      subtitle="Visualise balance trends, spending categories, and monthly cash flow"
+      title="Аналитика"
+      subtitle="Визуализируйте тренды баланса, категории расходов и месячный денежный поток"
       :breadcrumbs="[
-        { label: 'Home', to: '/dashboard' },
-        { label: 'Analytics' }
+        { label: 'Главная', to: '/dashboard' },
+        { label: 'Аналитика' }
       ]"
     />
 
@@ -341,8 +341,8 @@ onMounted(async () => {
         <template #title>
           <div class="chart-header">
             <div>
-              <h3>Balance trend</h3>
-              <p>Month-over-month change in total balance</p>
+              <h3>Тренд баланса</h3>
+              <p>Изменение общего баланса месяц за месяцем</p>
             </div>
           </div>
         </template>
@@ -359,8 +359,8 @@ onMounted(async () => {
         <template #title>
           <div class="chart-header">
             <div>
-              <h3>Spending by category</h3>
-              <p>Distribution for the selected month</p>
+              <h3>Расходы по категориям</h3>
+              <p>Распределение за выбранный месяц</p>
             </div>
             <Select
               v-model="selectedMonth"
@@ -382,8 +382,8 @@ onMounted(async () => {
         <template #title>
           <div class="chart-header">
             <div>
-              <h3>Monthly expenses</h3>
-              <p>Compare spending month over month</p>
+              <h3>Месячные расходы</h3>
+              <p>Сравните расходы месяц за месяцем</p>
             </div>
           </div>
         </template>

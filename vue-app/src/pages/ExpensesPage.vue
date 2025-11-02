@@ -24,16 +24,16 @@ onMounted(async () => {
 <template>
   <div class="transactions page">
     <PageHeader
-      title="Transactions"
-      subtitle="Filter, explore, and manage every expense and income entry"
+      title="Транзакции"
+      subtitle="Фильтруйте, изучайте и управляйте всеми расходами и доходами"
       :breadcrumbs="[
-        { label: 'Home', to: '/dashboard' },
-        { label: 'Transactions' }
+        { label: 'Главная', to: '/dashboard' },
+        { label: 'Транзакции' }
       ]"
     >
       <template #actions>
         <Button
-          label="Add Transaction"
+          label="Добавить транзакцию"
           icon="pi pi-plus"
           @click="openExpenseDialog"
         />

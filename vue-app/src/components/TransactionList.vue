@@ -82,9 +82,9 @@ const isEmptyState = computed(
     <EmptyState
       v-else-if="isEmptyState"
       icon="pi-database"
-      title="No transactions found"
-      description="Adjust filters or add your first transaction to see activity here."
-      action-label="Add transaction"
+      title="Транзакции не найдены"
+      description="Измените фильтры или добавьте первую транзакцию, чтобы увидеть активность."
+      action-label="Добавить транзакцию"
       action-icon="pi pi-plus"
       @action="emit('add-transaction')"
     />
@@ -101,27 +101,29 @@ const isEmptyState = computed(
       :rows="PAGINATION_OPTIONS.defaultRows"
       :rowsPerPageOptions="[...PAGINATION_OPTIONS.options]"
       paginatorTemplate="FirstPageLink PrevPageLink PageLinks NextPageLink LastPageLink CurrentPageReport RowsPerPageDropdown"
-      currentPageReportTemplate="Showing {first} - {last} of {totalRecords}"
+      currentPageReportTemplate="Показано {first} - {last} из {totalRecords}"
       :globalFilterFields="['categoryName', 'accountName', 'description']"
       tableStyle="min-width: 760px"
     >
       <template #header>
         <div class="table-caption">
-          <h3>Transaction History</h3>
+          <h3>История транзакций</h3>
           <p>
-            {{ filteredTransactions.length }} transaction<span v-if="filteredTransactions.length !== 1">s</span>
-            across {{ store.accounts.length }} account<span v-if="store.accounts.length !== 1">s</span>
+            {{ filteredTransactions.length }}
+            {{ filteredTransactions.length === 1 ? 'транзакция' : filteredTransactions.length < 5 ? 'транзакции' : 'транзакций' }}
+            по {{ store.accounts.length }}
+            {{ store.accounts.length === 1 ? 'счету' : store.accounts.length < 5 ? 'счетам' : 'счетам' }}
           </p>
         </div>
       </template>
 
-      <Column field="occurredAt" header="Date" :sortable="true" style="min-width: 120px">
+      <Column field="occurredAt" header="Дата" :sortable="true" style="min-width: 120px">
         <template #body="slotProps">
           <span class="date-cell">{{ formatDate(slotProps.data.occurredAt) }}</span>
         </template>
       </Column>
 
-      <Column field="signedAmount" header="Amount" :sortable="true" style="min-width: 160px">
+      <Column field="signedAmount" header="Сумма" :sortable="true" style="min-width: 160px">
         <template #body="slotProps">
           <div class="amount-cell" :class="{ negative: slotProps.data.signedAmount < 0 }">
             <span class="amount-value">
@@ -135,7 +137,7 @@ const isEmptyState = computed(
         </template>
       </Column>
 
-      <Column field="categoryName" header="Category" :sortable="true" style="min-width: 180px">
+      <Column field="categoryName" header="Категория" :sortable="true" style="min-width: 180px">
         <template #body="slotProps">
           <div class="category-cell">
             <Tag
@@ -145,13 +147,13 @@ const isEmptyState = computed(
             <i
               v-if="slotProps.data.isMandatory"
               class="pi pi-lock mandatory-icon"
-              title="Mandatory payment"
+              title="Обязательный платеж"
             />
           </div>
         </template>
       </Column>
 
-      <Column field="accountName" header="Account" :sortable="true" style="min-width: 160px">
+      <Column field="accountName" header="Счет" :sortable="true" style="min-width: 160px">
         <template #body="slotProps">
           <div class="account-cell">
             <i class="pi pi-credit-card" aria-hidden="true" />
@@ -160,7 +162,7 @@ const isEmptyState = computed(
         </template>
       </Column>
 
-      <Column field="description" header="Notes" style="min-width: 220px">
+      <Column field="description" header="Заметки" style="min-width: 220px">
         <template #body="slotProps">
           <span v-if="slotProps.data.description" class="description-text">
             {{ slotProps.data.description }}

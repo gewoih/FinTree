@@ -18,16 +18,16 @@ onMounted(() => {
 <template>
   <div class="categories page">
     <PageHeader
-      title="Categories"
-      subtitle="Customise how transactions are grouped for better insights"
+      title="Категории"
+      subtitle="Настройте группировку транзакций для лучшей аналитики"
       :breadcrumbs="[
-        { label: 'Home', to: '/dashboard' },
-        { label: 'Categories' }
+        { label: 'Главная', to: '/dashboard' },
+        { label: 'Категории' }
       ]"
     >
       <template #actions>
         <Button
-          label="Create category"
+          label="Создать категорию"
           icon="pi pi-plus"
           @click="handleCreateCategory"
         />

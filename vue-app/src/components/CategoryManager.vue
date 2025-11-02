@@ -27,8 +27,8 @@ const openModal = (category?: Category) => {
   if (category?.isSystem) {
     toast.add({
       severity: 'info',
-      summary: 'System category',
-      detail: 'Built-in categories cannot be edited.',
+      summary: 'Системная категория',
+      detail: 'Встроенные категории нельзя редактировать.',
       life: 2500
     })
     return
@@ -42,18 +42,18 @@ const handleDelete = (category: Category) => {
   if (category.isSystem) {
     toast.add({
       severity: 'warn',
-      summary: 'Protected category',
-      detail: 'System categories cannot be removed.',
+      summary: 'Защищенная категория',
+      detail: 'Системные категории нельзя удалить.',
       life: 2500
     })
     return
   }
 
   confirm.require({
-    message: `Delete category “${category.name}”?`,
-    header: 'Confirm deletion',
-    acceptLabel: 'Delete',
-    rejectLabel: 'Cancel',
+    message: `Удалить категорию "${category.name}"?`,
+    header: 'Подтверждение удаления',
+    acceptLabel: 'Удалить',
+    rejectLabel: 'Отмена',
     icon: 'pi pi-exclamation-triangle',
     acceptClass: 'p-button-danger',
     accept: async () => {
@@ -62,8 +62,8 @@ const handleDelete = (category: Category) => {
       pendingCategoryId.value = null
       toast.add({
         severity: success ? 'success' : 'error',
-        summary: success ? 'Category removed' : 'Delete failed',
-        detail: success ? 'The category is no longer available.' : 'Please try again later.',
+        summary: success ? 'Категория удалена' : 'Ошибка удаления',
+        detail: success ? 'Категория больше недоступна.' : 'Пожалуйста, попробуйте позже.',
         life: 2500
       })
     }
@@ -79,11 +79,11 @@ defineExpose({
   <section class="categories ft-card">
     <header class="categories__header">
       <div>
-        <h3>Categories</h3>
-        <p>Organise expenses into meaningful groups for faster analytics.</p>
+        <h3>Категории</h3>
+        <p>Организуйте расходы в группы для быстрой аналитики.</p>
       </div>
       <Button
-        label="Create category"
+        label="Создать категорию"
         icon="pi pi-plus"
         @click="openModal()"
       />
@@ -96,9 +96,9 @@ defineExpose({
     <EmptyState
       v-else-if="categories.length === 0"
       icon="pi-tags"
-      title="No categories created"
-      description="Add your first category to start grouping transactions."
-      action-label="Create category"
+      title="Нет созданных категорий"
+      description="Добавьте первую категорию для группировки транзакций."
+      action-label="Создать категорию"
       action-icon="pi pi-plus"
       @action="openModal()"
     />
@@ -107,7 +107,7 @@ defineExpose({
       <div v-if="userCategories.length" class="category-section">
         <h4>
           <i class="pi pi-user" aria-hidden="true" />
-          Personal categories
+          Личные категории
         </h4>
 
         <ul class="category-list">
@@ -123,12 +123,12 @@ defineExpose({
 
             <div class="category-actions">
               <Button
-                label="Edit"
+                label="Изменить"
                 text
                 @click="openModal(category)"
               />
               <Button
-                label="Delete"
+                label="Удалить"
                 text
                 severity="danger"
                 :loading="pendingCategoryId === category.id"
@@ -142,7 +142,7 @@ defineExpose({
       <div v-if="systemCategories.length" class="category-section">
         <h4>
           <i class="pi pi-lock" aria-hidden="true" />
-          System categories
+          Системные категории
         </h4>
 
         <ul class="category-list">
@@ -155,10 +155,10 @@ defineExpose({
               <span class="color-dot" :style="{ backgroundColor: category.color }" />
               <span class="category-name">
                 {{ category.name }}
-                <Tag value="System" severity="info" rounded />
+                <Tag value="Системная" severity="info" rounded />
               </span>
             </div>
-            <span class="category-note">Protected · cannot edit or delete</span>
+            <span class="category-note">Защищена · нельзя изменить или удалить</span>
           </li>
         </ul>
       </div>

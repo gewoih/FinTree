@@ -2,11 +2,13 @@
 import { computed, onMounted, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { useFinanceStore } from '../stores/finance'
+import { useUserStore } from '../stores/user'
 import type { Transaction } from '../types'
 import { formatCurrency } from '../utils/formatters'
 
 const router = useRouter()
 const financeStore = useFinanceStore()
+const userStore = useUserStore()
 
 const isLoading = ref(true)
 
@@ -15,11 +17,12 @@ const accounts = computed(() => financeStore.accounts ?? [])
 
 const baseCurrencyCode = computed(() => {
   return (
+    userStore.baseCurrencyCode ??
     financeStore.primaryAccount?.currency?.code ??
     financeStore.primaryAccount?.currencyCode ??
     accounts.value[0]?.currency?.code ??
     accounts.value[0]?.currencyCode ??
-    'KZT'
+    'USD'
   )
 })
 
@@ -106,6 +109,7 @@ onMounted(async () => {
   isLoading.value = true
   try {
     await Promise.all([
+      userStore.fetchCurrentUser(),
       financeStore.fetchCurrencies(),
       financeStore.fetchAccounts(),
       financeStore.fetchCategories(),
@@ -120,16 +124,16 @@ onMounted(async () => {
 <template>
   <div class="dashboard page">
     <PageHeader
-      title="Dashboard"
-      subtitle="Overview of your balances, spending, and recent activity"
+      title="Дашборд"
+      subtitle="Обзор ваших балансов, расходов и последних транзакций"
       :breadcrumbs="[
-        { label: 'Home', to: '/dashboard' },
-        { label: 'Dashboard' }
+        { label: 'Главная', to: '/dashboard' },
+        { label: 'Дашборд' }
       ]"
     >
       <template #actions>
         <Button
-          label="Add Transaction"
+          label="Добавить транзакцию"
           icon="pi pi-plus"
           @click="router.push('/expenses')"
         />
@@ -138,27 +142,27 @@ onMounted(async () => {
 
     <section class="dashboard__kpis">
       <KPICard
-        title="Total Balance"
+        title="Общий баланс"
         :value="formattedBalance"
         icon="pi-wallet"
         :trend="balanceTrend ?? undefined"
-        trend-label="vs last month"
+        trend-label="по сравнению с прошлым месяцем"
         variant="success"
         :loading="isLoading"
       />
 
       <KPICard
-        title="Monthly Expenses"
+        title="Расходы за месяц"
         :value="formattedMonthlyExpenses"
         icon="pi-chart-line"
         :trend="expensesTrend ?? undefined"
-        trend-label="vs last month"
+        trend-label="по сравнению с прошлым месяцем"
         :variant="expensesTrend && expensesTrend > 0 ? 'danger' : 'success'"
         :loading="isLoading"
       />
 
       <KPICard
-        title="Active Accounts"
+        title="Активные счета"
         :value="accountCount.toString()"
         icon="pi-credit-card"
         :loading="isLoading"
@@ -170,33 +174,33 @@ onMounted(async () => {
         <template #title>
           <div class="card-title-with-icon">
             <i class="pi pi-bolt" />
-            <span>Quick Actions</span>
+            <span>Быстрые действия</span>
           </div>
         </template>
         <template #content>
           <div class="quick-actions-grid">
             <Button
-              label="Add Expense"
+              label="Добавить расход"
               icon="pi pi-plus-circle"
               severity="success"
               @click="router.push('/expenses')"
             />
             <Button
-              label="View Accounts"
+              label="Счета"
               icon="pi pi-wallet"
               severity="info"
               outlined
               @click="router.push('/accounts')"
             />
             <Button
-              label="Analytics"
+              label="Аналитика"
               icon="pi pi-chart-bar"
               severity="secondary"
               outlined
               @click="router.push('/analytics')"
             />
             <Button
-              label="Manage Categories"
+              label="Категории"
               icon="pi pi-tags"
               severity="help"
               outlined
@@ -210,13 +214,13 @@ onMounted(async () => {
         <template #title>
           <div class="card-title-with-icon">
             <i class="pi pi-history" />
-            <span>Recent Transactions</span>
+            <span>Последние транзакции</span>
           </div>
         </template>
 
         <template #subtitle>
           <p class="card-subtitle">
-            Latest activity across all accounts · {{ trendLabel }}
+            Последняя активность по всем счетам · {{ trendLabel }}
           </p>
         </template>
 
@@ -228,9 +232,9 @@ onMounted(async () => {
           <EmptyState
             v-else-if="recentTransactions.length === 0"
             icon="pi-receipt"
-            title="No transactions yet"
-            description="Start tracking your spending to see insights and analytics."
-            action-label="Add your first transaction"
+            title="Нет транзакций"
+            description="Начните отслеживать расходы, чтобы увидеть аналитику и статистику."
+            action-label="Добавить первую транзакцию"
             action-icon="pi pi-plus"
             @action="router.push('/expenses')"
           />
@@ -248,14 +252,14 @@ onMounted(async () => {
               <div class="transaction-details">
                 <div class="transaction-primary">
                   <span class="transaction-category">
-                    {{ transaction.category?.name ?? 'Uncategorized' }}
+                    {{ transaction.category?.name ?? 'Без категории' }}
                   </span>
                   <span class="transaction-date">
                     {{ formatShortDate(transaction.occurredAt) }}
                   </span>
                 </div>
                 <span class="transaction-note">
-                  {{ transaction.description ?? 'No description provided' }}
+                  {{ transaction.description ?? 'Описание отсутствует' }}
                 </span>
               </div>
 
@@ -270,7 +274,7 @@ onMounted(async () => {
           </ul>
 
           <Button
-            label="View all transactions"
+            label="Все транзакции"
             icon="pi pi-arrow-right"
             iconPos="right"
             text

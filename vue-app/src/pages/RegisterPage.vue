@@ -14,14 +14,14 @@
           <i class="pi pi-tree"></i>
         </div>
         <h1 class="brand-name">FinTree</h1>
-        <p class="brand-tagline">Personal finance control</p>
+        <p class="brand-tagline">Контроль личных финансов</p>
       </div>
 
       <!-- Register Card -->
       <div class="auth-card">
         <div class="auth-card-header">
-          <h2 class="auth-title">Create an account</h2>
-          <p class="auth-subtitle">Start managing your finances today</p>
+          <h2 class="auth-title">Создать аккаунт</h2>
+          <p class="auth-subtitle">Начните управлять своими финансами сегодня</p>
         </div>
 
         <form @submit.prevent="handleRegister" class="auth-form">
@@ -35,7 +35,7 @@
               v-model="email"
               type="email"
               class="form-input"
-              placeholder="your@email.com"
+              placeholder="ваш@email.com"
               required
               autocomplete="email"
             />
@@ -44,28 +44,28 @@
           <div class="form-group">
             <label for="password" class="form-label">
               <i class="pi pi-lock"></i>
-              Password
+              Пароль
             </label>
             <input
               id="password"
               v-model="password"
               type="password"
               class="form-input"
-              placeholder="At least 8 characters"
+              placeholder="Минимум 8 символов"
               required
               autocomplete="new-password"
               minlength="8"
             />
             <div class="password-hint">
               <i class="pi pi-info-circle"></i>
-              <span>At least 8 characters with 4 unique symbols</span>
+              <span>Минимум 8 символов с 4 уникальными символами</span>
             </div>
           </div>
 
           <div class="form-group">
             <label for="passwordConfirmation" class="form-label">
               <i class="pi pi-check-circle"></i>
-              Confirm password
+              Подтвердите пароль
             </label>
             <input
               id="passwordConfirmation"
@@ -73,7 +73,7 @@
               type="password"
               class="form-input"
               :class="{ 'input-error': validationError }"
-              placeholder="Re-enter your password"
+              placeholder="Введите пароль повторно"
               required
               autocomplete="new-password"
               minlength="8"
@@ -97,24 +97,24 @@
           >
             <span v-if="!authStore.isLoading">
               <i class="pi pi-user-plus"></i>
-              Sign up
+              Зарегистрироваться
             </span>
             <span v-else class="loading-spinner">
               <i class="pi pi-spin pi-spinner"></i>
-              Creating account...
+              Создание аккаунта...
             </span>
           </button>
         </form>
 
         <div class="auth-divider">
-          <span>or</span>
+          <span>или</span>
         </div>
 
         <div class="auth-footer">
           <p class="footer-text">
-            Already have an account?
+            Уже есть аккаунт?
             <router-link to="/login" class="auth-link">
-              Sign in
+              Войти
               <i class="pi pi-arrow-right"></i>
             </router-link>
           </p>
@@ -125,15 +125,15 @@
       <div class="auth-benefits">
         <div class="benefit-item">
           <i class="pi pi-check"></i>
-          <span>Free forever</span>
+          <span>Бесплатно навсегда</span>
         </div>
         <div class="benefit-item">
           <i class="pi pi-check"></i>
-          <span>Unlimited accounts</span>
+          <span>Неограниченное количество счетов</span>
         </div>
         <div class="benefit-item">
           <i class="pi pi-check"></i>
-          <span>Multi-currency support</span>
+          <span>Поддержка мультивалют</span>
         </div>
       </div>
     </div>
@@ -154,7 +154,7 @@ const passwordConfirmation = ref('');
 
 const validationError = computed(() => {
   if (password.value && passwordConfirmation.value && password.value !== passwordConfirmation.value) {
-    return 'Passwords do not match';
+    return 'Пароли не совпадают';
   }
   return null;
 });

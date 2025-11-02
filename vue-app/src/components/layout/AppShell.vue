@@ -16,19 +16,19 @@ const { darkMode, toggleTheme, initTheme } = useTheme()
 const userEmail = computed(() => authStore.userEmail ?? 'Account')
 
 const navigationItems = [
-  { label: 'Dashboard', icon: 'pi-home', to: '/dashboard' },
-  { label: 'Accounts', icon: 'pi-wallet', to: '/accounts' },
-  { label: 'Transactions', icon: 'pi-list', to: '/expenses' },
-  { label: 'Categories', icon: 'pi-tags', to: '/categories' },
-  { label: 'Analytics', icon: 'pi-chart-line', to: '/analytics' },
-  { label: 'Settings', icon: 'pi-cog', to: '/profile' }
+  { label: 'Дашборд', icon: 'pi-home', to: '/dashboard' },
+  { label: 'Счета', icon: 'pi-wallet', to: '/accounts' },
+  { label: 'Транзакции', icon: 'pi-list', to: '/expenses' },
+  { label: 'Категории', icon: 'pi-tags', to: '/categories' },
+  { label: 'Аналитика', icon: 'pi-chart-line', to: '/analytics' },
+  { label: 'Настройки', icon: 'pi-cog', to: '/profile' }
 ]
 
 const userMenuItems = [
-  { label: 'Profile', icon: 'pi pi-user', command: () => router.push('/profile') },
-  { label: 'Settings', icon: 'pi pi-cog', command: () => router.push('/profile') },
+  { label: 'Профиль', icon: 'pi pi-user', command: () => router.push('/profile') },
+  { label: 'Настройки', icon: 'pi pi-cog', command: () => router.push('/profile') },
   { separator: true },
-  { label: 'Logout', icon: 'pi pi-sign-out', command: () => handleLogout() }
+  { label: 'Выход', icon: 'pi pi-sign-out', command: () => handleLogout() }
 ]
 
 const handleUserMenuToggle = (event: Event) => {
@@ -97,33 +97,6 @@ onMounted(() => {
         </div>
       </div>
     </div>
-
-    <!-- Sidebar -->
-    <Sidebar
-      v-model:visible="sidebarVisible"
-      class="app-shell__sidebar-mobile"
-      :dismissable="true"
-    >
-      <template #header>
-        <div class="app-shell__sidebar-header">
-          <i class="pi pi-chart-bar" />
-          <span>FinTree</span>
-        </div>
-      </template>
-
-      <nav class="app-shell__nav">
-        <router-link
-          v-for="item in navigationItems"
-          :key="item.to"
-          :to="item.to"
-          class="app-shell__nav-link"
-          :aria-current="route.path === item.to ? 'page' : undefined"
-        >
-          <i :class="['pi', item.icon]" />
-          <span>{{ item.label }}</span>
-        </router-link>
-      </nav>
-    </Sidebar>
 
     <!-- Desktop Sidebar -->
     <aside class="app-shell__sidebar-desktop">
@@ -258,17 +231,17 @@ onMounted(() => {
   }
 }
 
-.app-shell__sidebar-mobile :deep(.p-sidebar) {
+.app-shell__drawer-mobile :deep(.p-drawer) {
   width: 280px;
   background: var(--ft-surface-soft);
   border-right: 1px solid var(--ft-border-soft);
 }
 
-.app-shell__sidebar-mobile :deep(.p-sidebar-header) {
+.app-shell__drawer-mobile :deep(.p-drawer-header) {
   padding: var(--ft-space-5) var(--ft-space-4) var(--ft-space-3);
 }
 
-.app-shell__sidebar-header {
+.app-shell__drawer-header {
   display: flex;
   align-items: center;
   gap: var(--ft-space-3);
@@ -277,7 +250,7 @@ onMounted(() => {
   color: var(--ft-text-primary);
 }
 
-.app-shell__sidebar-header i {
+.app-shell__drawer-header i {
   font-size: 1.5rem;
   color: var(--ft-primary-600);
 }
@@ -352,5 +325,28 @@ onMounted(() => {
 /* User Menu */
 .app-shell__user-menu {
   position: relative;
+}
+
+.app-shell__user-menu :deep(.p-menu) {
+  min-width: 200px;
+  margin-top: var(--ft-space-2);
+}
+
+.app-shell__user-menu :deep(.p-menu .p-menuitem-link) {
+  padding: var(--ft-space-3) var(--ft-space-4);
+  gap: var(--ft-space-3);
+}
+
+.app-shell__user-menu :deep(.p-menu .p-menuitem-icon) {
+  color: var(--ft-text-muted);
+}
+
+.app-shell__user-menu :deep(.p-menu .p-menuitem-text) {
+  font-size: var(--ft-text-sm);
+  font-weight: var(--ft-font-medium);
+}
+
+.app-shell__user-menu :deep(.p-menu .p-menu-separator) {
+  margin: var(--ft-space-2) 0;
 }
 </style>

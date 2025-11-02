@@ -25,7 +25,7 @@ public sealed class TransactionsService(AppDbContext context, ICurrentUser curre
         TxFilter? filter, CancellationToken ct = default)
     {
         var currentUserId = currentUser.Id;
-        var q = context.Transactions
+        var q = context.ExpenseTransactions
             .AsNoTracking()
             .Where(t => t.Account.UserId == currentUserId);
 

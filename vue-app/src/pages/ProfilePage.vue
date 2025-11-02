@@ -90,8 +90,8 @@ async function handleSubmit() {
   if (!form.baseCurrencyCode) {
     toast.add({
       severity: 'warn',
-      summary: 'Select a currency',
-      detail: 'Choose a base currency before updating your profile.',
+      summary: 'Выберите валюту',
+      detail: 'Выберите базовую валюту перед обновлением профиля.',
       life: 2500,
     });
     return;
@@ -105,16 +105,16 @@ async function handleSubmit() {
   if (success) {
     toast.add({
       severity: 'success',
-      summary: 'Profile updated',
-      detail: 'Your changes have been applied.',
+      summary: 'Профиль обновлен',
+      detail: 'Ваши изменения применены.',
       life: 2500,
     });
     resetForm();
   } else {
     toast.add({
       severity: 'error',
-      summary: 'Save failed',
-      detail: 'Unable to update the profile. Please try again.',
+      summary: 'Ошибка сохранения',
+      detail: 'Не удалось обновить профиль. Пожалуйста, попробуйте еще раз.',
       life: 3000,
     });
   }
@@ -128,11 +128,11 @@ function handleClearTelegram() {
 <template>
   <div class="page profile-page">
     <PageHeader
-      title="Profile"
-      subtitle="Update your base currency and Telegram handle for smarter insights"
+      title="Профиль"
+      subtitle="Обновите базовую валюту и Telegram для более умной аналитики"
       :breadcrumbs="[
-        { label: 'Home', to: '/dashboard' },
-        { label: 'Profile' }
+        { label: 'Главная', to: '/dashboard' },
+        { label: 'Профиль' }
       ]"
     />
 
@@ -140,8 +140,8 @@ function handleClearTelegram() {
       <template #title>
         <div class="card-header">
           <div>
-            <h3 class="card-title">Account details</h3>
-            <p class="card-subtitle">Manage profile preferences without leaving the page.</p>
+            <h3 class="card-title">Детали аккаунта</h3>
+            <p class="card-subtitle">Управляйте настройками профиля не покидая страницы.</p>
           </div>
         </div>
       </template>
@@ -150,7 +150,7 @@ function handleClearTelegram() {
         <form class="profile-form" @submit.prevent="handleSubmit">
           <div class="profile-grid">
             <div class="profile-row">
-              <label>Name</label>
+              <label>Имя</label>
               <p>{{ currentUser?.name ?? '—' }}</p>
             </div>
 
@@ -160,7 +160,7 @@ function handleClearTelegram() {
             </div>
 
             <div class="profile-row">
-              <label>User ID</label>
+              <label>ID пользователя</label>
               <p class="muted">{{ currentUser?.id ?? '—' }}</p>
             </div>
           </div>
@@ -169,25 +169,25 @@ function handleClearTelegram() {
 
           <div class="profile-grid editable">
             <div class="profile-row">
-              <label for="profileCurrency">Base currency</label>
+              <label for="profileCurrency">Базовая валюта</label>
               <Select
                 id="profileCurrency"
                 v-model="form.baseCurrencyCode"
                 :options="currencyOptions"
                 option-label="label"
                 option-value="value"
-                placeholder="Select currency"
+                placeholder="Выберите валюту"
                 class="w-full"
                 :disabled="isLoading"
               />
               <small v-if="isLoading" class="helper-text ft-text ft-text--muted">
-                Loading available currencies…
+                Загрузка доступных валют…
               </small>
               <small v-else-if="selectedCurrencySummary" class="helper-text ft-text ft-text--muted">
                 {{ selectedCurrencySummary }}
               </small>
               <small v-else class="helper-text ft-text ft-text--muted">
-                This currency is used for analytics and reports.
+                Эта валюта используется для аналитики и отчетов.
               </small>
             </div>
 
@@ -204,7 +204,7 @@ function handleClearTelegram() {
                 />
                 <Button
                   type="button"
-                  label="Clear"
+                  label="Очистить"
                   text
                   severity="secondary"
                   :disabled="!form.telegramHandle || isSaving"
@@ -212,7 +212,7 @@ function handleClearTelegram() {
                 />
               </div>
               <small class="helper-text ft-text ft-text--muted">
-                Enter a handle without spaces. Leave blank to unlink Telegram.
+                Введите никнейм без пробелов. Оставьте пустым, чтобы отвязать Telegram.
               </small>
             </div>
           </div>
@@ -220,7 +220,7 @@ function handleClearTelegram() {
           <div class="actions">
             <Button
               type="button"
-              label="Reset changes"
+              label="Сбросить изменения"
               outlined
               severity="secondary"
               :disabled="!hasChanges || isSaving"
@@ -228,7 +228,7 @@ function handleClearTelegram() {
             />
             <Button
               type="submit"
-              label="Update profile"
+              label="Обновить профиль"
               icon="pi pi-check"
               :loading="isSaving"
               :disabled="!canSubmit"

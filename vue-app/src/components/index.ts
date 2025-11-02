@@ -12,6 +12,7 @@ import Card from 'primevue/card'
 import Skeleton from 'primevue/skeleton'
 import Menu from 'primevue/menu'
 import Sidebar from 'primevue/sidebar'
+import Drawer from 'primevue/drawer'
 import DataTable from 'primevue/datatable'
 import Column from 'primevue/column'
 import InputText from 'primevue/inputtext'
@@ -39,6 +40,7 @@ export function registerComponents(app: App) {
   app.component('Skeleton', Skeleton)
   app.component('Menu', Menu)
   app.component('Sidebar', Sidebar)
+  app.component('Drawer', Drawer)
   app.component('DataTable', DataTable)
   app.component('Column', Column)
   app.component('InputText', InputText)

@@ -7,70 +7,70 @@ const router = useRouter()
 const features = [
   {
     icon: 'pi-wallet',
-    title: 'Multi-Currency Accounts',
-    description: 'Track multiple bank accounts and cash wallets in different currencies with real-time balance updates.'
+    title: 'Мультивалютные счета',
+    description: 'Отслеживайте несколько банковских счетов и кошельков в разных валютах с обновлением баланса в реальном времени.'
   },
   {
     icon: 'pi-tags',
-    title: 'Smart Categories',
-    description: 'Organize expenses with custom categories and automatic categorization for better spending insights.'
+    title: 'Умные категории',
+    description: 'Организуйте расходы с помощью пользовательских категорий и автоматической категоризации для лучшей аналитики.'
   },
   {
     icon: 'pi-chart-line',
-    title: 'Powerful Analytics',
-    description: 'Visualize your financial data with interactive charts, trends, and personalized spending reports.'
+    title: 'Мощная аналитика',
+    description: 'Визуализируйте финансовые данные с помощью интерактивных графиков, трендов и персонализированных отчетов.'
   },
   {
     icon: 'pi-shield',
-    title: 'Bank-Grade Security',
-    description: 'Your data is encrypted end-to-end with enterprise-level security and 2FA protection.'
+    title: 'Банковская безопасность',
+    description: 'Ваши данные зашифрованы end-to-end с корпоративным уровнем безопасности и защитой 2FA.'
   },
   {
     icon: 'pi-mobile',
-    title: 'Works Everywhere',
-    description: 'Access your finances on any device. Fully responsive design optimized for mobile, tablet, and desktop.'
+    title: 'Работает везде',
+    description: 'Доступ к финансам с любого устройства. Адаптивный дизайн для мобильных, планшетов и десктопов.'
   },
   {
     icon: 'pi-bolt',
-    title: 'Lightning Fast',
-    description: 'Built with modern technology for instant loading and real-time updates across all your devices.'
+    title: 'Молниеносная скорость',
+    description: 'Построен на современных технологиях для мгновенной загрузки и обновлений в реальном времени.'
   }
 ]
 
 const howItWorks = [
   {
     step: '1',
-    title: 'Connect Your Accounts',
-    description: 'Add your bank accounts and cash wallets in seconds. Support for multiple currencies.'
+    title: 'Подключите счета',
+    description: 'Добавьте банковские счета и кошельки за секунды. Поддержка нескольких валют.'
   },
   {
     step: '2',
-    title: 'Track Expenses',
-    description: 'Record transactions with categories, dates, and notes. Automatic categorization makes it effortless.'
+    title: 'Отслеживайте расходы',
+    description: 'Записывайте транзакции с категориями, датами и заметками. Автоматическая категоризация упрощает процесс.'
   },
   {
     step: '3',
-    title: 'Get Insights',
-    description: 'View charts and analytics to understand your spending patterns and make smarter financial decisions.'
+    title: 'Получайте аналитику',
+    description: 'Просматривайте графики и аналитику, чтобы понять свои траты и принимать умные финансовые решения.'
   }
 ]
 
 const faq = [
   {
-    question: 'Is FinTree free to use?',
-    answer: 'Yes! FinTree offers a generous free tier that includes unlimited accounts, transactions, and basic analytics. Premium features are available for advanced users.'
+    question: 'FinTree бесплатный?',
+    answer: 'Да! FinTree предлагает щедрый бесплатный тариф с неограниченным количеством счетов, транзакций и базовой аналитикой. Премиум-функции доступны для продвинутых пользователей.'
   },
   {
-    question: 'How secure is my data?',
-    answer: 'We use bank-grade encryption (AES-256) to protect your data. All communication is encrypted with HTTPS, and we offer two-factor authentication for enhanced security.'
+    question: 'Насколько безопасны мои данные?',
+    answer: 'Мы используем банковское шифрование (AES-256) для защиты ваших данных. Вся связь зашифрована HTTPS, и мы предлагаем двухфакторную аутентификацию для усиленной безопасности.'
   },
   {
-    question: 'Can I import my existing data?',
-    answer: 'Yes, you can import transactions from CSV files. We also support direct bank connections through secure integrations (coming soon).'
+    question: 'Могу ли я импортировать существующие данные?',
+    answer: 'Да, вы можете импортировать транзакции из CSV файлов. Мы также поддерживаем прямое подключение к банкам через безопасные интеграции (скоро).'
   },
   {
-    question: 'What currencies are supported?',
-    answer: 'FinTree supports 150+ currencies including USD, EUR, GBP, KZT, RUB, and more. You can track multiple accounts in different currencies.'
+    question: 'Какие валюты поддерживаются?',
+    answer: 'FinTree поддерживает более 150 валют, включая USD, EUR, GBP, KZT, RUB и другие. Вы можете отслеживать несколько счетов в разных валютах.'
   }
 ]
 
@@ -99,20 +99,20 @@ const scrollToSection = (sectionId: string) => {
         </router-link>
 
         <div class="landing__nav-links">
-          <a href="#features" class="landing__nav-link" @click.prevent="scrollToSection('features')">Features</a>
-          <a href="#how-it-works" class="landing__nav-link" @click.prevent="scrollToSection('how-it-works')">How It Works</a>
-          <a href="#pricing" class="landing__nav-link" @click.prevent="scrollToSection('pricing')">Pricing</a>
+          <a href="#features" class="landing__nav-link" @click.prevent="scrollToSection('features')">Возможности</a>
+          <a href="#how-it-works" class="landing__nav-link" @click.prevent="scrollToSection('how-it-works')">Как это работает</a>
+          <a href="#pricing" class="landing__nav-link" @click.prevent="scrollToSection('pricing')">Тарифы</a>
           <a href="#faq" class="landing__nav-link" @click.prevent="scrollToSection('faq')">FAQ</a>
         </div>
 
         <div class="landing__nav-actions">
           <Button
-            label="Sign In"
+            label="Войти"
             text
             @click="router.push('/login')"
           />
           <Button
-            label="Get Started"
+            label="Начать"
             @click="router.push('/register')"
           />
         </div>
@@ -125,28 +125,28 @@ const scrollToSection = (sectionId: string) => {
         <div class="landing__hero-content">
           <div class="landing__hero-badge">
             <i class="pi pi-bolt" />
-            <span>Smart Personal Finance Tracking</span>
+            <span>Умное управление личными финансами</span>
           </div>
 
           <h1 class="landing__hero-title">
-            Take Control of Your <span class="landing__hero-gradient">Finances</span>
+            Возьмите под контроль свои <span class="landing__hero-gradient">Финансы</span>
           </h1>
 
           <p class="landing__hero-subtitle">
-            Track spending, manage multiple accounts, and get powerful insights
-            to make smarter financial decisions. All in one beautiful, secure platform.
+            Отслеживайте расходы, управляйте несколькими счетами и получайте мощную аналитику
+            для принятия умных финансовых решений. Все на одной красивой и безопасной платформе.
           </p>
 
           <div class="landing__hero-actions">
             <Button
-              label="Start Free"
+              label="Начать бесплатно"
               size="large"
               icon="pi pi-arrow-right"
               iconPos="right"
               @click="router.push('/register')"
             />
             <Button
-              label="See How It Works"
+              label="Как это работает"
               size="large"
               severity="secondary"
               outlined
@@ -158,15 +158,15 @@ const scrollToSection = (sectionId: string) => {
           <div class="landing__hero-trust">
             <div class="landing__trust-item">
               <i class="pi pi-shield" />
-              <span>Bank-grade security</span>
+              <span>Банковский уровень безопасности</span>
             </div>
             <div class="landing__trust-item">
               <i class="pi pi-lock" />
-              <span>Encrypted data</span>
+              <span>Зашифрованные данные</span>
             </div>
             <div class="landing__trust-item">
               <i class="pi pi-check-circle" />
-              <span>Free forever</span>
+              <span>Бесплатно навсегда</span>
             </div>
           </div>
         </div>
@@ -177,9 +177,9 @@ const scrollToSection = (sectionId: string) => {
     <section id="features" class="landing__section">
       <div class="landing__container">
         <div class="landing__section-header">
-          <h2 class="landing__section-title">Everything you need to manage your money</h2>
+          <h2 class="landing__section-title">Все необходимое для управления деньгами</h2>
           <p class="landing__section-subtitle">
-            Powerful features designed to give you complete control over your personal finances
+            Мощные функции для полного контроля над вашими личными финансами
           </p>
         </div>
 
@@ -201,9 +201,9 @@ const scrollToSection = (sectionId: string) => {
     <section id="how-it-works" class="landing__section landing__section--alt">
       <div class="landing__container">
         <div class="landing__section-header">
-          <h2 class="landing__section-title">Get started in 3 simple steps</h2>
+          <h2 class="landing__section-title">Начните за 3 простых шага</h2>
           <p class="landing__section-subtitle">
-            Start tracking your finances in minutes, no complicated setup required
+            Начните отслеживать свои финансы за считанные минуты без сложных настроек
           </p>
         </div>
 
@@ -224,27 +224,27 @@ const scrollToSection = (sectionId: string) => {
           <div class="landing__security-icon">
             <i class="pi pi-shield" />
           </div>
-          <h2 class="landing__security-title">Your data is safe with us</h2>
+          <h2 class="landing__security-title">Ваши данные в безопасности</h2>
           <p class="landing__security-description">
-            We use industry-leading encryption and security practices to protect your financial data.
-            Your information is encrypted end-to-end, and we never share it with third parties.
+            Мы используем передовые методы шифрования для защиты ваших финансовых данных.
+            Ваша информация зашифрована end-to-end, и мы никогда не передаем ее третьим лицам.
           </p>
           <div class="landing__security-features">
             <div class="landing__security-feature">
               <i class="pi pi-check-circle" />
-              <span>256-bit AES encryption</span>
+              <span>256-битное шифрование AES</span>
             </div>
             <div class="landing__security-feature">
               <i class="pi pi-check-circle" />
-              <span>Two-factor authentication</span>
+              <span>Двухфакторная аутентификация</span>
             </div>
             <div class="landing__security-feature">
               <i class="pi pi-check-circle" />
-              <span>HTTPS secure connection</span>
+              <span>Защищенное HTTPS соединение</span>
             </div>
             <div class="landing__security-feature">
               <i class="pi pi-check-circle" />
-              <span>Regular security audits</span>
+              <span>Регулярные аудиты безопасности</span>
             </div>
           </div>
         </div>
@@ -255,9 +255,9 @@ const scrollToSection = (sectionId: string) => {
     <section id="pricing" class="landing__section landing__section--alt">
       <div class="landing__container">
         <div class="landing__section-header">
-          <h2 class="landing__section-title">Simple, transparent pricing</h2>
+          <h2 class="landing__section-title">Простые и прозрачные цены</h2>
           <p class="landing__section-subtitle">
-            Start free and upgrade when you're ready for advanced features
+            Начните бесплатно и переходите на расширенные функции, когда будете готовы
           </p>
         </div>
 
@@ -265,23 +265,23 @@ const scrollToSection = (sectionId: string) => {
           <Card class="landing__pricing-card">
             <template #content>
               <div class="landing__pricing-header">
-                <h3 class="landing__pricing-title">Free</h3>
+                <h3 class="landing__pricing-title">Бесплатно</h3>
                 <div class="landing__pricing-price">
                   <span class="landing__pricing-amount">$0</span>
-                  <span class="landing__pricing-period">/month</span>
+                  <span class="landing__pricing-period">/месяц</span>
                 </div>
               </div>
 
               <ul class="landing__pricing-features">
-                <li><i class="pi pi-check" /> Unlimited accounts</li>
-                <li><i class="pi pi-check" /> Unlimited transactions</li>
-                <li><i class="pi pi-check" /> Basic analytics</li>
-                <li><i class="pi pi-check" /> Multi-currency support</li>
-                <li><i class="pi pi-check" /> Mobile & desktop access</li>
+                <li><i class="pi pi-check" /> Неограниченное количество счетов</li>
+                <li><i class="pi pi-check" /> Неограниченное количество транзакций</li>
+                <li><i class="pi pi-check" /> Базовая аналитика</li>
+                <li><i class="pi pi-check" /> Поддержка мультивалют</li>
+                <li><i class="pi pi-check" /> Доступ с мобильных и десктопов</li>
               </ul>
 
               <Button
-                label="Get Started"
+                label="Начать"
                 class="landing__pricing-cta"
                 @click="router.push('/register')"
               />
@@ -290,28 +290,28 @@ const scrollToSection = (sectionId: string) => {
 
           <Card class="landing__pricing-card landing__pricing-card--featured">
             <template #content>
-              <div class="landing__pricing-badge">Most Popular</div>
+              <div class="landing__pricing-badge">Самый популярный</div>
 
               <div class="landing__pricing-header">
                 <h3 class="landing__pricing-title">Pro</h3>
                 <div class="landing__pricing-price">
                   <span class="landing__pricing-amount">$9</span>
-                  <span class="landing__pricing-period">/month</span>
+                  <span class="landing__pricing-period">/месяц</span>
                 </div>
               </div>
 
               <ul class="landing__pricing-features">
-                <li><i class="pi pi-check" /> Everything in Free</li>
-                <li><i class="pi pi-check" /> Advanced analytics & reports</li>
-                <li><i class="pi pi-check" /> Budget tracking</li>
-                <li><i class="pi pi-check" /> Savings goals</li>
-                <li><i class="pi pi-check" /> Bank integrations</li>
-                <li><i class="pi pi-check" /> Export data (CSV, PDF)</li>
-                <li><i class="pi pi-check" /> Priority support</li>
+                <li><i class="pi pi-check" /> Все из бесплатного</li>
+                <li><i class="pi pi-check" /> Продвинутая аналитика и отчеты</li>
+                <li><i class="pi pi-check" /> Отслеживание бюджета</li>
+                <li><i class="pi pi-check" /> Цели накоплений</li>
+                <li><i class="pi pi-check" /> Интеграция с банками</li>
+                <li><i class="pi pi-check" /> Экспорт данных (CSV, PDF)</li>
+                <li><i class="pi pi-check" /> Приоритетная поддержка</li>
               </ul>
 
               <Button
-                label="Start Free Trial"
+                label="Начать пробный период"
                 class="landing__pricing-cta"
                 severity="contrast"
                 @click="router.push('/register')"
@@ -326,7 +326,7 @@ const scrollToSection = (sectionId: string) => {
     <section id="faq" class="landing__section">
       <div class="landing__container landing__container--narrow">
         <div class="landing__section-header">
-          <h2 class="landing__section-title">Frequently asked questions</h2>
+          <h2 class="landing__section-title">Часто задаваемые вопросы</h2>
         </div>
 
         <div class="landing__faq">
@@ -355,12 +355,12 @@ const scrollToSection = (sectionId: string) => {
     <section class="landing__section landing__cta-section">
       <div class="landing__container">
         <div class="landing__cta">
-          <h2 class="landing__cta-title">Ready to take control of your finances?</h2>
+          <h2 class="landing__cta-title">Готовы взять свои финансы под контроль?</h2>
           <p class="landing__cta-subtitle">
-            Join thousands of users who are already making smarter financial decisions with FinTree
+            Присоединяйтесь к тысячам пользователей, которые уже принимают умные финансовые решения с FinTree
           </p>
           <Button
-            label="Get Started Free"
+            label="Начать бесплатно"
             size="large"
             icon="pi pi-arrow-right"
             iconPos="right"
@@ -379,38 +379,38 @@ const scrollToSection = (sectionId: string) => {
               <i class="pi pi-chart-bar" />
               <span>FinTree</span>
             </div>
-            <p>Smart personal finance tracking for everyone</p>
+            <p>Умное управление личными финансами для каждого</p>
           </div>
 
           <div class="landing__footer-links">
             <div class="landing__footer-column">
-              <h4>Product</h4>
-              <a href="#features">Features</a>
-              <a href="#pricing">Pricing</a>
-              <a href="#security">Security</a>
+              <h4>Продукт</h4>
+              <a href="#features">Возможности</a>
+              <a href="#pricing">Тарифы</a>
+              <a href="#security">Безопасность</a>
             </div>
 
             <div class="landing__footer-column">
-              <h4>Company</h4>
-              <a href="#">About</a>
-              <a href="#">Blog</a>
-              <a href="#">Careers</a>
+              <h4>Компания</h4>
+              <a href="#">О нас</a>
+              <a href="#">Блог</a>
+              <a href="#">Карьера</a>
             </div>
 
             <div class="landing__footer-column">
-              <h4>Support</h4>
+              <h4>Поддержка</h4>
               <a href="#faq">FAQ</a>
-              <a href="#">Help Center</a>
-              <a href="#">Contact</a>
+              <a href="#">Центр помощи</a>
+              <a href="#">Контакты</a>
             </div>
           </div>
         </div>
 
         <div class="landing__footer-bottom">
-          <p>&copy; 2025 FinTree. All rights reserved.</p>
+          <p>&copy; 2025 FinTree. Все права защищены.</p>
           <div class="landing__footer-legal">
-            <a href="#">Privacy Policy</a>
-            <a href="#">Terms of Service</a>
+            <a href="#">Политика конфиденциальности</a>
+            <a href="#">Условия использования</a>
           </div>
         </div>
       </div>

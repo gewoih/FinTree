@@ -14,14 +14,14 @@
           <i class="pi pi-tree"></i>
         </div>
         <h1 class="brand-name">FinTree</h1>
-        <p class="brand-tagline">Personal finance control</p>
+        <p class="brand-tagline">Контроль личных финансов</p>
       </div>
 
       <!-- Login Card -->
       <div class="auth-card">
         <div class="auth-card-header">
-          <h2 class="auth-title">Welcome back</h2>
-          <p class="auth-subtitle">Sign in to your account</p>
+          <h2 class="auth-title">С возвращением</h2>
+          <p class="auth-subtitle">Войдите в свой аккаунт</p>
         </div>
 
         <form @submit.prevent="handleLogin" class="auth-form">
@@ -35,7 +35,7 @@
               v-model="email"
               type="email"
               class="form-input"
-              placeholder="your@email.com"
+              placeholder="ваш@email.com"
               required
               autocomplete="email"
             />
@@ -44,14 +44,14 @@
           <div class="form-group">
             <label for="password" class="form-label">
               <i class="pi pi-lock"></i>
-              Password
+              Пароль
             </label>
             <input
               id="password"
               v-model="password"
               type="password"
               class="form-input"
-              placeholder="Enter your password"
+              placeholder="Введите ваш пароль"
               required
               autocomplete="current-password"
             />
@@ -69,24 +69,24 @@
           >
             <span v-if="!authStore.isLoading">
               <i class="pi pi-sign-in"></i>
-              Sign in
+              Войти
             </span>
             <span v-else class="loading-spinner">
               <i class="pi pi-spin pi-spinner"></i>
-              Signing in...
+              Вход...
             </span>
           </button>
         </form>
 
         <div class="auth-divider">
-          <span>or</span>
+          <span>или</span>
         </div>
 
         <div class="auth-footer">
           <p class="footer-text">
-            Don’t have an account?
+            Нет аккаунта?
             <router-link to="/register" class="auth-link">
-              Create one for free
+              Создать бесплатно
               <i class="pi pi-arrow-right"></i>
             </router-link>
           </p>
@@ -97,15 +97,15 @@
       <div class="auth-features">
         <div class="feature-badge">
           <i class="pi pi-shield"></i>
-          <span>Secure</span>
+          <span>Безопасно</span>
         </div>
         <div class="feature-badge">
           <i class="pi pi-lock"></i>
-          <span>Protected</span>
+          <span>Защищено</span>
         </div>
         <div class="feature-badge">
           <i class="pi pi-bolt"></i>
-          <span>Fast</span>
+          <span>Быстро</span>
         </div>
       </div>
     </div>
