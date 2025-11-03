@@ -9,11 +9,10 @@ public sealed class CurrencyConverter(AppDbContext context, IMemoryCache cache)
 {
     private static readonly TimeSpan CacheTtl = TimeSpan.FromHours(1);
 
-    public async Task<decimal> ConvertAsync(Money money, string toCurrencyCode, DateTime atUtc,
-        CancellationToken ct = default)
+    public async Task<Money> ConvertAsync(Money money, string toCurrencyCode, DateTime atUtc, CancellationToken ct)
     {
         var rate = await GetCrossRateAsync(money.Currency.Code, toCurrencyCode, atUtc, ct);
-        return money.Amount * rate;
+        return new Money(toCurrencyCode, money.Amount * rate);
     }
 
     private async Task<decimal> GetCrossRateAsync(string fromCurrency, string toCurrency, DateTime atUtc,

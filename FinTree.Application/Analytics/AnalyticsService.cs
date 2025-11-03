@@ -43,7 +43,7 @@ public sealed class AnalyticsService(
                 ? DateTime.SpecifyKind(dt, DateTimeKind.Utc)
                 : dt).ToUniversalTime();
 
-            var valueBase = await currencyConverter.ConvertAsync(
+            var baseMoney = await currencyConverter.ConvertAsync(
                 money: r.Money,
                 toCurrencyCode: baseCurrencyCode,
                 atUtc: occurredUtc,
@@ -51,9 +51,9 @@ public sealed class AnalyticsService(
 
             var key = (occurredUtc.Year, occurredUtc.Month);
             if (totals.TryGetValue(key, out var sum))
-                totals[key] = sum + valueBase;
+                totals[key] = sum + baseMoney.Amount;
             else
-                totals[key] = valueBase;
+                totals[key] = baseMoney.Amount;
         }
 
         var result = totals
@@ -96,7 +96,7 @@ public sealed class AnalyticsService(
                 ? DateTime.SpecifyKind(dt, DateTimeKind.Utc)
                 : dt).ToUniversalTime();
 
-            var valueBase = await currencyConverter.ConvertAsync(
+            var baseMoney = await currencyConverter.ConvertAsync(
                 money: r.Money,
                 toCurrencyCode: baseCurrencyCode,
                 atUtc: occurredUtc,
@@ -104,27 +104,28 @@ public sealed class AnalyticsService(
 
             string key;
             (int Year, int Month, int? Day, int? Week, decimal Amount) entry;
+            var baseAmount = baseMoney.Amount;
 
             switch (granularity.ToLower())
             {
                 case "days":
                     key = $"{occurredUtc.Year}-{occurredUtc.Month}-{occurredUtc.Day}";
-                    entry = (occurredUtc.Year, occurredUtc.Month, occurredUtc.Day, null, valueBase);
+                    entry = (occurredUtc.Year, occurredUtc.Month, occurredUtc.Day, null, baseAmount);
                     break;
                 case "weeks":
                     var weekOfYear = System.Globalization.CultureInfo.InvariantCulture.Calendar
                         .GetWeekOfYear(occurredUtc, System.Globalization.CalendarWeekRule.FirstDay, DayOfWeek.Monday);
                     key = $"{occurredUtc.Year}-W{weekOfYear}";
-                    entry = (occurredUtc.Year, occurredUtc.Month, null, weekOfYear, valueBase);
+                    entry = (occurredUtc.Year, occurredUtc.Month, null, weekOfYear, baseAmount);
                     break;
                 default:
                     key = $"{occurredUtc.Year}-{occurredUtc.Month}";
-                    entry = (occurredUtc.Year, occurredUtc.Month, null, null, valueBase);
+                    entry = (occurredUtc.Year, occurredUtc.Month, null, null, baseAmount);
                     break;
             }
 
             if (totals.TryGetValue(key, out var existing))
-                totals[key] = existing with { Amount = existing.Amount + valueBase };
+                totals[key] = existing with { Amount = existing.Amount + baseAmount };
             else
                 totals[key] = entry;
         }
@@ -187,16 +188,17 @@ public sealed class AnalyticsService(
                 ? DateTime.SpecifyKind(dt, DateTimeKind.Utc)
                 : dt).ToUniversalTime();
 
-            var valueBase = await currencyConverter.ConvertAsync(
+            var baseMoney = await currencyConverter.ConvertAsync(
                 money: r.Money,
                 toCurrencyCode: baseCurrencyCode,
                 atUtc: occurredUtc,
                 ct: ct);
 
+            var baseAmount = baseMoney.Amount;
             if (categoryTotals.TryGetValue(r.CategoryId, out var currentTotal))
-                categoryTotals[r.CategoryId] = currentTotal + valueBase;
+                categoryTotals[r.CategoryId] = currentTotal + baseAmount;
             else
-                categoryTotals[r.CategoryId] = valueBase;
+                categoryTotals[r.CategoryId] = baseAmount;
         }
 
         var result = categoryTotals
@@ -274,14 +276,14 @@ public sealed class AnalyticsService(
                     ? DateTime.SpecifyKind(txn.OccurredAt, DateTimeKind.Utc)
                     : txn.OccurredAt.ToUniversalTime();
 
-                var valueBase = await currencyConverter.ConvertAsync(
+                var baseMoney = await currencyConverter.ConvertAsync(
                     money: txn.Money,
                     toCurrencyCode: baseCurrencyCode,
                     atUtc: dt,
                     ct: ct);
-
+                
                 // Withdrawal transactions have negative money amount
-                accountBalances[txn.AccountId] -= valueBase;
+                accountBalances[txn.AccountId] -= baseMoney.Amount;
             }
 
             // Calculate total networth at end of this month
