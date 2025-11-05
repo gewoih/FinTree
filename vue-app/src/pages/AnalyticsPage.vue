@@ -321,25 +321,39 @@ const expensesChartData = computed(() => {
 const balanceChartOptions = {
   responsive: true,
   maintainAspectRatio: false,
+  interaction: {
+    mode: 'index' as const,
+    intersect: false,
+  },
   plugins: {
     legend: {
       display: true,
       position: 'top' as const,
+      align: 'start' as const,
       labels: {
         color: '#e2e8f0',
-        font: { size: 14 },
-        padding: 20,
+        font: { size: 14, weight: 600 as const },
+        padding: 16,
         usePointStyle: true,
+        pointStyle: 'circle',
+        boxWidth: 8,
+        boxHeight: 8,
       }
     },
     tooltip: {
-      backgroundColor: 'rgba(15, 23, 42, 0.95)',
+      enabled: true,
+      backgroundColor: 'rgba(15, 23, 42, 0.98)',
       titleColor: '#f8fafc',
+      titleFont: { size: 14, weight: 600 as const },
       bodyColor: '#e2e8f0',
-      padding: 12,
-      borderColor: 'rgba(56, 189, 248, 0.3)',
+      bodyFont: { size: 13 },
+      padding: 16,
+      borderColor: 'rgba(56, 189, 248, 0.4)',
       borderWidth: 1,
+      cornerRadius: 8,
       displayColors: true,
+      boxPadding: 6,
+      usePointStyle: true,
       callbacks: {
         label: function(context: any) {
           return `${context.dataset.label}: ${formatAmount(context.parsed.y ?? 0)}`;
@@ -349,15 +363,33 @@ const balanceChartOptions = {
   },
   scales: {
     x: {
-      grid: { color: 'rgba(148, 163, 184, 0.1)' },
-      ticks: { color: '#94a3b8', font: { size: 12 } }
+      grid: {
+        color: 'rgba(148, 163, 184, 0.08)',
+        lineWidth: 1,
+      },
+      border: {
+        display: false,
+      },
+      ticks: {
+        color: 'rgba(148, 163, 184, 0.85)',
+        font: { size: 12, weight: 500 as const },
+        padding: 8,
+      }
     },
     y: {
       beginAtZero: false,
-      grid: { color: 'rgba(148, 163, 184, 0.1)' },
+      grid: {
+        color: 'rgba(148, 163, 184, 0.08)',
+        lineWidth: 1,
+      },
+      border: {
+        display: false,
+        dash: [5, 5],
+      },
       ticks: {
-        color: '#94a3b8',
-        font: { size: 12 },
+        color: 'rgba(148, 163, 184, 0.85)',
+        font: { size: 12, weight: 500 as const },
+        padding: 12,
         callback: function(value: any) {
           return formatAmount(value);
         }
@@ -369,16 +401,23 @@ const balanceChartOptions = {
 const categoryChartOptions = {
   responsive: true,
   maintainAspectRatio: false,
+  interaction: {
+    mode: 'point' as const,
+    intersect: true,
+  },
   plugins: {
     legend: {
       display: true,
       position: 'right' as const,
+      align: 'start' as const,
       labels: {
         color: '#f1f5f9',
-        font: { size: 13, weight: 500 as const },
-        padding: 15,
+        font: { size: 13, weight: 600 as const },
+        padding: 12,
         usePointStyle: true,
         pointStyle: 'circle',
+        boxWidth: 10,
+        boxHeight: 10,
         generateLabels: function(chart: any) {
           const data = chart.data;
           if (data.labels.length && data.datasets.length) {
@@ -402,12 +441,18 @@ const categoryChartOptions = {
       }
     },
     tooltip: {
-      backgroundColor: 'rgba(15, 23, 42, 0.95)',
+      enabled: true,
+      backgroundColor: 'rgba(15, 23, 42, 0.98)',
       titleColor: '#f8fafc',
+      titleFont: { size: 14, weight: 600 as const },
       bodyColor: '#e2e8f0',
-      padding: 12,
-      borderColor: 'rgba(56, 189, 248, 0.3)',
+      bodyFont: { size: 13 },
+      padding: 16,
+      borderColor: 'rgba(56, 189, 248, 0.4)',
       borderWidth: 1,
+      cornerRadius: 8,
+      displayColors: true,
+      boxPadding: 6,
       callbacks: {
         label: function(context: any) {
           const total = context.dataset.data.reduce((a: number, b: number) => a + b, 0);
@@ -423,25 +468,40 @@ const expensesChartOptions = computed(() => {
   const currencyCode = analyticsCurrencyCode.value;
   return {
     responsive: true,
-    maintainAspectRatio: true,
+    maintainAspectRatio: false,
+    interaction: {
+      mode: 'index' as const,
+      intersect: false,
+    },
     plugins: {
       legend: {
         display: true,
         position: 'top' as const,
+        align: 'start' as const,
         labels: {
           color: '#e2e8f0',
-          font: { size: 14 },
-          padding: 20,
+          font: { size: 14, weight: 600 as const },
+          padding: 16,
           usePointStyle: true,
+          pointStyle: 'circle',
+          boxWidth: 8,
+          boxHeight: 8,
         }
       },
       tooltip: {
-        backgroundColor: 'rgba(15, 23, 42, 0.95)',
+        enabled: true,
+        backgroundColor: 'rgba(15, 23, 42, 0.98)',
         titleColor: '#f8fafc',
+        titleFont: { size: 14, weight: 600 as const },
         bodyColor: '#e2e8f0',
-        padding: 12,
-        borderColor: 'rgba(56, 189, 248, 0.3)',
+        bodyFont: { size: 13 },
+        padding: 16,
+        borderColor: 'rgba(239, 68, 68, 0.4)',
         borderWidth: 1,
+        cornerRadius: 8,
+        displayColors: true,
+        boxPadding: 6,
+        usePointStyle: true,
         callbacks: {
           label(context: any) {
             const value = context.parsed?.y ?? 0;
@@ -453,14 +513,34 @@ const expensesChartOptions = computed(() => {
     },
     scales: {
       x: {
-        grid: { color: 'rgba(148, 163, 184, 0.1)' },
-        ticks: { color: '#94a3b8', font: { size: 12 } }
+        grid: {
+          color: 'rgba(148, 163, 184, 0.08)',
+          lineWidth: 1,
+        },
+        border: {
+          display: false,
+        },
+        ticks: {
+          color: 'rgba(148, 163, 184, 0.85)',
+          font: { size: 12, weight: 500 as const },
+          padding: 8,
+          maxRotation: 45,
+          minRotation: 0,
+        }
       },
       y: {
-        grid: { color: 'rgba(148, 163, 184, 0.1)' },
+        beginAtZero: true,
+        grid: {
+          color: 'rgba(148, 163, 184, 0.08)',
+          lineWidth: 1,
+        },
+        border: {
+          display: false,
+        },
         ticks: {
-          color: '#94a3b8',
-          font: { size: 12 },
+          color: 'rgba(148, 163, 184, 0.85)',
+          font: { size: 12, weight: 500 as const },
+          padding: 12,
           callback(value: string | number) {
             const numericValue = typeof value === 'number' ? value : Number(value);
             if (!Number.isFinite(numericValue)) {
@@ -686,19 +766,20 @@ onMounted(async () => {
 
 <style scoped>
 .analytics {
-  gap: var(--ft-space-6);
+  gap: var(--ft-space-7);
+  padding-bottom: var(--ft-space-8);
 }
 
 .analytics__content {
   display: flex;
   flex-direction: column;
-  gap: var(--ft-space-6);
+  gap: var(--ft-space-7);
 }
 
 .analytics__grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(min(100%, 480px), 1fr));
-  gap: var(--ft-space-6);
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 520px), 1fr));
+  gap: var(--ft-space-7);
 }
 
 /* Chart Cards */
@@ -706,28 +787,42 @@ onMounted(async () => {
   position: relative;
   background: var(--ft-surface);
   border: 1px solid var(--ft-border);
-  border-radius: var(--ft-radius-lg);
+  border-radius: var(--ft-radius-xl);
   overflow: hidden;
-  transition: all 0.2s ease;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
 }
 
 .chart-card:hover {
   border-color: var(--ft-border-hover);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12), 0 2px 8px rgba(0, 0, 0, 0.08);
+  transform: translateY(-2px);
 }
 
 .chart-card--primary {
   background: linear-gradient(135deg,
     var(--ft-surface) 0%,
-    rgba(56, 189, 248, 0.03) 100%);
-  border-color: rgba(56, 189, 248, 0.15);
+    rgba(56, 189, 248, 0.04) 50%,
+    rgba(56, 189, 248, 0.06) 100%);
+  border-color: rgba(56, 189, 248, 0.2);
+}
+
+.chart-card--primary:hover {
+  border-color: rgba(56, 189, 248, 0.35);
+  box-shadow: 0 8px 32px rgba(56, 189, 248, 0.15), 0 2px 12px rgba(0, 0, 0, 0.08);
 }
 
 .chart-card--health {
   background: linear-gradient(135deg,
     var(--ft-surface) 0%,
-    rgba(34, 197, 94, 0.06) 100%);
-  border-color: rgba(34, 197, 94, 0.18);
+    rgba(34, 197, 94, 0.04) 50%,
+    rgba(34, 197, 94, 0.08) 100%);
+  border-color: rgba(34, 197, 94, 0.22);
+}
+
+.chart-card--health:hover {
+  border-color: rgba(34, 197, 94, 0.38);
+  box-shadow: 0 8px 32px rgba(34, 197, 94, 0.12), 0 2px 12px rgba(0, 0, 0, 0.08);
 }
 
 .chart-card :deep(.p-card-header) {
@@ -747,41 +842,75 @@ onMounted(async () => {
 .health-metrics {
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
-  gap: var(--ft-space-5);
+  gap: var(--ft-space-6);
 }
 
 .health-metric {
-  background: rgba(15, 23, 42, 0.6);
-  border: 1px solid rgba(148, 163, 184, 0.14);
+  position: relative;
+  background: linear-gradient(135deg,
+    rgba(15, 23, 42, 0.5) 0%,
+    rgba(15, 23, 42, 0.7) 100%);
+  border: 1px solid rgba(148, 163, 184, 0.18);
   border-radius: var(--ft-radius-lg);
-  padding: var(--ft-space-5);
+  padding: var(--ft-space-6);
   display: flex;
   flex-direction: column;
-  gap: var(--ft-space-2);
-  min-height: 160px;
+  gap: var(--ft-space-3);
+  min-height: 180px;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  overflow: hidden;
+}
+
+.health-metric::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 3px;
+  background: linear-gradient(90deg,
+    rgba(34, 197, 94, 0.6) 0%,
+    rgba(56, 189, 248, 0.6) 100%);
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+.health-metric:hover {
+  border-color: rgba(148, 163, 184, 0.3);
+  transform: translateY(-4px);
+  box-shadow: 0 12px 24px rgba(0, 0, 0, 0.15);
+}
+
+.health-metric:hover::before {
+  opacity: 1;
 }
 
 .health-metric__label {
   margin: 0;
-  font-size: var(--ft-text-sm);
-  font-weight: var(--ft-font-medium);
+  font-size: var(--ft-text-xs);
+  font-weight: var(--ft-font-semibold);
   text-transform: uppercase;
-  letter-spacing: 0.04em;
-  color: var(--ft-text-muted);
+  letter-spacing: 0.06em;
+  color: rgba(148, 163, 184, 0.9);
 }
 
 .health-metric__value {
   margin: 0;
-  font-size: 2rem;
-  font-weight: var(--ft-font-semibold);
-  color: var(--ft-heading);
+  font-size: 2.25rem;
+  font-weight: var(--ft-font-bold);
+  background: linear-gradient(135deg, #f8fafc 0%, #cbd5e1 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
   line-height: 1.1;
+  letter-spacing: -0.02em;
 }
 
 .health-metric__description {
   margin: 0;
   font-size: var(--ft-text-sm);
-  color: var(--ft-text-muted);
+  color: rgba(148, 163, 184, 0.85);
+  line-height: 1.5;
   flex-grow: 1;
 }
 
@@ -819,7 +948,7 @@ onMounted(async () => {
   display: flex;
   justify-content: space-between;
   align-items: flex-start;
-  gap: var(--ft-space-4);
+  gap: var(--ft-space-5);
 }
 
 .chart-header__text {
@@ -830,24 +959,47 @@ onMounted(async () => {
 .chart-title {
   display: flex;
   align-items: center;
-  gap: var(--ft-space-2);
+  gap: var(--ft-space-3);
   margin: 0;
   font-size: var(--ft-text-xl);
-  font-weight: var(--ft-font-semibold);
+  font-weight: var(--ft-font-bold);
   color: var(--ft-heading);
-  line-height: 1.3;
+  line-height: 1.2;
+  letter-spacing: -0.01em;
 }
 
 .chart-icon {
-  color: var(--ft-accent);
-  font-size: 1.25rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  background: linear-gradient(135deg,
+    rgba(56, 189, 248, 0.15) 0%,
+    rgba(56, 189, 248, 0.25) 100%);
+  border-radius: var(--ft-radius-md);
+  color: rgba(56, 189, 248, 1);
+  font-size: 1rem;
+  transition: all 0.3s ease;
+}
+
+.chart-card--health .chart-icon {
+  background: linear-gradient(135deg,
+    rgba(34, 197, 94, 0.15) 0%,
+    rgba(34, 197, 94, 0.25) 100%);
+  color: rgba(34, 197, 94, 1);
+}
+
+.chart-card:hover .chart-icon {
+  transform: scale(1.1) rotate(5deg);
 }
 
 .chart-subtitle {
   margin: var(--ft-space-2) 0 0;
   color: var(--ft-text-muted);
   font-size: var(--ft-text-sm);
-  line-height: 1.5;
+  line-height: 1.6;
+  font-weight: var(--ft-font-normal);
 }
 
 .month-selector {
@@ -861,51 +1013,82 @@ onMounted(async () => {
   gap: var(--ft-space-2);
   flex-wrap: wrap;
   align-items: center;
+  background: rgba(15, 23, 42, 0.4);
+  padding: var(--ft-space-2);
+  border-radius: var(--ft-radius-lg);
+  border: 1px solid rgba(148, 163, 184, 0.1);
 }
 
 .filter-btn {
-  padding: var(--ft-space-2) var(--ft-space-3);
+  position: relative;
+  padding: var(--ft-space-2) var(--ft-space-4);
   font-size: var(--ft-text-sm);
   font-weight: var(--ft-font-medium);
-  color: var(--ft-text-muted);
-  background: var(--ft-surface);
-  border: 1px solid var(--ft-border);
+  color: rgba(148, 163, 184, 0.9);
+  background: transparent;
+  border: 1px solid transparent;
   border-radius: var(--ft-radius-md);
   cursor: pointer;
-  transition: all 0.2s ease;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   white-space: nowrap;
+  overflow: hidden;
+}
+
+.filter-btn::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(135deg,
+    rgba(56, 189, 248, 0.1) 0%,
+    rgba(56, 189, 248, 0.05) 100%);
+  opacity: 0;
+  transition: opacity 0.3s ease;
 }
 
 .filter-btn:hover {
-  color: var(--ft-text);
-  border-color: var(--ft-border-hover);
-  background: var(--ft-surface-elevated);
+  color: rgba(203, 213, 225, 1);
+  border-color: rgba(148, 163, 184, 0.2);
+  background: rgba(148, 163, 184, 0.08);
 }
 
 .filter-btn--active {
-  color: var(--ft-accent);
-  background: rgba(56, 189, 248, 0.1);
-  border-color: var(--ft-accent);
+  color: #ffffff;
+  background: linear-gradient(135deg,
+    rgba(56, 189, 248, 0.25) 0%,
+    rgba(56, 189, 248, 0.35) 100%);
+  border-color: rgba(56, 189, 248, 0.4);
   font-weight: var(--ft-font-semibold);
+  box-shadow: 0 2px 8px rgba(56, 189, 248, 0.2),
+              inset 0 1px 0 rgba(255, 255, 255, 0.1);
+}
+
+.filter-btn--active::before {
+  opacity: 1;
 }
 
 .filter-btn--active:hover {
-  background: rgba(56, 189, 248, 0.15);
+  background: linear-gradient(135deg,
+    rgba(56, 189, 248, 0.3) 0%,
+    rgba(56, 189, 248, 0.4) 100%);
+  border-color: rgba(56, 189, 248, 0.5);
+  box-shadow: 0 4px 12px rgba(56, 189, 248, 0.25),
+              inset 0 1px 0 rgba(255, 255, 255, 0.15);
 }
 
 /* Chart Containers */
 .chart-container {
   position: relative;
-  min-height: 300px;
-  height: 400px;
+  min-height: 320px;
+  height: 420px;
+  padding: var(--ft-space-4) 0;
 }
 
 .chart-container--pie {
-  height: 450px;
+  height: 480px;
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: var(--ft-space-4) 0;
+  padding: var(--ft-space-5) 0;
 }
 
 /* Empty States */
@@ -914,21 +1097,34 @@ onMounted(async () => {
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: var(--ft-space-3);
+  gap: var(--ft-space-4);
   min-height: 400px;
   padding: var(--ft-space-8);
   text-align: center;
+  background: radial-gradient(circle at center,
+    rgba(148, 163, 184, 0.03) 0%,
+    transparent 70%);
 }
 
 .empty-state--compact {
-  min-height: 350px;
-  padding: var(--ft-space-6);
+  min-height: 360px;
+  padding: var(--ft-space-7);
 }
 
 .empty-state__icon {
-  font-size: 3rem;
-  color: var(--ft-text-muted);
-  opacity: 0.5;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 80px;
+  height: 80px;
+  font-size: 2.5rem;
+  color: rgba(148, 163, 184, 0.6);
+  background: radial-gradient(circle,
+    rgba(148, 163, 184, 0.08) 0%,
+    rgba(148, 163, 184, 0.03) 70%,
+    transparent 100%);
+  border-radius: 50%;
+  border: 2px dashed rgba(148, 163, 184, 0.15);
 }
 
 .empty-state__title {
@@ -936,37 +1132,57 @@ onMounted(async () => {
   font-size: var(--ft-text-lg);
   font-weight: var(--ft-font-semibold);
   color: var(--ft-heading);
+  letter-spacing: -0.01em;
 }
 
 .empty-state__subtitle {
   margin: 0;
   font-size: var(--ft-text-sm);
-  color: var(--ft-text-muted);
-  max-width: 300px;
+  color: rgba(148, 163, 184, 0.8);
+  max-width: 320px;
+  line-height: 1.6;
 }
 
 /* Responsive Design */
 @media (max-width: 1200px) {
+  .analytics {
+    gap: var(--ft-space-6);
+  }
+
+  .analytics__content {
+    gap: var(--ft-space-6);
+  }
+
+  .analytics__grid {
+    gap: var(--ft-space-6);
+  }
+
   .chart-container {
-    height: 350px;
+    height: 380px;
   }
 
   .chart-container--pie {
-    height: 400px;
+    height: 440px;
   }
 
   .health-metrics {
     grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: var(--ft-space-5);
+  }
+
+  .health-metric {
+    min-height: 160px;
   }
 
   .health-metric__value {
-    font-size: 1.75rem;
+    font-size: 2rem;
   }
 }
 
 @media (max-width: 768px) {
   .analytics {
     gap: var(--ft-space-5);
+    padding-bottom: var(--ft-space-7);
   }
 
   .analytics__content {
@@ -978,8 +1194,12 @@ onMounted(async () => {
     gap: var(--ft-space-5);
   }
 
+  .chart-card {
+    border-radius: var(--ft-radius-lg);
+  }
+
   .chart-card :deep(.p-card-header) {
-    padding: var(--ft-space-4) var(--ft-space-5);
+    padding: var(--ft-space-5);
   }
 
   .chart-card :deep(.p-card-content) {
@@ -988,11 +1208,18 @@ onMounted(async () => {
 
   .chart-header {
     flex-direction: column;
-    gap: var(--ft-space-3);
+    gap: var(--ft-space-4);
+    align-items: stretch;
   }
 
   .chart-title {
     font-size: var(--ft-text-lg);
+  }
+
+  .chart-icon {
+    width: 28px;
+    height: 28px;
+    font-size: 0.95rem;
   }
 
   .month-selector {
@@ -1003,44 +1230,70 @@ onMounted(async () => {
   .filter-group {
     width: 100%;
     justify-content: flex-start;
+    padding: var(--ft-space-2);
   }
 
   .filter-btn {
     flex: 1;
     min-width: fit-content;
+    padding: var(--ft-space-2) var(--ft-space-3);
+    font-size: 0.8125rem;
   }
 
   .health-metrics {
     grid-template-columns: 1fr;
+    gap: var(--ft-space-4);
   }
 
   .health-metric {
-    min-height: 140px;
+    min-height: 150px;
+    padding: var(--ft-space-5);
+  }
+
+  .health-metric__value {
+    font-size: 1.875rem;
   }
 
   .chart-container {
-    height: 300px;
+    height: 320px;
+    min-height: 280px;
   }
 
   .chart-container--pie {
-    height: 350px;
+    height: 380px;
   }
 
   .empty-state {
+    min-height: 320px;
+    padding: var(--ft-space-7);
+    gap: var(--ft-space-3);
+  }
+
+  .empty-state--compact {
     min-height: 300px;
     padding: var(--ft-space-6);
   }
 
-  .empty-state--compact {
-    min-height: 280px;
-  }
-
   .empty-state__icon {
-    font-size: 2.5rem;
+    width: 70px;
+    height: 70px;
+    font-size: 2.25rem;
   }
 }
 
 @media (max-width: 480px) {
+  .analytics {
+    gap: var(--ft-space-4);
+  }
+
+  .analytics__content {
+    gap: var(--ft-space-4);
+  }
+
+  .analytics__grid {
+    gap: var(--ft-space-4);
+  }
+
   .chart-card :deep(.p-card-header) {
     padding: var(--ft-space-4);
   }
@@ -1049,28 +1302,80 @@ onMounted(async () => {
     padding: var(--ft-space-4);
   }
 
+  .chart-header {
+    gap: var(--ft-space-3);
+  }
+
   .chart-title {
     font-size: var(--ft-text-base);
+    gap: var(--ft-space-2);
   }
 
   .chart-icon {
-    font-size: 1.1rem;
+    width: 26px;
+    height: 26px;
+    font-size: 0.875rem;
+  }
+
+  .chart-subtitle {
+    font-size: 0.8125rem;
+  }
+
+  .filter-group {
+    gap: var(--ft-space-1);
+    padding: var(--ft-space-1);
+  }
+
+  .filter-btn {
+    padding: var(--ft-space-2);
+    font-size: 0.75rem;
+  }
+
+  .health-metric {
+    min-height: 140px;
+    padding: var(--ft-space-4);
+  }
+
+  .health-metric__value {
+    font-size: 1.625rem;
+  }
+
+  .health-metric__description {
+    font-size: 0.8125rem;
   }
 
   .chart-container {
     height: 280px;
+    min-height: 260px;
   }
 
   .chart-container--pie {
-    height: 320px;
+    height: 340px;
+  }
+
+  .empty-state {
+    min-height: 280px;
+    padding: var(--ft-space-6);
+  }
+
+  .empty-state--compact {
+    min-height: 260px;
+    padding: var(--ft-space-5);
+  }
+
+  .empty-state__icon {
+    width: 60px;
+    height: 60px;
+    font-size: 2rem;
   }
 
   .health-state {
     padding: var(--ft-space-5);
+    min-height: 200px;
   }
 
-  .health-metric__value {
-    font-size: 1.5rem;
+  .health-state__icon {
+    font-size: 2rem;
   }
 }
 </style>
