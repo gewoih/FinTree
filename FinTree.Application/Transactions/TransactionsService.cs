@@ -1,6 +1,7 @@
 using FinTree.Application.Exceptions;
 using FinTree.Application.Transactions.Dto;
 using FinTree.Application.Users;
+using FinTree.Domain.Transactions;
 using FinTree.Domain.ValueObjects;
 using FinTree.Infrastructure.Database;
 using Microsoft.EntityFrameworkCore;
@@ -76,6 +77,16 @@ public sealed class TransactionsService(AppDbContext context, ICurrentUser curre
         transaction.Update(command.AccountId, command.CategoryId, money, command.OccurredAt,
             command.Description, command.IsMandatory);
 
+        await context.SaveChangesAsync(ct);
+    }
+
+    public async Task DeleteAsync(Guid id, CancellationToken ct)
+    {
+        var transaction = await context.Transactions.FirstOrDefaultAsync(t => t.Id == id, ct);
+        if (transaction == null)
+            throw new NotFoundException(nameof(Transaction), id);
+        
+        transaction.Delete();
         await context.SaveChangesAsync(ct);
     }
 }

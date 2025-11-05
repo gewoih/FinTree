@@ -37,4 +37,11 @@ public class TransactionController(TransactionsService transactionsService) : Co
         await transactionsService.AssignCategoryAsync(command, ct);
         return Ok();
     }
+
+    [HttpDelete]
+    public async Task<IActionResult> Delete([FromQuery] Guid id, CancellationToken ct)
+    {
+        await transactionsService.DeleteAsync(id, ct);
+        return Ok();
+    }
 }

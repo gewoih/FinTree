@@ -1,5 +1,6 @@
 using FinTree.Application.Currencies;
 using FinTree.Application.Users;
+using FinTree.Domain.Accounts;
 using FinTree.Domain.Transactions;
 using FinTree.Infrastructure.Database;
 using Microsoft.EntityFrameworkCore;
@@ -12,6 +13,166 @@ public sealed class AnalyticsService(
     CurrencyConverter currencyConverter,
     UserService userService)
 {
+    private static readonly HashSet<int> SupportedPeriods = new() { 1, 3, 6, 12 };
+    private static readonly HashSet<AccountType> LiquidAccountTypes = new() { AccountType.Bank, AccountType.Cash };
+
+    public async Task<FinancialHealthMetricsDto> GetFinancialHealthMetricsAsync(
+        int periodMonths,
+        CancellationToken ct = default)
+    {
+        if (!SupportedPeriods.Contains(periodMonths))
+            throw new ArgumentOutOfRangeException(nameof(periodMonths),
+                "Supported periods: 1, 3, 6 and 12 months.");
+
+        var currentUserId = currentUserService.Id;
+        var nowUtc = DateTime.UtcNow;
+        var currentMonthStart = new DateTime(nowUtc.Year, nowUtc.Month, 1, 0, 0, 0, DateTimeKind.Utc);
+        var periodStartUtc = currentMonthStart.AddMonths(1 - periodMonths);
+
+        var baseCurrencyCode = await context.Users
+            .Where(u => u.Id == currentUserId)
+            .Select(u => u.BaseCurrencyCode)
+            .SingleAsync(ct);
+
+        var rawTransactions = await context.Transactions
+            .AsNoTracking()
+            .Where(t => t.Account.UserId == currentUserId &&
+                        t.OccurredAt >= periodStartUtc &&
+                        t.OccurredAt <= nowUtc)
+            .Select(t => new
+            {
+                t.Money,
+                t.OccurredAt,
+                t.Type,
+                t.IsMandatory,
+                t.CategoryId,
+                AccountType = t.Account.Type
+            })
+            .ToListAsync(ct);
+
+        if (rawTransactions.Count == 0)
+            return new FinancialHealthMetricsDto(periodMonths, null, null, null, null);
+
+        var normalizedTransactions = new List<NormalizedTransaction>(rawTransactions.Count);
+
+        foreach (var txn in rawTransactions)
+        {
+            ct.ThrowIfCancellationRequested();
+
+            var occurredAt = txn.OccurredAt.Kind == DateTimeKind.Unspecified
+                ? DateTime.SpecifyKind(txn.OccurredAt, DateTimeKind.Utc)
+                : txn.OccurredAt.ToUniversalTime();
+
+            if (occurredAt < periodStartUtc || occurredAt > nowUtc)
+                continue;
+
+            var baseMoney = await currencyConverter.ConvertAsync(
+                money: txn.Money,
+                toCurrencyCode: baseCurrencyCode,
+                atUtc: occurredAt,
+                ct: ct);
+
+            var isIncome = txn.Type == TransactionType.Income;
+
+            normalizedTransactions.Add(new NormalizedTransaction(
+                OccurredAt: occurredAt,
+                Amount: baseMoney.Amount,
+                IsIncome: isIncome,
+                IsMandatory: txn.IsMandatory,
+                CategoryId: txn.CategoryId,
+                AccountType: txn.AccountType));
+        }
+
+        if (normalizedTransactions.Count == 0)
+            return new FinancialHealthMetricsDto(periodMonths, null, null, null, null);
+
+        var incomeTransactions = normalizedTransactions.Where(t => t.IsIncome).ToList();
+        var expenseTransactions = normalizedTransactions.Where(t => !t.IsIncome).ToList();
+
+        var totalIncome = incomeTransactions.Sum(t => t.Amount);
+        var totalExpenses = expenseTransactions.Sum(t => t.Amount);
+
+        decimal? savingsRate = null;
+        if (totalIncome > 0m)
+            savingsRate = (totalIncome - totalExpenses) / totalIncome;
+
+        var mandatoryExpenses = expenseTransactions
+            .Where(t => t.IsMandatory)
+            .Sum(t => t.Amount);
+
+        var liquidTransactions = normalizedTransactions
+            .Where(t => LiquidAccountTypes.Contains(t.AccountType))
+            .ToList();
+
+        var liquidAssets = liquidTransactions.Sum(t => t.IsIncome ? t.Amount : -t.Amount);
+
+        decimal? liquidityMonths = null;
+        if (periodMonths > 0)
+        {
+            var avgEssentialMonthly = mandatoryExpenses / periodMonths;
+            if (avgEssentialMonthly > 0m)
+                liquidityMonths = liquidAssets / avgEssentialMonthly;
+        }
+
+        decimal? expenseVolatility = null;
+        {
+            var expenseByMonth = expenseTransactions
+                .GroupBy(t => new DateTime(t.OccurredAt.Year, t.OccurredAt.Month, 1, 0, 0, 0, DateTimeKind.Utc))
+                .ToDictionary(g => g.Key, g => g.Sum(x => x.Amount));
+
+            var monthlyValues = new List<decimal>();
+            for (var monthCursor = periodStartUtc; monthCursor <= currentMonthStart; monthCursor = monthCursor.AddMonths(1))
+            {
+                if (!expenseByMonth.TryGetValue(monthCursor, out var value))
+                    value = 0m;
+
+                monthlyValues.Add(value);
+            }
+
+            if (monthlyValues.Count > 0)
+            {
+                var average = monthlyValues.Average();
+                if (average > 0m)
+                {
+                    var variance = monthlyValues.Average(v =>
+                    {
+                        var diff = v - average;
+                        return diff * diff;
+                    });
+
+                    var stdDeviation = Math.Sqrt((double)variance);
+                    expenseVolatility = (decimal)(stdDeviation / (double)average);
+                }
+                else
+                {
+                    expenseVolatility = 0m;
+                }
+            }
+        }
+
+        decimal? incomeDiversity = null;
+        if (totalIncome > 0m)
+        {
+            var incomeByCategory = incomeTransactions
+                .GroupBy(t => t.CategoryId)
+                .Select(g => g.Sum(x => x.Amount))
+                .ToList();
+
+            if (incomeByCategory.Count > 0)
+            {
+                var largestShare = incomeByCategory.Max();
+                incomeDiversity = largestShare / totalIncome;
+            }
+        }
+
+        return new FinancialHealthMetricsDto(
+            PeriodMonths: periodMonths,
+            SavingsRate: savingsRate,
+            LiquidityMonths: liquidityMonths,
+            ExpenseVolatility: expenseVolatility,
+            IncomeDiversity: incomeDiversity);
+    }
+
     public async Task<IReadOnlyList<MonthlyExpensesDto>> GetMonthlyExpensesAsync(DateTime? from = null,
         DateTime? to = null, CancellationToken ct = default)
     {
@@ -308,4 +469,12 @@ public sealed class AnalyticsService(
 
         return result;
     }
+
+    private readonly record struct NormalizedTransaction(
+        DateTime OccurredAt,
+        decimal Amount,
+        bool IsIncome,
+        bool IsMandatory,
+        Guid CategoryId,
+        AccountType AccountType);
 }

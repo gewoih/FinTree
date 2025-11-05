@@ -13,6 +13,7 @@ import type {
     MonthlyExpenseDto,
     CategoryExpenseDto,
     NetWorthSnapshotDto,
+    FinancialHealthMetricsDto,
     CurrentUserDto,
     UpdateUserProfilePayload
 } from '../types.ts';
@@ -215,6 +216,13 @@ export const apiService = {
 
     async getNetWorthTrend(): Promise<NetWorthSnapshotDto[]> {
         const response = await apiClient.get<NetWorthSnapshotDto[]>('/analytics/networth-trend');
+        return response.data;
+    },
+
+    async getFinancialHealthMetrics(periodMonths: number): Promise<FinancialHealthMetricsDto> {
+        const response = await apiClient.get<FinancialHealthMetricsDto>('/analytics/financial-health', {
+            params: { months: periodMonths }
+        });
         return response.data;
     },
 

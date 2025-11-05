@@ -9,6 +9,13 @@ namespace FinTree.Api.Controllers
     [ApiController]
     public class AnalyticsController(AnalyticsService analyticsService) : ControllerBase
     {
+        [HttpGet("financial-health")]
+        public async Task<IActionResult> GetFinancialHealth([FromQuery] int months, CancellationToken ct)
+        {
+            var data = await analyticsService.GetFinancialHealthMetricsAsync(months, ct);
+            return Ok(data);
+        }
+
         [HttpGet("monthly-expenses")]
         public async Task<IActionResult> GetMonthlyExpenses()
         {

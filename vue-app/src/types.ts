@@ -140,6 +140,14 @@ export interface NetWorthSnapshotDto {
     totalBalance: number;
 }
 
+export interface FinancialHealthMetricsDto {
+    periodMonths: number;
+    savingsRate: number | null;
+    liquidityMonths: number | null;
+    expenseVolatility: number | null;
+    incomeDiversity: number | null;
+}
+
 export interface CurrentUserDto {
     id: string;
     name: string;

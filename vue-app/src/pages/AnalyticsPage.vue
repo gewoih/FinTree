@@ -18,7 +18,7 @@ import Card from 'primevue/card';
 import { useFinanceStore } from '../stores/finance';
 import { useUserStore } from '../stores/user';
 import { apiService } from '../services/api.service.ts';
-import type { MonthlyExpenseDto, CategoryExpenseDto, NetWorthSnapshotDto } from '../types.ts';
+import type { MonthlyExpenseDto, CategoryExpenseDto, NetWorthSnapshotDto, FinancialHealthMetricsDto } from '../types.ts';
 import { formatCurrency } from '../utils/formatters';
 
 // Register Chart.js components
@@ -43,6 +43,18 @@ const monthlyExpenses = ref<MonthlyExpenseDto[]>([]);
 const categoryExpenses = ref<CategoryExpenseDto[]>([]);
 const netWorthSnapshots = ref<NetWorthSnapshotDto[]>([]);
 
+const financialPeriodOptions = [
+  { value: 1, label: '1 месяц' },
+  { value: 3, label: '3 месяца' },
+  { value: 6, label: '6 месяцев' },
+  { value: 12, label: '12 месяцев' },
+] as const;
+type FinancialPeriod = (typeof financialPeriodOptions)[number]['value'];
+
+const financialPeriod = ref<FinancialPeriod>(3);
+const financialHealth = ref<FinancialHealthMetricsDto | null>(null);
+const isFinancialHealthLoading = ref(false);
+
 const analyticsCurrencyCode = computed(() => {
   return userStore.baseCurrencyCode ||
     financeStore.primaryAccount?.currency?.code ||
@@ -58,6 +70,18 @@ const formatAmount = (value: number) => {
     minimumFractionDigits: 2
   }).format(value);
 }
+
+const formatPercent = (value: number | null | undefined, fractionDigits = 0): string => {
+  if (value === null || value === undefined) return '—';
+  if (!Number.isFinite(value)) return '—';
+  return `${(value * 100).toFixed(fractionDigits)}%`;
+};
+
+const formatMonths = (value: number | null | undefined, fractionDigits = 1): string => {
+  if (value === null || value === undefined) return '—';
+  if (!Number.isFinite(value)) return '—';
+  return `${value.toFixed(fractionDigits)} мес`;
+};
 
 const monthNameFormatter = new Intl.DateTimeFormat('ru-RU', { month: 'long' });
 
@@ -83,6 +107,67 @@ function formatExpenseLabel(point: MonthlyExpenseDto): string {
   }
 
   return formatMonthLabel(point.year, point.month);
+}
+
+const selectedFinancialPeriodLabel = computed(() => {
+  const option = financialPeriodOptions.find(option => option.value === financialPeriod.value);
+  return option?.label ?? 'Период';
+});
+
+const hasFinancialMetrics = computed(() => {
+  const data = financialHealth.value;
+  if (!data) return false;
+
+  return [
+    data.savingsRate,
+    data.liquidityMonths,
+    data.expenseVolatility,
+    data.incomeDiversity
+  ].some(value => value !== null && value !== undefined);
+});
+
+const financialMetricCards = computed(() => {
+  const data = financialHealth.value;
+
+  return [
+    {
+      key: 'savingsRate',
+      label: 'Уровень сбережений',
+      description: 'Доля дохода, которая остаётся после расходов',
+      value: formatPercent(data?.savingsRate ?? null, 0)
+    },
+    {
+      key: 'liquidityMonths',
+      label: 'Запас ликвидности',
+      description: 'Сколько месяцев обязательных расходов покрывают ликвидные активы',
+      value: formatMonths(data?.liquidityMonths ?? null, 1)
+    },
+    {
+      key: 'expenseVolatility',
+      label: 'Волатильность расходов',
+      description: 'Изменчивость ежемесячных трат относительно среднего',
+      value: formatPercent(data?.expenseVolatility ?? null, 0)
+    },
+    {
+      key: 'incomeDiversity',
+      label: 'Диверсификация доходов',
+      description: 'Доля крупнейшего источника дохода',
+      value: formatPercent(data?.incomeDiversity ?? null, 0)
+    }
+  ];
+});
+
+async function loadFinancialHealth(): Promise<void> {
+  isFinancialHealthLoading.value = true;
+  try {
+    const data = await apiService.getFinancialHealthMetrics(financialPeriod.value);
+    financialHealth.value = data;
+  } catch (error) {
+    console.error('Failed to load financial health metrics:', error);
+    financialHealth.value = null;
+  } finally {
+    isFinancialHealthLoading.value = false;
+  }
 }
 
 // Time period filters for category expenses
@@ -135,6 +220,11 @@ watch(categoryTimePeriod, async () => {
     categoryExpenses.value = [];
   }
 }, { immediate: true });
+
+watch(financialPeriod, async (newValue, oldValue) => {
+  if (newValue === oldValue) return;
+  await loadFinancialHealth();
+});
 
 // Sorted monthly expenses
 const sortedMonthlyExpenses = computed(() => {
@@ -416,6 +506,7 @@ onMounted(async () => {
     financeStore.fetchCategories(),
     userStore.fetchCurrentUser(),
     fetchAllData(),
+    loadFinancialHealth(),
   ]);
 });
 </script>
@@ -432,6 +523,55 @@ onMounted(async () => {
     />
 
     <section class="analytics__content">
+      <Card class="chart-card chart-card--health">
+        <template #title>
+          <div class="chart-header">
+            <div class="chart-header__text">
+              <h3 class="chart-title">
+                <i class="pi pi-heart chart-icon" />
+                Финансовое здоровье
+              </h3>
+              <p class="chart-subtitle">
+                Ключевые показатели за {{ selectedFinancialPeriodLabel }}
+              </p>
+            </div>
+            <div class="filter-group">
+              <button
+                v-for="option in financialPeriodOptions"
+                :key="option.value"
+                :class="['filter-btn', { 'filter-btn--active': financialPeriod === option.value }]"
+                @click="financialPeriod = option.value"
+              >
+                {{ option.label }}
+              </button>
+            </div>
+          </div>
+        </template>
+        <template #content>
+          <div v-if="isFinancialHealthLoading" class="health-state health-state--loading">
+            <i class="pi pi-spinner pi-spin health-state__icon" />
+            <p class="health-state__title">Считаем показатели...</p>
+            <p class="health-state__subtitle">Это может занять несколько секунд</p>
+          </div>
+          <div v-else-if="!hasFinancialMetrics" class="empty-state empty-state--compact">
+            <i class="pi pi-inbox empty-state__icon" />
+            <p class="empty-state__title">Недостаточно данных</p>
+            <p class="empty-state__subtitle">Добавьте доходы и расходы за выбранный период</p>
+          </div>
+          <div v-else class="health-metrics">
+            <div
+              v-for="metric in financialMetricCards"
+              :key="metric.key"
+              class="health-metric"
+            >
+              <p class="health-metric__label">{{ metric.label }}</p>
+              <p class="health-metric__value">{{ metric.value }}</p>
+              <p class="health-metric__description">{{ metric.description }}</p>
+            </div>
+          </div>
+        </template>
+      </Card>
+
       <!-- Net Worth Trend - Full Width -->
       <Card class="chart-card chart-card--primary">
         <template #title>
@@ -583,6 +723,13 @@ onMounted(async () => {
   border-color: rgba(56, 189, 248, 0.15);
 }
 
+.chart-card--health {
+  background: linear-gradient(135deg,
+    var(--ft-surface) 0%,
+    rgba(34, 197, 94, 0.06) 100%);
+  border-color: rgba(34, 197, 94, 0.18);
+}
+
 .chart-card :deep(.p-card-header) {
   padding: var(--ft-space-5) var(--ft-space-6);
   border-bottom: 1px solid var(--ft-border-soft);
@@ -595,6 +742,76 @@ onMounted(async () => {
 
 .chart-card :deep(.p-card-content) {
   padding: var(--ft-space-6);
+}
+
+.health-metrics {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: var(--ft-space-5);
+}
+
+.health-metric {
+  background: rgba(15, 23, 42, 0.6);
+  border: 1px solid rgba(148, 163, 184, 0.14);
+  border-radius: var(--ft-radius-lg);
+  padding: var(--ft-space-5);
+  display: flex;
+  flex-direction: column;
+  gap: var(--ft-space-2);
+  min-height: 160px;
+}
+
+.health-metric__label {
+  margin: 0;
+  font-size: var(--ft-text-sm);
+  font-weight: var(--ft-font-medium);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--ft-text-muted);
+}
+
+.health-metric__value {
+  margin: 0;
+  font-size: 2rem;
+  font-weight: var(--ft-font-semibold);
+  color: var(--ft-heading);
+  line-height: 1.1;
+}
+
+.health-metric__description {
+  margin: 0;
+  font-size: var(--ft-text-sm);
+  color: var(--ft-text-muted);
+  flex-grow: 1;
+}
+
+.health-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--ft-space-3);
+  min-height: 220px;
+  padding: var(--ft-space-6);
+  text-align: center;
+}
+
+.health-state__icon {
+  font-size: 2.5rem;
+  color: var(--ft-text-muted);
+}
+
+.health-state__title {
+  margin: 0;
+  font-size: var(--ft-text-lg);
+  font-weight: var(--ft-font-semibold);
+  color: var(--ft-heading);
+}
+
+.health-state__subtitle {
+  margin: 0;
+  font-size: var(--ft-text-sm);
+  color: var(--ft-text-muted);
 }
 
 /* Chart Header */
@@ -737,6 +954,14 @@ onMounted(async () => {
   .chart-container--pie {
     height: 400px;
   }
+
+  .health-metrics {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .health-metric__value {
+    font-size: 1.75rem;
+  }
 }
 
 @media (max-width: 768px) {
@@ -785,6 +1010,14 @@ onMounted(async () => {
     min-width: fit-content;
   }
 
+  .health-metrics {
+    grid-template-columns: 1fr;
+  }
+
+  .health-metric {
+    min-height: 140px;
+  }
+
   .chart-container {
     height: 300px;
   }
@@ -830,6 +1063,14 @@ onMounted(async () => {
 
   .chart-container--pie {
     height: 320px;
+  }
+
+  .health-state {
+    padding: var(--ft-space-5);
+  }
+
+  .health-metric__value {
+    font-size: 1.5rem;
   }
 }
 </style>
