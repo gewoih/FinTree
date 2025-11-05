@@ -6,7 +6,6 @@ import type { Account, Category } from '../types';
 import InputText from 'primevue/inputtext';
 import Select from 'primevue/select';
 import DatePicker from 'primevue/datepicker';
-import Button from 'primevue/button';
 
 const props = defineProps<{
   searchText: string;
@@ -41,67 +40,83 @@ const accountOptions = computed(() => [
 <template>
   <div class="filters-panel ft-card ft-card--muted">
     <div class="filters-grid">
-      <div class="filter-field filter-field--wide">
-        <label>Search</label>
-        <InputText
-          :model-value="props.searchText"
-          @update:model-value="(val) => emit('update:searchText', val)"
-          placeholder="Search by category, account, or note…"
-          class="w-full"
-        />
-      </div>
+      <FormField class="filter-field filter-field--wide" label="Поиск">
+        <template #default="{ fieldAttrs }">
+          <InputText
+            v-bind="fieldAttrs"
+            :model-value="props.searchText"
+            @update:model-value="val => emit('update:searchText', val)"
+            placeholder="Категория, счёт или заметка…"
+            class="w-full"
+            autocomplete="off"
+          />
+        </template>
+      </FormField>
 
-      <div class="filter-field">
-        <label>Category</label>
-        <Select
-          :model-value="props.selectedCategory"
-          @update:model-value="(val) => emit('update:selectedCategory', val)"
-          :options="categoryOptions"
-          option-label="label"
-          option-value="value"
-          placeholder="All categories"
-          class="w-full"
-        />
-      </div>
+      <FormField class="filter-field" label="Категория">
+        <template #default="{ fieldAttrs }">
+          <Select
+            :model-value="props.selectedCategory"
+            @update:model-value="val => emit('update:selectedCategory', val)"
+            :options="categoryOptions"
+            option-label="label"
+            option-value="value"
+            placeholder="Все категории"
+            class="w-full"
+            :input-id="fieldAttrs.id"
+            :aria-describedby="fieldAttrs['aria-describedby']"
+            :aria-invalid="fieldAttrs['aria-invalid']"
+          />
+        </template>
+      </FormField>
 
-      <div class="filter-field">
-        <label>Account</label>
-        <Select
-          :model-value="props.selectedAccount"
-          @update:model-value="(val) => emit('update:selectedAccount', val)"
-          :options="accountOptions"
-          option-label="label"
-          option-value="value"
-          placeholder="All accounts"
-          class="w-full"
-        />
-      </div>
+      <FormField class="filter-field" label="Счёт">
+        <template #default="{ fieldAttrs }">
+          <Select
+            :model-value="props.selectedAccount"
+            @update:model-value="val => emit('update:selectedAccount', val)"
+            :options="accountOptions"
+            option-label="label"
+            option-value="value"
+            placeholder="Все счета"
+            class="w-full"
+            :input-id="fieldAttrs.id"
+            :aria-describedby="fieldAttrs['aria-describedby']"
+            :aria-invalid="fieldAttrs['aria-invalid']"
+          />
+        </template>
+      </FormField>
 
-      <div class="filter-field">
-        <label>Date range</label>
-        <DatePicker
-          :model-value="props.dateRange"
-          @update:model-value="(val) => emit('update:dateRange', val as Date[] | null)"
-          selectionMode="range"
-          :manualInput="false"
-          dateFormat="dd.mm.yy"
-          placeholder="Select date range"
-          showButtonBar
-          class="w-full"
-        />
-      </div>
+      <FormField class="filter-field" label="Диапазон дат">
+        <template #default="{ fieldAttrs }">
+          <DatePicker
+            :model-value="props.dateRange"
+            @update:model-value="val => emit('update:dateRange', val as Date[] | null)"
+            selection-mode="range"
+            :manual-input="false"
+            date-format="dd.mm.yy"
+            placeholder="Выберите период"
+            show-button-bar
+            class="w-full"
+            :input-id="fieldAttrs.id"
+            :aria-describedby="fieldAttrs['aria-describedby']"
+            :aria-invalid="fieldAttrs['aria-invalid']"
+          />
+        </template>
+      </FormField>
 
-      <div class="filter-field filter-field--compact">
-        <label class="sr-only">Clear filters</label>
-        <Button
-          label="Reset"
-          icon="pi pi-refresh"
-          severity="secondary"
-          outlined
-          @click="emit('clearFilters')"
-          class="w-full"
-        />
-      </div>
+      <FormField class="filter-field filter-field--compact" label="Сбросить фильтры" label-sr-only>
+        <template #default>
+          <AppButton
+            icon="pi pi-refresh"
+            variant="ghost"
+            block
+            @click="emit('clearFilters')"
+          >
+            Сбросить
+          </AppButton>
+        </template>
+      </FormField>
     </div>
   </div>
 </template>
@@ -133,7 +148,7 @@ const accountOptions = computed(() => [
   grid-column: span 2;
 }
 
-.filter-field--compact :deep(.p-button) {
+.filter-field--compact :deep(.app-button) {
   height: 100%;
 }
 

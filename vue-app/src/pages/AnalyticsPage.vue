@@ -20,6 +20,7 @@ import { useUserStore } from '../stores/user';
 import { apiService } from '../services/api.service.ts';
 import type { MonthlyExpenseDto, CategoryExpenseDto, NetWorthSnapshotDto, FinancialHealthMetricsDto } from '../types.ts';
 import { formatCurrency } from '../utils/formatters';
+import FinancialHealthSummaryCard from '../components/analytics/FinancialHealthSummaryCard.vue';
 
 // Register Chart.js components
 ChartJS.register(
@@ -42,6 +43,7 @@ const userStore = useUserStore();
 const monthlyExpenses = ref<MonthlyExpenseDto[]>([]);
 const categoryExpenses = ref<CategoryExpenseDto[]>([]);
 const netWorthSnapshots = ref<NetWorthSnapshotDto[]>([]);
+const isAnalyticsLoading = ref(true);
 
 const financialPeriodOptions = [
   { value: 1, label: '1 месяц' },
@@ -580,14 +582,19 @@ watch(expenseGranularity, async () => {
 });
 
 onMounted(async () => {
-  await Promise.all([
-    financeStore.fetchCurrencies(),
-    financeStore.fetchAccounts(),
-    financeStore.fetchCategories(),
-    userStore.fetchCurrentUser(),
-    fetchAllData(),
-    loadFinancialHealth(),
-  ]);
+  isAnalyticsLoading.value = true;
+  try {
+    await Promise.all([
+      financeStore.fetchCurrencies(),
+      financeStore.fetchAccounts(),
+      financeStore.fetchCategories(),
+      userStore.fetchCurrentUser(),
+      fetchAllData(),
+      loadFinancialHealth(),
+    ]);
+  } finally {
+    isAnalyticsLoading.value = false;
+  }
 });
 </script>
 
@@ -603,54 +610,26 @@ onMounted(async () => {
     />
 
     <section class="analytics__content">
-      <Card class="chart-card chart-card--health">
-        <template #title>
-          <div class="chart-header">
-            <div class="chart-header__text">
-              <h3 class="chart-title">
-                <i class="pi pi-heart chart-icon" />
-                Финансовое здоровье
-              </h3>
-              <p class="chart-subtitle">
-                Ключевые показатели за {{ selectedFinancialPeriodLabel }}
-              </p>
-            </div>
-            <div class="filter-group">
-              <button
-                v-for="option in financialPeriodOptions"
-                :key="option.value"
-                :class="['filter-btn', { 'filter-btn--active': financialPeriod === option.value }]"
-                @click="financialPeriod = option.value"
-              >
-                {{ option.label }}
-              </button>
-            </div>
-          </div>
-        </template>
-        <template #content>
-          <div v-if="isFinancialHealthLoading" class="health-state health-state--loading">
-            <i class="pi pi-spinner pi-spin health-state__icon" />
-            <p class="health-state__title">Считаем показатели...</p>
-            <p class="health-state__subtitle">Это может занять несколько секунд</p>
-          </div>
-          <div v-else-if="!hasFinancialMetrics" class="empty-state empty-state--compact">
-            <i class="pi pi-inbox empty-state__icon" />
-            <p class="empty-state__title">Недостаточно данных</p>
-            <p class="empty-state__subtitle">Добавьте доходы и расходы за выбранный период</p>
-          </div>
-          <div v-else class="health-metrics">
-            <div
-              v-for="metric in financialMetricCards"
-              :key="metric.key"
-              class="health-metric"
+      <FinancialHealthSummaryCard
+        :loading="isFinancialHealthLoading"
+        :metrics="financialMetricCards"
+        :has-data="hasFinancialMetrics"
+        :period-label="selectedFinancialPeriodLabel"
+      >
+        <template #actions>
+          <div class="filter-group">
+            <button
+              v-for="option in financialPeriodOptions"
+              :key="option.value"
+              :class="['filter-btn', { 'filter-btn--active': financialPeriod === option.value }]"
+              type="button"
+              @click="financialPeriod = option.value"
             >
-              <p class="health-metric__label">{{ metric.label }}</p>
-              <p class="health-metric__value">{{ metric.value }}</p>
-              <p class="health-metric__description">{{ metric.description }}</p>
-            </div>
+              {{ option.label }}
+            </button>
           </div>
         </template>
-      </Card>
+      </FinancialHealthSummaryCard>
 
       <!-- Net Worth Trend - Full Width -->
       <Card class="chart-card chart-card--primary">
@@ -666,7 +645,10 @@ onMounted(async () => {
           </div>
         </template>
         <template #content>
-          <div v-if="sortedNetWorth.length === 0" class="empty-state">
+          <div v-if="isAnalyticsLoading" class="chart-container chart-container--loading">
+            <Skeleton width="100%" height="280px" />
+          </div>
+          <div v-else-if="sortedNetWorth.length === 0" class="empty-state">
             <i class="pi pi-chart-line empty-state__icon" />
             <p class="empty-state__title">Недостаточно данных</p>
             <p class="empty-state__subtitle">Добавьте транзакции, чтобы увидеть тренд баланса</p>
@@ -710,7 +692,10 @@ onMounted(async () => {
             </div>
           </template>
           <template #content>
-            <div v-if="categoryExpenses.length === 0" class="empty-state empty-state--compact">
+            <div v-if="isAnalyticsLoading" class="chart-container chart-container--loading">
+              <Skeleton width="100%" height="280px" />
+            </div>
+            <div v-else-if="categoryExpenses.length === 0" class="empty-state empty-state--compact">
               <i class="pi pi-inbox empty-state__icon" />
               <p class="empty-state__title">Нет данных</p>
               <p class="empty-state__subtitle">За выбранный период нет расходов</p>
@@ -749,7 +734,10 @@ onMounted(async () => {
             </div>
           </template>
           <template #content>
-            <div v-if="sortedMonthlyExpenses.length === 0" class="empty-state empty-state--compact">
+            <div v-if="isAnalyticsLoading" class="chart-container chart-container--loading">
+              <Skeleton width="100%" height="280px" />
+            </div>
+            <div v-else-if="sortedMonthlyExpenses.length === 0" class="empty-state empty-state--compact">
               <i class="pi pi-database empty-state__icon" />
               <p class="empty-state__title">Недостаточно данных</p>
               <p class="empty-state__subtitle">Добавьте операции, чтобы увидеть динамику расходов</p>
@@ -812,19 +800,6 @@ onMounted(async () => {
   box-shadow: 0 8px 32px rgba(56, 189, 248, 0.15), 0 2px 12px rgba(0, 0, 0, 0.08);
 }
 
-.chart-card--health {
-  background: linear-gradient(135deg,
-    var(--ft-surface) 0%,
-    rgba(34, 197, 94, 0.04) 50%,
-    rgba(34, 197, 94, 0.08) 100%);
-  border-color: rgba(34, 197, 94, 0.22);
-}
-
-.chart-card--health:hover {
-  border-color: rgba(34, 197, 94, 0.38);
-  box-shadow: 0 8px 32px rgba(34, 197, 94, 0.12), 0 2px 12px rgba(0, 0, 0, 0.08);
-}
-
 .chart-card :deep(.p-card-header) {
   padding: var(--ft-space-5) var(--ft-space-6);
   border-bottom: 1px solid var(--ft-border-soft);
@@ -837,110 +812,6 @@ onMounted(async () => {
 
 .chart-card :deep(.p-card-content) {
   padding: var(--ft-space-6);
-}
-
-.health-metrics {
-  display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
-  gap: var(--ft-space-6);
-}
-
-.health-metric {
-  position: relative;
-  background: linear-gradient(135deg,
-    rgba(15, 23, 42, 0.5) 0%,
-    rgba(15, 23, 42, 0.7) 100%);
-  border: 1px solid rgba(148, 163, 184, 0.18);
-  border-radius: var(--ft-radius-lg);
-  padding: var(--ft-space-6);
-  display: flex;
-  flex-direction: column;
-  gap: var(--ft-space-3);
-  min-height: 180px;
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-  overflow: hidden;
-}
-
-.health-metric::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  height: 3px;
-  background: linear-gradient(90deg,
-    rgba(34, 197, 94, 0.6) 0%,
-    rgba(56, 189, 248, 0.6) 100%);
-  opacity: 0;
-  transition: opacity 0.3s ease;
-}
-
-.health-metric:hover {
-  border-color: rgba(148, 163, 184, 0.3);
-  transform: translateY(-4px);
-  box-shadow: 0 12px 24px rgba(0, 0, 0, 0.15);
-}
-
-.health-metric:hover::before {
-  opacity: 1;
-}
-
-.health-metric__label {
-  margin: 0;
-  font-size: var(--ft-text-xs);
-  font-weight: var(--ft-font-semibold);
-  text-transform: uppercase;
-  letter-spacing: 0.06em;
-  color: rgba(148, 163, 184, 0.9);
-}
-
-.health-metric__value {
-  margin: 0;
-  font-size: 2.25rem;
-  font-weight: var(--ft-font-bold);
-  background: linear-gradient(135deg, #f8fafc 0%, #cbd5e1 100%);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
-  line-height: 1.1;
-  letter-spacing: -0.02em;
-}
-
-.health-metric__description {
-  margin: 0;
-  font-size: var(--ft-text-sm);
-  color: rgba(148, 163, 184, 0.85);
-  line-height: 1.5;
-  flex-grow: 1;
-}
-
-.health-state {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: var(--ft-space-3);
-  min-height: 220px;
-  padding: var(--ft-space-6);
-  text-align: center;
-}
-
-.health-state__icon {
-  font-size: 2.5rem;
-  color: var(--ft-text-muted);
-}
-
-.health-state__title {
-  margin: 0;
-  font-size: var(--ft-text-lg);
-  font-weight: var(--ft-font-semibold);
-  color: var(--ft-heading);
-}
-
-.health-state__subtitle {
-  margin: 0;
-  font-size: var(--ft-text-sm);
-  color: var(--ft-text-muted);
 }
 
 /* Chart Header */
@@ -981,13 +852,6 @@ onMounted(async () => {
   color: rgba(56, 189, 248, 1);
   font-size: 1rem;
   transition: all 0.3s ease;
-}
-
-.chart-card--health .chart-icon {
-  background: linear-gradient(135deg,
-    rgba(34, 197, 94, 0.15) 0%,
-    rgba(34, 197, 94, 0.25) 100%);
-  color: rgba(34, 197, 94, 1);
 }
 
 .chart-card:hover .chart-icon {
@@ -1091,6 +955,11 @@ onMounted(async () => {
   padding: var(--ft-space-5) 0;
 }
 
+.chart-container--loading {
+  display: grid;
+  place-items: center;
+}
+
 /* Empty States */
 .empty-state {
   display: flex;
@@ -1165,18 +1034,6 @@ onMounted(async () => {
     height: 440px;
   }
 
-  .health-metrics {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: var(--ft-space-5);
-  }
-
-  .health-metric {
-    min-height: 160px;
-  }
-
-  .health-metric__value {
-    font-size: 2rem;
-  }
 }
 
 @media (max-width: 768px) {
@@ -1238,20 +1095,6 @@ onMounted(async () => {
     min-width: fit-content;
     padding: var(--ft-space-2) var(--ft-space-3);
     font-size: 0.8125rem;
-  }
-
-  .health-metrics {
-    grid-template-columns: 1fr;
-    gap: var(--ft-space-4);
-  }
-
-  .health-metric {
-    min-height: 150px;
-    padding: var(--ft-space-5);
-  }
-
-  .health-metric__value {
-    font-size: 1.875rem;
   }
 
   .chart-container {
@@ -1331,19 +1174,6 @@ onMounted(async () => {
     font-size: 0.75rem;
   }
 
-  .health-metric {
-    min-height: 140px;
-    padding: var(--ft-space-4);
-  }
-
-  .health-metric__value {
-    font-size: 1.625rem;
-  }
-
-  .health-metric__description {
-    font-size: 0.8125rem;
-  }
-
   .chart-container {
     height: 280px;
     min-height: 260px;
@@ -1369,13 +1199,5 @@ onMounted(async () => {
     font-size: 2rem;
   }
 
-  .health-state {
-    padding: var(--ft-space-5);
-    min-height: 200px;
-  }
-
-  .health-state__icon {
-    font-size: 2rem;
-  }
 }
 </style>

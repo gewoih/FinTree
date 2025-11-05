@@ -1,69 +1,59 @@
 import { createRouter, createWebHistory } from 'vue-router';
-import LandingPage from '../pages/LandingPage.vue';
-import HomePage from '../pages/HomePage.vue';
-import AccountsPage from '../pages/AccountsPage.vue';
-import CategoriesPage from '../pages/CategoriesPage.vue';
-import ExpensesPage from '../pages/ExpensesPage.vue';
-import AnalyticsPage from '../pages/AnalyticsPage.vue';
-import ProfilePage from '../pages/ProfilePage.vue';
-import LoginPage from '../pages/LoginPage.vue';
-import RegisterPage from '../pages/RegisterPage.vue';
-
 export const router = createRouter({
   history: createWebHistory(),
   routes: [
     {
       path: '/',
       name: 'landing',
-      component: LandingPage,
+      component: () => import('../pages/LandingPage.vue'),
       meta: { title: 'Smart Personal Finance Tracking', public: true },
     },
     {
       path: '/login',
       name: 'login',
-      component: LoginPage,
+      component: () => import('../pages/LoginPage.vue'),
       meta: { title: 'Sign In', public: true },
     },
     {
       path: '/register',
       name: 'register',
-      component: RegisterPage,
+      component: () => import('../pages/RegisterPage.vue'),
       meta: { title: 'Sign Up', public: true },
     },
     {
       path: '/dashboard',
       name: 'dashboard',
-      component: HomePage,
+      component: () => import('../pages/HomePage.vue'),
       meta: { title: 'Dashboard', requiresAuth: true },
     },
     {
       path: '/accounts',
       name: 'accounts',
-      component: AccountsPage,
+      component: () => import('../pages/AccountsPage.vue'),
       meta: { title: 'Accounts', requiresAuth: true },
     },
     {
       path: '/categories',
       name: 'categories',
-      component: CategoriesPage,
+      component: () => import('../pages/CategoriesPage.vue'),
       meta: { title: 'Categories', requiresAuth: true },
     },
     {
       path: '/expenses',
       name: 'expenses',
-      component: ExpensesPage,
+      component: () => import('../pages/ExpensesPage.vue'),
       meta: { title: 'Transactions', requiresAuth: true },
     },
     {
       path: '/analytics',
       name: 'analytics',
-      component: AnalyticsPage,
+      component: () => import('../pages/AnalyticsPage.vue'),
       meta: { title: 'Analytics', requiresAuth: true },
     },
     {
       path: '/profile',
       name: 'profile',
-      component: ProfilePage,
+      component: () => import('../pages/ProfilePage.vue'),
       meta: { title: 'Profile', requiresAuth: true },
     },
     {

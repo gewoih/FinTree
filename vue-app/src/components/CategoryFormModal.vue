@@ -1,13 +1,12 @@
 <script setup lang="ts">
-import { ref, watch } from 'vue';
+import { computed, ref, watch } from 'vue';
 import Dialog from 'primevue/dialog';
 import InputText from 'primevue/inputtext';
-import Button from 'primevue/button';
 import SelectButton from 'primevue/selectbutton';
-import { useToast } from 'primevue/usetoast';
 import type { Category, CategoryType } from '../types';
 import { CATEGORY_TYPE } from '../types';
 import { useFinanceStore } from '../stores/finance';
+import { useFormModal } from '../composables/useFormModal';
 
 const props = defineProps<{
   visible: boolean;
@@ -15,25 +14,34 @@ const props = defineProps<{
   defaultType?: CategoryType;
 }>();
 
-const emit = defineEmits(['update:visible']);
+const emit = defineEmits<{
+  (e: 'update:visible', value: boolean): void;
+}>();
 
 const store = useFinanceStore();
-const toast = useToast();
 const DEFAULT_COLOR = '#10b981';
+const HEX_COLOR_REGEX = /^#([0-9A-Fa-f]{6})$/;
+
 const name = ref('');
 const color = ref(DEFAULT_COLOR);
 const categoryType = ref<CategoryType | null>(null);
-const isSubmitting = ref(false);
+const attemptedSubmit = ref(false);
+
+const isEditMode = computed(() => Boolean(props.category));
+const isSystemCategory = computed(() => props.category?.isSystem ?? false);
 
 const categoryTypeOptions = [
   { label: 'Доход', value: CATEGORY_TYPE.Income },
   { label: 'Расход', value: CATEGORY_TYPE.Expense },
 ];
 
+const canChooseType = computed(() => !isEditMode.value);
+
 const resetForm = () => {
   name.value = '';
   color.value = DEFAULT_COLOR;
   categoryType.value = props.defaultType ?? null;
+  attemptedSubmit.value = false;
 };
 
 watch(
@@ -53,121 +61,162 @@ watch(
   }
 );
 
+const isNameValid = computed(() => name.value.trim().length > 0);
+const isColorValid = computed(() => HEX_COLOR_REGEX.test(color.value));
+const isTypeValid = computed(() => !canChooseType.value || Boolean(categoryType.value));
+
+const nameError = computed(() => {
+  if (!attemptedSubmit.value) return null;
+  return isNameValid.value ? null : 'Введите название категории.';
+});
+
+const typeError = computed(() => {
+  if (!attemptedSubmit.value || !canChooseType.value) return null;
+  return categoryType.value ? null : 'Выберите тип категории.';
+});
+
+const colorError = computed(() => {
+  if (!attemptedSubmit.value) return null;
+  return isColorValid.value ? null : 'Используйте формат #RRGGBB.';
+});
+
+const isFormValid = computed(
+  () => isNameValid.value && isColorValid.value && isTypeValid.value && !isSystemCategory.value
+);
+
+const { isSubmitting, handleSubmit: submitCategory, showWarning } = useFormModal(
+  async () => {
+    if (isSystemCategory.value) {
+      showWarning('Системные категории нельзя редактировать.');
+      return false;
+    }
+
+    if (props.category) {
+      return await store.updateCategory({
+        id: props.category.id,
+        categoryType: categoryType.value ?? props.category.type,
+        name: name.value.trim(),
+        color: color.value,
+      });
+    }
+
+    return await store.createCategory({
+      categoryType: categoryType.value ?? CATEGORY_TYPE.Expense,
+      name: name.value.trim(),
+      color: color.value,
+    });
+  },
+  {
+    successMessage: 'Категория сохранена.',
+    errorMessage: 'Не удалось сохранить категорию.',
+  }
+);
+
 const handleSubmit = async () => {
-  if (!categoryType.value) {
-    toast.add({
-      severity: 'warn',
-      summary: 'Выберите тип категории',
-      life: 2500,
-    });
+  attemptedSubmit.value = true;
+
+  if (!isFormValid.value) {
+    if (!isTypeValid.value) {
+      showWarning('Выберите тип категории.');
+    } else if (!isNameValid.value) {
+      showWarning('Введите название категории.');
+    } else if (!isColorValid.value) {
+      showWarning('Введите корректный цвет в формате #RRGGBB.');
+    } else if (isSystemCategory.value) {
+      showWarning('Системные категории нельзя редактировать.');
+    }
     return;
   }
 
-  if (!name.value) {
-    toast.add({
-      severity: 'warn',
-      summary: 'Введите название',
-      detail: 'Название категории обязательно.',
-      life: 2500,
-    });
-    return;
+  const success = await submitCategory();
+  if (success) {
+    attemptedSubmit.value = false;
+    emit('update:visible', false);
   }
-
-  isSubmitting.value = true;
-  let success = false;
-
-  if (props.category?.isSystem) {
-    toast.add({
-      severity: 'warn',
-      summary: 'Системная категория',
-      detail: 'Встроенные категории нельзя изменить.',
-      life: 2500,
-    });
-    isSubmitting.value = false;
-    return;
-  }
-
-  if (props.category) {
-    success = await store.updateCategory({
-      id: props.category.id,
-      categoryType: categoryType.value!,
-      name: name.value.trim(),
-      color: color.value,
-    });
-  } else {
-    success = await store.createCategory({
-      categoryType: categoryType.value!,
-      name: name.value.trim(),
-      color: color.value,
-    });
-  }
-
-  isSubmitting.value = false;
-
-  toast.add({
-    severity: success ? 'success' : 'error',
-    summary: success ? 'Категория сохранена' : 'Не удалось сохранить категорию',
-    life: 2500,
-  });
-
-  if (success) emit('update:visible', false);
 };
 </script>
 
 <template>
   <Dialog
-      :visible="props.visible"
-      :header="props.category ? 'Редактирование категории' : 'Создание категории'"
-      :modal="true"
-      :style="{ width: '420px' }"
-      @update:visible="val => emit('update:visible', val)"
+    :visible="props.visible"
+    :header="props.category ? 'Редактирование категории' : 'Создание категории'"
+    modal
+    :style="{ width: '440px' }"
+    @update:visible="val => emit('update:visible', val)"
   >
-    <form @submit.prevent="handleSubmit" class="category-form">
-      <div class="field" v-if="!props.category">
-        <label for="category-type">Тип</label>
-        <SelectButton
-            id="category-type"
+    <form @submit.prevent="handleSubmit" class="category-form" novalidate>
+      <FormField
+        v-if="canChooseType"
+        label="Тип"
+        :error="typeError"
+        required
+      >
+        <template #default="{ fieldAttrs }">
+          <SelectButton
             v-model="categoryType"
             :options="categoryTypeOptions"
-            optionLabel="label"
-            optionValue="value"
-            :allowEmpty="false"
+            option-label="label"
+            option-value="value"
+            :allow-empty="false"
             class="w-full"
-        />
-      </div>
+            :aria-describedby="fieldAttrs['aria-describedby']"
+            :aria-invalid="fieldAttrs['aria-invalid']"
+            :pt="{
+              button: { class: 'category-form__type-button' },
+            }"
+          />
+        </template>
+      </FormField>
 
-      <div class="field">
-        <label for="category-name">Название</label>
-        <InputText
-            id="category-name"
+      <FormField label="Название" :error="nameError" required>
+        <template #default="{ fieldAttrs }">
+          <InputText
+            v-bind="fieldAttrs"
             v-model="name"
-            placeholder="Например, 'Транспорт'"
+            placeholder="Например, «Транспорт»"
             class="w-full"
-        />
-      </div>
+            autocomplete="off"
+          />
+        </template>
+      </FormField>
 
-      <div class="field color-field">
-        <label for="category-color">Цвет</label>
-        <div class="color-picker">
-          <input id="category-color" v-model="color" type="color" />
-          <InputText v-model="color" class="w-full" />
-        </div>
+      <FormField label="Цвет" :error="colorError" hint="Цвет используется для легенд и тегов списка.">
+        <template #default="{ fieldAttrs }">
+          <div class="color-picker">
+            <input
+              :id="fieldAttrs.id"
+              v-model="color"
+              type="color"
+              class="color-picker__swatch"
+              :aria-describedby="fieldAttrs['aria-describedby']"
+              :aria-invalid="fieldAttrs['aria-invalid']"
+            />
+            <InputText
+              v-model="color"
+              maxlength="7"
+              class="w-full"
+              placeholder="#10B981"
+            />
+          </div>
+        </template>
+      </FormField>
+
+      <div v-if="isSystemCategory" class="system-category-alert">
+        Эта категория системная и не может быть изменена.
       </div>
 
       <div class="actions">
-        <Button
-            type="button"
-            label="Отмена"
-            severity="secondary"
-            outlined
-            @click="emit('update:visible', false)"
-        />
-        <Button
-            type="submit"
-            :label="props.category ? 'Сохранить' : 'Создать'"
-            icon="pi pi-check"
-            :loading="isSubmitting"
-        />
+        <AppButton type="button" variant="ghost" @click="emit('update:visible', false)">
+          Отмена
+        </AppButton>
+        <AppButton
+          type="submit"
+          icon="pi pi-check"
+          :loading="isSubmitting"
+          :disabled="isSystemCategory || isSubmitting"
+        >
+          {{ props.category ? 'Сохранить' : 'Создать' }}
+        </AppButton>
       </div>
     </form>
   </Dialog>
@@ -175,42 +224,68 @@ const handleSubmit = async () => {
 
 <style scoped>
 .category-form {
-  display: flex;
-  flex-direction: column;
-  gap: clamp(0.85rem, 1vw, 1.1rem);
+  display: grid;
+  gap: var(--ft-space-4);
 }
 
-.field {
-  display: flex;
-  flex-direction: column;
-  gap: 0.45rem;
-}
-
-label {
-  font-weight: 600;
-  color: var(--ft-heading);
+.category-form__type-button {
+  flex: 1;
+  padding: var(--ft-space-2) var(--ft-space-3);
 }
 
 .color-picker {
-  display: flex;
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: var(--ft-space-3);
   align-items: center;
-  gap: 0.6rem;
 }
 
-.color-field input[type='color'] {
-  width: 42px;
-  height: 42px;
-  border: 1px solid rgba(15, 23, 42, 0.1);
-  border-radius: var(--ft-radius-sm);
+.color-picker__swatch {
+  inline-size: 42px;
+  block-size: 42px;
+  border: 1px solid var(--ft-border-subtle);
+  border-radius: var(--ft-radius-md);
   padding: 0;
   background: transparent;
   cursor: pointer;
 }
 
+.color-picker__swatch::-webkit-color-swatch-wrapper {
+  padding: 0;
+  border-radius: inherit;
+}
+
+.color-picker__swatch::-webkit-color-swatch {
+  border: none;
+  border-radius: inherit;
+}
+
+.system-category-alert {
+  padding: var(--ft-space-3);
+  border-radius: var(--ft-radius-lg);
+  background: rgba(234, 179, 8, 0.12);
+  color: var(--ft-warning-700);
+  font-size: var(--ft-text-sm);
+}
+
 .actions {
   display: flex;
   justify-content: flex-end;
-  gap: 0.75rem;
-  margin-top: 0.5rem;
+  gap: var(--ft-space-3);
+  margin-top: var(--ft-space-3);
+}
+
+@media (max-width: 576px) {
+  .category-form {
+    gap: var(--ft-space-3);
+  }
+
+  .actions {
+    flex-direction: column;
+  }
+
+  .actions :deep(.app-button) {
+    width: 100%;
+  }
 }
 </style>

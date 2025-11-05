@@ -3,7 +3,6 @@ import { computed, ref, watch, onMounted } from 'vue';
 import Dialog from 'primevue/dialog';
 import InputText from 'primevue/inputtext';
 import Select from 'primevue/select';
-import Button from 'primevue/button';
 import { useFinanceStore } from '../stores/finance';
 import { ACCOUNT_TYPE_OPTIONS } from '../constants';
 import { useFormModal } from '../composables/useFormModal';
@@ -13,22 +12,19 @@ const props = defineProps<{
   visible: boolean;
 }>();
 
-const emit = defineEmits(['update:visible']);
+const emit = defineEmits<{
+  (e: 'update:visible', value: boolean): void;
+}>();
 
 const store = useFinanceStore();
 
 const name = ref('');
 const accountType = ref<AccountType>(ACCOUNT_TYPE_OPTIONS[0].value);
 const selectedCurrencyCode = ref<string | null>(null);
+const attemptedSubmit = ref(false);
 
-/**
- * Computed list of available currencies from the store
- */
 const availableCurrencies = computed(() => store.currencies);
 
-/**
- * Computed currency options for the select dropdown
- */
 const currencyOptions = computed(() =>
   availableCurrencies.value.map(currency => ({
     label: `${currency.symbol} ${currency.code} · ${currency.name}`,
@@ -36,35 +32,49 @@ const currencyOptions = computed(() =>
   }))
 );
 
-/**
- * Selected currency object based on selected code
- */
 const selectedCurrency = computed(() => {
   if (!selectedCurrencyCode.value) return null;
   return availableCurrencies.value.find(currency => currency.code === selectedCurrencyCode.value) ?? null;
 });
 
-/**
- * Currency code to use for form submission
- */
-const currencyCodeForSubmit = computed(() => selectedCurrency.value?.code ?? selectedCurrencyCode.value ?? '');
+const defaultCurrencyCode = computed(() => availableCurrencies.value[0]?.code ?? null);
 
-/**
- * Form validation state
- */
-const isFormReady = computed(() => Boolean(name.value.trim()) && Boolean(currencyCodeForSubmit.value));
+const currencyCodeForSubmit = computed(
+  () => selectedCurrency.value?.code ?? selectedCurrencyCode.value ?? ''
+);
 
-/**
- * Display text for selected currency
- */
+const isFormReady = computed(
+  () => Boolean(name.value.trim()) && Boolean(currencyCodeForSubmit.value)
+);
+
+const nameError = computed(() => {
+  if (!attemptedSubmit.value) return null;
+  return name.value.trim().length ? null : 'Введите название счёта';
+});
+
+const currencyError = computed(() => {
+  if (!attemptedSubmit.value) return null;
+  return currencyCodeForSubmit.value ? null : 'Выберите валюту';
+});
+
 const currencySummary = computed(() => {
   if (!selectedCurrency.value) return '';
   return `${selectedCurrency.value.symbol} ${selectedCurrency.value.code} · ${selectedCurrency.value.name}`;
 });
 
-/**
- * Watch for modal visibility changes
- */
+function setDefaultCurrency() {
+  if (!selectedCurrencyCode.value) {
+    selectedCurrencyCode.value = defaultCurrencyCode.value;
+  }
+}
+
+function resetForm() {
+  name.value = '';
+  accountType.value = ACCOUNT_TYPE_OPTIONS[0].value;
+  attemptedSubmit.value = false;
+  setDefaultCurrency();
+}
+
 watch(
   () => props.visible,
   visible => {
@@ -74,29 +84,11 @@ watch(
   }
 );
 
-/**
- * Reset form to initial state and set default currency
- */
-function resetForm() {
-  name.value = '';
-  accountType.value = ACCOUNT_TYPE_OPTIONS[0].value;
+watch(availableCurrencies, () => setDefaultCurrency(), { immediate: true });
 
-  // Set first available currency as default
-  if (availableCurrencies.value.length > 0 && !selectedCurrencyCode.value) {
-    selectedCurrencyCode.value = availableCurrencies.value[0]?.code ?? null;
-  }
-}
-
-/**
- * Load currencies on component mount
- */
 onMounted(async () => {
   await store.fetchCurrencies();
-
-  // Set default currency after loading
-  if (availableCurrencies.value.length > 0 && !selectedCurrencyCode.value) {
-    selectedCurrencyCode.value = availableCurrencies.value[0]?.code ?? null;
-  }
+  setDefaultCurrency();
 });
 
 const { isSubmitting, handleSubmit: handleFormSubmit, showWarning } = useFormModal(
@@ -108,19 +100,22 @@ const { isSubmitting, handleSubmit: handleFormSubmit, showWarning } = useFormMod
     });
   },
   {
-    successMessage: 'Account created successfully.',
-    errorMessage: 'Unable to create account. Please check the details and try again.',
+    successMessage: 'Счёт успешно создан.',
+    errorMessage: 'Не удалось создать счёт. Проверьте данные и попробуйте снова.',
   }
 );
 
 const handleSubmit = async () => {
-  if (!name.value.trim() || !currencyCodeForSubmit.value) {
-    showWarning('Enter an account name and select a currency.');
+  attemptedSubmit.value = true;
+
+  if (!isFormReady.value) {
+    showWarning('Введите название счёта и выберите валюту.');
     return;
   }
 
   const success = await handleFormSubmit();
   if (success) {
+    attemptedSubmit.value = false;
     emit('update:visible', false);
   }
 };
@@ -128,104 +123,103 @@ const handleSubmit = async () => {
 
 <template>
   <Dialog
-      :visible="props.visible"
-      header="Add account"
-      :modal="true"
-      @update:visible="val => emit('update:visible', val)"
-      :style="{ width: '480px' }"
+    :visible="props.visible"
+    header="Добавить счёт"
+    modal
+    @update:visible="val => emit('update:visible', val)"
+    :style="{ width: '520px' }"
+    dismissableMask
   >
-    <form @submit.prevent="handleSubmit" class="form-grid">
-      <div class="field">
-        <label for="name">Account name</label>
-        <InputText
-            id="name"
+    <form @submit.prevent="handleSubmit" class="form-layout" novalidate>
+      <FormField label="Название счёта" :error="nameError" required>
+        <template #default="{ fieldAttrs }">
+          <InputText
+            v-bind="fieldAttrs"
             v-model="name"
-            placeholder="For example, “Primary card”"
-            required
+            placeholder="Например, «Основная карта»"
             class="w-full"
-        />
-      </div>
+            autocomplete="off"
+            :autofocus="props.visible"
+          />
+        </template>
+      </FormField>
 
-      <div class="field">
-        <label for="type">Account type</label>
-        <Select
-            id="type"
+      <FormField label="Тип счёта">
+        <template #default="{ fieldAttrs }">
+          <Select
             v-model="accountType"
-            :options="[...ACCOUNT_TYPE_OPTIONS]"
+            :options="ACCOUNT_TYPE_OPTIONS"
             option-label="label"
             option-value="value"
             class="w-full"
-        />
-      </div>
+            :input-id="fieldAttrs.id"
+            :aria-describedby="fieldAttrs['aria-describedby']"
+            :aria-invalid="fieldAttrs['aria-invalid']"
+          />
+        </template>
+      </FormField>
 
-      <div class="field">
-        <label for="currency">Currency</label>
-        <Select
-            id="currency"
+      <FormField label="Валюта" :error="currencyError" required>
+        <template #default="{ fieldAttrs }">
+          <Select
             v-model="selectedCurrencyCode"
             :options="currencyOptions"
             option-label="label"
             option-value="value"
-            placeholder="Select currency"
+            placeholder="Выберите валюту"
             class="w-full"
             :disabled="store.areCurrenciesLoading || !currencyOptions.length"
-        />
-        <small v-if="store.areCurrenciesLoading" class="helper-text ft-text ft-text--muted">Loading currencies…</small>
-        <small v-else-if="!currencyOptions.length" class="helper-text error">Unable to load currencies. Check your connection.</small>
-        <small v-else-if="currencySummary" class="helper-text ft-text ft-text--muted">{{ currencySummary }}</small>
-        <small v-else class="helper-text ft-text ft-text--muted">Select a currency for the new account.</small>
-      </div>
+            :input-id="fieldAttrs.id"
+            :aria-describedby="fieldAttrs['aria-describedby']"
+            :aria-invalid="fieldAttrs['aria-invalid']"
+          />
+        </template>
+
+        <template #hint>
+          <span v-if="store.areCurrenciesLoading">Загрузка валют…</span>
+          <span v-else-if="!currencyOptions.length">Не удалось загрузить валюты. Проверьте соединение.</span>
+          <span v-else-if="currencySummary">{{ currencySummary }}</span>
+          <span v-else>Выберите валюту для нового счёта.</span>
+        </template>
+      </FormField>
 
       <div class="actions">
-        <Button
-            type="button"
-            label="Cancel"
-            severity="secondary"
-            outlined
-            @click="emit('update:visible', false)"
-        />
-        <Button
-            type="submit"
-            label="Create"
-            icon="pi pi-plus"
-            :loading="isSubmitting"
-            :disabled="!isFormReady || isSubmitting"
-        />
+        <AppButton type="button" variant="ghost" @click="emit('update:visible', false)">
+          Отмена
+        </AppButton>
+        <AppButton
+          type="submit"
+          icon="pi pi-plus"
+          :loading="isSubmitting"
+          :disabled="!isFormReady || isSubmitting"
+        >
+          Создать
+        </AppButton>
       </div>
     </form>
   </Dialog>
 </template>
 
 <style scoped>
-.form-grid {
-  display: flex;
-  flex-direction: column;
-  gap: clamp(0.85rem, 1vw, 1.1rem);
-}
-
-.field {
-  display: flex;
-  flex-direction: column;
-  gap: 0.45rem;
-}
-
-label {
-  font-weight: 600;
-  color: var(--ft-heading);
-}
-
-.helper-text {
-  font-size: 0.85rem;
-}
-
-.error {
-  color: #dc2626;
+.form-layout {
+  display: grid;
+  gap: var(--ft-space-4);
 }
 
 .actions {
   display: flex;
   justify-content: flex-end;
-  gap: 0.75rem;
-  margin-top: 0.75rem;
+  gap: var(--ft-space-3);
+  margin-top: var(--ft-space-4);
+}
+
+@media (max-width: 576px) {
+  .actions {
+    flex-direction: column;
+  }
+
+  .actions :deep(.app-button) {
+    width: 100%;
+  }
 }
 </style>

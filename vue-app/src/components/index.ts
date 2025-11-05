@@ -1,7 +1,10 @@
 import type { App } from 'vue'
 
 // Common components
+import AppButton from './common/AppButton.vue'
+import AppCard from './common/AppCard.vue'
 import EmptyState from './common/EmptyState.vue'
+import FormField from './common/FormField.vue'
 import KPICard from './common/KPICard.vue'
 import PageHeader from './common/PageHeader.vue'
 import StatusBadge from './common/StatusBadge.vue'
@@ -29,7 +32,10 @@ import Chart from 'primevue/chart'
 
 export function registerComponents(app: App) {
   // Common components
+  app.component('AppButton', AppButton)
+  app.component('AppCard', AppCard)
   app.component('EmptyState', EmptyState)
+  app.component('FormField', FormField)
   app.component('KPICard', KPICard)
   app.component('PageHeader', PageHeader)
   app.component('StatusBadge', StatusBadge)
