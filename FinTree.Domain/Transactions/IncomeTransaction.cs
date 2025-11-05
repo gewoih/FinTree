@@ -11,9 +11,13 @@ public sealed class IncomeTransaction : Transaction
         string? description = null) : base(accountId, categoryId, money, occurredAt, description)
     {
     }
-    
+
+    private IncomeTransaction()
+    {
+    }
+
     public void UpdateIncome(Guid accountId, Guid categoryId, Money money, DateTime occurredAt, string? description)
     {
         Update(accountId, categoryId, money, occurredAt, description);
-    }    
+    }
 }
