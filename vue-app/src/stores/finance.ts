@@ -136,17 +136,17 @@ export const useFinanceStore = defineStore('finance', () => {
     }
 
     /**
-     * Creates a new expense transaction
+     * Creates a new transaction (expense or income)
      * @param payload - Transaction data
      * @returns Success status
      */
-    async function addExpense(payload: NewTransactionPayload) {
+    async function addTransaction(payload: NewTransactionPayload) {
         try {
-            await apiService.createExpense(payload);
+            await apiService.createTransaction(payload);
             await fetchTransactions(currentTransactionsAccountId.value ?? undefined);
             return true;
         } catch (error) {
-            console.error('Ошибка при добавлении расхода:', error);
+            console.error('Ошибка при добавлении транзакции:', error);
             return false;
         }
     }
@@ -220,6 +220,7 @@ export const useFinanceStore = defineStore('finance', () => {
                 userId: CURRENT_USER_ID,
                 name: payload.name,
                 color: payload.color,
+                categoryType: payload.categoryType,
             });
 
             await fetchCategories(true);
@@ -297,7 +298,7 @@ export const useFinanceStore = defineStore('finance', () => {
         fetchAccounts,
         fetchCategories,
         fetchCurrencies,
-        addExpense,
+        addTransaction,
         updateTransaction,
         createAccount,
         setPrimaryAccount,

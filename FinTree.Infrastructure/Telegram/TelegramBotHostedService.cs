@@ -1,5 +1,6 @@
 using System.Globalization;
 using FinTree.Domain.Accounts;
+using FinTree.Domain.Transactions;
 using FinTree.Infrastructure.Database;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
@@ -128,7 +129,7 @@ public class TelegramBotHostedService(
         {
             try
             {
-                account.AddExpense(category.Id, amount, DateTime.UtcNow, note);
+                account.AddTransaction(TransactionType.Expense, category.Id, amount, DateTime.UtcNow, note);
                 await context.SaveChangesAsync(ct);
                 
                 await botClient.SendMessage(chatId,

@@ -4,7 +4,7 @@ using FinTree.Domain.Transactions;
 namespace FinTree.Application.Transactions.Dto;
 
 public record struct CreateTransaction(
-    CategoryType Type,
+    TransactionType Type,
     Guid AccountId,
     decimal Amount,
     DateTime OccurredAt,

@@ -6,10 +6,6 @@ import { useFinanceStore } from '../stores/finance'
 const financeStore = useFinanceStore()
 const managerRef = ref<InstanceType<typeof CategoryManager> | null>(null)
 
-const handleCreateCategory = () => {
-  managerRef.value?.openModal()
-}
-
 onMounted(() => {
   financeStore.fetchCategories()
 })
@@ -17,23 +13,6 @@ onMounted(() => {
 
 <template>
   <div class="categories page">
-    <PageHeader
-      title="Категории"
-      subtitle="Настройте группировку транзакций для лучшей аналитики"
-      :breadcrumbs="[
-        { label: 'Главная', to: '/dashboard' },
-        { label: 'Категории' }
-      ]"
-    >
-      <template #actions>
-        <Button
-          label="Создать категорию"
-          icon="pi pi-plus"
-          @click="handleCreateCategory"
-        />
-      </template>
-    </PageHeader>
-
     <section class="categories__content">
       <CategoryManager ref="managerRef" />
     </section>

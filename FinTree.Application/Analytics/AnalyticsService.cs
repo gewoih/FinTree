@@ -1,5 +1,6 @@
 using FinTree.Application.Currencies;
 using FinTree.Application.Users;
+using FinTree.Domain.Transactions;
 using FinTree.Infrastructure.Database;
 using Microsoft.EntityFrameworkCore;
 
@@ -20,7 +21,9 @@ public sealed class AnalyticsService(
             .Select(u => u.BaseCurrencyCode)
             .SingleAsync(ct);
 
-        var transactionsQuery = context.ExpenseTransactions.Where(t => t.Account.UserId == currentUserId);
+        var transactionsQuery = context.Transactions.Where(t => 
+            t.Type == TransactionType.Expense &&
+            t.Account.UserId == currentUserId);
 
         if (from.HasValue)
             transactionsQuery = transactionsQuery.Where(t => t.OccurredAt >= from.Value);
@@ -79,7 +82,9 @@ public sealed class AnalyticsService(
             .Select(u => u.BaseCurrencyCode)
             .SingleAsync(ct);
 
-        var transactionsQuery = context.ExpenseTransactions.Where(t => t.Account.UserId == currentUserId);
+        var transactionsQuery = context.Transactions.Where(t => 
+            t.Type == TransactionType.Expense &&
+            t.Account.UserId == currentUserId);
 
         var transactionDatas = await transactionsQuery
             .Select(t => new { t.Money, t.OccurredAt })
@@ -161,7 +166,8 @@ public sealed class AnalyticsService(
             .Select(u => u.BaseCurrencyCode)
             .SingleAsync(ct);
 
-        var transactionsQuery = context.ExpenseTransactions.Where(t =>
+        var transactionsQuery = context.Transactions.Where(t =>
+            t.Type == TransactionType.Expense &&
             t.Account.UserId == currentUserId &&
             t.OccurredAt >= from &&
             t.OccurredAt < to);

@@ -3,20 +3,20 @@ import { onMounted, ref } from 'vue'
 import { useFinanceStore } from '../stores/finance'
 import type { Transaction } from '../types'
 import TransactionList from '../components/TransactionList.vue'
-import ExpenseForm from '../components/ExpenseForm.vue'
+import TransactionForm from '../components/TransactionForm.vue'
 
 const financeStore = useFinanceStore()
-const expenseDialogVisible = ref(false)
+const transactionDialogVisible = ref(false)
 const editingTransaction = ref<Transaction | null>(null)
 
-const openExpenseDialog = () => {
+const openTransactionDialog = () => {
   editingTransaction.value = null
-  expenseDialogVisible.value = true
+  transactionDialogVisible.value = true
 }
 
 const handleEditTransaction = (transaction: Transaction) => {
   editingTransaction.value = transaction
-  expenseDialogVisible.value = true
+  transactionDialogVisible.value = true
 }
 
 onMounted(async () => {
@@ -43,20 +43,20 @@ onMounted(async () => {
         <Button
           label="Добавить транзакцию"
           icon="pi pi-plus"
-          @click="openExpenseDialog"
+          @click="openTransactionDialog"
         />
       </template>
     </PageHeader>
 
     <section class="transactions__content">
       <TransactionList
-        @add-transaction="openExpenseDialog"
+        @add-transaction="openTransactionDialog"
         @edit-transaction="handleEditTransaction"
       />
     </section>
 
-    <ExpenseForm
-      v-model:visible="expenseDialogVisible"
+    <TransactionForm
+      v-model:visible="transactionDialogVisible"
       :transaction="editingTransaction"
     />
   </div>

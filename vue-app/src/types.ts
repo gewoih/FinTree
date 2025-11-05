@@ -2,10 +2,16 @@
 
 export type AccountType = 0 | 1; // 0 - Дебетовая карта, 1 - Наличка (примерно)
 
+export const CATEGORY_TYPE = {
+    Income: 'Income',
+    Expense: 'Expense',
+} as const;
+
+export type CategoryType = typeof CATEGORY_TYPE[keyof typeof CATEGORY_TYPE];
+
 export const TRANSACTION_TYPE = {
-    Deposit: 0,
-    Withdrawal: 1,
-    Adjustment: 2,
+    Income: CATEGORY_TYPE.Income,
+    Expense: CATEGORY_TYPE.Expense,
 } as const;
 
 export type TransactionType = typeof TRANSACTION_TYPE[keyof typeof TRANSACTION_TYPE];
@@ -23,6 +29,7 @@ export interface TransactionCategoryDto {
     id: string; // Guid
     name: string;
     color: string;
+    type: CategoryType;
     isSystem: boolean;
 }
 
@@ -44,20 +51,22 @@ export interface Currency {
 export interface TransactionDto {
     id: string;
     accountId: string;
-    amount: number;
-    currencyCode: string;
     categoryId: string;
+    amount: number;
+    type: TransactionType | string | number;
     occurredAt: string; // ISO дата (как возвращает API)
     description: string | null;
     isMandatory: boolean;
 }
 
-export interface Transaction extends TransactionDto {
+export interface Transaction extends Omit<TransactionDto, 'type'> {
+    type: TransactionType;
     account?: Account;
     category?: Category | null;
 }
 
 export interface NewTransactionPayload {
+    type: TransactionType;
     accountId: string;
     categoryId: string;
     amount: number;
@@ -68,6 +77,7 @@ export interface NewTransactionPayload {
 
 export interface UpdateTransactionPayload {
     id: string;
+    type: TransactionType;
     accountId: string;
     categoryId: string;
     amount: number;
@@ -91,12 +101,14 @@ export interface AccountFormPayload {
 
 export interface CreateCategoryPayload {
     userId: string;
+    categoryType: CategoryType;
     name: string;
     color: string;
 }
 
 export interface CategoryFormPayload {
     id?: string | null;
+    categoryType: CategoryType;
     name: string;
     color: string;
 }

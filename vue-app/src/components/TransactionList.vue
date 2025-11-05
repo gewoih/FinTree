@@ -11,6 +11,7 @@ import { useTransactionFilters } from '../composables/useTransactionFilters'
 import TransactionFilters from './TransactionFilters.vue'
 import { formatCurrency, formatDate } from '../utils/formatters'
 import type { Transaction } from '../types'
+import { TRANSACTION_TYPE } from '../types'
 
 const emit = defineEmits<{
   (e: 'add-transaction'): void
@@ -27,7 +28,8 @@ const enrichedTransactions = computed(() =>
     const category = txn.category
 
     const baseAmount = Number(txn.amount)
-    const signedAmount = baseAmount > 0 ? -Math.abs(baseAmount) : baseAmount
+    const isIncome = txn.type === TRANSACTION_TYPE.Income
+    const signedAmount = isIncome ? Math.abs(baseAmount) : -Math.abs(baseAmount)
 
     return {
       ...txn,

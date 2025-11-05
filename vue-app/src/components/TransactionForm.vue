@@ -1,15 +1,16 @@
 <script setup lang="ts">
 import { ref, computed, watch, onMounted } from 'vue';
 import { useFinanceStore } from '../stores/finance.ts';
-import type { Account, Category, NewTransactionPayload, UpdateTransactionPayload, Transaction } from '../types.ts';
-import { CATEGORY_TYPE } from '../types.ts';
+import type { Account, Category, NewTransactionPayload, UpdateTransactionPayload, Transaction, TransactionType } from '../types.ts';
 import { VALIDATION_RULES } from '../constants';
+import { TRANSACTION_TYPE } from '../types.ts';
 import { useFormModal } from '../composables/useFormModal';
 import { validators } from '../services/validation.service';
 
 // PrimeVue Components
 import Dialog from 'primevue/dialog';
 import Select from 'primevue/select';
+import SelectButton from 'primevue/selectbutton';
 import InputNumber from 'primevue/inputnumber';
 import InputText from 'primevue/inputtext';
 import DatePicker from 'primevue/datepicker';
@@ -28,6 +29,7 @@ const emit = defineEmits(['update:visible']);
 const isEditMode = computed(() => !!props.transaction);
 
 // --- Form state ---
+const transactionType = ref<TransactionType | null>(null);
 const selectedAccount = ref<Account | null>(null);
 const amount = ref<number | null>(null);
 const description = ref<string>('');
@@ -35,14 +37,66 @@ const date = ref<Date>(new Date());
 const isMandatory = ref<boolean>(false);
 const selectedCategory = ref<Category | null>(null);
 
+const transactionTypeOptions = [
+  { label: 'Расход', value: TRANSACTION_TYPE.Expense },
+  { label: 'Доход', value: TRANSACTION_TYPE.Income },
+];
+
 // --- Computed helpers ---
-const expenseCategories = computed(() =>
-  store.categories.filter(category => category.type === CATEGORY_TYPE.Expense)
+const filteredCategories = computed(() =>
+  transactionType.value
+    ? store.categories.filter(cat => cat.type === transactionType.value)
+    : []
 );
-const sortedCategories = computed(() => [...expenseCategories.value].sort((a, b) => a.name.localeCompare(b.name)));
-const defaultCategory = computed(() => sortedCategories.value[0] ?? null);
+
+const sortedCategories = computed(() =>
+  [...filteredCategories.value].sort((a, b) => a.name.localeCompare(b.name))
+);
+
+const isIncome = computed(() => transactionType.value === TRANSACTION_TYPE.Income);
 
 // --- Flow logic ---
+
+const ensureTransactionType = () => {
+  if (isEditMode.value) return;
+  if (!transactionType.value) return;
+
+  const hasCurrentType = store.categories.some(category => category.type === transactionType.value);
+  if (!hasCurrentType) {
+    transactionType.value = null;
+  }
+};
+
+const ensureCategorySelection = () => {
+  if (isEditMode.value) return;
+
+  if (!transactionType.value) {
+    selectedCategory.value = null;
+    return;
+  }
+
+  const categoriesForType = sortedCategories.value;
+  if (!categoriesForType.length) {
+    selectedCategory.value = null;
+    return;
+  }
+
+  if (!selectedCategory.value || selectedCategory.value.type !== transactionType.value) {
+    const [firstCategory] = categoriesForType;
+    selectedCategory.value = firstCategory ?? null;
+  }
+};
+
+// When transaction type changes, reset category to first available in new type
+watch(transactionType, (newType) => {
+  if (!isEditMode.value) {
+    ensureCategorySelection();
+  }
+
+  if (newType === TRANSACTION_TYPE.Income) {
+    isMandatory.value = false;
+  }
+});
 
 // Initialise defaults when the modal opens
 watch(() => props.visible, (newVal) => {
@@ -52,27 +106,25 @@ watch(() => props.visible, (newVal) => {
       const txn = props.transaction;
       selectedAccount.value = txn.account || store.accounts.find(a => a.id === txn.accountId) || null;
       selectedCategory.value = txn.category || store.categories.find(c => c.id === txn.categoryId) || null;
+      transactionType.value = selectedCategory.value?.type ?? txn.type ?? TRANSACTION_TYPE.Expense;
       amount.value = Math.abs(Number(txn.amount));
       description.value = txn.description || '';
       date.value = new Date(txn.occurredAt);
       isMandatory.value = txn.isMandatory;
+      ensureTransactionType();
+      ensureCategorySelection();
     } else {
       // Create mode: use defaults
+      transactionType.value = null;
       selectedAccount.value = store.primaryAccount || store.accounts[0] || null;
 
-      // Restore the last used category if available
-      const lastCategoryId = localStorage.getItem('lastUsedCategoryId');
-      if (lastCategoryId) {
-        const lastCategory = expenseCategories.value.find(c => c.id === lastCategoryId);
-        selectedCategory.value = lastCategory || defaultCategory.value;
-      } else {
-        selectedCategory.value = defaultCategory.value;
-      }
-
+      selectedCategory.value = null;
       date.value = new Date();
       amount.value = null;
       description.value = '';
       isMandatory.value = false;
+      ensureTransactionType();
+      ensureCategorySelection();
     }
   }
 });
@@ -92,7 +144,7 @@ const currencyCode = computed(
 );
 const currencySymbol = computed(() => selectedAccount.value?.currency?.symbol ?? '');
 const isAmountValid = computed(() => validators.isAmountValid(amount.value));
-const submitDisabled = computed(() => !isAmountValid.value || !selectedCategory.value || !selectedAccount.value);
+const submitDisabled = computed(() => !transactionType.value || !isAmountValid.value || !selectedCategory.value || !selectedAccount.value);
 
 // --- Submit handler ---
 const { isSubmitting, handleSubmit: handleFormSubmit, showWarning } = useFormModal(
@@ -101,7 +153,7 @@ const { isSubmitting, handleSubmit: handleFormSubmit, showWarning } = useFormMod
       // Update existing transaction
       const payload: UpdateTransactionPayload = {
         id: props.transaction.id,
-        type: CATEGORY_TYPE.Expense,
+        type: transactionType.value!,
         accountId: selectedAccount.value!.id,
         categoryId: selectedCategory.value!.id,
         amount: amount.value!,
@@ -114,7 +166,7 @@ const { isSubmitting, handleSubmit: handleFormSubmit, showWarning } = useFormMod
     } else {
       // Create new transaction
       const payload: NewTransactionPayload = {
-        type: CATEGORY_TYPE.Expense,
+        type: transactionType.value!,
         accountId: selectedAccount.value!.id,
         categoryId: selectedCategory.value!.id,
         amount: amount.value!,
@@ -133,8 +185,8 @@ const { isSubmitting, handleSubmit: handleFormSubmit, showWarning } = useFormMod
 );
 
 const handleSubmit = async () => {
-  if (!isAmountValid.value || !selectedAccount.value || !selectedCategory.value) {
-    showWarning('Заполните счет, категорию и сумму перед сохранением.');
+  if (!transactionType.value || !isAmountValid.value || !selectedAccount.value || !selectedCategory.value) {
+    showWarning('Выберите тип, счет, категорию и сумму перед сохранением.');
     return;
   }
 
@@ -149,8 +201,21 @@ const handleSubmit = async () => {
 };
 
 onMounted(() => {
-  // Initialise default category on mount
-  selectedCategory.value = defaultCategory.value;
+  ensureTransactionType();
+  ensureCategorySelection();
+});
+
+watch(
+  () => store.categories,
+  () => {
+    ensureTransactionType();
+    ensureCategorySelection();
+  },
+  { immediate: true }
+);
+
+watch(filteredCategories, () => {
+  ensureCategorySelection();
 });
 </script>
 
@@ -159,13 +224,26 @@ onMounted(() => {
       :visible="props.visible"
       :modal="true"
       :style="{ width: '620px' }"
-      class="expense-dialog"
+      class="transaction-dialog"
       :closable="true"
       :dismissableMask="true"
       @update:visible="val => emit('update:visible', val)"
   >
-    <form class="expense-form" @submit.prevent="handleSubmit">
+    <form class="transaction-form" @submit.prevent="handleSubmit">
       <section class="form-fields">
+        <div class="field" v-if="!isEditMode">
+          <label for="transaction-type">Тип транзакции *</label>
+          <SelectButton
+              id="transaction-type"
+              v-model="transactionType"
+              :options="transactionTypeOptions"
+              optionLabel="label"
+              optionValue="value"
+              :allowEmpty="false"
+              class="w-full"
+          />
+        </div>
+
         <div class="field">
           <label for="account">Счет *</label>
           <Select
@@ -189,7 +267,7 @@ onMounted(() => {
               </div>
             </template>
           </Select>
-          <small>Средства будут сняты с выбранного счета.</small>
+          <small>{{ isIncome ? 'Средства будут зачислены на выбранный счет.' : 'Средства будут сняты с выбранного счета.' }}</small>
         </div>
 
         <div class="field">
@@ -248,7 +326,7 @@ onMounted(() => {
           <small>По умолчанию сегодня.</small>
       </div>
 
-      <div class="field">
+      <div class="field" v-if="!isIncome">
         <label for="isMandatory">Повторяющийся расход</label>
         <Checkbox id="isMandatory" v-model="isMandatory" binary />
       </div>
@@ -258,7 +336,7 @@ onMounted(() => {
         <InputText
             id="description"
             v-model="description"
-            placeholder="Например: утренний кофе"
+            :placeholder="isIncome ? 'Например: зарплата' : 'Например: утренний кофе'"
             class="w-full"
         />
       </div>
@@ -286,75 +364,22 @@ onMounted(() => {
 </template>
 
 <style scoped>
-.expense-dialog :deep(.p-dialog-content) {
+.transaction-dialog :deep(.p-dialog-content) {
   padding: 0;
   border-radius: var(--ft-radius-xl);
   overflow: hidden;
 }
 
-.expense-dialog :deep(.p-dialog-header) {
+.transaction-dialog :deep(.p-dialog-header) {
   display: none;
 }
 
-.expense-form {
+.transaction-form {
   display: flex;
   flex-direction: column;
   gap: clamp(1.5rem, 2vw, 2.1rem);
   padding: clamp(1.8rem, 2.2vw, 2.3rem);
   background: var(--ft-surface-elevated);
-}
-
-.form-hero {
-  display: flex;
-  justify-content: space-between;
-  align-items: flex-start;
-  gap: clamp(1.1rem, 1.5vw, 1.6rem);
-  flex-wrap: wrap;
-  border-radius: var(--ft-radius-xl);
-  padding: clamp(1.4rem, 1.8vw, 1.75rem);
-  background: linear-gradient(135deg, rgba(56, 189, 248, 0.16), rgba(14, 165, 233, 0.08));
-  box-shadow: inset 0 0 0 1px rgba(56, 189, 248, 0.24);
-}
-
-.form-title {
-  margin: 0;
-  font-size: clamp(1.6rem, 2.2vw, 1.9rem);
-  color: var(--ft-heading);
-}
-
-.form-hero .ft-text {
-  margin: 0.35rem 0 0;
-  max-width: 360px;
-}
-
-.form-summary {
-  border-radius: var(--ft-radius-md);
-  background: linear-gradient(135deg, rgba(56, 189, 248, 0.28), rgba(14, 165, 233, 0.35));
-  color: var(--ft-heading);
-  padding: 1rem 1.3rem;
-  display: flex;
-  flex-direction: column;
-  gap: 0.25rem;
-  min-width: 200px;
-  box-shadow: inset 0 0 0 1px rgba(56, 189, 248, 0.28);
-}
-
-.summary-label {
-  text-transform: uppercase;
-  letter-spacing: 0.12em;
-  font-size: 0.72rem;
-  color: var(--ft-accent);
-  font-weight: 600;
-}
-
-.form-summary strong {
-  font-size: clamp(1.65rem, 2vw, 1.85rem);
-  font-weight: 600;
-  color: var(--ft-heading);
-}
-
-.form-summary small {
-  color: var(--ft-text-muted);
 }
 
 .form-fields {
@@ -438,7 +463,7 @@ onMounted(() => {
 }
 
 @media (max-width: 640px) {
-  .expense-form {
+  .transaction-form {
     padding: 1.5rem;
   }
 

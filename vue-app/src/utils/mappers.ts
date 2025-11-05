@@ -2,11 +2,13 @@ import type {
   Account,
   AccountDto,
   Category,
+  CategoryType,
   Currency,
   Transaction,
   TransactionCategoryDto,
   TransactionDto
 } from '../types';
+import { CATEGORY_TYPE } from '../types';
 
 /**
  * Data mapping utilities for converting DTOs to UI models
@@ -31,13 +33,16 @@ export function mapAccount(
 
 /**
  * Maps TransactionCategoryDto to Category
- * Currently a passthrough but can be extended with enrichment logic
  * @param dto - Category DTO from API
  * @returns Category object
  */
 export function mapCategory(dto: TransactionCategoryDto): Category {
   return {
-    ...dto,
+    id: dto.id,
+    name: dto.name,
+    color: dto.color,
+    type: normalizeCategoryType(dto.type),
+    isSystem: dto.isSystem,
   };
 }
 
@@ -55,12 +60,15 @@ export function mapTransaction(
 ): Transaction {
   const account = accounts.find(acc => acc.id === dto.accountId) ?? null;
   const category = categories.find(cat => cat.id === dto.categoryId) ?? null;
+  const rawType = dto.type ?? category?.type ?? CATEGORY_TYPE.Expense;
+  const type = normalizeCategoryType(rawType);
 
   // Handle API inconsistency: occuredAt (wrong) vs occurredAt (correct)
   const occurredAt = dto.occurredAt || dto.occuredAt;
 
   return {
     ...dto,
+    type,
     occurredAt,
     amount: Number(dto.amount),
     description: dto.description ?? null,
@@ -118,4 +126,28 @@ export function createCurrencyMap(currencies: Currency[]): Map<string, Currency>
     map.set(currency.code, currency);
   });
   return map;
+}
+
+function normalizeCategoryType(value: unknown): CategoryType {
+  if (value === CATEGORY_TYPE.Income || value === CATEGORY_TYPE.Expense) {
+    return value;
+  }
+
+  if (typeof value === 'string') {
+    const normalized = value.toLowerCase();
+    if (normalized === CATEGORY_TYPE.Income.toLowerCase()) {
+      return CATEGORY_TYPE.Income;
+    }
+    if (normalized === CATEGORY_TYPE.Expense.toLowerCase()) {
+      return CATEGORY_TYPE.Expense;
+    }
+  }
+
+  if (typeof value === 'number') {
+    if (value === 0) return CATEGORY_TYPE.Income;
+    if (value === 1) return CATEGORY_TYPE.Expense;
+  }
+
+  console.warn('Не удалось распознать тип категории, используем Expense по умолчанию:', value);
+  return CATEGORY_TYPE.Expense;
 }

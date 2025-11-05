@@ -1,8 +1,6 @@
 using FinTree.Application.Exceptions;
 using FinTree.Application.Transactions.Dto;
 using FinTree.Application.Users;
-using FinTree.Domain.Categories;
-using FinTree.Domain.Transactions;
 using FinTree.Domain.ValueObjects;
 using FinTree.Infrastructure.Database;
 using Microsoft.EntityFrameworkCore;
@@ -16,20 +14,8 @@ public sealed class TransactionsService(AppDbContext context, ICurrentUser curre
         var account = await context.Accounts.FirstOrDefaultAsync(a => a.Id == command.AccountId, ct) ??
                       throw new InvalidOperationException("Счет не найден.");
 
-        Transaction newTransaction;
-        switch (command.Type)
-        {
-            case CategoryType.Income:
-                newTransaction = account.AddIncome(command.CategoryId, command.Amount, command.OccurredAt,
-                    command.Description);
-                break;
-            case CategoryType.Expense:
-                newTransaction = account.AddExpense(command.CategoryId, command.Amount, command.OccurredAt,
-                    command.Description, command.IsMandatory);
-                break;
-            default:
-                throw new ArgumentOutOfRangeException(nameof(command.Type), "Неизвестный тип транзакции");
-        }
+        var newTransaction = account.AddTransaction(command.Type, command.CategoryId, command.Amount,
+            command.OccurredAt, command.Description, command.IsMandatory);
 
         await context.SaveChangesAsync(ct);
         return newTransaction.Id;
@@ -39,8 +25,9 @@ public sealed class TransactionsService(AppDbContext context, ICurrentUser curre
         TxFilter? filter, CancellationToken ct = default)
     {
         var currentUserId = currentUser.Id;
-        var q = context.ExpenseTransactions
+        var q = context.Transactions
             .AsNoTracking()
+            .Include(t => t.Account)
             .Where(t => t.Account.UserId == currentUserId);
 
         if (accountId.HasValue)
@@ -57,15 +44,23 @@ public sealed class TransactionsService(AppDbContext context, ICurrentUser curre
 
         if (!string.IsNullOrWhiteSpace(filter?.Search))
         {
+            var search = $"%{filter.Search!.Trim()}%";
             q = q.Where(t => t.Description != null &&
-                             EF.Functions.Like(t.Description, $"%{filter.Search}%"));
+                             EF.Functions.Like(t.Description, search));
         }
 
         var total = await q.CountAsync(ct);
 
         var items = await q.OrderByDescending(t => t.OccurredAt)
             .Select(t =>
-                new TransactionDto(t.Id, t.AccountId, t.Money.Amount, t.CategoryId, t.Description, t.OccurredAt, t.IsMandatory))
+                new TransactionDto(
+                    t.Id,
+                    t.AccountId,
+                    t.Money.Amount,
+                    t.CategoryId,
+                    t.Description,
+                    t.OccurredAt,
+                    t.IsMandatory))
             .ToListAsync(ct);
 
         return (items, total);
@@ -82,25 +77,22 @@ public sealed class TransactionsService(AppDbContext context, ICurrentUser curre
 
     public async Task UpdateAsync(UpdateTransaction command, CancellationToken ct)
     {
-        var transaction = await context.ExpenseTransactions
-            .Include(t => t.Account)
-            .FirstOrDefaultAsync(t => t.Id == command.Id, ct) ??
+        var transaction = await context.Transactions
+                              .Include(t => t.Account)
+                              .FirstOrDefaultAsync(t => t.Id == command.Id, ct) ??
                           throw new NotFoundException("Транзакция не найдена", command.Id);
 
-        // Verify the transaction belongs to the current user
         if (transaction.Account.UserId != currentUser.Id)
             throw new InvalidOperationException("Доступ запрещен");
 
-        // Get the new account to determine currency
         var newAccount = await context.Accounts.FirstOrDefaultAsync(a => a.Id == command.AccountId, ct) ??
                          throw new InvalidOperationException("Счет не найден");
 
-        // Verify the new account also belongs to the current user
         if (newAccount.UserId != currentUser.Id)
             throw new InvalidOperationException("Доступ запрещен");
 
         var money = new Money(newAccount.CurrencyCode, command.Amount);
-        transaction.UpdateExpense(command.AccountId, command.CategoryId, money, command.OccurredAt,
+        transaction.Update(command.AccountId, command.CategoryId, money, command.OccurredAt,
             command.Description, command.IsMandatory);
 
         await context.SaveChangesAsync(ct);

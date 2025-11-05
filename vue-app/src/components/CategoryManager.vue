@@ -1,13 +1,14 @@
 <script setup lang="ts">
-import { computed, ref } from 'vue'
+import { computed, ref, watch } from 'vue'
 import Button from 'primevue/button'
-import Tag from 'primevue/tag'
 import Skeleton from 'primevue/skeleton'
+import SelectButton from 'primevue/selectbutton'
 import { useConfirm } from 'primevue/useconfirm'
 import { useToast } from 'primevue/usetoast'
 import { useFinanceStore } from '../stores/finance'
 import CategoryFormModal from './CategoryFormModal.vue'
-import type { Category } from '../types'
+import type { Category, CategoryType } from '../types'
+import { CATEGORY_TYPE } from '../types'
 
 const financeStore = useFinanceStore()
 const toast = useToast()
@@ -16,12 +17,44 @@ const confirm = useConfirm()
 const modalVisible = ref(false)
 const editingCategory = ref<Category | null>(null)
 const pendingCategoryId = ref<string | null>(null)
+const selectedCategoryType = ref<CategoryType>(CATEGORY_TYPE.Expense)
+
+const categoryTypeOptions = [
+  { label: 'Расходы', value: CATEGORY_TYPE.Expense },
+  { label: 'Доходы', value: CATEGORY_TYPE.Income },
+]
 
 const categories = computed<Category[]>(() => financeStore.categories ?? [])
 const loadingCategories = computed(() => financeStore.areCategoriesLoading)
 
-const systemCategories = computed(() => categories.value.filter((category: Category) => category.isSystem))
-const userCategories = computed(() => categories.value.filter((category: Category) => !category.isSystem))
+const filteredCategories = computed(() =>
+  categories.value.filter((category: Category) => category.type === selectedCategoryType.value)
+)
+
+const systemCategories = computed(() =>
+  filteredCategories.value.filter((category: Category) => category.isSystem)
+)
+const userCategories = computed(() =>
+  filteredCategories.value.filter((category: Category) => !category.isSystem)
+)
+
+watch(
+  () => categories.value,
+  (newCategories) => {
+    if (!newCategories.length) {
+      return
+    }
+
+    const hasSelectedType = newCategories.some(category => category.type === selectedCategoryType.value)
+    if (!hasSelectedType) {
+      const firstCategory = newCategories[0]
+      if (firstCategory) {
+        selectedCategoryType.value = firstCategory.type
+      }
+    }
+  },
+  { immediate: true }
+)
 
 const openModal = (category?: Category) => {
   if (category?.isSystem) {
@@ -80,7 +113,7 @@ defineExpose({
     <header class="categories__header">
       <div>
         <h3>Категории</h3>
-        <p>Организуйте расходы в группы для быстрой аналитики.</p>
+        <p>Организуйте транзакции в группы для быстрой аналитики.</p>
       </div>
       <Button
         label="Создать категорию"
@@ -89,15 +122,24 @@ defineExpose({
       />
     </header>
 
+    <div class="categories__filter">
+      <SelectButton
+        v-model="selectedCategoryType"
+        :options="categoryTypeOptions"
+        optionLabel="label"
+        optionValue="value"
+      />
+    </div>
+
     <div v-if="loadingCategories" class="categories__skeleton">
       <Skeleton v-for="i in 3" :key="i" height="68px" />
     </div>
 
     <EmptyState
-      v-else-if="categories.length === 0"
+      v-else-if="filteredCategories.length === 0"
       icon="pi-tags"
-      title="Нет созданных категорий"
-      description="Добавьте первую категорию для группировки транзакций."
+      title="Нет категорий"
+      :description="`Добавьте категорию для ${selectedCategoryType === CATEGORY_TYPE.Income ? 'доходов' : 'расходов'}.`"
       action-label="Создать категорию"
       action-icon="pi pi-plus"
       @action="openModal()"
@@ -153,12 +195,8 @@ defineExpose({
           >
             <div class="category-info">
               <span class="color-dot" :style="{ backgroundColor: category.color }" />
-              <span class="category-name">
-                {{ category.name }}
-                <Tag value="Системная" severity="info" rounded />
-              </span>
+              <span class="category-name">{{ category.name }}</span>
             </div>
-            <span class="category-note">Защищена · нельзя изменить или удалить</span>
           </li>
         </ul>
       </div>
@@ -167,6 +205,7 @@ defineExpose({
     <CategoryFormModal
       v-model:visible="modalVisible"
       :category="editingCategory"
+      :default-type="selectedCategoryType"
     />
   </section>
 </template>
@@ -193,6 +232,12 @@ defineExpose({
   margin: var(--ft-space-1) 0 0;
   color: var(--ft-text-muted);
   font-size: var(--ft-text-sm);
+}
+
+.categories__filter {
+  display: flex;
+  justify-content: center;
+  padding: var(--ft-space-2) 0;
 }
 
 .categories__skeleton {
@@ -275,11 +320,6 @@ defineExpose({
   display: inline-flex;
   align-items: center;
   gap: var(--ft-space-2);
-}
-
-.category-note {
-  font-size: var(--ft-text-xs);
-  color: var(--ft-text-muted);
 }
 
 .category-actions {

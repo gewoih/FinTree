@@ -16,7 +16,6 @@ import type {
     CurrentUserDto,
     UpdateUserProfilePayload
 } from '../types.ts';
-import { TRANSACTION_TYPE } from '../types.ts';
 
 /**
  * Axios client instance configured for the FinTree API
@@ -129,10 +128,10 @@ export const apiService = {
         return response.data;
     },
 
-    // Создание новой транзакции (расхода)
-    async createExpense(payload: NewTransactionPayload): Promise<string> {
-        const expensePayload = {
-            type: TRANSACTION_TYPE.Withdrawal,
+    // Создание новой транзакции
+    async createTransaction(payload: NewTransactionPayload): Promise<string> {
+        const transactionPayload = {
+            type: payload.type,
             accountId: payload.accountId,
             categoryId: payload.categoryId,
             amount: Math.abs(payload.amount),
@@ -140,7 +139,7 @@ export const apiService = {
             description: payload.description,
             isMandatory: payload.isMandatory ?? false,
         };
-        const response = await apiClient.post<string>('/Transaction', expensePayload);
+        const response = await apiClient.post<string>('/Transaction', transactionPayload);
         return response.data;
     },
 
