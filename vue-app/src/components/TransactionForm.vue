@@ -24,7 +24,9 @@ const props = defineProps<{
   transaction?: Transaction | null;
 }>();
 
-const emit = defineEmits(['update:visible']);
+const emit = defineEmits<{
+  'update:visible': [value: boolean]
+}>();
 
 const isEditMode = computed(() => !!props.transaction);
 
@@ -36,7 +38,6 @@ const description = ref<string>('');
 const date = ref<Date>(new Date());
 const isMandatory = ref<boolean>(false);
 const selectedCategory = ref<Category | null>(null);
-const attemptedSubmit = ref(false);
 
 const transactionTypeOptions = [
   { label: 'Расход', value: TRANSACTION_TYPE.Expense },
@@ -127,9 +128,6 @@ watch(() => props.visible, (newVal) => {
       ensureTransactionType();
       ensureCategorySelection();
     }
-    attemptedSubmit.value = false;
-  } else {
-    attemptedSubmit.value = false;
   }
 });
 
@@ -149,30 +147,6 @@ const currencyCode = computed(
 const currencySymbol = computed(() => selectedAccount.value?.currency?.symbol ?? '');
 const isAmountValid = computed(() => validators.isAmountValid(amount.value));
 const submitDisabled = computed(() => !transactionType.value || !isAmountValid.value || !selectedCategory.value || !selectedAccount.value);
-const isFormValid = computed(() => !submitDisabled.value);
-const typeError = computed(() => {
-  if (isEditMode.value || !attemptedSubmit.value) return null;
-  return transactionType.value ? null : 'Выберите тип транзакции.';
-});
-const accountError = computed(() => {
-  if (!attemptedSubmit.value) return null;
-  return selectedAccount.value ? null : 'Выберите счёт.';
-});
-const categoryError = computed(() => {
-  if (!attemptedSubmit.value) return null;
-  return selectedCategory.value ? null : 'Выберите категорию.';
-});
-const amountError = computed(() => {
-  if (!attemptedSubmit.value) return null;
-  if (amount.value === null) {
-    return 'Введите сумму транзакции.';
-  }
-  if (!isAmountValid.value) {
-    return `Сумма должна быть между ${VALIDATION_RULES.minAmount} и ${VALIDATION_RULES.maxAmount}`;
-  }
-  return null;
-});
-const currencyBadgeLabel = computed(() => currencySymbol.value || currencyCode.value);
 
 // --- Submit handler ---
 const { isSubmitting, handleSubmit: handleFormSubmit, showWarning } = useFormModal(
@@ -213,16 +187,13 @@ const { isSubmitting, handleSubmit: handleFormSubmit, showWarning } = useFormMod
 );
 
 const handleSubmit = async () => {
-  attemptedSubmit.value = true;
-
-  if (!isFormValid.value || !transactionType.value || !selectedAccount.value || !selectedCategory.value) {
-    showWarning('Проверьте обязательные поля перед сохранением.');
+  if (!transactionType.value || !isAmountValid.value || !selectedAccount.value || !selectedCategory.value) {
+    showWarning('Выберите тип, счет, категорию и сумму перед сохранением.');
     return;
   }
 
   const success = await handleFormSubmit();
   if (success) {
-    attemptedSubmit.value = false;
     // Persist the most recently used category (only in create mode)
     if (!isEditMode.value && selectedCategory.value) {
       localStorage.setItem('lastUsedCategoryId', selectedCategory.value.id);
@@ -252,208 +223,152 @@ watch(filteredCategories, () => {
 
 <template>
   <Dialog
-    :visible="props.visible"
-    modal
-    :style="{ width: '640px' }"
-    class="transaction-dialog"
-    :closable="true"
-    :dismissable-mask="true"
-    @update:visible="val => emit('update:visible', val)"
+      :visible="props.visible"
+      :modal="true"
+      :style="{ width: '620px' }"
+      class="transaction-dialog"
+      :closable="true"
+      :dismissableMask="true"
+      role="dialog"
+      aria-modal="true"
+      :aria-labelledby="isEditMode ? 'transaction-dialog-title-edit' : 'transaction-dialog-title-new'"
+      @update:visible="val => emit('update:visible', val)"
   >
-    <form class="transaction-form" @submit.prevent="handleSubmit" novalidate>
-      <section class="transaction-form__grid">
-        <FormField
-          v-if="!isEditMode"
-          class="transaction-form__field"
-          label="Тип транзакции"
-          :error="typeError"
-          required
-        >
-          <template #default="{ fieldAttrs }">
-            <SelectButton
+    <template #header>
+      <h2 :id="isEditMode ? 'transaction-dialog-title-edit' : 'transaction-dialog-title-new'" class="dialog-title">
+        {{ isEditMode ? 'Редактировать транзакцию' : 'Новая транзакция' }}
+      </h2>
+    </template>
+
+    <form class="transaction-form" @submit.prevent="handleSubmit">
+      <section class="form-fields">
+        <div class="field" v-if="!isEditMode">
+          <label for="transaction-type">Тип транзакции *</label>
+          <SelectButton
+              id="transaction-type"
               v-model="transactionType"
               :options="transactionTypeOptions"
-              option-label="label"
-              option-value="value"
-              :allow-empty="false"
+              optionLabel="label"
+              optionValue="value"
+              :allowEmpty="false"
               class="w-full"
-              :aria-describedby="fieldAttrs['aria-describedby']"
-              :aria-invalid="fieldAttrs['aria-invalid']"
-            />
-          </template>
-        </FormField>
+          />
+        </div>
 
-        <FormField
-          class="transaction-form__field"
-          label="Счёт"
-          :error="accountError"
-          required
-        >
-          <template #default="{ fieldAttrs }">
-            <Select
+        <div class="field">
+          <label for="account">Счет *</label>
+          <Select
+              id="account"
               v-model="selectedAccount"
               :options="store.accounts"
               option-label="name"
-              placeholder="Выберите счёт"
+              placeholder="Выберите счет"
+              required
               class="w-full"
-              :input-id="fieldAttrs.id"
-              :aria-describedby="fieldAttrs['aria-describedby']"
-              :aria-invalid="fieldAttrs['aria-invalid']"
-            >
-              <template #option="slotProps">
-                <div class="option-line">
-                  <div class="option-name">
-                    <i class="pi pi-credit-card" />
-                    <span>{{ slotProps.option.name }}</span>
-                  </div>
-                  <span class="option-currency">
-                    {{ slotProps.option.currency?.symbol ?? '' }}
-                    {{ slotProps.option.currency?.code ?? slotProps.option.currencyCode ?? '—' }}
-                  </span>
+          >
+            <template #option="slotProps">
+              <div class="option-line">
+                <div class="option-name">
+                  <i class="pi pi-credit-card"></i>
+                  <span>{{ slotProps.option.name }}</span>
                 </div>
-              </template>
-            </Select>
-          </template>
+                <span class="option-currency">
+                  {{ slotProps.option.currency?.symbol ?? '' }} {{ slotProps.option.currency?.code ?? slotProps.option.currencyCode ?? '—' }}
+                </span>
+              </div>
+            </template>
+          </Select>
+          <small>{{ isIncome ? 'Средства будут зачислены на выбранный счет.' : 'Средства будут сняты с выбранного счета.' }}</small>
+        </div>
 
-          <template #hint>
-            <span v-if="isIncome">Средства будут зачислены на выбранный счёт.</span>
-            <span v-else>Средства будут списаны с выбранного счёта.</span>
-          </template>
-        </FormField>
-
-        <FormField
-          class="transaction-form__field"
-          label="Категория"
-          :error="categoryError"
-          required
-        >
-          <template #default="{ fieldAttrs }">
-            <Select
+        <div class="field">
+          <label for="category">Категория *</label>
+          <Select
+              id="category"
               v-model="selectedCategory"
               :options="sortedCategories"
               option-label="name"
               placeholder="Выберите категорию"
+              required
               class="w-full"
-              :input-id="fieldAttrs.id"
-              :aria-describedby="fieldAttrs['aria-describedby']"
-              :aria-invalid="fieldAttrs['aria-invalid']"
-            >
-              <template #option="slotProps">
-                <div class="option-name">
-                  <span class="category-dot" :style="{ backgroundColor: slotProps.option.color }" />
-                  <span>{{ slotProps.option.name }}</span>
-                </div>
-              </template>
-            </Select>
-          </template>
+          >
+            <template #option="slotProps">
+              <div class="option-name">
+                <span class="category-dot" :style="{ backgroundColor: slotProps.option.color }"></span>
+                <span>{{ slotProps.option.name }}</span>
+              </div>
+            </template>
+          </Select>
+          <small>Первая категория в списке используется по умолчанию.</small>
+        </div>
 
-          <template #hint>
-            Первая категория в списке подставляется по умолчанию.
-          </template>
-        </FormField>
-
-        <FormField
-          class="transaction-form__field"
-          label="Сумма"
-          :error="amountError"
-          required
-        >
-          <template #default="{ fieldAttrs }">
-            <div class="transaction-form__amount">
-              <InputNumber
+        <div class="field">
+          <label for="amount">Сумма *</label>
+          <div class="amount-input">
+            <InputNumber
+                id="amount"
                 v-model="amount"
                 mode="decimal"
-                :min-fraction-digits="2"
-                :max-fraction-digits="2"
+                :minFractionDigits="2"
+                :maxFractionDigits="2"
                 :min="VALIDATION_RULES.minAmount"
+                autofocus
                 placeholder="0.00"
-                class="w-full"
-                :input-id="fieldAttrs.id"
-                :aria-describedby="fieldAttrs['aria-describedby']"
-                :aria-invalid="fieldAttrs['aria-invalid']"
-              />
-              <span class="transaction-form__currency ft-pill" aria-hidden="true">
-                {{ currencyBadgeLabel }}
-              </span>
-            </div>
-          </template>
+                required
+                :class="{ 'p-invalid': !isAmountValid }"
+            />
+            <span class="currency-chip ft-pill">{{ currencySymbol || currencyCode }}</span>
+          </div>
+          <small v-if="!isAmountValid && amount !== null" class="error-text">
+            Сумма должна быть между {{ VALIDATION_RULES.minAmount }} и {{ VALIDATION_RULES.maxAmount }}
+          </small>
+      </div>
 
-          <template #hint>
-            Валюта подтягивается из выбранного счёта.
-          </template>
-        </FormField>
-
-        <FormField class="transaction-form__field" label="Дата транзакции">
-          <template #default="{ fieldAttrs }">
-            <DatePicker
+      <div class="field">
+        <label for="date">Дата транзакции</label>
+          <DatePicker
+              id="date"
               v-model="date"
-              date-format="dd.mm.yy"
-              show-icon
+              dateFormat="dd.mm.yy"
+              :showIcon="true"
+              required
               class="w-full"
-              :input-id="fieldAttrs.id"
-              :aria-describedby="fieldAttrs['aria-describedby']"
-              :aria-invalid="fieldAttrs['aria-invalid']"
-            />
-          </template>
+          />
+          <small>По умолчанию сегодня.</small>
+      </div>
 
-          <template #hint>
-            По умолчанию используется сегодняшняя дата.
-          </template>
-        </FormField>
+      <div class="field" v-if="!isIncome">
+        <label for="isMandatory">Повторяющийся расход</label>
+        <Checkbox id="isMandatory" v-model="isMandatory" binary />
+      </div>
 
-        <FormField
-          v-if="!isIncome"
-          class="transaction-form__field transaction-form__field--inline"
-          label="Обязательный расход"
-          direction="horizontal"
-        >
-          <template #default="{ fieldAttrs }">
-            <Checkbox
-              v-model="isMandatory"
-              binary
-              :input-id="fieldAttrs.id"
-              :aria-describedby="fieldAttrs['aria-describedby']"
-            />
-          </template>
-
-          <template #hint>
-            Помечайте регулярные платежи, чтобы отслеживать обязательные расходы.
-          </template>
-        </FormField>
-
-        <FormField
-          class="transaction-form__field transaction-form__field--full"
-          label="Заметка (необязательно)"
-        >
-          <template #default="{ fieldAttrs }">
-            <InputText
-              v-bind="fieldAttrs"
-              v-model="description"
-              :placeholder="isIncome ? 'Например: зарплата' : 'Например: утренний кофе'"
-              class="w-full"
-              autocomplete="off"
-            />
-          </template>
-        </FormField>
+      <div class="field full">
+        <label for="description">Заметка</label>
+        <InputText
+            id="description"
+            v-model="description"
+            :placeholder="isIncome ? 'Например: зарплата' : 'Например: утренний кофе'"
+            class="w-full"
+        />
+      </div>
       </section>
 
       <footer class="form-actions">
-        <AppButton
-          type="button"
-          variant="ghost"
-          icon="pi pi-times"
-          @click="emit('update:visible', false)"
-        >
-          Отмена
-        </AppButton>
-        <AppButton
-          type="submit"
-          icon="pi pi-check"
-          :loading="isSubmitting"
-          :disabled="!isFormValid || isSubmitting"
-        >
-          {{ isEditMode ? 'Обновить транзакцию' : 'Сохранить транзакцию' }}
-        </AppButton>
+        <Button
+            type="button"
+            label="Отмена"
+            icon="pi pi-times"
+            severity="secondary"
+            outlined
+            @click="emit('update:visible', false)"
+        />
+        <Button
+            type="submit"
+            :label="isEditMode ? 'Обновить транзакцию' : 'Сохранить транзакцию'"
+            icon="pi pi-check"
+            :disabled="submitDisabled"
+            :loading="isSubmitting"
+        />
       </footer>
     </form>
   </Dialog>
@@ -463,7 +378,6 @@ watch(filteredCategories, () => {
 .transaction-dialog :deep(.p-dialog-content) {
   padding: 0;
   border-radius: var(--ft-radius-xl);
-  background: var(--ft-surface-elevated);
   overflow: hidden;
 }
 
@@ -474,65 +388,71 @@ watch(filteredCategories, () => {
 .transaction-form {
   display: flex;
   flex-direction: column;
-  gap: var(--ft-space-6);
-  padding: clamp(var(--ft-space-6), 3vw, var(--ft-space-7));
+  gap: clamp(1.5rem, 2vw, 2.1rem);
+  padding: clamp(1.8rem, 2.2vw, 2.3rem);
   background: var(--ft-surface-elevated);
 }
 
-.transaction-form__grid {
+.form-fields {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
-  gap: var(--ft-space-4) var(--ft-space-5);
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: clamp(1rem, 1.4vw, 1.35rem) clamp(1rem, 1.4vw, 1.5rem);
 }
 
-.transaction-form__field--full {
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.field.full {
   grid-column: 1 / -1;
 }
 
-.transaction-form__field--inline :deep(.form-field__control) {
-  align-items: center;
+.field label {
+  font-weight: 600;
+  font-size: 0.95rem;
+  color: var(--ft-heading);
 }
 
-.transaction-form__amount {
+.field small {
+  color: var(--ft-text-muted);
+  font-size: 0.85rem;
+}
+
+.amount-input {
   display: flex;
+  gap: 0.6rem;
   align-items: center;
-  gap: var(--ft-space-3);
 }
 
-.transaction-form__amount :deep(.p-inputnumber) {
+.amount-input :deep(.p-inputnumber) {
   flex: 1;
 }
 
-.transaction-form__currency {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  padding: var(--ft-space-2) var(--ft-space-3);
-  font-weight: var(--ft-font-semibold);
-  color: var(--ft-primary-600);
-  background: rgba(37, 99, 235, 0.12);
-  border: 1px solid rgba(37, 99, 235, 0.2);
+.currency-chip {
+  box-shadow: inset 0 0 0 1px rgba(56, 189, 248, 0.24);
 }
 
 .option-line {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  gap: var(--ft-space-3);
+  gap: 0.75rem;
 }
 
 .option-name {
   display: flex;
   align-items: center;
-  gap: var(--ft-space-2);
+  gap: 0.55rem;
 }
 
 .option-name i {
-  color: var(--ft-primary-500);
+  color: var(--ft-accent);
 }
 
 .option-currency {
-  font-size: var(--ft-text-xs);
+  font-size: 0.85rem;
   color: var(--ft-text-muted);
 }
 
@@ -543,26 +463,26 @@ watch(filteredCategories, () => {
   display: inline-block;
 }
 
+.error-text {
+  color: #dc2626;
+}
+
 .form-actions {
   display: flex;
   justify-content: flex-end;
-  gap: var(--ft-space-3);
+  gap: 0.9rem;
 }
 
 @media (max-width: 640px) {
   .transaction-form {
-    padding: var(--ft-space-5);
-  }
-
-  .transaction-form__grid {
-    gap: var(--ft-space-3);
+    padding: 1.5rem;
   }
 
   .form-actions {
     flex-direction: column-reverse;
   }
 
-  .form-actions :deep(.app-button) {
+  .form-actions :deep(.p-button) {
     width: 100%;
   }
 }

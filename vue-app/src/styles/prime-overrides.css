@@ -1,185 +1,211 @@
-:root {
-  color-scheme: light;
-}
+/* ═══════════════════════════════════════════════════════════════
+   PrimeVue Theme Overrides
+   Using CSS layers to reduce !important usage
+   ═══════════════════════════════════════════════════════════════ */
 
-.dark-mode {
-  color-scheme: dark;
-}
+@layer primevue-overrides {
+  :root {
+    color-scheme: light;
+  }
 
-.p-component,
-.p-inputtext,
-.p-select,
-.p-dropdown,
-.p-multiselect,
-.p-select-label,
-.p-select-trigger,
-.p-datepicker input,
-.p-calendar input,
-.p-inputnumber-input,
-.p-inputtextarea,
-.p-autocomplete-input,
-.p-password-input {
-  background-color: var(--ft-surface-base) !important;
-  color: var(--ft-text-primary) !important;
-  border-color: var(--ft-border-subtle) !important;
-  transition: border-color var(--ft-transition-fast), box-shadow var(--ft-transition-fast), background-color var(--ft-transition-fast) !important;
-}
+  .dark-mode {
+    color-scheme: dark;
+  }
 
-.dark-mode .p-component,
-.dark-mode .p-inputtext,
-.dark-mode .p-select,
-.dark-mode .p-dropdown,
-.dark-mode .p-multiselect,
-.dark-mode .p-select-label,
-.dark-mode .p-select-trigger,
-.dark-mode .p-datepicker input,
-.dark-mode .p-calendar input,
-.dark-mode .p-inputnumber-input,
-.dark-mode .p-inputtextarea,
-.dark-mode .p-autocomplete-input,
-.dark-mode .p-password-input {
-  background-color: var(--ft-surface-base) !important;
-  border-color: var(--ft-border-default) !important;
-}
+  /* ━━━ Input Fields Base Styles ━━━ */
+  .p-component,
+  .p-inputtext,
+  .p-select,
+  .p-dropdown,
+  .p-multiselect,
+  .p-select-label,
+  .p-select-trigger,
+  .p-datepicker input,
+  .p-calendar input,
+  .p-inputnumber-input,
+  .p-inputtextarea,
+  .p-autocomplete-input,
+  .p-password-input {
+    background-color: var(--ft-surface-base);
+    color: var(--ft-text-primary);
+    border-color: var(--ft-border-subtle);
+    transition:
+      border-color var(--ft-transition-fast),
+      box-shadow var(--ft-transition-fast),
+      background-color var(--ft-transition-fast);
+  }
 
-.p-inputtext:hover:not(:disabled),
-.p-select:hover:not(:disabled),
-.p-dropdown:hover:not(:disabled),
-.p-calendar:hover:not(:disabled),
-.p-inputnumber:hover:not(:disabled),
-.p-inputtextarea:hover:not(:disabled) {
-  border-color: var(--ft-border-default) !important;
-}
+  /* ━━━ Dark Mode Input Styles ━━━ */
+  .dark-mode .p-component,
+  .dark-mode .p-inputtext,
+  .dark-mode .p-select,
+  .dark-mode .p-dropdown,
+  .dark-mode .p-multiselect,
+  .dark-mode .p-select-label,
+  .dark-mode .p-select-trigger,
+  .dark-mode .p-datepicker input,
+  .dark-mode .p-calendar input,
+  .dark-mode .p-inputnumber-input,
+  .dark-mode .p-inputtextarea,
+  .dark-mode .p-autocomplete-input,
+  .dark-mode .p-password-input {
+    background-color: var(--ft-surface-base);
+    border-color: var(--ft-border-default);
+  }
 
-.p-inputtext:focus,
-.p-select:focus-within,
-.p-dropdown:focus-within,
-.p-calendar:focus-within,
-.p-inputnumber:focus-within,
-.p-inputtextarea:focus {
-  border-color: var(--ft-interactive-hover) !important;
-  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.16) !important;
-}
+  /* ━━━ Hover States ━━━ */
+  .p-inputtext:hover:not(:disabled),
+  .p-select:hover:not(:disabled),
+  .p-dropdown:hover:not(:disabled),
+  .p-calendar:hover:not(:disabled),
+  .p-inputnumber:hover:not(:disabled),
+  .p-inputtextarea:hover:not(:disabled) {
+    border-color: var(--ft-border-default);
+  }
 
-.p-inputtext::placeholder,
-.p-inputtextarea::placeholder {
-  color: var(--ft-text-muted) !important;
-  opacity: 0.8 !important;
-}
+  /* ━━━ Focus States ━━━ */
+  .p-inputtext:focus,
+  .p-select:focus-within,
+  .p-dropdown:focus-within,
+  .p-calendar:focus-within,
+  .p-inputnumber:focus-within,
+  .p-inputtextarea:focus {
+    border-color: var(--ft-interactive-hover);
+    box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.16);
+  }
 
-.p-dropdown,
-.p-select,
-.p-calendar,
-.p-inputnumber,
-.p-multiselect {
-  border-radius: var(--ft-radius-lg) !important;
-  min-height: var(--ft-input-height-md);
-}
+  /* ━━━ Placeholders ━━━ */
+  .p-inputtext::placeholder,
+  .p-inputtextarea::placeholder {
+    color: var(--ft-text-muted);
+    opacity: 0.8;
+  }
 
-.p-button:not(.p-button-link) {
-  border-radius: var(--ft-radius-lg);
-  transition: transform var(--ft-transition-fast), box-shadow var(--ft-transition-fast);
-}
+  /* ━━━ Component Sizing ━━━ */
+  .p-dropdown,
+  .p-select,
+  .p-calendar,
+  .p-inputnumber,
+  .p-multiselect {
+    border-radius: var(--ft-radius-lg);
+    min-height: var(--ft-input-height-md);
+  }
 
-.p-button:not(.p-button-link):hover:not(:disabled) {
-  transform: translateY(-1px);
-  box-shadow: 0 8px 20px rgba(37, 99, 235, 0.25);
-}
+  /* ━━━ Buttons ━━━ */
+  .p-button:not(.p-button-link) {
+    border-radius: var(--ft-radius-lg);
+    min-width: 44px;
+    min-height: 44px;
+    transition: transform var(--ft-transition-fast), box-shadow var(--ft-transition-fast);
+  }
 
-.p-button:not(.p-button-link):active:not(:disabled) {
-  transform: translateY(0);
-}
+  .p-button:not(.p-button-link):hover:not(:disabled) {
+    transform: translateY(-1px);
+    box-shadow: 0 8px 20px rgba(37, 99, 235, 0.25);
+  }
 
-.p-dialog .p-dialog-content,
-.p-dialog .p-dialog-header {
-  background: var(--ft-surface-soft);
-}
+  .p-button:not(.p-button-link):active:not(:disabled) {
+    transform: translateY(0);
+  }
 
-.p-datepicker,
-.p-select-panel,
-.p-dropdown-panel,
-.p-multiselect-panel {
-  background: var(--ft-surface-soft) !important;
-  border-radius: var(--ft-radius-card) !important;
-  border: 1px solid var(--ft-border-soft) !important;
-  box-shadow: var(--ft-shadow-card) !important;
-}
+  .p-button:focus-visible {
+    outline-offset: 4px;
+  }
 
-.p-datatable {
-  background: var(--ft-surface-soft);
-  color: var(--ft-text-primary);
-  border-radius: var(--ft-radius-card);
-  border: 1px solid var(--ft-border-soft);
-  overflow: hidden;
-}
+  /* ━━━ Dialogs ━━━ */
+  .p-dialog .p-dialog-content,
+  .p-dialog .p-dialog-header {
+    background: var(--ft-surface-soft);
+  }
 
-.p-datatable table {
-  background: transparent;
-}
+  /* ━━━ Dropdowns and Panels ━━━ */
+  .p-datepicker,
+  .p-select-panel,
+  .p-dropdown-panel,
+  .p-multiselect-panel {
+    background: var(--ft-surface-soft);
+    border-radius: var(--ft-radius-card);
+    border: 1px solid var(--ft-border-soft);
+    box-shadow: var(--ft-shadow-card);
+  }
 
-.p-datatable .p-datatable-thead > tr > th {
-  background: var(--ft-surface-muted) !important;
-  color: var(--ft-text-secondary) !important;
-  border-bottom: 1px solid var(--ft-border-soft);
-  padding-block: 0.85rem;
-  position: sticky;
-  top: 0;
-  z-index: 1;
-}
+  /* ━━━ DataTable ━━━ */
+  .p-datatable {
+    background: var(--ft-surface-soft);
+    color: var(--ft-text-primary);
+    border-radius: var(--ft-radius-card);
+    border: 1px solid var(--ft-border-soft);
+    overflow: hidden;
+  }
 
-.p-datatable .p-datatable-tbody > tr {
-  background: var(--ft-surface-soft) !important;
-  color: var(--ft-text-primary) !important;
-  transition: background-color var(--ft-transition-fast), transform var(--ft-transition-fast);
-}
+  .p-datatable table {
+    background: transparent;
+  }
 
-.p-datatable .p-datatable-tbody > tr:nth-child(even) {
-  background: rgba(37, 99, 235, 0.04) !important;
-}
+  .p-datatable .p-datatable-thead > tr > th {
+    background: var(--ft-surface-muted);
+    color: var(--ft-text-secondary);
+    border-bottom: 1px solid var(--ft-border-soft);
+    padding-block: var(--ft-space-3);
+    position: sticky;
+    top: 0;
+    z-index: 1;
+  }
 
-.dark-mode .p-datatable .p-datatable-tbody > tr:nth-child(even) {
-  background: rgba(37, 99, 235, 0.1) !important;
-}
+  .p-datatable .p-datatable-tbody > tr {
+    background: var(--ft-surface-soft);
+    color: var(--ft-text-primary);
+    transition: background-color var(--ft-transition-fast), transform var(--ft-transition-fast);
+  }
 
-.p-datatable .p-datatable-tbody > tr:hover {
-  background: rgba(37, 99, 235, 0.08) !important;
-}
+  .p-datatable .p-datatable-tbody > tr:nth-child(even) {
+    background: rgba(37, 99, 235, 0.04);
+  }
 
-.dark-mode .p-datatable .p-datatable-tbody > tr:hover {
-  background: rgba(37, 99, 235, 0.18) !important;
-}
+  .dark-mode .p-datatable .p-datatable-tbody > tr:nth-child(even) {
+    background: rgba(37, 99, 235, 0.1);
+  }
 
-.p-datatable .p-datatable-tbody > tr > td {
-  border-bottom: 1px solid var(--ft-border-soft);
-}
+  .p-datatable .p-datatable-tbody > tr:hover {
+    background: rgba(37, 99, 235, 0.08);
+  }
 
-.p-tag {
-  border-radius: 999px !important;
-  padding: 0.35rem 0.75rem !important;
-  font-weight: var(--ft-font-medium) !important;
-}
+  .dark-mode .p-datatable .p-datatable-tbody > tr:hover {
+    background: rgba(37, 99, 235, 0.18);
+  }
 
-.p-datepicker .p-datepicker-calendar table td > span {
-  border-radius: var(--ft-radius-md) !important;
-}
+  .p-datatable .p-datatable-tbody > tr > td {
+    border-bottom: 1px solid var(--ft-border-soft);
+  }
 
-*:focus-visible {
-  outline: 2px solid var(--ft-focus-ring);
-  outline-offset: 3px;
-  border-radius: 6px;
-}
+  /* ━━━ Tags/Badges ━━━ */
+  .p-tag {
+    border-radius: var(--ft-radius-full);
+    padding: var(--ft-space-1) var(--ft-space-3);
+    font-weight: var(--ft-font-medium);
+  }
 
-.p-button:focus-visible {
-  outline-offset: 4px;
-}
+  /* ━━━ DatePicker Calendar Cells ━━━ */
+  .p-datepicker .p-datepicker-calendar table td > span {
+    border-radius: var(--ft-radius-md);
+  }
 
-.ft-card,
-.p-card {
-  transition: transform var(--ft-transition-fast), box-shadow var(--ft-transition-fast);
-}
+  /* ━━━ Global Focus States ━━━ */
+  *:focus-visible {
+    outline: 2px solid var(--ft-focus-ring);
+    outline-offset: 3px;
+    border-radius: var(--ft-radius-sm);
+  }
 
-.ft-card:hover,
-.p-card:hover {
-  transform: translateY(-2px);
-  box-shadow: var(--ft-shadow-soft);
+  /* ━━━ Cards Hover Effect ━━━ */
+  .ft-card,
+  .p-card {
+    transition: transform var(--ft-transition-fast), box-shadow var(--ft-transition-fast);
+  }
+
+  .ft-card:hover,
+  .p-card:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--ft-shadow-soft);
+  }
 }
