@@ -410,7 +410,7 @@ public sealed class AnalyticsService(
 
         var transactions = await transactionsQuery
             .OrderBy(t => t.OccurredAt)
-            .Select(t => new { t.AccountId, t.Money, t.OccurredAt })
+            .Select(t => new { t.AccountId, t.Money, t.OccurredAt, t.Type })
             .ToListAsync(ct);
 
         if (transactions.Count == 0)
@@ -449,11 +449,19 @@ public sealed class AnalyticsService(
                     atUtc: dt,
                     ct: ct);
                 
-                // Withdrawal transactions have negative money amount
-                accountBalances[txn.AccountId] -= baseMoney.Amount;
+                switch (txn.Type)
+                {
+                    case TransactionType.Income:
+                        accountBalances[txn.AccountId] += baseMoney.Amount;
+                        break;
+                    case TransactionType.Expense:
+                        accountBalances[txn.AccountId] -= baseMoney.Amount;
+                        break;
+                    default:
+                        throw new ArgumentOutOfRangeException();
+                }
             }
 
-            // Calculate total networth at end of this month
             var totalNetWorth = accountBalances.Values.Sum();
             monthlySnapshots[monthGroup.Key] = totalNetWorth;
         }
