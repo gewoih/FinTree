@@ -1,9 +1,10 @@
+using FinTree.Domain.Categories;
 using FinTree.Domain.Transactions;
 
 namespace FinTree.Application.Transactions.Dto;
 
 public record struct CreateTransaction(
-    TransactionType Type,
+    CategoryType Type,
     Guid AccountId,
     decimal Amount,
     DateTime OccurredAt,

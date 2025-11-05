@@ -38,15 +38,31 @@ public sealed class Account : Entity
     public ExpenseTransaction AddExpense(Guid categoryId, decimal amount, DateTime occuredAt,
         string? description = null, bool isMandatory = false)
     {
-        ArgumentOutOfRangeException.ThrowIfEqual(categoryId, Guid.Empty, nameof(categoryId));
-        if (IsArchived)
-            throw new InvalidOperationException("Невозможно добавить транзакцию в заархивированный счет.");
+        ValidateTransaction(categoryId);
 
         var money = new Money(CurrencyCode, amount);
         var transaction = new ExpenseTransaction(Id, categoryId, money, occuredAt, description, isMandatory);
         _transactions.Add(transaction);
 
         return transaction;
+    }
+
+    public IncomeTransaction AddIncome(Guid categoryId, decimal amount, DateTime occuredAt, string? description = null)
+    {
+        ValidateTransaction(categoryId);
+
+        var money = new Money(CurrencyCode, amount);
+        var transaction = new IncomeTransaction(Id, categoryId, money, occuredAt, description);
+        _transactions.Add(transaction);
+
+        return transaction;
+    }
+
+    private void ValidateTransaction(Guid categoryId)
+    {
+        ArgumentOutOfRangeException.ThrowIfEqual(categoryId, Guid.Empty, nameof(categoryId));
+        if (IsArchived)
+            throw new InvalidOperationException("Невозможно добавить транзакцию в заархивированный счет.");
     }
 
     public void Archive() => IsArchived = true;

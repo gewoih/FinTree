@@ -1,4 +1,5 @@
 using FinTree.Domain.Accounts;
+using FinTree.Domain.Categories;
 using FinTree.Domain.Currencies;
 using FinTree.Domain.Identity;
 using FinTree.Domain.Transactions;
@@ -13,6 +14,7 @@ public sealed class AppDbContext(DbContextOptions<AppDbContext> options) : DbCon
     public DbSet<Account> Accounts => Set<Account>();
     public DbSet<Transaction> Transactions => Set<Transaction>();
     public DbSet<ExpenseTransaction> ExpenseTransactions => Set<ExpenseTransaction>();
+    public DbSet<IncomeTransaction> IncomeTransactions => Set<IncomeTransaction>();
     public DbSet<FxUsdRate> FxUsdRates => Set<FxUsdRate>();
     
     protected override void OnModelCreating(ModelBuilder modelBuilder)

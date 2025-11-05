@@ -1,4 +1,5 @@
 using FinTree.Domain.Accounts;
+using FinTree.Domain.Categories;
 using FinTree.Domain.Identity;
 using FinTree.Domain.Transactions;
 using Microsoft.EntityFrameworkCore;
@@ -32,7 +33,15 @@ public static class Initializer
             TransactionCategory.CreateSystem("Налоги и сборы", "#351c75"),
             TransactionCategory.CreateSystem("Благотворительность", "#741b47"),
             TransactionCategory.CreateSystem("Работа и бизнес", "#134f5c"),
-            TransactionCategory.CreateSystem("Прочее", "#666666")
+            
+            TransactionCategory.CreateSystem("Зарплата", "#6aa84f", CategoryType.Income),
+            TransactionCategory.CreateSystem("Фриланс", "#3d85c6", CategoryType.Income),
+            TransactionCategory.CreateSystem("Подарки", "#e69138", CategoryType.Income),
+            TransactionCategory.CreateSystem("Инвестиции", "#134f5c", CategoryType.Income),
+            TransactionCategory.CreateSystem("Продажа вещей", "#b45f06", CategoryType.Income),
+            TransactionCategory.CreateSystem("Кэшбэк и бонусы", "#ff9900", CategoryType.Income),
+            TransactionCategory.CreateSystem("Бизнес", "#351c75", CategoryType.Income),
+            TransactionCategory.CreateSystem("Пособия и выплаты", "#c90076", CategoryType.Income),
         };
 
         await context.TransactionCategories.AddRangeAsync(categories);

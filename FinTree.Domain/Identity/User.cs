@@ -1,8 +1,10 @@
 using System.ComponentModel.DataAnnotations.Schema;
 using FinTree.Domain.Accounts;
+using FinTree.Domain.Categories;
 using FinTree.Domain.Transactions;
 using FinTree.Domain.ValueObjects;
 using Microsoft.AspNetCore.Identity;
+using Transaction = System.Transactions.Transaction;
 
 namespace FinTree.Domain.Identity;
 
@@ -21,7 +23,7 @@ public sealed class User : IdentityUser<Guid>
     private User()
     {
     }
-    
+
     public User(string username, string email, string baseCurrencyCode)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(username, nameof(username));
@@ -68,12 +70,16 @@ public sealed class User : IdentityUser<Guid>
         TelegramUserId = null;
     }
 
-    public TransactionCategory AddTransactionCategory(string name, string color)
+    public TransactionCategory AddTransactionCategory(CategoryType categoryType, string name, string color)
     {
-        if (_transactionCategories.Any(t => string.Equals(t.Name, name, StringComparison.CurrentCultureIgnoreCase)))
+        if (_transactionCategories.Any(t =>
+                string.Equals(t.Name, name, StringComparison.CurrentCultureIgnoreCase) &&
+                t.Type == categoryType))
+        {
             throw new InvalidOperationException("Категория уже существует");
+        }
 
-        var transactionCategory = TransactionCategory.CreateUser(Id, name, color);
+        var transactionCategory = TransactionCategory.CreateUser(Id, name, color, categoryType);
         _transactionCategories.Add(transactionCategory);
         return transactionCategory;
     }

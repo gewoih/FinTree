@@ -1,6 +1,8 @@
 using FinTree.Application.Exceptions;
 using FinTree.Application.Transactions.Dto;
 using FinTree.Application.Users;
+using FinTree.Domain.Categories;
+using FinTree.Domain.Transactions;
 using FinTree.Domain.ValueObjects;
 using FinTree.Infrastructure.Database;
 using Microsoft.EntityFrameworkCore;
@@ -14,11 +16,22 @@ public sealed class TransactionsService(AppDbContext context, ICurrentUser curre
         var account = await context.Accounts.FirstOrDefaultAsync(a => a.Id == command.AccountId, ct) ??
                       throw new InvalidOperationException("Счет не найден.");
 
-        var newTransaction = account.AddExpense(command.CategoryId, command.Amount, command.OccurredAt,
-            command.Description, command.IsMandatory);
+        Transaction newTransaction;
+        switch (command.Type)
+        {
+            case CategoryType.Income:
+                newTransaction = account.AddIncome(command.CategoryId, command.Amount, command.OccurredAt,
+                    command.Description);
+                break;
+            case CategoryType.Expense:
+                newTransaction = account.AddExpense(command.CategoryId, command.Amount, command.OccurredAt,
+                    command.Description, command.IsMandatory);
+                break;
+            default:
+                throw new ArgumentOutOfRangeException(nameof(command.Type), "Неизвестный тип транзакции");
+        }
 
         await context.SaveChangesAsync(ct);
-
         return newTransaction.Id;
     }
 

@@ -17,7 +17,7 @@ public sealed class TransactionCategoryService(AppDbContext context, ICurrentUse
                        .SingleOrDefaultAsync(u => u.Id == userId, ct)
                    ?? throw new NotFoundException(nameof(User), userId);
 
-        var transactionCategory = user.AddTransactionCategory(command.Name, command.Color);
+        var transactionCategory = user.AddTransactionCategory(command.CategoryType, command.Name, command.Color);
         await context.SaveChangesAsync(ct);
 
         return transactionCategory.Id;

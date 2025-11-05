@@ -58,7 +58,7 @@ public sealed class UserService(AppDbContext context, ICurrentUser currentUser)
         
         var categories = await context.TransactionCategories
             .Where(tc => tc.UserId == userId || tc.UserId == null)
-            .Select(tc => new TransactionCategoryDto(tc.Id, tc.Name, tc.Color, tc.IsSystem))
+            .Select(tc => new TransactionCategoryDto(tc.Id, tc.Name, tc.Color, tc.IsSystem, tc.Type))
             .ToListAsync(ct);
         
         return categories;
