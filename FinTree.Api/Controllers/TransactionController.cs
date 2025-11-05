@@ -10,6 +10,13 @@ namespace FinTree.Api.Controllers;
 [ApiController]
 public class TransactionController(TransactionsService transactionsService) : ControllerBase
 {
+    [HttpGet]
+    public async Task<IActionResult> GetTransactions(Guid? accountId, CancellationToken ct)
+    {
+        var transactions = await transactionsService.GetTransactionsAsync(accountId, ct);
+        return Ok(transactions);
+    }
+    
     [HttpPost]
     public async Task<IActionResult> Post([FromBody] CreateTransaction command, CancellationToken ct)
     {

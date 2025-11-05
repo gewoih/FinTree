@@ -122,7 +122,7 @@ export const apiService = {
 
     // Получение всех транзакций по счету
     async getTransactions(accountId?: string): Promise<TransactionDto[]> {
-        const response = await apiClient.get<TransactionDto[]>('/accounts/transactions', {
+        const response = await apiClient.get<TransactionDto[]>('/transaction', {
             params: accountId ? { accountId } : {},
         });
         return response.data;

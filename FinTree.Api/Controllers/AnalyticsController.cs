@@ -17,14 +17,16 @@ namespace FinTree.Api.Controllers
         }
 
         [HttpGet("expenses-by-category")]
-        public async Task<IActionResult> GetExpensesByCategory([FromQuery] int year, [FromQuery] int month, CancellationToken ct)
+        public async Task<IActionResult> GetExpensesByCategory([FromQuery] int year, [FromQuery] int month,
+            CancellationToken ct)
         {
             var data = await analyticsService.GetExpensesByCategoryAsync(year, month, ct);
             return Ok(data);
         }
 
         [HttpGet("expenses-by-category-range")]
-        public async Task<IActionResult> GetExpensesByCategoryRange([FromQuery] DateTime from, [FromQuery] DateTime to, CancellationToken ct)
+        public async Task<IActionResult> GetExpensesByCategoryRange([FromQuery] DateTime from, [FromQuery] DateTime to,
+            CancellationToken ct)
         {
             var data = await analyticsService.GetExpensesByCategoryByDateRangeAsync(from, to, ct);
             return Ok(data);

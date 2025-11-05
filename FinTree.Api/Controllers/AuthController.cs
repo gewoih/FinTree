@@ -4,11 +4,11 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace FinTree.Api.Controllers;
 
+[AllowAnonymous]
 [Route("api/[controller]")]
 [ApiController]
 public class AuthController(AuthService authService) : ControllerBase
 {
-    [AllowAnonymous]
     [HttpPost("register")]
     public async Task<IActionResult> Register([FromBody] RegisterRequest request, CancellationToken ct)
     {
@@ -16,7 +16,6 @@ public class AuthController(AuthService authService) : ControllerBase
         return Ok(response);
     }
 
-    [AllowAnonymous]
     [HttpPost("login")]
     public async Task<IActionResult> Login([FromBody] LoginRequest request, CancellationToken ct)
     {

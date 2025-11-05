@@ -21,37 +21,18 @@ public sealed class TransactionsService(AppDbContext context, ICurrentUser curre
         return newTransaction.Id;
     }
 
-    public async Task<(List<TransactionDto> Items, int Total)> GetTransactionsAsync(Guid? accountId,
-        TxFilter? filter, CancellationToken ct = default)
+    public async Task<List<TransactionDto>> GetTransactionsAsync(Guid? accountId, CancellationToken ct = default)
     {
         var currentUserId = currentUser.Id;
-        var q = context.Transactions
+        var userTransactionsQuery = context.Transactions
             .AsNoTracking()
             .Include(t => t.Account)
             .Where(t => t.Account.UserId == currentUserId);
 
         if (accountId.HasValue)
-            q = q.Where(t => t.AccountId == accountId);
+            userTransactionsQuery = userTransactionsQuery.Where(t => t.AccountId == accountId);
 
-        if (filter?.AccountId is { } acc)
-            q = q.Where(t => t.AccountId == acc);
-
-        if (filter?.From is { } from)
-            q = q.Where(t => DateOnly.FromDateTime(t.OccurredAt) >= from);
-
-        if (filter?.To is { } to)
-            q = q.Where(t => DateOnly.FromDateTime(t.OccurredAt) <= to);
-
-        if (!string.IsNullOrWhiteSpace(filter?.Search))
-        {
-            var search = $"%{filter.Search!.Trim()}%";
-            q = q.Where(t => t.Description != null &&
-                             EF.Functions.Like(t.Description, search));
-        }
-
-        var total = await q.CountAsync(ct);
-
-        var items = await q.OrderByDescending(t => t.OccurredAt)
+        var userTransactions = await userTransactionsQuery
             .Select(t =>
                 new TransactionDto(
                     t.Id,
@@ -63,7 +44,7 @@ public sealed class TransactionsService(AppDbContext context, ICurrentUser curre
                     t.IsMandatory))
             .ToListAsync(ct);
 
-        return (items, total);
+        return userTransactions;
     }
 
     public async Task AssignCategoryAsync(AssignCategory command, CancellationToken ct)
