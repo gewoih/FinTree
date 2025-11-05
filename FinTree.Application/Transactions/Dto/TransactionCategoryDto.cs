@@ -1,5 +1,4 @@
 using FinTree.Domain.Categories;
-using FinTree.Domain.Transactions;
 
 namespace FinTree.Application.Transactions.Dto;
 
@@ -8,4 +7,4 @@ public readonly record struct TransactionCategoryDto(
     string Name,
     string Color,
     bool IsSystem,
-    CategoryType CategoryType);
+    CategoryType Type);

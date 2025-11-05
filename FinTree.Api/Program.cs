@@ -1,6 +1,7 @@
 using System.ComponentModel.DataAnnotations;
 using System.Text;
 using System.Text.Json;
+using System.Text.Json.Serialization;
 using FinTree.Api;
 using FinTree.Application.Accounts;
 using FinTree.Application.Analytics;
@@ -9,7 +10,6 @@ using FinTree.Application.Exceptions;
 using FinTree.Application.Transactions;
 using FinTree.Application.Users;
 using FinTree.Domain.Identity;
-using FinTree.Domain.Currencies;
 using FinTree.Infrastructure;
 using FinTree.Infrastructure.Database;
 using FinTree.Infrastructure.Telegram;
@@ -23,7 +23,11 @@ using Telegram.Bot;
 
 var builder = WebApplication.CreateBuilder(args);
 
-builder.Services.AddControllers();
+builder.Services.AddControllers().AddJsonOptions(options =>
+{
+    options.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter());
+});
+
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
