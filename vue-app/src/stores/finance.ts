@@ -11,7 +11,7 @@ import type {
     UpdateTransactionPayload,
     Transaction
 } from '../types.ts';
-import { CURRENT_USER_ID } from '../constants';
+
 import {
     mapAccounts,
     mapCategories,
@@ -175,7 +175,6 @@ export const useFinanceStore = defineStore('finance', () => {
     async function createAccount(payload: AccountFormPayload) {
         try {
             await apiService.createAccount({
-                userId: CURRENT_USER_ID,
                 currencyCode: payload.currencyCode,
                 type: payload.type,
                 name: payload.name,
@@ -217,7 +216,6 @@ export const useFinanceStore = defineStore('finance', () => {
     async function createCategory(payload: CategoryFormPayload) {
         try {
             await apiService.createCategory({
-                userId: CURRENT_USER_ID,
                 name: payload.name,
                 color: payload.color,
                 categoryType: payload.categoryType,

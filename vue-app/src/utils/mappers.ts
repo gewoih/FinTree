@@ -1,6 +1,7 @@
 import type {
   Account,
   AccountDto,
+  AccountType,
   Category,
   CategoryType,
   Currency,
@@ -27,6 +28,7 @@ export function mapAccount(
 ): Account {
   return {
     ...dto,
+    type: normalizeAccountType(dto.type),
     currency: currencies.get(dto.currencyCode) ?? null,
   };
 }
@@ -150,4 +152,27 @@ function normalizeCategoryType(value: unknown): CategoryType {
 
   console.warn('Не удалось распознать тип категории, используем Expense по умолчанию:', value);
   return CATEGORY_TYPE.Expense;
+}
+
+/**
+ * Normalizes account type from various formats (string/number) to AccountType
+ * @param value - Raw account type from API (can be "Bank", "Cash", "Crypto" or 0, 1, 2)
+ * @returns Normalized AccountType (0, 1, or 2)
+ */
+function normalizeAccountType(value: unknown): AccountType {
+  // Already correct type
+  if (value === 0 || value === 1 || value === 2) {
+    return value as AccountType;
+  }
+
+  // String values from backend
+  if (typeof value === 'string') {
+    const normalized = value.toLowerCase();
+    if (normalized === 'bank') return 0;
+    if (normalized === 'cash') return 1;
+    if (normalized === 'crypto') return 2;
+  }
+
+  console.warn('Не удалось распознать тип счета, используем Bank по умолчанию:', value);
+  return 0; // Default to Bank
 }

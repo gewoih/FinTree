@@ -1,6 +1,6 @@
 // src/types.ts
 
-export type AccountType = 0 | 1; // 0 - Дебетовая карта, 1 - Наличка (примерно)
+export type AccountType = 0 | 1 | 2; // 0 - Bank, 1 - Cash, 2 - Crypto
 
 export const CATEGORY_TYPE = {
     Income: 'Income',
@@ -21,7 +21,7 @@ export interface AccountDto {
     id: string; // Guid
     currencyCode: string;
     name: string;
-    type: AccountType;
+    type: AccountType | string | number; // Backend may return string "Bank", "Cash", "Crypto" or numbers
     isMain: boolean;
 }
 
@@ -87,7 +87,6 @@ export interface UpdateTransactionPayload {
 }
 
 export interface CreateAccountPayload {
-    userId: string;
     currencyCode: string;
     type: AccountType;
     name: string;
@@ -100,7 +99,6 @@ export interface AccountFormPayload {
 }
 
 export interface CreateCategoryPayload {
-    userId: string;
     categoryType: CategoryType;
     name: string;
     color: string;

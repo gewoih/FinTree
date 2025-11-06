@@ -71,9 +71,8 @@ export const TOAST_CONFIG = {
   }
 } as const;
 
-export const CURRENT_USER_ID = 'e8f7ff88-d7f9-4f7a-a7ce-dae7e191c89c';
-
 export const ACCOUNT_TYPE_OPTIONS = [
-  { label: 'Bank account', value: 0 },
-  { label: 'Cash wallet', value: 1 }
+  { label: 'Банковский счет', value: 0 },
+  { label: 'Наличные', value: 1 },
+  { label: 'Криптовалюта', value: 2 }
 ] as const;
