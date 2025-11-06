@@ -1,6 +1,7 @@
 using System.ComponentModel.DataAnnotations.Schema;
 using FinTree.Domain.Accounts;
 using FinTree.Domain.Categories;
+using FinTree.Domain.IncomeStreams;
 using FinTree.Domain.Transactions;
 using FinTree.Domain.ValueObjects;
 using Microsoft.AspNetCore.Identity;
@@ -12,6 +13,7 @@ public sealed class User : IdentityUser<Guid>
 {
     private readonly List<Account> _accounts = [];
     private readonly List<TransactionCategory> _transactionCategories = [];
+    private readonly List<IncomeInstrument> _incomeInstruments = [];
 
     public string BaseCurrencyCode { get; private set; }
     public string? TelegramUserId { get; private set; }
@@ -19,6 +21,7 @@ public sealed class User : IdentityUser<Guid>
     [NotMapped] public Currency BaseCurrency => Currency.FromCode(BaseCurrencyCode);
     public IReadOnlyCollection<Account> Accounts => _accounts;
     public IReadOnlyCollection<TransactionCategory> TransactionCategories => _transactionCategories;
+    public IReadOnlyCollection<IncomeInstrument> IncomeInstruments => _incomeInstruments;
 
     private User()
     {
@@ -47,6 +50,17 @@ public sealed class User : IdentityUser<Guid>
         _accounts.Add(account);
 
         return account;
+    }
+
+    public IncomeInstrument AddIncomeInstrument(string name, string currencyCode, IncomeInstrumentType type,
+        decimal principalAmount, decimal expectedAnnualYieldRate, decimal? monthlyContribution = null,
+        string? notes = null)
+    {
+        var instrument = new IncomeInstrument(Id, name, currencyCode, type, principalAmount,
+            expectedAnnualYieldRate, monthlyContribution, notes);
+        _incomeInstruments.Add(instrument);
+
+        return instrument;
     }
 
     public void SetMainAccount(Guid accountId)

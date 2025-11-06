@@ -52,5 +52,12 @@ namespace FinTree.Api.Controllers
             var data = await analyticsService.GetNetWorthTrendAsync(ct: ct);
             return Ok(data);
         }
+
+        [HttpGet("future-income")]
+        public async Task<IActionResult> GetFutureIncome(CancellationToken ct)
+        {
+            var data = await analyticsService.GetFutureIncomeOverviewAsync(ct);
+            return Ok(data);
+        }
     }
 }

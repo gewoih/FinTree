@@ -158,3 +158,64 @@ export interface UpdateUserProfilePayload {
     baseCurrencyCode: string;
     telegramUsername: string;
 }
+
+export type IncomeInstrumentType = 'Salary' | 'Deposit' | 'Investment' | 'Other';
+
+export interface IncomeInstrumentDto {
+    id: string;
+    name: string;
+    currencyCode: string;
+    type: IncomeInstrumentType | string;
+    principalAmount: number;
+    expectedAnnualYieldRate: number;
+    monthlyContribution: number | null;
+    notes: string | null;
+    createdAt: string;
+}
+
+export interface CreateIncomeInstrumentPayload {
+    name: string;
+    currencyCode: string;
+    type: IncomeInstrumentType;
+    principalAmount: number;
+    expectedAnnualYieldRate: number;
+    monthlyContribution?: number | null;
+    notes?: string | null;
+}
+
+export interface IncomeBreakdownDto {
+    label: string;
+    monthlyAmount: number;
+    annualAmount: number;
+    share: number;
+}
+
+export interface SalaryProjectionDto {
+    monthlyAverage: number;
+    annualProjection: number;
+    sources: IncomeBreakdownDto[];
+}
+
+export interface IncomeInstrumentProjectionDto {
+    id: string;
+    name: string;
+    type: IncomeInstrumentType | string;
+    originalCurrencyCode: string;
+    principalAmount: number;
+    expectedAnnualYieldRate: number;
+    monthlyContribution: number | null;
+    expectedMonthlyIncome: number;
+    expectedAnnualIncome: number;
+    principalAmountInBaseCurrency: number;
+    monthlyContributionInBaseCurrency: number | null;
+    expectedMonthlyIncomeInBaseCurrency: number;
+    expectedAnnualIncomeInBaseCurrency: number;
+}
+
+export interface FutureIncomeOverviewDto {
+    baseCurrencyCode: string;
+    salary: SalaryProjectionDto | null;
+    instruments: IncomeInstrumentProjectionDto[];
+    totalExpectedMonthlyIncome: number;
+    totalExpectedAnnualIncome: number;
+}

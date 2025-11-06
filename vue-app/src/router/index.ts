@@ -52,6 +52,12 @@ export const router = createRouter({
       meta: { title: 'Analytics', requiresAuth: true },
     },
     {
+      path: '/future-income',
+      name: 'future-income',
+      component: () => import('../pages/FutureIncomePage.vue'),
+      meta: { title: 'Future Income', requiresAuth: true },
+    },
+    {
       path: '/profile',
       name: 'profile',
       component: () => import('../pages/ProfilePage.vue'),
