@@ -4,10 +4,7 @@
    ═══════════════════════════════════════════════════════════════ */
 
 @layer primevue-overrides {
-  :root {
-    color-scheme: light;
-  }
-
+  :root,
   .dark-mode {
     color-scheme: dark;
   }

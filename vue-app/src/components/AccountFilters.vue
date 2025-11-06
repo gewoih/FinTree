@@ -18,7 +18,7 @@ const emit = defineEmits<{
 }>()
 
 // Account type filter options
-const accountTypeOptions = computed(() => [
+const accountTypeOptions = computed<Array<{ label: string; value: AccountType | null; icon?: string }>>(() => [
   { label: 'Все типы', value: null },
   { label: getAccountTypeInfo(0).label, value: 0, icon: getAccountTypeInfo(0).icon },
   { label: getAccountTypeInfo(1).label, value: 1, icon: getAccountTypeInfo(1).icon },
@@ -36,18 +36,17 @@ const hasActiveFilters = computed(() => {
       <!-- Search -->
       <FormField class="filter-field filter-field--wide" label="Поиск">
         <template #default="{ fieldAttrs }">
-          <InputText
-            v-bind="fieldAttrs"
-            :model-value="props.searchText"
-            @update:model-value="val => emit('update:searchText', val)"
-            placeholder="Название счёта..."
-            class="w-full"
-            autocomplete="off"
-          >
-            <template #prefix>
-              <i class="pi pi-search" />
-            </template>
-          </InputText>
+          <div class="filter-input">
+            <i class="pi pi-search" aria-hidden="true" />
+            <InputText
+              :id="fieldAttrs.id"
+              :model-value="props.searchText"
+              @update:model-value="val => emit('update:searchText', val ?? '')"
+              placeholder="Название счёта..."
+              class="w-full"
+              autocomplete="off"
+            />
+          </div>
         </template>
       </FormField>
 
@@ -62,9 +61,7 @@ const hasActiveFilters = computed(() => {
             option-value="value"
             placeholder="Все типы"
             class="w-full"
-            :input-id="fieldAttrs.id"
-            :aria-describedby="fieldAttrs['aria-describedby']"
-            :aria-invalid="fieldAttrs['aria-invalid']"
+            :inputId="fieldAttrs.id"
           >
             <template #value="slotProps">
               <div v-if="slotProps.value !== null && slotProps.value !== undefined" class="filter-option">
@@ -149,6 +146,28 @@ const hasActiveFilters = computed(() => {
   display: flex;
   flex-direction: column;
   gap: var(--ft-space-2);
+}
+
+.filter-input {
+  display: flex;
+  align-items: center;
+  gap: var(--ft-space-2);
+  padding: var(--ft-space-2) var(--ft-space-3);
+  border-radius: var(--ft-radius-lg);
+  border: 1px solid var(--ft-border-soft);
+  background: var(--ft-surface-base);
+}
+
+.filter-input i {
+  color: var(--ft-text-tertiary);
+}
+
+.filter-input :deep(.p-inputtext) {
+  flex: 1;
+  border: none;
+  background: transparent;
+  padding: 0;
+  box-shadow: none;
 }
 
 .filter-option {

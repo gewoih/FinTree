@@ -10,7 +10,7 @@ const props = withDefaults(
     score: number | null;
     verdict: FinancialHealthVerdict | null;
     period: number;
-    periodOptions: ReadonlyArray<{ label: string; value: number }>;
+    periodOptions: Array<{ label: string; value: number }>;
   }>(),
   {
     period: 6,

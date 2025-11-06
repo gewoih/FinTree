@@ -47,9 +47,9 @@ const accountOptions = computed(() => [
       <FormField class="filter-field filter-field--wide" label="Поиск">
         <template #default="{ fieldAttrs }">
           <InputText
-            v-bind="fieldAttrs"
+            :id="fieldAttrs.id"
             :model-value="props.searchText"
-            @update:model-value="val => emit('update:searchText', val)"
+            @update:model-value="val => emit('update:searchText', val ?? '')"
             placeholder="Категория, счёт или заметка…"
             class="w-full"
             autocomplete="off"
@@ -67,9 +67,7 @@ const accountOptions = computed(() => [
             option-value="value"
             placeholder="Все категории"
             class="w-full"
-            :input-id="fieldAttrs.id"
-            :aria-describedby="fieldAttrs['aria-describedby']"
-            :aria-invalid="fieldAttrs['aria-invalid']"
+            :inputId="fieldAttrs.id"
           />
         </template>
       </FormField>
@@ -84,9 +82,7 @@ const accountOptions = computed(() => [
             option-value="value"
             placeholder="Все счета"
             class="w-full"
-            :input-id="fieldAttrs.id"
-            :aria-describedby="fieldAttrs['aria-describedby']"
-            :aria-invalid="fieldAttrs['aria-invalid']"
+            :inputId="fieldAttrs.id"
           />
         </template>
       </FormField>
@@ -102,9 +98,7 @@ const accountOptions = computed(() => [
             placeholder="Выберите период"
             show-button-bar
             class="w-full"
-            :input-id="fieldAttrs.id"
-            :aria-describedby="fieldAttrs['aria-describedby']"
-            :aria-invalid="fieldAttrs['aria-invalid']"
+            :inputId="fieldAttrs.id"
           />
         </template>
       </FormField>

@@ -13,7 +13,24 @@ onMounted(() => {
 
 <template>
   <div class="categories page">
-    <section class="categories__content">
+    <PageHeader
+      title="Категории"
+      subtitle="Настройте группировки для расходов и доходов, чтобы аналитика была точнее"
+      :breadcrumbs="[
+        { label: 'Главная', to: '/dashboard' },
+        { label: 'Категории' }
+      ]"
+    >
+      <template #actions>
+        <AppButton
+          label="Новая категория"
+          icon="pi pi-plus"
+          @click="managerRef?.openModal()"
+        />
+      </template>
+    </PageHeader>
+
+    <section class="page-section categories__content">
       <CategoryManager ref="managerRef" />
     </section>
   </div>
@@ -21,12 +38,10 @@ onMounted(() => {
 
 <style scoped>
 .categories {
-  gap: var(--ft-space-8);
+  gap: clamp(var(--ft-space-6), 4vw, var(--ft-space-9));
 }
 
 .categories__content {
-  display: flex;
-  flex-direction: column;
-  gap: var(--ft-space-6);
+  gap: clamp(var(--ft-space-4), 3vw, var(--ft-space-6));
 }
 </style>

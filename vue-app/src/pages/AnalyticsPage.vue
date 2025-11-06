@@ -33,34 +33,27 @@ interface MetricDefinition {
 
 const userStore = useUserStore();
 
-const healthPeriodOptions = [
+const healthPeriodOptions: Array<{ label: string; value: number }> = [
   { label: '1 месяц', value: 1 },
   { label: '3 месяца', value: 3 },
   { label: '6 месяцев', value: 6 },
   { label: '12 месяцев', value: 12 },
-] as const;
+];
 const selectedHealthPeriod = ref<number>(6);
 
-const categoryPeriodOptions = [
+const categoryPeriodOptions: Array<{ label: string; value: number }> = [
   { label: '1', value: 1 },
   { label: '3', value: 3 },
   { label: '6', value: 6 },
   { label: '12', value: 12 },
-] as const;
+];
 const selectedCategoryPeriod = ref<number>(3);
 
-const netWorthPeriodOptions = [
-  { label: '6 месяцев', value: 6 },
-  { label: '12 месяцев', value: 12 },
-  { label: '24 месяца', value: 24 },
-] as const;
-const selectedNetWorthPeriod = ref<number>(12);
-
-const granularityOptions = [
+const granularityOptions: Array<{ label: string; value: ExpenseGranularity }> = [
   { label: 'День', value: 'days' },
   { label: 'Неделя', value: 'weeks' },
   { label: 'Месяц', value: 'months' },
-] as const satisfies ReadonlyArray<{ label: string; value: ExpenseGranularity }>;
+] ;
 const selectedGranularity = ref<ExpenseGranularity>('months');
 
 const financialMetrics = ref<FinancialHealthMetricsDto | null>(null);
@@ -267,6 +260,7 @@ function computeFinancialMetricRows(): FinancialHealthMetricRow[] {
       value: definition.format(value, baseCurrency.value),
       status,
       statusLabel: flairMeta.statusLabel,
+      flair: flairMeta.statusLabel,
       emoji: flairMeta.emoji,
       tooltip: presentation.tooltip,
     });
@@ -378,7 +372,7 @@ const categoryLegend = computed<CategoryLegendItem[]>(() => {
     name: item.name,
     amount: Number(item.amount ?? 0),
     percent: total > 0 ? (Number(item.amount ?? 0) / total) * 100 : 0,
-    color: item.color?.trim() || chartPalette.categories[index % chartPalette.categories.length],
+    color: item.color?.trim() ?? chartPalette.categories[index % chartPalette.categories.length],
   }));
 });
 
@@ -450,7 +444,7 @@ function extractRgb(color: string): string {
     return `${rgbMatch[1]},${rgbMatch[2]},${rgbMatch[3]}`;
   }
   const match = computed.match(/^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i);
-  if (!match) return '59,130,246';
+  if (!match || !match[1] || !match[2] || !match[3]) return '59,130,246';
   const r = parseInt(match[1], 16);
   const g = parseInt(match[2], 16);
   const b = parseInt(match[3], 16);
@@ -549,6 +543,9 @@ const forecastModel = computed<{
   }
 
   const previous = monthlySorted[currentIndex - 1];
+  if (!previous) {
+    return { summary: null, chartData: null };
+  }
   const baselineLimit = Number(previous.amount ?? 0);
   if (!baselineLimit) {
     return { summary: null, chartData: null };

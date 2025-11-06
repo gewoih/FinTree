@@ -20,6 +20,9 @@ const store = useFinanceStore();
 
 const name = ref('');
 const accountType = ref<AccountType>(ACCOUNT_TYPE_OPTIONS[0].value);
+const accountTypeSelectOptions = computed(() =>
+  ACCOUNT_TYPE_OPTIONS.map(option => ({ ...option }))
+);
 const selectedCurrencyCode = ref<string | null>(null);
 const attemptedSubmit = ref(false);
 
@@ -148,7 +151,7 @@ const handleSubmit = async () => {
         <template #default="{ fieldAttrs }">
           <Select
             v-model="accountType"
-            :options="ACCOUNT_TYPE_OPTIONS"
+            :options="accountTypeSelectOptions"
             option-label="label"
             option-value="value"
             class="w-full"

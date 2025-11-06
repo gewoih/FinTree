@@ -74,7 +74,7 @@ const handleEditAccount = (account: Account) => {
   toast.add({
     severity: 'info',
     summary: 'В разработке',
-    detail: 'Функция редактирования счетов скоро будет доступна.',
+    detail: `Редактирование счёта «${account.name}» скоро будет доступно.`,
     life: 3000
   })
   // TODO: Implement account editing
@@ -132,14 +132,20 @@ onMounted(async () => {
       </template>
     </PageHeader>
 
-    <section class="accounts__content">
+    <section class="page-section accounts__content">
       <!-- Filters -->
-      <AccountFilters
+      <AppCard
         v-if="allAccounts.length > 0"
-        v-model:search-text="searchText"
-        v-model:selected-type="selectedType"
-        @clear-filters="clearFilters"
-      />
+        class="accounts__filters"
+        variant="muted"
+        padding="lg"
+      >
+        <AccountFilters
+          v-model:search-text="searchText"
+          v-model:selected-type="selectedType"
+          @clear-filters="clearFilters"
+        />
+      </AppCard>
 
       <!-- Loading skeleton -->
       <div
@@ -172,7 +178,7 @@ onMounted(async () => {
       />
 
       <!-- Accounts grid -->
-      <div v-else class="accounts-grid">
+      <div v-else class="accounts-grid card-grid card-grid--balanced">
         <AccountCard
           v-for="account in filteredAccounts"
           :key="account.id"
@@ -185,7 +191,10 @@ onMounted(async () => {
       </div>
 
       <!-- Results count -->
-      <div v-if="filteredAccounts.length > 0 && hasActiveFilters" class="accounts__results">
+      <div
+        v-if="filteredAccounts.length > 0 && hasActiveFilters"
+        class="surface-panel accounts__results"
+      >
         <p class="results-text">
           <i class="pi pi-info-circle" aria-hidden="true" />
           Показано счетов: <strong>{{ filteredAccounts.length }}</strong> из <strong>{{ allAccounts.length }}</strong>
@@ -204,13 +213,11 @@ onMounted(async () => {
 
 <style scoped>
 .accounts {
-  gap: var(--ft-space-8);
+  gap: clamp(var(--ft-space-6), 4vw, var(--ft-space-9));
 }
 
 .accounts__content {
-  display: flex;
-  flex-direction: column;
-  gap: var(--ft-space-6);
+  gap: clamp(var(--ft-space-4), 3vw, var(--ft-space-6));
 }
 
 .accounts__skeleton {
@@ -219,23 +226,15 @@ onMounted(async () => {
   gap: var(--ft-space-4);
 }
 
-.account-skeleton {
-  border-radius: var(--ft-radius-lg);
-}
-
 .accounts-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
-  gap: var(--ft-space-5);
+  gap: clamp(var(--ft-space-4), 3vw, var(--ft-space-5));
 }
 
 .accounts__results {
+  padding: clamp(var(--ft-space-3), 2vw, var(--ft-space-4));
   display: flex;
+  align-items: center;
   justify-content: center;
-  padding: var(--ft-space-4);
-  background: var(--ft-bg-subtle);
-  border-radius: var(--ft-radius-lg);
-  border: 1px solid var(--ft-border-soft);
 }
 
 .results-text {
@@ -244,15 +243,15 @@ onMounted(async () => {
   gap: var(--ft-space-2);
   margin: 0;
   font-size: var(--ft-text-sm);
-  color: var(--ft-text-secondary);
+  color: var(--ft-text-tertiary);
 }
 
 .results-text i {
-  color: var(--ft-info-500);
+  color: var(--ft-info-400);
 }
 
 .results-text strong {
-  color: var(--ft-heading);
+  color: var(--ft-text-primary);
   font-weight: var(--ft-font-semibold);
 }
 
@@ -264,28 +263,9 @@ onMounted(async () => {
   clip: rect(0, 0, 0, 0);
 }
 
-/* Responsive */
 @media (max-width: 640px) {
   .accounts-grid {
     grid-template-columns: 1fr;
-  }
-}
-
-/* Animation for account cards appearing */
-@media (prefers-reduced-motion: no-preference) {
-  .accounts-grid {
-    animation: fadeIn var(--ft-transition-base);
-  }
-}
-
-@keyframes fadeIn {
-  from {
-    opacity: 0;
-    transform: translateY(8px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
   }
 }
 </style>

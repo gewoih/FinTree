@@ -6,7 +6,7 @@
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-  color-scheme: light;
+  color-scheme: dark;
   background-color: var(--ft-bg-base);
   color: var(--ft-text-primary);
 }
@@ -66,6 +66,105 @@ button {
 
 .page--full {
   max-width: none;
+}
+
+.page-section {
+  display: flex;
+  flex-direction: column;
+  gap: clamp(var(--ft-space-4), 2vw, var(--ft-space-6));
+}
+
+.section-header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--ft-space-3);
+}
+
+.section-header__title {
+  margin: 0;
+  font-size: var(--ft-text-xl);
+  font-weight: var(--ft-font-semibold);
+  color: var(--ft-text-primary);
+}
+
+.section-header__subtitle {
+  margin: 0;
+  color: var(--ft-text-secondary);
+  font-size: var(--ft-text-sm);
+}
+
+.section-header__actions {
+  display: flex;
+  gap: var(--ft-space-2);
+}
+
+.card-grid {
+  display: grid;
+  gap: clamp(var(--ft-space-4), 2vw, var(--ft-space-5));
+}
+
+.card-grid--auto {
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+}
+
+.card-grid--balanced {
+  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+}
+
+.card-grid--dense {
+  grid-auto-rows: 1fr;
+}
+
+.table-shell {
+  display: flex;
+  flex-direction: column;
+  gap: var(--ft-space-3);
+  border: 1px solid var(--ft-border-soft);
+  border-radius: var(--ft-radius-xl);
+  background: var(--ft-surface-soft);
+  padding: clamp(var(--ft-space-4), 2vw, var(--ft-space-5));
+}
+
+.table-shell__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--ft-space-3);
+}
+
+.table-shell__title {
+  margin: 0;
+  font-size: var(--ft-text-lg);
+  font-weight: var(--ft-font-semibold);
+  color: var(--ft-text-primary);
+}
+
+.table-shell__meta {
+  margin: 0;
+  color: var(--ft-text-tertiary);
+  font-size: var(--ft-text-sm);
+}
+
+.table-shell__actions {
+  display: flex;
+  gap: var(--ft-space-2);
+}
+
+.table-shell__body {
+  border-radius: var(--ft-radius-lg);
+  overflow: hidden;
+}
+
+.surface-panel {
+  border-radius: var(--ft-radius-xl);
+  border: 1px solid var(--ft-border-soft);
+  background: var(--ft-surface-soft);
+  padding: clamp(var(--ft-space-4), 2vw, var(--ft-space-6));
+  display: flex;
+  flex-direction: column;
+  gap: var(--ft-space-4);
 }
 
 /* Utility classes */

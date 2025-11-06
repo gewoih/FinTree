@@ -1,618 +1,274 @@
-<template>
-  <div class="auth-page">
-    <!-- Animated Background Elements -->
-    <div class="auth-bg">
-      <div class="gradient-orb orb-1"></div>
-      <div class="gradient-orb orb-2"></div>
-      <div class="gradient-orb orb-3"></div>
-    </div>
-
-    <div class="auth-container">
-      <!-- Brand Header -->
-      <div class="auth-brand">
-        <div class="brand-icon">
-          <i class="pi pi-tree"></i>
-        </div>
-        <h1 class="brand-name">FinTree</h1>
-        <p class="brand-tagline">Контроль личных финансов</p>
-      </div>
-
-      <!-- Register Card -->
-      <div class="auth-card">
-        <div class="auth-card-header">
-          <h2 class="auth-title">Создать аккаунт</h2>
-          <p class="auth-subtitle">Начните управлять своими финансами сегодня</p>
-        </div>
-
-        <form @submit.prevent="handleRegister" class="auth-form">
-          <div class="form-group">
-            <label for="email" class="form-label">
-              <i class="pi pi-envelope"></i>
-              Email
-            </label>
-            <input
-              id="email"
-              v-model="email"
-              type="email"
-              class="form-input"
-              placeholder="ваш@email.com"
-              required
-              autocomplete="email"
-            />
-          </div>
-
-          <div class="form-group">
-            <label for="password" class="form-label">
-              <i class="pi pi-lock"></i>
-              Пароль
-            </label>
-            <input
-              id="password"
-              v-model="password"
-              type="password"
-              class="form-input"
-              placeholder="Минимум 8 символов"
-              required
-              autocomplete="new-password"
-              minlength="8"
-            />
-            <div class="password-hint">
-              <i class="pi pi-info-circle"></i>
-              <span>Минимум 8 символов с 4 уникальными символами</span>
-            </div>
-          </div>
-
-          <div class="form-group">
-            <label for="passwordConfirmation" class="form-label">
-              <i class="pi pi-check-circle"></i>
-              Подтвердите пароль
-            </label>
-            <input
-              id="passwordConfirmation"
-              v-model="passwordConfirmation"
-              type="password"
-              class="form-input"
-              :class="{ 'input-error': validationError }"
-              placeholder="Введите пароль повторно"
-              required
-              autocomplete="new-password"
-              minlength="8"
-            />
-          </div>
-
-          <div v-if="validationError" class="error-alert">
-            <i class="pi pi-exclamation-circle"></i>
-            <span>{{ validationError }}</span>
-          </div>
-
-          <div v-if="authStore.error" class="error-alert">
-            <i class="pi pi-exclamation-circle"></i>
-            <span>{{ authStore.error }}</span>
-          </div>
-
-          <button
-            type="submit"
-            class="btn-primary btn-gradient"
-            :disabled="authStore.isLoading || !!validationError"
-          >
-            <span v-if="!authStore.isLoading">
-              <i class="pi pi-user-plus"></i>
-              Зарегистрироваться
-            </span>
-            <span v-else class="loading-spinner">
-              <i class="pi pi-spin pi-spinner"></i>
-              Создание аккаунта...
-            </span>
-          </button>
-        </form>
-
-        <div class="auth-divider">
-          <span>или</span>
-        </div>
-
-        <div class="auth-footer">
-          <p class="footer-text">
-            Уже есть аккаунт?
-            <router-link to="/login" class="auth-link">
-              Войти
-              <i class="pi pi-arrow-right"></i>
-            </router-link>
-          </p>
-        </div>
-      </div>
-
-      <!-- Benefits List -->
-      <div class="auth-benefits">
-        <div class="benefit-item">
-          <i class="pi pi-check"></i>
-          <span>Бесплатно навсегда</span>
-        </div>
-        <div class="benefit-item">
-          <i class="pi pi-check"></i>
-          <span>Неограниченное количество счетов</span>
-        </div>
-        <div class="benefit-item">
-          <i class="pi pi-check"></i>
-          <span>Поддержка мультивалют</span>
-        </div>
-      </div>
-    </div>
-  </div>
-</template>
-
 <script setup lang="ts">
-import { ref, computed, onMounted } from 'vue';
-import { useRouter } from 'vue-router';
-import { useAuthStore } from '../stores/auth';
+import { computed, onMounted, ref } from 'vue'
+import { useRouter } from 'vue-router'
+import { useAuthStore } from '../stores/auth'
 
-const router = useRouter();
-const authStore = useAuthStore();
+const router = useRouter()
+const authStore = useAuthStore()
 
-const email = ref('');
-const password = ref('');
-const passwordConfirmation = ref('');
+const email = ref('')
+const password = ref('')
+const passwordConfirmation = ref('')
 
 const validationError = computed(() => {
-  if (password.value && passwordConfirmation.value && password.value !== passwordConfirmation.value) {
-    return 'Пароли не совпадают';
-  }
-  return null;
-});
+  if (!password.value || !passwordConfirmation.value) return null
+  return password.value !== passwordConfirmation.value ? 'Пароли не совпадают' : null
+})
+
+const isDisabled = computed(() => {
+  return authStore.isLoading || Boolean(validationError.value) || !email.value || !password.value
+})
 
 onMounted(() => {
-  authStore.clearError();
-
-  // Redirect if already authenticated
+  authStore.clearError()
   if (authStore.isAuthenticated) {
-    router.push('/');
+    void router.push('/dashboard')
   }
-});
+})
 
-async function handleRegister() {
-  if (validationError.value) {
-    return;
-  }
-
+const handleRegister = async () => {
+  if (isDisabled.value) return
   const success = await authStore.register({
     email: email.value,
     password: password.value,
-    passwordConfirmation: passwordConfirmation.value,
-  });
+    passwordConfirmation: passwordConfirmation.value
+  })
 
   if (success) {
-    router.push('/');
+    router.push('/dashboard')
   }
 }
 </script>
 
+<template>
+  <div class="auth auth--register">
+    <div class="auth__gradient" aria-hidden="true"></div>
+
+    <div class="auth__container">
+      <div class="auth__intro">
+        <router-link to="/" class="auth__brand">
+          <i class="pi pi-chart-bar" />
+          <span>FinTree</span>
+        </router-link>
+        <h1>Создайте аккаунт FinTree</h1>
+        <p>Получите доступ к аналитике, автоматизации и персональным трекерам с первого дня.</p>
+        <ul class="auth__benefits">
+          <li><i class="pi pi-check" />Базовый тариф бесплатен навсегда</li>
+          <li><i class="pi pi-check" />Система работает с мультивалютой</li>
+          <li><i class="pi pi-check" />Export CSV/PDF по одному клику</li>
+        </ul>
+      </div>
+
+      <AppCard class="auth__card" variant="muted" padding="lg" elevated>
+        <form class="auth__form" @submit.prevent="handleRegister">
+          <div class="auth__field">
+            <label for="email">Email</label>
+            <InputText
+              id="email"
+              v-model="email"
+              type="email"
+              placeholder="name@domain.com"
+              autocomplete="email"
+            />
+          </div>
+
+          <div class="auth__field">
+            <label for="password">Пароль</label>
+            <InputText
+              id="password"
+              v-model="password"
+              type="password"
+              placeholder="Минимум 8 символов"
+              autocomplete="new-password"
+            />
+            <small>Используйте минимум 8 символов и смешайте регистры для лучшей защиты.</small>
+          </div>
+
+          <div class="auth__field">
+            <label for="passwordConfirmation">Подтвердите пароль</label>
+            <InputText
+              id="passwordConfirmation"
+              v-model="passwordConfirmation"
+              type="password"
+              placeholder="Введите пароль повторно"
+              autocomplete="new-password"
+            />
+          </div>
+
+          <p v-if="validationError" class="auth__error">
+            <i class="pi pi-exclamation-circle" />
+            <span>{{ validationError }}</span>
+          </p>
+
+          <p v-if="authStore.error" class="auth__error">
+            <i class="pi pi-exclamation-circle" />
+            <span>{{ authStore.error }}</span>
+          </p>
+
+          <AppButton
+            type="submit"
+            label="Зарегистрироваться"
+            icon="pi pi-user-plus"
+            :loading="authStore.isLoading"
+            :disabled="isDisabled"
+            block
+          />
+        </form>
+
+        <footer class="auth__footer">
+          <span>Уже есть аккаунт?</span>
+          <router-link to="/login">Войти</router-link>
+        </footer>
+      </AppCard>
+    </div>
+  </div>
+</template>
+
 <style scoped>
-/* Import all styles from LoginPage */
-.auth-page {
+.auth {
   min-height: 100vh;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 2rem 1rem;
+  display: grid;
+  place-items: center;
+  padding: clamp(var(--ft-space-6), 6vw, var(--ft-space-12)) clamp(var(--ft-space-4), 6vw, var(--ft-space-10));
+  background: radial-gradient(120% 120% at -10% 10%, rgba(59, 130, 246, 0.22), rgba(15, 20, 25, 0.92)),
+    linear-gradient(160deg, rgba(15, 20, 25, 1) 0%, rgba(17, 24, 39, 1) 100%);
+  color: var(--ft-text-primary);
   position: relative;
   overflow: hidden;
 }
 
-.auth-bg {
+.auth__gradient {
   position: absolute;
   inset: 0;
-  overflow: hidden;
-  z-index: 0;
-}
-
-.gradient-orb {
-  position: absolute;
-  border-radius: 50%;
-  filter: blur(80px);
+  background: radial-gradient(60% 60% at 100% 100%, rgba(59, 130, 246, 0.18), transparent),
+    radial-gradient(40% 40% at 20% 80%, rgba(236, 72, 153, 0.18), transparent);
   opacity: 0.6;
-  animation: float 20s infinite ease-in-out;
+  pointer-events: none;
 }
 
-.orb-1 {
-  width: 500px;
-  height: 500px;
-  background: radial-gradient(circle, var(--ft-primary), transparent);
-  top: -10%;
-  left: -10%;
-  animation-delay: 0s;
-}
-
-.orb-2 {
-  width: 400px;
-  height: 400px;
-  background: radial-gradient(circle, var(--ft-secondary), transparent);
-  bottom: -10%;
-  right: -10%;
-  animation-delay: 7s;
-}
-
-.orb-3 {
-  width: 350px;
-  height: 350px;
-  background: radial-gradient(circle, var(--ft-accent), transparent);
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-  animation-delay: 14s;
-}
-
-@keyframes float {
-  0%, 100% { transform: translate(0, 0) scale(1); }
-  33% { transform: translate(30px, -30px) scale(1.1); }
-  66% { transform: translate(-20px, 20px) scale(0.9); }
-}
-
-.auth-container {
+.auth__container {
   position: relative;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+  gap: clamp(var(--ft-space-6), 6vw, var(--ft-space-10));
+  align-items: center;
   z-index: 1;
+  max-width: var(--ft-container-xl);
   width: 100%;
-  max-width: 440px;
+}
+
+.auth__intro {
   display: flex;
   flex-direction: column;
-  gap: 2rem;
-  animation: fadeInUp 0.6s ease-out;
+  gap: var(--ft-space-4);
 }
 
-@keyframes fadeInUp {
-  from {
-    opacity: 0;
-    transform: translateY(30px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-.auth-brand {
-  text-align: center;
-  animation: fadeIn 0.8s ease-out 0.2s both;
-}
-
-@keyframes fadeIn {
-  from { opacity: 0; }
-  to { opacity: 1; }
-}
-
-.brand-icon {
-  width: 64px;
-  height: 64px;
-  margin: 0 auto 1rem;
-  background: linear-gradient(135deg, var(--ft-primary), var(--ft-accent));
-  border-radius: var(--ft-radius-xl);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 2rem;
-  color: white;
-  box-shadow: var(--ft-shadow-lg), var(--ft-shadow-glow);
-}
-
-.brand-name {
-  font-size: 2rem;
-  font-weight: 700;
-  margin: 0;
-  background: linear-gradient(135deg, var(--ft-primary-light), var(--ft-accent-light));
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
-}
-
-.brand-tagline {
-  margin: 0.5rem 0 0;
-  color: var(--ft-text-muted);
-  font-size: 0.9rem;
-}
-
-.auth-card {
-  background: var(--ft-glass);
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
-  border: 1px solid var(--ft-glass-border);
-  border-radius: var(--ft-radius-2xl);
-  padding: 2.5rem;
-  box-shadow: var(--ft-shadow-xl);
-  animation: fadeInUp 0.6s ease-out 0.4s both;
-}
-
-.auth-card-header {
-  text-align: center;
-  margin-bottom: 2rem;
-}
-
-.auth-title {
-  font-size: 1.75rem;
-  font-weight: 700;
-  color: var(--ft-text-primary);
-  margin: 0 0 0.5rem;
-}
-
-.auth-subtitle {
-  color: var(--ft-text-muted);
-  margin: 0;
-  font-size: 0.95rem;
-}
-
-.auth-form {
-  display: flex;
-  flex-direction: column;
-  gap: 1.25rem;
-}
-
-.form-group {
-  display: flex;
-  flex-direction: column;
-  gap: 0.625rem;
-}
-
-.form-label {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  font-weight: 600;
-  font-size: 0.875rem;
-  color: var(--ft-text-secondary);
-}
-
-.form-label i {
-  font-size: 0.875rem;
-  color: var(--ft-text-muted);
-}
-
-.form-input {
-  padding: 0.875rem 1.125rem;
-  background: rgba(255, 255, 255, 0.05);
-  border: 1.5px solid var(--ft-border);
-  border-radius: var(--ft-radius-lg);
-  font-size: 1rem;
-  color: var(--ft-text-primary);
-  transition: all var(--ft-transition-base);
-}
-
-.form-input::placeholder {
-  color: var(--ft-text-disabled);
-}
-
-.form-input:hover {
-  border-color: var(--ft-border-hover);
-  background: rgba(255, 255, 255, 0.08);
-}
-
-.form-input:focus {
-  outline: none;
-  border-color: var(--ft-primary);
-  background: rgba(255, 255, 255, 0.08);
-  box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.1);
-}
-
-.form-input.input-error {
-  border-color: var(--ft-danger);
-}
-
-.form-input.input-error:focus {
-  box-shadow: 0 0 0 4px rgba(239, 68, 68, 0.1);
-}
-
-/* Password Hint */
-.password-hint {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  font-size: 0.8125rem;
-  color: var(--ft-text-muted);
-  padding: 0 0.25rem;
-}
-
-.password-hint i {
-  font-size: 0.875rem;
-  color: var(--ft-info);
-}
-
-/* Error Alert */
-.error-alert {
-  display: flex;
-  align-items: center;
-  gap: 0.75rem;
-  padding: 1rem 1.125rem;
-  background: rgba(239, 68, 68, 0.1);
-  border: 1px solid rgba(239, 68, 68, 0.3);
-  border-radius: var(--ft-radius-lg);
-  color: #fca5a5;
-  font-size: 0.875rem;
-  animation: shake 0.4s ease-in-out;
-}
-
-@keyframes shake {
-  0%, 100% { transform: translateX(0); }
-  25% { transform: translateX(-10px); }
-  75% { transform: translateX(10px); }
-}
-
-.error-alert i {
-  font-size: 1.125rem;
-  flex-shrink: 0;
-}
-
-.btn-primary {
-  padding: 1rem 1.5rem;
-  border: none;
-  border-radius: var(--ft-radius-lg);
-  font-weight: 600;
-  font-size: 1rem;
-  cursor: pointer;
-  transition: all var(--ft-transition-base);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 0.625rem;
-}
-
-.btn-gradient {
-  background: linear-gradient(135deg, var(--ft-primary), var(--ft-accent));
-  color: white;
-  box-shadow: var(--ft-shadow-md);
-  position: relative;
-  overflow: hidden;
-}
-
-.btn-gradient::before {
-  content: '';
-  position: absolute;
-  inset: 0;
-  background: linear-gradient(135deg, var(--ft-primary-hover), var(--ft-accent));
-  opacity: 0;
-  transition: opacity var(--ft-transition-base);
-}
-
-.btn-gradient:hover:not(:disabled)::before {
-  opacity: 1;
-}
-
-.btn-gradient:hover:not(:disabled) {
-  transform: translateY(-2px);
-  box-shadow: var(--ft-shadow-lg), var(--ft-shadow-glow);
-}
-
-.btn-gradient:active:not(:disabled) {
-  transform: translateY(0);
-}
-
-.btn-gradient:disabled {
-  opacity: 0.6;
-  cursor: not-allowed;
-}
-
-.btn-gradient span {
-  position: relative;
-  z-index: 1;
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-}
-
-.loading-spinner i {
-  animation: spin 1s linear infinite;
-}
-
-@keyframes spin {
-  from { transform: rotate(0deg); }
-  to { transform: rotate(360deg); }
-}
-
-.auth-divider {
-  position: relative;
-  text-align: center;
-  margin: 1.5rem 0;
-}
-
-.auth-divider::before {
-  content: '';
-  position: absolute;
-  left: 0;
-  right: 0;
-  top: 50%;
-  height: 1px;
-  background: var(--ft-divider);
-}
-
-.auth-divider span {
-  position: relative;
-  padding: 0 1rem;
-  background: var(--ft-glass);
-  color: var(--ft-text-muted);
-  font-size: 0.875rem;
-}
-
-.auth-footer {
-  text-align: center;
-}
-
-.footer-text {
-  margin: 0;
-  color: var(--ft-text-muted);
-  font-size: 0.9375rem;
-}
-
-.auth-link {
-  color: var(--ft-primary-light);
-  text-decoration: none;
-  font-weight: 600;
+.auth__brand {
   display: inline-flex;
   align-items: center;
-  gap: 0.375rem;
-  transition: all var(--ft-transition-base);
-  margin-left: 0.375rem;
+  gap: var(--ft-space-2);
+  font-weight: var(--ft-font-semibold);
+  color: var(--ft-primary-300);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
 }
 
-.auth-link:hover {
-  color: var(--ft-accent-light);
-  gap: 0.625rem;
+.auth__intro h1 {
+  margin: 0;
+  font-size: clamp(2rem, 4vw, 2.75rem);
 }
 
-.auth-link i {
-  font-size: 0.75rem;
+.auth__intro p {
+  margin: 0;
+  color: var(--ft-text-secondary);
+  max-width: 48ch;
+  line-height: 1.6;
 }
 
-/* Benefits List */
-.auth-benefits {
+.auth__benefits {
+  list-style: none;
   display: flex;
   flex-direction: column;
-  gap: 0.875rem;
-  animation: fadeIn 0.8s ease-out 0.6s both;
+  gap: var(--ft-space-2);
+  margin: 0;
+  padding: 0;
+  color: var(--ft-text-secondary);
 }
 
-.benefit-item {
+.auth__benefits li {
   display: flex;
   align-items: center;
-  gap: 0.75rem;
-  padding: 0.875rem 1.25rem;
-  background: rgba(255, 255, 255, 0.03);
-  backdrop-filter: blur(8px);
-  border: 1px solid var(--ft-glass-border);
-  border-radius: var(--ft-radius-lg);
+  gap: var(--ft-space-2);
+}
+
+.auth__benefits i {
+  color: var(--ft-success-400);
+}
+
+.auth__card {
+  width: min(460px, 100%);
+  backdrop-filter: blur(18px);
+}
+
+.auth__form {
+  display: flex;
+  flex-direction: column;
+  gap: var(--ft-space-4);
+}
+
+.auth__field {
+  display: flex;
+  flex-direction: column;
+  gap: var(--ft-space-2);
+}
+
+.auth__field label {
+  font-size: var(--ft-text-xs);
+  text-transform: uppercase;
+  letter-spacing: 0.14em;
+  color: var(--ft-text-tertiary);
+}
+
+.auth__field small {
+  color: var(--ft-text-tertiary);
+  font-size: var(--ft-text-xs);
+}
+
+.auth__error {
+  display: flex;
+  align-items: center;
+  gap: var(--ft-space-2);
+  margin: 0;
+  font-size: var(--ft-text-sm);
+  color: var(--ft-danger-400);
+}
+
+.auth__footer {
+  display: flex;
+  justify-content: center;
+  gap: var(--ft-space-2);
+  font-size: var(--ft-text-sm);
   color: var(--ft-text-secondary);
-  font-size: 0.9rem;
-  font-weight: 500;
-  transition: all var(--ft-transition-base);
+  margin-top: var(--ft-space-4);
 }
 
-.benefit-item:hover {
-  background: rgba(255, 255, 255, 0.05);
-  border-color: var(--ft-border-hover);
-  transform: translateX(4px);
+.auth__footer a {
+  color: var(--ft-text-primary);
+  font-weight: var(--ft-font-medium);
+  text-decoration: none;
 }
 
-.benefit-item i {
-  color: var(--ft-success-light);
-  font-size: 1rem;
-  flex-shrink: 0;
+.auth__footer a:hover {
+  text-decoration: underline;
 }
 
-/* Responsive */
-@media (max-width: 640px) {
-  .auth-card {
-    padding: 2rem 1.5rem;
+@media (max-width: 768px) {
+  .auth {
+    padding-block: clamp(var(--ft-space-6), 8vw, var(--ft-space-8));
   }
 
-  .brand-name {
-    font-size: 1.75rem;
-  }
-
-  .auth-title {
-    font-size: 1.5rem;
-  }
-
-  .auth-benefits {
-    gap: 0.625rem;
-  }
-
-  .benefit-item {
-    padding: 0.75rem 1rem;
-    font-size: 0.875rem;
+  .auth__container {
+    grid-template-columns: 1fr;
   }
 }
 </style>

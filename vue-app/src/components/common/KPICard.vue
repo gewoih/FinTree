@@ -35,53 +35,42 @@ const trendClass = computed(() => {
 </script>
 
 <template>
-  <Card class="kpi-card" :class="`kpi-card--${variant}`">
-    <template #content>
-      <div v-if="loading" class="kpi-card__loading">
-        <Skeleton width="100%" height="1.5rem" class="mb-3" />
-        <Skeleton width="60%" height="2.5rem" class="mb-2" />
-        <Skeleton width="40%" height="1rem" />
-      </div>
-
-      <div v-else class="kpi-card__content">
-        <div class="kpi-card__header">
-          <span class="kpi-card__title">{{ title }}</span>
-          <i v-if="icon" :class="['pi', icon, 'kpi-card__icon']" />
-        </div>
-
-        <div class="kpi-card__value">{{ value }}</div>
-
-        <div v-if="trend !== null && trend !== undefined" class="kpi-card__footer">
-          <div class="kpi-card__trend" :class="trendClass">
-            <i :class="['pi', trendIcon]" />
-            <span>{{ Math.abs(trend) }}%</span>
-          </div>
-          <span v-if="trendLabel" class="kpi-card__trend-label">
-            {{ trendLabel }}
-          </span>
-        </div>
+  <AppCard class="kpi-card" variant="muted" padding="lg" :class="`kpi-card--${variant}`">
+    <template #header>
+      <div class="kpi-card__header">
+        <span class="kpi-card__title">{{ title }}</span>
+        <i v-if="icon" :class="['pi', icon, 'kpi-card__icon']" />
       </div>
     </template>
-  </Card>
+
+    <div v-if="loading" class="kpi-card__loading">
+      <Skeleton width="80%" height="1.5rem" />
+      <Skeleton width="60%" height="2.25rem" />
+      <Skeleton width="45%" height="1rem" />
+    </div>
+
+    <template v-else>
+      <div class="kpi-card__value">{{ value }}</div>
+
+      <div v-if="trend !== null && trend !== undefined" class="kpi-card__footer">
+        <div class="kpi-card__trend" :class="trendClass">
+          <i :class="['pi', trendIcon]" />
+          <span>{{ Math.abs(trend) }}%</span>
+        </div>
+        <span v-if="trendLabel" class="kpi-card__trend-label">
+          {{ trendLabel }}
+        </span>
+      </div>
+    </template>
+  </AppCard>
 </template>
 
 <style scoped>
 .kpi-card {
   height: 100%;
-  transition: all var(--ft-transition-base);
-  border: 1px solid var(--ft-border-subtle);
-  background: var(--ft-surface-base);
 }
 
-.kpi-card:hover {
-  border-color: var(--ft-border-default);
-  box-shadow: var(--ft-shadow-md);
-  transform: translateY(-2px);
-}
-
-.kpi-card__content {
-  display: flex;
-  flex-direction: column;
+:deep(.app-card__body) {
   gap: var(--ft-space-3);
 }
 
@@ -89,6 +78,7 @@ const trendClass = computed(() => {
   display: flex;
   align-items: center;
   justify-content: space-between;
+  gap: var(--ft-space-3);
 }
 
 .kpi-card__title {
@@ -170,6 +160,8 @@ const trendClass = computed(() => {
 }
 
 .kpi-card__loading {
-  padding: var(--ft-space-2) 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--ft-space-2);
 }
 </style>

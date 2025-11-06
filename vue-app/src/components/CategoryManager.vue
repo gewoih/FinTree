@@ -38,6 +38,8 @@ const userCategories = computed(() =>
   filteredCategories.value.filter((category: Category) => !category.isSystem)
 )
 
+// Следим за перечнем категорий, чтобы автоматически переключать фильтр,
+// если, например, пользователь удалил последний элемент выбранного типа.
 watch(
   () => categories.value,
   (newCategories) => {
@@ -109,20 +111,22 @@ defineExpose({
 </script>
 
 <template>
-  <section class="categories ft-card">
-    <header class="categories__header">
-      <div>
-        <h3>Категории</h3>
-        <p>Организуйте транзакции в группы для быстрой аналитики.</p>
+  <AppCard class="categories-manager" variant="muted" padding="lg">
+    <template #header>
+      <div class="categories-manager__header">
+        <div>
+          <h3>Категории</h3>
+          <p>Организуйте транзакции в понятные группы, чтобы аналитика была точнее.</p>
+        </div>
+        <AppButton
+          label="Создать категорию"
+          icon="pi pi-plus"
+          @click="openModal()"
+        />
       </div>
-      <Button
-        label="Создать категорию"
-        icon="pi pi-plus"
-        @click="openModal()"
-      />
-    </header>
+    </template>
 
-    <div class="categories__filter">
+    <div class="categories-manager__controls">
       <SelectButton
         v-model="selectedCategoryType"
         :options="categoryTypeOptions"
@@ -207,37 +211,37 @@ defineExpose({
       :category="editingCategory"
       :default-type="selectedCategoryType"
     />
-  </section>
+</AppCard>
 </template>
 
 <style scoped>
-.categories {
-  gap: var(--ft-space-5);
+.categories-manager {
+  gap: clamp(var(--ft-space-4), 3vw, var(--ft-space-6));
 }
 
-.categories__header {
+.categories-manager__header {
   display: flex;
   justify-content: space-between;
   align-items: flex-start;
   gap: var(--ft-space-4);
 }
 
-.categories__header h3 {
+.categories-manager__header h3 {
   margin: 0;
   font-size: var(--ft-text-xl);
-  color: var(--ft-heading);
+  font-weight: var(--ft-font-semibold);
+  color: var(--ft-text-primary);
 }
 
-.categories__header p {
+.categories-manager__header p {
   margin: var(--ft-space-1) 0 0;
-  color: var(--ft-text-muted);
+  color: var(--ft-text-tertiary);
   font-size: var(--ft-text-sm);
 }
 
-.categories__filter {
+.categories-manager__controls {
   display: flex;
   justify-content: center;
-  padding: var(--ft-space-2) 0;
 }
 
 .categories__skeleton {
@@ -248,7 +252,7 @@ defineExpose({
 .categories__sections {
   display: flex;
   flex-direction: column;
-  gap: var(--ft-space-6);
+  gap: clamp(var(--ft-space-4), 2vw, var(--ft-space-5));
 }
 
 .category-section {
@@ -261,14 +265,14 @@ defineExpose({
   margin: 0;
   font-size: var(--ft-text-base);
   font-weight: var(--ft-font-semibold);
-  color: var(--ft-heading);
+  color: var(--ft-text-primary);
   display: flex;
   align-items: center;
   gap: var(--ft-space-2);
 }
 
 .category-section h4 i {
-  color: var(--ft-primary-500);
+  color: var(--ft-primary-400);
 }
 
 .category-list {
@@ -285,9 +289,9 @@ defineExpose({
   align-items: center;
   justify-content: space-between;
   padding: var(--ft-space-3);
-  border: 1px solid var(--ft-border-soft);
   border-radius: var(--ft-radius-lg);
-  background: var(--ft-surface-soft);
+  border: 1px solid var(--ft-border-soft);
+  background: var(--ft-surface-base);
   transition: transform var(--ft-transition-fast), box-shadow var(--ft-transition-fast), border-color var(--ft-transition-fast);
 }
 
@@ -299,6 +303,8 @@ defineExpose({
 
 .category-item--system {
   cursor: not-allowed;
+  border-style: dashed;
+  opacity: 0.8;
 }
 
 .category-info {
@@ -311,12 +317,13 @@ defineExpose({
   width: 14px;
   height: 14px;
   border-radius: 50%;
-  border: 2px solid rgba(0, 0, 0, 0.08);
+  border: 2px solid rgba(15, 20, 25, 0.16);
+  box-shadow: 0 0 0 2px rgba(15, 20, 25, 0.4);
 }
 
 .category-name {
   font-weight: var(--ft-font-medium);
-  color: var(--ft-heading);
+  color: var(--ft-text-primary);
   display: inline-flex;
   align-items: center;
   gap: var(--ft-space-2);
@@ -328,16 +335,16 @@ defineExpose({
   gap: var(--ft-space-1);
 }
 
-@media (max-width: 600px) {
+@media (max-width: 640px) {
+  .categories-manager__header {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
   .category-item {
     flex-direction: column;
     align-items: flex-start;
     gap: var(--ft-space-3);
-  }
-
-  .category-actions {
-    width: 100%;
-    justify-content: flex-start;
   }
 }
 </style>

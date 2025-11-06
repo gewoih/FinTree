@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, ref, onMounted, watchEffect } from 'vue';
+import { computed, ref, onMounted } from 'vue';
 
 const props = defineProps<{
   loading: boolean;

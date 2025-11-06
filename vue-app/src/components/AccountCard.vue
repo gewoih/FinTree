@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { ref, computed } from 'vue'
-import type { Account } from '../types'
+import type { Account, AccountType } from '../types'
 import { getAccountTypeInfo, getCurrencyFlag } from '../utils/accountHelpers'
 import Menu from 'primevue/menu'
 import type { MenuItem } from 'primevue/menuitem'
@@ -19,7 +19,7 @@ const emit = defineEmits<{
 const menuRef = ref()
 const isMenuOpen = ref(false)
 
-const accountTypeInfo = computed(() => getAccountTypeInfo(props.account.type))
+const accountTypeInfo = computed(() => getAccountTypeInfo(props.account.type as AccountType))
 const currencyFlag = computed(() => getCurrencyFlag(props.account.currencyCode))
 const currencyDisplay = computed(() => {
   const flag = currencyFlag.value

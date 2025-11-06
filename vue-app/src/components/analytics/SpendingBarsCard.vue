@@ -6,7 +6,7 @@ const props = defineProps<{
   loading: boolean;
   error: string | null;
   granularity: ExpenseGranularity;
-  granularityOptions: ReadonlyArray<{ label: string; value: ExpenseGranularity }>;
+  granularityOptions: Array<{ label: string; value: ExpenseGranularity }>;
   chartData: any | null;
   empty: boolean;
   currency: string;

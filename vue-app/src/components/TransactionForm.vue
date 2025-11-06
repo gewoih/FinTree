@@ -38,7 +38,6 @@ const description = ref<string>('');
 const date = ref<Date>(new Date());
 const isMandatory = ref<boolean>(false);
 const selectedCategory = ref<Category | null>(null);
-const saveAndAddAnother = ref<boolean>(false); // Flag for continuous adding
 
 const transactionTypeOptions = [
   { label: 'Расход', value: TRANSACTION_TYPE.Expense },
@@ -58,12 +57,16 @@ const isIncome = computed(() => transactionType.value === TRANSACTION_TYPE.Incom
 
 const ensureTransactionType = () => {
   if (isEditMode.value) return;
-  if (!transactionType.value) return;
 
-  const hasCurrentType = store.categories.some(category => category.type === transactionType.value);
-  if (!hasCurrentType) {
-    transactionType.value = null;
+  const current = transactionType.value ?? TRANSACTION_TYPE.Expense;
+  const hasCurrentType = store.categories.some(category => category.type === current);
+  if (hasCurrentType) {
+    transactionType.value = current;
+    return;
   }
+
+  const fallback = store.categories[0]?.type ?? TRANSACTION_TYPE.Expense;
+  transactionType.value = fallback;
 };
 
 const ensureCategorySelection = () => {
@@ -183,7 +186,7 @@ const { isSubmitting, handleSubmit: handleFormSubmit, showWarning } = useFormMod
   }
 );
 
-const handleSubmit = async (addAnother: boolean = false) => {
+const submitTransaction = async (addAnother = false) => {
   if (!transactionType.value || !isAmountValid.value || !selectedAccount.value || !selectedCategory.value) {
     showWarning('Выберите тип, счет, категорию и сумму перед сохранением.');
     return;
@@ -215,6 +218,11 @@ const handleSubmit = async (addAnother: boolean = false) => {
       emit('update:visible', false);
     }
   }
+};
+
+const handleFormSubmitEvent = async (event?: SubmitEvent) => {
+  event?.preventDefault();
+  await submitTransaction(false);
 };
 
 onMounted(() => {
@@ -255,7 +263,7 @@ watch(filteredCategories, () => {
       </h2>
     </template>
 
-    <form class="transaction-form" @submit.prevent="handleSubmit">
+    <form class="transaction-form" @submit.prevent="handleFormSubmitEvent">
       <section class="form-fields">
         <!-- Type selector - only in create mode -->
         <div class="field field--type" v-if="!isEditMode">
@@ -390,7 +398,7 @@ watch(filteredCategories, () => {
               severity="secondary"
               :disabled="submitDisabled"
               :loading="isSubmitting"
-              @click="handleSubmit(true)"
+              @click="submitTransaction(true)"
           />
           <Button
               type="submit"

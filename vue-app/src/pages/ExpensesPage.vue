@@ -48,7 +48,7 @@ onMounted(async () => {
       </template>
     </PageHeader>
 
-    <section class="transactions__content">
+    <section class="page-section transactions__content">
       <TransactionList
         @add-transaction="openTransactionDialog"
         @edit-transaction="handleEditTransaction"
@@ -64,12 +64,10 @@ onMounted(async () => {
 
 <style scoped>
 .transactions {
-  gap: var(--ft-space-8);
+  gap: clamp(var(--ft-space-6), 4vw, var(--ft-space-9));
 }
 
 .transactions__content {
-  display: flex;
-  flex-direction: column;
-  gap: var(--ft-space-6);
+  gap: clamp(var(--ft-space-4), 3vw, var(--ft-space-6));
 }
 </style>

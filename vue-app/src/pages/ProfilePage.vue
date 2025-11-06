@@ -1,10 +1,6 @@
 <script setup lang="ts">
 import { computed, onMounted, reactive, watch } from 'vue';
 import { storeToRefs } from 'pinia';
-import Card from 'primevue/card';
-import InputText from 'primevue/inputtext';
-import Select from 'primevue/select';
-import Button from 'primevue/button';
 import { useToast } from 'primevue/usetoast';
 import { useFinanceStore } from '../stores/finance';
 import { useUserStore } from '../stores/user';
@@ -41,6 +37,7 @@ const selectedCurrencySummary = computed(() => {
 });
 
 function normalizeTelegram(value: string | null | undefined): string {
+  // Приводим никнейм к единому виду, чтобы не отправлять на бэк разные форматы.
   if (!value) return '';
   const trimmed = value.trim();
   if (!trimmed.length) return '';
@@ -136,107 +133,104 @@ function handleClearTelegram() {
       ]"
     />
 
-    <Card class="ft-card profile-card">
-      <template #title>
+    <AppCard class="profile-card" variant="muted" padding="lg">
+      <template #header>
         <div class="card-header">
           <div>
             <h3 class="card-title">Детали аккаунта</h3>
-            <p class="card-subtitle">Управляйте настройками профиля не покидая страницы.</p>
+            <p class="card-subtitle">Управляйте настройками профиля, не покидая страницу.</p>
           </div>
         </div>
       </template>
 
-      <template #content>
-        <form class="profile-form" @submit.prevent="handleSubmit">
-          <div class="profile-grid">
-            <div class="profile-row">
-              <label>Имя</label>
-              <p>{{ currentUser?.name ?? '—' }}</p>
-            </div>
-
-            <div class="profile-row">
-              <label>Email</label>
-              <p>{{ currentUser?.email ?? '—' }}</p>
-            </div>
-
-            <div class="profile-row">
-              <label>ID пользователя</label>
-              <p class="muted">{{ currentUser?.id ?? '—' }}</p>
-            </div>
+      <form class="profile-form" @submit.prevent="handleSubmit">
+        <div class="profile-grid">
+          <div class="profile-row">
+            <span class="profile-label">Имя</span>
+            <p>{{ currentUser?.name ?? '—' }}</p>
           </div>
 
-          <div class="profile-divider" aria-hidden="true"></div>
+          <div class="profile-row">
+            <span class="profile-label">Email</span>
+            <p>{{ currentUser?.email ?? '—' }}</p>
+          </div>
 
-          <div class="profile-grid editable">
-            <div class="profile-row">
-              <label for="profileCurrency">Базовая валюта</label>
-              <Select
-                id="profileCurrency"
-                v-model="form.baseCurrencyCode"
-                :options="currencyOptions"
-                option-label="label"
-                option-value="value"
-                placeholder="Выберите валюту"
+          <div class="profile-row">
+            <span class="profile-label">ID пользователя</span>
+            <p class="muted">{{ currentUser?.id ?? '—' }}</p>
+          </div>
+        </div>
+
+        <div class="profile-divider" aria-hidden="true"></div>
+
+        <div class="profile-grid editable">
+          <div class="profile-row">
+            <label class="profile-label" for="profileCurrency">Базовая валюта</label>
+            <Select
+              id="profileCurrency"
+              v-model="form.baseCurrencyCode"
+              :options="currencyOptions"
+              option-label="label"
+              option-value="value"
+              placeholder="Выберите валюту"
+              class="w-full"
+              :disabled="isLoading"
+            />
+            <small v-if="isLoading" class="helper-text">
+              Загрузка доступных валют…
+            </small>
+            <small v-else-if="selectedCurrencySummary" class="helper-text">
+              {{ selectedCurrencySummary }}
+            </small>
+            <small v-else class="helper-text">
+              Эта валюта используется для аналитики и отчетов.
+            </small>
+          </div>
+
+          <div class="profile-row">
+            <label class="profile-label" for="profileTelegram">Telegram</label>
+            <div class="telegram-input">
+              <InputText
+                id="profileTelegram"
+                v-model="form.telegramHandle"
+                placeholder="@username"
+                autocomplete="off"
+                :disabled="isSaving"
                 class="w-full"
-                :disabled="isLoading"
               />
-              <small v-if="isLoading" class="helper-text ft-text ft-text--muted">
-                Загрузка доступных валют…
-              </small>
-              <small v-else-if="selectedCurrencySummary" class="helper-text ft-text ft-text--muted">
-                {{ selectedCurrencySummary }}
-              </small>
-              <small v-else class="helper-text ft-text ft-text--muted">
-                Эта валюта используется для аналитики и отчетов.
-              </small>
+              <AppButton
+                type="button"
+                label="Очистить"
+                variant="ghost"
+                size="sm"
+                :disabled="!form.telegramHandle || isSaving"
+                @click="handleClearTelegram"
+              />
             </div>
-
-            <div class="profile-row">
-              <label for="profileTelegram">Telegram</label>
-              <div class="telegram-input">
-                <InputText
-                  id="profileTelegram"
-                  v-model="form.telegramHandle"
-                  placeholder="@username"
-                  autocomplete="off"
-                  :disabled="isSaving"
-                  class="w-full"
-                />
-                <Button
-                  type="button"
-                  label="Очистить"
-                  text
-                  severity="secondary"
-                  :disabled="!form.telegramHandle || isSaving"
-                  @click="handleClearTelegram"
-                />
-              </div>
-              <small class="helper-text ft-text ft-text--muted">
-                Введите никнейм без пробелов. Оставьте пустым, чтобы отвязать Telegram.
-              </small>
-            </div>
+            <small class="helper-text">
+              Введите никнейм без пробелов. Оставьте пустым, чтобы отвязать Telegram.
+            </small>
           </div>
+        </div>
 
-          <div class="actions">
-            <Button
-              type="button"
-              label="Сбросить изменения"
-              outlined
-              severity="secondary"
-              :disabled="!hasChanges || isSaving"
-              @click="resetForm"
-            />
-            <Button
-              type="submit"
-              label="Обновить профиль"
-              icon="pi pi-check"
-              :loading="isSaving"
-              :disabled="!canSubmit"
-            />
-          </div>
-        </form>
-      </template>
-    </Card>
+        <div class="actions">
+          <AppButton
+            type="button"
+            label="Сбросить изменения"
+            variant="ghost"
+            :disabled="!hasChanges || isSaving"
+            @click="resetForm"
+          />
+          <AppButton
+            type="submit"
+            label="Обновить профиль"
+            icon="pi pi-check"
+            :loading="isSaving"
+            :disabled="!canSubmit"
+          />
+        </div>
+      </form>
+    </AppCard>
   </div>
 </template>
 
@@ -246,7 +240,11 @@ function handleClearTelegram() {
 }
 
 .profile-card {
-  padding-bottom: clamp(1.75rem, 3vw, 2.5rem);
+  gap: clamp(var(--ft-space-4), 3vw, var(--ft-space-6));
+}
+
+:deep(.profile-card .app-card__body) {
+  gap: clamp(var(--ft-space-4), 3vw, var(--ft-space-6));
 }
 
 .card-header {
@@ -258,15 +256,15 @@ function handleClearTelegram() {
 
 .card-title {
   margin: 0;
-  font-size: 1.25rem;
-  font-weight: 600;
-  color: var(--ft-heading);
+  font-size: var(--ft-text-xl);
+  font-weight: var(--ft-font-semibold);
+  color: var(--ft-text-primary);
 }
 
 .card-subtitle {
   margin: 0.25rem 0 0;
-  font-size: 0.875rem;
-  color: var(--ft-text-muted);
+  font-size: var(--ft-text-sm);
+  color: var(--ft-text-tertiary);
 }
 
 .profile-form {
@@ -291,24 +289,24 @@ function handleClearTelegram() {
   gap: 0.6rem;
 }
 
-.profile-row label {
-  font-size: 0.75rem;
+.profile-label {
+  font-size: var(--ft-text-xs);
   text-transform: uppercase;
   letter-spacing: 0.16em;
-  color: var(--ft-text-muted);
+  color: var(--ft-text-tertiary);
 }
 
 .profile-row p {
   margin: 0;
-  font-size: 1rem;
-  color: var(--ft-heading);
+  font-size: var(--ft-text-base);
+  color: var(--ft-text-primary);
   word-break: break-word;
 }
 
 .profile-row .muted {
-  color: var(--ft-text-muted);
+  color: var(--ft-text-tertiary);
   font-family: var(--ft-font-mono, 'Fira Code', monospace);
-  font-size: 0.85rem;
+  font-size: var(--ft-text-sm);
 }
 
 .profile-divider {
@@ -319,7 +317,8 @@ function handleClearTelegram() {
 }
 
 .helper-text {
-  font-size: 0.8rem;
+  font-size: var(--ft-text-xs);
+  color: var(--ft-text-tertiary);
 }
 
 .telegram-input {
@@ -333,6 +332,10 @@ function handleClearTelegram() {
   justify-content: flex-end;
   gap: 0.75rem;
   flex-wrap: wrap;
+}
+
+.actions :deep(.app-button) {
+  min-width: 180px;
 }
 
 @media (max-width: 768px) {

@@ -6,7 +6,7 @@ const props = defineProps<{
   loading: boolean;
   error: string | null;
   period: number;
-  periodOptions: ReadonlyArray<{ label: string; value: number }>;
+  periodOptions: Array<{ label: string; value: number }>;
   chartData: any | null;
   legend: CategoryLegendItem[];
   currency: string;

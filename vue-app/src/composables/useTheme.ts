@@ -1,23 +1,13 @@
-import { ref, onMounted } from 'vue'
+import { onMounted } from 'vue'
 
 export function useTheme() {
-  const darkMode = ref(true) // Always dark mode
+  const applyDarkTheme = () => {
+    if (typeof document === 'undefined') return
+    document.documentElement.classList.add('dark-mode')
+  }
 
   const initTheme = () => {
-    // Force dark mode always
-    darkMode.value = true
-    applyTheme()
-  }
-
-  const toggleTheme = () => {
-    // Keep dark mode always on
-    darkMode.value = true
-    applyTheme()
-  }
-
-  const applyTheme = () => {
-    // Always apply dark mode class
-    document.documentElement.classList.add('dark-mode')
+    applyDarkTheme()
   }
 
   onMounted(() => {
@@ -25,8 +15,6 @@ export function useTheme() {
   })
 
   return {
-    darkMode,
-    toggleTheme,
     initTheme
   }
 }
