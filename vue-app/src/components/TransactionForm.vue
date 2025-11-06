@@ -31,13 +31,14 @@ const emit = defineEmits<{
 const isEditMode = computed(() => !!props.transaction);
 
 // --- Form state ---
-const transactionType = ref<TransactionType | null>(null);
+const transactionType = ref<TransactionType>(TRANSACTION_TYPE.Expense); // Default to Expense
 const selectedAccount = ref<Account | null>(null);
 const amount = ref<number | null>(null);
 const description = ref<string>('');
 const date = ref<Date>(new Date());
 const isMandatory = ref<boolean>(false);
 const selectedCategory = ref<Category | null>(null);
+const saveAndAddAnother = ref<boolean>(false); // Flag for continuous adding
 
 const transactionTypeOptions = [
   { label: 'Расход', value: TRANSACTION_TYPE.Expense },
@@ -49,10 +50,6 @@ const filteredCategories = computed(() =>
   transactionType.value
     ? store.categories.filter(cat => cat.type === transactionType.value)
     : []
-);
-
-const sortedCategories = computed(() =>
-  [...filteredCategories.value].sort((a, b) => a.name.localeCompare(b.name))
 );
 
 const isIncome = computed(() => transactionType.value === TRANSACTION_TYPE.Income);
@@ -77,7 +74,7 @@ const ensureCategorySelection = () => {
     return;
   }
 
-  const categoriesForType = sortedCategories.value;
+  const categoriesForType = filteredCategories.value;
   if (!categoriesForType.length) {
     selectedCategory.value = null;
     return;
@@ -117,7 +114,7 @@ watch(() => props.visible, (newVal) => {
       ensureCategorySelection();
     } else {
       // Create mode: use defaults
-      transactionType.value = null;
+      transactionType.value = TRANSACTION_TYPE.Expense; // Default to Expense
       selectedAccount.value = store.primaryAccount || store.accounts[0] || null;
 
       selectedCategory.value = null;
@@ -186,7 +183,7 @@ const { isSubmitting, handleSubmit: handleFormSubmit, showWarning } = useFormMod
   }
 );
 
-const handleSubmit = async () => {
+const handleSubmit = async (addAnother: boolean = false) => {
   if (!transactionType.value || !isAmountValid.value || !selectedAccount.value || !selectedCategory.value) {
     showWarning('Выберите тип, счет, категорию и сумму перед сохранением.');
     return;
@@ -198,7 +195,25 @@ const handleSubmit = async () => {
     if (!isEditMode.value && selectedCategory.value) {
       localStorage.setItem('lastUsedCategoryId', selectedCategory.value.id);
     }
-    emit('update:visible', false);
+
+    if (addAnother) {
+      // Reset form for next transaction, but keep type, account, category
+      const keepAccount = selectedAccount.value;
+      const keepCategory = selectedCategory.value;
+      const keepType = transactionType.value;
+
+      amount.value = null;
+      description.value = '';
+      date.value = new Date();
+      isMandatory.value = false;
+
+      // Restore preserved values
+      selectedAccount.value = keepAccount;
+      selectedCategory.value = keepCategory;
+      transactionType.value = keepType;
+    } else {
+      emit('update:visible', false);
+    }
   }
 };
 
@@ -236,14 +251,15 @@ watch(filteredCategories, () => {
   >
     <template #header>
       <h2 :id="isEditMode ? 'transaction-dialog-title-edit' : 'transaction-dialog-title-new'" class="dialog-title">
-        {{ isEditMode ? 'Редактировать транзакцию' : 'Новая транзакция' }}
+        {{ isEditMode ? 'Редактирование' : 'Новая транзакция' }}
       </h2>
     </template>
 
     <form class="transaction-form" @submit.prevent="handleSubmit">
       <section class="form-fields">
-        <div class="field" v-if="!isEditMode">
-          <label for="transaction-type">Тип транзакции *</label>
+        <!-- Type selector - only in create mode -->
+        <div class="field field--type" v-if="!isEditMode">
+          <label for="transaction-type" class="sr-only">Тип</label>
           <SelectButton
               id="transaction-type"
               v-model="transactionType"
@@ -253,6 +269,50 @@ watch(filteredCategories, () => {
               :allowEmpty="false"
               class="w-full"
           />
+        </div>
+
+        <!-- Row 1: Amount + Currency -->
+        <div class="field field--amount">
+          <label for="amount">Сумма *</label>
+          <div class="amount-input">
+            <InputNumber
+                id="amount"
+                v-model="amount"
+                mode="decimal"
+                :minFractionDigits="2"
+                :maxFractionDigits="2"
+                :min="VALIDATION_RULES.minAmount"
+                autofocus
+                placeholder="0.00"
+                required
+                :class="{ 'p-invalid': !isAmountValid }"
+            />
+            <span class="currency-chip">{{ currencySymbol || currencyCode }}</span>
+          </div>
+          <small v-if="!isAmountValid && amount !== null" class="error-text">
+            Сумма от {{ VALIDATION_RULES.minAmount }} до {{ VALIDATION_RULES.maxAmount }}
+          </small>
+        </div>
+
+        <!-- Row 2: Category + Account -->
+        <div class="field">
+          <label for="category">Категория *</label>
+          <Select
+              id="category"
+              v-model="selectedCategory"
+              :options="filteredCategories"
+              option-label="name"
+              placeholder="Выберите категорию"
+              required
+              class="w-full"
+          >
+            <template #option="slotProps">
+              <div class="option-name">
+                <span class="category-dot" :style="{ backgroundColor: slotProps.option.color }"></span>
+                <span>{{ slotProps.option.name }}</span>
+              </div>
+            </template>
+          </Select>
         </div>
 
         <div class="field">
@@ -278,54 +338,11 @@ watch(filteredCategories, () => {
               </div>
             </template>
           </Select>
-          <small>{{ isIncome ? 'Средства будут зачислены на выбранный счет.' : 'Средства будут сняты с выбранного счета.' }}</small>
         </div>
 
+        <!-- Row 3: Date + Mandatory checkbox (optional) -->
         <div class="field">
-          <label for="category">Категория *</label>
-          <Select
-              id="category"
-              v-model="selectedCategory"
-              :options="sortedCategories"
-              option-label="name"
-              placeholder="Выберите категорию"
-              required
-              class="w-full"
-          >
-            <template #option="slotProps">
-              <div class="option-name">
-                <span class="category-dot" :style="{ backgroundColor: slotProps.option.color }"></span>
-                <span>{{ slotProps.option.name }}</span>
-              </div>
-            </template>
-          </Select>
-          <small>Первая категория в списке используется по умолчанию.</small>
-        </div>
-
-        <div class="field">
-          <label for="amount">Сумма *</label>
-          <div class="amount-input">
-            <InputNumber
-                id="amount"
-                v-model="amount"
-                mode="decimal"
-                :minFractionDigits="2"
-                :maxFractionDigits="2"
-                :min="VALIDATION_RULES.minAmount"
-                autofocus
-                placeholder="0.00"
-                required
-                :class="{ 'p-invalid': !isAmountValid }"
-            />
-            <span class="currency-chip ft-pill">{{ currencySymbol || currencyCode }}</span>
-          </div>
-          <small v-if="!isAmountValid && amount !== null" class="error-text">
-            Сумма должна быть между {{ VALIDATION_RULES.minAmount }} и {{ VALIDATION_RULES.maxAmount }}
-          </small>
-      </div>
-
-      <div class="field">
-        <label for="date">Дата транзакции</label>
+          <label for="date">Дата</label>
           <DatePicker
               id="date"
               v-model="date"
@@ -334,23 +351,25 @@ watch(filteredCategories, () => {
               required
               class="w-full"
           />
-          <small>По умолчанию сегодня.</small>
-      </div>
+        </div>
 
-      <div class="field" v-if="!isIncome">
-        <label for="isMandatory">Обязательный расход</label>
-        <Checkbox id="isMandatory" v-model="isMandatory" binary />
-      </div>
+        <div class="field field--checkbox" v-if="!isIncome">
+          <label for="isMandatory" class="checkbox-label">
+            <Checkbox id="isMandatory" v-model="isMandatory" binary />
+            <span>Обязательный расход</span>
+          </label>
+        </div>
 
-      <div class="field full">
-        <label for="description">Заметка</label>
-        <InputText
-            id="description"
-            v-model="description"
-            :placeholder="isIncome ? 'Например: зарплата' : 'Например: утренний кофе'"
-            class="w-full"
-        />
-      </div>
+        <!-- Row 4: Description (full width) -->
+        <div class="field field--full">
+          <label for="description">Заметка</label>
+          <InputText
+              id="description"
+              v-model="description"
+              :placeholder="isIncome ? 'Например: зарплата' : 'Например: утренний кофе'"
+              class="w-full"
+          />
+        </div>
       </section>
 
       <footer class="form-actions">
@@ -362,13 +381,25 @@ watch(filteredCategories, () => {
             outlined
             @click="emit('update:visible', false)"
         />
-        <Button
-            type="submit"
-            :label="isEditMode ? 'Обновить транзакцию' : 'Сохранить транзакцию'"
-            icon="pi pi-check"
-            :disabled="submitDisabled"
-            :loading="isSubmitting"
-        />
+        <div class="action-buttons">
+          <Button
+              v-if="!isEditMode"
+              type="button"
+              label="Сохранить и добавить еще"
+              icon="pi pi-plus"
+              severity="secondary"
+              :disabled="submitDisabled"
+              :loading="isSubmitting"
+              @click="handleSubmit(true)"
+          />
+          <Button
+              type="submit"
+              :label="isEditMode ? 'Обновить' : 'Сохранить'"
+              icon="pi pi-check"
+              :disabled="submitDisabled"
+              :loading="isSubmitting"
+          />
+        </div>
       </footer>
     </form>
   </Dialog>
@@ -395,29 +426,66 @@ watch(filteredCategories, () => {
 
 .form-fields {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-  gap: clamp(1rem, 1.4vw, 1.35rem) clamp(1rem, 1.4vw, 1.5rem);
+  grid-template-columns: repeat(2, 1fr);
+  gap: var(--ft-space-5) var(--ft-space-4);
 }
 
 .field {
   display: flex;
   flex-direction: column;
-  gap: 0.5rem;
+  gap: var(--ft-space-2);
 }
 
-.field.full {
+.field--type {
   grid-column: 1 / -1;
+  margin-bottom: var(--ft-space-2);
+}
+
+.field--amount {
+  grid-column: 1 / -1;
+}
+
+.field--full {
+  grid-column: 1 / -1;
+}
+
+.field--checkbox {
+  display: flex;
+  align-items: flex-end;
+  padding-bottom: var(--ft-space-1);
 }
 
 .field label {
   font-weight: 600;
-  font-size: 0.95rem;
+  font-size: 0.9rem;
   color: var(--ft-heading);
 }
 
 .field small {
   color: var(--ft-text-muted);
-  font-size: 0.85rem;
+  font-size: 0.8rem;
+  margin-top: var(--ft-space-1);
+}
+
+.checkbox-label {
+  display: flex;
+  align-items: center;
+  gap: var(--ft-space-2);
+  cursor: pointer;
+  font-weight: 500 !important;
+  font-size: 0.9rem !important;
+}
+
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border-width: 0;
 }
 
 .amount-input {
@@ -469,8 +537,15 @@ watch(filteredCategories, () => {
 
 .form-actions {
   display: flex;
-  justify-content: flex-end;
+  justify-content: space-between;
+  align-items: center;
   gap: 0.9rem;
+}
+
+.action-buttons {
+  display: flex;
+  gap: 0.6rem;
+  align-items: center;
 }
 
 @media (max-width: 640px) {
@@ -479,6 +554,11 @@ watch(filteredCategories, () => {
   }
 
   .form-actions {
+    flex-direction: column;
+  }
+
+  .action-buttons {
+    width: 100%;
     flex-direction: column-reverse;
   }
 

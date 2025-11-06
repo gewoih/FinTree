@@ -59,7 +59,7 @@ export const PAGINATION_OPTIONS = {
 
 export const VALIDATION_RULES = {
   minAmount: 0.01,
-  maxAmount: 999999.99,
+  maxAmount: 9999999.99,
   maxNoteLength: 500
 } as const;
 

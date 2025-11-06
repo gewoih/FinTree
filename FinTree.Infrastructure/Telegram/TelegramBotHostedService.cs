@@ -48,7 +48,8 @@ public class TelegramBotHostedService(
 
     private Task HandleErrorAsync(ITelegramBotClient arg1, Exception arg2, CancellationToken arg3)
     {
-        throw new NotImplementedException();
+        logger.LogError(arg2, "Ошибка Telegram API");
+        return Task.CompletedTask;
     }
 
     private async Task HandleUpdateAsync(ITelegramBotClient bot, Update update, CancellationToken ct)
