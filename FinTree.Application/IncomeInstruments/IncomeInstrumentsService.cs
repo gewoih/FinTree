@@ -16,15 +16,15 @@ public sealed class IncomeInstrumentsService(AppDbContext context, ICurrentUser 
             .Where(i => i.UserId == userId)
             .OrderBy(i => i.CreatedAt)
             .Select(i => new IncomeInstrumentDto(
-                Id: i.Id,
-                Name: i.Name,
-                CurrencyCode: i.CurrencyCode,
-                Type: i.InstrumentType,
-                PrincipalAmount: i.PrincipalAmount,
-                ExpectedAnnualYieldRate: i.ExpectedAnnualYieldRate,
-                MonthlyContribution: i.MonthlyContribution,
-                Notes: i.Notes,
-                CreatedAt: i.CreatedAt))
+                i.Id,
+                i.Name,
+                i.CurrencyCode,
+                i.InstrumentType,
+                i.PrincipalAmount,
+                i.ExpectedAnnualYieldRate,
+                i.MonthlyContribution,
+                i.Notes,
+                i.CreatedAt))
             .ToListAsync(ct);
 
         return items;

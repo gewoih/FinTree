@@ -18,14 +18,11 @@ public sealed class IncomeInstrument : Entity
 
     public IncomeInstrumentType InstrumentType { get; private set; }
 
-    [Column(TypeName = "numeric(18,2)")]
-    public decimal PrincipalAmount { get; private set; }
+    [Column(TypeName = "numeric(18,2)")] public decimal PrincipalAmount { get; private set; }
 
-    [Column(TypeName = "numeric(6,4)")]
-    public decimal ExpectedAnnualYieldRate { get; private set; }
+    [Column(TypeName = "numeric(6,4)")] public decimal ExpectedAnnualYieldRate { get; private set; }
 
-    [Column(TypeName = "numeric(18,2)")]
-    public decimal? MonthlyContribution { get; private set; }
+    [Column(TypeName = "numeric(18,2)")] public decimal? MonthlyContribution { get; private set; }
 
     [MaxLength(500)] public string? Notes { get; private set; }
 
@@ -64,8 +61,25 @@ public sealed class IncomeInstrument : Entity
     }
 
     public decimal CalculateExpectedAnnualIncome()
-        => PrincipalAmount * ExpectedAnnualYieldRate + (MonthlyContribution ?? 0m) * 12m;
+    {
+        var monthly = MonthlyContribution ?? 0m;
 
-    public decimal CalculateExpectedMonthlyIncome()
-        => CalculateExpectedAnnualIncome() / 12m;
+        switch (InstrumentType)
+        {
+            case IncomeInstrumentType.Salary:
+                return Math.Round(PrincipalAmount * 12m, 2, MidpointRounding.AwayFromZero);
+
+            case IncomeInstrumentType.Deposit:
+            case IncomeInstrumentType.Investment:
+            case IncomeInstrumentType.Other:
+            default:
+                if (ExpectedAnnualYieldRate <= 0m)
+                    return 0m;
+
+                var interestOnPrincipal = PrincipalAmount * ExpectedAnnualYieldRate;
+                var interestOnContributions = monthly * 12m * ExpectedAnnualYieldRate * 0.5m;
+                var income = interestOnPrincipal + interestOnContributions;
+                return Math.Round(income, 2, MidpointRounding.AwayFromZero);
+        }
+    }
 }

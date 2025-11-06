@@ -54,10 +54,9 @@ namespace FinTree.Api.Controllers
         }
 
         [HttpGet("future-income")]
-        public async Task<IActionResult> GetFutureIncome([FromQuery] int? salaryMonths, CancellationToken ct)
+        public async Task<IActionResult> GetFutureIncome(CancellationToken ct)
         {
-            var months = salaryMonths.GetValueOrDefault(6);
-            var data = await analyticsService.GetFutureIncomeOverviewAsync(months, ct);
+            var data = await analyticsService.GetFutureIncomeOverviewAsync(ct);
             return Ok(data);
         }
     }

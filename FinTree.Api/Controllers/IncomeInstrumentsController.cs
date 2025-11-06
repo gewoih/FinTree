@@ -6,7 +6,7 @@ namespace FinTree.Api.Controllers;
 
 [Authorize]
 [ApiController]
-[Route("api/[controller]")]
+[Route("api/income-instruments")]
 public sealed class IncomeInstrumentsController(IncomeInstrumentsService service) : ControllerBase
 {
     [HttpGet]

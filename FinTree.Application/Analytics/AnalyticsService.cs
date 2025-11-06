@@ -123,7 +123,9 @@ public sealed class AnalyticsService(
                 .ToDictionary(g => g.Key, g => g.Sum(x => x.Amount));
 
             var monthlyValues = new List<decimal>();
-            for (var monthCursor = periodStartUtc; monthCursor <= currentMonthStart; monthCursor = monthCursor.AddMonths(1))
+            for (var monthCursor = periodStartUtc;
+                 monthCursor <= currentMonthStart;
+                 monthCursor = monthCursor.AddMonths(1))
             {
                 if (!expenseByMonth.TryGetValue(monthCursor, out var value))
                     value = 0m;
@@ -184,7 +186,7 @@ public sealed class AnalyticsService(
             .Select(u => u.BaseCurrencyCode)
             .SingleAsync(ct);
 
-        var transactionsQuery = context.Transactions.Where(t => 
+        var transactionsQuery = context.Transactions.Where(t =>
             t.Type == TransactionType.Expense &&
             t.Account.UserId == currentUserId);
 
@@ -245,7 +247,7 @@ public sealed class AnalyticsService(
             .Select(u => u.BaseCurrencyCode)
             .SingleAsync(ct);
 
-        var transactionsQuery = context.Transactions.Where(t => 
+        var transactionsQuery = context.Transactions.Where(t =>
             t.Type == TransactionType.Expense &&
             t.Account.UserId == currentUserId);
 
@@ -450,7 +452,7 @@ public sealed class AnalyticsService(
                     toCurrencyCode: baseCurrencyCode,
                     atUtc: dt,
                     ct: ct);
-                
+
                 switch (txn.Type)
                 {
                     case TransactionType.Income:
@@ -480,86 +482,17 @@ public sealed class AnalyticsService(
         return result;
     }
 
-    public async Task<FutureIncomeOverviewDto> GetFutureIncomeOverviewAsync(int salaryLookbackMonths = 6,
-        CancellationToken ct = default)
+    public async Task<FutureIncomeOverviewDto> GetFutureIncomeOverviewAsync(CancellationToken ct = default)
     {
-        if (salaryLookbackMonths <= 0)
-            throw new ArgumentOutOfRangeException(nameof(salaryLookbackMonths));
-
         var currentUserId = currentUserService.Id;
         var nowUtc = DateTime.UtcNow;
+
         var baseCurrencyCode = await context.Users
             .Where(u => u.Id == currentUserId)
             .Select(u => u.BaseCurrencyCode)
             .SingleAsync(ct);
 
-        var currentMonthStart = new DateTime(nowUtc.Year, nowUtc.Month, 1, 0, 0, 0, DateTimeKind.Utc);
-        var salaryPeriodStart = currentMonthStart.AddMonths(1 - salaryLookbackMonths);
-
-        var incomeTransactions = await context.Transactions
-            .AsNoTracking()
-            .Where(t => t.Account.UserId == currentUserId &&
-                        t.Type == TransactionType.Income &&
-                        t.OccurredAt >= salaryPeriodStart &&
-                        t.OccurredAt <= nowUtc)
-            .Join(context.TransactionCategories.AsNoTracking(),
-                t => t.CategoryId,
-                c => c.Id,
-                (t, c) => new
-                {
-                    t.Money,
-                    t.OccurredAt,
-                    CategoryName = c.Name
-                })
-            .ToListAsync(ct);
-
-        var normalizedIncome = new List<(DateTime OccurredAt, decimal Amount, string CategoryName)>();
-        foreach (var income in incomeTransactions)
-        {
-            ct.ThrowIfCancellationRequested();
-
-            var occurredAt = income.OccurredAt.Kind == DateTimeKind.Unspecified
-                ? DateTime.SpecifyKind(income.OccurredAt, DateTimeKind.Utc)
-                : income.OccurredAt.ToUniversalTime();
-
-            var baseMoney = await currencyConverter.ConvertAsync(
-                income.Money,
-                baseCurrencyCode,
-                occurredAt,
-                ct);
-
-            var categoryName = string.IsNullOrWhiteSpace(income.CategoryName)
-                ? "Доход"
-                : income.CategoryName;
-
-            normalizedIncome.Add((occurredAt, baseMoney.Amount, categoryName));
-        }
-
-        var monthsConsidered = Math.Max(1, salaryLookbackMonths);
         SalaryProjectionDto? salaryProjection = null;
-        if (normalizedIncome.Count > 0)
-        {
-            var totalIncome = normalizedIncome.Sum(x => x.Amount);
-            var monthlyAverage = totalIncome / monthsConsidered;
-
-            var sources = normalizedIncome
-                .GroupBy(x => x.CategoryName)
-                .Select(g =>
-                {
-                    var total = g.Sum(x => x.Amount);
-                    var monthly = total / monthsConsidered;
-                    var annual = monthly * 12m;
-                    var share = totalIncome > 0m ? total / totalIncome : 0m;
-                    return new IncomeBreakdownDto(g.Key, monthly, annual, share);
-                })
-                .OrderByDescending(x => x.MonthlyAmount)
-                .ToList();
-
-            salaryProjection = new SalaryProjectionDto(
-                MonthlyAverage: monthlyAverage,
-                AnnualProjection: monthlyAverage * 12m,
-                Sources: sources);
-        }
 
         var instruments = await context.IncomeInstruments
             .AsNoTracking()
@@ -573,25 +506,52 @@ public sealed class AnalyticsService(
         {
             ct.ThrowIfCancellationRequested();
 
-            var asOfUtc = nowUtc;
-
             var principalMoney = new Money(instrument.CurrencyCode, instrument.PrincipalAmount);
-            var principalInBase = await currencyConverter.ConvertAsync(principalMoney, baseCurrencyCode, asOfUtc, ct);
+            var principalInBase = await currencyConverter.ConvertAsync(principalMoney, baseCurrencyCode, nowUtc, ct);
 
             decimal? contributionInBase = null;
             if (instrument.MonthlyContribution is { } contribution && contribution > 0m)
             {
                 var contributionMoney = new Money(instrument.CurrencyCode, contribution);
-                var converted = await currencyConverter.ConvertAsync(contributionMoney, baseCurrencyCode, asOfUtc, ct);
-                contributionInBase = converted.Amount;
+                contributionInBase =
+                    (await currencyConverter.ConvertAsync(contributionMoney, baseCurrencyCode, nowUtc, ct)).Amount;
             }
 
             var expectedAnnualIncome = instrument.CalculateExpectedAnnualIncome();
             var expectedMonthlyIncome = expectedAnnualIncome / 12m;
 
-            var expectedAnnualIncomeInBase = principalInBase.Amount * instrument.ExpectedAnnualYieldRate
-                                              + (contributionInBase ?? 0m) * 12m;
-            var expectedMonthlyIncomeInBase = expectedAnnualIncomeInBase / 12m;
+            decimal expectedAnnualIncomeInBase;
+            decimal expectedMonthlyIncomeInBase;
+            switch (instrument.InstrumentType)
+            {
+                case IncomeInstrumentType.Salary:
+                {
+                    var monthlyInBase = principalInBase.Amount;
+                    expectedMonthlyIncomeInBase = monthlyInBase;
+                    expectedAnnualIncomeInBase = monthlyInBase * 12m;
+                    break;
+                }
+
+                default:
+                {
+                    var r = instrument.ExpectedAnnualYieldRate;
+                    if (r <= 0m)
+                    {
+                        expectedAnnualIncomeInBase = 0m;
+                        expectedMonthlyIncomeInBase = 0m;
+                    }
+                    else
+                    {
+                        var interestOnPrincipalBase = principalInBase.Amount * r;
+                        var interestOnContribsBase = (contributionInBase ?? 0m) * 12m * r * 0.5m;
+
+                        expectedAnnualIncomeInBase = interestOnPrincipalBase + interestOnContribsBase;
+                        expectedMonthlyIncomeInBase = expectedAnnualIncomeInBase / 12m;
+                    }
+
+                    break;
+                }
+            }
 
             instrumentProjections.Add(new IncomeInstrumentProjectionDto(
                 Id: instrument.Id,
@@ -601,12 +561,16 @@ public sealed class AnalyticsService(
                 PrincipalAmount: instrument.PrincipalAmount,
                 ExpectedAnnualYieldRate: instrument.ExpectedAnnualYieldRate,
                 MonthlyContribution: instrument.MonthlyContribution,
-                ExpectedMonthlyIncome: expectedMonthlyIncome,
-                ExpectedAnnualIncome: expectedAnnualIncome,
-                PrincipalAmountInBaseCurrency: principalInBase.Amount,
-                MonthlyContributionInBaseCurrency: contributionInBase,
-                ExpectedMonthlyIncomeInBaseCurrency: expectedMonthlyIncomeInBase,
-                ExpectedAnnualIncomeInBaseCurrency: expectedAnnualIncomeInBase));
+                ExpectedMonthlyIncome: R2(expectedMonthlyIncome),
+                ExpectedAnnualIncome: R2(expectedAnnualIncome),
+                PrincipalAmountInBaseCurrency: R2(principalInBase.Amount),
+                MonthlyContributionInBaseCurrency: contributionInBase is null ? null : R2(contributionInBase.Value),
+                ExpectedMonthlyIncomeInBaseCurrency: R2(expectedMonthlyIncomeInBase),
+                ExpectedAnnualIncomeInBaseCurrency: R2(expectedAnnualIncomeInBase)
+            ));
+            continue;
+
+            decimal R2(decimal v) => Math.Round(v, 2, MidpointRounding.AwayFromZero);
         }
 
         var salaryMonthly = salaryProjection?.MonthlyAverage ?? 0m;
@@ -618,9 +582,11 @@ public sealed class AnalyticsService(
             BaseCurrencyCode: baseCurrencyCode,
             Salary: salaryProjection,
             Instruments: instrumentProjections,
-            TotalExpectedMonthlyIncome: totalMonthly,
-            TotalExpectedAnnualIncome: totalAnnual);
+            TotalExpectedMonthlyIncome: Math.Round(totalMonthly, 2, MidpointRounding.AwayFromZero),
+            TotalExpectedAnnualIncome: Math.Round(totalAnnual, 2, MidpointRounding.AwayFromZero)
+        );
     }
+
 
     private readonly record struct NormalizedTransaction(
         DateTime OccurredAt,
