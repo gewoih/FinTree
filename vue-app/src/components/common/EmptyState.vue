@@ -12,29 +12,28 @@ const props = withDefaults(defineProps<Props>(), {
   actionIcon: 'pi-plus'
 })
 
-const { icon, title, description, actionLabel, actionIcon } = props
-
+// Don't destructure props to maintain reactivity
 const emit = defineEmits<{
   action: []
 }>()
 </script>
 
 <template>
-  <div class="empty-state">
+  <div class="empty-state" role="status">
     <div class="empty-state__icon-wrapper">
-      <i :class="['pi', icon, 'empty-state__icon']" />
+      <i :class="['pi', props.icon, 'empty-state__icon']" aria-hidden="true" />
     </div>
 
-    <h3 class="empty-state__title">{{ title }}</h3>
+    <h3 class="empty-state__title">{{ props.title }}</h3>
 
-    <p v-if="description" class="empty-state__description">
-      {{ description }}
+    <p v-if="props.description" class="empty-state__description">
+      {{ props.description }}
     </p>
 
     <Button
-      v-if="actionLabel"
-      :label="actionLabel"
-      :icon="actionIcon"
+      v-if="props.actionLabel"
+      :label="props.actionLabel"
+      :icon="props.actionIcon"
       severity="primary"
       class="empty-state__action"
       @click="emit('action')"
