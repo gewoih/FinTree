@@ -22,6 +22,7 @@ import InputText from 'primevue/inputtext'
 import InputNumber from 'primevue/inputnumber'
 import Textarea from 'primevue/textarea'
 import Select from 'primevue/select'
+import SelectButton from 'primevue/selectbutton'
 import DatePicker from 'primevue/datepicker'
 import Dialog from 'primevue/dialog'
 import Toast from 'primevue/toast'
@@ -29,6 +30,9 @@ import ConfirmDialog from 'primevue/confirmdialog'
 import Tag from 'primevue/tag'
 import Checkbox from 'primevue/checkbox'
 import Chart from 'primevue/chart'
+import Message from 'primevue/message'
+import OverlayPanel from 'primevue/overlaypanel'
+import ProgressBar from 'primevue/progressbar'
 
 export function registerComponents(app: App) {
   // Common components
@@ -53,6 +57,7 @@ export function registerComponents(app: App) {
   app.component('InputNumber', InputNumber)
   app.component('Textarea', Textarea)
   app.component('Select', Select)
+  app.component('SelectButton', SelectButton)
   app.component('DatePicker', DatePicker)
   app.component('Dialog', Dialog)
   app.component('Toast', Toast)
@@ -60,4 +65,7 @@ export function registerComponents(app: App) {
   app.component('Tag', Tag)
   app.component('Checkbox', Checkbox)
   app.component('Chart', Chart)
+  app.component('Message', Message)
+  app.component('OverlayPanel', OverlayPanel)
+  app.component('ProgressBar', ProgressBar)
 }

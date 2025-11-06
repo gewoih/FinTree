@@ -1,1252 +1,807 @@
 <script setup lang="ts">
-import { ref, computed, onMounted, watch } from 'vue';
-import { Line, Pie, Bar } from 'vue-chartjs';
-import {
-  Chart as ChartJS,
-  CategoryScale,
-  LinearScale,
-  PointElement,
-  LineElement,
-  BarElement,
-  ArcElement,
-  Title,
-  Tooltip,
-  Legend,
-  Filler
-} from 'chart.js';
-import { useFinanceStore } from '../stores/finance';
+import { computed, onMounted, reactive, ref, watch } from 'vue';
+import PageHeader from '../components/common/PageHeader.vue';
+import HeroHealthCard from '../components/analytics/HeroHealthCard.vue';
+import SpendingPieCard from '../components/analytics/SpendingPieCard.vue';
+import NetWorthLineCard from '../components/analytics/NetWorthLineCard.vue';
+import SpendingBarsCard from '../components/analytics/SpendingBarsCard.vue';
+import ForecastCard from '../components/analytics/ForecastCard.vue';
 import { useUserStore } from '../stores/user';
-import { apiService } from '../services/api.service.ts';
-import type { MonthlyExpenseDto, CategoryExpenseDto, NetWorthSnapshotDto, FinancialHealthMetricsDto } from '../types.ts';
-import { formatCurrency } from '../utils/formatters';
-import FinancialHealthSummaryCard from '../components/analytics/FinancialHealthSummaryCard.vue';
+import { apiService } from '../services/api.service';
+import type {
+  CategoryExpenseDto,
+  FinancialHealthMetricsDto,
+  MonthlyExpenseDto,
+  NetWorthSnapshotDto,
+} from '../types';
+import type {
+  CategoryLegendItem,
+  ExpenseGranularity,
+  FinancialHealthMetricRow,
+  FinancialHealthVerdict,
+  ForecastSummary,
+  HealthStatus,
+} from '../types/analytics';
 
-// Register Chart.js components
-ChartJS.register(
-  CategoryScale,
-  LinearScale,
-  PointElement,
-  LineElement,
-  BarElement,
-  ArcElement,
-  Title,
-  Tooltip,
-  Legend,
-  Filler
-);
+type FinancialMetricKey = 'savingsRate' | 'liquidityMonths' | 'expenseVolatility' | 'incomeDiversity';
 
-const financeStore = useFinanceStore();
+interface MetricDefinition {
+  key: FinancialMetricKey;
+  format: (value: number | null, currency: string) => string;
+  evaluate: (value: number | null) => { status: HealthStatus; score: number } | null;
+}
+
 const userStore = useUserStore();
 
-// Data from API
-const monthlyExpenses = ref<MonthlyExpenseDto[]>([]);
+const healthPeriodOptions = [
+  { label: '1 месяц', value: 1 },
+  { label: '3 месяца', value: 3 },
+  { label: '6 месяцев', value: 6 },
+  { label: '12 месяцев', value: 12 },
+] as const;
+const selectedHealthPeriod = ref<number>(6);
+
+const categoryPeriodOptions = [
+  { label: '1', value: 1 },
+  { label: '3', value: 3 },
+  { label: '6', value: 6 },
+  { label: '12', value: 12 },
+] as const;
+const selectedCategoryPeriod = ref<number>(3);
+
+const netWorthPeriodOptions = [
+  { label: '6 месяцев', value: 6 },
+  { label: '12 месяцев', value: 12 },
+  { label: '24 месяца', value: 24 },
+] as const;
+const selectedNetWorthPeriod = ref<number>(12);
+
+const granularityOptions = [
+  { label: 'День', value: 'days' },
+  { label: 'Неделя', value: 'weeks' },
+  { label: 'Месяц', value: 'months' },
+] as const satisfies ReadonlyArray<{ label: string; value: ExpenseGranularity }>;
+const selectedGranularity = ref<ExpenseGranularity>('months');
+
+const financialMetrics = ref<FinancialHealthMetricsDto | null>(null);
+const healthLoading = ref(false);
+const healthError = ref<string | null>(null);
+
 const categoryExpenses = ref<CategoryExpenseDto[]>([]);
+const categoryLoading = ref(false);
+const categoryError = ref<string | null>(null);
+
 const netWorthSnapshots = ref<NetWorthSnapshotDto[]>([]);
-const isAnalyticsLoading = ref(true);
+const netWorthLoading = ref(false);
+const netWorthError = ref<string | null>(null);
 
-const financialPeriodOptions = [
-  { value: 1, label: '1 месяц' },
-  { value: 3, label: '3 месяца' },
-  { value: 6, label: '6 месяцев' },
-  { value: 12, label: '12 месяцев' },
-] as const;
-type FinancialPeriod = (typeof financialPeriodOptions)[number]['value'];
-
-const financialPeriod = ref<FinancialPeriod>(3);
-const financialHealth = ref<FinancialHealthMetricsDto | null>(null);
-const isFinancialHealthLoading = ref(false);
-
-const analyticsCurrencyCode = computed(() => {
-  return userStore.baseCurrencyCode ||
-    financeStore.primaryAccount?.currency?.code ||
-    financeStore.primaryAccount?.currencyCode ||
-    'USD';
+const expensesData = reactive<Record<ExpenseGranularity, MonthlyExpenseDto[]>>({
+  days: [],
+  weeks: [],
+  months: [],
+});
+const expensesLoading = reactive<Record<ExpenseGranularity, boolean>>({
+  days: false,
+  weeks: false,
+  months: false,
+});
+const expensesError = reactive<Record<ExpenseGranularity, string | null>>({
+  days: null,
+  weeks: null,
+  months: null,
 });
 
-const formatAmount = (value: number) => {
-  const currencyCode = analyticsCurrencyCode.value;
-  return new Intl.NumberFormat('ru-RU', {
-    style: 'currency',
-    currency: currencyCode,
-    minimumFractionDigits: 2
-  }).format(value);
+const chartPalette = reactive({
+  primary: '#60a5fa',
+  surface: '#94a3b8',
+  accent: '#f97316',
+  categories: ['#60a5fa', '#14b8a6', '#a855f7', '#06b6d4', '#fb923c'],
+});
+
+const baseCurrency = computed(() => userStore.baseCurrencyCode ?? 'RUB');
+
+const metricDefinitions: MetricDefinition[] = [
+  {
+    key: 'savingsRate',
+    format: (value, _currency) => formatPercent(value),
+    evaluate: (value) => {
+      if (value == null) return null;
+      if (value >= 0.25) return { status: 'good', score: 90 };
+      if (value >= 0.05) return { status: 'average', score: 60 };
+      return { status: 'poor', score: 25 };
+    },
+  },
+  {
+    key: 'liquidityMonths',
+    format: (value, _currency) => formatMonths(value),
+    evaluate: (value) => {
+      if (value == null) return null;
+      if (value >= 6) return { status: 'good', score: 90 };
+      if (value >= 3) return { status: 'average', score: 60 };
+      return { status: 'poor', score: 25 };
+    },
+  },
+  {
+    key: 'expenseVolatility',
+    format: (value, _currency) => formatPercent(value),
+    evaluate: (value) => {
+      if (value == null) return null;
+      if (value <= 0.2) return { status: 'good', score: 85 };
+      if (value <= 0.45) return { status: 'average', score: 55 };
+      return { status: 'poor', score: 20 };
+    },
+  },
+  {
+    key: 'incomeDiversity',
+    format: (value, _currency) => formatPercent(value != null ? 1 - value : null),
+    evaluate: (value) => {
+      if (value == null) return null;
+      if (value <= 0.4) return { status: 'good', score: 85 };
+      if (value <= 0.7) return { status: 'average', score: 55 };
+      return { status: 'poor', score: 25 };
+    },
+  },
+];
+
+const metricPresentation: Record<
+  FinancialMetricKey,
+  {
+    label: string;
+    tooltip: string;
+    flair: Record<HealthStatus, { text: string; emoji: string; statusLabel: string }>;
+  }
+> = {
+  savingsRate: {
+    label: 'Уровень сбережений',
+    tooltip: 'Доля доходов, которые остаются у вас после всех расходов.',
+    flair: {
+      good: { text: 'Ранг: Финансовый пилот', emoji: '🚀', statusLabel: 'С запасом' },
+      average: { text: 'Ранг: Стратег', emoji: '🧭', statusLabel: 'Нужен апгрейд' },
+      poor: { text: 'Ранг: Новобранец', emoji: '🌱', statusLabel: 'Тревога' },
+    },
+  },
+  liquidityMonths: {
+    label: 'Финансовая подушка',
+    tooltip: 'Сколько месяцев вы проживёте на текущие резервы, сохраняя образ жизни.',
+    flair: {
+      good: { text: 'Ранг: Хранитель резерва', emoji: '🛡️', statusLabel: 'Резерв крепкий' },
+      average: { text: 'Ранг: Сборщик', emoji: '🧱', statusLabel: 'Подкопить' },
+      poor: { text: 'Ранг: На грани', emoji: '⚠️', statusLabel: 'Создайте запас' },
+    },
+  },
+  expenseVolatility: {
+    label: 'Стабильность расходов',
+    tooltip: 'Насколько сильно траты скачут от месяца к месяцу.',
+    flair: {
+      good: { text: 'Ранг: Штурман', emoji: '🧠', statusLabel: 'Контроль идеален' },
+      average: { text: 'Ранг: Балансир', emoji: '⚖️', statusLabel: 'Следите внимательнее' },
+      poor: { text: 'Ранг: Шторм', emoji: '🌪️', statusLabel: 'Сгладьте скачки' },
+    },
+  },
+  incomeDiversity: {
+    label: 'Диверсификация доходов',
+    tooltip: 'Насколько равномерно распределены ваши источники дохода.',
+    flair: {
+      good: { text: 'Ранг: Мультипликатор', emoji: '🎯', statusLabel: 'Доходы распределены' },
+      average: { text: 'Ранг: Пилот одного корабля', emoji: '🛶', statusLabel: 'Добавьте источники' },
+      poor: { text: 'Ранг: Один двигатель', emoji: '🔥', statusLabel: 'Риск потерять доход' },
+    },
+  },
 };
 
-const formatPercent = (value: number | null | undefined, fractionDigits = 0): string => {
-  if (value === null || value === undefined) return '—';
-  if (!Number.isFinite(value)) return '—';
+function resolveCssVariables() {
+  if (typeof window === 'undefined') return;
+  const styles = getComputedStyle(document.documentElement);
+  chartPalette.primary = styles.getPropertyValue('--primary-400').trim() || chartPalette.primary;
+  chartPalette.surface = styles.getPropertyValue('--surface-500').trim() || chartPalette.surface;
+  chartPalette.accent = styles.getPropertyValue('--orange-400').trim() || chartPalette.accent;
+  const fallback = [
+    styles.getPropertyValue('--blue-400').trim(),
+    styles.getPropertyValue('--teal-400').trim(),
+    styles.getPropertyValue('--violet-400').trim(),
+    styles.getPropertyValue('--cyan-400').trim(),
+    styles.getPropertyValue('--orange-400').trim(),
+  ].filter(Boolean);
+  if (fallback.length) {
+    chartPalette.categories = fallback;
+  }
+}
+
+function formatPercent(value: number | null, fractionDigits = 0): string {
+  if (value == null || Number.isNaN(value)) return '—';
   return `${(value * 100).toFixed(fractionDigits)}%`;
-};
+}
 
-const formatMonths = (value: number | null | undefined, fractionDigits = 1): string => {
-  if (value === null || value === undefined) return '—';
-  if (!Number.isFinite(value)) return '—';
+function formatMonths(value: number | null, fractionDigits = 1): string {
+  if (value == null || Number.isNaN(value)) return '—';
   return `${value.toFixed(fractionDigits)} мес`;
-};
-
-const monthNameFormatter = new Intl.DateTimeFormat('ru-RU', { month: 'long' });
-
-function capitalize(value: string): string {
-  if (!value) return value;
-  return value.charAt(0).toLocaleUpperCase('ru-RU') + value.slice(1);
 }
 
-function formatMonthLabel(year: number, month: number): string {
-  const date = new Date(year, month - 1, 1);
-  const monthName = capitalize(monthNameFormatter.format(date));
-  return `${monthName} ${year}`;
-}
-
-function formatExpenseLabel(point: MonthlyExpenseDto): string {
-  if (expenseGranularity.value === 'days' && point.day != null) {
-    const date = new Date(point.year, point.month - 1, point.day);
-    return date.toLocaleDateString('ru-RU', { month: 'short', day: 'numeric' });
-  }
-
-  if (expenseGranularity.value === 'weeks' && point.week != null) {
-    return `Неделя ${point.week}, ${point.year}`;
-  }
-
-  return formatMonthLabel(point.year, point.month);
-}
-
-const selectedFinancialPeriodLabel = computed(() => {
-  const option = financialPeriodOptions.find(option => option.value === financialPeriod.value);
-  return option?.label ?? 'Период';
-});
-
-const hasFinancialMetrics = computed(() => {
-  const data = financialHealth.value;
-  if (!data) return false;
-
-  return [
-    data.savingsRate,
-    data.liquidityMonths,
-    data.expenseVolatility,
-    data.incomeDiversity
-  ].some(value => value !== null && value !== undefined);
-});
-
-const financialMetricCards = computed(() => {
-  const data = financialHealth.value;
-
-  return [
-    {
-      key: 'savingsRate',
-      label: 'Уровень сбережений',
-      description: 'Доля дохода, которая остаётся после расходов',
-      value: formatPercent(data?.savingsRate ?? null, 0)
-    },
-    {
-      key: 'liquidityMonths',
-      label: 'Запас ликвидности',
-      description: 'Сколько месяцев обязательных расходов покрывают ликвидные активы',
-      value: formatMonths(data?.liquidityMonths ?? null, 1)
-    },
-    {
-      key: 'expenseVolatility',
-      label: 'Волатильность расходов',
-      description: 'Изменчивость ежемесячных трат относительно среднего',
-      value: formatPercent(data?.expenseVolatility ?? null, 0)
-    },
-    {
-      key: 'incomeDiversity',
-      label: 'Диверсификация доходов',
-      description: 'Доля крупнейшего источника дохода',
-      value: formatPercent(data?.incomeDiversity ?? null, 0)
+function resolveErrorMessage(error: unknown, fallback: string): string {
+  if (typeof error === 'object' && error && 'userMessage' in error) {
+    const message = (error as { userMessage?: string }).userMessage;
+    if (typeof message === 'string' && message.trim().length) {
+      return message;
     }
-  ];
-});
+  }
+  if (error instanceof Error && error.message) {
+    return error.message;
+  }
+  return fallback;
+}
 
-async function loadFinancialHealth(): Promise<void> {
-  isFinancialHealthLoading.value = true;
+async function loadFinancialHealth(period: number) {
+  if (healthLoading.value) return;
+  healthLoading.value = true;
+  healthError.value = null;
   try {
-    const data = await apiService.getFinancialHealthMetrics(financialPeriod.value);
-    financialHealth.value = data;
+    const data = await apiService.getFinancialHealthMetrics(period);
+    financialMetrics.value = data;
   } catch (error) {
-    console.error('Failed to load financial health metrics:', error);
-    financialHealth.value = null;
+    healthError.value = resolveErrorMessage(error, 'Не удалось получить показатели финансового здоровья.');
+    financialMetrics.value = null;
   } finally {
-    isFinancialHealthLoading.value = false;
+    healthLoading.value = false;
   }
 }
 
-// Time period filters for category expenses
-type CategoryTimePeriod = 'week' | 'month' | '3months' | '6months' | '12months' | 'all';
-const categoryTimePeriod = ref<CategoryTimePeriod>('month');
-const categoryPeriods = [
-  { value: 'week', label: 'Неделя' },
-  { value: 'month', label: 'Месяц' },
-  { value: '3months', label: '3 месяца' },
-  { value: '6months', label: '6 месяцев' },
-  { value: '12months', label: '12 месяцев' },
-  { value: 'all', label: 'Всё время' }
-] as const;
+function computeFinancialMetricRows(): FinancialHealthMetricRow[] {
+  const metrics = financialMetrics.value;
+  if (!metrics) return [];
 
-// Granularity filters for monthly expenses
-type ExpenseGranularity = 'days' | 'weeks' | 'months';
-const expenseGranularity = ref<ExpenseGranularity>('months');
-const expenseGranularities = [
-  { value: 'days', label: 'По дням' },
-  { value: 'weeks', label: 'По неделям' },
-  { value: 'months', label: 'По месяцам' }
-] as const;
+  const rows: FinancialHealthMetricRow[] = [];
+  let hasRealData = false;
 
-// Calculate date range based on category time period
-const categoryDateRange = computed(() => {
-  const now = new Date();
-  const to = new Date(now);
-  let from: Date;
-
-  switch (categoryTimePeriod.value) {
-    case 'week':
-      from = new Date(now);
-      from.setDate(now.getDate() - 6);
-      break;
-    case 'month':
-      from = new Date(now.getFullYear(), now.getMonth(), 1);
-      break;
-    case '3months':
-      from = new Date(now.getFullYear(), now.getMonth() - 2, 1);
-      break;
-    case '6months':
-      from = new Date(now.getFullYear(), now.getMonth() - 5, 1);
-      break;
-    case '12months':
-      from = new Date(now.getFullYear(), now.getMonth() - 11, 1);
-      break;
-    case 'all':
-      from = new Date(2000, 0, 1); // Far in the past
-      break;
-  }
-
-  return { from, to };
-});
-
-// Fetch category expenses when time period changes
-watch(categoryTimePeriod, async () => {
-  try {
-    const { from, to } = categoryDateRange.value;
-    const data = await apiService.getExpensesByCategoryByDateRange(from, to);
-    categoryExpenses.value = Array.isArray(data) ? data : [];
-  } catch (error) {
-    console.error('Failed to load category expenses:', error);
-    categoryExpenses.value = [];
-  }
-}, { immediate: true });
-
-watch(financialPeriod, async (newValue, oldValue) => {
-  if (newValue === oldValue) return;
-  await loadFinancialHealth();
-});
-
-// Sorted monthly expenses
-const sortedMonthlyExpenses = computed(() => {
-  const granularity = expenseGranularity.value;
-
-  return monthlyExpenses.value
-    .slice()
-    .sort((a, b) => {
-      const yearComparison = a.year - b.year;
-      if (yearComparison !== 0) return yearComparison;
-
-      if (granularity === 'days' && a.day != null && b.day != null) {
-        const monthComparison = a.month - b.month;
-        if (monthComparison !== 0) return monthComparison;
-        return (a.day ?? 0) - (b.day ?? 0);
-      }
-
-      if (granularity === 'weeks' && a.week != null && b.week != null) {
-        return (a.week ?? 0) - (b.week ?? 0);
-      }
-
-      return a.month - b.month;
+  for (const definition of metricDefinitions) {
+    const value = metrics[definition.key] ?? null;
+    if (value != null) {
+      hasRealData = true;
+    }
+    const evaluation = definition.evaluate(value);
+    const status = evaluation?.status ?? 'average';
+    const presentation = metricPresentation[definition.key];
+    const flairMeta = presentation.flair[status];
+    rows.push({
+      key: definition.key,
+      label: presentation.label,
+      value: definition.format(value, baseCurrency.value),
+      status,
+      statusLabel: flairMeta.statusLabel,
+      flair: flairMeta.text,
+      emoji: flairMeta.emoji,
+      tooltip: presentation.tooltip,
     });
+  }
+  return hasRealData ? rows : [];
+}
+
+const financialMetricRows = computed(() => computeFinancialMetricRows());
+
+const financialScore = computed(() => {
+  const metrics = financialMetrics.value;
+  if (!metrics) return null;
+  const evaluations = metricDefinitions
+    .map((definition) => definition.evaluate(metrics[definition.key]))
+    .filter((item): item is { status: HealthStatus; score: number } => item != null);
+
+  if (!evaluations.length) return null;
+  const total = evaluations.reduce((sum, item) => sum + item.score, 0);
+  return Math.round(total / evaluations.length);
 });
 
-const expenseLabels = computed(() =>
-  sortedMonthlyExpenses.value.map(point => formatExpenseLabel(point))
-);
+const financialVerdict = computed<FinancialHealthVerdict | null>(() => {
+  const score = financialScore.value;
+  if (score == null) return null;
 
-// Sorted networth snapshots
-const sortedNetWorth = computed(() =>
-  netWorthSnapshots.value
-    .slice()
-    .sort((a, b) => (a.year === b.year ? a.month - b.month : a.year - b.year))
-);
-
-const latestExpensePoint = computed(() => sortedMonthlyExpenses.value.at(-1) ?? null);
-const previousExpensePoint = computed(() => sortedMonthlyExpenses.value.at(-2) ?? null);
-
-const monthlyExpenseTrend = computed(() => {
-  if (!latestExpensePoint.value || !previousExpensePoint.value) return null;
-  return latestExpensePoint.value.amount - previousExpensePoint.value.amount;
-});
-
-const dominantCategory = computed(() => {
-  if (!categoryExpenses.value.length) return null;
-  return [...categoryExpenses.value].sort((a, b) => b.amount - a.amount)[0] ?? null;
-});
-
-const totalCategoryAmount = computed(() =>
-  categoryExpenses.value.reduce((sum, category) => sum + category.amount, 0)
-);
-
-const topCategoryShare = computed(() => {
-  if (!dominantCategory.value || !totalCategoryAmount.value) return null;
-  return dominantCategory.value.amount / totalCategoryAmount.value;
-});
-
-const heroHighlights = computed(() => {
-  const currencyCode = analyticsCurrencyCode.value;
-  const lastNet = sortedNetWorth.value.at(-1) ?? null;
-  const previousNet = sortedNetWorth.value.at(-2) ?? null;
-  const netDelta =
-    lastNet && previousNet ? lastNet.totalBalance - previousNet.totalBalance : null;
-
-  const latestExpenseAmount = latestExpensePoint.value?.amount ?? null;
-  const expenseTrendValue = monthlyExpenseTrend.value;
-
-  const savingsRate = financialHealth.value?.savingsRate ?? null;
-
-  return [
-    {
-      key: 'netWorth',
-      label: 'Стоимость активов',
-      primary: lastNet ? formatCurrency(lastNet.totalBalance, currencyCode) : '—',
-      secondary:
-        netDelta !== null
-          ? `${netDelta >= 0 ? '▲' : '▼'} ${formatCurrency(Math.abs(netDelta), currencyCode)}`
-          : 'Нет динамики',
-      secondaryTone: netDelta === null ? 'muted' : netDelta >= 0 ? 'positive' : 'negative',
-    },
-    {
-      key: 'monthlySpend',
-      label: 'Расходы за период',
-      primary: latestExpenseAmount !== null ? formatCurrency(latestExpenseAmount, currencyCode) : '—',
-      secondary:
-        expenseTrendValue !== null
-          ? `${expenseTrendValue >= 0 ? '▲' : '▼'} ${formatCurrency(
-              Math.abs(expenseTrendValue),
-              currencyCode
-            )} vs прошлый период`
-          : 'Нет данных для сравнения',
-      secondaryTone:
-        expenseTrendValue === null
-          ? 'muted'
-          : expenseTrendValue <= 0
-          ? 'positive'
-          : 'negative',
-    },
-    {
-      key: 'savingsRate',
-      label: 'Уровень сбережений',
-      primary: savingsRate !== null ? formatPercent(savingsRate, 0) : '—',
-      secondary: 'Цель на квартал: 30%',
-      secondaryTone:
-        savingsRate !== null && savingsRate >= 0.3
-          ? 'positive'
-          : savingsRate !== null
-          ? 'warning'
-          : 'muted',
-    },
-    {
-      key: 'topCategory',
-      label: 'Топ категория расходов',
-      primary: dominantCategory.value?.name ?? '—',
-      secondary: dominantCategory.value
-        ? formatCurrency(dominantCategory.value.amount, currencyCode)
-        : 'Добавьте расходы, чтобы увидеть лидеров',
-      secondaryTone: 'muted',
-    },
-  ];
-});
-
-const improvementTips = computed(() => {
-  const tips: string[] = [];
-
-  const savingsRate = financialHealth.value?.savingsRate ?? null;
-  if (savingsRate !== null) {
-    if (savingsRate < 0.25) {
-      tips.push(
-        'Поднимите долю сбережений до 25%: настройте автоматический перевод в накопления сразу после зарплаты.'
-      );
-    } else {
-      tips.push('Удерживайте текущий уровень сбережений — вы уже двигаетесь быстрее среднего.');
-    }
+  if (score >= 70) {
+    return {
+      label: 'Хорошо',
+      status: 'good',
+      helper: 'Продолжайте придерживаться текущей стратегии.',
+    };
   }
 
-  if (monthlyExpenseTrend.value !== null) {
-    if (monthlyExpenseTrend.value > 0) {
-      tips.push(
-        'Расходы растут относительно прошлого периода — зафиксируйте лимит для крупнейших статей расходов.'
-      );
-    } else if (monthlyExpenseTrend.value < 0) {
-      tips.push(
-        'Траты сокращаются — закрепите прогресс, добавив автоматические правила и уведомления.'
-      );
-    }
+  if (score >= 45) {
+    return {
+      label: 'Средне',
+      status: 'average',
+      helper: 'Подумайте о сокращении нестабильных расходов.',
+    };
   }
 
-  if (topCategoryShare.value !== null && topCategoryShare.value > 0.35 && dominantCategory.value) {
-    tips.push(
-      `Категория «${dominantCategory.value.name}» занимает ${Math.round(
-        topCategoryShare.value * 100
-      )}% ваших расходов. Установите для неё недельный или месячный бюджет.`
-    );
-  }
-
-  if (!tips.length) {
-    tips.push('Продолжайте фиксировать операции — новые инсайты появятся после нескольких транзакций.');
-  }
-
-  return tips.slice(0, 3);
-});
-
-// Net Worth trend chart
-const balanceChartData = computed(() => {
-  const points = sortedNetWorth.value;
   return {
-    labels: points.map(item => formatMonthLabel(item.year, item.month)),
+    label: 'Плохо',
+    status: 'poor',
+    helper: 'Усилите контроль расходов и создайте резерв.',
+  };
+});
+
+async function loadCategoryExpenses(periodMonths: number) {
+  if (categoryLoading.value) return;
+  categoryLoading.value = true;
+  categoryError.value = null;
+  try {
+    const { from, to } = resolvePeriodRange(periodMonths);
+    const data = await apiService.getExpensesByCategoryByDateRange(from, to);
+    categoryExpenses.value = data ?? [];
+  } catch (error) {
+    categoryError.value = resolveErrorMessage(error, 'Не удалось загрузить расходы по категориям.');
+    categoryExpenses.value = [];
+  } finally {
+    categoryLoading.value = false;
+  }
+}
+
+function resolvePeriodRange(months: number) {
+  const now = new Date();
+  const end = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth() + 1, 1, 0, 0, 0));
+  const start = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth() + 1 - months, 1, 0, 0, 0));
+  return { from: start, to: end };
+}
+
+async function loadNetWorth() {
+  if (netWorthLoading.value) return;
+  netWorthLoading.value = true;
+  netWorthError.value = null;
+  try {
+    const snapshots = await apiService.getNetWorthTrend();
+    netWorthSnapshots.value = snapshots ?? [];
+  } catch (error) {
+    netWorthError.value = resolveErrorMessage(error, 'Не удалось загрузить динамику капитала.');
+    netWorthSnapshots.value = [];
+  } finally {
+    netWorthLoading.value = false;
+  }
+}
+
+async function loadExpenses(granularity: ExpenseGranularity, force = false) {
+  if (expensesLoading[granularity]) return;
+  if (expensesData[granularity].length && !force) return;
+
+  expensesLoading[granularity] = true;
+  expensesError[granularity] = null;
+  try {
+    const data = await apiService.getExpensesByGranularity(granularity);
+    expensesData[granularity] = data ?? [];
+  } catch (error) {
+    expensesError[granularity] = resolveErrorMessage(error, 'Не удалось загрузить расходы.');
+    expensesData[granularity] = [];
+  } finally {
+    expensesLoading[granularity] = false;
+  }
+}
+
+const categoryLegend = computed<CategoryLegendItem[]>(() => {
+  if (!categoryExpenses.value.length) return [];
+  const total = categoryExpenses.value.reduce((sum, item) => sum + Number(item.amount ?? 0), 0);
+  return categoryExpenses.value.map((item, index) => ({
+    id: item.id,
+    name: item.name,
+    amount: Number(item.amount ?? 0),
+    percent: total > 0 ? (Number(item.amount ?? 0) / total) * 100 : 0,
+    color: item.color?.trim() || chartPalette.categories[index % chartPalette.categories.length],
+  }));
+});
+
+const categoryChartData = computed(() => {
+  if (!categoryLegend.value.length) return null;
+  return {
+    labels: categoryLegend.value.map((item) => item.name),
+    datasets: [
+      {
+        data: categoryLegend.value.map((item) => item.amount),
+        backgroundColor: categoryLegend.value.map((item) => item.color),
+        borderWidth: 1,
+        borderColor: 'rgba(255,255,255,0.8)',
+      },
+    ],
+  };
+});
+
+const sortedNetWorth = computed(() => {
+  return [...netWorthSnapshots.value].sort((a, b) => {
+    if (a.year !== b.year) return a.year - b.year;
+    return a.month - b.month;
+  });
+});
+
+const visibleNetWorth = computed(() => {
+  const entries = sortedNetWorth.value;
+  if (!entries.length) return [];
+  const count = selectedNetWorthPeriod.value;
+  return entries.slice(Math.max(entries.length - count, 0));
+});
+
+const netWorthChartData = computed(() => {
+  const entries = visibleNetWorth.value;
+  if (!entries.length) return null;
+  const labels = entries.map((entry) => formatMonthLabel(entry.year, entry.month));
+  return {
+    labels,
     datasets: [
       {
         label: 'Общий баланс',
-        data: points.map(item => item.totalBalance),
-        borderColor: 'rgba(56, 189, 248, 1)',
-        backgroundColor: 'rgba(56, 189, 248, 0.1)',
+        data: entries.map((entry) => Number(entry.totalBalance ?? 0)),
+        borderColor: chartPalette.primary,
+        backgroundColor: `rgba(${extractRgb(chartPalette.primary)}, 0.18)`,
         fill: true,
-        tension: 0.4,
+        tension: 0.35,
         pointRadius: 4,
-        pointHoverRadius: 6,
-        pointBackgroundColor: 'rgba(56, 189, 248, 1)',
-        pointBorderColor: '#fff',
+        pointBackgroundColor: chartPalette.primary,
+        pointBorderColor: '#ffffff',
         pointBorderWidth: 2,
-      }
-    ]
+      },
+    ],
   };
 });
 
-// Category pie chart
-const categoryChartData = computed(() => ({
-  labels: categoryExpenses.value.map(c => c.name),
-  datasets: [
-    {
-      data: categoryExpenses.value.map(c => c.amount),
-      backgroundColor: categoryExpenses.value.map(c => c.color),
-      borderColor: 'rgba(148, 163, 184, 0.35)',
-      borderWidth: 1,
-      hoverBorderWidth: 2,
-      hoverBorderColor: '#f8fafc',
-    }
-  ]
-}));
+function formatMonthLabel(year: number, month: number): string {
+  const formatter = new Intl.DateTimeFormat('ru-RU', { month: 'short', year: 'numeric' });
+  return formatter.format(new Date(year, month - 1, 1));
+}
 
-// Monthly expenses bar chart
+function extractRgb(color: string): string {
+  if (typeof document === 'undefined') {
+    return '59,130,246';
+  }
+  const canvas = document.createElement('canvas');
+  const ctx = canvas.getContext('2d');
+  if (!ctx) return '59,130,246';
+  ctx.fillStyle = color;
+  const computed = ctx.fillStyle as string;
+  const rgbMatch = computed.match(/rgba?\((\d+),\s*(\d+),\s*(\d+)/i);
+  if (rgbMatch) {
+    return `${rgbMatch[1]},${rgbMatch[2]},${rgbMatch[3]}`;
+  }
+  const match = computed.match(/^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i);
+  if (!match) return '59,130,246';
+  const r = parseInt(match[1], 16);
+  const g = parseInt(match[2], 16);
+  const b = parseInt(match[3], 16);
+  return `${r},${g},${b}`;
+}
+
 const expensesChartData = computed(() => {
-  const points = sortedMonthlyExpenses.value;
+  const data = getSortedExpenses(selectedGranularity.value);
+  if (!data.length) return null;
+  const labels = data.map((item) => formatExpenseLabel(item, selectedGranularity.value));
   return {
-    labels: expenseLabels.value,
+    labels,
     datasets: [
       {
-        label: 'Расходы',
-        data: points.map(item => item.amount),
-        backgroundColor: 'rgba(239, 68, 68, 0.7)',
-        borderColor: 'rgba(239, 68, 68, 1)',
-        borderWidth: 2,
+        data: data.map((item) => Number(item.amount ?? 0)),
+        backgroundColor: `rgba(${extractRgb(chartPalette.accent)}, 0.65)`,
+        borderColor: chartPalette.accent,
         borderRadius: 8,
-      }
-    ]
+        maxBarThickness: 48,
+      },
+    ],
   };
 });
 
-// Chart options
-const balanceChartOptions = {
-  responsive: true,
-  maintainAspectRatio: false,
-  interaction: {
-    mode: 'index' as const,
-    intersect: false,
-  },
-  plugins: {
-    legend: {
-      display: true,
-      position: 'top' as const,
-      align: 'start' as const,
-      labels: {
-        color: '#e2e8f0',
-        font: { size: 14, weight: 600 as const },
-        padding: 16,
-        usePointStyle: true,
-        pointStyle: 'circle',
-        boxWidth: 8,
-        boxHeight: 8,
-      }
-    },
-    tooltip: {
-      enabled: true,
-      backgroundColor: 'rgba(15, 23, 42, 0.98)',
-      titleColor: '#f8fafc',
-      titleFont: { size: 14, weight: 600 as const },
-      bodyColor: '#e2e8f0',
-      bodyFont: { size: 13 },
-      padding: 16,
-      borderColor: 'rgba(56, 189, 248, 0.4)',
-      borderWidth: 1,
-      cornerRadius: 8,
-      displayColors: true,
-      boxPadding: 6,
-      usePointStyle: true,
-      callbacks: {
-        label: function(context: any) {
-          return `${context.dataset.label}: ${formatAmount(context.parsed.y ?? 0)}`;
-        }
-      }
-    }
-  },
-  scales: {
-    x: {
-      grid: {
-        color: 'rgba(148, 163, 184, 0.08)',
-        lineWidth: 1,
-      },
-      border: {
-        display: false,
-      },
-      ticks: {
-        color: 'rgba(148, 163, 184, 0.85)',
-        font: { size: 12, weight: 500 as const },
-        padding: 8,
-      }
-    },
-    y: {
-      beginAtZero: false,
-      grid: {
-        color: 'rgba(148, 163, 184, 0.08)',
-        lineWidth: 1,
-      },
-      border: {
-        display: false,
-      },
-      ticks: {
-        color: 'rgba(148, 163, 184, 0.85)',
-        font: { size: 12, weight: 500 as const },
-        padding: 12,
-        callback(value: string | number) {
-          const numericValue = typeof value === 'number' ? value : Number(value);
-          if (!Number.isFinite(numericValue)) {
-            return typeof value === 'string' ? value : String(value);
-          }
-          return formatAmount(numericValue);
-        }
-      }
+function getSortedExpenses(granularity: ExpenseGranularity): MonthlyExpenseDto[] {
+  const items = expensesData[granularity] ?? [];
+  const sorted = [...items].sort((a, b) => {
+    if (a.year !== b.year) return a.year - b.year;
+    if (a.month !== b.month) return a.month - b.month;
+    if (granularity === 'days') return (a.day ?? 0) - (b.day ?? 0);
+    if (granularity === 'weeks') return (a.week ?? 0) - (b.week ?? 0);
+    return 0;
+  });
+
+  const limit = granularity === 'days' ? 30 : granularity === 'weeks' ? 16 : 18;
+  return sorted.slice(Math.max(sorted.length - limit, 0));
+}
+
+function formatExpenseLabel(entry: MonthlyExpenseDto, granularity: ExpenseGranularity): string {
+  if (granularity === 'days' && entry.day != null) {
+    return new Intl.DateTimeFormat('ru-RU', {
+      day: 'numeric',
+      month: 'short',
+    }).format(new Date(entry.year, entry.month - 1, entry.day));
+  }
+
+  if (granularity === 'weeks' && entry.week != null) {
+    return `Неделя ${entry.week}`;
+  }
+
+  return formatMonthLabel(entry.year, entry.month);
+}
+
+const forecastModel = computed<{
+  summary: ForecastSummary | null;
+  chartData: any | null;
+}>(() => {
+  const daily = expensesData.days;
+  const monthly = expensesData.months;
+  if (!daily.length || !monthly.length) {
+    return { summary: null, chartData: null };
+  }
+
+  const now = new Date();
+  const currentYear = now.getUTCFullYear();
+  const currentMonth = now.getUTCMonth() + 1;
+  const today = now.getUTCDate();
+  const daysInMonth = new Date(currentYear, currentMonth, 0).getDate();
+
+  const dailyCurrent = daily.filter(
+    (entry) => entry.year === currentYear && entry.month === currentMonth && entry.day != null,
+  );
+
+  if (!dailyCurrent.length) {
+    return { summary: null, chartData: null };
+  }
+
+  const sumsByDay = new Map<number, number>();
+  for (const entry of dailyCurrent) {
+    const day = entry.day ?? 0;
+    if (!day) continue;
+    sumsByDay.set(day, (sumsByDay.get(day) ?? 0) + Number(entry.amount ?? 0));
+  }
+
+  const monthlySorted = [...monthly].sort((a, b) => {
+    if (a.year !== b.year) return a.year - b.year;
+    return a.month - b.month;
+  });
+
+  const currentIndex = monthlySorted.findIndex(
+    (entry) => entry.year === currentYear && entry.month === currentMonth,
+  );
+
+  if (currentIndex <= 0) {
+    return { summary: null, chartData: null };
+  }
+
+  const previous = monthlySorted[currentIndex - 1];
+  const baselineLimit = Number(previous.amount ?? 0);
+  if (!baselineLimit) {
+    return { summary: null, chartData: null };
+  }
+
+  let cumulative = 0;
+  const labels: string[] = [];
+  const actualData: Array<number | null> = [];
+
+  for (let day = 1; day <= daysInMonth; day += 1) {
+    labels.push(day.toString());
+    const dayAmount = sumsByDay.get(day) ?? 0;
+    cumulative += dayAmount;
+    if (day <= today) {
+      actualData.push(Number(cumulative.toFixed(2)));
+    } else {
+      actualData.push(null);
     }
   }
-};
 
-const categoryChartOptions = {
-  responsive: true,
-  maintainAspectRatio: false,
-  plugins: {
-    legend: {
-      display: true,
-      position: 'right' as const,
-      labels: {
-        color: '#e2e8f0',
-        font: { size: 14, weight: 500 as const },
-        usePointStyle: true,
-        padding: 12,
-      }
-    },
-    tooltip: {
-      enabled: true,
-      backgroundColor: 'rgba(15, 23, 42, 0.98)',
-      titleColor: '#f8fafc',
-      bodyColor: '#e2e8f0',
-      bodyFont: { size: 13 },
-      padding: 16,
-      borderColor: 'rgba(148, 163, 184, 0.4)',
-      borderWidth: 1,
-      cornerRadius: 8,
-      displayColors: true,
-      callbacks: {
-        label(context: any) {
-          const total = context.dataset.data.reduce((a: number, b: number) => a + b, 0);
-          const percentage = total ? ((context.parsed / total) * 100).toFixed(1) : '0.0';
-          return `${context.label}: ${formatAmount(context.parsed ?? 0)} (${percentage}%)`;
-        }
-      }
-    }
-  }
-};
+  const currentSpent = actualData[today - 1] ?? cumulative;
+  const daysElapsed = Math.max(today, 1);
+  const dailyAverage = currentSpent / daysElapsed;
+  const forecastTotal = dailyAverage * daysInMonth;
 
-const expensesChartOptions = computed(() => {
-  const currencyCode = analyticsCurrencyCode.value;
+  const forecastData = Array.from({ length: daysInMonth }, (_, index) =>
+    Number((dailyAverage * (index + 1)).toFixed(2)),
+  );
+
+  const baselineData = Array.from({ length: daysInMonth }, () => Number(baselineLimit.toFixed(2)));
+
+  const status: HealthStatus =
+    forecastTotal <= baselineLimit * 0.9
+      ? 'good'
+      : forecastTotal <= baselineLimit * 1.05
+        ? 'average'
+        : 'poor';
+
+  const chartData = {
+    labels,
+    datasets: [
+      {
+        label: 'Факт',
+        data: actualData,
+        borderColor: chartPalette.accent,
+        backgroundColor: `rgba(${extractRgb(chartPalette.accent)}, 0.18)`,
+        fill: true,
+        borderWidth: 2,
+        tension: 0.35,
+        pointRadius: 3,
+        pointBackgroundColor: chartPalette.accent,
+        pointBorderColor: '#ffffff',
+        spanGaps: false,
+      },
+      {
+        label: 'Прогноз',
+        data: forecastData,
+        borderColor: chartPalette.primary,
+        borderDash: [8, 6],
+        borderWidth: 2,
+        pointRadius: 0,
+        fill: false,
+        tension: 0.25,
+      },
+      {
+        label: 'Лимит прошлого месяца',
+        data: baselineData,
+        borderColor: chartPalette.surface,
+        borderDash: [4, 4],
+        borderWidth: 1.5,
+        pointRadius: 0,
+        fill: false,
+        tension: 0,
+      },
+    ],
+  };
+
   return {
-    responsive: true,
-    maintainAspectRatio: false,
-    interaction: {
-      mode: 'index' as const,
-      intersect: false,
+    summary: {
+      forecastTotal,
+      currentSpent,
+      baselineLimit,
+      status,
     },
-    plugins: {
-      legend: {
-        display: true,
-        position: 'top' as const,
-        align: 'start' as const,
-        labels: {
-          color: '#e2e8f0',
-          font: { size: 14, weight: 600 as const },
-          padding: 16,
-          usePointStyle: true,
-          pointStyle: 'circle',
-          boxWidth: 8,
-          boxHeight: 8,
-        }
-      },
-      tooltip: {
-        enabled: true,
-        backgroundColor: 'rgba(15, 23, 42, 0.98)',
-        titleColor: '#f8fafc',
-        titleFont: { size: 14, weight: 600 as const },
-        bodyColor: '#e2e8f0',
-        bodyFont: { size: 13 },
-        padding: 16,
-        borderColor: 'rgba(239, 68, 68, 0.4)',
-        borderWidth: 1,
-        cornerRadius: 8,
-        displayColors: true,
-        boxPadding: 6,
-        usePointStyle: true,
-        callbacks: {
-          label(context: any) {
-            const value = context.parsed?.y ?? 0;
-            const safeValue = Math.max(value, 0);
-            return `${context.dataset.label}: ${formatCurrency(safeValue, currencyCode)}`;
-          }
-        }
-      }
-    },
-    scales: {
-      x: {
-        grid: {
-          color: 'rgba(148, 163, 184, 0.08)',
-          lineWidth: 1,
-        },
-        border: {
-          display: false,
-        },
-        ticks: {
-          color: 'rgba(148, 163, 184, 0.85)',
-          font: { size: 12, weight: 500 as const },
-          padding: 8,
-          maxRotation: 45,
-          minRotation: 0,
-        }
-      },
-      y: {
-        beginAtZero: true,
-        grid: {
-          color: 'rgba(148, 163, 184, 0.08)',
-          lineWidth: 1,
-        },
-        border: {
-          display: false,
-        },
-        ticks: {
-          color: 'rgba(148, 163, 184, 0.85)',
-          font: { size: 12, weight: 500 as const },
-          padding: 12,
-          callback(value: string | number) {
-            const numericValue = typeof value === 'number' ? value : Number(value);
-            if (!Number.isFinite(numericValue)) {
-              return typeof value === 'string' ? value : String(value);
-            }
-            return formatCurrency(numericValue, currencyCode);
-          }
-        }
-      }
-    }
+    chartData,
   };
 });
 
-async function fetchExpensesByGranularity(): Promise<void> {
-  try {
-    const data = await apiService.getExpensesByGranularity(expenseGranularity.value);
-    monthlyExpenses.value = Array.isArray(data) ? data : [];
-  } catch (error) {
-    console.error('Failed to load expenses by granularity:', error);
-    monthlyExpenses.value = [];
-  }
+const forecastSummary = computed(() => forecastModel.value.summary);
+const forecastChartData = computed(() => forecastModel.value.chartData);
+
+const forecastLoading = computed(() => expensesLoading.days || expensesLoading.months);
+
+const forecastError = computed(() => expensesError.days ?? expensesError.months);
+
+function retryHealth() {
+  void loadFinancialHealth(selectedHealthPeriod.value);
 }
 
-async function fetchAllData(): Promise<void> {
-  try {
-    const networth = await apiService.getNetWorthTrend();
-    netWorthSnapshots.value = Array.isArray(networth) ? networth : [];
-    await fetchExpensesByGranularity();
-  } catch (error) {
-    console.error('Failed to load analytics data:', error);
-  }
+function retryCategories() {
+  void loadCategoryExpenses(selectedCategoryPeriod.value);
 }
 
-// Watch granularity changes
-watch(expenseGranularity, async () => {
-  await fetchExpensesByGranularity();
+function retryNetWorthData() {
+  void loadNetWorth();
+}
+
+function retryExpensesData() {
+  void loadExpenses(selectedGranularity.value, true);
+}
+
+function retryForecastData() {
+  void Promise.all([loadExpenses('months', true), loadExpenses('days', true)]);
+}
+
+watch(selectedHealthPeriod, (period) => {
+  void loadFinancialHealth(period);
+});
+
+watch(selectedCategoryPeriod, (period) => {
+  void loadCategoryExpenses(period);
+});
+
+watch(selectedGranularity, (granularity) => {
+  void loadExpenses(granularity);
 });
 
 onMounted(async () => {
-  isAnalyticsLoading.value = true;
-  try {
-    await Promise.all([
-      financeStore.fetchCurrencies(),
-      financeStore.fetchAccounts(),
-      financeStore.fetchCategories(),
-      userStore.fetchCurrentUser(),
-      fetchAllData(),
-      loadFinancialHealth(),
-    ]);
-  } finally {
-    isAnalyticsLoading.value = false;
-  }
+  resolveCssVariables();
+  await userStore.fetchCurrentUser();
+  await Promise.all([
+    loadFinancialHealth(selectedHealthPeriod.value),
+    loadCategoryExpenses(selectedCategoryPeriod.value),
+    loadNetWorth(),
+    loadExpenses('months'),
+    loadExpenses('days'),
+  ]);
 });
 </script>
 
 <template>
-  <div class="analytics page">
+  <div class="analytics-page">
     <PageHeader
       title="Аналитика"
-      subtitle="Динамика капитала, структура расходов и персональные подсказки"
-      :breadcrumbs="[
-        { label: 'Главная', to: '/dashboard' },
-        { label: 'Аналитика' }
-      ]"
-    >
-      <template #actions>
-        <AppButton size="md" icon="pi pi-bolt">
-          Запланировать цель
-        </AppButton>
-      </template>
-    </PageHeader>
+      subtitle="Отслеживайте баланс, структуру расходов и прогноз в одном месте"
+    />
 
-    <section class="analytics__summary">
-      <AppCard class="summary-card" padding="lg" elevated>
-        <header class="summary-card__header">
-          <div class="summary-card__intro">
-            <p class="summary-card__eyebrow">Личная аналитика</p>
-            <h2 class="summary-card__title">Финансовая траектория</h2>
-            <p class="summary-card__copy">
-              Ключевые показатели за выбранный период — {{ selectedFinancialPeriodLabel }}.
-              Отслеживайте баланс, расходы и прогресс по целям в одном месте.
-            </p>
-          </div>
-        </header>
-        <div class="summary-card__metrics">
-          <article
-            v-for="metric in heroHighlights"
-            :key="metric.key"
-            class="summary-metric"
-          >
-            <span class="summary-metric__label">{{ metric.label }}</span>
-            <span class="summary-metric__value">{{ metric.primary }}</span>
-            <span
-              class="summary-metric__meta"
-              :class="`summary-metric__meta--${metric.secondaryTone ?? 'muted'}`"
-            >
-              {{ metric.secondary }}
-            </span>
-          </article>
-        </div>
-      </AppCard>
-    </section>
+    <div class="analytics-grid">
+      <HeroHealthCard
+        class="analytics-grid__hero"
+        :loading="healthLoading"
+        :error="healthError"
+        :metrics="financialMetricRows"
+        :score="financialScore"
+        :verdict="financialVerdict"
+        :period="selectedHealthPeriod"
+        :period-options="healthPeriodOptions"
+        @retry="retryHealth"
+        @update:period="selectedHealthPeriod = $event"
+      />
 
-    <section class="analytics__grid">
-      <FinancialHealthSummaryCard
-        class="analytics-card analytics-card--health"
-        :loading="isFinancialHealthLoading"
-        :metrics="financialMetricCards"
-        :has-data="hasFinancialMetrics"
-        :period-label="selectedFinancialPeriodLabel"
-      >
-        <template #actions>
-          <div class="segmented" role="tablist" aria-label="Период финансового здоровья">
-            <button
-              v-for="option in financialPeriodOptions"
-              :key="option.value"
-              type="button"
-              :class="['segmented__btn', { 'is-active': financialPeriod === option.value }]"
-              @click="financialPeriod = option.value"
-            >
-              {{ option.label }}
-            </button>
-          </div>
-        </template>
-      </FinancialHealthSummaryCard>
+      <SpendingPieCard
+        class="analytics-grid__pie"
+        :loading="categoryLoading"
+        :error="categoryError"
+        :period="selectedCategoryPeriod"
+        :period-options="categoryPeriodOptions"
+        :chart-data="categoryChartData"
+        :legend="categoryLegend"
+        :currency="baseCurrency"
+        @update:period="selectedCategoryPeriod = $event"
+        @retry="retryCategories"
+      />
 
-      <AppCard class="analytics-card analytics-card--net-worth" padding="lg" elevated>
-        <template #header>
-          <div class="analytics-card__header">
-            <div class="analytics-card__title">
-              <span class="analytics-card__icon">
-                <i class="pi pi-chart-line" aria-hidden="true" />
-              </span>
-              <div>
-                <h3>Тренд баланса</h3>
-                <p>Как меняется стоимость активов по месяцам</p>
-              </div>
-            </div>
-          </div>
-        </template>
+      <SpendingBarsCard
+        class="analytics-grid__spending"
+        :loading="expensesLoading[selectedGranularity]"
+        :error="expensesError[selectedGranularity]"
+        :granularity="selectedGranularity"
+        :granularity-options="granularityOptions"
+        :chart-data="expensesChartData"
+        :empty="!expensesChartData"
+        :currency="baseCurrency"
+        @update:granularity="selectedGranularity = $event"
+        @retry="retryExpensesData"
+      />
 
-        <div v-if="isAnalyticsLoading" class="chart-container chart-container--loading">
-          <Skeleton width="100%" height="280px" />
-        </div>
-        <div v-else-if="sortedNetWorth.length === 0" class="analytics-empty">
-          <i class="pi pi-chart-line analytics-empty__icon" />
-          <p class="analytics-empty__title">Недостаточно данных</p>
-          <p class="analytics-empty__subtitle">
-            Добавьте транзакции, чтобы увидеть динамику баланса.
-          </p>
-        </div>
-        <div v-else class="chart-container">
-          <Line :data="balanceChartData" :options="balanceChartOptions" />
-        </div>
-      </AppCard>
+      <NetWorthLineCard
+        class="analytics-grid__networth"
+        :loading="netWorthLoading"
+        :error="netWorthError"
+        :period="selectedNetWorthPeriod"
+        :period-options="netWorthPeriodOptions"
+        :chart-data="netWorthChartData"
+        :empty="!visibleNetWorth.length"
+        :currency="baseCurrency"
+        @update:period="selectedNetWorthPeriod = $event"
+        @retry="retryNetWorthData"
+      />
 
-      <AppCard class="analytics-card analytics-card--categories" padding="lg" elevated>
-        <template #header>
-          <div class="analytics-card__header">
-            <div class="analytics-card__title">
-              <span class="analytics-card__icon">
-                <i class="pi pi-chart-pie" aria-hidden="true" />
-              </span>
-              <div>
-                <h3>Расходы по категориям</h3>
-                <p>Структура трат за выбранный период</p>
-              </div>
-            </div>
-            <div class="segmented" role="tablist" aria-label="Период по категориям">
-              <button
-                v-for="period in categoryPeriods"
-                :key="period.value"
-                type="button"
-                :class="['segmented__btn', { 'is-active': categoryTimePeriod === period.value }]"
-                @click="categoryTimePeriod = period.value as CategoryTimePeriod"
-              >
-                {{ period.label }}
-              </button>
-            </div>
-          </div>
-        </template>
-
-        <div v-if="isAnalyticsLoading" class="chart-container chart-container--loading">
-          <Skeleton width="100%" height="280px" />
-        </div>
-        <div v-else-if="categoryExpenses.length === 0" class="analytics-empty analytics-empty--compact">
-          <i class="pi pi-inbox analytics-empty__icon" />
-          <p class="analytics-empty__title">Нет данных</p>
-          <p class="analytics-empty__subtitle">
-            Запишите операции, чтобы увидеть лидирующие категории.
-          </p>
-        </div>
-        <div v-else class="chart-container chart-container--pie">
-          <Pie :data="categoryChartData" :options="categoryChartOptions" />
-        </div>
-      </AppCard>
-
-      <AppCard class="analytics-card analytics-card--expenses" padding="lg" elevated>
-        <template #header>
-          <div class="analytics-card__header">
-            <div class="analytics-card__title">
-              <span class="analytics-card__icon">
-                <i class="pi pi-chart-bar" aria-hidden="true" />
-              </span>
-              <div>
-                <h3>Динамика расходов</h3>
-                <p>Сравнивайте траты по выбранной детализации</p>
-              </div>
-            </div>
-            <div class="segmented" role="tablist" aria-label="Гранулярность расходов">
-              <button
-                v-for="granularity in expenseGranularities"
-                :key="granularity.value"
-                type="button"
-                :class="['segmented__btn', { 'is-active': expenseGranularity === granularity.value }]"
-                @click="expenseGranularity = granularity.value as ExpenseGranularity"
-              >
-                {{ granularity.label }}
-              </button>
-            </div>
-          </div>
-        </template>
-
-        <div v-if="isAnalyticsLoading" class="chart-container chart-container--loading">
-          <Skeleton width="100%" height="280px" />
-        </div>
-        <div v-else-if="sortedMonthlyExpenses.length === 0" class="analytics-empty analytics-empty--compact">
-          <i class="pi pi-database analytics-empty__icon" />
-          <p class="analytics-empty__title">Недостаточно данных</p>
-          <p class="analytics-empty__subtitle">
-            Добавьте операции, чтобы увидеть динамику расходов.
-          </p>
-        </div>
-        <div v-else class="chart-container">
-          <Bar :data="expensesChartData" :options="expensesChartOptions" />
-        </div>
-      </AppCard>
-
-      <AppCard
-        v-if="improvementTips.length > 0"
-        class="analytics-card analytics-card--insights"
-        padding="lg"
-        elevated
-      >
-        <template #header>
-          <div class="analytics-card__header">
-            <div class="analytics-card__title">
-              <span class="analytics-card__icon">
-                <i class="pi pi-lightbulb" aria-hidden="true" />
-              </span>
-              <div>
-                <h3>Следующие шаги</h3>
-                <p>Персональные рекомендации на основе текущих данных</p>
-              </div>
-            </div>
-          </div>
-        </template>
-
-        <ul class="insight-list">
-          <li v-for="tip in improvementTips" :key="tip">
-            <i class="pi pi-check-circle" aria-hidden="true" />
-            <span>{{ tip }}</span>
-          </li>
-        </ul>
-      </AppCard>
-    </section>
+      <ForecastCard
+        class="analytics-grid__forecast"
+        :loading="forecastLoading"
+        :error="forecastError"
+        :forecast="forecastSummary"
+        :chart-data="forecastChartData"
+        :currency="baseCurrency"
+        @retry="retryForecastData"
+      />
+    </div>
   </div>
 </template>
 
 <style scoped>
-.analytics {
-  display: flex;
-  flex-direction: column;
-  gap: var(--ft-space-7);
-  padding-bottom: var(--ft-space-8);
-}
-
-.analytics__summary {
-  margin-top: var(--ft-space-5);
-}
-
-.summary-card {
-  display: flex;
-  flex-direction: column;
-  gap: var(--ft-space-5);
-  border-radius: var(--ft-radius-2xl);
-  border: 1px solid var(--ft-border-soft);
-  background: linear-gradient(145deg, rgba(37, 99, 235, 0.12), rgba(15, 23, 42, 0.6));
-  box-shadow: 0 22px 48px rgba(15, 23, 42, 0.28);
-}
-
-.summary-card__header {
-  display: flex;
-  flex-wrap: wrap;
-  justify-content: space-between;
-  gap: var(--ft-space-4);
-}
-
-.summary-card__intro {
-  display: grid;
-  gap: var(--ft-space-2);
-  max-width: clamp(320px, 60vw, 560px);
-}
-
-.summary-card__eyebrow {
-  margin: 0;
-  font-size: var(--ft-text-xs);
-  text-transform: uppercase;
-  letter-spacing: 0.12em;
-  font-weight: var(--ft-font-semibold);
-  color: rgba(191, 219, 254, 0.9);
-}
-
-.summary-card__title {
-  margin: 0;
-  font-size: clamp(var(--ft-text-2xl), 3.8vw, var(--ft-text-3xl));
-  font-weight: var(--ft-font-semibold);
-  color: var(--ft-text-inverse);
-}
-
-.summary-card__copy {
-  margin: 0;
-  font-size: var(--ft-text-base);
-  line-height: var(--ft-leading-relaxed);
-  color: rgba(226, 232, 240, 0.85);
-}
-
-.summary-card__metrics {
-  display: grid;
-  gap: var(--ft-space-4);
-  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-}
-
-.summary-metric {
-  display: grid;
-  gap: var(--ft-space-2);
-  padding: var(--ft-space-4);
-  border-radius: var(--ft-radius-xl);
-  background: rgba(15, 23, 42, 0.68);
-  border: 1px solid rgba(148, 163, 184, 0.25);
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.05);
-}
-
-.summary-metric__label {
-  font-size: var(--ft-text-xs);
-  text-transform: uppercase;
-  letter-spacing: 0.08em;
-  color: rgba(226, 232, 240, 0.72);
-}
-
-.summary-metric__value {
-  font-size: clamp(var(--ft-text-lg), 3vw, var(--ft-text-2xl));
-  font-weight: var(--ft-font-semibold);
-  color: var(--ft-text-inverse);
-}
-
-.summary-metric__meta {
-  font-size: var(--ft-text-sm);
-  font-weight: var(--ft-font-medium);
-}
-
-.summary-metric__meta--muted {
-  color: rgba(209, 213, 219, 0.8);
-}
-
-.summary-metric__meta--positive {
-  color: var(--ft-success-400);
-}
-
-.summary-metric__meta--negative {
-  color: var(--ft-danger-400);
-}
-
-.summary-metric__meta--warning {
-  color: var(--ft-warning-400);
-}
-
-.analytics__grid {
+.analytics-page {
   display: grid;
   gap: var(--ft-space-6);
-  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
-  align-items: stretch;
 }
 
-.analytics-card {
-  display: flex;
-  flex-direction: column;
-  gap: var(--ft-space-4);
-  padding: clamp(var(--ft-space-5), 3vw, var(--ft-space-6));
-  border-radius: var(--ft-radius-2xl);
-  border: 1px solid var(--ft-border-soft);
-  background: var(--ft-surface-soft);
-  box-shadow: var(--ft-shadow-card);
-}
-
-.analytics-card__header {
-  display: flex;
-  flex-wrap: wrap;
-  justify-content: space-between;
-  align-items: flex-start;
+.analytics-grid {
+  display: grid;
   gap: var(--ft-space-4);
 }
 
-.analytics-card__title {
-  display: flex;
-  align-items: center;
-  gap: var(--ft-space-3);
+.analytics-grid__hero,
+.analytics-grid__pie,
+.analytics-grid__spending,
+.analytics-grid__networth,
+.analytics-grid__forecast {
+  grid-column: 1 / -1;
 }
 
-.analytics-card__icon {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 36px;
-  height: 36px;
-  border-radius: var(--ft-radius-lg);
-  background: rgba(37, 99, 235, 0.14);
-  color: var(--ft-primary-600);
-}
-
-.analytics-card__title h3 {
-  margin: 0;
-  font-size: var(--ft-text-lg);
-  font-weight: var(--ft-font-semibold);
-  color: var(--ft-heading);
-}
-
-.analytics-card__title p {
-  margin: var(--ft-space-1) 0 0;
-  color: var(--ft-text-muted);
-  font-size: var(--ft-text-sm);
-}
-
-.segmented {
-  display: inline-flex;
-  align-items: center;
-  gap: var(--ft-space-1);
-  padding: var(--ft-space-1);
-  border-radius: 999px;
-  background: var(--ft-surface-muted);
-}
-
-.segmented__btn {
-  border: none;
-  background: transparent;
-  color: var(--ft-text-muted);
-  font-size: var(--ft-text-sm);
-  font-weight: var(--ft-font-medium);
-  padding: var(--ft-space-2) var(--ft-space-3);
-  border-radius: 999px;
-  cursor: pointer;
-  transition: all var(--ft-transition-fast);
-}
-
-.segmented__btn:hover {
-  color: var(--ft-heading);
-}
-
-.segmented__btn.is-active {
-  background: var(--ft-primary-600);
-  color: var(--ft-text-inverse);
-  box-shadow: 0 12px 24px rgba(37, 99, 235, 0.22);
-}
-
-.segmented__btn:focus-visible {
-  outline: 2px solid var(--ft-focus-ring);
-  outline-offset: 2px;
-}
-
-.chart-container {
-  position: relative;
-  min-height: 320px;
-  height: 360px;
-}
-
-.chart-container--pie {
-  height: 380px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.chart-container--loading {
-  display: grid;
-  place-items: center;
-}
-
-.analytics-empty {
-  display: grid;
-  place-items: center;
-  gap: var(--ft-space-3);
-  text-align: center;
-  min-height: 300px;
-  padding: var(--ft-space-6);
-  border-radius: var(--ft-radius-xl);
-  border: 1px dashed var(--ft-border-soft);
-  background: var(--ft-surface-muted);
-}
-
-.analytics-empty--compact {
-  min-height: 260px;
-}
-
-.analytics-empty__icon {
-  font-size: var(--ft-text-3xl);
-  color: var(--ft-primary-500);
-}
-
-.analytics-empty__title {
-  margin: 0;
-  font-size: var(--ft-text-lg);
-  font-weight: var(--ft-font-semibold);
-  color: var(--ft-heading);
-}
-
-.analytics-empty__subtitle {
-  margin: 0;
-  max-width: 36ch;
-  color: var(--ft-text-muted);
-  font-size: var(--ft-text-sm);
-}
-
-.insight-list {
-  margin: 0;
-  padding: 0;
-  list-style: none;
-  display: grid;
-  gap: var(--ft-space-3);
-}
-
-.insight-list li {
-  display: flex;
-  align-items: flex-start;
-  gap: var(--ft-space-3);
-  padding: var(--ft-space-3) var(--ft-space-4);
-  border-radius: var(--ft-radius-lg);
-  background: var(--ft-surface-muted);
-}
-
-.insight-list i {
-  color: var(--ft-success-500);
-  font-size: 1rem;
-  margin-top: 2px;
-}
-
-@media (min-width: 1200px) {
-  .analytics__grid {
-    grid-template-columns: repeat(6, minmax(0, 1fr));
+@media (min-width: 1024px) {
+  .analytics-grid {
+    grid-template-columns: repeat(12, minmax(0, 1fr));
   }
 
-  .analytics-card--health {
-    grid-column: span 2;
+  .analytics-grid__hero,
+  .analytics-grid__networth,
+  .analytics-grid__forecast {
+    grid-column: 1 / -1;
   }
 
-  .analytics-card--net-worth {
-    grid-column: span 4;
+  .analytics-grid__pie {
+    grid-column: 1 / span 6;
   }
 
-  .analytics-card--categories,
-  .analytics-card--expenses {
-    grid-column: span 3;
-  }
-
-  .analytics-card--insights {
-    grid-column: span 6;
-  }
-}
-
-@media (max-width: 768px) {
-  .analytics {
-    gap: var(--ft-space-5);
-  }
-
-  .summary-card__header {
-    flex-direction: column;
-    gap: var(--ft-space-3);
-  }
-
-  .chart-container {
-    height: 320px;
-  }
-
-  .segmented {
-    width: 100%;
-    justify-content: flex-start;
-    flex-wrap: wrap;
-  }
-
-  .segmented__btn {
-    flex: 1 1 auto;
-    text-align: center;
+  .analytics-grid__spending {
+    grid-column: 7 / span 6;
   }
 }
 </style>
