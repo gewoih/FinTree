@@ -2,6 +2,10 @@
 import { computed } from 'vue';
 import type { Account, Category } from '../types';
 
+// Common components
+import FormField from './common/FormField.vue';
+import AppButton from './common/AppButton.vue';
+
 // PrimeVue Components
 import InputText from 'primevue/inputtext';
 import Select from 'primevue/select';
