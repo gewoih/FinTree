@@ -21,6 +21,12 @@ export const NAVIGATION_ITEMS = [
     route: '/analytics'
   },
   {
+    id: 'future-income',
+    label: 'Future Income',
+    icon: 'pi pi-chart-bar',
+    route: '/future-income'
+  },
+  {
     id: 'accounts',
     label: 'Accounts',
     icon: 'pi pi-wallet',

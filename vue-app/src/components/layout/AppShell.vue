@@ -27,6 +27,7 @@ const navigationItems = [
   { label: 'Транзакции', icon: 'pi-list', to: '/expenses' },
   { label: 'Категории', icon: 'pi-tags', to: '/categories' },
   { label: 'Аналитика', icon: 'pi-chart-line', to: '/analytics' },
+  { label: 'План доходов', icon: 'pi-chart-bar', to: '/future-income' },
   { label: 'Профиль', icon: 'pi-cog', to: '/profile' }
 ]
 

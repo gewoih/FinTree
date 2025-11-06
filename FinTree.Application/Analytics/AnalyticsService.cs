@@ -1,7 +1,9 @@
 using FinTree.Application.Currencies;
 using FinTree.Application.Users;
 using FinTree.Domain.Accounts;
+using FinTree.Domain.IncomeStreams;
 using FinTree.Domain.Transactions;
+using FinTree.Domain.ValueObjects;
 using FinTree.Infrastructure.Database;
 using Microsoft.EntityFrameworkCore;
 
@@ -476,6 +478,148 @@ public sealed class AnalyticsService(
             .ToList();
 
         return result;
+    }
+
+    public async Task<FutureIncomeOverviewDto> GetFutureIncomeOverviewAsync(int salaryLookbackMonths = 6,
+        CancellationToken ct = default)
+    {
+        if (salaryLookbackMonths <= 0)
+            throw new ArgumentOutOfRangeException(nameof(salaryLookbackMonths));
+
+        var currentUserId = currentUserService.Id;
+        var nowUtc = DateTime.UtcNow;
+        var baseCurrencyCode = await context.Users
+            .Where(u => u.Id == currentUserId)
+            .Select(u => u.BaseCurrencyCode)
+            .SingleAsync(ct);
+
+        var currentMonthStart = new DateTime(nowUtc.Year, nowUtc.Month, 1, 0, 0, 0, DateTimeKind.Utc);
+        var salaryPeriodStart = currentMonthStart.AddMonths(1 - salaryLookbackMonths);
+
+        var incomeTransactions = await context.Transactions
+            .AsNoTracking()
+            .Where(t => t.Account.UserId == currentUserId &&
+                        t.Type == TransactionType.Income &&
+                        t.OccurredAt >= salaryPeriodStart &&
+                        t.OccurredAt <= nowUtc)
+            .Join(context.TransactionCategories.AsNoTracking(),
+                t => t.CategoryId,
+                c => c.Id,
+                (t, c) => new
+                {
+                    t.Money,
+                    t.OccurredAt,
+                    CategoryName = c.Name
+                })
+            .ToListAsync(ct);
+
+        var normalizedIncome = new List<(DateTime OccurredAt, decimal Amount, string CategoryName)>();
+        foreach (var income in incomeTransactions)
+        {
+            ct.ThrowIfCancellationRequested();
+
+            var occurredAt = income.OccurredAt.Kind == DateTimeKind.Unspecified
+                ? DateTime.SpecifyKind(income.OccurredAt, DateTimeKind.Utc)
+                : income.OccurredAt.ToUniversalTime();
+
+            var baseMoney = await currencyConverter.ConvertAsync(
+                income.Money,
+                baseCurrencyCode,
+                occurredAt,
+                ct);
+
+            var categoryName = string.IsNullOrWhiteSpace(income.CategoryName)
+                ? "Доход"
+                : income.CategoryName;
+
+            normalizedIncome.Add((occurredAt, baseMoney.Amount, categoryName));
+        }
+
+        var monthsConsidered = Math.Max(1, salaryLookbackMonths);
+        SalaryProjectionDto? salaryProjection = null;
+        if (normalizedIncome.Count > 0)
+        {
+            var totalIncome = normalizedIncome.Sum(x => x.Amount);
+            var monthlyAverage = totalIncome / monthsConsidered;
+
+            var sources = normalizedIncome
+                .GroupBy(x => x.CategoryName)
+                .Select(g =>
+                {
+                    var total = g.Sum(x => x.Amount);
+                    var monthly = total / monthsConsidered;
+                    var annual = monthly * 12m;
+                    var share = totalIncome > 0m ? total / totalIncome : 0m;
+                    return new IncomeBreakdownDto(g.Key, monthly, annual, share);
+                })
+                .OrderByDescending(x => x.MonthlyAmount)
+                .ToList();
+
+            salaryProjection = new SalaryProjectionDto(
+                MonthlyAverage: monthlyAverage,
+                AnnualProjection: monthlyAverage * 12m,
+                Sources: sources);
+        }
+
+        var instruments = await context.IncomeInstruments
+            .AsNoTracking()
+            .Where(i => i.UserId == currentUserId)
+            .OrderBy(i => i.CreatedAt)
+            .ToListAsync(ct);
+
+        var instrumentProjections = new List<IncomeInstrumentProjectionDto>(instruments.Count);
+
+        foreach (var instrument in instruments)
+        {
+            ct.ThrowIfCancellationRequested();
+
+            var asOfUtc = nowUtc;
+
+            var principalMoney = new Money(instrument.CurrencyCode, instrument.PrincipalAmount);
+            var principalInBase = await currencyConverter.ConvertAsync(principalMoney, baseCurrencyCode, asOfUtc, ct);
+
+            decimal? contributionInBase = null;
+            if (instrument.MonthlyContribution is { } contribution && contribution > 0m)
+            {
+                var contributionMoney = new Money(instrument.CurrencyCode, contribution);
+                var converted = await currencyConverter.ConvertAsync(contributionMoney, baseCurrencyCode, asOfUtc, ct);
+                contributionInBase = converted.Amount;
+            }
+
+            var expectedAnnualIncome = instrument.CalculateExpectedAnnualIncome();
+            var expectedMonthlyIncome = expectedAnnualIncome / 12m;
+
+            var expectedAnnualIncomeInBase = principalInBase.Amount * instrument.ExpectedAnnualYieldRate
+                                              + (contributionInBase ?? 0m) * 12m;
+            var expectedMonthlyIncomeInBase = expectedAnnualIncomeInBase / 12m;
+
+            instrumentProjections.Add(new IncomeInstrumentProjectionDto(
+                Id: instrument.Id,
+                Name: instrument.Name,
+                Type: instrument.InstrumentType,
+                OriginalCurrencyCode: instrument.CurrencyCode,
+                PrincipalAmount: instrument.PrincipalAmount,
+                ExpectedAnnualYieldRate: instrument.ExpectedAnnualYieldRate,
+                MonthlyContribution: instrument.MonthlyContribution,
+                ExpectedMonthlyIncome: expectedMonthlyIncome,
+                ExpectedAnnualIncome: expectedAnnualIncome,
+                PrincipalAmountInBaseCurrency: principalInBase.Amount,
+                MonthlyContributionInBaseCurrency: contributionInBase,
+                ExpectedMonthlyIncomeInBaseCurrency: expectedMonthlyIncomeInBase,
+                ExpectedAnnualIncomeInBaseCurrency: expectedAnnualIncomeInBase));
+        }
+
+        var salaryMonthly = salaryProjection?.MonthlyAverage ?? 0m;
+        var instrumentsMonthly = instrumentProjections.Sum(i => i.ExpectedMonthlyIncomeInBaseCurrency);
+        var totalMonthly = salaryMonthly + instrumentsMonthly;
+        var totalAnnual = totalMonthly * 12m;
+
+        return new FutureIncomeOverviewDto(
+            BaseCurrencyCode: baseCurrencyCode,
+            Salary: salaryProjection,
+            Instruments: instrumentProjections,
+            TotalExpectedMonthlyIncome: totalMonthly,
+            TotalExpectedAnnualIncome: totalAnnual);
     }
 
     private readonly record struct NormalizedTransaction(

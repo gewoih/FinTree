@@ -15,7 +15,10 @@ import type {
     NetWorthSnapshotDto,
     FinancialHealthMetricsDto,
     CurrentUserDto,
-    UpdateUserProfilePayload
+    UpdateUserProfilePayload,
+    CreateIncomeInstrumentPayload,
+    IncomeInstrumentDto,
+    FutureIncomeOverviewDto
 } from '../types.ts';
 
 /**
@@ -170,6 +173,17 @@ export const apiService = {
         });
     },
 
+    // Инвестиционные инструменты
+    async getIncomeInstruments(): Promise<IncomeInstrumentDto[]> {
+        const response = await apiClient.get<IncomeInstrumentDto[]>('/income-instruments');
+        return response.data;
+    },
+
+    async createIncomeInstrument(payload: CreateIncomeInstrumentPayload): Promise<string> {
+        const response = await apiClient.post<string>('/income-instruments', payload);
+        return response.data;
+    },
+
     // Работа с категориями
     async createCategory(payload: CreateCategoryPayload): Promise<string> {
         const response = await apiClient.post<string>('/TransactionCategory', payload);
@@ -222,6 +236,13 @@ export const apiService = {
     async getFinancialHealthMetrics(periodMonths: number): Promise<FinancialHealthMetricsDto> {
         const response = await apiClient.get<FinancialHealthMetricsDto>('/analytics/financial-health', {
             params: { months: periodMonths }
+        });
+        return response.data;
+    },
+
+    async getFutureIncomeOverview(salaryMonths?: number): Promise<FutureIncomeOverviewDto> {
+        const response = await apiClient.get<FutureIncomeOverviewDto>('/analytics/future-income', {
+            params: salaryMonths ? { salaryMonths } : {},
         });
         return response.data;
     },
