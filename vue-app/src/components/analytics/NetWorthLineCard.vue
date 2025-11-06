@@ -1,20 +1,34 @@
 <script setup lang="ts">
-import { computed } from 'vue';
+import { computed, ref, onMounted, watchEffect } from 'vue';
 
 const props = defineProps<{
   loading: boolean;
   error: string | null;
-  period: number;
-  periodOptions: ReadonlyArray<{ label: string; value: number }>;
   chartData: any | null;
   empty: boolean;
   currency: string;
 }>();
 
 const emit = defineEmits<{
-  (event: 'update:period', value: number): void;
   (event: 'retry'): void;
 }>();
+
+const textColor = ref('#1e293b');
+const gridColor = ref('rgba(148,163,184,0.2)');
+
+const updateColors = () => {
+  if (typeof window === 'undefined') return;
+  const styles = getComputedStyle(document.documentElement);
+  textColor.value = styles.getPropertyValue('--ft-text-primary').trim() || '#1e293b';
+  gridColor.value = styles.getPropertyValue('--ft-border-subtle').trim() || 'rgba(148,163,184,0.2)';
+};
+
+onMounted(() => {
+  updateColors();
+  // Watch for class changes on html element to detect theme changes
+  const observer = new MutationObserver(updateColors);
+  observer.observe(document.documentElement, { attributes: true, attributeFilter: ['class'] });
+});
 
 const chartOptions = computed(() => ({
   maintainAspectRatio: false,
@@ -25,18 +39,18 @@ const chartOptions = computed(() => ({
   scales: {
     x: {
       grid: {
-        color: 'rgba(148,163,184,0.2)',
+        color: gridColor.value,
       },
       ticks: {
-        color: 'var(--text-color-secondary)',
+        color: textColor.value,
       },
     },
     y: {
       grid: {
-        color: 'rgba(148,163,184,0.2)',
+        color: gridColor.value,
       },
       ticks: {
-        color: 'var(--text-color-secondary)',
+        color: textColor.value,
         callback(value: number | string) {
           const numeric = typeof value === 'string' ? Number(value) : value;
           return numeric.toLocaleString('ru-RU', {
@@ -53,7 +67,7 @@ const chartOptions = computed(() => ({
       display: true,
       align: 'start',
       labels: {
-        color: 'var(--text-color-secondary)',
+        color: textColor.value,
         usePointStyle: true,
       },
     },
@@ -81,16 +95,8 @@ const chartOptions = computed(() => ({
       <div class="card-head">
         <div>
           <h3>Изменение капитала</h3>
-          <p>Динамика нетто-активов по месяцам</p>
+          <p>Динамика нетто-активов по месяцам за всё время</p>
         </div>
-        <Select
-          :modelValue="period"
-          :options="periodOptions"
-          optionLabel="label"
-          optionValue="value"
-          class="card-select"
-          @update:modelValue="emit('update:period', $event)"
-        />
       </div>
     </template>
 
@@ -124,12 +130,14 @@ const chartOptions = computed(() => ({
       </div>
 
       <div v-else class="line-card__chart">
-        <Chart
-          v-if="chartData"
-          type="line"
-          :data="chartData"
-          :options="chartOptions"
-        />
+        <div class="line-card__chart-container">
+          <Chart
+            v-if="chartData"
+            type="line"
+            :data="chartData"
+            :options="chartOptions"
+          />
+        </div>
       </div>
     </template>
   </Card>
@@ -199,7 +207,24 @@ const chartOptions = computed(() => ({
 }
 
 .line-card__chart {
-  min-height: 360px;
-  padding-inline: var(--ft-space-2);
+  height: 450px;
+  width: 100%;
+  padding: var(--ft-space-4) var(--ft-space-3);
+}
+
+.line-card__chart-container {
+  position: relative;
+  height: 100%;
+  width: 100%;
+}
+
+.line-card__chart-container :deep(.p-chart) {
+  height: 100%;
+  width: 100%;
+}
+
+.line-card__chart-container :deep(canvas) {
+  max-height: 100%;
+  height: 100%;
 }
 </style>

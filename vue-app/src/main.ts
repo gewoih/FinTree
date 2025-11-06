@@ -13,6 +13,7 @@ import Aura from '@primeuix/themes/aura';
 import "primeicons/primeicons.css";
 import ToastService from 'primevue/toastservice';
 import ConfirmationService from 'primevue/confirmationservice';
+import Tooltip from 'primevue/tooltip';
 import { registerComponents } from './components';
 
 const app = createApp(App);
@@ -34,6 +35,8 @@ app.use(PrimeVue, {
         }
     }
 });
+
+app.directive('tooltip', Tooltip);
 
 registerComponents(app);
 

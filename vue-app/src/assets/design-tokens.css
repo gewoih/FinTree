@@ -80,44 +80,46 @@
   --ft-gray-900: #111827;
   --ft-gray-950: #0B1220;
 
-  /* ━━━ SEMANTIC TOKENS - LIGHT THEME ━━━ */
+  /* ━━━ SEMANTIC TOKENS - DARK THEME (DEFAULT) ━━━ */
 
-  /* Backgrounds */
-  --ft-bg-base: #FFFFFF;
-  --ft-bg-subtle: var(--ft-gray-50);
-  --ft-bg-muted: var(--ft-gray-100);
-  --ft-bg-elevated: #FFFFFF;
-  --ft-bg-overlay: rgba(0, 0, 0, 0.5);
+  /* Backgrounds - Rich dark with subtle warmth */
+  --ft-bg-base: #0F1419;
+  --ft-bg-subtle: #1A1F26;
+  --ft-bg-muted: #22272E;
+  --ft-bg-elevated: #1A1F26;
+  --ft-bg-overlay: rgba(0, 0, 0, 0.7);
 
-  /* Surfaces */
-  --ft-surface-base: #FFFFFF;
-  --ft-surface-raised: var(--ft-gray-50);
-  --ft-surface-overlay: #FFFFFF;
+  /* Surfaces - Layered depth */
+  --ft-surface-base: #1A1F26;
+  --ft-surface-raised: #22272E;
+  --ft-surface-overlay: #2D333B;
+  --ft-surface-soft: #22272E;
 
-  /* Text */
-  --ft-text-primary: var(--ft-gray-950);
-  --ft-text-secondary: var(--ft-gray-700);
-  --ft-text-tertiary: var(--ft-gray-500);
-  --ft-text-disabled: var(--ft-gray-400);
-  --ft-text-inverse: #FFFFFF;
-  --ft-text-link: var(--ft-primary-600);
-  --ft-text-link-hover: var(--ft-primary-700);
+  /* Text - High contrast for readability */
+  --ft-text-primary: #E6EDF3;
+  --ft-text-secondary: #9198A1;
+  --ft-text-tertiary: #6E7781;
+  --ft-text-disabled: #484F58;
+  --ft-text-inverse: #0F1419;
+  --ft-text-link: var(--ft-primary-400);
+  --ft-text-link-hover: var(--ft-primary-300);
 
-  /* Borders */
-  --ft-border-subtle: var(--ft-gray-200);
-  --ft-border-default: var(--ft-gray-300);
-  --ft-border-strong: var(--ft-gray-400);
-  --ft-border-inverse: rgba(255, 255, 255, 0.2);
+  /* Borders - Subtle definition */
+  --ft-border-subtle: #2D333B;
+  --ft-border-default: #373E47;
+  --ft-border-strong: #444C56;
+  --ft-border-soft: #22272E;
+  --ft-border-inverse: rgba(255, 255, 255, 0.1);
 
-  /* Interactive */
-  --ft-interactive-default: var(--ft-primary-600);
-  --ft-interactive-hover: var(--ft-primary-700);
-  --ft-interactive-active: var(--ft-primary-800);
-  --ft-interactive-disabled: var(--ft-gray-300);
+  /* Interactive - Vibrant accents */
+  --ft-interactive-default: var(--ft-primary-500);
+  --ft-interactive-hover: var(--ft-primary-400);
+  --ft-interactive-active: var(--ft-primary-600);
+  --ft-interactive-disabled: #373E47;
 
   /* Focus */
-  --ft-focus-ring: var(--ft-primary-500);
-  --ft-focus-ring-offset: #FFFFFF;
+  --ft-focus-ring: var(--ft-primary-400);
+  --ft-focus-ring-offset: #0F1419;
 
   /* ━━━ TYPOGRAPHY ━━━ */
 
@@ -219,56 +221,7 @@
   --ft-button-height-lg: 3rem;    /* 48px */
 }
 
-/* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-   DARK THEME
-   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
-
-.dark-mode {
-  /* Backgrounds */
-  --ft-bg-base: var(--ft-gray-950);
-  --ft-bg-subtle: var(--ft-gray-900);
-  --ft-bg-muted: var(--ft-gray-800);
-  --ft-bg-elevated: var(--ft-gray-900);
-  --ft-bg-overlay: rgba(0, 0, 0, 0.75);
-
-  /* Surfaces */
-  --ft-surface-base: var(--ft-gray-900);
-  --ft-surface-raised: var(--ft-gray-800);
-  --ft-surface-overlay: var(--ft-gray-800);
-
-  /* Text */
-  --ft-text-primary: var(--ft-gray-50);
-  --ft-text-secondary: var(--ft-gray-300);
-  --ft-text-tertiary: var(--ft-gray-400);
-  --ft-text-disabled: var(--ft-gray-600);
-  --ft-text-inverse: var(--ft-gray-950);
-  --ft-text-link: var(--ft-primary-400);
-  --ft-text-link-hover: var(--ft-primary-300);
-
-  /* Borders */
-  --ft-border-subtle: var(--ft-gray-800);
-  --ft-border-default: var(--ft-gray-700);
-  --ft-border-strong: var(--ft-gray-600);
-  --ft-border-inverse: rgba(255, 255, 255, 0.1);
-
-  /* Interactive */
-  --ft-interactive-default: var(--ft-primary-500);
-  --ft-interactive-hover: var(--ft-primary-400);
-  --ft-interactive-active: var(--ft-primary-300);
-  --ft-interactive-disabled: var(--ft-gray-700);
-
-  /* Focus */
-  --ft-focus-ring: var(--ft-primary-400);
-  --ft-focus-ring-offset: var(--ft-gray-950);
-
-  /* Shadows (darker, more pronounced) */
-  --ft-shadow-xs: 0 1px 2px 0 rgba(0, 0, 0, 0.5);
-  --ft-shadow-sm: 0 1px 3px 0 rgba(0, 0, 0, 0.6), 0 1px 2px -1px rgba(0, 0, 0, 0.5);
-  --ft-shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.7), 0 2px 4px -2px rgba(0, 0, 0, 0.6);
-  --ft-shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.8), 0 4px 6px -4px rgba(0, 0, 0, 0.7);
-  --ft-shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.9), 0 8px 10px -6px rgba(0, 0, 0, 0.8);
-  --ft-shadow-2xl: 0 25px 50px -12px rgba(0, 0, 0, 0.95);
-}
+/* Dark theme is now the default - no separate class needed */
 
 /* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
    ACCESSIBILITY
@@ -289,11 +242,6 @@
 /* High contrast mode support */
 @media (prefers-contrast: high) {
   :root {
-    --ft-border-default: var(--ft-gray-900);
-    --ft-text-secondary: var(--ft-gray-900);
-  }
-
-  .dark-mode {
     --ft-border-default: var(--ft-gray-100);
     --ft-text-secondary: var(--ft-gray-100);
   }

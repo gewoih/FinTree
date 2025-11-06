@@ -11,9 +11,15 @@ const route = useRoute()
 const sidebarVisible = ref(false)
 const userMenuRef = ref<{ toggle: (event: Event) => void } | null>(null)
 
-const { darkMode, toggleTheme, initTheme } = useTheme()
+const { initTheme } = useTheme()
 
 const userEmail = computed(() => authStore.userEmail ?? 'Аккаунт')
+
+// Only show drawer on mobile (width < 1024px)
+const isDrawerVisible = computed(() => {
+  if (typeof window === 'undefined') return false
+  return window.innerWidth < 1024
+})
 
 const navigationItems = [
   { label: 'Дашборд', icon: 'pi-home', to: '/dashboard' },
@@ -77,14 +83,6 @@ onMounted(() => {
       </div>
 
       <div class="app-shell__topnav-right">
-        <Button
-          :icon="darkMode ? 'pi pi-sun' : 'pi pi-moon'"
-          text
-          rounded
-          :aria-label="darkMode ? 'Переключиться на светлую тему' : 'Переключиться на тёмную тему'"
-          @click="toggleTheme"
-        />
-
         <div class="app-shell__user-menu">
           <Button
             type="button"
@@ -97,6 +95,33 @@ onMounted(() => {
         </div>
       </div>
     </div>
+
+    <!-- Mobile Drawer (hidden on desktop) -->
+    <Drawer
+      v-if="isDrawerVisible"
+      v-model:visible="sidebarVisible"
+      position="left"
+      class="app-shell__drawer-mobile"
+    >
+      <template #header>
+        <div class="app-shell__drawer-header">
+          <i class="pi pi-chart-bar" />
+          <span>FinTree</span>
+        </div>
+      </template>
+      <nav class="app-shell__nav">
+        <router-link
+          v-for="item in navigationItems"
+          :key="item.to"
+          :to="item.to"
+          class="app-shell__nav-link"
+          :aria-current="route.path === item.to ? 'page' : undefined"
+        >
+          <i :class="['pi', item.icon]" />
+          <span>{{ item.label }}</span>
+        </router-link>
+      </nav>
+    </Drawer>
 
     <!-- Desktop Sidebar -->
     <aside class="app-shell__sidebar-desktop">

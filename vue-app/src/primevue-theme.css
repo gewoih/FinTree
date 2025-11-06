@@ -171,20 +171,46 @@
   padding: var(--ft-space-3) var(--ft-space-4);
 }
 
-.dark-mode .p-card {
-  background: var(--ft-surface-muted);
+/* Card and Table styles - dark mode is default */
+.p-card {
+  background: var(--ft-surface-soft);
   border-color: var(--ft-border-soft);
 }
 
-.dark-mode .p-datatable {
-  background: var(--ft-surface-muted);
+.p-datatable {
+  background: var(--ft-surface-soft);
 }
 
-.dark-mode .p-datatable .p-datatable-header,
-.dark-mode .p-datatable .p-datatable-thead > tr > th {
+.p-datatable .p-datatable-header,
+.p-datatable .p-datatable-thead > tr > th {
   background: rgba(148, 163, 184, 0.08);
 }
 
-.dark-mode .p-datatable .p-datatable-tbody > tr:hover {
-  background-color: rgba(59, 130, 246, 0.14);
+.p-datatable .p-datatable-tbody > tr:hover {
+  background-color: rgba(96, 165, 250, 0.12);
+}
+
+/* SelectButton Active State */
+.p-selectbutton .p-button {
+  background: var(--ft-surface-raised);
+  border-color: var(--ft-border-subtle);
+  color: var(--ft-text-secondary);
+}
+
+.p-selectbutton .p-button:hover {
+  background: var(--ft-surface-overlay);
+  border-color: var(--ft-border-default);
+  color: var(--ft-text-primary);
+}
+
+.p-selectbutton .p-button.p-highlight {
+  background: var(--ft-primary-500);
+  border-color: var(--ft-primary-500);
+  color: white;
+}
+
+.p-selectbutton .p-button.p-highlight:hover {
+  background: var(--ft-primary-400);
+  border-color: var(--ft-primary-400);
+  color: white;
 }

@@ -2,20 +2,32 @@
 import { computed } from 'vue';
 import type { FinancialHealthMetricRow, FinancialHealthVerdict, HealthStatus } from '../../types/analytics';
 
-const props = defineProps<{
-  loading: boolean;
-  error: string | null;
-  metrics: FinancialHealthMetricRow[];
-  score: number | null;
-  verdict: FinancialHealthVerdict | null;
-  period: number;
-  periodOptions: ReadonlyArray<{ label: string; value: number }>;
-}>();
+const props = withDefaults(
+  defineProps<{
+    loading: boolean;
+    error: string | null;
+    metrics: FinancialHealthMetricRow[];
+    score: number | null;
+    verdict: FinancialHealthVerdict | null;
+    period: number;
+    periodOptions: ReadonlyArray<{ label: string; value: number }>;
+  }>(),
+  {
+    period: 6,
+  }
+);
 
 const emit = defineEmits<{
   (event: 'retry'): void;
   (event: 'update:period', value: number): void;
 }>();
+
+const handlePeriodUpdate = (value: number) => {
+  // Only emit valid positive numbers
+  if (value && typeof value === 'number' && value > 0) {
+    emit('update:period', value);
+  }
+};
 
 const formattedScore = computed(() => {
   if (props.score == null || Number.isNaN(props.score)) {
@@ -28,29 +40,16 @@ const showEmpty = computed(
   () => !props.loading && !props.error && props.metrics.length === 0 && props.score == null
 );
 
-const verdictSeverity = computed(() => {
-  switch (props.verdict?.status) {
-    case 'good':
-      return 'success';
-    case 'average':
-      return 'warning';
-    case 'poor':
-      return 'danger';
-    default:
-      return 'secondary';
-  }
-});
-
-const verdictTagClass = computed(() => {
-  if (!props.verdict) return null;
-  return `hero-card__verdict hero-card__verdict--${props.verdict.status}`;
-});
-
 const metricStatusClass: Record<HealthStatus, string> = {
   good: 'hero-card__metric-status--good',
   average: 'hero-card__metric-status--average',
   poor: 'hero-card__metric-status--poor',
 };
+
+const scoreCircleClass = computed(() => {
+  if (!props.verdict?.status) return null;
+  return `hero-card__score-circle--${props.verdict.status}`;
+});
 </script>
 
 <template>
@@ -59,7 +58,7 @@ const metricStatusClass: Record<HealthStatus, string> = {
       <div class="hero-card__header">
         <div>
           <p class="hero-card__eyebrow">Финансовое здоровье</p>
-          <h2 class="hero-card__title">Индекс благополучия</h2>
+          <h2 class="hero-card__title">Финансовое здоровье</h2>
           <p class="hero-card__subtitle">
             Комплексная оценка ваших финансов на основе последних транзакций.
           </p>
@@ -69,7 +68,7 @@ const metricStatusClass: Record<HealthStatus, string> = {
           :options="periodOptions"
           optionLabel="label"
           optionValue="value"
-          @update:modelValue="emit('update:period', $event)"
+          @update:modelValue="handlePeriodUpdate"
         />
       </div>
 
@@ -114,17 +113,9 @@ const metricStatusClass: Record<HealthStatus, string> = {
 
       <div v-else class="hero-card__content">
         <div class="hero-card__score">
-          <div class="hero-card__score-circle">
+          <div class="hero-card__score-circle" :class="scoreCircleClass">
             <span class="hero-card__score-value">{{ formattedScore }}</span>
             <span class="hero-card__score-max">/ 100</span>
-          </div>
-          <div class="hero-card__score-meta">
-            <Tag v-if="verdict" :severity="verdictSeverity" :class="verdictTagClass">
-              {{ verdict.label }}
-            </Tag>
-            <p v-if="verdict?.helper" class="hero-card__score-helper">
-              {{ verdict.helper }}
-            </p>
           </div>
         </div>
 
@@ -133,23 +124,19 @@ const metricStatusClass: Record<HealthStatus, string> = {
             v-for="metric in metrics"
             :key="metric.key"
             class="hero-card__metric"
+            :class="metricStatusClass[metric.status]"
             role="listitem"
-            :title="metric.tooltip"
           >
-            <div class="hero-card__metric-top">
-              <span class="hero-card__metric-emoji" aria-hidden="true">{{ metric.emoji }}</span>
-              <div class="hero-card__metric-text">
+            <div class="hero-card__metric-content">
+              <div class="hero-card__metric-header">
                 <p class="hero-card__metric-label">{{ metric.label }}</p>
-                <p class="hero-card__metric-flair">{{ metric.flair }}</p>
+                <i
+                  class="pi pi-question-circle hero-card__metric-info"
+                  v-tooltip.top="metric.tooltip"
+                />
               </div>
               <p class="hero-card__metric-value">{{ metric.value }}</p>
             </div>
-            <span
-              class="hero-card__metric-status"
-              :class="metricStatusClass[metric.status]"
-            >
-              {{ metric.statusLabel }}
-            </span>
           </article>
         </div>
       </div>
@@ -231,17 +218,19 @@ const metricStatusClass: Record<HealthStatus, string> = {
 
 .hero-card__content {
   display: grid;
-  gap: clamp(1.5rem, 2vw, 2.5rem);
+  grid-template-columns: auto 1fr;
+  gap: clamp(1.5rem, 3vw, 3rem);
+  align-items: center;
 }
 
 .hero-card__score {
   display: flex;
+  justify-content: center;
   align-items: center;
-  gap: clamp(1.25rem, 2vw, 2rem);
 }
 
 .hero-card__score-circle {
-  width: clamp(110px, 14vw, 132px);
+  width: clamp(120px, 14vw, 140px);
   aspect-ratio: 1;
   border-radius: 999px;
   background: color-mix(in srgb, var(--ft-primary-100) 35%, transparent);
@@ -249,74 +238,51 @@ const metricStatusClass: Record<HealthStatus, string> = {
   display: grid;
   place-items: center;
   position: relative;
+  transition: all var(--ft-transition-base);
+}
+
+.hero-card__score-circle--good {
+  background: linear-gradient(135deg, rgba(34, 197, 94, 0.12) 0%, rgba(34, 197, 94, 0.06) 100%);
+  border-color: rgba(34, 197, 94, 0.4);
+}
+
+.hero-card__score-circle--average {
+  background: linear-gradient(135deg, rgba(251, 146, 60, 0.12) 0%, rgba(251, 146, 60, 0.06) 100%);
+  border-color: rgba(251, 146, 60, 0.4);
+}
+
+.hero-card__score-circle--poor {
+  background: linear-gradient(135deg, rgba(239, 68, 68, 0.12) 0%, rgba(239, 68, 68, 0.06) 100%);
+  border-color: rgba(239, 68, 68, 0.4);
 }
 
 .hero-card__score-value {
-  font-size: clamp(2.25rem, 4vw, 3rem);
+  font-size: clamp(2.25rem, 4vw, 2.75rem);
   font-weight: var(--ft-font-bold);
   color: var(--ft-text-primary);
 }
 
 .hero-card__score-max {
   position: absolute;
-  inset-block-end: 18px;
+  inset-block-end: 16px;
   font-size: var(--ft-text-xs);
   color: var(--ft-text-secondary);
 }
 
-.hero-card__score-helper {
-  margin: var(--ft-space-2) 0 0;
-  color: var(--ft-text-secondary);
-  font-size: var(--ft-text-sm);
-  max-width: 32ch;
-}
-
-.hero-card__verdict {
-  font-weight: var(--ft-font-semibold);
-  text-transform: none;
-}
-
-.hero-card__verdict--good {
-  background: color-mix(in srgb, var(--ft-success-200) 45%, transparent) !important;
-  color: var(--ft-success-600) !important;
-}
-
-.hero-card__verdict--average {
-  background: color-mix(in srgb, var(--ft-warning-200) 55%, transparent) !important;
-  color: var(--ft-warning-600) !important;
-}
-
-.hero-card__verdict--poor {
-  background: color-mix(in srgb, var(--ft-danger-200) 55%, transparent) !important;
-  color: var(--ft-danger-600) !important;
-}
-
 .hero-card__metrics {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-  gap: clamp(0.75rem, 2vw, 1.4rem);
+  grid-template-columns: repeat(2, 1fr);
+  gap: clamp(0.75rem, 1.5vw, 1rem);
 }
 
 .hero-card__metric {
   position: relative;
-  padding: clamp(1rem, 2vw, 1.35rem);
+  padding: clamp(1.25rem, 2vw, 1.5rem);
   border-radius: var(--ft-radius-xl);
-  border: 1px solid color-mix(in srgb, var(--ft-border-subtle) 70%, transparent);
-  background: color-mix(in srgb, var(--ft-surface-raised) 85%, transparent);
+  border: 1px solid;
   display: grid;
-  gap: var(--ft-space-3);
+  gap: var(--ft-space-2);
   transition: transform var(--ft-transition-base), box-shadow var(--ft-transition-base);
-  cursor: help;
-}
-
-.hero-card__metric::after {
-  content: '';
-  position: absolute;
-  inset: 0;
-  border-radius: inherit;
-  background: radial-gradient(circle at top right, color-mix(in srgb, var(--ft-primary-200) 35%, transparent), transparent 70%);
-  pointer-events: none;
-  opacity: 0.35;
 }
 
 .hero-card__metric:hover {
@@ -324,82 +290,83 @@ const metricStatusClass: Record<HealthStatus, string> = {
   box-shadow: var(--ft-shadow-md);
 }
 
-.hero-card__metric-top {
-  display: flex;
-  align-items: flex-start;
+.hero-card__metric-content {
+  display: grid;
   gap: var(--ft-space-3);
 }
 
-.hero-card__metric-emoji {
-  font-size: 1.5rem;
-}
-
-.hero-card__metric-text {
-  display: grid;
-  gap: var(--ft-space-1);
-  flex: 1;
+.hero-card__metric-header {
+  display: flex;
+  align-items: center;
+  gap: var(--ft-space-2);
 }
 
 .hero-card__metric-label {
   margin: 0;
   font-size: var(--ft-text-sm);
-  font-weight: var(--ft-font-semibold);
-  color: var(--ft-text-primary);
+  font-weight: var(--ft-font-medium);
+  flex: 1;
 }
 
-.hero-card__metric-flair {
-  margin: 0;
-  font-size: var(--ft-text-xs);
-  text-transform: uppercase;
-  letter-spacing: 0.08em;
-  color: var(--ft-text-secondary);
+.hero-card__metric-info {
+  font-size: var(--ft-text-sm);
+  opacity: 0.5;
+  cursor: help;
+  transition: opacity var(--ft-transition-fast);
+}
+
+.hero-card__metric-info:hover {
+  opacity: 0.8;
 }
 
 .hero-card__metric-value {
   margin: 0;
-  font-size: clamp(1.5rem, 2.2vw, 1.85rem);
+  font-size: clamp(1.75rem, 2.5vw, 2rem);
   font-weight: var(--ft-font-bold);
-  color: var(--ft-text-primary);
-}
-
-.hero-card__metric-status {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  align-self: flex-start;
-  padding: 0.4rem 0.85rem;
-  border-radius: var(--ft-radius-full);
-  font-size: var(--ft-text-xs);
-  font-weight: var(--ft-font-semibold);
-  letter-spacing: 0.04em;
-  text-transform: uppercase;
-  color: var(--ft-text-primary);
-  background: color-mix(in srgb, var(--ft-gray-200) 45%, transparent);
 }
 
 .hero-card__metric-status--good {
-  color: var(--ft-success-700);
-  background: color-mix(in srgb, var(--ft-success-100) 65%, transparent);
+  background: linear-gradient(135deg, rgba(34, 197, 94, 0.08) 0%, rgba(34, 197, 94, 0.04) 100%);
+  border-color: rgba(34, 197, 94, 0.25);
+  color: #4ade80;
 }
 
 .hero-card__metric-status--average {
-  color: var(--ft-warning-700);
-  background: color-mix(in srgb, var(--ft-warning-100) 65%, transparent);
+  background: linear-gradient(135deg, rgba(251, 146, 60, 0.08) 0%, rgba(251, 146, 60, 0.04) 100%);
+  border-color: rgba(251, 146, 60, 0.25);
+  color: #fb923c;
 }
 
 .hero-card__metric-status--poor {
-  color: var(--ft-danger-700);
-  background: color-mix(in srgb, var(--ft-danger-100) 65%, transparent);
+  background: linear-gradient(135deg, rgba(239, 68, 68, 0.08) 0%, rgba(239, 68, 68, 0.04) 100%);
+  border-color: rgba(239, 68, 68, 0.25);
+  color: #f87171;
 }
 
-@media (max-width: 768px) {
+@media (max-width: 992px) {
+  .hero-card__content {
+    grid-template-columns: 1fr;
+    gap: clamp(1rem, 2vw, 1.5rem);
+  }
+
   .hero-card__score {
-    flex-direction: column;
-    align-items: flex-start;
+    justify-content: flex-start;
   }
 
   .hero-card__score-circle {
-    width: 108px;
+    width: clamp(90px, 12vw, 100px);
+  }
+
+  .hero-card__score-value {
+    font-size: clamp(1.75rem, 3vw, 2rem);
+  }
+
+  .hero-card__score-max {
+    inset-block-end: 12px;
+  }
+
+  .hero-card__metrics {
+    grid-template-columns: 1fr;
   }
 }
 </style>

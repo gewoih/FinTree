@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed } from 'vue';
+import { computed, ref, onMounted } from 'vue';
 import type { ExpenseGranularity } from '../../types/analytics';
 
 const props = defineProps<{
@@ -17,6 +17,22 @@ const emit = defineEmits<{
   (event: 'retry'): void;
 }>();
 
+const textColor = ref('#1e293b');
+const gridColor = ref('rgba(148,163,184,0.2)');
+
+const updateColors = () => {
+  if (typeof window === 'undefined') return;
+  const styles = getComputedStyle(document.documentElement);
+  textColor.value = styles.getPropertyValue('--ft-text-primary').trim() || '#1e293b';
+  gridColor.value = styles.getPropertyValue('--ft-border-subtle').trim() || 'rgba(148,163,184,0.2)';
+};
+
+onMounted(() => {
+  updateColors();
+  const observer = new MutationObserver(updateColors);
+  observer.observe(document.documentElement, { attributes: true, attributeFilter: ['class'] });
+});
+
 const chartOptions = computed(() => ({
   maintainAspectRatio: false,
   scales: {
@@ -25,15 +41,15 @@ const chartOptions = computed(() => ({
         display: false,
       },
       ticks: {
-        color: 'var(--text-color-secondary)',
+        color: textColor.value,
       },
     },
     y: {
       grid: {
-        color: 'rgba(148,163,184,0.2)',
+        color: gridColor.value,
       },
       ticks: {
-        color: 'var(--text-color-secondary)',
+        color: textColor.value,
         callback(value: number | string) {
           const numeric = typeof value === 'string' ? Number(value) : value;
           return numeric.toLocaleString('ru-RU', {
@@ -114,12 +130,14 @@ const chartOptions = computed(() => ({
       </div>
 
       <div v-else class="bars-card__chart">
-        <Chart
-          v-if="chartData"
-          type="bar"
-          :data="chartData"
-          :options="chartOptions"
-        />
+        <div class="bars-card__chart-container">
+          <Chart
+            v-if="chartData"
+            type="bar"
+            :data="chartData"
+            :options="chartOptions"
+          />
+        </div>
       </div>
     </template>
   </Card>
@@ -185,7 +203,24 @@ const chartOptions = computed(() => ({
 }
 
 .bars-card__chart {
-  min-height: 360px;
-  padding-inline: var(--ft-space-2);
+  height: 450px;
+  width: 100%;
+  padding: var(--ft-space-4) var(--ft-space-3);
+}
+
+.bars-card__chart-container {
+  position: relative;
+  height: 100%;
+  width: 100%;
+}
+
+.bars-card__chart-container :deep(.p-chart) {
+  height: 100%;
+  width: 100%;
+}
+
+.bars-card__chart-container :deep(canvas) {
+  max-height: 100%;
+  height: 100%;
 }
 </style>

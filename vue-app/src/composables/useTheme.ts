@@ -1,24 +1,23 @@
 import { ref, onMounted } from 'vue'
 
 export function useTheme() {
-  const darkMode = ref(false)
+  const darkMode = ref(true) // Always dark mode
 
   const initTheme = () => {
-    const savedTheme = localStorage.getItem('fintree-theme')
-    const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches
-
-    darkMode.value = savedTheme === 'dark' || (!savedTheme && prefersDark)
+    // Force dark mode always
+    darkMode.value = true
     applyTheme()
   }
 
   const toggleTheme = () => {
-    darkMode.value = !darkMode.value
+    // Keep dark mode always on
+    darkMode.value = true
     applyTheme()
-    localStorage.setItem('fintree-theme', darkMode.value ? 'dark' : 'light')
   }
 
   const applyTheme = () => {
-    document.documentElement.classList.toggle('dark-mode', darkMode.value)
+    // Always apply dark mode class
+    document.documentElement.classList.add('dark-mode')
   }
 
   onMounted(() => {

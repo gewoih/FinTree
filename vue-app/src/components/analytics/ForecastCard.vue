@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed } from 'vue';
+import { computed, ref, onMounted } from 'vue';
 import type { ForecastSummary } from '../../types/analytics';
 
 const props = defineProps<{
@@ -13,6 +13,22 @@ const props = defineProps<{
 const emit = defineEmits<{
   (event: 'retry'): void;
 }>();
+
+const textColor = ref('#1e293b');
+const gridColor = ref('rgba(148,163,184,0.2)');
+
+const updateColors = () => {
+  if (typeof window === 'undefined') return;
+  const styles = getComputedStyle(document.documentElement);
+  textColor.value = styles.getPropertyValue('--ft-text-primary').trim() || '#1e293b';
+  gridColor.value = styles.getPropertyValue('--ft-border-subtle').trim() || 'rgba(148,163,184,0.2)';
+};
+
+onMounted(() => {
+  updateColors();
+  const observer = new MutationObserver(updateColors);
+  observer.observe(document.documentElement, { attributes: true, attributeFilter: ['class'] });
+});
 
 const showEmpty = computed(
   () =>
@@ -86,19 +102,19 @@ const chartOptions = computed(() => ({
   scales: {
     x: {
       grid: {
-        color: 'rgba(148,163,184,0.15)',
+        color: gridColor.value,
       },
       ticks: {
-        color: 'var(--ft-text-secondary)',
+        color: textColor.value,
       },
     },
     y: {
       grid: {
-        color: 'rgba(148,163,184,0.2)',
+        color: gridColor.value,
         drawBorder: false,
       },
       ticks: {
-        color: 'var(--ft-text-secondary)',
+        color: textColor.value,
         callback(value: number | string) {
           const numeric = typeof value === 'string' ? Number(value) : value;
           return numeric.toLocaleString('ru-RU', {
@@ -115,7 +131,7 @@ const chartOptions = computed(() => ({
       display: true,
       align: 'start',
       labels: {
-        color: 'var(--ft-text-secondary)',
+        color: textColor.value,
         usePointStyle: true,
       },
     },
@@ -196,12 +212,14 @@ const chartOptions = computed(() => ({
           </p>
         </div>
         <div class="forecast-card__chart">
-          <Chart
-            v-if="chartData"
-            type="line"
-            :data="chartData"
-            :options="chartOptions"
-          />
+          <div class="forecast-card__chart-container">
+            <Chart
+              v-if="chartData"
+              type="line"
+              :data="chartData"
+              :options="chartOptions"
+            />
+          </div>
         </div>
       </div>
     </template>
@@ -306,7 +324,24 @@ const chartOptions = computed(() => ({
 }
 
 .forecast-card__chart {
-  min-height: 340px;
-  padding-inline: var(--ft-space-2);
+  height: 450px;
+  width: 100%;
+  padding: var(--ft-space-4) var(--ft-space-3);
+}
+
+.forecast-card__chart-container {
+  position: relative;
+  height: 100%;
+  width: 100%;
+}
+
+.forecast-card__chart-container :deep(.p-chart) {
+  height: 100%;
+  width: 100%;
+}
+
+.forecast-card__chart-container :deep(canvas) {
+  max-height: 100%;
+  height: 100%;
 }
 </style>

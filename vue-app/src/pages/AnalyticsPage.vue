@@ -148,43 +148,43 @@ const metricPresentation: Record<
   {
     label: string;
     tooltip: string;
-    flair: Record<HealthStatus, { text: string; emoji: string; statusLabel: string }>;
+    flair: Record<HealthStatus, { emoji: string; statusLabel: string }>;
   }
 > = {
   savingsRate: {
     label: 'Уровень сбережений',
     tooltip: 'Доля доходов, которые остаются у вас после всех расходов.',
     flair: {
-      good: { text: 'Ранг: Финансовый пилот', emoji: '🚀', statusLabel: 'С запасом' },
-      average: { text: 'Ранг: Стратег', emoji: '🧭', statusLabel: 'Нужен апгрейд' },
-      poor: { text: 'Ранг: Новобранец', emoji: '🌱', statusLabel: 'Тревога' },
+      good: { emoji: '🚀', statusLabel: 'С запасом' },
+      average: { emoji: '🧭', statusLabel: 'Нужен апгрейд' },
+      poor: { emoji: '🌱', statusLabel: 'Тревога' },
     },
   },
   liquidityMonths: {
     label: 'Финансовая подушка',
     tooltip: 'Сколько месяцев вы проживёте на текущие резервы, сохраняя образ жизни.',
     flair: {
-      good: { text: 'Ранг: Хранитель резерва', emoji: '🛡️', statusLabel: 'Резерв крепкий' },
-      average: { text: 'Ранг: Сборщик', emoji: '🧱', statusLabel: 'Подкопить' },
-      poor: { text: 'Ранг: На грани', emoji: '⚠️', statusLabel: 'Создайте запас' },
+      good: { emoji: '🛡️', statusLabel: 'Резерв крепкий' },
+      average: { emoji: '🧱', statusLabel: 'Подкопить' },
+      poor: { emoji: '⚠️', statusLabel: 'Создайте запас' },
     },
   },
   expenseVolatility: {
     label: 'Стабильность расходов',
     tooltip: 'Насколько сильно траты скачут от месяца к месяцу.',
     flair: {
-      good: { text: 'Ранг: Штурман', emoji: '🧠', statusLabel: 'Контроль идеален' },
-      average: { text: 'Ранг: Балансир', emoji: '⚖️', statusLabel: 'Следите внимательнее' },
-      poor: { text: 'Ранг: Шторм', emoji: '🌪️', statusLabel: 'Сгладьте скачки' },
+      good: { emoji: '🧠', statusLabel: 'Контроль идеален' },
+      average: { emoji: '⚖️', statusLabel: 'Следите внимательнее' },
+      poor: { emoji: '🌪️', statusLabel: 'Сгладьте скачки' },
     },
   },
   incomeDiversity: {
     label: 'Диверсификация доходов',
     tooltip: 'Насколько равномерно распределены ваши источники дохода.',
     flair: {
-      good: { text: 'Ранг: Мультипликатор', emoji: '🎯', statusLabel: 'Доходы распределены' },
-      average: { text: 'Ранг: Пилот одного корабля', emoji: '🛶', statusLabel: 'Добавьте источники' },
-      poor: { text: 'Ранг: Один двигатель', emoji: '🔥', statusLabel: 'Риск потерять доход' },
+      good: { emoji: '🎯', statusLabel: 'Доходы распределены' },
+      average: { emoji: '🛶', statusLabel: 'Добавьте источники' },
+      poor: { emoji: '🔥', statusLabel: 'Риск потерять доход' },
     },
   },
 };
@@ -267,7 +267,6 @@ function computeFinancialMetricRows(): FinancialHealthMetricRow[] {
       value: definition.format(value, baseCurrency.value),
       status,
       statusLabel: flairMeta.statusLabel,
-      flair: flairMeta.text,
       emoji: flairMeta.emoji,
       tooltip: presentation.tooltip,
     });
@@ -406,10 +405,7 @@ const sortedNetWorth = computed(() => {
 });
 
 const visibleNetWorth = computed(() => {
-  const entries = sortedNetWorth.value;
-  if (!entries.length) return [];
-  const count = selectedNetWorthPeriod.value;
-  return entries.slice(Math.max(entries.length - count, 0));
+  return sortedNetWorth.value;
 });
 
 const netWorthChartData = computed(() => {
@@ -669,15 +665,21 @@ function retryForecastData() {
 }
 
 watch(selectedHealthPeriod, (period) => {
-  void loadFinancialHealth(period);
+  if (period && period > 0) {
+    void loadFinancialHealth(period);
+  }
 });
 
 watch(selectedCategoryPeriod, (period) => {
-  void loadCategoryExpenses(period);
+  if (period && period > 0) {
+    void loadCategoryExpenses(period);
+  }
 });
 
 watch(selectedGranularity, (granularity) => {
-  void loadExpenses(granularity);
+  if (granularity) {
+    void loadExpenses(granularity);
+  }
 });
 
 onMounted(async () => {
@@ -744,12 +746,9 @@ onMounted(async () => {
         class="analytics-grid__networth"
         :loading="netWorthLoading"
         :error="netWorthError"
-        :period="selectedNetWorthPeriod"
-        :period-options="netWorthPeriodOptions"
         :chart-data="netWorthChartData"
         :empty="!visibleNetWorth.length"
         :currency="baseCurrency"
-        @update:period="selectedNetWorthPeriod = $event"
         @retry="retryNetWorthData"
       />
 

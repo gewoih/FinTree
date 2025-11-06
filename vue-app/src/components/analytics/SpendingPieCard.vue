@@ -17,17 +17,26 @@ const emit = defineEmits<{
   (event: 'retry'): void;
 }>();
 
+const handlePeriodUpdate = (value: number) => {
+  // Only emit valid positive numbers
+  if (value && typeof value === 'number' && value > 0) {
+    emit('update:period', value);
+  }
+};
+
 const showEmpty = computed(
   () => !props.loading && !props.error && (!props.chartData || props.legend.length === 0)
 );
 
 const chartOptions = computed(() => ({
+  responsive: true,
+  maintainAspectRatio: true,
+  aspectRatio: 1,
   plugins: {
     legend: {
       display: false,
     },
   },
-  maintainAspectRatio: false,
 }));
 </script>
 
@@ -44,7 +53,7 @@ const chartOptions = computed(() => ({
           :options="periodOptions"
           optionLabel="label"
           optionValue="value"
-          @update:modelValue="emit('update:period', $event)"
+          @update:modelValue="handlePeriodUpdate"
         />
       </div>
     </template>
@@ -189,15 +198,21 @@ const chartOptions = computed(() => ({
 }
 
 .pie-card__chart {
-  min-height: 280px;
-  display: grid;
-  place-items: center;
-  padding: var(--ft-space-3);
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--ft-space-4);
+}
+
+.pie-card__chart :deep(.p-chart) {
+  width: 100%;
+  max-width: 420px;
 }
 
 .pie-card__chart :deep(canvas) {
-  max-width: 340px;
-  max-height: 340px;
+  width: 100% !important;
+  height: auto !important;
 }
 
 .pie-card__legend {
