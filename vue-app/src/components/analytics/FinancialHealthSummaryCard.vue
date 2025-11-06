@@ -21,14 +21,14 @@ const showEmptyState = computed(() => !props.loading && (!props.hasData || !prop
 <template>
   <AppCard class="analytics-card analytics-card--health" padding="lg" elevated>
     <template #header>
-      <div class="analytics-card__header">
+      <div class="analytics-card__head">
         <div class="analytics-card__title">
-          <i class="pi pi-heart-fill analytics-card__icon" aria-hidden="true" />
+          <span class="analytics-card__icon">
+            <i class="pi pi-heart-fill" aria-hidden="true" />
+          </span>
           <div>
-            <h3 class="analytics-card__heading">Финансовое здоровье</h3>
-            <p class="analytics-card__subtitle">
-              Ключевые показатели за {{ periodLabel }}
-            </p>
+            <h3>Финансовое здоровье</h3>
+            <p>Ключевые показатели за {{ periodLabel }}</p>
           </div>
         </div>
         <div v-if="$slots.actions" class="analytics-card__actions">
@@ -68,12 +68,14 @@ const showEmptyState = computed(() => !props.loading && (!props.hasData || !prop
 
 <style scoped>
 .analytics-card {
-  background: radial-gradient(circle at top left, rgba(37, 99, 235, 0.12), rgba(15, 23, 42, 0.4));
-  border: 1px solid rgba(148, 163, 184, 0.24);
-  color: var(--ft-gray-100);
+  padding: clamp(var(--ft-space-5), 3vw, var(--ft-space-6));
+  background: linear-gradient(135deg, rgba(34, 197, 94, 0.16), rgba(59, 130, 246, 0.1));
+  border: 1px solid rgba(34, 197, 94, 0.22);
+  border-radius: var(--ft-radius-2xl);
+  box-shadow: var(--ft-shadow-card);
 }
 
-.analytics-card__header {
+.analytics-card__head {
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -86,21 +88,27 @@ const showEmptyState = computed(() => !props.loading && (!props.hasData || !prop
   gap: var(--ft-space-3);
 }
 
-.analytics-card__icon {
-  font-size: 1.75rem;
-  color: var(--ft-success-400);
+.analytics-card__title .analytics-card__icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  border-radius: var(--ft-radius-lg);
+  background: rgba(34, 197, 94, 0.2);
+  color: var(--ft-success-500);
 }
 
-.analytics-card__heading {
+.analytics-card__title h3 {
   margin: 0;
-  font-size: var(--ft-text-xl);
-  font-weight: var(--ft-font-bold);
-  color: var(--ft-gray-100);
+  font-size: var(--ft-text-lg);
+  font-weight: var(--ft-font-semibold);
+  color: var(--ft-heading);
 }
 
-.analytics-card__subtitle {
-  margin: 0;
-  color: rgba(226, 232, 240, 0.72);
+.analytics-card__title p {
+  margin: var(--ft-space-1) 0 0;
+  color: var(--ft-text-muted);
   font-size: var(--ft-text-sm);
 }
 
@@ -113,7 +121,7 @@ const showEmptyState = computed(() => !props.loading && (!props.hasData || !prop
 
 .health-metrics {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
   gap: var(--ft-space-4);
 }
 
@@ -121,15 +129,14 @@ const showEmptyState = computed(() => !props.loading && (!props.hasData || !prop
   display: grid;
   gap: var(--ft-space-2);
   padding: var(--ft-space-4);
-  border-radius: var(--ft-radius-lg);
+  border-radius: var(--ft-radius-xl);
+  background: rgba(255, 255, 255, 0.04);
   border: 1px solid rgba(148, 163, 184, 0.22);
-  background: linear-gradient(145deg, rgba(15, 23, 42, 0.6), rgba(15, 23, 42, 0.4));
-  transition: transform var(--ft-transition-fast), border-color var(--ft-transition-fast);
 }
 
 .health-metric:hover {
-  transform: translateY(-3px);
   border-color: rgba(148, 163, 184, 0.38);
+  transform: translateY(-2px);
 }
 
 .health-metric__label {
@@ -137,20 +144,19 @@ const showEmptyState = computed(() => !props.loading && (!props.hasData || !prop
   font-size: var(--ft-text-xs);
   text-transform: uppercase;
   letter-spacing: 0.08em;
-  color: rgba(226, 232, 240, 0.78);
+  color: rgba(15, 23, 42, 0.55);
 }
 
 .health-metric__value {
   margin: 0;
   font-size: clamp(1.75rem, 2.4vw, 2.25rem);
   font-weight: var(--ft-font-bold);
-  color: var(--ft-gray-50);
-  letter-spacing: -0.02em;
+  color: var(--ft-heading);
 }
 
 .health-metric__description {
   margin: 0;
-  color: rgba(226, 232, 240, 0.75);
+  color: rgba(15, 23, 42, 0.65);
   font-size: var(--ft-text-sm);
   line-height: var(--ft-leading-relaxed);
 }
@@ -161,7 +167,7 @@ const showEmptyState = computed(() => !props.loading && (!props.hasData || !prop
   place-items: center;
   text-align: center;
   padding: var(--ft-space-6) var(--ft-space-4);
-  color: rgba(226, 232, 240, 0.85);
+  color: rgba(15, 23, 42, 0.72);
 }
 
 .health-state__icon {
@@ -178,12 +184,14 @@ const showEmptyState = computed(() => !props.loading && (!props.hasData || !prop
   margin: 0;
   font-size: var(--ft-text-sm);
   max-width: 32ch;
-  color: rgba(226, 232, 240, 0.66);
+  color: rgba(15, 23, 42, 0.6);
 }
 
 @media (max-width: 768px) {
-  .health-metrics {
-    grid-template-columns: 1fr;
+  .analytics-card__head {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: var(--ft-space-3);
   }
 }
 </style>
