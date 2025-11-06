@@ -338,7 +338,7 @@ watch(filteredCategories, () => {
       </div>
 
       <div class="field" v-if="!isIncome">
-        <label for="isMandatory">Повторяющийся расход</label>
+        <label for="isMandatory">Обязательный расход</label>
         <Checkbox id="isMandatory" v-model="isMandatory" binary />
       </div>
 

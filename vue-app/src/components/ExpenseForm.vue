@@ -249,7 +249,7 @@ onMounted(() => {
       </div>
 
       <div class="field">
-        <label for="isMandatory">Повторяющийся расход</label>
+        <label for="isMandatory">Обязательный расход</label>
         <Checkbox id="isMandatory" v-model="isMandatory" binary />
       </div>
 
