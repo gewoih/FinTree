@@ -2,8 +2,6 @@
 Microsoft Visual Studio Solution File, Format Version 12.00
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "FinTree.Api", "FinTree.Api\FinTree.Api.csproj", "{FD9AE860-1752-4FFF-BA0D-925FB81FABD8}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "FinTree.Parser", "FinTree.Parser\FinTree.Parser.csproj", "{99CA2E8D-41AD-4595-9042-5E51A3097002}"
-EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "FinTree.Application", "FinTree.Application\FinTree.Application.csproj", "{7AACEEE7-1D11-4B4F-B5A9-A189D42ADF57}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "FinTree.Infrastructure", "FinTree.Infrastructure\FinTree.Infrastructure.csproj", "{71A287D7-2AC7-402B-A45A-4F2EF0FF189F}"
@@ -20,10 +18,6 @@ Global
 		{FD9AE860-1752-4FFF-BA0D-925FB81FABD8}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{FD9AE860-1752-4FFF-BA0D-925FB81FABD8}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{FD9AE860-1752-4FFF-BA0D-925FB81FABD8}.Release|Any CPU.Build.0 = Release|Any CPU
-		{99CA2E8D-41AD-4595-9042-5E51A3097002}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{99CA2E8D-41AD-4595-9042-5E51A3097002}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{99CA2E8D-41AD-4595-9042-5E51A3097002}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{99CA2E8D-41AD-4595-9042-5E51A3097002}.Release|Any CPU.Build.0 = Release|Any CPU
 		{7AACEEE7-1D11-4B4F-B5A9-A189D42ADF57}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{7AACEEE7-1D11-4B4F-B5A9-A189D42ADF57}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{7AACEEE7-1D11-4B4F-B5A9-A189D42ADF57}.Release|Any CPU.ActiveCfg = Release|Any CPU
