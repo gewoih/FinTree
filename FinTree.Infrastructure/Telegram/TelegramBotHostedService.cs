@@ -24,19 +24,26 @@ public partial class TelegramBotHostedService(
     : BackgroundService
 {
     private const string StartMessage =
-        "Пришли сообщение в формате:\n`{сумма}{валюта?}, {категория}, {заметка?}`\nМожно несколько строк.\nНапример:\n`2400тг, продукты`\n`3000р, комиссии, сбербанк`.";
+        "Как добавить расход:\n" +
+        "• Одна строка = один расход\n" +
+        "• Формат: `{сумма}{валюта?} {категория} {заметка?}`\n" +
+        "Примеры:\n" +
+        "`2400тг продукты`\n" +
+        "`3000р комиссии сбербанк`";
 
     private const string FormatErrorMessage =
-        "Не понял формат{0}. Пришли: `2400тг, продукты` или `3000р, комиссии, заметка`.";
+        "Не удалось распознать формат{0}.\n" +
+        "Формат: `2400тг продукты` или `3000р комиссии сбербанк`.\n" +
+        "Подсказка: сумму и валюту пиши слитно (например, `2400тг`).";
 
     private const string UserNotFoundMessage =
-        "Не удалось найти аккаунт. Привяжите ваш Телеграм на сайте FinTree.";
+        "Не нашёл привязанный аккаунт. Свяжите Telegram с профилем в FinTree и попробуйте ещё раз.";
 
     private const string MainAccountMissingMessage =
-        "Основной счёт не найден. Создайте/назначьте основной счёт и повторите.";
+        "Основной счёт не назначен. Выберите основной счёт в приложении и повторите.";
 
     private const string DefaultCategoryMissingMessage =
-        "Категория по умолчанию недоступна. Попробуйте позже.";
+        "Не получилось подобрать категорию. Проверьте, что есть категории расходов и одна из них — по умолчанию.";
 
     private static readonly string[] LineSeparators = ["\r\n", "\n"];
 
@@ -132,7 +139,8 @@ public partial class TelegramBotHostedService(
         catch (Exception ex)
         {
             logger.LogError(ex, "Ошибка при сохранении расхода");
-            await botClient.SendMessage(chatId, "❌ Ошибка при сохранении. Попробуйте позже.", cancellationToken: ct);
+            await botClient.SendMessage(chatId, "❌ Не удалось сохранить расход. Попробуйте позже.",
+                cancellationToken: ct);
         }
     }
 
@@ -264,7 +272,7 @@ public partial class TelegramBotHostedService(
         var normalizedCategory = categoryName.Trim();
         return string.IsNullOrWhiteSpace(trimmedNote)
             ? normalizedCategory
-            : $"{normalizedCategory} - {trimmedNote}";
+            : $"{normalizedCategory} {trimmedNote}";
     }
 
     private static void AddTransactions(Account account, IEnumerable<ResolvedExpense> expenses)
@@ -317,14 +325,14 @@ public partial class TelegramBotHostedService(
     {
         var lines = new List<string>
         {
-            "✅Добавлен расход:",
-            $"💳Счёт: {Escape(account.Name)} ({Escape(account.Currency.Code)})",
-            $"📂Категория: '{Escape(expense.Category.Name)}'",
-            $"💰Сумма: {FormatAmount(account, expense.Amount)}"
+            "✅ Расход добавлен",
+            $"💳 Счёт: {Escape(account.Name)} ({Escape(account.Currency.Code)})",
+            $"📂 Категория: {Escape(expense.Category.Name)}",
+            $"💰 Сумма: {FormatAmount(account, expense.Amount)}"
         };
 
         if (!string.IsNullOrWhiteSpace(expense.Description))
-            lines.Add($"📝Заметка: '{Escape(expense.Description)}'");
+            lines.Add($"📝 Заметка: {Escape(expense.Description)}");
 
         return string.Join("\n", lines);
     }
@@ -333,8 +341,8 @@ public partial class TelegramBotHostedService(
     {
         var lines = new List<string>
         {
-            $"✅Добавлено расходов: {expenses.Count}",
-            $"💳Счёт: {Escape(account.Name)} ({Escape(account.Currency.Code)})"
+            $"✅ Добавлено расходов: {expenses.Count}",
+            $"💳 Счёт: {Escape(account.Name)} ({Escape(account.Currency.Code)})"
         };
 
         foreach (var expense in expenses)
@@ -343,7 +351,7 @@ public partial class TelegramBotHostedService(
                 ? string.Empty
                 : $" — {Escape(expense.Description)}";
 
-            lines.Add($"• '{Escape(expense.Category.Name)}': {FormatAmount(account, expense.Amount)}{notePart}");
+            lines.Add($"• {Escape(expense.Category.Name)}: {FormatAmount(account, expense.Amount)}{notePart}");
         }
 
         return string.Join("\n", lines);
