@@ -12,10 +12,11 @@ export default defineConfig({
   },
   server: {
     port: 8080, // Фронт будет работать на порту 8080
+    host: true,
     proxy: {
       // Проксирование всех запросов /api/* на локальный API
       '/api': {
-        target: 'https://localhost:5001',
+        target: 'http://fintree.api:5000',
         changeOrigin: true,
         secure: false, // Отключение проверки SSL для localhost
       },

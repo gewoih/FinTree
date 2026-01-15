@@ -1,0 +1,53 @@
+﻿services:
+  fintree-postgres:
+    image: postgres:18-alpine
+    container_name: fintree-postgres
+    environment:
+      POSTGRES_DB: fin_tree
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    networks:
+      - fintree-net
+  
+  fintree.api:
+    container_name: fintree-api
+    build:
+      context: .
+      dockerfile: FinTree.Api/Dockerfile
+    image: fintree.api:local
+    environment:
+      ASPNETCORE_URLS: "http://+:5000"
+      ASPNETCORE_ENVIRONMENT: "Development"
+      ConnectionStrings__DefaultConnection: "Host=fintree-postgres;Port=5432;Database=fin_tree;Username=postgres;Password=postgres"
+    ports:
+      - "5000:5000"
+    depends_on:
+      - fintree-postgres
+    networks:
+      - fintree-net
+      
+  fintree.frontend:
+    container_name: fintree-frontend
+    build:
+      context: ./vue-app
+      dockerfile: Dockerfile
+    image: fintree.frontend:local
+    environment:
+      VITE_API_BASE_URL: "/api"
+    ports:
+      - "8080:8080"
+    depends_on:
+      - fintree.api
+    networks:
+      - fintree-net
+
+volumes:
+  pgdata:
+
+networks:
+  fintree-net:
+    driver: bridge

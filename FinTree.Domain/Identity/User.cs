@@ -32,6 +32,7 @@ public sealed class User : IdentityUser<Guid>
         ArgumentException.ThrowIfNullOrWhiteSpace(username, nameof(username));
         ArgumentException.ThrowIfNullOrWhiteSpace(email, nameof(email));
 
+        Id = Guid.NewGuid();
         UserName = username;
         Email = email;
         SetBaseCurrency(baseCurrencyCode);
