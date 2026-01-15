@@ -9,6 +9,7 @@ public sealed record Currency
     private static readonly Dictionary<string, Currency> ByCode =
         new()
         {
+            ["RUB"] = new Currency("RUB", "Российский рубль", "₽", CurrencyType.Fiat),
             ["USD"] = new Currency("USD", "Доллар США", "$", CurrencyType.Fiat),
             ["EUR"] = new Currency("EUR", "Евро", "€", CurrencyType.Fiat),
             ["GBP"] = new Currency("GBP", "Фунт стерлингов", "£", CurrencyType.Fiat),
@@ -34,7 +35,6 @@ public sealed record Currency
             ["THB"] = new Currency("THB", "Тайский бат", "฿", CurrencyType.Fiat),
             ["VND"] = new Currency("VND", "Вьетнамский донг", "₫", CurrencyType.Fiat),
             ["KZT"] = new Currency("KZT", "Тенге", "₸", CurrencyType.Fiat),
-            ["RUB"] = new Currency("RUB", "Российский рубль", "₽", CurrencyType.Fiat),
             ["UAH"] = new Currency("UAH", "Украинская гривна", "₴", CurrencyType.Fiat),
             ["BYN"] = new Currency("BYN", "Белорусский рубль", "Br", CurrencyType.Fiat),
             ["BRL"] = new Currency("BRL", "Бразильский реал", "R$", CurrencyType.Fiat),

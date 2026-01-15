@@ -4,11 +4,12 @@ using FinTree.Domain.Currencies;
 using FinTree.Domain.Identity;
 using FinTree.Domain.IncomeStreams;
 using FinTree.Domain.Transactions;
+using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 
 namespace FinTree.Infrastructure.Database;
 
-public sealed class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(options)
+public sealed class AppDbContext(DbContextOptions<AppDbContext> options) : IdentityDbContext<User, Role, Guid>(options)
 {
     public DbSet<User> Users => Set<User>();
     public DbSet<TransactionCategory> TransactionCategories => Set<TransactionCategory>();

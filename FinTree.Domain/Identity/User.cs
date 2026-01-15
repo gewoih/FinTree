@@ -29,10 +29,9 @@ public sealed class User : IdentityUser<Guid>
 
     public User(string username, string email, string baseCurrencyCode)
     {
-        ArgumentException.ThrowIfNullOrWhiteSpace(username, nameof(username));
-        ArgumentException.ThrowIfNullOrWhiteSpace(email, nameof(email));
+        ArgumentException.ThrowIfNullOrWhiteSpace(username);
+        ArgumentException.ThrowIfNullOrWhiteSpace(email);
 
-        Id = Guid.NewGuid();
         UserName = username;
         Email = email;
         SetBaseCurrency(baseCurrencyCode);
@@ -40,7 +39,7 @@ public sealed class User : IdentityUser<Guid>
 
     public void SetBaseCurrency(string currencyCode)
     {
-        ArgumentException.ThrowIfNullOrWhiteSpace(currencyCode, nameof(currencyCode));
+        ArgumentException.ThrowIfNullOrWhiteSpace(currencyCode);
 
         BaseCurrencyCode = currencyCode;
     }
@@ -75,7 +74,7 @@ public sealed class User : IdentityUser<Guid>
 
     public void LinkTelegramAccount(string telegramUserId)
     {
-        ArgumentException.ThrowIfNullOrWhiteSpace(telegramUserId, nameof(telegramUserId));
+        ArgumentException.ThrowIfNullOrWhiteSpace(telegramUserId);
 
         TelegramUserId = telegramUserId.Trim();
     }

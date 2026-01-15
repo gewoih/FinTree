@@ -1,4 +1,5 @@
 using System.Globalization;
+using System.Net;
 using System.Text.RegularExpressions;
 using FinTree.Domain.Accounts;
 using FinTree.Domain.Categories;
@@ -23,7 +24,24 @@ public partial class TelegramBotHostedService(
     : BackgroundService
 {
     private const string StartMessage =
-        "Пришли сообщение в формате:\n`{сумма}{валюта?}, {категория}, {заметка?}`\nНапример: `2400тг, продукты` или `3000р, комиссии, сбербанк`.";
+        "Пришли сообщение в формате:\n`{сумма}{валюта?}, {категория}, {заметка?}`\nМожно несколько строк.\nНапример:\n`2400тг, продукты`\n`3000р, комиссии, сбербанк`.";
+
+    private const string FormatErrorMessage =
+        "Не понял формат{0}. Пришли: `2400тг, продукты` или `3000р, комиссии, заметка`.";
+
+    private const string UserNotFoundMessage =
+        "Не удалось найти аккаунт. Привяжите ваш Телеграм на сайте FinTree.";
+
+    private const string MainAccountMissingMessage =
+        "Основной счёт не найден. Создайте/назначьте основной счёт и повторите.";
+
+    private const string DefaultCategoryMissingMessage =
+        "Категория по умолчанию недоступна. Попробуйте позже.";
+
+    private static readonly string[] LineSeparators = ["\r\n", "\n"];
+
+    private sealed record ParsedExpense(decimal Amount, string CategoryName, string? Note);
+    private sealed record ResolvedExpense(decimal Amount, TransactionCategory Category, string? Description);
 
     private readonly ReceiverOptions _receiverOptions = new()
     {
@@ -38,7 +56,7 @@ public partial class TelegramBotHostedService(
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
         botClient.StartReceiving(HandleUpdateAsync, HandleErrorAsync, _receiverOptions, stoppingToken);
-        await botClient.SetMyCommands(_availableCommands, cancellationToken: stoppingToken);
+        await RegisterCommandsAsync(stoppingToken);
 
         await Task.Delay(Timeout.Infinite, stoppingToken);
     }
@@ -76,71 +94,78 @@ public partial class TelegramBotHostedService(
             return;
         }
 
-        if (!TryParseExpense(text, out var amount, out var categoryName, out var note))
+        if (!TryParseExpenses(text, out var parsedExpenses, out var invalidLines))
         {
-            await botClient.SendMessage(chatId,
-                "Не понял формат. Пришли: `2400тг, продукты` или `3000р, комиссии, заметка`.",
-                parseMode: ParseMode.Markdown,
-                cancellationToken: ct);
+            await SendFormatErrorAsync(chatId, invalidLines, ct);
             return;
         }
 
         var user = await GetUserAsync(msg, context, ct);
         if (user is null)
         {
-            await botClient.SendMessage(chatId,
-                "Не удалось найти аккаунт. Привяжите ваш Телеграм на сайте FinTree.",
-                cancellationToken: ct);
+            await botClient.SendMessage(chatId, UserNotFoundMessage, cancellationToken: ct);
             return;
         }
 
-        var account = user.Accounts.FirstOrDefault(a => a.IsMain);
+        var account = GetMainAccount(user);
         if (account is null)
         {
-            await botClient.SendMessage(chatId,
-                "Основной счёт не найден. Создайте/назначьте основной счёт и повторите.",
-                cancellationToken: ct);
+            await botClient.SendMessage(chatId, MainAccountMissingMessage, cancellationToken: ct);
             return;
         }
 
-        var categories = await context.TransactionCategories
-            .Where(t => t.Type == CategoryType.Expense)
-            .Where(t => t.UserId == user.Id || t.UserId == null)
-            .AsNoTracking()
-            .ToListAsync(ct);
-
-        var category = ResolveCategory(categories, categoryName);
-        if (category is null)
+        var categories = await GetExpenseCategoriesAsync(context, user.Id, ct);
+        if (!TryResolveExpenses(parsedExpenses, categories, out var resolvedExpenses))
         {
-            await botClient.SendMessage(chatId,
-                "Категория по умолчанию недоступна. Попробуйте позже.",
-                cancellationToken: ct);
+            await botClient.SendMessage(chatId, DefaultCategoryMissingMessage, cancellationToken: ct);
             return;
         }
-        
+
         try
         {
-            if (category.IsDefault)
-                note = $"{categoryName} - {note}";
-            
-            var description = string.IsNullOrWhiteSpace(note) ? null : note.Trim();
-            account.AddTransaction(TransactionType.Expense, category.Id, amount, DateTime.UtcNow, description);
+            AddTransactions(account, resolvedExpenses);
+
             await context.SaveChangesAsync(ct);
 
-            var response =
-                $"✅Добавлен расход:\n" +
-                $"💳Счёт: {account.Name} ({account.Currency.Code})\n" +
-                $"📂Категория: '{category.Name}'\n" +
-                $"💰Сумма: {FormatAmount(amount, account)}\n" +
-                (string.IsNullOrWhiteSpace(description) ? "" : $"📝Заметка: '{description}'");
-
-            await botClient.SendMessage(chatId, response, ParseMode.Html, cancellationToken: ct);
+            await SendSuccessResponseAsync(chatId, account, resolvedExpenses, ct);
         }
         catch (Exception ex)
         {
             logger.LogError(ex, "Ошибка при сохранении расхода");
             await botClient.SendMessage(chatId, "❌ Ошибка при сохранении. Попробуйте позже.", cancellationToken: ct);
         }
+    }
+
+    private async Task RegisterCommandsAsync(CancellationToken ct)
+    {
+        try
+        {
+            await botClient.SetMyCommands(_availableCommands, cancellationToken: ct);
+        }
+        catch (Exception ex)
+        {
+            logger.LogWarning(ex, "Не удалось установить команды бота");
+        }
+    }
+
+    private async Task SendFormatErrorAsync(long chatId, IReadOnlyCollection<int> invalidLines, CancellationToken ct)
+    {
+        var suffix = invalidLines.Count > 0
+            ? $" (строки: {string.Join(", ", invalidLines)})"
+            : string.Empty;
+
+        var message = string.Format(CultureInfo.InvariantCulture, FormatErrorMessage, suffix);
+        await botClient.SendMessage(chatId, message, parseMode: ParseMode.Markdown, cancellationToken: ct);
+    }
+
+    private async Task SendSuccessResponseAsync(long chatId, Account account, IReadOnlyList<ResolvedExpense> expenses,
+        CancellationToken ct)
+    {
+        var response = expenses.Count == 1
+            ? BuildSingleExpenseResponse(account, expenses[0])
+            : BuildBatchExpenseResponse(account, expenses);
+
+        await botClient.SendMessage(chatId, response, ParseMode.Html, cancellationToken: ct);
     }
 
     private static async Task<User?> GetUserAsync(Message msg, AppDbContext context, CancellationToken ct)
@@ -154,27 +179,99 @@ public partial class TelegramBotHostedService(
             .FirstOrDefaultAsync(cancellationToken: ct);
     }
 
+    private static Account? GetMainAccount(User user)
+        => user.Accounts.FirstOrDefault(a => a.IsMain);
+
     private static bool IsStartCommand(string text)
         => text.Equals("/start", StringComparison.OrdinalIgnoreCase);
 
-    private static TransactionCategory? ResolveCategory(IEnumerable<TransactionCategory> categories,
+    private static IReadOnlyList<string> SplitLines(string text)
+        => text.Split(LineSeparators, StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+
+    private static TransactionCategory? ResolveCategory(IReadOnlyList<TransactionCategory> categories,
         string categoryName)
     {
         var normalized = categoryName.Trim();
-        var expenseCategories = categories.ToList();
-
-        var exactMatch = expenseCategories
+        var exactMatch = categories
             .FirstOrDefault(c => string.Equals(c.Name, normalized, StringComparison.OrdinalIgnoreCase));
         if (exactMatch is not null)
             return exactMatch;
 
-        var prefixMatches = expenseCategories
+        var prefixMatches = categories
             .Where(c => c.Name.StartsWith(normalized, StringComparison.OrdinalIgnoreCase))
             .ToList();
 
         return prefixMatches.Count == 1
             ? prefixMatches[0]
-            : expenseCategories.FirstOrDefault(c => c.IsDefault);
+            : categories.FirstOrDefault(c => c.IsDefault);
+    }
+
+    private static async Task<List<TransactionCategory>> GetExpenseCategoriesAsync(AppDbContext context, Guid userId,
+        CancellationToken ct)
+    {
+        return await context.TransactionCategories
+            .Where(t => t.Type == CategoryType.Expense)
+            .Where(t => t.UserId == userId || t.UserId == null)
+            .AsNoTracking()
+            .ToListAsync(ct);
+    }
+
+    private static bool TryParseExpenses(string text, out List<ParsedExpense> expenses, out List<int> invalidLines)
+    {
+        var lines = SplitLines(text);
+        expenses = new List<ParsedExpense>(lines.Count);
+        invalidLines = [];
+
+        for (var i = 0; i < lines.Count; i++)
+        {
+            if (!TryParseExpense(lines[i], out var amount, out var categoryName, out var note))
+            {
+                invalidLines.Add(i + 1);
+                continue;
+            }
+
+            expenses.Add(new ParsedExpense(amount, categoryName, note));
+        }
+
+        return expenses.Count > 0 && invalidLines.Count == 0;
+    }
+
+    private static bool TryResolveExpenses(IEnumerable<ParsedExpense> parsedExpenses,
+        IReadOnlyList<TransactionCategory> categories,
+        out List<ResolvedExpense> resolvedExpenses)
+    {
+        resolvedExpenses = [];
+
+        foreach (var expense in parsedExpenses)
+        {
+            var category = ResolveCategory(categories, expense.CategoryName);
+            if (category is null)
+                return false;
+
+            var description = BuildDescription(expense.CategoryName, expense.Note, category.IsDefault);
+            resolvedExpenses.Add(new ResolvedExpense(expense.Amount, category, description));
+        }
+
+        return true;
+    }
+
+    private static string? BuildDescription(string categoryName, string? note, bool isDefaultCategory)
+    {
+        var trimmedNote = string.IsNullOrWhiteSpace(note) ? null : note.Trim();
+        if (!isDefaultCategory)
+            return trimmedNote;
+
+        var normalizedCategory = categoryName.Trim();
+        return string.IsNullOrWhiteSpace(trimmedNote)
+            ? normalizedCategory
+            : $"{normalizedCategory} - {trimmedNote}";
+    }
+
+    private static void AddTransactions(Account account, IEnumerable<ResolvedExpense> expenses)
+    {
+        foreach (var expense in expenses)
+            account.AddTransaction(TransactionType.Expense, expense.Category.Id, expense.Amount, DateTime.UtcNow,
+                expense.Description);
     }
 
     private static bool TryParseExpense(string text, out decimal amount, out string category, out string? note)
@@ -183,7 +280,7 @@ public partial class TelegramBotHostedService(
         category = "";
         note = null;
 
-        var parts = text.Split(',', 3, StringSplitOptions.TrimEntries | StringSplitOptions.RemoveEmptyEntries);
+        var parts = text.Split(' ', 3, StringSplitOptions.TrimEntries | StringSplitOptions.RemoveEmptyEntries);
         if (parts.Length < 2 || !TryParseAmount(parts[0], out amount) || amount <= 0)
             return false;
 
@@ -194,6 +291,12 @@ public partial class TelegramBotHostedService(
 
     private static bool TryParseAmount(string raw, out decimal amount)
     {
+        if (string.IsNullOrWhiteSpace(raw))
+        {
+            amount = 0;
+            return false;
+        }
+
         var cleaned = raw
             .Replace(" ", string.Empty)
             .Replace("\u00A0", string.Empty)
@@ -210,7 +313,47 @@ public partial class TelegramBotHostedService(
         return decimal.TryParse(normalized, NumberStyles.Number, CultureInfo.InvariantCulture, out amount);
     }
 
-    private static string FormatAmount(decimal amount, Account account) => $"{amount:0.##} {account.Currency.Symbol}";
+    private static string BuildSingleExpenseResponse(Account account, ResolvedExpense expense)
+    {
+        var lines = new List<string>
+        {
+            "✅Добавлен расход:",
+            $"💳Счёт: {Escape(account.Name)} ({Escape(account.Currency.Code)})",
+            $"📂Категория: '{Escape(expense.Category.Name)}'",
+            $"💰Сумма: {FormatAmount(account, expense.Amount)}"
+        };
+
+        if (!string.IsNullOrWhiteSpace(expense.Description))
+            lines.Add($"📝Заметка: '{Escape(expense.Description)}'");
+
+        return string.Join("\n", lines);
+    }
+
+    private static string BuildBatchExpenseResponse(Account account, IReadOnlyList<ResolvedExpense> expenses)
+    {
+        var lines = new List<string>
+        {
+            $"✅Добавлено расходов: {expenses.Count}",
+            $"💳Счёт: {Escape(account.Name)} ({Escape(account.Currency.Code)})"
+        };
+
+        foreach (var expense in expenses)
+        {
+            var notePart = string.IsNullOrWhiteSpace(expense.Description)
+                ? string.Empty
+                : $" — {Escape(expense.Description)}";
+
+            lines.Add($"• '{Escape(expense.Category.Name)}': {FormatAmount(account, expense.Amount)}{notePart}");
+        }
+
+        return string.Join("\n", lines);
+    }
+
+    private static string FormatAmount(Account account, decimal amount)
+        => Escape($"{amount:0.##} {account.Currency.Symbol}");
+
+    private static string Escape(string value)
+        => WebUtility.HtmlEncode(value);
 
     [GeneratedRegex("^(?<value>[0-9]+(?:[.,][0-9]+)?)", RegexOptions.Compiled)]
     private static partial Regex AmountRegexCompiled();

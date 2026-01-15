@@ -23,9 +23,9 @@ public sealed class Account : Entity
 
     internal Account(Guid userId, string name, string currencyCode, AccountType type)
     {
-        ArgumentOutOfRangeException.ThrowIfEqual(userId, Guid.Empty, nameof(userId));
-        ArgumentException.ThrowIfNullOrWhiteSpace(currencyCode, nameof(currencyCode));
-        ArgumentException.ThrowIfNullOrWhiteSpace(name, nameof(name));
+        ArgumentOutOfRangeException.ThrowIfEqual(userId, Guid.Empty);
+        ArgumentException.ThrowIfNullOrWhiteSpace(currencyCode);
+        ArgumentException.ThrowIfNullOrWhiteSpace(name);
 
         UserId = userId;
         Name = name;
@@ -47,6 +47,6 @@ public sealed class Account : Entity
 
     private static void ValidateTransaction(Guid categoryId)
     {
-        ArgumentOutOfRangeException.ThrowIfEqual(categoryId, Guid.Empty, nameof(categoryId));
+        ArgumentOutOfRangeException.ThrowIfEqual(categoryId, Guid.Empty);
     }
 }

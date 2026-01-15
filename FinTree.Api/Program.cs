@@ -104,6 +104,7 @@ builder.Services.AddScoped<ICurrentUser, HttpCurrentUser>();
 builder.Services.AddScoped<AnalyticsService>();
 builder.Services.AddScoped<IncomeInstrumentsService>();
 builder.Services.AddScoped<CurrencyConverter>();
+builder.Services.AddScoped<DatabaseInitializer>();
     
 builder.Services.AddHostedService<TelegramBotHostedService>();
 builder.Services.AddHostedService<FxLoader>();
@@ -115,7 +116,7 @@ if (app.Environment.IsDevelopment())
     app.UseSwaggerUI();
 }
 
-app.UseHttpsRedirection();
+//app.UseHttpsRedirection();
 app.UseAuthentication();
 app.UseAuthorization();
 
@@ -130,6 +131,7 @@ app.UseExceptionHandler(b =>
         {
             NotFoundException => StatusCodes.Status404NotFound,
             ValidationException => StatusCodes.Status400BadRequest,
+            UnauthorizedAccessException => StatusCodes.Status401Unauthorized,
             _ => StatusCodes.Status500InternalServerError
         };
 
@@ -141,11 +143,14 @@ app.UseCors("VueFrontend");
 
 app.MapControllers();
 
-var scope = app.Services.CreateScope();
-var appDbContext = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+using var scope = app.Services.CreateScope();
+var serviceProvider = scope.ServiceProvider;
+
+var appDbContext = serviceProvider.GetRequiredService<AppDbContext>();
 await appDbContext.Database.MigrateAsync();
 
-await Initializer.SeedTransactionCategories(appDbContext);
-await Initializer.SeedTestUser(appDbContext);
+var dbInitializer = serviceProvider.GetRequiredService<DatabaseInitializer>();
+await dbInitializer.SeedTransactionCategories();
+await dbInitializer.SeedTestUser();
 
 await app.RunAsync();
