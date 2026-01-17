@@ -23,9 +23,9 @@
   .p-inputtextarea,
   .p-autocomplete-input,
   .p-password-input {
-    background-color: var(--ft-surface-base);
-    color: var(--ft-text-primary);
-    border-color: var(--ft-border-subtle);
+    background-color: var(--surface-1);
+    color: var(--text);
+    border-color: var(--border);
     transition:
       border-color var(--ft-transition-fast),
       box-shadow var(--ft-transition-fast),
@@ -46,8 +46,8 @@
   .dark-mode .p-inputtextarea,
   .dark-mode .p-autocomplete-input,
   .dark-mode .p-password-input {
-    background-color: var(--ft-surface-base);
-    border-color: var(--ft-border-default);
+    background-color: var(--surface-1);
+    border-color: var(--border);
   }
 
   /* ━━━ Hover States ━━━ */
@@ -57,7 +57,7 @@
   .p-calendar:hover:not(:disabled),
   .p-inputnumber:hover:not(:disabled),
   .p-inputtextarea:hover:not(:disabled) {
-    border-color: var(--ft-border-default);
+    border-color: var(--border);
   }
 
   /* ━━━ Focus States ━━━ */
@@ -67,14 +67,14 @@
   .p-calendar:focus-within,
   .p-inputnumber:focus-within,
   .p-inputtextarea:focus {
-    border-color: var(--ft-interactive-hover);
-    box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.16);
+    border-color: var(--accent);
+    box-shadow: var(--focus-ring);
   }
 
   /* ━━━ Placeholders ━━━ */
   .p-inputtext::placeholder,
   .p-inputtextarea::placeholder {
-    color: var(--ft-text-muted);
+    color: var(--text-muted);
     opacity: 0.8;
   }
 
@@ -84,15 +84,15 @@
   .p-calendar,
   .p-inputnumber,
   .p-multiselect {
-    border-radius: var(--ft-radius-lg);
-    min-height: var(--ft-input-height-md);
+    border-radius: var(--radius-md);
+    min-height: var(--control-height);
   }
 
   /* ━━━ Buttons ━━━ */
   .p-button:not(.p-button-link) {
-    border-radius: var(--ft-radius-lg);
+    border-radius: var(--radius-md);
     min-width: 44px;
-    min-height: 44px;
+    min-height: var(--control-height);
     transition: transform var(--ft-transition-fast), box-shadow var(--ft-transition-fast);
   }
 
@@ -112,7 +112,7 @@
   /* ━━━ Dialogs ━━━ */
   .p-dialog .p-dialog-content,
   .p-dialog .p-dialog-header {
-    background: var(--ft-surface-soft);
+    background: var(--surface-2);
   }
 
   /* ━━━ Dropdowns and Panels ━━━ */
@@ -120,18 +120,18 @@
   .p-select-panel,
   .p-dropdown-panel,
   .p-multiselect-panel {
-    background: var(--ft-surface-soft);
-    border-radius: var(--ft-radius-card);
-    border: 1px solid var(--ft-border-soft);
-    box-shadow: var(--ft-shadow-card);
+    background: var(--surface-2);
+    border-radius: var(--radius-lg);
+    border: 1px solid var(--border);
+    box-shadow: var(--shadow-soft);
   }
 
   /* ━━━ DataTable ━━━ */
   .p-datatable {
-    background: var(--ft-surface-soft);
-    color: var(--ft-text-primary);
-    border-radius: var(--ft-radius-card);
-    border: 1px solid var(--ft-border-soft);
+    background: var(--surface-2);
+    color: var(--text);
+    border-radius: var(--radius-lg);
+    border: 1px solid var(--border);
     overflow: hidden;
   }
 
@@ -140,9 +140,9 @@
   }
 
   .p-datatable .p-datatable-thead > tr > th {
-    background: var(--ft-surface-muted);
-    color: var(--ft-text-secondary);
-    border-bottom: 1px solid var(--ft-border-soft);
+    background: var(--surface-1);
+    color: var(--text-muted);
+    border-bottom: 1px solid var(--border);
     padding-block: var(--ft-space-3);
     position: sticky;
     top: 0;
@@ -150,8 +150,8 @@
   }
 
   .p-datatable .p-datatable-tbody > tr {
-    background: var(--ft-surface-soft);
-    color: var(--ft-text-primary);
+    background: var(--surface-2);
+    color: var(--text);
     transition: background-color var(--ft-transition-fast), transform var(--ft-transition-fast);
   }
 
@@ -172,12 +172,12 @@
   }
 
   .p-datatable .p-datatable-tbody > tr > td {
-    border-bottom: 1px solid var(--ft-border-soft);
+    border-bottom: 1px solid var(--border);
   }
 
   /* ━━━ Tags/Badges ━━━ */
   .p-tag {
-    border-radius: var(--ft-radius-full);
+    border-radius: var(--radius-lg);
     padding: var(--ft-space-1) var(--ft-space-3);
     font-weight: var(--ft-font-medium);
   }
@@ -189,9 +189,9 @@
 
   /* ━━━ Global Focus States ━━━ */
   *:focus-visible {
-    outline: 2px solid var(--ft-focus-ring);
+    outline: 2px solid var(--accent);
     outline-offset: 3px;
-    border-radius: var(--ft-radius-sm);
+    border-radius: var(--radius-sm);
   }
 
   /* ━━━ Cards Hover Effect ━━━ */

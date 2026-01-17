@@ -2,6 +2,9 @@
 import { onMounted, ref } from 'vue'
 import CategoryManager from '../components/CategoryManager.vue'
 import { useFinanceStore } from '../stores/finance'
+import PageContainer from "@/components/layout/PageContainer.vue";
+import PageHeader from "@/components/common/PageHeader.vue";
+import UiSection from "@/ui/UiSection.vue";
 
 const financeStore = useFinanceStore()
 const managerRef = ref<InstanceType<typeof CategoryManager> | null>(null)
@@ -12,7 +15,7 @@ onMounted(() => {
 </script>
 
 <template>
-  <div class="categories page">
+  <PageContainer class="categories">
     <PageHeader
       title="Категории"
       subtitle="Настройте группировки для расходов и доходов, чтобы аналитика была точнее"
@@ -22,7 +25,7 @@ onMounted(() => {
       ]"
     >
       <template #actions>
-        <AppButton
+        <UiButton
           label="Новая категория"
           icon="pi pi-plus"
           @click="managerRef?.openModal()"
@@ -30,18 +33,18 @@ onMounted(() => {
       </template>
     </PageHeader>
 
-    <section class="page-section categories__content">
+    <UiSection class="categories__content">
       <CategoryManager ref="managerRef" />
-    </section>
-  </div>
+    </UiSection>
+  </PageContainer>
 </template>
 
 <style scoped>
 .categories {
-  gap: var(--ft-layout-section-gap);
+  gap: var(--space-6);
 }
 
 .categories__content {
-  gap: var(--ft-layout-card-gap);
+  gap: var(--space-5);
 }
 </style>

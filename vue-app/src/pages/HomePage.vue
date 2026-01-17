@@ -131,7 +131,7 @@ onMounted(async () => {
 </script>
 
 <template>
-  <div class="dashboard page">
+  <PageContainer class="dashboard">
     <PageHeader
       title="Дашборд"
       subtitle="Обзор ваших балансов, расходов и последних транзакций"
@@ -141,7 +141,7 @@ onMounted(async () => {
       ]"
     >
       <template #actions>
-        <Button
+        <UiButton
           label="Добавить транзакцию"
           icon="pi pi-plus"
           @click="router.push('/expenses')"
@@ -149,137 +149,137 @@ onMounted(async () => {
       </template>
     </PageHeader>
 
-<section class="page-section">
-  <div class="card-grid card-grid--auto card-grid--dense dashboard__kpis">
-    <KPICard
-      title="Общий баланс"
-      :value="formattedBalance"
-      icon="pi-wallet"
-      :trend="balanceTrend ?? undefined"
-        trend-label="по сравнению с прошлым месяцем"
-        variant="success"
-        :loading="isLoading"
-      />
+    <UiSection>
+      <div class="card-grid card-grid--auto card-grid--dense dashboard__kpis">
+        <KPICard
+          title="Общий баланс"
+          :value="formattedBalance"
+          icon="pi-wallet"
+          :trend="balanceTrend ?? undefined"
+          trend-label="по сравнению с прошлым месяцем"
+          variant="success"
+          :loading="isLoading"
+        />
 
-      <KPICard
-        title="Расходы за месяц"
-        :value="formattedMonthlyExpenses"
-        icon="pi-chart-line"
-        :trend="expensesTrend ?? undefined"
-        trend-label="по сравнению с прошлым месяцем"
-        :variant="expensesTrend && expensesTrend > 0 ? 'danger' : 'success'"
-        :loading="isLoading"
-      />
+        <KPICard
+          title="Расходы за месяц"
+          :value="formattedMonthlyExpenses"
+          icon="pi-chart-line"
+          :trend="expensesTrend ?? undefined"
+          trend-label="по сравнению с прошлым месяцем"
+          :variant="expensesTrend && expensesTrend > 0 ? 'danger' : 'success'"
+          :loading="isLoading"
+        />
 
-      <KPICard
-        title="Активные счета"
-        :value="accountCount.toString()"
-      icon="pi-credit-card"
-      :loading="isLoading"
-    />
-  </div>
-</section>
-
-<section class="page-section">
-  <div class="card-grid dashboard__content">
-    <AppCard class="dashboard__quick-actions" variant="muted" padding="lg">
-      <template #header>
-        <div class="card-title-with-icon">
-          <i class="pi pi-bolt" aria-hidden="true" />
-          <span>Быстрые действия</span>
-        </div>
-      </template>
-      <div class="quick-actions-grid">
-        <AppButton
-          v-for="action in quickActions"
-          :key="action.label"
-          :label="action.label"
-          :icon="action.icon"
-          :variant="action.variant"
-          block
-          @click="router.push(action.to)"
+        <KPICard
+          title="Активные счета"
+          :value="accountCount.toString()"
+          icon="pi-credit-card"
+          :loading="isLoading"
         />
       </div>
-    </AppCard>
+    </UiSection>
 
-    <AppCard class="dashboard__recent" variant="muted" padding="lg">
-      <template #header>
-        <div class="dashboard__recent-header">
-          <div class="card-title-with-icon">
-            <i class="pi pi-history" aria-hidden="true" />
-            <span>Последние транзакции</span>
-          </div>
-          <p class="card-subtitle">
-            Последняя активность · {{ trendLabel }}
-          </p>
-        </div>
-      </template>
-
-      <div v-if="isLoading" class="transactions-skeleton">
-        <Skeleton v-for="i in 4" :key="i" height="60px" />
-      </div>
-
-      <EmptyState
-        v-else-if="recentTransactions.length === 0"
-        icon="pi-receipt"
-        title="Нет транзакций"
-        description="Начните отслеживать расходы, чтобы увидеть аналитику и статистику."
-        action-label="Добавить первую транзакцию"
-        action-icon="pi pi-plus"
-        @action="router.push('/expenses')"
-      />
-
-      <ul v-else class="transactions-list">
-        <li
-          v-for="transaction in recentTransactions"
-          :key="transaction.id"
-          class="transaction-item"
-        >
-          <div class="transaction-icon">
-            <i class="pi pi-shopping-bag" aria-hidden="true" />
-          </div>
-
-          <div class="transaction-details">
-            <div class="transaction-primary">
-              <span class="transaction-category">
-                {{ transaction.category?.name ?? 'Без категории' }}
-              </span>
-              <span class="transaction-date">
-                {{ formatShortDate(transaction.occurredAt) }}
-              </span>
+    <UiSection>
+      <div class="card-grid dashboard__content">
+        <UiCard class="dashboard__quick-actions" variant="muted" padding="lg">
+          <template #header>
+            <div class="card-title-with-icon">
+              <i class="pi pi-bolt" aria-hidden="true" />
+              <span>Быстрые действия</span>
             </div>
-            <span class="transaction-note">
-              {{ transaction.description ?? 'Описание отсутствует' }}
-            </span>
+          </template>
+          <div class="quick-actions-grid">
+            <UiButton
+              v-for="action in quickActions"
+              :key="action.label"
+              :label="action.label"
+              :icon="action.icon"
+              :variant="action.variant"
+              block
+              @click="router.push(action.to)"
+            />
+          </div>
+        </UiCard>
+
+        <UiCard class="dashboard__recent" variant="muted" padding="lg">
+          <template #header>
+            <div class="dashboard__recent-header">
+              <div class="card-title-with-icon">
+                <i class="pi pi-history" aria-hidden="true" />
+                <span>Последние транзакции</span>
+              </div>
+              <p class="card-subtitle">
+                Последняя активность · {{ trendLabel }}
+              </p>
+            </div>
+          </template>
+
+          <div v-if="isLoading" class="transactions-skeleton">
+            <UiSkeleton v-for="i in 4" :key="i" height="60px" />
           </div>
 
-          <div
-            class="transaction-amount"
-            :class="{ 'transaction-amount--positive': Number(transaction.amount) > 0 }"
-          >
-            <span>{{ Number(transaction.amount) > 0 ? '+' : '−' }}</span>
-            <span>{{ formatAmount(Number(transaction.amount)) }}</span>
-          </div>
-        </li>
-      </ul>
+          <EmptyState
+            v-else-if="recentTransactions.length === 0"
+            icon="pi-receipt"
+            title="Нет транзакций"
+            description="Начните отслеживать расходы, чтобы увидеть аналитику и статистику."
+            action-label="Добавить первую транзакцию"
+            action-icon="pi pi-plus"
+            @action="router.push('/expenses')"
+          />
 
-      <AppButton
-        label="Все транзакции"
-        icon="pi pi-arrow-right"
-        variant="ghost"
-        iconPos="right"
-        block
-        @click="router.push('/expenses')"
-      />
-    </AppCard>
-  </div>
-</section>
-  </div>
+          <ul v-else class="transactions-list">
+            <li
+              v-for="transaction in recentTransactions"
+              :key="transaction.id"
+              class="transaction-item"
+            >
+              <div class="transaction-icon">
+                <i class="pi pi-shopping-bag" aria-hidden="true" />
+              </div>
+
+              <div class="transaction-details">
+                <div class="transaction-primary">
+                  <span class="transaction-category">
+                    {{ transaction.category?.name ?? 'Без категории' }}
+                  </span>
+                  <span class="transaction-date">
+                    {{ formatShortDate(transaction.occurredAt) }}
+                  </span>
+                </div>
+                <span class="transaction-note">
+                  {{ transaction.description ?? 'Описание отсутствует' }}
+                </span>
+              </div>
+
+              <div
+                class="transaction-amount"
+                :class="{ 'transaction-amount--positive': Number(transaction.amount) > 0 }"
+              >
+                <span>{{ Number(transaction.amount) > 0 ? '+' : '−' }}</span>
+                <span>{{ formatAmount(Number(transaction.amount)) }}</span>
+              </div>
+            </li>
+          </ul>
+
+          <UiButton
+            label="Все транзакции"
+            icon="pi pi-arrow-right"
+            variant="ghost"
+            iconPos="right"
+            block
+            @click="router.push('/expenses')"
+          />
+        </UiCard>
+      </div>
+    </UiSection>
+  </PageContainer>
 </template>
 
 <style scoped>
 .dashboard {
-  gap: var(--ft-layout-section-gap);
+  gap: var(--space-6);
 }
 
 .dashboard__kpis {
@@ -292,50 +292,50 @@ onMounted(async () => {
   grid-auto-rows: minmax(0, 1fr);
 }
 
-.dashboard__content > .app-card {
+.dashboard__content > .ui-card {
   height: 100%;
 }
 
 .card-title-with-icon {
   display: flex;
   align-items: center;
-  gap: var(--ft-space-3);
-  color: var(--ft-text-primary);
+  gap: var(--space-3);
+  color: var(--text);
 }
 
 .card-title-with-icon i {
-  color: var(--ft-primary-400);
+  color: var(--accent);
   font-size: 1.25rem;
 }
 
 .card-subtitle {
   margin: 0;
-  color: var(--ft-text-tertiary);
+  color: var(--text-muted);
   font-size: var(--ft-text-sm);
 }
 
 .dashboard__recent-header {
   display: flex;
   flex-direction: column;
-  gap: var(--ft-space-2);
+  gap: var(--space-2);
 }
 
 .quick-actions-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-  gap: var(--ft-space-3);
+  gap: var(--space-3);
 }
 
 .transactions-skeleton {
   display: grid;
-  gap: var(--ft-space-3);
+  gap: var(--space-3);
 }
 
 .transactions-list {
   list-style: none;
   display: flex;
   flex-direction: column;
-  gap: var(--ft-space-2);
+  gap: var(--space-2);
   margin: 0;
   padding: 0;
 }
@@ -343,64 +343,64 @@ onMounted(async () => {
 .transaction-item {
   display: grid;
   grid-template-columns: auto 1fr auto;
-  gap: var(--ft-space-3);
-  padding: var(--ft-space-3);
-  border-radius: var(--ft-radius-lg);
-  border: 1px solid var(--ft-border-soft);
-  background: var(--ft-surface-base);
+  gap: var(--space-3);
+  padding: var(--space-3);
+  border-radius: var(--radius-md);
+  border: 1px solid var(--border);
+  background: var(--surface-1);
   transition: background-color var(--ft-transition-fast), transform var(--ft-transition-fast), border-color var(--ft-transition-fast);
 }
 
 .transaction-item:hover {
-  background: var(--ft-surface-muted);
-  border-color: var(--ft-border-default);
+  background: var(--surface-2);
+  border-color: var(--border);
   transform: translateY(-2px);
 }
 
 .transaction-icon {
   width: 44px;
   height: 44px;
-  border-radius: var(--ft-radius-md);
+  border-radius: var(--radius-md);
   background: rgba(37, 99, 235, 0.16);
   display: grid;
   place-items: center;
-  color: var(--ft-primary-300);
+  color: var(--accent);
 }
 
 .transaction-details {
   display: flex;
   flex-direction: column;
-  gap: var(--ft-space-1);
+  gap: var(--space-1);
 }
 
 .transaction-primary {
   display: flex;
   align-items: center;
-  gap: var(--ft-space-3);
+  gap: var(--space-3);
   font-weight: var(--ft-font-medium);
-  color: var(--ft-text-primary);
+  color: var(--text);
 }
 
 .transaction-date {
-  color: var(--ft-text-tertiary);
+  color: var(--text-muted);
   font-size: var(--ft-text-sm);
 }
 
 .transaction-note {
-  color: var(--ft-text-tertiary);
+  color: var(--text-muted);
   font-size: var(--ft-text-sm);
 }
 
 .transaction-amount {
   display: flex;
-  gap: var(--ft-space-1);
+  gap: var(--space-1);
   align-items: center;
   font-weight: var(--ft-font-bold);
-  color: var(--ft-danger-400);
+  color: var(--danger);
 }
 
 .transaction-amount--positive {
-  color: var(--ft-success-400);
+  color: var(--success);
 }
 
 @media (max-width: 768px) {

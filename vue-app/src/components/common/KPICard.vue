@@ -35,7 +35,7 @@ const trendClass = computed(() => {
 </script>
 
 <template>
-  <AppCard class="kpi-card" variant="muted" padding="lg" :class="`kpi-card--${variant}`">
+  <UiCard class="kpi-card" variant="muted" padding="lg" :class="`kpi-card--${variant}`">
     <template #header>
       <div class="kpi-card__header">
         <span class="kpi-card__title">{{ title }}</span>
@@ -44,9 +44,9 @@ const trendClass = computed(() => {
     </template>
 
     <div v-if="loading" class="kpi-card__loading">
-      <Skeleton width="80%" height="1.5rem" />
-      <Skeleton width="60%" height="2.25rem" />
-      <Skeleton width="45%" height="1rem" />
+      <UiSkeleton width="80%" height="1.5rem" />
+      <UiSkeleton width="60%" height="2.25rem" />
+      <UiSkeleton width="45%" height="1rem" />
     </div>
 
     <template v-else>
@@ -62,7 +62,7 @@ const trendClass = computed(() => {
         </span>
       </div>
     </template>
-  </AppCard>
+  </UiCard>
 </template>
 
 <style scoped>
@@ -70,80 +70,80 @@ const trendClass = computed(() => {
   height: 100%;
 }
 
-:deep(.app-card__body) {
-  gap: var(--ft-space-3);
+:deep(.ui-card__body) {
+  gap: var(--space-3);
 }
 
 .kpi-card__header {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: var(--ft-space-3);
+  gap: var(--space-3);
 }
 
 .kpi-card__title {
   font-size: var(--ft-text-sm);
   font-weight: var(--ft-font-medium);
-  color: var(--ft-text-secondary);
+  color: var(--text-muted);
   text-transform: uppercase;
   letter-spacing: 0.05em;
 }
 
 .kpi-card__icon {
   font-size: 1.25rem;
-  color: var(--ft-text-tertiary);
+  color: var(--text-muted);
 }
 
 .kpi-card__value {
   font-size: var(--ft-text-3xl);
   font-weight: var(--ft-font-bold);
-  color: var(--ft-text-primary);
+  color: var(--text);
   line-height: 1.2;
 }
 
 .kpi-card__footer {
   display: flex;
   align-items: center;
-  gap: var(--ft-space-2);
+  gap: var(--space-2);
   font-size: var(--ft-text-sm);
 }
 
 .kpi-card__trend {
   display: inline-flex;
   align-items: center;
-  gap: var(--ft-space-1);
-  padding: var(--ft-space-1) var(--ft-space-2);
-  border-radius: var(--ft-radius-md);
+  gap: var(--space-1);
+  padding: var(--space-1) var(--space-2);
+  border-radius: var(--radius-md);
   font-weight: var(--ft-font-semibold);
 }
 
 .kpi-card__trend--up {
   background: rgba(34, 197, 94, 0.1);
-  color: var(--ft-success-600);
+  color: var(--success);
 }
 
 .dark-mode .kpi-card__trend--up {
   background: rgba(34, 197, 94, 0.15);
-  color: var(--ft-success-400);
+  color: var(--success);
 }
 
 .kpi-card__trend--down {
   background: rgba(239, 68, 68, 0.1);
-  color: var(--ft-danger-600);
+  color: var(--danger);
 }
 
 .dark-mode .kpi-card__trend--down {
   background: rgba(239, 68, 68, 0.15);
-  color: var(--ft-danger-400);
+  color: var(--danger);
 }
 
 .kpi-card__trend--neutral {
   background: rgba(107, 114, 128, 0.1);
-  color: var(--ft-text-tertiary);
+  color: var(--text-muted);
 }
 
 .kpi-card__trend-label {
-  color: var(--ft-text-tertiary);
+  color: var(--text-muted);
 }
 
 /* Variant styles */
@@ -162,6 +162,6 @@ const trendClass = computed(() => {
 .kpi-card__loading {
   display: flex;
   flex-direction: column;
-  gap: var(--ft-space-2);
+  gap: var(--space-2);
 }
 </style>

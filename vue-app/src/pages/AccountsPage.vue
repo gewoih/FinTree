@@ -114,7 +114,7 @@ onMounted(async () => {
 </script>
 
 <template>
-  <div class="accounts page">
+  <PageContainer class="accounts">
     <PageHeader
       title="Счета"
       subtitle="Управляйте всеми банковскими счетами и кошельками в одном месте"
@@ -124,7 +124,7 @@ onMounted(async () => {
       ]"
     >
       <template #actions>
-        <AppButton
+        <UiButton
           label="Добавить счет"
           icon="pi pi-plus"
           @click="openModal"
@@ -132,9 +132,9 @@ onMounted(async () => {
       </template>
     </PageHeader>
 
-    <section class="page-section accounts__content">
+    <UiSection class="accounts__content">
       <!-- Filters -->
-      <AppCard
+      <UiCard
         v-if="allAccounts.length > 0"
         class="accounts__filters"
         variant="muted"
@@ -145,14 +145,14 @@ onMounted(async () => {
           v-model:selected-type="selectedType"
           @clear-filters="clearFilters"
         />
-      </AppCard>
+      </UiCard>
 
       <!-- Loading skeleton -->
       <div
         v-if="loadingAccounts && allAccounts.length === 0"
         class="accounts__skeleton"
       >
-        <Skeleton v-for="i in 4" :key="i" height="220px" class="account-skeleton" />
+        <UiSkeleton v-for="i in 4" :key="i" height="220px" class="account-skeleton" />
       </div>
 
       <!-- Empty state (no accounts at all) -->
@@ -200,38 +200,38 @@ onMounted(async () => {
           Показано счетов: <strong>{{ filteredAccounts.length }}</strong> из <strong>{{ allAccounts.length }}</strong>
         </p>
       </div>
-    </section>
+    </UiSection>
 
     <AccountFormModal v-model:visible="modalVisible" />
-    <Skeleton
+    <UiSkeleton
       v-if="loadingCurrencies"
       class="visually-hidden"
       height="0"
     />
-  </div>
+  </PageContainer>
 </template>
 
 <style scoped>
 .accounts {
-  gap: clamp(var(--ft-space-6), 4vw, var(--ft-space-9));
+  gap: var(--space-6);
 }
 
 .accounts__content {
-  gap: clamp(var(--ft-space-4), 3vw, var(--ft-space-6));
+  gap: var(--space-5);
 }
 
 .accounts__skeleton {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-  gap: var(--ft-space-4);
+  gap: var(--space-4);
 }
 
 .accounts-grid {
-  gap: clamp(var(--ft-space-4), 3vw, var(--ft-space-5));
+  gap: var(--space-5);
 }
 
 .accounts__results {
-  padding: clamp(var(--ft-space-3), 2vw, var(--ft-space-4));
+  padding: var(--space-4);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -240,18 +240,18 @@ onMounted(async () => {
 .results-text {
   display: flex;
   align-items: center;
-  gap: var(--ft-space-2);
+  gap: var(--space-2);
   margin: 0;
   font-size: var(--ft-text-sm);
-  color: var(--ft-text-tertiary);
+  color: var(--text-muted);
 }
 
 .results-text i {
-  color: var(--ft-info-400);
+  color: var(--accent);
 }
 
 .results-text strong {
-  color: var(--ft-text-primary);
+  color: var(--text);
   font-weight: var(--ft-font-semibold);
 }
 
