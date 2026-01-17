@@ -30,11 +30,11 @@ const emit = defineEmits<{
       {{ props.description }}
     </p>
 
-    <Button
+    <UiButton
       v-if="props.actionLabel"
       :label="props.actionLabel"
       :icon="props.actionIcon"
-      severity="primary"
+      variant="primary"
       class="empty-state__action"
       @click="emit('action')"
     />
@@ -47,7 +47,7 @@ const emit = defineEmits<{
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  padding: var(--ft-space-16) var(--ft-space-8);
+  padding: var(--space-7) var(--space-6);
   text-align: center;
   min-height: 400px;
 }
@@ -58,14 +58,14 @@ const emit = defineEmits<{
   justify-content: center;
   width: 80px;
   height: 80px;
-  margin-bottom: var(--ft-space-6);
+  margin-bottom: var(--space-6);
   background: linear-gradient(
     135deg,
     rgba(37, 99, 235, 0.1) 0%,
     rgba(34, 197, 94, 0.1) 100%
   );
-  border-radius: var(--ft-radius-2xl);
-  border: 1px solid var(--ft-border-subtle);
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--border);
 }
 
 .empty-state__icon {
@@ -74,14 +74,14 @@ const emit = defineEmits<{
 }
 
 .empty-state__title {
-  margin: 0 0 var(--ft-space-3);
+  margin: 0 0 var(--space-3);
   font-size: var(--ft-text-xl);
   font-weight: var(--ft-font-semibold);
   color: var(--ft-text-primary);
 }
 
 .empty-state__description {
-  margin: 0 0 var(--ft-space-8);
+  margin: 0 0 var(--space-6);
   max-width: 420px;
   font-size: var(--ft-text-base);
   color: var(--ft-text-secondary);

@@ -2,9 +2,6 @@
 import { computed } from 'vue'
 import type { AccountType } from '../types'
 import { getAccountTypeInfo } from '../utils/accountHelpers'
-import InputText from 'primevue/inputtext'
-import Select from 'primevue/select'
-import Tag from 'primevue/tag'
 
 const props = defineProps<{
   searchText: string
@@ -31,19 +28,18 @@ const hasActiveFilters = computed(() => {
 </script>
 
 <template>
-  <div class="account-filters ft-card ft-card--muted">
+  <div class="account-filters">
     <div class="filters-grid">
       <!-- Search -->
       <FormField class="filter-field filter-field--wide" label="Поиск">
         <template #default="{ fieldAttrs }">
           <div class="filter-input">
             <i class="pi pi-search" aria-hidden="true" />
-            <InputText
+            <UiInputText
               :id="fieldAttrs.id"
               :model-value="props.searchText"
               @update:model-value="val => emit('update:searchText', val ?? '')"
               placeholder="Название счёта..."
-              class="w-full"
               autocomplete="off"
             />
           </div>
@@ -53,16 +49,15 @@ const hasActiveFilters = computed(() => {
       <!-- Type filter -->
       <FormField class="filter-field" label="Тип счёта">
         <template #default="{ fieldAttrs }">
-          <Select
-            :model-value="props.selectedType"
-            @update:model-value="val => emit('update:selectedType', val)"
-            :options="accountTypeOptions"
-            option-label="label"
-            option-value="value"
-            placeholder="Все типы"
-            class="w-full"
-            :inputId="fieldAttrs.id"
-          >
+            <UiSelect
+              :model-value="props.selectedType"
+              @update:model-value="val => emit('update:selectedType', val)"
+              :options="accountTypeOptions"
+              option-label="label"
+              option-value="value"
+              placeholder="Все типы"
+              :inputId="fieldAttrs.id"
+            >
             <template #value="slotProps">
               <div v-if="slotProps.value !== null && slotProps.value !== undefined" class="filter-option">
                 <i :class="`pi ${getAccountTypeInfo(slotProps.value).icon}`" />
@@ -76,14 +71,14 @@ const hasActiveFilters = computed(() => {
                 <span>{{ slotProps.option.label }}</span>
               </div>
             </template>
-          </Select>
+          </UiSelect>
         </template>
       </FormField>
 
       <!-- Clear button -->
       <FormField class="filter-field filter-field--compact" label="Сбросить" label-sr-only>
         <template #default>
-          <AppButton
+          <UiButton
             icon="pi pi-filter-slash"
             variant="ghost"
             block
@@ -91,7 +86,7 @@ const hasActiveFilters = computed(() => {
             @click="emit('clearFilters')"
           >
             Сбросить
-          </AppButton>
+          </UiButton>
         </template>
       </FormField>
     </div>
@@ -103,28 +98,28 @@ const hasActiveFilters = computed(() => {
         Активные фильтры:
       </span>
       <div class="active-filters__tags">
-        <Tag
+        <UiBadge
           v-if="searchText"
-          :value="`Поиск: ${searchText}`"
+          class="active-filters__tag"
           severity="info"
           @click="emit('update:searchText', '')"
         >
           <template #default>
             {{ `Поиск: ${searchText}` }}
-            <i class="pi pi-times ml-2" style="cursor: pointer;" />
+            <i class="pi pi-times active-filters__tag-icon" />
           </template>
-        </Tag>
-        <Tag
+        </UiBadge>
+        <UiBadge
           v-if="selectedType !== null"
-          :value="getAccountTypeInfo(selectedType).label"
+          class="active-filters__tag"
           severity="info"
           @click="emit('update:selectedType', null)"
         >
           <template #default>
             {{ getAccountTypeInfo(selectedType).label }}
-            <i class="pi pi-times ml-2" style="cursor: pointer;" />
+            <i class="pi pi-times active-filters__tag-icon" />
           </template>
-        </Tag>
+        </UiBadge>
       </div>
     </div>
   </div>
@@ -151,15 +146,15 @@ const hasActiveFilters = computed(() => {
 .filter-input {
   display: flex;
   align-items: center;
-  gap: var(--ft-space-2);
-  padding: var(--ft-space-2) var(--ft-space-3);
-  border-radius: var(--ft-radius-lg);
-  border: 1px solid var(--ft-border-soft);
-  background: var(--ft-surface-base);
+  gap: var(--space-2);
+  padding: var(--space-2) var(--space-3);
+  border-radius: var(--radius-md);
+  border: 1px solid var(--border);
+  background: var(--surface-1);
 }
 
 .filter-input i {
-  color: var(--ft-text-tertiary);
+  color: var(--text-muted);
 }
 
 .filter-input :deep(.p-inputtext) {
@@ -200,13 +195,21 @@ const hasActiveFilters = computed(() => {
 }
 
 .active-filters__label i {
-  color: var(--ft-primary-500);
+  color: var(--accent);
 }
 
 .active-filters__tags {
   display: flex;
   flex-wrap: wrap;
-  gap: var(--ft-space-2);
+  gap: var(--space-2);
+}
+
+.active-filters__tag {
+  cursor: pointer;
+}
+
+.active-filters__tag-icon {
+  margin-left: var(--space-2);
 }
 
 @media (max-width: 768px) {

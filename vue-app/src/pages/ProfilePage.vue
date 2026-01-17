@@ -123,7 +123,7 @@ function handleClearTelegram() {
 </script>
 
 <template>
-  <div class="page profile-page">
+  <PageContainer class="profile-page">
     <PageHeader
       title="Профиль"
       subtitle="Обновите базовую валюту и Telegram для более умной аналитики"
@@ -133,7 +133,7 @@ function handleClearTelegram() {
       ]"
     />
 
-    <AppCard class="profile-card" variant="muted" padding="lg">
+    <UiCard class="profile-card" variant="muted" padding="lg">
       <template #header>
         <div class="card-header">
           <div>
@@ -166,14 +166,13 @@ function handleClearTelegram() {
         <div class="profile-grid editable">
           <div class="profile-row">
             <label class="profile-label" for="profileCurrency">Базовая валюта</label>
-            <Select
+            <UiSelect
               id="profileCurrency"
               v-model="form.baseCurrencyCode"
               :options="currencyOptions"
               option-label="label"
               option-value="value"
               placeholder="Выберите валюту"
-              class="w-full"
               :disabled="isLoading"
             />
             <small v-if="isLoading" class="helper-text">
@@ -190,15 +189,14 @@ function handleClearTelegram() {
           <div class="profile-row">
             <label class="profile-label" for="profileTelegram">Telegram</label>
             <div class="telegram-input">
-              <InputText
+              <UiInputText
                 id="profileTelegram"
                 v-model="form.telegramHandle"
                 placeholder="@username"
                 autocomplete="off"
                 :disabled="isSaving"
-                class="w-full"
               />
-              <AppButton
+              <UiButton
                 type="button"
                 label="Очистить"
                 variant="ghost"
@@ -214,14 +212,14 @@ function handleClearTelegram() {
         </div>
 
         <div class="actions">
-          <AppButton
+          <UiButton
             type="button"
             label="Сбросить изменения"
             variant="ghost"
             :disabled="!hasChanges || isSaving"
             @click="resetForm"
           />
-          <AppButton
+          <UiButton
             type="submit"
             label="Обновить профиль"
             icon="pi pi-check"
@@ -230,21 +228,21 @@ function handleClearTelegram() {
           />
         </div>
       </form>
-    </AppCard>
-  </div>
+    </UiCard>
+  </PageContainer>
 </template>
 
 <style scoped>
 .profile-page {
-  gap: clamp(2rem, 3vw, 3.25rem);
+  gap: var(--space-6);
 }
 
 .profile-card {
-  gap: clamp(var(--ft-space-4), 3vw, var(--ft-space-6));
+  gap: var(--space-5);
 }
 
-:deep(.profile-card .app-card__body) {
-  gap: clamp(var(--ft-space-4), 3vw, var(--ft-space-6));
+:deep(.profile-card .ui-card__body) {
+  gap: var(--space-5);
 }
 
 .card-header {
@@ -258,25 +256,25 @@ function handleClearTelegram() {
   margin: 0;
   font-size: var(--ft-text-xl);
   font-weight: var(--ft-font-semibold);
-  color: var(--ft-text-primary);
+  color: var(--text);
 }
 
 .card-subtitle {
   margin: 0.25rem 0 0;
   font-size: var(--ft-text-sm);
-  color: var(--ft-text-tertiary);
+  color: var(--text-muted);
 }
 
 .profile-form {
   display: flex;
   flex-direction: column;
-  gap: clamp(1.5rem, 2.5vw, 2rem);
+  gap: var(--space-5);
 }
 
 .profile-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-  gap: clamp(1rem, 2vw, 1.5rem);
+  gap: var(--space-4);
 }
 
 .profile-grid.editable .profile-row {
@@ -286,25 +284,25 @@ function handleClearTelegram() {
 .profile-row {
   display: flex;
   flex-direction: column;
-  gap: 0.6rem;
+  gap: var(--space-2);
 }
 
 .profile-label {
   font-size: var(--ft-text-xs);
   text-transform: uppercase;
   letter-spacing: 0.16em;
-  color: var(--ft-text-tertiary);
+  color: var(--text-muted);
 }
 
 .profile-row p {
   margin: 0;
   font-size: var(--ft-text-base);
-  color: var(--ft-text-primary);
+  color: var(--text);
   word-break: break-word;
 }
 
 .profile-row .muted {
-  color: var(--ft-text-tertiary);
+  color: var(--text-muted);
   font-family: var(--ft-font-mono, 'Fira Code', monospace);
   font-size: var(--ft-text-sm);
 }
@@ -312,29 +310,29 @@ function handleClearTelegram() {
 .profile-divider {
   width: 100%;
   height: 1px;
-  background: var(--ft-border-soft);
+  background: var(--border);
   opacity: 0.6;
 }
 
 .helper-text {
   font-size: var(--ft-text-xs);
-  color: var(--ft-text-tertiary);
+  color: var(--text-muted);
 }
 
 .telegram-input {
   display: flex;
-  gap: 0.75rem;
+  gap: var(--space-3);
   align-items: center;
 }
 
 .actions {
   display: flex;
   justify-content: flex-end;
-  gap: 0.75rem;
+  gap: var(--space-3);
   flex-wrap: wrap;
 }
 
-.actions :deep(.app-button) {
+.actions :deep(.ui-button) {
   min-width: 180px;
 }
 

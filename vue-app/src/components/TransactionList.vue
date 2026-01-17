@@ -1,9 +1,6 @@
 <script setup lang="ts">
 import { computed, watch } from 'vue'
-import DataTable from 'primevue/datatable'
 import Column from 'primevue/column'
-import Tag from 'primevue/tag'
-import Button from 'primevue/button'
 import Skeleton from 'primevue/skeleton'
 import { useFinanceStore } from '../stores/finance'
 import { PAGINATION_OPTIONS } from '../constants'
@@ -70,7 +67,7 @@ const isEmptyState = computed(
 
 <template>
   <div class="transaction-history">
-    <AppCard class="transaction-history__filters" variant="muted" padding="lg">
+    <UiCard class="transaction-history__filters" variant="muted" padding="lg">
       <TransactionFilters
         v-model:search-text="searchText"
         v-model:selected-category="selectedCategory"
@@ -80,7 +77,7 @@ const isEmptyState = computed(
         :accounts="store.accounts"
         @clear-filters="clearFilters"
       />
-    </AppCard>
+    </UiCard>
 
     <div v-if="transactionsLoading" class="table-skeleton">
       <Skeleton v-for="i in 6" :key="i" height="54px" />
@@ -96,32 +93,35 @@ const isEmptyState = computed(
       @action="emit('add-transaction')"
     />
 
-    <div v-else class="table-shell transaction-history__table">
-      <header class="table-shell__header">
-        <div>
-          <h3 class="table-shell__title">История транзакций</h3>
-          <p class="table-shell__meta">
-            {{ filteredTransactions.length }}
-            {{ filteredTransactions.length === 1 ? 'транзакция' : filteredTransactions.length < 5 ? 'транзакции' : 'транзакций' }}
-            по {{ store.accounts.length }}
-            {{ store.accounts.length === 1 ? 'счету' : store.accounts.length < 5 ? 'счетам' : 'счетам' }}
-          </p>
+    <UiCard v-else class="transaction-history__table" padding="lg">
+      <template #header>
+        <div class="table-shell__header">
+          <div>
+            <h3 class="table-shell__title">История транзакций</h3>
+            <p class="table-shell__meta">
+              {{ filteredTransactions.length }}
+              {{ filteredTransactions.length === 1 ? 'транзакция' : filteredTransactions.length < 5 ? 'транзакции' : 'транзакций' }}
+              по {{ store.accounts.length }}
+              {{ store.accounts.length === 1 ? 'счету' : store.accounts.length < 5 ? 'счетам' : 'счетам' }}
+            </p>
+          </div>
+          <div class="table-shell__actions">
+            <UiButton
+              variant="ghost"
+              icon="pi pi-plus"
+              label="Добавить"
+              @click="emit('add-transaction')"
+            />
+          </div>
         </div>
-        <div class="table-shell__actions">
-          <AppButton
-            variant="ghost"
-            icon="pi pi-plus"
-            label="Добавить"
-            @click="emit('add-transaction')"
-          />
-        </div>
-      </header>
-      <div class="table-shell__body">
-        <DataTable
+      </template>
+      <UiDataTable
+          class="transaction-history__datatable"
           :value="filteredTransactions"
           sortField="occurredAt"
           :sortOrder="-1"
           stripedRows
+          rowHover
           responsiveLayout="scroll"
           :paginator="true"
           :rows="PAGINATION_OPTIONS.defaultRows"
@@ -129,7 +129,6 @@ const isEmptyState = computed(
           paginatorTemplate="FirstPageLink PrevPageLink PageLinks NextPageLink LastPageLink CurrentPageReport RowsPerPageDropdown"
           currentPageReportTemplate="Показано {first} - {last} из {totalRecords}"
           :globalFilterFields="['categoryName', 'accountName', 'description']"
-          tableStyle="min-width: 760px"
         >
           <Column field="occurredAt" header="Дата" :sortable="true" style="min-width: 120px">
             <template #body="slotProps">
@@ -154,9 +153,9 @@ const isEmptyState = computed(
           <Column field="categoryName" header="Категория" :sortable="true" style="min-width: 180px">
             <template #body="slotProps">
               <div class="category-cell">
-                <Tag
-                  :value="slotProps.data.categoryName"
-                  :style="{ backgroundColor: slotProps.data.categoryColor, color: '#fff' }"
+                <UiBadge
+                  :label="slotProps.data.categoryName"
+                  :color="slotProps.data.categoryColor"
                 />
                 <i
                   v-if="slotProps.data.isMandatory"
@@ -187,19 +186,16 @@ const isEmptyState = computed(
 
           <Column header="Действия" style="min-width: 120px">
             <template #body="slotProps">
-              <Button
+              <UiButton
                 icon="pi pi-pencil"
-                text
-                rounded
-                severity="secondary"
+                variant="ghost"
                 @click="emit('edit-transaction', slotProps.data)"
                 aria-label="Редактировать транзакцию"
               />
             </template>
           </Column>
-        </DataTable>
-      </div>
-    </div>
+      </UiDataTable>
+    </UiCard>
   </div>
 </template>
 
@@ -220,7 +216,13 @@ const isEmptyState = computed(
 }
 
 .transaction-history__table {
-  gap: 0;
+  gap: var(--space-4);
+}
+
+.transaction-history__datatable :deep(.ui-datatable__shell) {
+  border: none;
+  background: transparent;
+  box-shadow: none;
 }
 
 .date-cell {
@@ -283,25 +285,25 @@ const isEmptyState = computed(
   font-size: var(--ft-text-sm);
 }
 
-:deep(.transaction-history__table .p-datatable) {
+:deep(.transaction-history__datatable .p-datatable) {
   border: none;
   border-radius: 0;
 }
 
-:deep(.transaction-history__table .p-datatable .p-datatable-thead > tr > th),
-:deep(.transaction-history__table .p-datatable .p-datatable-tbody > tr > td) {
+:deep(.transaction-history__datatable .p-datatable .p-datatable-thead > tr > th),
+:deep(.transaction-history__datatable .p-datatable .p-datatable-tbody > tr > td) {
   border-right: none;
 }
 
-:deep(.transaction-history__table .p-datatable .p-datatable-thead > tr > th:last-child),
-:deep(.transaction-history__table .p-datatable .p-datatable-tbody > tr > td:last-child) {
+:deep(.transaction-history__datatable .p-datatable .p-datatable-thead > tr > th:last-child),
+:deep(.transaction-history__datatable .p-datatable .p-datatable-tbody > tr > td:last-child) {
   text-align: center;
 }
 
-:deep(.transaction-history__table .p-datatable .p-column-header-content) {
+:deep(.transaction-history__datatable .p-datatable .p-column-header-content) {
   display: inline-flex;
   align-items: center;
-  gap: var(--ft-space-2);
+  gap: var(--space-2);
 }
 
 :deep(.p-datatable .p-datatable-tbody > tr > td) {

@@ -71,7 +71,7 @@ const toggleMenu = (event: Event) => {
         <p class="account-card__type">{{ accountTypeInfo.label }}</p>
       </div>
 
-      <AppButton
+      <UiButton
         class="account-card__menu-button"
         icon="pi pi-ellipsis-v"
         variant="ghost"
@@ -116,7 +116,7 @@ const toggleMenu = (event: Event) => {
 
     <!-- Quick actions footer -->
     <footer v-if="!account.isMain" class="account-card__footer">
-      <AppButton
+      <UiButton
         label="Сделать основным"
         icon="pi pi-star"
         variant="ghost"
@@ -344,7 +344,7 @@ const toggleMenu = (event: Event) => {
     flex-direction: column;
   }
 
-  .account-card__footer :deep(.app-button) {
+  .account-card__footer :deep(.ui-button) {
     width: 100%;
   }
 }
