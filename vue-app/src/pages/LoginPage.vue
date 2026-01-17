@@ -130,6 +130,7 @@ const handleLogin = async () => {
   display: flex;
   flex-direction: column;
   gap: var(--ft-space-4);
+  max-width: 52ch;
 }
 
 .auth__brand {
@@ -161,6 +162,7 @@ const handleLogin = async () => {
 .auth__card {
   width: min(420px, 100%);
   backdrop-filter: blur(18px);
+  justify-self: end;
 }
 
 .auth__form {
@@ -217,6 +219,17 @@ const handleLogin = async () => {
 
   .auth__container {
     grid-template-columns: 1fr;
+  }
+
+  .auth__card {
+    justify-self: center;
+  }
+}
+
+@media (min-width: 1024px) {
+  .auth__container {
+    grid-template-columns: minmax(0, 1fr) minmax(320px, 420px);
+    justify-content: space-between;
   }
 }
 </style>

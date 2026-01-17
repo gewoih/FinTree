@@ -38,10 +38,10 @@ onMounted(() => {
 
 <style scoped>
 .categories {
-  gap: clamp(var(--ft-space-6), 4vw, var(--ft-space-9));
+  gap: var(--ft-layout-section-gap);
 }
 
 .categories__content {
-  gap: clamp(var(--ft-space-4), 3vw, var(--ft-space-6));
+  gap: var(--ft-layout-card-gap);
 }
 </style>

@@ -46,10 +46,10 @@ defineProps<Props>()
 .page-header {
   display: flex;
   flex-direction: column;
-  gap: var(--ft-space-4);
-  padding-bottom: var(--ft-space-6);
+  gap: var(--ft-space-3);
+  padding-bottom: var(--ft-space-5);
   border-bottom: 1px solid var(--ft-border-subtle);
-  margin-bottom: var(--ft-space-8);
+  margin-bottom: 0;
 }
 
 .page-header__breadcrumbs {
@@ -81,7 +81,7 @@ defineProps<Props>()
 
 .page-header__main {
   display: flex;
-  align-items: flex-start;
+  align-items: center;
   justify-content: space-between;
   gap: var(--ft-space-6);
 }

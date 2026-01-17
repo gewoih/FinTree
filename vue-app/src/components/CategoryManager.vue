@@ -118,11 +118,6 @@ defineExpose({
           <h3>Категории</h3>
           <p>Организуйте транзакции в понятные группы, чтобы аналитика была точнее.</p>
         </div>
-        <AppButton
-          label="Создать категорию"
-          icon="pi pi-plus"
-          @click="openModal()"
-        />
       </div>
     </template>
 
@@ -216,14 +211,14 @@ defineExpose({
 
 <style scoped>
 .categories-manager {
-  gap: clamp(var(--ft-space-4), 3vw, var(--ft-space-6));
+  gap: var(--ft-layout-card-gap);
 }
 
 .categories-manager__header {
   display: flex;
-  justify-content: space-between;
+  flex-direction: column;
   align-items: flex-start;
-  gap: var(--ft-space-4);
+  gap: var(--ft-space-2);
 }
 
 .categories-manager__header h3 {
@@ -241,7 +236,7 @@ defineExpose({
 
 .categories-manager__controls {
   display: flex;
-  justify-content: center;
+  justify-content: flex-start;
 }
 
 .categories__skeleton {
@@ -288,7 +283,7 @@ defineExpose({
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: var(--ft-space-3);
+  padding: var(--ft-space-3) var(--ft-space-4);
   border-radius: var(--ft-radius-lg);
   border: 1px solid var(--ft-border-soft);
   background: var(--ft-surface-base);
@@ -304,7 +299,8 @@ defineExpose({
 .category-item--system {
   cursor: not-allowed;
   border-style: dashed;
-  opacity: 0.8;
+  border-color: var(--ft-border-subtle);
+  opacity: 0.85;
 }
 
 .category-info {
@@ -317,8 +313,8 @@ defineExpose({
   width: 14px;
   height: 14px;
   border-radius: 50%;
-  border: 2px solid rgba(15, 20, 25, 0.16);
-  box-shadow: 0 0 0 2px rgba(15, 20, 25, 0.4);
+  border: 1px solid rgba(15, 20, 25, 0.2);
+  box-shadow: 0 0 0 2px rgba(15, 20, 25, 0.2);
 }
 
 .category-name {
@@ -332,7 +328,7 @@ defineExpose({
 .category-actions {
   display: flex;
   align-items: center;
-  gap: var(--ft-space-1);
+  gap: var(--ft-space-2);
 }
 
 @media (max-width: 640px) {

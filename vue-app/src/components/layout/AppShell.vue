@@ -192,7 +192,7 @@ onMounted(() => {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: var(--ft-space-4) var(--ft-space-6);
+  padding: var(--ft-space-4) var(--ft-layout-gutter);
   background: var(--ft-surface-base);
   border-bottom: 1px solid var(--ft-border-subtle);
   position: sticky;
@@ -335,8 +335,8 @@ onMounted(() => {
 /* Main Content */
 .app-shell__main {
   grid-area: main;
-  padding: var(--ft-space-8) var(--ft-space-6);
-  max-width: 1536px;
+  padding: var(--ft-layout-page-padding) var(--ft-layout-gutter);
+  max-width: var(--ft-layout-max-width);
   margin: 0 auto;
   width: 100%;
   outline: none;
@@ -344,7 +344,7 @@ onMounted(() => {
 
 @media (max-width: 768px) {
   .app-shell__main {
-    padding: var(--ft-space-6) var(--ft-space-4);
+    padding: var(--ft-layout-page-padding) var(--ft-layout-gutter);
   }
 }
 
@@ -354,13 +354,20 @@ onMounted(() => {
 }
 
 .app-shell__user-menu :deep(.p-menu) {
-  min-width: 200px;
+  min-width: 220px;
   margin-top: var(--ft-space-2);
+  padding: var(--ft-space-2);
+  border-radius: var(--ft-radius-lg);
+  border: 1px solid var(--ft-border-soft);
+  background: var(--ft-surface-soft);
+  box-shadow: var(--ft-shadow-card);
 }
 
 .app-shell__user-menu :deep(.p-menu .p-menuitem-link) {
-  padding: var(--ft-space-3) var(--ft-space-4);
+  padding: var(--ft-space-2) var(--ft-space-3);
   gap: var(--ft-space-3);
+  border-radius: var(--ft-radius-md);
+  min-height: 44px;
 }
 
 .app-shell__user-menu :deep(.p-menu .p-menuitem-icon) {
@@ -373,6 +380,6 @@ onMounted(() => {
 }
 
 .app-shell__user-menu :deep(.p-menu .p-menu-separator) {
-  margin: var(--ft-space-2) 0;
+  margin: var(--ft-space-2);
 }
 </style>

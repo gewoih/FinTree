@@ -210,6 +210,12 @@
   --ft-container-xl: 1280px;
   --ft-container-2xl: 1536px;
 
+  --ft-layout-max-width: var(--ft-container-2xl);
+  --ft-layout-gutter: clamp(var(--ft-space-4), 3vw, var(--ft-space-8));
+  --ft-layout-page-padding: clamp(var(--ft-space-6), 4vw, var(--ft-space-10));
+  --ft-layout-section-gap: clamp(var(--ft-space-6), 3vw, var(--ft-space-9));
+  --ft-layout-card-gap: clamp(var(--ft-space-4), 2vw, var(--ft-space-6));
+
   /* ━━━ COMPONENT SIZES ━━━ */
 
   --ft-input-height-sm: 2rem;     /* 32px */

@@ -279,7 +279,7 @@ onMounted(async () => {
 
 <style scoped>
 .dashboard {
-  gap: clamp(var(--ft-space-6), 4vw, var(--ft-space-9));
+  gap: var(--ft-layout-section-gap);
 }
 
 .dashboard__kpis {
@@ -289,6 +289,11 @@ onMounted(async () => {
 .dashboard__content {
   grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
   align-items: stretch;
+  grid-auto-rows: minmax(0, 1fr);
+}
+
+.dashboard__content > .app-card {
+  height: 100%;
 }
 
 .card-title-with-icon {

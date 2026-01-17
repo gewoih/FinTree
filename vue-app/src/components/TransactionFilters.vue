@@ -42,7 +42,7 @@ const accountOptions = computed(() => [
 </script>
 
 <template>
-  <div class="filters-panel ft-card ft-card--muted">
+  <div class="filters-panel transaction-filters">
     <div class="filters-grid">
       <FormField class="filter-field filter-field--wide" label="Поиск">
         <template #default="{ fieldAttrs }">
@@ -121,13 +121,16 @@ const accountOptions = computed(() => [
 
 <style scoped>
 .filters-panel {
-  gap: clamp(1rem, 1.5vw, 1.35rem);
+  display: flex;
+  flex-direction: column;
+  gap: var(--ft-space-4);
 }
 
 .filters-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
-  gap: clamp(0.85rem, 1.2vw, 1.3rem);
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: var(--ft-layout-card-gap);
+  align-items: end;
 }
 
 .filter-field {
@@ -147,7 +150,7 @@ const accountOptions = computed(() => [
 }
 
 .filter-field--compact :deep(.app-button) {
-  height: 100%;
+  min-height: var(--ft-input-height-md);
 }
 
 @media (max-width: 768px) {
