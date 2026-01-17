@@ -22,6 +22,7 @@ import type {
   ForecastSummary,
   HealthStatus,
 } from '../types/analytics';
+import PageContainer from "@/components/layout/PageContainer.vue";
 
 type FinancialMetricKey = 'savingsRate' | 'liquidityMonths' | 'expenseVolatility' | 'incomeDiversity';
 
@@ -693,7 +694,7 @@ onMounted(async () => {
 </script>
 
 <template>
-  <div class="analytics-page">
+  <PageContainer class="analytics-page">
     <PageHeader
       title="Аналитика"
       subtitle="Отслеживайте баланс, структуру расходов и прогноз в одном месте"
@@ -759,7 +760,7 @@ onMounted(async () => {
         @retry="retryForecastData"
       />
     </div>
-  </div>
+  </PageContainer>
 </template>
 
 <style scoped>

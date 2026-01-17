@@ -220,7 +220,7 @@ onMounted(async () => {
 </script>
 
 <template>
-  <div class="future-income-page">
+  <PageContainer class="future-income-page">
     <PageHeader
       title="План будущих доходов"
       subtitle="Отслеживайте зарплату, вклады и инвестиции с прогнозом по базовой валюте"
@@ -515,7 +515,7 @@ onMounted(async () => {
         />
       </template>
     </Dialog>
-  </div>
+  </PageContainer>
 </template>
 
 <style scoped>
