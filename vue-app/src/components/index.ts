@@ -7,7 +7,17 @@ import EmptyState from './common/EmptyState.vue'
 import FormField from './common/FormField.vue'
 import KPICard from './common/KPICard.vue'
 import PageHeader from './common/PageHeader.vue'
+import PageContainer from './layout/PageContainer.vue'
 import StatusBadge from './common/StatusBadge.vue'
+
+// UI kit
+import UiBadge from '../ui/UiBadge.vue'
+import UiButton from '../ui/UiButton.vue'
+import UiCard from '../ui/UiCard.vue'
+import UiDataTable from '../ui/UiDataTable.vue'
+import UiInputText from '../ui/UiInputText.vue'
+import UiSelect from '../ui/UiSelect.vue'
+import UiSection from '../ui/UiSection.vue'
 
 // PrimeVue components
 import Button from 'primevue/button'
@@ -42,7 +52,17 @@ export function registerComponents(app: App) {
   app.component('FormField', FormField)
   app.component('KPICard', KPICard)
   app.component('PageHeader', PageHeader)
+  app.component('PageContainer', PageContainer)
   app.component('StatusBadge', StatusBadge)
+
+  // UI kit
+  app.component('UiBadge', UiBadge)
+  app.component('UiButton', UiButton)
+  app.component('UiCard', UiCard)
+  app.component('UiDataTable', UiDataTable)
+  app.component('UiInputText', UiInputText)
+  app.component('UiSelect', UiSelect)
+  app.component('UiSection', UiSection)
 
   // PrimeVue components
   app.component('Button', Button)

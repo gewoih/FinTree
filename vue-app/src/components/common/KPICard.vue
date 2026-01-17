@@ -35,7 +35,7 @@ const trendClass = computed(() => {
 </script>
 
 <template>
-  <AppCard class="kpi-card" variant="muted" padding="lg" :class="`kpi-card--${variant}`">
+  <UiCard class="kpi-card" variant="muted" padding="lg" :class="`kpi-card--${variant}`">
     <template #header>
       <div class="kpi-card__header">
         <span class="kpi-card__title">{{ title }}</span>
@@ -62,7 +62,7 @@ const trendClass = computed(() => {
         </span>
       </div>
     </template>
-  </AppCard>
+  </UiCard>
 </template>
 
 <style scoped>
@@ -70,50 +70,46 @@ const trendClass = computed(() => {
   height: 100%;
 }
 
-:deep(.app-card__body) {
-  gap: var(--ft-space-3);
-}
-
 .kpi-card__header {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: var(--ft-space-3);
+  gap: var(--space-3);
 }
 
 .kpi-card__title {
   font-size: var(--ft-text-sm);
   font-weight: var(--ft-font-medium);
-  color: var(--ft-text-secondary);
+  color: var(--text-muted);
   text-transform: uppercase;
   letter-spacing: 0.05em;
 }
 
 .kpi-card__icon {
   font-size: 1.25rem;
-  color: var(--ft-text-tertiary);
+  color: var(--text-muted);
 }
 
 .kpi-card__value {
   font-size: var(--ft-text-3xl);
   font-weight: var(--ft-font-bold);
-  color: var(--ft-text-primary);
+  color: var(--text);
   line-height: 1.2;
 }
 
 .kpi-card__footer {
   display: flex;
   align-items: center;
-  gap: var(--ft-space-2);
+  gap: var(--space-2);
   font-size: var(--ft-text-sm);
 }
 
 .kpi-card__trend {
   display: inline-flex;
   align-items: center;
-  gap: var(--ft-space-1);
-  padding: var(--ft-space-1) var(--ft-space-2);
-  border-radius: var(--ft-radius-md);
+  gap: var(--space-1);
+  padding: var(--space-1) var(--space-2);
+  border-radius: var(--radius-sm);
   font-weight: var(--ft-font-semibold);
 }
 
@@ -143,7 +139,7 @@ const trendClass = computed(() => {
 }
 
 .kpi-card__trend-label {
-  color: var(--ft-text-tertiary);
+  color: var(--text-muted);
 }
 
 /* Variant styles */
@@ -162,6 +158,6 @@ const trendClass = computed(() => {
 .kpi-card__loading {
   display: flex;
   flex-direction: column;
-  gap: var(--ft-space-2);
+  gap: var(--space-2);
 }
 </style>

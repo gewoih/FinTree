@@ -2,8 +2,6 @@
 import { computed } from 'vue'
 import type { AccountType } from '../types'
 import { getAccountTypeInfo } from '../utils/accountHelpers'
-import InputText from 'primevue/inputtext'
-import Select from 'primevue/select'
 import Tag from 'primevue/tag'
 
 const props = defineProps<{
@@ -31,19 +29,18 @@ const hasActiveFilters = computed(() => {
 </script>
 
 <template>
-  <div class="account-filters ft-card ft-card--muted">
+  <div class="account-filters">
     <div class="filters-grid">
       <!-- Search -->
       <FormField class="filter-field filter-field--wide" label="Поиск">
         <template #default="{ fieldAttrs }">
           <div class="filter-input">
             <i class="pi pi-search" aria-hidden="true" />
-            <InputText
+            <UiInputText
               :id="fieldAttrs.id"
               :model-value="props.searchText"
               @update:model-value="val => emit('update:searchText', val ?? '')"
               placeholder="Название счёта..."
-              class="w-full"
               autocomplete="off"
             />
           </div>
@@ -53,14 +50,13 @@ const hasActiveFilters = computed(() => {
       <!-- Type filter -->
       <FormField class="filter-field" label="Тип счёта">
         <template #default="{ fieldAttrs }">
-          <Select
+          <UiSelect
             :model-value="props.selectedType"
             @update:model-value="val => emit('update:selectedType', val)"
             :options="accountTypeOptions"
             option-label="label"
             option-value="value"
             placeholder="Все типы"
-            class="w-full"
             :inputId="fieldAttrs.id"
           >
             <template #value="slotProps">
@@ -83,7 +79,7 @@ const hasActiveFilters = computed(() => {
       <!-- Clear button -->
       <FormField class="filter-field filter-field--compact" label="Сбросить" label-sr-only>
         <template #default>
-          <AppButton
+          <UiButton
             icon="pi pi-filter-slash"
             variant="ghost"
             block
@@ -91,7 +87,7 @@ const hasActiveFilters = computed(() => {
             @click="emit('clearFilters')"
           >
             Сбросить
-          </AppButton>
+          </UiButton>
         </template>
       </FormField>
     </div>
@@ -111,7 +107,7 @@ const hasActiveFilters = computed(() => {
         >
           <template #default>
             {{ `Поиск: ${searchText}` }}
-            <i class="pi pi-times ml-2" style="cursor: pointer;" />
+            <i class="pi pi-times filter-remove" />
           </template>
         </Tag>
         <Tag
@@ -122,7 +118,7 @@ const hasActiveFilters = computed(() => {
         >
           <template #default>
             {{ getAccountTypeInfo(selectedType).label }}
-            <i class="pi pi-times ml-2" style="cursor: pointer;" />
+            <i class="pi pi-times filter-remove" />
           </template>
         </Tag>
       </div>
@@ -132,37 +128,39 @@ const hasActiveFilters = computed(() => {
 
 <style scoped>
 .account-filters {
-  gap: var(--ft-space-4);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
 }
 
 .filters-grid {
   display: grid;
   grid-template-columns: 2fr 1fr auto;
-  gap: var(--ft-space-3);
+  gap: var(--space-3);
   align-items: end;
 }
 
 .filter-field {
   display: flex;
   flex-direction: column;
-  gap: var(--ft-space-2);
+  gap: var(--space-2);
 }
 
 .filter-input {
   display: flex;
   align-items: center;
-  gap: var(--ft-space-2);
-  padding: var(--ft-space-2) var(--ft-space-3);
-  border-radius: var(--ft-radius-lg);
-  border: 1px solid var(--ft-border-soft);
-  background: var(--ft-surface-base);
+  gap: var(--space-2);
+  padding: var(--space-2) var(--space-3);
+  border-radius: var(--radius-md);
+  border: 1px solid var(--border);
+  background: var(--surface-1);
 }
 
 .filter-input i {
-  color: var(--ft-text-tertiary);
+  color: var(--text-muted);
 }
 
-.filter-input :deep(.p-inputtext) {
+.filter-input :deep(.ui-input) {
   flex: 1;
   border: none;
   background: transparent;
@@ -173,30 +171,35 @@ const hasActiveFilters = computed(() => {
 .filter-option {
   display: flex;
   align-items: center;
-  gap: var(--ft-space-2);
+  gap: var(--space-2);
 }
 
 .filter-option i {
   font-size: var(--ft-text-sm);
-  color: var(--ft-text-muted);
+  color: var(--text-muted);
 }
 
 .active-filters {
   display: flex;
   align-items: center;
-  gap: var(--ft-space-3);
-  padding-top: var(--ft-space-3);
-  border-top: 1px solid var(--ft-border-soft);
+  gap: var(--space-3);
+  padding-top: var(--space-3);
+  border-top: 1px solid var(--border);
 }
 
 .active-filters__label {
   display: flex;
   align-items: center;
-  gap: var(--ft-space-2);
+  gap: var(--space-2);
   font-size: var(--ft-text-sm);
   font-weight: var(--ft-font-medium);
-  color: var(--ft-text-secondary);
+  color: var(--text-muted);
   white-space: nowrap;
+}
+
+.filter-remove {
+  margin-left: var(--space-2);
+  cursor: pointer;
 }
 
 .active-filters__label i {

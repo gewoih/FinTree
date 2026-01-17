@@ -33,8 +33,6 @@ const handleLogin = async () => {
 
 <template>
   <div class="auth auth--login">
-    <div class="auth__gradient" aria-hidden="true"></div>
-
     <div class="auth__container">
       <div class="auth__intro">
         <router-link to="/" class="auth__brand">
@@ -45,11 +43,11 @@ const handleLogin = async () => {
         <p>Войдите в пространство аналитики и продолжайте путь к финансовой стабильности.</p>
       </div>
 
-      <AppCard class="auth__card" variant="muted" padding="lg" elevated>
+      <UiCard class="auth__card" variant="muted" padding="lg">
         <form class="auth__form" @submit.prevent="handleLogin">
           <div class="auth__field">
             <label for="email">Email</label>
-            <InputText
+            <UiInputText
               id="email"
               v-model="email"
               type="email"
@@ -60,7 +58,7 @@ const handleLogin = async () => {
 
           <div class="auth__field">
             <label for="password">Пароль</label>
-            <InputText
+            <UiInputText
               id="password"
               v-model="password"
               type="password"
@@ -74,7 +72,7 @@ const handleLogin = async () => {
             <span>{{ authStore.error }}</span>
           </p>
 
-          <AppButton
+          <UiButton
             type="submit"
             label="Войти"
             icon="pi pi-log-in"
@@ -88,7 +86,7 @@ const handleLogin = async () => {
           <span>Нет аккаунта?</span>
           <router-link to="/register">Создать бесплатно</router-link>
         </footer>
-      </AppCard>
+      </UiCard>
     </div>
   </div>
 </template>
@@ -98,47 +96,36 @@ const handleLogin = async () => {
   min-height: 100vh;
   display: grid;
   place-items: center;
-  padding: clamp(var(--ft-space-6), 6vw, var(--ft-space-12)) clamp(var(--ft-space-4), 6vw, var(--ft-space-10));
-  background: radial-gradient(120% 120% at 100% 0%, rgba(59, 130, 246, 0.2), rgba(15, 20, 25, 0.9)),
-    linear-gradient(180deg, rgba(15, 20, 25, 0.96) 0%, rgba(15, 20, 25, 1) 100%);
-  color: var(--ft-text-primary);
-  position: relative;
-  overflow: hidden;
-}
-
-.auth__gradient {
-  position: absolute;
-  inset: 0;
-  background: radial-gradient(60% 60% at 0% 100%, rgba(15, 118, 110, 0.18), transparent),
-    radial-gradient(50% 50% at 80% 20%, rgba(236, 72, 153, 0.2), transparent);
-  opacity: 0.6;
-  pointer-events: none;
+  padding: clamp(var(--space-6), 6vw, var(--space-8)) clamp(var(--space-4), 6vw, var(--space-7));
+  background:
+    radial-gradient(80% 80% at 0% 100%, rgba(14, 116, 144, 0.2), transparent),
+    radial-gradient(80% 80% at 100% 0%, rgba(59, 130, 246, 0.2), transparent),
+    var(--bg);
+  color: var(--text);
 }
 
 .auth__container {
-  position: relative;
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
-  gap: clamp(var(--ft-space-6), 6vw, var(--ft-space-10));
+  gap: clamp(var(--space-6), 6vw, var(--space-8));
   align-items: center;
-  z-index: 1;
-  max-width: var(--ft-container-xl);
+  max-width: var(--page-max-width);
   width: 100%;
 }
 
 .auth__intro {
   display: flex;
   flex-direction: column;
-  gap: var(--ft-space-4);
+  gap: var(--space-4);
   max-width: 52ch;
 }
 
 .auth__brand {
   display: inline-flex;
   align-items: center;
-  gap: var(--ft-space-2);
+  gap: var(--space-2);
   font-weight: var(--ft-font-semibold);
-  color: var(--ft-primary-300);
+  color: var(--accent);
   letter-spacing: 0.08em;
   text-transform: uppercase;
 }
@@ -154,56 +141,55 @@ const handleLogin = async () => {
 
 .auth__intro p {
   margin: 0;
-  color: var(--ft-text-secondary);
+  color: var(--text-muted);
   max-width: 44ch;
   line-height: 1.6;
 }
 
 .auth__card {
   width: min(420px, 100%);
-  backdrop-filter: blur(18px);
   justify-self: end;
 }
 
 .auth__form {
   display: flex;
   flex-direction: column;
-  gap: var(--ft-space-4);
+  gap: var(--space-4);
 }
 
 .auth__field {
   display: flex;
   flex-direction: column;
-  gap: var(--ft-space-2);
+  gap: var(--space-2);
 }
 
 .auth__field label {
   font-size: var(--ft-text-xs);
   text-transform: uppercase;
   letter-spacing: 0.14em;
-  color: var(--ft-text-tertiary);
+  color: var(--text-muted);
 }
 
 .auth__error {
   display: flex;
   align-items: center;
-  gap: var(--ft-space-2);
+  gap: var(--space-2);
   margin: 0;
   font-size: var(--ft-text-sm);
-  color: var(--ft-danger-400);
+  color: var(--danger);
 }
 
 .auth__footer {
   display: flex;
   justify-content: center;
-  gap: var(--ft-space-2);
+  gap: var(--space-2);
   font-size: var(--ft-text-sm);
-  color: var(--ft-text-secondary);
-  margin-top: var(--ft-space-4);
+  color: var(--text-muted);
+  margin-top: var(--space-4);
 }
 
 .auth__footer a {
-  color: var(--ft-text-primary);
+  color: var(--text);
   font-weight: var(--ft-font-medium);
   text-decoration: none;
 }
@@ -214,7 +200,7 @@ const handleLogin = async () => {
 
 @media (max-width: 768px) {
   .auth {
-    padding-block: clamp(var(--ft-space-6), 8vw, var(--ft-space-8));
+    padding-block: clamp(var(--space-6), 8vw, var(--space-7));
   }
 
   .auth__container {

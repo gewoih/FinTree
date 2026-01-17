@@ -42,8 +42,6 @@ const handleRegister = async () => {
 
 <template>
   <div class="auth auth--register">
-    <div class="auth__gradient" aria-hidden="true"></div>
-
     <div class="auth__container">
       <div class="auth__intro">
         <router-link to="/" class="auth__brand">
@@ -59,11 +57,11 @@ const handleRegister = async () => {
         </ul>
       </div>
 
-      <AppCard class="auth__card" variant="muted" padding="lg" elevated>
+      <UiCard class="auth__card" variant="muted" padding="lg">
         <form class="auth__form" @submit.prevent="handleRegister">
           <div class="auth__field">
             <label for="email">Email</label>
-            <InputText
+            <UiInputText
               id="email"
               v-model="email"
               type="email"
@@ -74,7 +72,7 @@ const handleRegister = async () => {
 
           <div class="auth__field">
             <label for="password">Пароль</label>
-            <InputText
+            <UiInputText
               id="password"
               v-model="password"
               type="password"
@@ -86,7 +84,7 @@ const handleRegister = async () => {
 
           <div class="auth__field">
             <label for="passwordConfirmation">Подтвердите пароль</label>
-            <InputText
+            <UiInputText
               id="passwordConfirmation"
               v-model="passwordConfirmation"
               type="password"
@@ -105,7 +103,7 @@ const handleRegister = async () => {
             <span>{{ authStore.error }}</span>
           </p>
 
-          <AppButton
+          <UiButton
             type="submit"
             label="Зарегистрироваться"
             icon="pi pi-user-plus"
@@ -119,7 +117,7 @@ const handleRegister = async () => {
           <span>Уже есть аккаунт?</span>
           <router-link to="/login">Войти</router-link>
         </footer>
-      </AppCard>
+      </UiCard>
     </div>
   </div>
 </template>
@@ -129,46 +127,35 @@ const handleRegister = async () => {
   min-height: 100vh;
   display: grid;
   place-items: center;
-  padding: clamp(var(--ft-space-6), 6vw, var(--ft-space-12)) clamp(var(--ft-space-4), 6vw, var(--ft-space-10));
-  background: radial-gradient(120% 120% at -10% 10%, rgba(59, 130, 246, 0.22), rgba(15, 20, 25, 0.92)),
-    linear-gradient(160deg, rgba(15, 20, 25, 1) 0%, rgba(17, 24, 39, 1) 100%);
-  color: var(--ft-text-primary);
-  position: relative;
-  overflow: hidden;
-}
-
-.auth__gradient {
-  position: absolute;
-  inset: 0;
-  background: radial-gradient(60% 60% at 100% 100%, rgba(59, 130, 246, 0.18), transparent),
-    radial-gradient(40% 40% at 20% 80%, rgba(236, 72, 153, 0.18), transparent);
-  opacity: 0.6;
-  pointer-events: none;
+  padding: clamp(var(--space-6), 6vw, var(--space-8)) clamp(var(--space-4), 6vw, var(--space-7));
+  background:
+    radial-gradient(90% 90% at -10% 0%, rgba(59, 130, 246, 0.2), transparent),
+    radial-gradient(80% 80% at 100% 100%, rgba(236, 72, 153, 0.18), transparent),
+    var(--bg);
+  color: var(--text);
 }
 
 .auth__container {
-  position: relative;
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
-  gap: clamp(var(--ft-space-6), 6vw, var(--ft-space-10));
+  gap: clamp(var(--space-6), 6vw, var(--space-8));
   align-items: center;
-  z-index: 1;
-  max-width: var(--ft-container-xl);
+  max-width: var(--page-max-width);
   width: 100%;
 }
 
 .auth__intro {
   display: flex;
   flex-direction: column;
-  gap: var(--ft-space-4);
+  gap: var(--space-4);
 }
 
 .auth__brand {
   display: inline-flex;
   align-items: center;
-  gap: var(--ft-space-2);
+  gap: var(--space-2);
   font-weight: var(--ft-font-semibold);
-  color: var(--ft-primary-300);
+  color: var(--accent);
   letter-spacing: 0.08em;
   text-transform: uppercase;
 }
@@ -180,7 +167,7 @@ const handleRegister = async () => {
 
 .auth__intro p {
   margin: 0;
-  color: var(--ft-text-secondary);
+  color: var(--text-muted);
   max-width: 48ch;
   line-height: 1.6;
 }
@@ -189,71 +176,70 @@ const handleRegister = async () => {
   list-style: none;
   display: flex;
   flex-direction: column;
-  gap: var(--ft-space-2);
+  gap: var(--space-2);
   margin: 0;
   padding: 0;
-  color: var(--ft-text-secondary);
+  color: var(--text-muted);
 }
 
 .auth__benefits li {
   display: flex;
   align-items: center;
-  gap: var(--ft-space-2);
+  gap: var(--space-2);
 }
 
 .auth__benefits i {
-  color: var(--ft-success-400);
+  color: var(--success);
 }
 
 .auth__card {
   width: min(460px, 100%);
-  backdrop-filter: blur(18px);
 }
 
 .auth__form {
   display: flex;
   flex-direction: column;
-  gap: var(--ft-space-4);
+  gap: var(--space-4);
 }
 
 .auth__field {
   display: flex;
   flex-direction: column;
-  gap: var(--ft-space-2);
+  gap: var(--space-2);
 }
 
 .auth__field label {
   font-size: var(--ft-text-xs);
   text-transform: uppercase;
   letter-spacing: 0.14em;
-  color: var(--ft-text-tertiary);
+  color: var(--text-muted);
 }
 
 .auth__field small {
-  color: var(--ft-text-tertiary);
+  color: var(--text-muted);
   font-size: var(--ft-text-xs);
 }
 
 .auth__error {
   display: flex;
   align-items: center;
-  gap: var(--ft-space-2);
+  gap: var(--space-2);
   margin: 0;
   font-size: var(--ft-text-sm);
-  color: var(--ft-danger-400);
+  color: var(--danger);
 }
 
 .auth__footer {
   display: flex;
   justify-content: center;
-  gap: var(--ft-space-2);
+  gap: var(--space-2);
   font-size: var(--ft-text-sm);
-  color: var(--ft-text-secondary);
-  margin-top: var(--ft-space-4);
+  color: var(--text-muted);
+  margin-top: var(--space-4);
 }
 
 .auth__footer a {
-  color: var(--ft-text-primary);
+  color: var(--text);
   font-weight: var(--ft-font-medium);
   text-decoration: none;
 }
@@ -264,7 +250,7 @@ const handleRegister = async () => {
 
 @media (max-width: 768px) {
   .auth {
-    padding-block: clamp(var(--ft-space-6), 8vw, var(--ft-space-8));
+    padding-block: clamp(var(--space-6), 8vw, var(--space-7));
   }
 
   .auth__container {

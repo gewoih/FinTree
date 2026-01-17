@@ -7,8 +7,8 @@
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   color-scheme: dark;
-  background-color: var(--ft-bg-base);
-  color: var(--ft-text-primary);
+  background-color: var(--bg);
+  color: var(--text);
 }
 
 .dark-mode {
@@ -30,13 +30,13 @@ body {
 
 body {
   min-height: 100vh;
-  background-color: var(--ft-bg-base);
-  color: var(--ft-text-primary);
+  background-color: var(--bg);
+  color: var(--text);
 }
 
 #app {
   min-height: 100vh;
-  background-color: var(--ft-bg-base);
+  background-color: var(--bg);
 }
 
 a {

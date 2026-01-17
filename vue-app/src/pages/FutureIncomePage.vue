@@ -220,13 +220,13 @@ onMounted(async () => {
 </script>
 
 <template>
-  <div class="future-income-page">
+  <PageContainer class="future-income-page">
     <PageHeader
       title="План будущих доходов"
-      subtitle="Отслеживайте зарплату, вклады и инвестиции с прогнозом по базовой валюте"
+      description="Отслеживайте зарплату, вклады и инвестиции с прогнозом по базовой валюте"
     >
       <template #actions>
-        <Button
+        <UiButton
           label="Добавить инструмент"
           icon="pi pi-plus"
           @click="openInstrumentDialog"
@@ -427,7 +427,6 @@ onMounted(async () => {
       header="Новый инвестиционный инструмент"
       modal
       class="future-income-dialog"
-      :style="{ width: '540px' }"
       :breakpoints="{ '768px': '95vw' }"
       :closable="!instrumentSubmitting"
     >
@@ -515,7 +514,7 @@ onMounted(async () => {
         />
       </template>
     </Dialog>
-  </div>
+  </PageContainer>
 </template>
 
 <style scoped>
@@ -664,6 +663,10 @@ onMounted(async () => {
 .future-income-dialog__content {
   display: grid;
   gap: var(--ft-space-3);
+}
+
+.future-income-dialog {
+  width: 540px;
 }
 
 .future-income-dialog :deep(.p-select),

@@ -122,8 +122,8 @@ const scrollToSection = (sectionId: string) => {
         </nav>
 
         <div class="landing__actions">
-          <AppButton variant="ghost" label="Войти" @click="router.push('/login')" />
-          <AppButton label="Регистрация" @click="router.push('/register')" />
+          <UiButton variant="ghost" label="Войти" @click="router.push('/login')" />
+          <UiButton label="Регистрация" @click="router.push('/register')" />
         </div>
       </div>
     </header>
@@ -145,14 +145,14 @@ const scrollToSection = (sectionId: string) => {
             </p>
 
             <div class="landing__hero-actions">
-              <AppButton
+              <UiButton
                 label="Начать бесплатно"
                 icon="pi pi-arrow-right"
                 iconPos="right"
                 size="lg"
                 @click="router.push('/register')"
               />
-              <AppButton
+              <UiButton
                 label="Посмотреть веб-интерфейс"
                 variant="ghost"
                 size="lg"
@@ -177,7 +177,7 @@ const scrollToSection = (sectionId: string) => {
             </div>
           </div>
 
-          <AppCard class="landing__hero-card" padding="lg" variant="muted" elevated>
+          <UiCard class="landing__hero-card" padding="lg" variant="muted">
             <template #header>
               <div class="landing__hero-card-header">
                 <span>Превью аналитики</span>
@@ -203,10 +203,10 @@ const scrollToSection = (sectionId: string) => {
                 </article>
               </div>
               <div class="landing__hero-chart">
-                <div class="landing__hero-chart-bar" style="--progress: 68%"></div>
+                <div class="landing__hero-chart-bar"></div>
               </div>
             </div>
-          </AppCard>
+          </UiCard>
         </div>
       </section>
 
@@ -218,7 +218,7 @@ const scrollToSection = (sectionId: string) => {
           </header>
 
           <div class="card-grid card-grid--balanced card-grid--dense landing__feature-grid">
-            <AppCard
+            <UiCard
               v-for="feature in features"
               :key="feature.title"
               variant="muted"
@@ -230,7 +230,7 @@ const scrollToSection = (sectionId: string) => {
               </div>
               <h3>{{ feature.title }}</h3>
               <p>{{ feature.description }}</p>
-            </AppCard>
+            </UiCard>
           </div>
         </div>
       </section>
@@ -243,7 +243,7 @@ const scrollToSection = (sectionId: string) => {
           </header>
 
           <div class="card-grid card-grid--balanced landing__steps">
-            <AppCard
+            <UiCard
               v-for="step in steps"
               :key="step.number"
               variant="outlined"
@@ -253,7 +253,7 @@ const scrollToSection = (sectionId: string) => {
               <span class="landing__step-number">{{ step.number }}</span>
               <h3>{{ step.title }}</h3>
               <p>{{ step.description }}</p>
-            </AppCard>
+            </UiCard>
           </div>
         </div>
       </section>
@@ -266,14 +266,13 @@ const scrollToSection = (sectionId: string) => {
           </header>
 
           <div class="card-grid landing__pricing">
-            <AppCard
+            <UiCard
               v-for="plan in pricing"
               :key="plan.name"
               :variant="plan.accent ? 'outlined' : 'muted'"
               padding="lg"
               class="landing__pricing-card"
               :class="{ 'landing__pricing-card--accent': plan.accent }"
-              :elevated="plan.accent"
             >
               <header class="landing__pricing-header">
                 <div>
@@ -290,13 +289,13 @@ const scrollToSection = (sectionId: string) => {
                 </li>
               </ul>
 
-              <AppButton
+              <UiButton
                 :label="plan.accent ? 'Попробовать 14 дней' : 'Начать бесплатно'"
                 block
                 :variant="plan.accent ? 'primary' : 'ghost'"
                 @click="router.push('/register')"
               />
-            </AppCard>
+            </UiCard>
           </div>
         </div>
       </section>
@@ -309,7 +308,7 @@ const scrollToSection = (sectionId: string) => {
           </header>
 
           <div class="landing__faq-list">
-            <AppCard
+            <UiCard
               v-for="(item, index) in faq"
               :key="item.question"
               variant="muted"
@@ -329,7 +328,7 @@ const scrollToSection = (sectionId: string) => {
                   {{ item.answer }}
                 </p>
               </transition>
-            </AppCard>
+            </UiCard>
           </div>
         </div>
       </section>
@@ -340,7 +339,7 @@ const scrollToSection = (sectionId: string) => {
             <h2>Готовы к спокойствию за финансы?</h2>
             <p>Запустите FinTree сегодня и получите прозрачность денежных потоков уже завтра.</p>
           </div>
-          <AppButton
+          <UiButton
             label="Создать аккаунт"
             icon="pi pi-arrow-right"
             iconPos="right"
@@ -601,6 +600,7 @@ const scrollToSection = (sectionId: string) => {
 .landing__hero-chart-bar {
   position: absolute;
   inset: 0;
+  --progress: 68%;
   width: var(--progress);
   background: linear-gradient(90deg, var(--ft-primary-400), var(--ft-success-400));
 }

@@ -693,10 +693,10 @@ onMounted(async () => {
 </script>
 
 <template>
-  <div class="analytics-page">
+  <PageContainer class="analytics-page">
     <PageHeader
       title="Аналитика"
-      subtitle="Отслеживайте баланс, структуру расходов и прогноз в одном месте"
+      description="Отслеживайте баланс, структуру расходов и прогноз в одном месте"
     />
 
     <div class="analytics-grid">
@@ -759,7 +759,7 @@ onMounted(async () => {
         @retry="retryForecastData"
       />
     </div>
-  </div>
+  </PageContainer>
 </template>
 
 <style scoped>

@@ -30,17 +30,17 @@ onMounted(async () => {
 </script>
 
 <template>
-  <div class="transactions page">
+  <PageContainer>
     <PageHeader
       title="Транзакции"
-      subtitle="Фильтруйте, изучайте и управляйте всеми расходами и доходами"
+      description="Фильтруйте, изучайте и управляйте всеми расходами и доходами"
       :breadcrumbs="[
         { label: 'Главная', to: '/dashboard' },
         { label: 'Транзакции' }
       ]"
     >
       <template #actions>
-        <Button
+        <UiButton
           label="Добавить транзакцию"
           icon="pi pi-plus"
           @click="openTransactionDialog"
@@ -48,26 +48,16 @@ onMounted(async () => {
       </template>
     </PageHeader>
 
-    <section class="page-section transactions__content">
+    <UiSection gap="lg">
       <TransactionList
         @add-transaction="openTransactionDialog"
         @edit-transaction="handleEditTransaction"
       />
-    </section>
+    </UiSection>
 
     <TransactionForm
       v-model:visible="transactionDialogVisible"
       :transaction="editingTransaction"
     />
-  </div>
+  </PageContainer>
 </template>
-
-<style scoped>
-.transactions {
-  gap: var(--ft-layout-section-gap);
-}
-
-.transactions__content {
-  gap: var(--ft-layout-card-gap);
-}
-</style>

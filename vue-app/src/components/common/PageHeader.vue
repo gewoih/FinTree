@@ -1,7 +1,7 @@
 <script setup lang="ts">
 interface Props {
   title: string
-  subtitle?: string
+  description?: string
   breadcrumbs?: Array<{ label: string; to?: string }>
 }
 
@@ -9,7 +9,7 @@ defineProps<Props>()
 </script>
 
 <template>
-  <div class="page-header">
+  <header class="page-header">
     <div v-if="breadcrumbs && breadcrumbs.length" class="page-header__breadcrumbs">
       <template v-for="(crumb, index) in breadcrumbs" :key="index">
         <router-link
@@ -32,94 +32,89 @@ defineProps<Props>()
     <div class="page-header__main">
       <div class="page-header__text">
         <h1 class="page-header__title">{{ title }}</h1>
-        <p v-if="subtitle" class="page-header__subtitle">{{ subtitle }}</p>
+        <p v-if="description" class="page-header__description">{{ description }}</p>
       </div>
 
       <div v-if="$slots.actions" class="page-header__actions">
         <slot name="actions" />
       </div>
     </div>
-  </div>
+  </header>
 </template>
 
 <style scoped>
 .page-header {
   display: flex;
   flex-direction: column;
-  gap: var(--ft-space-3);
-  padding-bottom: var(--ft-space-5);
-  border-bottom: 1px solid var(--ft-border-subtle);
-  margin-bottom: 0;
+  gap: var(--space-3);
 }
 
 .page-header__breadcrumbs {
   display: flex;
   align-items: center;
-  gap: var(--ft-space-2);
-  font-size: var(--ft-text-sm);
+  gap: var(--space-2);
+  font-size: 0.85rem;
 }
 
 .page-header__breadcrumb-link {
-  color: var(--ft-text-tertiary);
+  color: var(--text-muted);
   text-decoration: none;
   transition: color var(--ft-transition-fast);
 }
 
 .page-header__breadcrumb-link:hover {
-  color: var(--ft-text-link);
+  color: var(--accent);
 }
 
 .page-header__breadcrumb-current {
-  color: var(--ft-text-secondary);
+  color: var(--text);
   font-weight: var(--ft-font-medium);
 }
 
 .page-header__breadcrumb-separator {
   font-size: 0.75rem;
-  color: var(--ft-text-tertiary);
+  color: var(--text-muted);
 }
 
 .page-header__main {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: var(--ft-space-6);
+  gap: var(--space-6);
 }
 
 .page-header__text {
   flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
 }
 
 .page-header__title {
   margin: 0;
-  font-size: var(--ft-text-3xl);
+  font-size: clamp(1.75rem, 2.5vw, 2.25rem);
   font-weight: var(--ft-font-bold);
-  color: var(--ft-text-primary);
+  color: var(--text);
   line-height: var(--ft-leading-tight);
 }
 
-.page-header__subtitle {
-  margin: var(--ft-space-2) 0 0;
-  font-size: var(--ft-text-base);
-  color: var(--ft-text-secondary);
+.page-header__description {
+  margin: 0;
+  font-size: 0.95rem;
+  color: var(--text-muted);
   line-height: var(--ft-leading-normal);
 }
 
 .page-header__actions {
   display: flex;
   align-items: center;
-  gap: var(--ft-space-3);
+  gap: var(--space-3);
 }
 
-/* Responsive */
 @media (max-width: 768px) {
   .page-header__main {
     flex-direction: column;
     align-items: stretch;
-  }
-
-  .page-header__title {
-    font-size: var(--ft-text-2xl);
   }
 
   .page-header__actions {

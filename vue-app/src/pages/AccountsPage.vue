@@ -114,17 +114,17 @@ onMounted(async () => {
 </script>
 
 <template>
-  <div class="accounts page">
+  <PageContainer>
     <PageHeader
       title="Счета"
-      subtitle="Управляйте всеми банковскими счетами и кошельками в одном месте"
+      description="Управляйте всеми банковскими счетами и кошельками в одном месте"
       :breadcrumbs="[
         { label: 'Главная', to: '/dashboard' },
         { label: 'Счета' }
       ]"
     >
       <template #actions>
-        <AppButton
+        <UiButton
           label="Добавить счет"
           icon="pi pi-plus"
           @click="openModal"
@@ -132,9 +132,8 @@ onMounted(async () => {
       </template>
     </PageHeader>
 
-    <section class="page-section accounts__content">
-      <!-- Filters -->
-      <AppCard
+    <UiSection gap="lg">
+      <UiCard
         v-if="allAccounts.length > 0"
         class="accounts__filters"
         variant="muted"
@@ -145,9 +144,8 @@ onMounted(async () => {
           v-model:selected-type="selectedType"
           @clear-filters="clearFilters"
         />
-      </AppCard>
+      </UiCard>
 
-      <!-- Loading skeleton -->
       <div
         v-if="loadingAccounts && allAccounts.length === 0"
         class="accounts__skeleton"
@@ -155,7 +153,6 @@ onMounted(async () => {
         <Skeleton v-for="i in 4" :key="i" height="220px" class="account-skeleton" />
       </div>
 
-      <!-- Empty state (no accounts at all) -->
       <EmptyState
         v-else-if="allAccounts.length === 0"
         icon="pi-wallet"
@@ -166,7 +163,6 @@ onMounted(async () => {
         @action="openModal"
       />
 
-      <!-- Empty state (no accounts match filters) -->
       <EmptyState
         v-else-if="filteredAccounts.length === 0 && hasActiveFilters"
         icon="pi-filter-slash"
@@ -177,8 +173,7 @@ onMounted(async () => {
         @action="clearFilters"
       />
 
-      <!-- Accounts grid -->
-      <div v-else class="accounts-grid card-grid card-grid--balanced">
+      <div v-else class="accounts-grid">
         <AccountCard
           v-for="account in filteredAccounts"
           :key="account.id"
@@ -190,17 +185,18 @@ onMounted(async () => {
         />
       </div>
 
-      <!-- Results count -->
-      <div
+      <UiCard
         v-if="filteredAccounts.length > 0 && hasActiveFilters"
-        class="surface-panel accounts__results"
+        class="accounts__results"
+        variant="muted"
+        padding="md"
       >
         <p class="results-text">
           <i class="pi pi-info-circle" aria-hidden="true" />
           Показано счетов: <strong>{{ filteredAccounts.length }}</strong> из <strong>{{ allAccounts.length }}</strong>
         </p>
-      </div>
-    </section>
+      </UiCard>
+    </UiSection>
 
     <AccountFormModal v-model:visible="modalVisible" />
     <Skeleton
@@ -208,30 +204,23 @@ onMounted(async () => {
       class="visually-hidden"
       height="0"
     />
-  </div>
+  </PageContainer>
 </template>
 
 <style scoped>
-.accounts {
-  gap: clamp(var(--ft-space-6), 4vw, var(--ft-space-9));
-}
-
-.accounts__content {
-  gap: clamp(var(--ft-space-4), 3vw, var(--ft-space-6));
-}
-
 .accounts__skeleton {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-  gap: var(--ft-space-4);
+  gap: var(--space-4);
 }
 
 .accounts-grid {
-  gap: clamp(var(--ft-space-4), 3vw, var(--ft-space-5));
+  display: grid;
+  gap: var(--space-5);
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
 }
 
 .accounts__results {
-  padding: clamp(var(--ft-space-3), 2vw, var(--ft-space-4));
   display: flex;
   align-items: center;
   justify-content: center;
@@ -240,18 +229,18 @@ onMounted(async () => {
 .results-text {
   display: flex;
   align-items: center;
-  gap: var(--ft-space-2);
+  gap: var(--space-2);
   margin: 0;
   font-size: var(--ft-text-sm);
-  color: var(--ft-text-tertiary);
+  color: var(--text-muted);
 }
 
 .results-text i {
-  color: var(--ft-info-400);
+  color: var(--accent);
 }
 
 .results-text strong {
-  color: var(--ft-text-primary);
+  color: var(--text);
   font-weight: var(--ft-font-semibold);
 }
 

@@ -111,7 +111,7 @@ defineExpose({
 </script>
 
 <template>
-  <AppCard class="categories-manager" variant="muted" padding="lg">
+  <UiCard class="categories-manager" variant="muted" padding="lg">
     <template #header>
       <div class="categories-manager__header">
         <div>
@@ -206,7 +206,7 @@ defineExpose({
       :category="editingCategory"
       :default-type="selectedCategoryType"
     />
-</AppCard>
+  </UiCard>
 </template>
 
 <style scoped>

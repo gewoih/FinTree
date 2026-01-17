@@ -67,32 +67,32 @@ onMounted(() => {
   <div class="app-shell">
     <a class="app-shell__skip-link" href="#main-content">Перейти к основному содержимому</a>
 
-    <!-- Top Navigation -->
     <div class="app-shell__topnav">
-      <div class="app-shell__topnav-left">
-        <Button
-          icon="pi pi-bars"
-          text
-          rounded
-          class="app-shell__menu-toggle lg:hidden"
-          @click="toggleSidebar"
-        />
-        <router-link to="/dashboard" class="app-shell__logo">
-          <i class="pi pi-chart-bar" />
-          <span>FinTree</span>
-        </router-link>
-      </div>
-
-      <div class="app-shell__topnav-right">
-        <div class="app-shell__user-menu">
-          <Button
-            type="button"
-            :label="userEmail"
-            icon="pi pi-user"
-            text
-            @click="handleUserMenuToggle"
+      <div class="app-shell__topnav-inner">
+        <div class="app-shell__topnav-left">
+          <UiButton
+            icon="pi pi-bars"
+            variant="ghost"
+            class="app-shell__menu-toggle lg:hidden"
+            @click="toggleSidebar"
           />
-          <Menu ref="userMenuRef" :model="userMenuItems" popup />
+          <router-link to="/dashboard" class="app-shell__logo">
+            <i class="pi pi-chart-bar" />
+            <span>FinTree</span>
+          </router-link>
+        </div>
+
+        <div class="app-shell__topnav-right">
+          <div class="app-shell__user-menu">
+            <UiButton
+              type="button"
+              :label="userEmail"
+              icon="pi pi-user"
+              variant="ghost"
+              @click="handleUserMenuToggle"
+            />
+            <Menu ref="userMenuRef" :model="userMenuItems" popup />
+          </div>
         </div>
       </div>
     </div>
@@ -157,24 +157,24 @@ onMounted(() => {
     "topnav"
     "main";
   min-height: 100vh;
-  background: var(--ft-bg-base);
+  background: var(--bg);
 }
 
 .app-shell__skip-link {
   position: absolute;
-  left: var(--ft-space-4);
+  left: var(--space-4);
   top: -100%;
-  padding: var(--ft-space-2) var(--ft-space-3);
-  background: var(--ft-primary-600);
-  color: var(--ft-text-inverse);
-  border-radius: var(--ft-radius-md);
-  box-shadow: var(--ft-shadow-soft);
+  padding: var(--space-2) var(--space-3);
+  background: var(--accent);
+  color: var(--text);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-soft);
   transition: top var(--ft-transition-fast);
   z-index: calc(var(--ft-z-sticky) + 1);
 }
 
 .app-shell__skip-link:focus {
-  top: var(--ft-space-4);
+  top: var(--space-4);
 }
 
 @media (min-width: 1024px) {
@@ -189,53 +189,57 @@ onMounted(() => {
 /* Top Navigation */
 .app-shell__topnav {
   grid-area: topnav;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: var(--ft-space-4) var(--ft-layout-gutter);
-  background: var(--ft-surface-base);
-  border-bottom: 1px solid var(--ft-border-subtle);
+  background: var(--surface-1);
+  border-bottom: 1px solid var(--border);
   position: sticky;
   top: 0;
   z-index: var(--ft-z-sticky);
-  backdrop-filter: blur(12px);
-  box-shadow: 0 4px 20px rgba(15, 23, 42, 0.06);
+}
+
+.app-shell__topnav-inner {
+  max-width: var(--page-max-width);
+  margin: 0 auto;
+  padding: var(--space-4) var(--page-padding);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-4);
 }
 
 .app-shell__topnav-left {
   display: flex;
   align-items: center;
-  gap: var(--ft-space-4);
+  gap: var(--space-4);
 }
 
 .app-shell__topnav-right {
   display: flex;
   align-items: center;
-  gap: var(--ft-space-2);
+  gap: var(--space-3);
 }
 
 .app-shell__menu-toggle {
-  margin-left: calc(var(--ft-space-4) * -1);
+  margin-left: calc(var(--space-4) * -1);
 }
 
 .app-shell__logo {
   display: flex;
   align-items: center;
-  gap: var(--ft-space-3);
+  gap: var(--space-3);
   font-size: var(--ft-text-xl);
   font-weight: var(--ft-font-bold);
-  color: var(--ft-text-primary);
+  color: var(--text);
   text-decoration: none;
   transition: color var(--ft-transition-fast);
 }
 
 .app-shell__logo i {
   font-size: 1.5rem;
-  color: var(--ft-primary-600);
+  color: var(--accent);
 }
 
 .app-shell__logo:hover {
-  color: var(--ft-primary-600);
+  color: var(--accent);
 }
 
 /* Sidebar - Desktop */
@@ -247,9 +251,9 @@ onMounted(() => {
   .app-shell__sidebar-desktop {
     display: block;
     grid-area: sidebar;
-    background: var(--ft-surface-base);
-    border-right: 1px solid var(--ft-border-subtle);
-    padding: var(--ft-space-6) var(--ft-space-4);
+    background: var(--surface-1);
+    border-right: 1px solid var(--border);
+    padding: var(--space-6) var(--space-4);
     position: sticky;
     top: var(--app-shell-nav-height);
     height: calc(100vh - var(--app-shell-nav-height));
@@ -259,73 +263,65 @@ onMounted(() => {
 
 .app-shell__drawer-mobile :deep(.p-drawer) {
   width: 280px;
-  background: var(--ft-surface-soft);
-  border-right: 1px solid var(--ft-border-soft);
+  background: var(--surface-2);
+  border-right: 1px solid var(--border);
 }
 
 .app-shell__drawer-mobile :deep(.p-drawer-header) {
-  padding: var(--ft-space-5) var(--ft-space-4) var(--ft-space-3);
+  padding: var(--space-5) var(--space-4) var(--space-3);
 }
 
 .app-shell__drawer-header {
   display: flex;
   align-items: center;
-  gap: var(--ft-space-3);
+  gap: var(--space-3);
   font-size: var(--ft-text-xl);
   font-weight: var(--ft-font-bold);
-  color: var(--ft-text-primary);
+  color: var(--text);
 }
 
 .app-shell__drawer-header i {
   font-size: 1.5rem;
-  color: var(--ft-primary-600);
+  color: var(--accent);
 }
 
 /* Navigation */
 .app-shell__nav {
   display: flex;
   flex-direction: column;
-  gap: var(--ft-space-1);
-  margin-top: var(--ft-space-4);
+  gap: var(--space-1);
+  margin-top: var(--space-4);
 }
 
 .app-shell__nav-link {
   display: flex;
   align-items: center;
-  gap: var(--ft-space-3);
-  padding: var(--ft-space-3) var(--ft-space-4);
-  border-radius: var(--ft-radius-lg);
+  gap: var(--space-3);
+  padding: var(--space-3) var(--space-4);
+  border-radius: var(--radius-md);
   font-size: var(--ft-text-base);
   font-weight: var(--ft-font-medium);
-  color: var(--ft-text-secondary);
+  color: var(--text-muted);
   text-decoration: none;
   transition: all var(--ft-transition-fast);
   position: relative;
 }
 
 .app-shell__nav-link:hover {
-  background: rgba(37, 99, 235, 0.08);
-  color: var(--ft-text-primary);
+  background: var(--surface-2);
+  color: var(--text);
 }
 
 .app-shell__nav-link.router-link-active {
-  background: linear-gradient(
-    135deg,
-    rgba(37, 99, 235, 0.1) 0%,
-    rgba(59, 130, 246, 0.05) 100%
-  );
-  color: var(--ft-primary-600);
+  background: rgba(59, 130, 246, 0.12);
+  color: var(--accent);
   font-weight: var(--ft-font-semibold);
-  box-shadow: inset 0 0 0 1px rgba(37, 99, 235, 0.1);
+  box-shadow: inset 0 0 0 1px rgba(59, 130, 246, 0.18);
 }
 
 .dark-mode .app-shell__nav-link.router-link-active {
-  background: linear-gradient(
-    135deg,
-    rgba(59, 130, 246, 0.15) 0%,
-    rgba(96, 165, 250, 0.1) 100%
-  );
-  color: var(--ft-primary-400);
+  background: rgba(59, 130, 246, 0.18);
+  color: var(--accent);
 }
 
 .app-shell__nav-link i {
@@ -335,16 +331,13 @@ onMounted(() => {
 /* Main Content */
 .app-shell__main {
   grid-area: main;
-  padding: var(--ft-layout-page-padding) var(--ft-layout-gutter);
-  max-width: var(--ft-layout-max-width);
-  margin: 0 auto;
-  width: 100%;
   outline: none;
+  background: var(--bg);
 }
 
 @media (max-width: 768px) {
   .app-shell__main {
-    padding: var(--ft-layout-page-padding) var(--ft-layout-gutter);
+    padding: 0;
   }
 }
 
@@ -355,23 +348,23 @@ onMounted(() => {
 
 .app-shell__user-menu :deep(.p-menu) {
   min-width: 220px;
-  margin-top: var(--ft-space-2);
-  padding: var(--ft-space-2);
-  border-radius: var(--ft-radius-lg);
-  border: 1px solid var(--ft-border-soft);
-  background: var(--ft-surface-soft);
-  box-shadow: var(--ft-shadow-card);
+  margin-top: var(--space-2);
+  padding: var(--space-2);
+  border-radius: var(--radius-md);
+  border: 1px solid var(--border);
+  background: var(--surface-2);
+  box-shadow: var(--shadow-soft);
 }
 
 .app-shell__user-menu :deep(.p-menu .p-menuitem-link) {
-  padding: var(--ft-space-2) var(--ft-space-3);
-  gap: var(--ft-space-3);
-  border-radius: var(--ft-radius-md);
+  padding: var(--space-2) var(--space-3);
+  gap: var(--space-3);
+  border-radius: var(--radius-md);
   min-height: 44px;
 }
 
 .app-shell__user-menu :deep(.p-menu .p-menuitem-icon) {
-  color: var(--ft-text-muted);
+  color: var(--text-muted);
 }
 
 .app-shell__user-menu :deep(.p-menu .p-menuitem-text) {
@@ -380,6 +373,6 @@ onMounted(() => {
 }
 
 .app-shell__user-menu :deep(.p-menu .p-menu-separator) {
-  margin: var(--ft-space-2);
+  margin: var(--space-2);
 }
 </style>
