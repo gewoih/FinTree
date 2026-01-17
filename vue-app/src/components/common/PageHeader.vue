@@ -9,7 +9,7 @@ defineProps<Props>()
 </script>
 
 <template>
-  <div class="page-header">
+  <header class="page-header">
     <div v-if="breadcrumbs && breadcrumbs.length" class="page-header__breadcrumbs">
       <template v-for="(crumb, index) in breadcrumbs" :key="index">
         <router-link
@@ -39,28 +39,27 @@ defineProps<Props>()
         <slot name="actions" />
       </div>
     </div>
-  </div>
+  </header>
 </template>
 
 <style scoped>
 .page-header {
   display: flex;
   flex-direction: column;
-  gap: var(--ft-space-3);
-  padding-bottom: var(--ft-space-5);
-  border-bottom: 1px solid var(--ft-border-subtle);
-  margin-bottom: 0;
+  gap: var(--space-3);
+  padding-bottom: var(--space-4);
+  border-bottom: 1px solid var(--border-subtle);
 }
 
 .page-header__breadcrumbs {
   display: flex;
   align-items: center;
-  gap: var(--ft-space-2);
-  font-size: var(--ft-text-sm);
+  gap: var(--space-2);
+  font-size: 0.85rem;
 }
 
 .page-header__breadcrumb-link {
-  color: var(--ft-text-tertiary);
+  color: var(--text-muted);
   text-decoration: none;
   transition: color var(--ft-transition-fast);
 }
@@ -70,20 +69,20 @@ defineProps<Props>()
 }
 
 .page-header__breadcrumb-current {
-  color: var(--ft-text-secondary);
+  color: var(--text);
   font-weight: var(--ft-font-medium);
 }
 
 .page-header__breadcrumb-separator {
   font-size: 0.75rem;
-  color: var(--ft-text-tertiary);
+  color: var(--text-muted);
 }
 
 .page-header__main {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: var(--ft-space-6);
+  gap: var(--space-4);
 }
 
 .page-header__text {
@@ -92,23 +91,23 @@ defineProps<Props>()
 
 .page-header__title {
   margin: 0;
-  font-size: var(--ft-text-3xl);
+  font-size: clamp(1.5rem, 2.5vw, 2.25rem);
   font-weight: var(--ft-font-bold);
-  color: var(--ft-text-primary);
+  color: var(--text);
   line-height: var(--ft-leading-tight);
 }
 
 .page-header__subtitle {
-  margin: var(--ft-space-2) 0 0;
-  font-size: var(--ft-text-base);
-  color: var(--ft-text-secondary);
+  margin: var(--space-2) 0 0;
+  font-size: 1rem;
+  color: var(--text-muted);
   line-height: var(--ft-leading-normal);
 }
 
 .page-header__actions {
   display: flex;
   align-items: center;
-  gap: var(--ft-space-3);
+  gap: var(--space-3);
 }
 
 /* Responsive */
@@ -116,10 +115,6 @@ defineProps<Props>()
   .page-header__main {
     flex-direction: column;
     align-items: stretch;
-  }
-
-  .page-header__title {
-    font-size: var(--ft-text-2xl);
   }
 
   .page-header__actions {

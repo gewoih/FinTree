@@ -1,0 +1,54 @@
+:root {
+  /* Core surfaces */
+  --bg: var(--ft-bg-base);
+  --surface-1: var(--ft-surface-base);
+  --surface-2: var(--ft-surface-raised);
+  --surface-3: var(--ft-surface-overlay);
+  --border: var(--ft-border-default);
+  --border-subtle: var(--ft-border-subtle);
+
+  /* Text */
+  --text: var(--ft-text-primary);
+  --text-muted: var(--ft-text-secondary);
+
+  /* Accents */
+  --accent: var(--ft-primary-500);
+  --danger: var(--ft-danger-500);
+  --success: var(--ft-success-500);
+
+  /* Spacing scale (4/8/12/16/24/32/48/64) */
+  --space-1: 0.25rem;
+  --space-2: 0.5rem;
+  --space-3: 0.75rem;
+  --space-4: 1rem;
+  --space-5: 1.5rem;
+  --space-6: 2rem;
+  --space-7: 3rem;
+  --space-8: 4rem;
+
+  /* Radius */
+  --radius-sm: 0.625rem;
+  --radius-md: 0.75rem;
+  --radius-lg: 1rem;
+
+  /* Component heights */
+  --control-height: 44px;
+
+  /* Focus ring */
+  --focus-ring-color: rgba(59, 130, 246, 0.35);
+  --focus-ring: 0 0 0 3px var(--focus-ring-color);
+
+  /* Shadows */
+  --shadow-soft: 0 10px 30px rgba(15, 23, 42, 0.12);
+
+  /* Layout */
+  --page-max-width: 1360px;
+  --page-padding: 24px;
+  --section-gap: 32px;
+  --card-gap: 24px;
+}
+
+.dark-mode {
+  --focus-ring-color: rgba(96, 165, 250, 0.4);
+  --shadow-soft: 0 12px 28px rgba(0, 0, 0, 0.35);
+}

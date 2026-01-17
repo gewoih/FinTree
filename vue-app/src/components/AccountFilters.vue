@@ -2,9 +2,9 @@
 import { computed } from 'vue'
 import type { AccountType } from '../types'
 import { getAccountTypeInfo } from '../utils/accountHelpers'
-import InputText from 'primevue/inputtext'
-import Select from 'primevue/select'
-import Tag from 'primevue/tag'
+import UiInputText from '../ui/UiInputText.vue'
+import UiSelect from '../ui/UiSelect.vue'
+import UiButton from '../ui/UiButton.vue'
 
 const props = defineProps<{
   searchText: string
@@ -31,19 +31,18 @@ const hasActiveFilters = computed(() => {
 </script>
 
 <template>
-  <div class="account-filters ft-card ft-card--muted">
+  <div class="account-filters">
     <div class="filters-grid">
       <!-- Search -->
       <FormField class="filter-field filter-field--wide" label="Поиск">
         <template #default="{ fieldAttrs }">
           <div class="filter-input">
             <i class="pi pi-search" aria-hidden="true" />
-            <InputText
+            <UiInputText
               :id="fieldAttrs.id"
               :model-value="props.searchText"
               @update:model-value="val => emit('update:searchText', val ?? '')"
               placeholder="Название счёта..."
-              class="w-full"
               autocomplete="off"
             />
           </div>
@@ -53,14 +52,13 @@ const hasActiveFilters = computed(() => {
       <!-- Type filter -->
       <FormField class="filter-field" label="Тип счёта">
         <template #default="{ fieldAttrs }">
-          <Select
+          <UiSelect
             :model-value="props.selectedType"
             @update:model-value="val => emit('update:selectedType', val)"
             :options="accountTypeOptions"
             option-label="label"
             option-value="value"
             placeholder="Все типы"
-            class="w-full"
             :inputId="fieldAttrs.id"
           >
             <template #value="slotProps">
@@ -83,7 +81,7 @@ const hasActiveFilters = computed(() => {
       <!-- Clear button -->
       <FormField class="filter-field filter-field--compact" label="Сбросить" label-sr-only>
         <template #default>
-          <AppButton
+          <UiButton
             icon="pi pi-filter-slash"
             variant="ghost"
             block
@@ -91,7 +89,7 @@ const hasActiveFilters = computed(() => {
             @click="emit('clearFilters')"
           >
             Сбросить
-          </AppButton>
+          </UiButton>
         </template>
       </FormField>
     </div>
@@ -103,28 +101,24 @@ const hasActiveFilters = computed(() => {
         Активные фильтры:
       </span>
       <div class="active-filters__tags">
-        <Tag
+        <button
           v-if="searchText"
-          :value="`Поиск: ${searchText}`"
-          severity="info"
+          type="button"
+          class="filter-chip"
           @click="emit('update:searchText', '')"
         >
-          <template #default>
-            {{ `Поиск: ${searchText}` }}
-            <i class="pi pi-times ml-2" style="cursor: pointer;" />
-          </template>
-        </Tag>
-        <Tag
+          {{ `Поиск: ${searchText}` }}
+          <i class="pi pi-times" aria-hidden="true" />
+        </button>
+        <button
           v-if="selectedType !== null"
-          :value="getAccountTypeInfo(selectedType).label"
-          severity="info"
+          type="button"
+          class="filter-chip"
           @click="emit('update:selectedType', null)"
         >
-          <template #default>
-            {{ getAccountTypeInfo(selectedType).label }}
-            <i class="pi pi-times ml-2" style="cursor: pointer;" />
-          </template>
-        </Tag>
+          {{ getAccountTypeInfo(selectedType).label }}
+          <i class="pi pi-times" aria-hidden="true" />
+        </button>
       </div>
     </div>
   </div>
@@ -133,6 +127,8 @@ const hasActiveFilters = computed(() => {
 <style scoped>
 .account-filters {
   gap: var(--ft-space-4);
+  display: flex;
+  flex-direction: column;
 }
 
 .filters-grid {
@@ -153,9 +149,9 @@ const hasActiveFilters = computed(() => {
   align-items: center;
   gap: var(--ft-space-2);
   padding: var(--ft-space-2) var(--ft-space-3);
-  border-radius: var(--ft-radius-lg);
-  border: 1px solid var(--ft-border-soft);
-  background: var(--ft-surface-base);
+  border-radius: var(--radius-md);
+  border: 1px solid var(--border-subtle);
+  background: var(--surface-1);
 }
 
 .filter-input i {
@@ -207,6 +203,23 @@ const hasActiveFilters = computed(() => {
   display: flex;
   flex-wrap: wrap;
   gap: var(--ft-space-2);
+}
+
+.filter-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  border: 1px solid var(--border-subtle);
+  border-radius: 999px;
+  padding: 0.35rem 0.75rem;
+  background: rgba(59, 130, 246, 0.12);
+  color: var(--text);
+  font-size: 0.85rem;
+  cursor: pointer;
+}
+
+.filter-chip i {
+  font-size: 0.75rem;
 }
 
 @media (max-width: 768px) {

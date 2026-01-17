@@ -1,25 +1,21 @@
 <script setup lang="ts">
-import { ref, computed, onMounted, watch } from 'vue'
-import { useRouter, useRoute } from 'vue-router'
+import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue'
+import { useRoute, useRouter } from 'vue-router'
 import { useAuthStore } from '../../stores/auth'
 import { useTheme } from '../../composables/useTheme'
+import UiButton from '../../ui/UiButton.vue'
 
 const authStore = useAuthStore()
 const router = useRouter()
 const route = useRoute()
 
 const sidebarVisible = ref(false)
+const isDesktop = ref(true)
 const userMenuRef = ref<{ toggle: (event: Event) => void } | null>(null)
 
 const { initTheme } = useTheme()
 
 const userEmail = computed(() => authStore.userEmail ?? 'Аккаунт')
-
-// Only show drawer on mobile (width < 1024px)
-const isDrawerVisible = computed(() => {
-  if (typeof window === 'undefined') return false
-  return window.innerWidth < 1024
-})
 
 const navigationItems = [
   { label: 'Дашборд', icon: 'pi-home', to: '/dashboard' },
@@ -37,6 +33,14 @@ const userMenuItems = [
   { separator: true },
   { label: 'Выйти', icon: 'pi pi-sign-out', command: () => handleLogout() }
 ]
+
+const updateViewport = () => {
+  if (typeof window === 'undefined') return
+  isDesktop.value = window.innerWidth >= 1024
+  if (isDesktop.value) {
+    sidebarVisible.value = false
+  }
+}
 
 const handleUserMenuToggle = (event: Event) => {
   userMenuRef.value?.toggle(event)
@@ -60,6 +64,12 @@ watch(
 
 onMounted(() => {
   initTheme()
+  updateViewport()
+  window.addEventListener('resize', updateViewport)
+})
+
+onBeforeUnmount(() => {
+  window.removeEventListener('resize', updateViewport)
 })
 </script>
 
@@ -67,46 +77,41 @@ onMounted(() => {
   <div class="app-shell">
     <a class="app-shell__skip-link" href="#main-content">Перейти к основному содержимому</a>
 
-    <!-- Top Navigation -->
-    <div class="app-shell__topnav">
-      <div class="app-shell__topnav-left">
-        <Button
+    <header class="app-shell__topbar">
+      <div class="app-shell__topbar-left">
+        <UiButton
           icon="pi pi-bars"
-          text
-          rounded
-          class="app-shell__menu-toggle lg:hidden"
+          variant="ghost"
+          class="app-shell__menu-toggle"
           @click="toggleSidebar"
         />
         <router-link to="/dashboard" class="app-shell__logo">
-          <i class="pi pi-chart-bar" />
+          <i class="pi pi-chart-bar" aria-hidden="true" />
           <span>FinTree</span>
         </router-link>
       </div>
 
-      <div class="app-shell__topnav-right">
-        <div class="app-shell__user-menu">
-          <Button
-            type="button"
-            :label="userEmail"
-            icon="pi pi-user"
-            text
-            @click="handleUserMenuToggle"
-          />
-          <Menu ref="userMenuRef" :model="userMenuItems" popup />
-        </div>
+      <div class="app-shell__topbar-right">
+        <UiButton
+          type="button"
+          :label="userEmail"
+          icon="pi pi-user"
+          variant="ghost"
+          @click="handleUserMenuToggle"
+        />
+        <Menu ref="userMenuRef" :model="userMenuItems" popup />
       </div>
-    </div>
+    </header>
 
-    <!-- Mobile Drawer (hidden on desktop) -->
     <Drawer
-      v-if="isDrawerVisible"
+      v-if="!isDesktop"
       v-model:visible="sidebarVisible"
       position="left"
-      class="app-shell__drawer-mobile"
+      class="app-shell__drawer"
     >
       <template #header>
         <div class="app-shell__drawer-header">
-          <i class="pi pi-chart-bar" />
+          <i class="pi pi-chart-bar" aria-hidden="true" />
           <span>FinTree</span>
         </div>
       </template>
@@ -118,14 +123,13 @@ onMounted(() => {
           class="app-shell__nav-link"
           :aria-current="route.path === item.to ? 'page' : undefined"
         >
-          <i :class="['pi', item.icon]" />
+          <i :class="['pi', item.icon]" aria-hidden="true" />
           <span>{{ item.label }}</span>
         </router-link>
       </nav>
     </Drawer>
 
-    <!-- Desktop Sidebar -->
-    <aside class="app-shell__sidebar-desktop">
+    <aside v-if="isDesktop" class="app-shell__sidebar">
       <nav class="app-shell__nav">
         <router-link
           v-for="item in navigationItems"
@@ -134,14 +138,13 @@ onMounted(() => {
           class="app-shell__nav-link"
           :aria-current="route.path === item.to ? 'page' : undefined"
         >
-          <i :class="['pi', item.icon]" />
+          <i :class="['pi', item.icon]" aria-hidden="true" />
           <span>{{ item.label }}</span>
         </router-link>
       </nav>
     </aside>
 
-    <!-- Main Content -->
-    <main id="main-content" class="app-shell__main" tabindex="-1">
+    <main id="main-content" class="app-shell__content" tabindex="-1">
       <slot />
     </main>
   </div>
@@ -149,237 +152,174 @@ onMounted(() => {
 
 <style scoped>
 .app-shell {
-  --app-shell-nav-height: 72px;
-  display: grid;
-  grid-template-columns: 1fr;
-  grid-template-rows: auto 1fr;
-  grid-template-areas:
-    "topnav"
-    "main";
   min-height: 100vh;
-  background: var(--ft-bg-base);
-}
-
-.app-shell__skip-link {
-  position: absolute;
-  left: var(--ft-space-4);
-  top: -100%;
-  padding: var(--ft-space-2) var(--ft-space-3);
-  background: var(--ft-primary-600);
-  color: var(--ft-text-inverse);
-  border-radius: var(--ft-radius-md);
-  box-shadow: var(--ft-shadow-soft);
-  transition: top var(--ft-transition-fast);
-  z-index: calc(var(--ft-z-sticky) + 1);
-}
-
-.app-shell__skip-link:focus {
-  top: var(--ft-space-4);
+  background: var(--bg);
+  display: grid;
+  grid-template-rows: auto 1fr;
+  grid-template-columns: 1fr;
+  grid-template-areas:
+    "topbar"
+    "content";
 }
 
 @media (min-width: 1024px) {
   .app-shell {
-    grid-template-columns: 240px 1fr;
+    grid-template-columns: 260px 1fr;
     grid-template-areas:
-      "topnav topnav"
-      "sidebar main";
+      "topbar topbar"
+      "sidebar content";
   }
 }
 
-/* Top Navigation */
-.app-shell__topnav {
-  grid-area: topnav;
+.app-shell__skip-link {
+  position: absolute;
+  left: var(--space-4);
+  top: -120%;
+  padding: var(--space-2) var(--space-3);
+  border-radius: var(--radius-md);
+  background: var(--accent);
+  color: #fff;
+  z-index: 1000;
+  transition: top var(--ft-transition-fast);
+}
+
+.app-shell__skip-link:focus {
+  top: var(--space-4);
+}
+
+.app-shell__topbar {
+  grid-area: topbar;
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: var(--ft-space-4) var(--ft-layout-gutter);
-  background: var(--ft-surface-base);
-  border-bottom: 1px solid var(--ft-border-subtle);
+  padding: var(--space-3) var(--space-5);
+  background: var(--surface-1);
+  border-bottom: 1px solid var(--border-subtle);
   position: sticky;
   top: 0;
-  z-index: var(--ft-z-sticky);
-  backdrop-filter: blur(12px);
-  box-shadow: 0 4px 20px rgba(15, 23, 42, 0.06);
+  z-index: 50;
 }
 
-.app-shell__topnav-left {
+.app-shell__topbar-left {
   display: flex;
   align-items: center;
-  gap: var(--ft-space-4);
+  gap: var(--space-3);
 }
 
-.app-shell__topnav-right {
+.app-shell__topbar-right {
   display: flex;
   align-items: center;
-  gap: var(--ft-space-2);
+  gap: var(--space-2);
 }
 
 .app-shell__menu-toggle {
-  margin-left: calc(var(--ft-space-4) * -1);
-}
-
-.app-shell__logo {
-  display: flex;
-  align-items: center;
-  gap: var(--ft-space-3);
-  font-size: var(--ft-text-xl);
-  font-weight: var(--ft-font-bold);
-  color: var(--ft-text-primary);
-  text-decoration: none;
-  transition: color var(--ft-transition-fast);
-}
-
-.app-shell__logo i {
-  font-size: 1.5rem;
-  color: var(--ft-primary-600);
-}
-
-.app-shell__logo:hover {
-  color: var(--ft-primary-600);
-}
-
-/* Sidebar - Desktop */
-.app-shell__sidebar-desktop {
-  display: none;
+  display: inline-flex;
 }
 
 @media (min-width: 1024px) {
-  .app-shell__sidebar-desktop {
-    display: block;
-    grid-area: sidebar;
-    background: var(--ft-surface-base);
-    border-right: 1px solid var(--ft-border-subtle);
-    padding: var(--ft-space-6) var(--ft-space-4);
-    position: sticky;
-    top: var(--app-shell-nav-height);
-    height: calc(100vh - var(--app-shell-nav-height));
-    overflow-y: auto;
+  .app-shell__menu-toggle {
+    display: none;
   }
 }
 
-.app-shell__drawer-mobile :deep(.p-drawer) {
-  width: 280px;
-  background: var(--ft-surface-soft);
-  border-right: 1px solid var(--ft-border-soft);
+.app-shell__logo {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  font-weight: 700;
+  font-size: 1.1rem;
+  color: var(--text);
+  text-decoration: none;
 }
 
-.app-shell__drawer-mobile :deep(.p-drawer-header) {
-  padding: var(--ft-space-5) var(--ft-space-4) var(--ft-space-3);
+.app-shell__logo i {
+  color: var(--accent);
+}
+
+.app-shell__sidebar {
+  grid-area: sidebar;
+  background: var(--surface-1);
+  border-right: 1px solid var(--border-subtle);
+  padding: var(--space-5) var(--space-3);
+  position: sticky;
+  top: 72px;
+  height: calc(100vh - 72px);
+  overflow-y: auto;
+}
+
+.app-shell__drawer :deep(.p-drawer) {
+  width: 280px;
+  background: var(--surface-2);
+  border-right: 1px solid var(--border-subtle);
+}
+
+.app-shell__drawer :deep(.p-drawer-header) {
+  padding: var(--space-4);
 }
 
 .app-shell__drawer-header {
   display: flex;
   align-items: center;
-  gap: var(--ft-space-3);
-  font-size: var(--ft-text-xl);
-  font-weight: var(--ft-font-bold);
-  color: var(--ft-text-primary);
+  gap: var(--space-2);
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: var(--text);
 }
 
 .app-shell__drawer-header i {
-  font-size: 1.5rem;
-  color: var(--ft-primary-600);
+  color: var(--accent);
 }
 
-/* Navigation */
 .app-shell__nav {
   display: flex;
   flex-direction: column;
-  gap: var(--ft-space-1);
-  margin-top: var(--ft-space-4);
+  gap: var(--space-2);
 }
 
 .app-shell__nav-link {
   display: flex;
   align-items: center;
-  gap: var(--ft-space-3);
-  padding: var(--ft-space-3) var(--ft-space-4);
-  border-radius: var(--ft-radius-lg);
-  font-size: var(--ft-text-base);
-  font-weight: var(--ft-font-medium);
-  color: var(--ft-text-secondary);
+  gap: var(--space-3);
+  padding: var(--space-3) var(--space-4);
+  border-radius: var(--radius-md);
+  color: var(--text-muted);
   text-decoration: none;
-  transition: all var(--ft-transition-fast);
-  position: relative;
+  transition: background-color var(--ft-transition-fast), color var(--ft-transition-fast);
 }
 
 .app-shell__nav-link:hover {
-  background: rgba(37, 99, 235, 0.08);
-  color: var(--ft-text-primary);
+  background: rgba(59, 130, 246, 0.08);
+  color: var(--text);
 }
 
 .app-shell__nav-link.router-link-active {
-  background: linear-gradient(
-    135deg,
-    rgba(37, 99, 235, 0.1) 0%,
-    rgba(59, 130, 246, 0.05) 100%
-  );
-  color: var(--ft-primary-600);
-  font-weight: var(--ft-font-semibold);
-  box-shadow: inset 0 0 0 1px rgba(37, 99, 235, 0.1);
-}
-
-.dark-mode .app-shell__nav-link.router-link-active {
-  background: linear-gradient(
-    135deg,
-    rgba(59, 130, 246, 0.15) 0%,
-    rgba(96, 165, 250, 0.1) 100%
-  );
-  color: var(--ft-primary-400);
+  background: rgba(59, 130, 246, 0.16);
+  color: var(--accent);
+  font-weight: 600;
 }
 
 .app-shell__nav-link i {
-  font-size: 1.25rem;
+  font-size: 1.1rem;
 }
 
-/* Main Content */
-.app-shell__main {
-  grid-area: main;
-  padding: var(--ft-layout-page-padding) var(--ft-layout-gutter);
-  max-width: var(--ft-layout-max-width);
-  margin: 0 auto;
-  width: 100%;
+.app-shell__content {
+  grid-area: content;
+  min-width: 0;
   outline: none;
 }
 
-@media (max-width: 768px) {
-  .app-shell__main {
-    padding: var(--ft-layout-page-padding) var(--ft-layout-gutter);
-  }
-}
-
-/* User Menu */
-.app-shell__user-menu {
-  position: relative;
-}
-
-.app-shell__user-menu :deep(.p-menu) {
+.app-shell__topbar-right :deep(.p-menu) {
   min-width: 220px;
-  margin-top: var(--ft-space-2);
-  padding: var(--ft-space-2);
-  border-radius: var(--ft-radius-lg);
-  border: 1px solid var(--ft-border-soft);
-  background: var(--ft-surface-soft);
-  box-shadow: var(--ft-shadow-card);
+  margin-top: var(--space-2);
+  padding: var(--space-2);
+  border-radius: var(--radius-md);
+  border: 1px solid var(--border-subtle);
+  background: var(--surface-2);
+  box-shadow: var(--shadow-soft);
 }
 
-.app-shell__user-menu :deep(.p-menu .p-menuitem-link) {
-  padding: var(--ft-space-2) var(--ft-space-3);
-  gap: var(--ft-space-3);
-  border-radius: var(--ft-radius-md);
-  min-height: 44px;
-}
-
-.app-shell__user-menu :deep(.p-menu .p-menuitem-icon) {
-  color: var(--ft-text-muted);
-}
-
-.app-shell__user-menu :deep(.p-menu .p-menuitem-text) {
-  font-size: var(--ft-text-sm);
-  font-weight: var(--ft-font-medium);
-}
-
-.app-shell__user-menu :deep(.p-menu .p-menu-separator) {
-  margin: var(--ft-space-2);
+.app-shell__topbar-right :deep(.p-menu .p-menuitem-link) {
+  padding: var(--space-2) var(--space-3);
+  border-radius: var(--radius-sm);
 }
 </style>

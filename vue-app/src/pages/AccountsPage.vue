@@ -7,6 +7,10 @@ import AccountFormModal from '../components/AccountFormModal.vue'
 import AccountCard from '../components/AccountCard.vue'
 import AccountFilters from '../components/AccountFilters.vue'
 import type { Account, AccountType } from '../types'
+import PageContainer from '../components/layout/PageContainer.vue'
+import UiButton from '../ui/UiButton.vue'
+import UiCard from '../ui/UiCard.vue'
+import UiSection from '../ui/UiSection.vue'
 
 const financeStore = useFinanceStore()
 const toast = useToast()
@@ -114,7 +118,7 @@ onMounted(async () => {
 </script>
 
 <template>
-  <div class="accounts page">
+  <PageContainer class="accounts">
     <PageHeader
       title="Счета"
       subtitle="Управляйте всеми банковскими счетами и кошельками в одном месте"
@@ -124,7 +128,7 @@ onMounted(async () => {
       ]"
     >
       <template #actions>
-        <AppButton
+        <UiButton
           label="Добавить счет"
           icon="pi pi-plus"
           @click="openModal"
@@ -132,9 +136,9 @@ onMounted(async () => {
       </template>
     </PageHeader>
 
-    <section class="page-section accounts__content">
+    <UiSection class="accounts__content">
       <!-- Filters -->
-      <AppCard
+      <UiCard
         v-if="allAccounts.length > 0"
         class="accounts__filters"
         variant="muted"
@@ -145,7 +149,7 @@ onMounted(async () => {
           v-model:selected-type="selectedType"
           @clear-filters="clearFilters"
         />
-      </AppCard>
+      </UiCard>
 
       <!-- Loading skeleton -->
       <div
@@ -200,7 +204,7 @@ onMounted(async () => {
           Показано счетов: <strong>{{ filteredAccounts.length }}</strong> из <strong>{{ allAccounts.length }}</strong>
         </p>
       </div>
-    </section>
+    </UiSection>
 
     <AccountFormModal v-model:visible="modalVisible" />
     <Skeleton
@@ -208,14 +212,10 @@ onMounted(async () => {
       class="visually-hidden"
       height="0"
     />
-  </div>
+  </PageContainer>
 </template>
 
 <style scoped>
-.accounts {
-  gap: clamp(var(--ft-space-6), 4vw, var(--ft-space-9));
-}
-
 .accounts__content {
   gap: clamp(var(--ft-space-4), 3vw, var(--ft-space-6));
 }

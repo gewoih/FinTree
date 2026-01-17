@@ -4,6 +4,11 @@ import { storeToRefs } from 'pinia';
 import { useToast } from 'primevue/usetoast';
 import { useFinanceStore } from '../stores/finance';
 import { useUserStore } from '../stores/user';
+import PageContainer from '../components/layout/PageContainer.vue';
+import UiButton from '../ui/UiButton.vue';
+import UiCard from '../ui/UiCard.vue';
+import UiInputText from '../ui/UiInputText.vue';
+import UiSelect from '../ui/UiSelect.vue';
 
 const financeStore = useFinanceStore();
 const userStore = useUserStore();
@@ -123,7 +128,7 @@ function handleClearTelegram() {
 </script>
 
 <template>
-  <div class="page profile-page">
+  <PageContainer class="profile-page">
     <PageHeader
       title="Профиль"
       subtitle="Обновите базовую валюту и Telegram для более умной аналитики"
@@ -133,7 +138,7 @@ function handleClearTelegram() {
       ]"
     />
 
-    <AppCard class="profile-card" variant="muted" padding="lg">
+    <UiCard class="profile-card" variant="muted" padding="lg">
       <template #header>
         <div class="card-header">
           <div>
@@ -166,14 +171,13 @@ function handleClearTelegram() {
         <div class="profile-grid editable">
           <div class="profile-row">
             <label class="profile-label" for="profileCurrency">Базовая валюта</label>
-            <Select
+            <UiSelect
               id="profileCurrency"
               v-model="form.baseCurrencyCode"
               :options="currencyOptions"
               option-label="label"
               option-value="value"
               placeholder="Выберите валюту"
-              class="w-full"
               :disabled="isLoading"
             />
             <small v-if="isLoading" class="helper-text">
@@ -190,15 +194,14 @@ function handleClearTelegram() {
           <div class="profile-row">
             <label class="profile-label" for="profileTelegram">Telegram</label>
             <div class="telegram-input">
-              <InputText
+              <UiInputText
                 id="profileTelegram"
                 v-model="form.telegramHandle"
                 placeholder="@username"
                 autocomplete="off"
                 :disabled="isSaving"
-                class="w-full"
               />
-              <AppButton
+              <UiButton
                 type="button"
                 label="Очистить"
                 variant="ghost"
@@ -214,14 +217,14 @@ function handleClearTelegram() {
         </div>
 
         <div class="actions">
-          <AppButton
+          <UiButton
             type="button"
             label="Сбросить изменения"
             variant="ghost"
             :disabled="!hasChanges || isSaving"
             @click="resetForm"
           />
-          <AppButton
+          <UiButton
             type="submit"
             label="Обновить профиль"
             icon="pi pi-check"
@@ -230,20 +233,12 @@ function handleClearTelegram() {
           />
         </div>
       </form>
-    </AppCard>
-  </div>
+    </UiCard>
+  </PageContainer>
 </template>
 
 <style scoped>
-.profile-page {
-  gap: clamp(2rem, 3vw, 3.25rem);
-}
-
 .profile-card {
-  gap: clamp(var(--ft-space-4), 3vw, var(--ft-space-6));
-}
-
-:deep(.profile-card .app-card__body) {
   gap: clamp(var(--ft-space-4), 3vw, var(--ft-space-6));
 }
 
@@ -334,7 +329,7 @@ function handleClearTelegram() {
   flex-wrap: wrap;
 }
 
-.actions :deep(.app-button) {
+.actions :deep(.ui-button) {
   min-width: 180px;
 }
 

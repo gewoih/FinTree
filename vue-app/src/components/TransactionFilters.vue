@@ -4,12 +4,10 @@ import type { Account, Category } from '../types';
 
 // Common components
 import FormField from './common/FormField.vue';
-import AppButton from './common/AppButton.vue';
-
-// PrimeVue Components
-import InputText from 'primevue/inputtext';
-import Select from 'primevue/select';
-import DatePicker from 'primevue/datepicker';
+import UiButton from '../ui/UiButton.vue';
+import UiInputText from '../ui/UiInputText.vue';
+import UiSelect from '../ui/UiSelect.vue';
+import UiDatePicker from '../ui/UiDatePicker.vue';
 
 const props = defineProps<{
   searchText: string;
@@ -46,12 +44,11 @@ const accountOptions = computed(() => [
     <div class="filters-grid">
       <FormField class="filter-field filter-field--wide" label="Поиск">
         <template #default="{ fieldAttrs }">
-          <InputText
+          <UiInputText
             :id="fieldAttrs.id"
             :model-value="props.searchText"
             @update:model-value="val => emit('update:searchText', val ?? '')"
             placeholder="Категория, счёт или заметка…"
-            class="w-full"
             autocomplete="off"
           />
         </template>
@@ -59,14 +56,13 @@ const accountOptions = computed(() => [
 
       <FormField class="filter-field" label="Категория">
         <template #default="{ fieldAttrs }">
-          <Select
+          <UiSelect
             :model-value="props.selectedCategory"
             @update:model-value="val => emit('update:selectedCategory', val)"
             :options="categoryOptions"
             option-label="label"
             option-value="value"
             placeholder="Все категории"
-            class="w-full"
             :inputId="fieldAttrs.id"
           />
         </template>
@@ -74,14 +70,13 @@ const accountOptions = computed(() => [
 
       <FormField class="filter-field" label="Счёт">
         <template #default="{ fieldAttrs }">
-          <Select
+          <UiSelect
             :model-value="props.selectedAccount"
             @update:model-value="val => emit('update:selectedAccount', val)"
             :options="accountOptions"
             option-label="label"
             option-value="value"
             placeholder="Все счета"
-            class="w-full"
             :inputId="fieldAttrs.id"
           />
         </template>
@@ -89,7 +84,7 @@ const accountOptions = computed(() => [
 
       <FormField class="filter-field" label="Диапазон дат">
         <template #default="{ fieldAttrs }">
-          <DatePicker
+          <UiDatePicker
             :model-value="props.dateRange"
             @update:model-value="val => emit('update:dateRange', val as Date[] | null)"
             selection-mode="range"
@@ -97,7 +92,6 @@ const accountOptions = computed(() => [
             date-format="dd.mm.yy"
             placeholder="Выберите период"
             show-button-bar
-            class="w-full"
             :inputId="fieldAttrs.id"
           />
         </template>
@@ -105,14 +99,14 @@ const accountOptions = computed(() => [
 
       <FormField class="filter-field filter-field--compact" label="Сбросить фильтры" label-sr-only>
         <template #default>
-          <AppButton
+          <UiButton
             icon="pi pi-refresh"
             variant="ghost"
             block
             @click="emit('clearFilters')"
           >
             Сбросить
-          </AppButton>
+          </UiButton>
         </template>
       </FormField>
     </div>

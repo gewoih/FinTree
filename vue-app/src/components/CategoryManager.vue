@@ -1,12 +1,13 @@
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue'
-import Button from 'primevue/button'
 import Skeleton from 'primevue/skeleton'
 import SelectButton from 'primevue/selectbutton'
 import { useConfirm } from 'primevue/useconfirm'
 import { useToast } from 'primevue/usetoast'
 import { useFinanceStore } from '../stores/finance'
 import CategoryFormModal from './CategoryFormModal.vue'
+import UiButton from '../ui/UiButton.vue'
+import UiCard from '../ui/UiCard.vue'
 import type { Category, CategoryType } from '../types'
 import { CATEGORY_TYPE } from '../types'
 
@@ -111,7 +112,7 @@ defineExpose({
 </script>
 
 <template>
-  <AppCard class="categories-manager" variant="muted" padding="lg">
+  <UiCard class="categories-manager" variant="muted" padding="lg">
     <template #header>
       <div class="categories-manager__header">
         <div>
@@ -163,15 +164,17 @@ defineExpose({
             </div>
 
             <div class="category-actions">
-              <Button
+              <UiButton
                 label="Изменить"
-                text
+                variant="ghost"
+                size="sm"
                 @click="openModal(category)"
               />
-              <Button
+              <UiButton
                 label="Удалить"
-                text
-                severity="danger"
+                variant="ghost"
+                size="sm"
+                class="category-action category-action--danger"
                 :loading="pendingCategoryId === category.id"
                 @click="handleDelete(category)"
               />
@@ -206,7 +209,7 @@ defineExpose({
       :category="editingCategory"
       :default-type="selectedCategoryType"
     />
-</AppCard>
+</UiCard>
 </template>
 
 <style scoped>
@@ -329,6 +332,15 @@ defineExpose({
   display: flex;
   align-items: center;
   gap: var(--ft-space-2);
+}
+
+.category-action--danger {
+  color: var(--danger);
+}
+
+.category-action--danger:hover:not(:disabled) {
+  color: var(--danger);
+  background: rgba(239, 68, 68, 0.12);
 }
 
 @media (max-width: 640px) {

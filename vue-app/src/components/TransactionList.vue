@@ -1,10 +1,11 @@
 <script setup lang="ts">
 import { computed, watch } from 'vue'
-import DataTable from 'primevue/datatable'
 import Column from 'primevue/column'
-import Tag from 'primevue/tag'
-import Button from 'primevue/button'
 import Skeleton from 'primevue/skeleton'
+import UiButton from '../ui/UiButton.vue'
+import UiCard from '../ui/UiCard.vue'
+import UiDataTable from '../ui/UiDataTable.vue'
+import UiBadge from '../ui/UiBadge.vue'
 import { useFinanceStore } from '../stores/finance'
 import { PAGINATION_OPTIONS } from '../constants'
 import { useTransactionFilters } from '../composables/useTransactionFilters'
@@ -70,7 +71,7 @@ const isEmptyState = computed(
 
 <template>
   <div class="transaction-history">
-    <AppCard class="transaction-history__filters" variant="muted" padding="lg">
+    <UiCard class="transaction-history__filters" variant="muted" padding="lg">
       <TransactionFilters
         v-model:search-text="searchText"
         v-model:selected-category="selectedCategory"
@@ -80,7 +81,7 @@ const isEmptyState = computed(
         :accounts="store.accounts"
         @clear-filters="clearFilters"
       />
-    </AppCard>
+    </UiCard>
 
     <div v-if="transactionsLoading" class="table-skeleton">
       <Skeleton v-for="i in 6" :key="i" height="54px" />
@@ -108,7 +109,7 @@ const isEmptyState = computed(
           </p>
         </div>
         <div class="table-shell__actions">
-          <AppButton
+          <UiButton
             variant="ghost"
             icon="pi pi-plus"
             label="Добавить"
@@ -117,11 +118,10 @@ const isEmptyState = computed(
         </div>
       </header>
       <div class="table-shell__body">
-        <DataTable
+        <UiDataTable
           :value="filteredTransactions"
           sortField="occurredAt"
           :sortOrder="-1"
-          stripedRows
           responsiveLayout="scroll"
           :paginator="true"
           :rows="PAGINATION_OPTIONS.defaultRows"
@@ -129,7 +129,7 @@ const isEmptyState = computed(
           paginatorTemplate="FirstPageLink PrevPageLink PageLinks NextPageLink LastPageLink CurrentPageReport RowsPerPageDropdown"
           currentPageReportTemplate="Показано {first} - {last} из {totalRecords}"
           :globalFilterFields="['categoryName', 'accountName', 'description']"
-          tableStyle="min-width: 760px"
+          class="transaction-history__datatable"
         >
           <Column field="occurredAt" header="Дата" :sortable="true" style="min-width: 120px">
             <template #body="slotProps">
@@ -154,9 +154,10 @@ const isEmptyState = computed(
           <Column field="categoryName" header="Категория" :sortable="true" style="min-width: 180px">
             <template #body="slotProps">
               <div class="category-cell">
-                <Tag
+                <UiBadge
                   :value="slotProps.data.categoryName"
-                  :style="{ backgroundColor: slotProps.data.categoryColor, color: '#fff' }"
+                  class="category-chip"
+                  :style="{ '--chip-color': slotProps.data.categoryColor }"
                 />
                 <i
                   v-if="slotProps.data.isMandatory"
@@ -187,17 +188,16 @@ const isEmptyState = computed(
 
           <Column header="Действия" style="min-width: 120px">
             <template #body="slotProps">
-              <Button
+              <UiButton
                 icon="pi pi-pencil"
-                text
-                rounded
-                severity="secondary"
+                variant="ghost"
+                size="sm"
                 @click="emit('edit-transaction', slotProps.data)"
                 aria-label="Редактировать транзакцию"
               />
             </template>
           </Column>
-        </DataTable>
+        </UiDataTable>
       </div>
     </div>
   </div>
@@ -258,6 +258,12 @@ const isEmptyState = computed(
   gap: var(--ft-space-2);
 }
 
+.category-chip {
+  background: var(--chip-color, var(--accent));
+  color: #fff;
+  font-weight: 600;
+}
+
 .account-cell {
   display: flex;
   align-items: center;
@@ -286,6 +292,10 @@ const isEmptyState = computed(
 :deep(.transaction-history__table .p-datatable) {
   border: none;
   border-radius: 0;
+}
+
+:deep(.transaction-history__datatable) {
+  min-width: 760px;
 }
 
 :deep(.transaction-history__table .p-datatable .p-datatable-thead > tr > th),

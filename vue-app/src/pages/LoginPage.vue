@@ -2,6 +2,9 @@
 import { computed, onMounted, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuthStore } from '../stores/auth'
+import UiButton from '../ui/UiButton.vue'
+import UiCard from '../ui/UiCard.vue'
+import UiInputText from '../ui/UiInputText.vue'
 
 const router = useRouter()
 const authStore = useAuthStore()
@@ -45,11 +48,11 @@ const handleLogin = async () => {
         <p>Войдите в пространство аналитики и продолжайте путь к финансовой стабильности.</p>
       </div>
 
-      <AppCard class="auth__card" variant="muted" padding="lg" elevated>
+      <UiCard class="auth__card" variant="muted" padding="lg">
         <form class="auth__form" @submit.prevent="handleLogin">
           <div class="auth__field">
             <label for="email">Email</label>
-            <InputText
+            <UiInputText
               id="email"
               v-model="email"
               type="email"
@@ -60,7 +63,7 @@ const handleLogin = async () => {
 
           <div class="auth__field">
             <label for="password">Пароль</label>
-            <InputText
+            <UiInputText
               id="password"
               v-model="password"
               type="password"
@@ -74,7 +77,7 @@ const handleLogin = async () => {
             <span>{{ authStore.error }}</span>
           </p>
 
-          <AppButton
+          <UiButton
             type="submit"
             label="Войти"
             icon="pi pi-log-in"
@@ -88,7 +91,7 @@ const handleLogin = async () => {
           <span>Нет аккаунта?</span>
           <router-link to="/register">Создать бесплатно</router-link>
         </footer>
-      </AppCard>
+      </UiCard>
     </div>
   </div>
 </template>
