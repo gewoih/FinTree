@@ -15,7 +15,7 @@ public sealed class DatabaseInitializer(AppDbContext context, UserManager<User> 
 
         var categories = new[]
         {
-            TransactionCategory.CreateDefault("-", "#000000"),
+            TransactionCategory.CreateDefault("Без категории", "#000000"),
             TransactionCategory.CreateSystem("Продукты", "#8fce00"),
             TransactionCategory.CreateSystem("Кафе", "#c90076"),
             TransactionCategory.CreateSystem("Здоровье", "#cc0000"),
