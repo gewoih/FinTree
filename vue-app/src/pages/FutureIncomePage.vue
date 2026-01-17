@@ -520,12 +520,12 @@ onMounted(async () => {
 <style scoped>
 .future-income-page {
   display: grid;
-  gap: var(--ft-space-6);
+  gap: var(--space-6);
 }
 
 .future-income-grid {
   display: grid;
-  gap: var(--ft-space-4);
+  gap: var(--space-4);
 }
 
 .future-income-grid__summary,
@@ -554,7 +554,7 @@ onMounted(async () => {
 
 .future-income-summary__content {
   display: grid;
-  gap: var(--ft-space-3);
+  gap: var(--space-3);
 }
 
 .future-income-summary__lead {

@@ -9,12 +9,9 @@ import { validators } from '../services/validation.service';
 
 // PrimeVue Components
 import Dialog from 'primevue/dialog';
-import Select from 'primevue/select';
 import SelectButton from 'primevue/selectbutton';
 import InputNumber from 'primevue/inputnumber';
-import InputText from 'primevue/inputtext';
 import DatePicker from 'primevue/datepicker';
-import Button from 'primevue/button';
 import Checkbox from 'primevue/checkbox';
 
 const store = useFinanceStore();
@@ -248,7 +245,6 @@ watch(filteredCategories, () => {
   <Dialog
       :visible="props.visible"
       :modal="true"
-      :style="{ width: '620px' }"
       class="transaction-dialog"
       :closable="true"
       :dismissableMask="true"
@@ -305,14 +301,13 @@ watch(filteredCategories, () => {
         <!-- Row 2: Category + Account -->
         <div class="field">
           <label for="category">Категория *</label>
-          <Select
+          <UiSelect
               id="category"
               v-model="selectedCategory"
               :options="filteredCategories"
               option-label="name"
               placeholder="Выберите категорию"
               required
-              class="w-full"
           >
             <template #option="slotProps">
               <div class="option-name">
@@ -320,19 +315,18 @@ watch(filteredCategories, () => {
                 <span>{{ slotProps.option.name }}</span>
               </div>
             </template>
-          </Select>
+          </UiSelect>
         </div>
 
         <div class="field">
           <label for="account">Счет *</label>
-          <Select
+          <UiSelect
               id="account"
               v-model="selectedAccount"
               :options="store.accounts"
               option-label="name"
               placeholder="Выберите счет"
               required
-              class="w-full"
           >
             <template #option="slotProps">
               <div class="option-line">
@@ -345,7 +339,7 @@ watch(filteredCategories, () => {
                 </span>
               </div>
             </template>
-          </Select>
+          </UiSelect>
         </div>
 
         <!-- Row 3: Date + Mandatory checkbox (optional) -->
@@ -371,36 +365,34 @@ watch(filteredCategories, () => {
         <!-- Row 4: Description (full width) -->
         <div class="field field--full">
           <label for="description">Заметка</label>
-          <InputText
+          <UiInputText
               id="description"
               v-model="description"
               :placeholder="isIncome ? 'Например: зарплата' : 'Например: утренний кофе'"
-              class="w-full"
           />
         </div>
       </section>
 
       <footer class="form-actions">
-        <Button
+        <UiButton
             type="button"
             label="Отмена"
             icon="pi pi-times"
-            severity="secondary"
-            outlined
+            variant="ghost"
             @click="emit('update:visible', false)"
         />
         <div class="action-buttons">
-          <Button
+          <UiButton
               v-if="!isEditMode"
               type="button"
               label="Сохранить и добавить еще"
               icon="pi pi-plus"
-              severity="secondary"
+              variant="secondary"
               :disabled="submitDisabled"
               :loading="isSubmitting"
               @click="submitTransaction(true)"
           />
-          <Button
+          <UiButton
               type="submit"
               :label="isEditMode ? 'Обновить' : 'Сохранить'"
               icon="pi pi-check"
@@ -416,7 +408,7 @@ watch(filteredCategories, () => {
 <style scoped>
 .transaction-dialog :deep(.p-dialog-content) {
   padding: 0;
-  border-radius: var(--ft-radius-xl);
+  border-radius: var(--radius-lg);
   overflow: hidden;
 }
 
@@ -427,26 +419,26 @@ watch(filteredCategories, () => {
 .transaction-form {
   display: flex;
   flex-direction: column;
-  gap: clamp(1.5rem, 2vw, 2.1rem);
-  padding: clamp(1.8rem, 2.2vw, 2.3rem);
-  background: var(--ft-surface-elevated);
+  gap: var(--space-5);
+  padding: var(--space-6);
+  background: var(--surface-2);
 }
 
 .form-fields {
   display: grid;
   grid-template-columns: repeat(2, 1fr);
-  gap: var(--ft-space-5) var(--ft-space-4);
+  gap: var(--space-5) var(--space-4);
 }
 
 .field {
   display: flex;
   flex-direction: column;
-  gap: var(--ft-space-2);
+  gap: var(--space-2);
 }
 
 .field--type {
   grid-column: 1 / -1;
-  margin-bottom: var(--ft-space-2);
+  margin-bottom: var(--space-2);
 }
 
 .field--amount {
@@ -460,25 +452,25 @@ watch(filteredCategories, () => {
 .field--checkbox {
   display: flex;
   align-items: flex-end;
-  padding-bottom: var(--ft-space-1);
+  padding-bottom: var(--space-1);
 }
 
 .field label {
   font-weight: 600;
   font-size: 0.9rem;
-  color: var(--ft-heading);
+  color: var(--text);
 }
 
 .field small {
-  color: var(--ft-text-muted);
+  color: var(--text-muted);
   font-size: 0.8rem;
-  margin-top: var(--ft-space-1);
+  margin-top: var(--space-1);
 }
 
 .checkbox-label {
   display: flex;
   align-items: center;
-  gap: var(--ft-space-2);
+  gap: var(--space-2);
   cursor: pointer;
   font-weight: 500 !important;
   font-size: 0.9rem !important;
@@ -507,7 +499,13 @@ watch(filteredCategories, () => {
 }
 
 .currency-chip {
-  box-shadow: inset 0 0 0 1px rgba(56, 189, 248, 0.24);
+  padding: 0.35rem 0.75rem;
+  border-radius: var(--radius-sm);
+  background: var(--surface-3);
+  border: 1px solid var(--border);
+  color: var(--text);
+  font-weight: 600;
+  font-size: 0.85rem;
 }
 
 .option-line {
@@ -524,12 +522,12 @@ watch(filteredCategories, () => {
 }
 
 .option-name i {
-  color: var(--ft-accent);
+  color: var(--accent);
 }
 
 .option-currency {
   font-size: 0.85rem;
-  color: var(--ft-text-muted);
+  color: var(--text-muted);
 }
 
 .category-dot {
@@ -540,7 +538,7 @@ watch(filteredCategories, () => {
 }
 
 .error-text {
-  color: #dc2626;
+  color: var(--danger);
 }
 
 .form-actions {
@@ -556,9 +554,13 @@ watch(filteredCategories, () => {
   align-items: center;
 }
 
+.transaction-dialog {
+  width: min(620px, 100vw);
+}
+
 @media (max-width: 640px) {
   .transaction-form {
-    padding: 1.5rem;
+    padding: var(--space-4);
   }
 
   .form-actions {
@@ -570,7 +572,7 @@ watch(filteredCategories, () => {
     flex-direction: column-reverse;
   }
 
-  .form-actions :deep(.p-button) {
+  .form-actions :deep(.ui-button) {
     width: 100%;
   }
 }

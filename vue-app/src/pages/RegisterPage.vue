@@ -148,6 +148,7 @@ const handleRegister = async () => {
   display: flex;
   flex-direction: column;
   gap: var(--space-4);
+  max-width: 52ch;
 }
 
 .auth__brand {
@@ -194,6 +195,7 @@ const handleRegister = async () => {
 
 .auth__card {
   width: min(460px, 100%);
+  justify-self: end;
 }
 
 .auth__form {

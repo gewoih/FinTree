@@ -15,13 +15,6 @@ const isLoading = ref(true)
 const transactions = computed(() => financeStore.transactions ?? [])
 const accounts = computed(() => financeStore.accounts ?? [])
 
-const quickActions = [
-  { label: 'Добавить расход', icon: 'pi pi-plus-circle', variant: 'primary', to: '/expenses' },
-  { label: 'Счета', icon: 'pi pi-wallet', variant: 'secondary', to: '/accounts' },
-  { label: 'Аналитика', icon: 'pi pi-chart-bar', variant: 'secondary', to: '/analytics' },
-  { label: 'Категории', icon: 'pi pi-tags', variant: 'ghost', to: '/categories' }
-]
-
 const baseCurrencyCode = computed(() => {
   // Используем цепочку fallback-значений, чтобы всегда вернуть разумную валюту,
   // даже если профиль или хранилище ещё не прогружены.
@@ -139,15 +132,7 @@ onMounted(async () => {
         { label: 'Главная', to: '/dashboard' },
         { label: 'Дашборд' }
       ]"
-    >
-      <template #actions>
-        <UiButton
-          label="Добавить транзакцию"
-          icon="pi pi-plus"
-          @click="router.push('/expenses')"
-        />
-      </template>
-    </PageHeader>
+    />
 
     <UiSection gap="lg">
       <div class="dashboard__kpis">
@@ -182,26 +167,6 @@ onMounted(async () => {
 
     <UiSection gap="lg">
       <div class="dashboard__content">
-        <UiCard class="dashboard__quick-actions" variant="muted" padding="lg">
-          <template #header>
-            <div class="dashboard__section-title">
-              <i class="pi pi-bolt" aria-hidden="true" />
-              <span>Быстрые действия</span>
-            </div>
-          </template>
-          <div class="quick-actions-grid">
-            <UiButton
-              v-for="action in quickActions"
-              :key="action.label"
-              :label="action.label"
-              :icon="action.icon"
-              :variant="action.variant"
-              block
-              @click="router.push(action.to)"
-            />
-          </div>
-        </UiCard>
-
         <UiCard class="dashboard__recent" variant="muted" padding="lg">
           <template #header>
             <div class="dashboard__recent-header">
@@ -287,9 +252,8 @@ onMounted(async () => {
 
 .dashboard__content {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+  grid-template-columns: 1fr;
   gap: var(--space-5);
-  align-items: stretch;
 }
 
 .dashboard__section-title {
@@ -315,12 +279,6 @@ onMounted(async () => {
   display: flex;
   flex-direction: column;
   gap: var(--space-2);
-}
-
-.quick-actions-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-  gap: var(--space-3);
 }
 
 .transactions-skeleton {
@@ -403,17 +361,7 @@ onMounted(async () => {
   color: var(--success);
 }
 
-@media (max-width: 768px) {
-  .quick-actions-grid {
-    grid-template-columns: repeat(2, 1fr);
-  }
-}
-
 @media (max-width: 520px) {
-  .quick-actions-grid {
-    grid-template-columns: 1fr;
-  }
-
   .transaction-item {
     grid-template-columns: 1fr;
     grid-template-rows: auto auto auto;

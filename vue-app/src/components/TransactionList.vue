@@ -95,25 +95,6 @@ const isEmptyState = computed(
     />
 
     <UiCard v-else class="transaction-history__table" padding="lg">
-      <template #header>
-        <div class="transaction-history__table-header">
-          <div>
-            <h3 class="transaction-history__table-title">История транзакций</h3>
-            <p class="transaction-history__table-meta">
-              {{ filteredTransactions.length }}
-              {{ filteredTransactions.length === 1 ? 'транзакция' : filteredTransactions.length < 5 ? 'транзакции' : 'транзакций' }}
-              по {{ store.accounts.length }}
-              {{ store.accounts.length === 1 ? 'счету' : store.accounts.length < 5 ? 'счетам' : 'счетам' }}
-            </p>
-          </div>
-          <UiButton
-            variant="secondary"
-            icon="pi pi-plus"
-            label="Добавить"
-            @click="emit('add-transaction')"
-          />
-        </div>
-      </template>
       <UiDataTable
         :value="filteredTransactions"
         sortField="occurredAt"
@@ -214,26 +195,6 @@ const isEmptyState = computed(
 .table-skeleton {
   display: grid;
   gap: var(--ft-space-2);
-}
-
-.transaction-history__table-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: var(--space-4);
-}
-
-.transaction-history__table-title {
-  margin: 0;
-  font-size: 1.1rem;
-  font-weight: 600;
-  color: var(--text);
-}
-
-.transaction-history__table-meta {
-  margin: 4px 0 0;
-  font-size: 0.85rem;
-  color: var(--text-muted);
 }
 
 .transaction-history__datatable :deep(.p-datatable-table) {

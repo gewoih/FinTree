@@ -91,7 +91,13 @@ onMounted(() => {
               variant="ghost"
               @click="handleUserMenuToggle"
             />
-            <Menu ref="userMenuRef" :model="userMenuItems" popup />
+            <Menu
+              ref="userMenuRef"
+              :model="userMenuItems"
+              popup
+              appendTo="self"
+              class="app-shell__user-menu-popup"
+            />
           </div>
         </div>
       </div>
@@ -361,6 +367,15 @@ onMounted(() => {
   gap: var(--space-3);
   border-radius: var(--radius-md);
   min-height: 44px;
+  color: var(--text);
+}
+
+.app-shell__user-menu :deep(.p-menu .p-menuitem-link:hover) {
+  background: var(--surface-3);
+}
+
+.app-shell__user-menu :deep(.p-menu .p-menuitem-link:focus-visible) {
+  box-shadow: var(--focus-ring);
 }
 
 .app-shell__user-menu :deep(.p-menu .p-menuitem-icon) {

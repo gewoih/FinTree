@@ -765,12 +765,12 @@ onMounted(async () => {
 <style scoped>
 .analytics-page {
   display: grid;
-  gap: var(--ft-space-6);
+  gap: var(--space-6);
 }
 
 .analytics-grid {
   display: grid;
-  gap: var(--ft-space-4);
+  gap: var(--space-4);
 }
 
 .analytics-grid__hero,
