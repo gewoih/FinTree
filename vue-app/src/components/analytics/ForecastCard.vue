@@ -37,7 +37,6 @@ const showEmpty = computed(
     (!props.forecast ||
       props.forecast.forecastTotal == null ||
       props.forecast.currentSpent == null ||
-      props.forecast.baselineLimit == null ||
       !props.chartData)
 );
 
@@ -69,6 +68,27 @@ const formattedLimit = computed(() => {
     currency: props.currency,
     minimumFractionDigits: 0,
   });
+});
+
+const hasBaseline = computed(() => props.forecast?.baselineLimit != null);
+
+const remainingAmount = computed(() => {
+  const forecastTotal = props.forecast?.forecastTotal;
+  const currentSpent = props.forecast?.currentSpent;
+  if (forecastTotal == null || currentSpent == null) return null;
+  return forecastTotal - currentSpent;
+});
+
+const remainingText = computed(() => {
+  if (remainingAmount.value == null) return null;
+  const formatted = Math.abs(remainingAmount.value).toLocaleString('ru-RU', {
+    style: 'currency',
+    currency: props.currency,
+    minimumFractionDigits: 0,
+  });
+  return remainingAmount.value >= 0
+    ? `Осталось ориентировочно ${formatted} до конца месяца.`
+    : `Вы уже превысили прогноз на ${formatted}.`;
 });
 
 const statusLabel = computed(() => {
@@ -230,7 +250,7 @@ const chartOptions = computed(() => ({
               Недостаточно данных для прогноза
             </p>
             <p class="card-message__text">
-              Нужны ежедневные расходы за текущий месяц и как минимум один предыдущий месяц.
+              Нужны ежедневные расходы за текущий месяц. Предыдущий месяц нужен только для сравнения с лимитом.
             </p>
           </div>
         </Message>
@@ -245,9 +265,20 @@ const chartOptions = computed(() => ({
             При текущем темпе трат вы выйдете на сумму ≈
             <strong>{{ formattedForecast }}</strong> к концу месяца.
           </p>
+          <p
+            v-if="remainingText"
+            class="forecast-card__remaining"
+          >
+            {{ remainingText }}
+          </p>
           <p class="forecast-card__support">
-            Уже потрачено: <strong>{{ formattedCurrent }}</strong> из ориентировочного лимита
-            {{ formattedLimit }}.
+            Уже потрачено: <strong>{{ formattedCurrent }}</strong>
+            <template v-if="hasBaseline">
+              из ориентировочного лимита {{ formattedLimit }}.
+            </template>
+            <template v-else>
+              за текущий период без установленного лимита.
+            </template>
           </p>
         </div>
         <div class="forecast-card__chart">
@@ -360,6 +391,12 @@ const chartOptions = computed(() => ({
   margin: 0;
   color: var(--ft-text-secondary);
   font-size: var(--ft-text-sm);
+}
+
+.forecast-card__remaining {
+  margin: 0;
+  font-size: var(--ft-text-sm);
+  color: var(--ft-text-primary);
 }
 
 .forecast-card__chart {

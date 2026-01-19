@@ -1,0 +1,253 @@
+<script setup lang="ts">
+import { computed } from 'vue';
+
+interface PeakDayItem {
+  label: string;
+  amount: number;
+}
+
+const props = defineProps<{
+  loading: boolean;
+  error: string | null;
+  empty: boolean;
+  peaks: PeakDayItem[];
+  spikeCount: number | null;
+  medianDaily: number | null;
+  currency: string;
+  monthLabel: string;
+}>();
+
+const emit = defineEmits<{
+  (event: 'retry'): void;
+}>();
+
+const showEmpty = computed(
+  () =>
+    !props.loading &&
+    !props.error &&
+    (props.empty || props.peaks.length === 0)
+);
+
+const formatMoney = (value: number | null) => {
+  if (value == null) return '—';
+  return value.toLocaleString('ru-RU', {
+    style: 'currency',
+    currency: props.currency,
+    minimumFractionDigits: 0,
+  });
+};
+
+const spikeLabel = computed(() => (props.spikeCount == null ? '—' : props.spikeCount.toString()));
+</script>
+
+<template>
+  <Card class="analytics-card">
+    <template #title>
+      <div class="card-head">
+        <div>
+          <h3>Пиковые дни</h3>
+          <p>Самые дорогие дни в {{ monthLabel || 'выбранном месяце' }}</p>
+        </div>
+      </div>
+    </template>
+
+    <template #content>
+      <div
+        v-if="loading"
+        class="card-loading"
+      >
+        <Skeleton
+          v-for="index in 4"
+          :key="index"
+          height="24px"
+          width="90%"
+        />
+      </div>
+
+      <div
+        v-else-if="error"
+        class="card-message"
+      >
+        <Message
+          severity="error"
+          icon="pi pi-exclamation-triangle"
+          :closable="false"
+        >
+          <div class="card-message__body">
+            <p class="card-message__title">
+              Не удалось загрузить паттерны расходов
+            </p>
+            <p class="card-message__text">
+              {{ error }}
+            </p>
+            <Button
+              label="Повторить"
+              icon="pi pi-refresh"
+              size="small"
+              @click="emit('retry')"
+            />
+          </div>
+        </Message>
+      </div>
+
+      <div
+        v-else-if="showEmpty"
+        class="card-message"
+      >
+        <Message
+          severity="info"
+          icon="pi pi-inbox"
+          :closable="false"
+        >
+          <div class="card-message__body card-message__body--compact">
+            <p class="card-message__title">
+              Недостаточно данных
+            </p>
+            <p class="card-message__text">
+              Добавьте ежедневные траты, чтобы увидеть пиковые дни.
+            </p>
+          </div>
+        </Message>
+      </div>
+
+      <div
+        v-else
+        class="patterns-card__body"
+      >
+        <div class="patterns-card__stats">
+          <div class="patterns-card__stat">
+            <span class="patterns-card__label">Всплесков</span>
+            <strong>{{ spikeLabel }}</strong>
+          </div>
+          <div class="patterns-card__stat">
+            <span class="patterns-card__label">Медиана дня</span>
+            <strong>{{ formatMoney(medianDaily) }}</strong>
+          </div>
+        </div>
+        <ul class="patterns-card__list">
+          <li
+            v-for="item in peaks"
+            :key="item.label"
+            class="patterns-card__item"
+          >
+            <span class="patterns-card__date">{{ item.label }}</span>
+            <span class="patterns-card__amount">{{ formatMoney(item.amount) }}</span>
+          </li>
+        </ul>
+      </div>
+    </template>
+  </Card>
+</template>
+
+<style scoped>
+.analytics-card {
+  background: var(--ft-surface-base);
+  border-radius: var(--ft-radius-2xl);
+  border: 1px solid var(--ft-border-subtle);
+  display: flex;
+  flex-direction: column;
+  gap: var(--ft-space-4);
+  padding-bottom: var(--ft-space-3);
+  box-shadow: var(--ft-shadow-sm);
+}
+
+.card-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: var(--ft-space-4);
+}
+
+.card-head h3 {
+  margin: 0;
+  font-size: var(--ft-text-xl);
+  font-weight: var(--ft-font-semibold);
+  color: var(--ft-text-primary);
+}
+
+.card-head p {
+  margin: var(--ft-space-2) 0 0;
+  color: var(--ft-text-secondary);
+}
+
+.card-loading {
+  display: grid;
+  gap: var(--ft-space-3);
+}
+
+.card-message {
+  display: grid;
+}
+
+.card-message__body {
+  display: grid;
+  gap: var(--ft-space-3);
+}
+
+.card-message__body--compact {
+  gap: var(--ft-space-2);
+}
+
+.card-message__title {
+  margin: 0;
+  font-weight: var(--ft-font-semibold);
+}
+
+.card-message__text {
+  margin: 0;
+}
+
+.patterns-card__body {
+  display: grid;
+  gap: var(--ft-space-4);
+}
+
+.patterns-card__stats {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  gap: var(--ft-space-3);
+}
+
+.patterns-card__stat {
+  display: grid;
+  gap: var(--ft-space-1);
+  padding: var(--ft-space-2);
+  border-radius: var(--ft-radius-lg);
+  background: var(--ft-surface-soft);
+}
+
+.patterns-card__label {
+  font-size: var(--ft-text-xs);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--ft-text-tertiary);
+}
+
+.patterns-card__list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: var(--ft-space-2);
+}
+
+.patterns-card__item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: var(--ft-space-2);
+  border-radius: var(--ft-radius-lg);
+  border: 1px solid var(--ft-border-subtle);
+  background: var(--ft-surface-base);
+}
+
+.patterns-card__date {
+  font-weight: var(--ft-font-medium);
+  color: var(--ft-text-primary);
+}
+
+.patterns-card__amount {
+  font-weight: var(--ft-font-semibold);
+  color: var(--ft-text-primary);
+}
+</style>

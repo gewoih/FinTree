@@ -6,6 +6,8 @@ import SpendingPieCard from '../components/analytics/SpendingPieCard.vue';
 import NetWorthLineCard from '../components/analytics/NetWorthLineCard.vue';
 import SpendingBarsCard from '../components/analytics/SpendingBarsCard.vue';
 import ForecastCard from '../components/analytics/ForecastCard.vue';
+import CategoryDeltaCard from '../components/analytics/CategoryDeltaCard.vue';
+import SpendingPatternsCard from '../components/analytics/SpendingPatternsCard.vue';
 import { useUserStore } from '../stores/user';
 import { apiService } from '../services/api.service';
 import type {
@@ -24,12 +26,37 @@ import type {
 } from '../types/analytics';
 import PageContainer from "@/components/layout/PageContainer.vue";
 
-type FinancialMetricKey = 'savingsRate' | 'liquidityMonths' | 'expenseVolatility' | 'incomeDiversity';
+type FinancialMetricKey = 'savingsRate' | 'expenseVolatility' | 'meanMedianRatio';
 
 interface MetricDefinition {
   key: FinancialMetricKey;
+  getValue: (metrics: FinancialHealthMetricsDto | null) => number | null;
   format: (value: number | null, currency: string) => string;
   evaluate: (value: number | null) => { status: HealthStatus; score: number } | null;
+}
+
+interface SummaryCard {
+  title: string;
+  value: string;
+  icon?: string;
+  trend?: number | null;
+  trendLabel?: string;
+  variant?: 'default' | 'success' | 'warning' | 'danger';
+}
+
+interface CategoryDeltaItem {
+  id: string;
+  name: string;
+  color: string;
+  currentAmount: number;
+  previousAmount: number;
+  deltaAmount: number;
+  deltaPercent: number | null;
+}
+
+interface PeakDayItem {
+  label: string;
+  amount: number;
 }
 
 const userStore = useUserStore();
@@ -62,8 +89,10 @@ const healthLoading = ref(false);
 const healthError = ref<string | null>(null);
 
 const categoryExpenses = ref<CategoryExpenseDto[]>([]);
+const categoryExpensesPrevious = ref<CategoryExpenseDto[]>([]);
 const categoryLoading = ref(false);
 const categoryError = ref<string | null>(null);
+const categoryDeltaError = ref<string | null>(null);
 
 const netWorthSnapshots = ref<NetWorthSnapshotDto[]>([]);
 const netWorthLoading = ref(false);
@@ -97,6 +126,7 @@ const baseCurrency = computed(() => userStore.baseCurrencyCode ?? 'RUB');
 const metricDefinitions: MetricDefinition[] = [
   {
     key: 'savingsRate',
+    getValue: (metrics) => metrics?.savingsRate ?? null,
     format: (value, _currency) => formatPercent(value),
     evaluate: (value) => {
       if (value == null) return null;
@@ -106,17 +136,8 @@ const metricDefinitions: MetricDefinition[] = [
     },
   },
   {
-    key: 'liquidityMonths',
-    format: (value, _currency) => formatMonths(value),
-    evaluate: (value) => {
-      if (value == null) return null;
-      if (value >= 6) return { status: 'good', score: 90 };
-      if (value >= 3) return { status: 'average', score: 60 };
-      return { status: 'poor', score: 25 };
-    },
-  },
-  {
     key: 'expenseVolatility',
+    getValue: (metrics) => metrics?.expenseVolatility ?? null,
     format: (value, _currency) => formatPercent(value),
     evaluate: (value) => {
       if (value == null) return null;
@@ -126,12 +147,13 @@ const metricDefinitions: MetricDefinition[] = [
     },
   },
   {
-    key: 'incomeDiversity',
-    format: (value, _currency) => formatPercent(value != null ? 1 - value : null),
+    key: 'meanMedianRatio',
+    getValue: () => meanMedianRatio.value,
+    format: (value, _currency) => (value == null ? '—' : `${value.toFixed(2)}×`),
     evaluate: (value) => {
       if (value == null) return null;
-      if (value <= 0.4) return { status: 'good', score: 85 };
-      if (value <= 0.7) return { status: 'average', score: 55 };
+      if (value <= 1.15) return { status: 'good', score: 85 };
+      if (value <= 1.35) return { status: 'average', score: 55 };
       return { status: 'poor', score: 25 };
     },
   },
@@ -154,15 +176,6 @@ const metricPresentation: Record<
       poor: { emoji: '🌱', statusLabel: 'Тревога' },
     },
   },
-  liquidityMonths: {
-    label: 'Финансовая подушка',
-    tooltip: 'Сколько месяцев вы проживёте на текущие резервы, сохраняя образ жизни.',
-    flair: {
-      good: { emoji: '🛡️', statusLabel: 'Резерв крепкий' },
-      average: { emoji: '🧱', statusLabel: 'Подкопить' },
-      poor: { emoji: '⚠️', statusLabel: 'Создайте запас' },
-    },
-  },
   expenseVolatility: {
     label: 'Стабильность расходов',
     tooltip: 'Насколько сильно траты скачут от месяца к месяцу.',
@@ -172,13 +185,14 @@ const metricPresentation: Record<
       poor: { emoji: '🌪️', statusLabel: 'Сгладьте скачки' },
     },
   },
-  incomeDiversity: {
-    label: 'Диверсификация доходов',
-    tooltip: 'Насколько равномерно распределены ваши источники дохода.',
+  meanMedianRatio: {
+    label: 'Соотношение mean/median',
+    tooltip:
+      'Показывает, насколько траты искажаются пиковыми днями. Чем ближе к 1, тем стабильнее.',
     flair: {
-      good: { emoji: '🎯', statusLabel: 'Доходы распределены' },
-      average: { emoji: '🛶', statusLabel: 'Добавьте источники' },
-      poor: { emoji: '🔥', statusLabel: 'Риск потерять доход' },
+      good: { emoji: '🎛️', statusLabel: 'Стабильно' },
+      average: { emoji: '⚖️', statusLabel: 'Есть всплески' },
+      poor: { emoji: '⚠️', statusLabel: 'Сильные всплески' },
     },
   },
 };
@@ -206,9 +220,13 @@ function formatPercent(value: number | null, fractionDigits = 0): string {
   return `${(value * 100).toFixed(fractionDigits)}%`;
 }
 
-function formatMonths(value: number | null, fractionDigits = 1): string {
+function formatMoney(value: number | null, maximumFractionDigits = 0): string {
   if (value == null || Number.isNaN(value)) return '—';
-  return `${value.toFixed(fractionDigits)} мес`;
+  return value.toLocaleString('ru-RU', {
+    style: 'currency',
+    currency: baseCurrency.value,
+    maximumFractionDigits,
+  });
 }
 
 function resolveErrorMessage(error: unknown, fallback: string): string {
@@ -222,6 +240,25 @@ function resolveErrorMessage(error: unknown, fallback: string): string {
     return error.message;
   }
   return fallback;
+}
+
+function formatMonthPeriod(months: number): string {
+  const lastDigit = months % 10;
+  if (months % 100 >= 11 && months % 100 <= 19) {
+    return `${months} месяцев`;
+  }
+  if (lastDigit === 1) return `${months} месяц`;
+  if (lastDigit >= 2 && lastDigit <= 4) return `${months} месяца`;
+  return `${months} месяцев`;
+}
+
+function computeMedian(values: number[]): number | null {
+  if (!values.length) return null;
+  const sorted = [...values].sort((a, b) => a - b);
+  const mid = Math.floor(sorted.length / 2);
+  return sorted.length % 2 === 0
+    ? (sorted[mid - 1] + sorted[mid]) / 2
+    : sorted[mid];
 }
 
 async function loadFinancialHealth(period: number) {
@@ -247,7 +284,7 @@ function computeFinancialMetricRows(): FinancialHealthMetricRow[] {
   let hasRealData = false;
 
   for (const definition of metricDefinitions) {
-    const value = metrics[definition.key] ?? null;
+    const value = definition.getValue(metrics);
     if (value != null) {
       hasRealData = true;
     }
@@ -314,13 +351,31 @@ async function loadCategoryExpenses(periodMonths: number) {
   if (categoryLoading.value) return;
   categoryLoading.value = true;
   categoryError.value = null;
+  categoryDeltaError.value = null;
   try {
     const { from, to } = resolvePeriodRange(periodMonths);
     const data = await apiService.getExpensesByCategoryByDateRange(from, to);
     categoryExpenses.value = data ?? [];
+
+    try {
+      const previousRange = resolvePreviousPeriodRange(periodMonths);
+      const previousData = await apiService.getExpensesByCategoryByDateRange(
+        previousRange.from,
+        previousRange.to
+      );
+      categoryExpensesPrevious.value = previousData ?? [];
+    } catch (error) {
+      categoryDeltaError.value = resolveErrorMessage(
+        error,
+        'Не удалось загрузить данные для сравнения.'
+      );
+      categoryExpensesPrevious.value = [];
+    }
   } catch (error) {
     categoryError.value = resolveErrorMessage(error, 'Не удалось загрузить расходы по категориям.');
     categoryExpenses.value = [];
+    categoryDeltaError.value = categoryError.value;
+    categoryExpensesPrevious.value = [];
   } finally {
     categoryLoading.value = false;
   }
@@ -331,6 +386,15 @@ function resolvePeriodRange(months: number) {
   const end = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth() + 1, 1, 0, 0, 0));
   const start = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth() + 1 - months, 1, 0, 0, 0));
   return { from: start, to: end };
+}
+
+function resolvePreviousPeriodRange(months: number) {
+  const current = resolvePeriodRange(months);
+  const previousEnd = current.from;
+  const previousStart = new Date(
+    Date.UTC(previousEnd.getUTCFullYear(), previousEnd.getUTCMonth() - months, 1, 0, 0, 0)
+  );
+  return { from: previousStart, to: previousEnd };
 }
 
 async function loadNetWorth() {
@@ -391,6 +455,198 @@ const categoryChartData = computed(() => {
     ],
   };
 });
+
+const categoryPeriodLabel = computed(() => formatMonthPeriod(selectedCategoryPeriod.value));
+
+const categoryDelta = computed<{
+  increased: CategoryDeltaItem[];
+  decreased: CategoryDeltaItem[];
+}>(() => {
+  if (!categoryExpenses.value.length || !categoryExpensesPrevious.value.length) {
+    return { increased: [], decreased: [] };
+  }
+
+  const currentMap = new Map<string, CategoryExpenseDto>();
+  const previousMap = new Map<string, CategoryExpenseDto>();
+
+  categoryExpenses.value.forEach((item) => currentMap.set(item.id, item));
+  categoryExpensesPrevious.value.forEach((item) => previousMap.set(item.id, item));
+
+  const allIds = new Set<string>([...currentMap.keys(), ...previousMap.keys()]);
+  const entries: CategoryDeltaItem[] = [];
+
+  allIds.forEach((id) => {
+    const current = currentMap.get(id);
+    const previous = previousMap.get(id);
+    const currentAmount = Number(current?.amount ?? 0);
+    const previousAmount = Number(previous?.amount ?? 0);
+    if (!currentAmount && !previousAmount) return;
+
+    const deltaAmount = currentAmount - previousAmount;
+    const deltaPercent =
+      previousAmount > 0 ? (deltaAmount / previousAmount) * 100 : null;
+
+    entries.push({
+      id,
+      name: current?.name ?? previous?.name ?? 'Без категории',
+      color:
+        current?.color?.trim() ??
+        previous?.color?.trim() ??
+        chartPalette.categories[0],
+      currentAmount,
+      previousAmount,
+      deltaAmount,
+      deltaPercent,
+    });
+  });
+
+  const increased = entries
+    .filter((item) => item.deltaAmount > 0)
+    .sort((a, b) => b.deltaAmount - a.deltaAmount)
+    .slice(0, 4);
+  const decreased = entries
+    .filter((item) => item.deltaAmount < 0)
+    .sort((a, b) => a.deltaAmount - b.deltaAmount)
+    .slice(0, 4);
+
+  return { increased, decreased };
+});
+
+const monthlySortedExpenses = computed(() => {
+  return [...expensesData.months].sort((a, b) => {
+    if (a.year !== b.year) return a.year - b.year;
+    return a.month - b.month;
+  });
+});
+
+const currentMonthEntry = computed(() => {
+  const items = monthlySortedExpenses.value;
+  if (!items.length) return null;
+  return items[items.length - 1];
+});
+
+const previousMonthEntry = computed(() => {
+  const items = monthlySortedExpenses.value;
+  if (items.length < 2) return null;
+  return items[items.length - 2];
+});
+
+const currentMonthDaily = computed(() => {
+  const current = currentMonthEntry.value;
+  if (!current) return [];
+  return expensesData.days.filter(
+    (entry) => entry.year === current.year && entry.month === current.month
+  );
+});
+
+const currentMonthLabel = computed(() => {
+  const current = currentMonthEntry.value;
+  if (!current) return '';
+  return formatMonthLabel(current.year, current.month);
+});
+
+const currentMonthTotal = computed(() => {
+  const dailyTotal = currentMonthDaily.value.reduce(
+    (sum, entry) => sum + Number(entry.amount ?? 0),
+    0
+  );
+  const fallback = currentMonthEntry.value?.amount;
+  if (fallback != null) return Number(fallback);
+  return dailyTotal > 0 ? dailyTotal : null;
+});
+
+const currentMonthMaxDay = computed(() => {
+  if (!currentMonthDaily.value.length) return null;
+  return Math.max(...currentMonthDaily.value.map((entry) => Number(entry.amount ?? 0)));
+});
+
+const monthOverMonthChange = computed(() => {
+  const current = currentMonthEntry.value?.amount;
+  const previous = previousMonthEntry.value?.amount;
+  if (current == null || previous == null || Number(previous) === 0) return null;
+  return Number((((Number(current) - Number(previous)) / Number(previous)) * 100).toFixed(1));
+});
+
+const topCategory = computed(() => {
+  if (!categoryLegend.value.length) return null;
+  return [...categoryLegend.value].sort((a, b) => b.amount - a.amount)[0] ?? null;
+});
+
+const summaryCards = computed<SummaryCard[]>(() => {
+  const cards: SummaryCard[] = [
+    {
+      title: 'Всего за месяц',
+      value: formatMoney(currentMonthTotal.value),
+      icon: 'pi-wallet',
+      trend: monthOverMonthChange.value,
+      trendLabel: 'к прошлому мес.',
+      variant:
+        monthOverMonthChange.value == null
+          ? 'default'
+          : monthOverMonthChange.value > 0
+            ? 'danger'
+            : 'success',
+    },
+    {
+      title: 'Максимум за день',
+      value: formatMoney(currentMonthMaxDay.value),
+      icon: 'pi-arrow-up-right',
+    },
+    {
+      title: 'Топ-категория',
+      value: topCategory.value
+        ? `${topCategory.value.name} · ${topCategory.value.percent.toFixed(1)}%`
+        : '—',
+      icon: 'pi-chart-pie',
+    },
+  ];
+
+  return cards;
+});
+
+const dailyAmounts = computed(() =>
+  currentMonthDaily.value.map((entry) => Number(entry.amount ?? 0)).filter((value) => value > 0)
+);
+
+const dailyMean = computed(() => {
+  if (!dailyAmounts.value.length) return null;
+  const total = dailyAmounts.value.reduce((sum, value) => sum + value, 0);
+  return total / dailyAmounts.value.length;
+});
+
+const dailyMedian = computed(() => computeMedian(dailyAmounts.value));
+
+const meanMedianRatio = computed(() => {
+  if (dailyMean.value == null || dailyMedian.value == null || dailyMedian.value === 0) {
+    return null;
+  }
+  return dailyMean.value / dailyMedian.value;
+});
+
+const spikeThreshold = computed(() => {
+  if (dailyMedian.value == null) return null;
+  return dailyMedian.value * 2;
+});
+
+const spikeDaysCount = computed(() => {
+  if (spikeThreshold.value == null) return null;
+  return dailyAmounts.value.filter((amount) => amount > spikeThreshold.value!).length;
+});
+
+const peakDays = computed<PeakDayItem[]>(() => {
+  if (!currentMonthDaily.value.length) return [];
+  return [...currentMonthDaily.value]
+    .sort((a, b) => Number(b.amount ?? 0) - Number(a.amount ?? 0))
+    .slice(0, 3)
+    .map((entry) => ({
+      label: new Intl.DateTimeFormat('ru-RU', { day: '2-digit', month: 'short' }).format(
+        new Date(entry.year, entry.month - 1, entry.day ?? 1)
+      ),
+      amount: Number(entry.amount ?? 0),
+    }));
+});
+
+const patternsEmpty = computed(() => !currentMonthDaily.value.length);
 
 const sortedNetWorth = computed(() => {
   return [...netWorthSnapshots.value].sort((a, b) => {
@@ -505,7 +761,7 @@ const forecastModel = computed<{
 }>(() => {
   const daily = expensesData.days;
   const monthly = expensesData.months;
-  if (!daily.length || !monthly.length) {
+  if (!daily.length) {
     return { summary: null, chartData: null };
   }
 
@@ -539,18 +795,9 @@ const forecastModel = computed<{
     (entry) => entry.year === currentYear && entry.month === currentMonth,
   );
 
-  if (currentIndex <= 0) {
-    return { summary: null, chartData: null };
-  }
-
-  const previous = monthlySorted[currentIndex - 1];
-  if (!previous) {
-    return { summary: null, chartData: null };
-  }
-  const baselineLimit = Number(previous.amount ?? 0);
-  if (!baselineLimit) {
-    return { summary: null, chartData: null };
-  }
+  const previous = currentIndex > 0 ? monthlySorted[currentIndex - 1] : null;
+  const baselineLimit =
+    previous && Number(previous.amount ?? 0) > 0 ? Number(previous.amount ?? 0) : null;
 
   let cumulative = 0;
   const labels: string[] = [];
@@ -576,14 +823,17 @@ const forecastModel = computed<{
     Number((dailyAverage * (index + 1)).toFixed(2)),
   );
 
-  const baselineData = Array.from({ length: daysInMonth }, () => Number(baselineLimit.toFixed(2)));
+  const baselineData = baselineLimit
+    ? Array.from({ length: daysInMonth }, () => Number(baselineLimit.toFixed(2)))
+    : [];
 
-  const status: HealthStatus =
-    forecastTotal <= baselineLimit * 0.9
+  const status: HealthStatus | null = baselineLimit
+    ? forecastTotal <= baselineLimit * 0.9
       ? 'good'
       : forecastTotal <= baselineLimit * 1.05
         ? 'average'
-        : 'poor';
+        : 'poor'
+    : null;
 
   const chartData = {
     labels,
@@ -611,16 +861,20 @@ const forecastModel = computed<{
         fill: false,
         tension: 0.25,
       },
-      {
-        label: 'Лимит прошлого месяца',
-        data: baselineData,
-        borderColor: chartPalette.surface,
-        borderDash: [4, 4],
-        borderWidth: 1.5,
-        pointRadius: 0,
-        fill: false,
-        tension: 0,
-      },
+      ...(baselineLimit
+        ? [
+            {
+              label: 'Лимит прошлого месяца',
+              data: baselineData,
+              borderColor: chartPalette.surface,
+              borderDash: [4, 4],
+              borderWidth: 1.5,
+              pointRadius: 0,
+              fill: false,
+              tension: 0,
+            },
+          ]
+        : []),
     ],
   };
 
@@ -656,6 +910,10 @@ function retryNetWorthData() {
 
 function retryExpensesData() {
   void loadExpenses(selectedGranularity.value, true);
+}
+
+function retryDailyExpenses() {
+  void loadExpenses('days', true);
 }
 
 function retryForecastData() {
@@ -700,6 +958,29 @@ onMounted(async () => {
       subtitle="Отслеживайте баланс, структуру расходов и прогноз в одном месте"
     />
 
+    <section class="analytics-summary">
+      <div class="analytics-summary__header">
+        <div>
+          <h3>Сводка месяца</h3>
+          <p class="analytics-summary__meta">
+            {{ currentMonthLabel ? `Данные за ${currentMonthLabel}` : 'Данные за последний доступный месяц' }}
+          </p>
+        </div>
+      </div>
+      <div class="analytics-summary__grid">
+        <KPICard
+          v-for="card in summaryCards"
+          :key="card.title"
+          :title="card.title"
+          :value="card.value"
+          :icon="card.icon"
+          :trend="card.trend"
+          :trend-label="card.trendLabel"
+          :variant="card.variant"
+        />
+      </div>
+    </section>
+
     <div class="analytics-grid">
       <HeroHealthCard
         class="analytics-grid__hero"
@@ -740,6 +1021,30 @@ onMounted(async () => {
         @retry="retryExpensesData"
       />
 
+      <CategoryDeltaCard
+        class="analytics-grid__delta"
+        :loading="categoryLoading"
+        :error="categoryDeltaError"
+        :period-label="categoryPeriodLabel"
+        :increased="categoryDelta.increased"
+        :decreased="categoryDelta.decreased"
+        :currency="baseCurrency"
+        @retry="retryCategories"
+      />
+
+      <SpendingPatternsCard
+        class="analytics-grid__patterns"
+        :loading="expensesLoading.days"
+        :error="expensesError.days"
+        :empty="patternsEmpty"
+        :peaks="peakDays"
+        :spike-count="spikeDaysCount"
+        :median-daily="dailyMedian"
+        :currency="baseCurrency"
+        :month-label="currentMonthLabel"
+        @retry="retryDailyExpenses"
+      />
+
       <NetWorthLineCard
         class="analytics-grid__networth"
         :loading="netWorthLoading"
@@ -769,6 +1074,36 @@ onMounted(async () => {
   gap: var(--ft-space-6);
 }
 
+.analytics-summary {
+  display: grid;
+  gap: var(--ft-space-3);
+}
+
+.analytics-summary__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--ft-space-3);
+}
+
+.analytics-summary__header h3 {
+  margin: 0;
+  font-size: var(--ft-text-xl);
+  font-weight: var(--ft-font-semibold);
+  color: var(--ft-text-primary);
+}
+
+.analytics-summary__meta {
+  margin: var(--ft-space-2) 0 0;
+  color: var(--ft-text-secondary);
+}
+
+.analytics-summary__grid {
+  display: grid;
+  gap: var(--ft-space-3);
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+}
+
 .analytics-grid {
   display: grid;
   gap: var(--ft-space-4);
@@ -777,6 +1112,8 @@ onMounted(async () => {
 .analytics-grid__hero,
 .analytics-grid__pie,
 .analytics-grid__spending,
+.analytics-grid__delta,
+.analytics-grid__patterns,
 .analytics-grid__networth,
 .analytics-grid__forecast {
   grid-column: 1 / -1;
@@ -798,6 +1135,14 @@ onMounted(async () => {
   }
 
   .analytics-grid__spending {
+    grid-column: 7 / span 6;
+  }
+
+  .analytics-grid__delta {
+    grid-column: 1 / span 6;
+  }
+
+  .analytics-grid__patterns {
     grid-column: 7 / span 6;
   }
 }
