@@ -19,48 +19,85 @@ const showEmptyState = computed(() => !props.loading && (!props.hasData || !prop
 </script>
 
 <template>
-  <AppCard class="analytics-card analytics-card--health" padding="lg" elevated>
+  <AppCard
+    class="analytics-card analytics-card--health"
+    padding="lg"
+    elevated
+  >
     <template #header>
       <div class="analytics-card__head">
         <div class="analytics-card__title">
           <span class="analytics-card__icon">
-            <i class="pi pi-heart-fill" aria-hidden="true" />
+            <i
+              class="pi pi-heart-fill"
+              aria-hidden="true"
+            />
           </span>
           <div>
             <h3>Финансовое здоровье</h3>
             <p>Ключевые показатели за {{ periodLabel }}</p>
           </div>
         </div>
-        <div v-if="$slots.actions" class="analytics-card__actions">
+        <div
+          v-if="$slots.actions"
+          class="analytics-card__actions"
+        >
           <slot name="actions" />
         </div>
       </div>
     </template>
 
-    <div v-if="loading" class="health-state health-state--loading" role="status" aria-live="polite">
+    <div
+      v-if="loading"
+      class="health-state health-state--loading"
+      role="status"
+      aria-live="polite"
+    >
       <i class="pi pi-spinner pi-spin health-state__icon" />
-      <p class="health-state__title">Считаем показатели...</p>
-      <p class="health-state__subtitle">Это может занять несколько секунд</p>
+      <p class="health-state__title">
+        Считаем показатели...
+      </p>
+      <p class="health-state__subtitle">
+        Это может занять несколько секунд
+      </p>
     </div>
 
-    <div v-else-if="showEmptyState" class="health-state">
-      <i class="pi pi-chart-line health-state__icon" aria-hidden="true" />
-      <p class="health-state__title">Недостаточно данных</p>
+    <div
+      v-else-if="showEmptyState"
+      class="health-state"
+    >
+      <i
+        class="pi pi-chart-line health-state__icon"
+        aria-hidden="true"
+      />
+      <p class="health-state__title">
+        Недостаточно данных
+      </p>
       <p class="health-state__subtitle">
         Добавьте несколько транзакций и подождите, пока аналитика соберёт статистику.
       </p>
     </div>
 
-    <div v-else class="health-metrics" role="list">
+    <div
+      v-else
+      class="health-metrics"
+      role="list"
+    >
       <article
         v-for="metric in metrics"
         :key="metric.key"
         class="health-metric"
         role="listitem"
       >
-        <p class="health-metric__label">{{ metric.label }}</p>
-        <p class="health-metric__value">{{ metric.value }}</p>
-        <p class="health-metric__description">{{ metric.description }}</p>
+        <p class="health-metric__label">
+          {{ metric.label }}
+        </p>
+        <p class="health-metric__value">
+          {{ metric.value }}
+        </p>
+        <p class="health-metric__description">
+          {{ metric.description }}
+        </p>
       </article>
     </div>
   </AppCard>

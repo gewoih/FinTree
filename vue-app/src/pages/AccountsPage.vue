@@ -152,7 +152,12 @@ onMounted(async () => {
         v-if="loadingAccounts && allAccounts.length === 0"
         class="accounts__skeleton"
       >
-        <UiSkeleton v-for="i in 4" :key="i" height="220px" class="account-skeleton" />
+        <UiSkeleton
+          v-for="i in 4"
+          :key="i"
+          height="220px"
+          class="account-skeleton"
+        />
       </div>
 
       <!-- Empty state (no accounts at all) -->
@@ -178,7 +183,10 @@ onMounted(async () => {
       />
 
       <!-- Accounts grid -->
-      <div v-else class="accounts-grid card-grid card-grid--balanced">
+      <div
+        v-else
+        class="accounts-grid card-grid card-grid--balanced"
+      >
         <AccountCard
           v-for="account in filteredAccounts"
           :key="account.id"
@@ -196,7 +204,10 @@ onMounted(async () => {
         class="surface-panel accounts__results"
       >
         <p class="results-text">
-          <i class="pi pi-info-circle" aria-hidden="true" />
+          <i
+            class="pi pi-info-circle"
+            aria-hidden="true"
+          />
           Показано счетов: <strong>{{ filteredAccounts.length }}</strong> из <strong>{{ allAccounts.length }}</strong>
         </p>
       </div>

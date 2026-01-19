@@ -62,13 +62,23 @@ const toggleMenu = (event: Event) => {
   >
     <!-- Header with icon, name, and menu -->
     <header class="account-card__header">
-      <div class="account-card__icon" :style="{ color: accountTypeInfo.color }">
-        <i :class="`pi ${accountTypeInfo.icon}`" aria-hidden="true" />
+      <div
+        class="account-card__icon"
+        :style="{ color: accountTypeInfo.color }"
+      >
+        <i
+          :class="`pi ${accountTypeInfo.icon}`"
+          aria-hidden="true"
+        />
       </div>
 
       <div class="account-card__title-section">
-        <h3 class="account-card__name">{{ account.name }}</h3>
-        <p class="account-card__type">{{ accountTypeInfo.label }}</p>
+        <h3 class="account-card__name">
+          {{ account.name }}
+        </h3>
+        <p class="account-card__type">
+          {{ accountTypeInfo.label }}
+        </p>
       </div>
 
       <UiButton
@@ -90,7 +100,10 @@ const toggleMenu = (event: Event) => {
     </header>
 
     <!-- Status badges -->
-    <div v-if="account.isMain" class="account-card__badges">
+    <div
+      v-if="account.isMain"
+      class="account-card__badges"
+    >
       <StatusBadge
         label="Основной счет"
         severity="success"
@@ -103,7 +116,10 @@ const toggleMenu = (event: Event) => {
     <dl class="account-card__meta">
       <div class="meta-row">
         <dt>
-          <i class="pi pi-globe" aria-hidden="true" />
+          <i
+            class="pi pi-globe"
+            aria-hidden="true"
+          />
           Валюта
         </dt>
         <dd>
@@ -115,7 +131,10 @@ const toggleMenu = (event: Event) => {
     </dl>
 
     <!-- Quick actions footer -->
-    <footer v-if="!account.isMain" class="account-card__footer">
+    <footer
+      v-if="!account.isMain"
+      class="account-card__footer"
+    >
       <UiButton
         label="Сделать основным"
         icon="pi pi-star"
@@ -128,7 +147,11 @@ const toggleMenu = (event: Event) => {
     </footer>
 
     <!-- Primary account indicator -->
-    <div v-if="account.isMain" class="account-card__primary-indicator" aria-hidden="true" />
+    <div
+      v-if="account.isMain"
+      class="account-card__primary-indicator"
+      aria-hidden="true"
+    />
   </article>
 </template>
 

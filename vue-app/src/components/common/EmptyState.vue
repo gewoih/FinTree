@@ -19,14 +19,25 @@ const emit = defineEmits<{
 </script>
 
 <template>
-  <div class="empty-state" role="status">
+  <div
+    class="empty-state"
+    role="status"
+  >
     <div class="empty-state__icon-wrapper">
-      <i :class="['pi', props.icon, 'empty-state__icon']" aria-hidden="true" />
+      <i
+        :class="['pi', props.icon, 'empty-state__icon']"
+        aria-hidden="true"
+      />
     </div>
 
-    <h3 class="empty-state__title">{{ props.title }}</h3>
+    <h3 class="empty-state__title">
+      {{ props.title }}
+    </h3>
 
-    <p v-if="props.description" class="empty-state__description">
+    <p
+      v-if="props.description"
+      class="empty-state__description"
+    >
       {{ props.description }}
     </p>
 

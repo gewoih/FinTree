@@ -111,7 +111,11 @@ defineExpose({
 </script>
 
 <template>
-  <AppCard class="categories-manager" variant="muted" padding="lg">
+  <AppCard
+    class="categories-manager"
+    variant="muted"
+    padding="lg"
+  >
     <template #header>
       <div class="categories-manager__header">
         <div>
@@ -125,13 +129,20 @@ defineExpose({
       <SelectButton
         v-model="selectedCategoryType"
         :options="categoryTypeOptions"
-        optionLabel="label"
-        optionValue="value"
+        option-label="label"
+        option-value="value"
       />
     </div>
 
-    <div v-if="loadingCategories" class="categories__skeleton">
-      <Skeleton v-for="i in 3" :key="i" height="68px" />
+    <div
+      v-if="loadingCategories"
+      class="categories__skeleton"
+    >
+      <Skeleton
+        v-for="i in 3"
+        :key="i"
+        height="68px"
+      />
     </div>
 
     <EmptyState
@@ -144,10 +155,19 @@ defineExpose({
       @action="openModal()"
     />
 
-    <div v-else class="categories__sections">
-      <div v-if="userCategories.length" class="category-section">
+    <div
+      v-else
+      class="categories__sections"
+    >
+      <div
+        v-if="userCategories.length"
+        class="category-section"
+      >
         <h4>
-          <i class="pi pi-user" aria-hidden="true" />
+          <i
+            class="pi pi-user"
+            aria-hidden="true"
+          />
           Личные категории
         </h4>
 
@@ -158,7 +178,10 @@ defineExpose({
             class="category-item"
           >
             <div class="category-info">
-              <span class="color-dot" :style="{ backgroundColor: category.color }" />
+              <span
+                class="color-dot"
+                :style="{ backgroundColor: category.color }"
+              />
               <span class="category-name">{{ category.name }}</span>
             </div>
 
@@ -180,9 +203,15 @@ defineExpose({
         </ul>
       </div>
 
-      <div v-if="systemCategories.length" class="category-section">
+      <div
+        v-if="systemCategories.length"
+        class="category-section"
+      >
         <h4>
-          <i class="pi pi-lock" aria-hidden="true" />
+          <i
+            class="pi pi-lock"
+            aria-hidden="true"
+          />
           Системные категории
         </h4>
 
@@ -193,7 +222,10 @@ defineExpose({
             class="category-item category-item--system"
           >
             <div class="category-info">
-              <span class="color-dot" :style="{ backgroundColor: category.color }" />
+              <span
+                class="color-dot"
+                :style="{ backgroundColor: category.color }"
+              />
               <span class="category-name">{{ category.name }}</span>
             </div>
           </li>
@@ -206,7 +238,7 @@ defineExpose({
       :category="editingCategory"
       :default-type="selectedCategoryType"
     />
-</AppCard>
+  </AppCard>
 </template>
 
 <style scoped>

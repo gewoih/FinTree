@@ -25,7 +25,10 @@ const fieldAttrs = computed(() => ({
 </script>
 
 <template>
-  <div class="form-field" :class="{ 'form-field--error': error, 'form-field--required': required }">
+  <div
+    class="form-field"
+    :class="{ 'form-field--error': error, 'form-field--required': required }"
+  >
     <label
       v-if="label"
       :for="fieldId"
@@ -33,16 +36,33 @@ const fieldAttrs = computed(() => ({
       :class="{ 'sr-only': labelSrOnly }"
     >
       {{ label }}
-      <span v-if="required" class="form-field__required" aria-label="обязательное поле">*</span>
+      <span
+        v-if="required"
+        class="form-field__required"
+        aria-label="обязательное поле"
+      >*</span>
     </label>
 
     <div class="form-field__control">
-      <slot :fieldAttrs="fieldAttrs" />
+      <slot :field-attrs="fieldAttrs" />
     </div>
 
-    <small v-if="hint && !error" :id="hintId" class="form-field__hint">{{ hint }}</small>
-    <small v-if="error" :id="errorId" class="form-field__error" role="alert" aria-live="polite">
-      <i class="pi pi-exclamation-circle" aria-hidden="true" />
+    <small
+      v-if="hint && !error"
+      :id="hintId"
+      class="form-field__hint"
+    >{{ hint }}</small>
+    <small
+      v-if="error"
+      :id="errorId"
+      class="form-field__error"
+      role="alert"
+      aria-live="polite"
+    >
+      <i
+        class="pi pi-exclamation-circle"
+        aria-hidden="true"
+      />
       {{ error }}
     </small>
   </div>

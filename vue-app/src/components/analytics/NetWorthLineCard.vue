@@ -101,15 +101,33 @@ const chartOptions = computed(() => ({
     </template>
 
     <template #content>
-      <div v-if="loading" class="card-loading">
-        <Skeleton width="100%" height="280px" borderRadius="16px" />
+      <div
+        v-if="loading"
+        class="card-loading"
+      >
+        <Skeleton
+          width="100%"
+          height="280px"
+          border-radius="16px"
+        />
       </div>
 
-      <div v-else-if="error" class="card-message">
-        <Message severity="error" icon="pi pi-exclamation-triangle" :closable="false">
+      <div
+        v-else-if="error"
+        class="card-message"
+      >
+        <Message
+          severity="error"
+          icon="pi pi-exclamation-triangle"
+          :closable="false"
+        >
           <div class="card-message__body">
-            <p class="card-message__title">Не удалось загрузить динамику капитала</p>
-            <p class="card-message__text">{{ error }}</p>
+            <p class="card-message__title">
+              Не удалось загрузить динамику капитала
+            </p>
+            <p class="card-message__text">
+              {{ error }}
+            </p>
             <Button
               label="Повторить"
               icon="pi pi-refresh"
@@ -120,16 +138,30 @@ const chartOptions = computed(() => ({
         </Message>
       </div>
 
-      <div v-else-if="empty" class="card-message">
-        <Message severity="info" icon="pi pi-chart-line" :closable="false">
+      <div
+        v-else-if="empty"
+        class="card-message"
+      >
+        <Message
+          severity="info"
+          icon="pi pi-chart-line"
+          :closable="false"
+        >
           <div class="card-message__body card-message__body--compact">
-            <p class="card-message__title">Нет данных</p>
-            <p class="card-message__text">Добавьте транзакции, чтобы увидеть динамику капитала.</p>
+            <p class="card-message__title">
+              Нет данных
+            </p>
+            <p class="card-message__text">
+              Добавьте транзакции, чтобы увидеть динамику капитала.
+            </p>
           </div>
         </Message>
       </div>
 
-      <div v-else class="line-card__chart">
+      <div
+        v-else
+        class="line-card__chart"
+      >
         <div class="line-card__chart-container">
           <Chart
             v-if="chartData"

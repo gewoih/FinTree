@@ -30,11 +30,23 @@ const attrs = useAttrs();
     :disabled="props.disabled"
     @update:model-value="val => emit('update:modelValue', val)"
   >
-    <template v-if="$slots.value" #value="slotProps">
-      <slot name="value" v-bind="slotProps" />
+    <template
+      v-if="$slots.value"
+      #value="slotProps"
+    >
+      <slot
+        name="value"
+        v-bind="slotProps"
+      />
     </template>
-    <template v-if="$slots.option" #option="slotProps">
-      <slot name="option" v-bind="slotProps" />
+    <template
+      v-if="$slots.option"
+      #option="slotProps"
+    >
+      <slot
+        name="option"
+        v-bind="slotProps"
+      />
     </template>
   </Select>
 </template>

@@ -67,7 +67,11 @@ const isEmptyState = computed(
 
 <template>
   <div class="transaction-history">
-    <UiCard class="transaction-history__filters" variant="muted" padding="lg">
+    <UiCard
+      class="transaction-history__filters"
+      variant="muted"
+      padding="lg"
+    >
       <TransactionFilters
         v-model:search-text="searchText"
         v-model:selected-category="selectedCategory"
@@ -79,8 +83,15 @@ const isEmptyState = computed(
       />
     </UiCard>
 
-    <div v-if="transactionsLoading" class="table-skeleton">
-      <Skeleton v-for="i in 6" :key="i" height="54px" />
+    <div
+      v-if="transactionsLoading"
+      class="table-skeleton"
+    >
+      <Skeleton
+        v-for="i in 6"
+        :key="i"
+        height="54px"
+      />
     </div>
 
     <EmptyState
@@ -93,11 +104,17 @@ const isEmptyState = computed(
       @action="emit('add-transaction')"
     />
 
-    <UiCard v-else class="transaction-history__table" padding="lg">
+    <UiCard
+      v-else
+      class="transaction-history__table"
+      padding="lg"
+    >
       <template #header>
         <div class="table-shell__header">
           <div>
-            <h3 class="table-shell__title">История транзакций</h3>
+            <h3 class="table-shell__title">
+              История транзакций
+            </h3>
             <p class="table-shell__meta">
               {{ filteredTransactions.length }}
               {{ filteredTransactions.length === 1 ? 'транзакция' : filteredTransactions.length < 5 ? 'транзакции' : 'транзакций' }}
@@ -116,84 +133,123 @@ const isEmptyState = computed(
         </div>
       </template>
       <UiDataTable
-          class="transaction-history__datatable"
-          :value="filteredTransactions"
-          sortField="occurredAt"
-          :sortOrder="-1"
-          stripedRows
-          rowHover
-          responsiveLayout="scroll"
-          :paginator="true"
-          :rows="PAGINATION_OPTIONS.defaultRows"
-          :rowsPerPageOptions="[...PAGINATION_OPTIONS.options]"
-          paginatorTemplate="FirstPageLink PrevPageLink PageLinks NextPageLink LastPageLink CurrentPageReport RowsPerPageDropdown"
-          currentPageReportTemplate="Показано {first} - {last} из {totalRecords}"
-          :globalFilterFields="['categoryName', 'accountName', 'description']"
+        class="transaction-history__datatable"
+        :value="filteredTransactions"
+        sort-field="occurredAt"
+        :sort-order="-1"
+        striped-rows
+        row-hover
+        responsive-layout="scroll"
+        :paginator="true"
+        :rows="PAGINATION_OPTIONS.defaultRows"
+        :rows-per-page-options="[...PAGINATION_OPTIONS.options]"
+        paginator-template="FirstPageLink PrevPageLink PageLinks NextPageLink LastPageLink CurrentPageReport RowsPerPageDropdown"
+        current-page-report-template="Показано {first} - {last} из {totalRecords}"
+        :global-filter-fields="['categoryName', 'accountName', 'description']"
+      >
+        <Column
+          field="occurredAt"
+          header="Дата"
+          :sortable="true"
+          style="min-width: 120px"
         >
-          <Column field="occurredAt" header="Дата" :sortable="true" style="min-width: 120px">
-            <template #body="slotProps">
-              <span class="date-cell">{{ formatDate(slotProps.data.occurredAt) }}</span>
-            </template>
-          </Column>
+          <template #body="slotProps">
+            <span class="date-cell">{{ formatDate(slotProps.data.occurredAt) }}</span>
+          </template>
+        </Column>
 
-          <Column field="signedAmount" header="Сумма" :sortable="true" style="min-width: 160px">
-            <template #body="slotProps">
-              <div class="amount-cell" :class="{ negative: slotProps.data.signedAmount < 0 }">
-                <span class="amount-value">
-                  {{ slotProps.data.signedAmount < 0 ? '−' : '+' }}
-                  {{ formatCurrency(Math.abs(slotProps.data.signedAmount), slotProps.data.accountCurrency) }}
-                </span>
-                <small class="amount-currency">
-                  {{ slotProps.data.accountSymbol || slotProps.data.accountCurrency }}
-                </small>
-              </div>
-            </template>
-          </Column>
-
-          <Column field="categoryName" header="Категория" :sortable="true" style="min-width: 180px">
-            <template #body="slotProps">
-              <div class="category-cell">
-                <UiBadge
-                  :label="slotProps.data.categoryName"
-                  :color="slotProps.data.categoryColor"
-                />
-                <i
-                  v-if="slotProps.data.isMandatory"
-                  class="pi pi-lock mandatory-icon"
-                  title="Обязательный платеж"
-                />
-              </div>
-            </template>
-          </Column>
-
-          <Column field="accountName" header="Счет" :sortable="true" style="min-width: 160px">
-            <template #body="slotProps">
-              <div class="account-cell">
-                <i class="pi pi-credit-card" aria-hidden="true" />
-                <span>{{ slotProps.data.accountName }}</span>
-              </div>
-            </template>
-          </Column>
-
-          <Column field="description" header="Заметки" style="min-width: 220px">
-            <template #body="slotProps">
-              <span v-if="slotProps.data.description" class="description-text">
-                {{ slotProps.data.description }}
+        <Column
+          field="signedAmount"
+          header="Сумма"
+          :sortable="true"
+          style="min-width: 160px"
+        >
+          <template #body="slotProps">
+            <div
+              class="amount-cell"
+              :class="{ negative: slotProps.data.signedAmount < 0 }"
+            >
+              <span class="amount-value">
+                {{ slotProps.data.signedAmount < 0 ? '−' : '+' }}
+                {{ formatCurrency(Math.abs(slotProps.data.signedAmount), slotProps.data.accountCurrency) }}
               </span>
-              <span v-else class="description-empty">—</span>
-            </template>
-          </Column>
+              <small class="amount-currency">
+                {{ slotProps.data.accountSymbol || slotProps.data.accountCurrency }}
+              </small>
+            </div>
+          </template>
+        </Column>
 
-          <Column header="Действия" style="min-width: 120px">
-            <template #body="slotProps">
-              <UiButton
-                icon="pi pi-pencil"
-                variant="ghost"
-                @click="emit('edit-transaction', slotProps.data)"
-                aria-label="Редактировать транзакцию"
+        <Column
+          field="categoryName"
+          header="Категория"
+          :sortable="true"
+          style="min-width: 180px"
+        >
+          <template #body="slotProps">
+            <div class="category-cell">
+              <UiBadge
+                :label="slotProps.data.categoryName"
+                :color="slotProps.data.categoryColor"
               />
-            </template>
-          </Column>
+              <i
+                v-if="slotProps.data.isMandatory"
+                class="pi pi-lock mandatory-icon"
+                title="Обязательный платеж"
+              />
+            </div>
+          </template>
+        </Column>
+
+        <Column
+          field="accountName"
+          header="Счет"
+          :sortable="true"
+          style="min-width: 160px"
+        >
+          <template #body="slotProps">
+            <div class="account-cell">
+              <i
+                class="pi pi-credit-card"
+                aria-hidden="true"
+              />
+              <span>{{ slotProps.data.accountName }}</span>
+            </div>
+          </template>
+        </Column>
+
+        <Column
+          field="description"
+          header="Заметки"
+          style="min-width: 220px"
+        >
+          <template #body="slotProps">
+            <span
+              v-if="slotProps.data.description"
+              class="description-text"
+            >
+              {{ slotProps.data.description }}
+            </span>
+            <span
+              v-else
+              class="description-empty"
+            >—</span>
+          </template>
+        </Column>
+
+        <Column
+          header="Действия"
+          style="min-width: 120px"
+        >
+          <template #body="slotProps">
+            <UiButton
+              icon="pi pi-pencil"
+              variant="ghost"
+              aria-label="Редактировать транзакцию"
+              @click="emit('edit-transaction', slotProps.data)"
+            />
+          </template>
+        </Column>
       </UiDataTable>
     </UiCard>
   </div>

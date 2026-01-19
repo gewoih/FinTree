@@ -15,14 +15,23 @@ const props = withDefaults(
 </script>
 
 <template>
-  <article class="ui-card" :class="[`ui-card--${props.variant}`, `ui-card--${props.padding}`]">
-    <header v-if="$slots.header" class="ui-card__header">
+  <article
+    class="ui-card"
+    :class="[`ui-card--${props.variant}`, `ui-card--${props.padding}`]"
+  >
+    <header
+      v-if="$slots.header"
+      class="ui-card__header"
+    >
       <slot name="header" />
     </header>
     <div class="ui-card__body">
       <slot />
     </div>
-    <footer v-if="$slots.footer" class="ui-card__footer">
+    <footer
+      v-if="$slots.footer"
+      class="ui-card__footer"
+    >
       <slot name="footer" />
     </footer>
   </article>

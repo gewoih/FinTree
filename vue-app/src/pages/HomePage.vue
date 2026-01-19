@@ -182,10 +182,17 @@ onMounted(async () => {
 
     <UiSection>
       <div class="card-grid dashboard__content">
-        <UiCard class="dashboard__quick-actions" variant="muted" padding="lg">
+        <UiCard
+          class="dashboard__quick-actions"
+          variant="muted"
+          padding="lg"
+        >
           <template #header>
             <div class="card-title-with-icon">
-              <i class="pi pi-bolt" aria-hidden="true" />
+              <i
+                class="pi pi-bolt"
+                aria-hidden="true"
+              />
               <span>Быстрые действия</span>
             </div>
           </template>
@@ -202,11 +209,18 @@ onMounted(async () => {
           </div>
         </UiCard>
 
-        <UiCard class="dashboard__recent" variant="muted" padding="lg">
+        <UiCard
+          class="dashboard__recent"
+          variant="muted"
+          padding="lg"
+        >
           <template #header>
             <div class="dashboard__recent-header">
               <div class="card-title-with-icon">
-                <i class="pi pi-history" aria-hidden="true" />
+                <i
+                  class="pi pi-history"
+                  aria-hidden="true"
+                />
                 <span>Последние транзакции</span>
               </div>
               <p class="card-subtitle">
@@ -215,8 +229,15 @@ onMounted(async () => {
             </div>
           </template>
 
-          <div v-if="isLoading" class="transactions-skeleton">
-            <UiSkeleton v-for="i in 4" :key="i" height="60px" />
+          <div
+            v-if="isLoading"
+            class="transactions-skeleton"
+          >
+            <UiSkeleton
+              v-for="i in 4"
+              :key="i"
+              height="60px"
+            />
           </div>
 
           <EmptyState
@@ -229,14 +250,20 @@ onMounted(async () => {
             @action="router.push('/expenses')"
           />
 
-          <ul v-else class="transactions-list">
+          <ul
+            v-else
+            class="transactions-list"
+          >
             <li
               v-for="transaction in recentTransactions"
               :key="transaction.id"
               class="transaction-item"
             >
               <div class="transaction-icon">
-                <i class="pi pi-shopping-bag" aria-hidden="true" />
+                <i
+                  class="pi pi-shopping-bag"
+                  aria-hidden="true"
+                />
               </div>
 
               <div class="transaction-details">
@@ -267,7 +294,7 @@ onMounted(async () => {
             label="Все транзакции"
             icon="pi pi-arrow-right"
             variant="ghost"
-            iconPos="right"
+            icon-pos="right"
             block
             @click="router.push('/expenses')"
           />

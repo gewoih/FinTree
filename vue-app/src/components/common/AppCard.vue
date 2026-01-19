@@ -36,8 +36,15 @@ const computedAttrs = computed(() => ({
 </script>
 
 <template>
-  <component :is="props.as" v-bind="computedAttrs" :class="classes">
-    <header v-if="$slots.header" class="app-card__header">
+  <component
+    :is="props.as"
+    v-bind="computedAttrs"
+    :class="classes"
+  >
+    <header
+      v-if="$slots.header"
+      class="app-card__header"
+    >
       <slot name="header" />
     </header>
 
@@ -45,7 +52,10 @@ const computedAttrs = computed(() => ({
       <slot />
     </div>
 
-    <footer v-if="$slots.footer" class="app-card__footer">
+    <footer
+      v-if="$slots.footer"
+      class="app-card__footer"
+    >
       <slot name="footer" />
     </footer>
   </component>

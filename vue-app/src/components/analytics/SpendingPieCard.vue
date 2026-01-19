@@ -49,28 +49,51 @@ const chartOptions = computed(() => ({
           <p>Распределение трат за выбранный период</p>
         </div>
         <SelectButton
-          :modelValue="period"
+          :model-value="period"
           :options="periodOptions"
-          optionLabel="label"
-          optionValue="value"
-          @update:modelValue="handlePeriodUpdate"
+          option-label="label"
+          option-value="value"
+          @update:model-value="handlePeriodUpdate"
         />
       </div>
     </template>
 
     <template #content>
-      <div v-if="loading" class="card-loading">
-        <Skeleton width="240px" height="240px" borderRadius="999px" />
+      <div
+        v-if="loading"
+        class="card-loading"
+      >
+        <Skeleton
+          width="240px"
+          height="240px"
+          border-radius="999px"
+        />
         <div class="card-loading__legend">
-          <Skeleton v-for="index in 4" :key="index" height="18px" width="70%" />
+          <Skeleton
+            v-for="index in 4"
+            :key="index"
+            height="18px"
+            width="70%"
+          />
         </div>
       </div>
 
-      <div v-else-if="error" class="card-message">
-        <Message severity="error" icon="pi pi-exclamation-triangle" :closable="false">
+      <div
+        v-else-if="error"
+        class="card-message"
+      >
+        <Message
+          severity="error"
+          icon="pi pi-exclamation-triangle"
+          :closable="false"
+        >
           <div class="card-message__body">
-            <p class="card-message__title">Не удалось загрузить структуру расходов</p>
-            <p class="card-message__text">{{ error }}</p>
+            <p class="card-message__title">
+              Не удалось загрузить структуру расходов
+            </p>
+            <p class="card-message__text">
+              {{ error }}
+            </p>
             <Button
               label="Попробовать снова"
               icon="pi pi-refresh"
@@ -81,16 +104,30 @@ const chartOptions = computed(() => ({
         </Message>
       </div>
 
-      <div v-else-if="showEmpty" class="card-message">
-        <Message severity="info" icon="pi pi-inbox" :closable="false">
+      <div
+        v-else-if="showEmpty"
+        class="card-message"
+      >
+        <Message
+          severity="info"
+          icon="pi pi-inbox"
+          :closable="false"
+        >
           <div class="card-message__body card-message__body--compact">
-            <p class="card-message__title">Нет данных за период</p>
-            <p class="card-message__text">Добавьте расходы, чтобы увидеть распределение.</p>
+            <p class="card-message__title">
+              Нет данных за период
+            </p>
+            <p class="card-message__text">
+              Добавьте расходы, чтобы увидеть распределение.
+            </p>
           </div>
         </Message>
       </div>
 
-      <div v-else class="pie-card__content">
+      <div
+        v-else
+        class="pie-card__content"
+      >
         <div class="pie-card__chart">
           <Chart
             v-if="chartData"
@@ -100,8 +137,14 @@ const chartOptions = computed(() => ({
           />
         </div>
         <ul class="pie-card__legend">
-          <li v-for="item in legend" :key="item.id">
-            <span class="pie-card__legend-color" :style="{ backgroundColor: item.color }" />
+          <li
+            v-for="item in legend"
+            :key="item.id"
+          >
+            <span
+              class="pie-card__legend-color"
+              :style="{ backgroundColor: item.color }"
+            />
             <div class="pie-card__legend-body">
               <span class="pie-card__legend-name">{{ item.name }}</span>
               <span class="pie-card__legend-amount">

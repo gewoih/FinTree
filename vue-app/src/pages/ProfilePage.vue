@@ -133,17 +133,28 @@ function handleClearTelegram() {
       ]"
     />
 
-    <UiCard class="profile-card" variant="muted" padding="lg">
+    <UiCard
+      class="profile-card"
+      variant="muted"
+      padding="lg"
+    >
       <template #header>
         <div class="card-header">
           <div>
-            <h3 class="card-title">Детали аккаунта</h3>
-            <p class="card-subtitle">Управляйте настройками профиля, не покидая страницу.</p>
+            <h3 class="card-title">
+              Детали аккаунта
+            </h3>
+            <p class="card-subtitle">
+              Управляйте настройками профиля, не покидая страницу.
+            </p>
           </div>
         </div>
       </template>
 
-      <form class="profile-form" @submit.prevent="handleSubmit">
+      <form
+        class="profile-form"
+        @submit.prevent="handleSubmit"
+      >
         <div class="profile-grid">
           <div class="profile-row">
             <span class="profile-label">Имя</span>
@@ -157,15 +168,23 @@ function handleClearTelegram() {
 
           <div class="profile-row">
             <span class="profile-label">ID пользователя</span>
-            <p class="muted">{{ currentUser?.id ?? '—' }}</p>
+            <p class="muted">
+              {{ currentUser?.id ?? '—' }}
+            </p>
           </div>
         </div>
 
-        <div class="profile-divider" aria-hidden="true"></div>
+        <div
+          class="profile-divider"
+          aria-hidden="true"
+        />
 
         <div class="profile-grid editable">
           <div class="profile-row">
-            <label class="profile-label" for="profileCurrency">Базовая валюта</label>
+            <label
+              class="profile-label"
+              for="profileCurrency"
+            >Базовая валюта</label>
             <UiSelect
               id="profileCurrency"
               v-model="form.baseCurrencyCode"
@@ -175,19 +194,31 @@ function handleClearTelegram() {
               placeholder="Выберите валюту"
               :disabled="isLoading"
             />
-            <small v-if="isLoading" class="helper-text">
+            <small
+              v-if="isLoading"
+              class="helper-text"
+            >
               Загрузка доступных валют…
             </small>
-            <small v-else-if="selectedCurrencySummary" class="helper-text">
+            <small
+              v-else-if="selectedCurrencySummary"
+              class="helper-text"
+            >
               {{ selectedCurrencySummary }}
             </small>
-            <small v-else class="helper-text">
+            <small
+              v-else
+              class="helper-text"
+            >
               Эта валюта используется для аналитики и отчетов.
             </small>
           </div>
 
           <div class="profile-row">
-            <label class="profile-label" for="profileTelegram">Telegram</label>
+            <label
+              class="profile-label"
+              for="profileTelegram"
+            >Telegram</label>
             <div class="telegram-input">
               <UiInputText
                 id="profileTelegram"

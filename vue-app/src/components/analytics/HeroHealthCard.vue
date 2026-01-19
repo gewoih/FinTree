@@ -57,39 +57,61 @@ const scoreCircleClass = computed(() => {
     <template #content>
       <div class="hero-card__header">
         <div>
-          <p class="hero-card__eyebrow">Финансовое здоровье</p>
-          <h2 class="hero-card__title">Финансовое здоровье</h2>
+          <p class="hero-card__eyebrow">
+            Финансовое здоровье
+          </p>
+          <h2 class="hero-card__title">
+            Финансовое здоровье
+          </h2>
           <p class="hero-card__subtitle">
             Комплексная оценка ваших финансов на основе последних транзакций.
           </p>
         </div>
         <SelectButton
-          :modelValue="period"
+          :model-value="period"
           :options="periodOptions"
-          optionLabel="label"
-          optionValue="value"
-          @update:modelValue="handlePeriodUpdate"
+          option-label="label"
+          option-value="value"
+          @update:model-value="handlePeriodUpdate"
         />
       </div>
 
-      <div v-if="loading" class="hero-card__loading">
-        <Skeleton width="128px" height="128px" borderRadius="999px" />
+      <div
+        v-if="loading"
+        class="hero-card__loading"
+      >
+        <Skeleton
+          width="128px"
+          height="128px"
+          border-radius="999px"
+        />
         <div class="hero-card__loading-metrics">
           <Skeleton
             v-for="index in 4"
             :key="index"
             height="72px"
             width="100%"
-            borderRadius="20px"
+            border-radius="20px"
           />
         </div>
       </div>
 
-      <div v-else-if="error" class="hero-card__message">
-        <Message severity="error" icon="pi pi-exclamation-triangle" :closable="false">
+      <div
+        v-else-if="error"
+        class="hero-card__message"
+      >
+        <Message
+          severity="error"
+          icon="pi pi-exclamation-triangle"
+          :closable="false"
+        >
           <div class="hero-card__message-body">
-            <p class="hero-card__message-title">Не удалось загрузить данные</p>
-            <p class="hero-card__message-text">{{ error }}</p>
+            <p class="hero-card__message-title">
+              Не удалось загрузить данные
+            </p>
+            <p class="hero-card__message-text">
+              {{ error }}
+            </p>
             <Button
               label="Повторить"
               icon="pi pi-refresh"
@@ -100,10 +122,19 @@ const scoreCircleClass = computed(() => {
         </Message>
       </div>
 
-      <div v-else-if="showEmpty" class="hero-card__message">
-        <Message severity="info" icon="pi pi-inbox" :closable="false">
+      <div
+        v-else-if="showEmpty"
+        class="hero-card__message"
+      >
+        <Message
+          severity="info"
+          icon="pi pi-inbox"
+          :closable="false"
+        >
           <div class="hero-card__message-body hero-card__message-body--compact">
-            <p class="hero-card__message-title">Нет данных</p>
+            <p class="hero-card__message-title">
+              Нет данных
+            </p>
             <p class="hero-card__message-text">
               Добавьте несколько транзакций, чтобы увидеть расчёт индекса.
             </p>
@@ -111,15 +142,24 @@ const scoreCircleClass = computed(() => {
         </Message>
       </div>
 
-      <div v-else class="hero-card__content">
+      <div
+        v-else
+        class="hero-card__content"
+      >
         <div class="hero-card__score">
-          <div class="hero-card__score-circle" :class="scoreCircleClass">
+          <div
+            class="hero-card__score-circle"
+            :class="scoreCircleClass"
+          >
             <span class="hero-card__score-value">{{ formattedScore }}</span>
             <span class="hero-card__score-max">/ 100</span>
           </div>
         </div>
 
-        <div class="hero-card__metrics" role="list">
+        <div
+          class="hero-card__metrics"
+          role="list"
+        >
           <article
             v-for="metric in metrics"
             :key="metric.key"
@@ -129,13 +169,17 @@ const scoreCircleClass = computed(() => {
           >
             <div class="hero-card__metric-content">
               <div class="hero-card__metric-header">
-                <p class="hero-card__metric-label">{{ metric.label }}</p>
+                <p class="hero-card__metric-label">
+                  {{ metric.label }}
+                </p>
                 <i
-                  class="pi pi-question-circle hero-card__metric-info"
                   v-tooltip.top="metric.tooltip"
+                  class="pi pi-question-circle hero-card__metric-info"
                 />
               </div>
-              <p class="hero-card__metric-value">{{ metric.value }}</p>
+              <p class="hero-card__metric-value">
+                {{ metric.value }}
+              </p>
             </div>
           </article>
         </div>

@@ -129,12 +129,20 @@ const handleSubmit = async () => {
     :visible="props.visible"
     header="Добавить счёт"
     modal
-    @update:visible="val => emit('update:visible', val)"
     :style="{ width: '520px' }"
-    dismissableMask
+    dismissable-mask
+    @update:visible="val => emit('update:visible', val)"
   >
-    <form @submit.prevent="handleSubmit" class="form-layout" novalidate>
-      <FormField label="Название счёта" :error="nameError" required>
+    <form
+      class="form-layout"
+      novalidate
+      @submit.prevent="handleSubmit"
+    >
+      <FormField
+        label="Название счёта"
+        :error="nameError"
+        required
+      >
         <template #default="{ fieldAttrs }">
           <InputText
             v-bind="fieldAttrs"
@@ -162,7 +170,11 @@ const handleSubmit = async () => {
         </template>
       </FormField>
 
-      <FormField label="Валюта" :error="currencyError" required>
+      <FormField
+        label="Валюта"
+        :error="currencyError"
+        required
+      >
         <template #default="{ fieldAttrs }">
           <Select
             v-model="selectedCurrencyCode"
@@ -187,7 +199,11 @@ const handleSubmit = async () => {
       </FormField>
 
       <div class="actions">
-        <AppButton type="button" variant="ghost" @click="emit('update:visible', false)">
+        <AppButton
+          type="button"
+          variant="ghost"
+          @click="emit('update:visible', false)"
+        >
           Отмена
         </AppButton>
         <AppButton

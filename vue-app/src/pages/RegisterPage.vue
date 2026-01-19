@@ -42,11 +42,17 @@ const handleRegister = async () => {
 
 <template>
   <div class="auth auth--register">
-    <div class="auth__gradient" aria-hidden="true"></div>
+    <div
+      class="auth__gradient"
+      aria-hidden="true"
+    />
 
     <div class="auth__container">
       <div class="auth__intro">
-        <router-link to="/" class="auth__brand">
+        <router-link
+          to="/"
+          class="auth__brand"
+        >
           <i class="pi pi-chart-bar" />
           <span>FinTree</span>
         </router-link>
@@ -59,8 +65,16 @@ const handleRegister = async () => {
         </ul>
       </div>
 
-      <AppCard class="auth__card" variant="muted" padding="lg" elevated>
-        <form class="auth__form" @submit.prevent="handleRegister">
+      <AppCard
+        class="auth__card"
+        variant="muted"
+        padding="lg"
+        elevated
+      >
+        <form
+          class="auth__form"
+          @submit.prevent="handleRegister"
+        >
           <div class="auth__field">
             <label for="email">Email</label>
             <InputText
@@ -95,12 +109,18 @@ const handleRegister = async () => {
             />
           </div>
 
-          <p v-if="validationError" class="auth__error">
+          <p
+            v-if="validationError"
+            class="auth__error"
+          >
             <i class="pi pi-exclamation-circle" />
             <span>{{ validationError }}</span>
           </p>
 
-          <p v-if="authStore.error" class="auth__error">
+          <p
+            v-if="authStore.error"
+            class="auth__error"
+          >
             <i class="pi pi-exclamation-circle" />
             <span>{{ authStore.error }}</span>
           </p>
@@ -117,7 +137,9 @@ const handleRegister = async () => {
 
         <footer class="auth__footer">
           <span>Уже есть аккаунт?</span>
-          <router-link to="/login">Войти</router-link>
+          <router-link to="/login">
+            Войти
+          </router-link>
         </footer>
       </AppCard>
     </div>

@@ -15,9 +15,18 @@ withDefaults(defineProps<Props>(), {
 </script>
 
 <template>
-  <div class="status-badge" :class="[`status-badge--${severity}`, `status-badge--${size}`]">
-    <span v-if="dot" class="status-badge__dot" />
-    <i v-else-if="icon" :class="['pi', icon, 'status-badge__icon']" />
+  <div
+    class="status-badge"
+    :class="[`status-badge--${severity}`, `status-badge--${size}`]"
+  >
+    <span
+      v-if="dot"
+      class="status-badge__dot"
+    />
+    <i
+      v-else-if="icon"
+      :class="['pi', icon, 'status-badge__icon']"
+    />
     <span class="status-badge__label">{{ label }}</span>
   </div>
 </template>

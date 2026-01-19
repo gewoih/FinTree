@@ -161,24 +161,51 @@ const chartOptions = computed(() => ({
           <h3>Прогноз расходов</h3>
           <p>Как изменится траектория трат до конца месяца</p>
         </div>
-        <Tag v-if="statusLabel" :class="['forecast-card__status', statusClass]">
+        <Tag
+          v-if="statusLabel"
+          :class="['forecast-card__status', statusClass]"
+        >
           {{ statusLabel }}
         </Tag>
       </div>
     </template>
 
     <template #content>
-      <div v-if="loading" class="card-loading">
-        <Skeleton width="70%" height="24px" />
-        <Skeleton width="60%" height="18px" />
-        <Skeleton width="100%" height="320px" borderRadius="20px" />
+      <div
+        v-if="loading"
+        class="card-loading"
+      >
+        <Skeleton
+          width="70%"
+          height="24px"
+        />
+        <Skeleton
+          width="60%"
+          height="18px"
+        />
+        <Skeleton
+          width="100%"
+          height="320px"
+          border-radius="20px"
+        />
       </div>
 
-      <div v-else-if="error" class="card-message">
-        <Message severity="error" icon="pi pi-exclamation-triangle" :closable="false">
+      <div
+        v-else-if="error"
+        class="card-message"
+      >
+        <Message
+          severity="error"
+          icon="pi pi-exclamation-triangle"
+          :closable="false"
+        >
           <div class="card-message__body">
-            <p class="card-message__title">Не удалось построить прогноз</p>
-            <p class="card-message__text">{{ error }}</p>
+            <p class="card-message__title">
+              Не удалось построить прогноз
+            </p>
+            <p class="card-message__text">
+              {{ error }}
+            </p>
             <Button
               label="Повторить"
               icon="pi pi-refresh"
@@ -189,10 +216,19 @@ const chartOptions = computed(() => ({
         </Message>
       </div>
 
-      <div v-else-if="showEmpty" class="card-message">
-        <Message severity="info" icon="pi pi-inbox" :closable="false">
+      <div
+        v-else-if="showEmpty"
+        class="card-message"
+      >
+        <Message
+          severity="info"
+          icon="pi pi-inbox"
+          :closable="false"
+        >
           <div class="card-message__body card-message__body--compact">
-            <p class="card-message__title">Недостаточно данных для прогноза</p>
+            <p class="card-message__title">
+              Недостаточно данных для прогноза
+            </p>
             <p class="card-message__text">
               Нужны ежедневные расходы за текущий месяц и как минимум один предыдущий месяц.
             </p>
@@ -200,7 +236,10 @@ const chartOptions = computed(() => ({
         </Message>
       </div>
 
-      <div v-else class="forecast-card__body">
+      <div
+        v-else
+        class="forecast-card__body"
+      >
         <div class="forecast-card__summary">
           <p class="forecast-card__lead">
             При текущем темпе трат вы выйдете на сумму ≈

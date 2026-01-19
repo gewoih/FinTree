@@ -65,7 +65,10 @@ onMounted(() => {
 
 <template>
   <div class="app-shell">
-    <a class="app-shell__skip-link" href="#main-content">Перейти к основному содержимому</a>
+    <a
+      class="app-shell__skip-link"
+      href="#main-content"
+    >Перейти к основному содержимому</a>
 
     <!-- Top Navigation -->
     <div class="app-shell__topnav">
@@ -77,7 +80,10 @@ onMounted(() => {
           class="app-shell__menu-toggle lg:hidden"
           @click="toggleSidebar"
         />
-        <router-link to="/dashboard" class="app-shell__logo">
+        <router-link
+          to="/dashboard"
+          class="app-shell__logo"
+        >
           <i class="pi pi-chart-bar" />
           <span>FinTree</span>
         </router-link>
@@ -92,7 +98,11 @@ onMounted(() => {
             text
             @click="handleUserMenuToggle"
           />
-          <Menu ref="userMenuRef" :model="userMenuItems" popup />
+          <Menu
+            ref="userMenuRef"
+            :model="userMenuItems"
+            popup
+          />
         </div>
       </div>
     </div>
@@ -141,7 +151,11 @@ onMounted(() => {
     </aside>
 
     <!-- Main Content -->
-    <main id="main-content" class="app-shell__main" tabindex="-1">
+    <main
+      id="main-content"
+      class="app-shell__main"
+      tabindex="-1"
+    >
       <slot />
     </main>
   </div>

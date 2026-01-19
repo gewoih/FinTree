@@ -109,21 +109,51 @@ const scrollToSection = (sectionId: string) => {
   <div class="landing">
     <header class="landing__nav">
       <div class="landing__nav-inner">
-        <router-link to="/" class="landing__brand">
+        <router-link
+          to="/"
+          class="landing__brand"
+        >
           <i class="pi pi-chart-bar" />
           <span>FinTree</span>
         </router-link>
 
         <nav class="landing__links">
-          <button type="button" @click="scrollToSection('features')">Возможности</button>
-          <button type="button" @click="scrollToSection('steps')">Как это работает</button>
-          <button type="button" @click="scrollToSection('pricing')">Тарифы</button>
-          <button type="button" @click="scrollToSection('faq')">FAQ</button>
+          <button
+            type="button"
+            @click="scrollToSection('features')"
+          >
+            Возможности
+          </button>
+          <button
+            type="button"
+            @click="scrollToSection('steps')"
+          >
+            Как это работает
+          </button>
+          <button
+            type="button"
+            @click="scrollToSection('pricing')"
+          >
+            Тарифы
+          </button>
+          <button
+            type="button"
+            @click="scrollToSection('faq')"
+          >
+            FAQ
+          </button>
         </nav>
 
         <div class="landing__actions">
-          <AppButton variant="ghost" label="Войти" @click="router.push('/login')" />
-          <AppButton label="Регистрация" @click="router.push('/register')" />
+          <AppButton
+            variant="ghost"
+            label="Войти"
+            @click="router.push('/login')"
+          />
+          <AppButton
+            label="Регистрация"
+            @click="router.push('/register')"
+          />
         </div>
       </div>
     </header>
@@ -133,11 +163,14 @@ const scrollToSection = (sectionId: string) => {
         <div class="landing__container landing__hero-layout">
           <div class="landing__hero-copy">
             <span class="landing__hero-badge">
-              <i class="pi pi-bolt" aria-hidden="true" />
+              <i
+                class="pi pi-bolt"
+                aria-hidden="true"
+              />
               <span>Полный контроль личных финансов</span>
             </span>
             <h1 class="landing__hero-title">
-              Финансовый помощник,<br />
+              Финансовый помощник,<br>
               который работает за вас
             </h1>
             <p class="landing__hero-subtitle">
@@ -148,7 +181,7 @@ const scrollToSection = (sectionId: string) => {
               <AppButton
                 label="Начать бесплатно"
                 icon="pi pi-arrow-right"
-                iconPos="right"
+                icon-pos="right"
                 size="lg"
                 @click="router.push('/register')"
               />
@@ -177,7 +210,12 @@ const scrollToSection = (sectionId: string) => {
             </div>
           </div>
 
-          <AppCard class="landing__hero-card" padding="lg" variant="muted" elevated>
+          <AppCard
+            class="landing__hero-card"
+            padding="lg"
+            variant="muted"
+            elevated
+          >
             <template #header>
               <div class="landing__hero-card-header">
                 <span>Превью аналитики</span>
@@ -203,14 +241,20 @@ const scrollToSection = (sectionId: string) => {
                 </article>
               </div>
               <div class="landing__hero-chart">
-                <div class="landing__hero-chart-bar" style="--progress: 68%"></div>
+                <div
+                  class="landing__hero-chart-bar"
+                  style="--progress: 68%"
+                />
               </div>
             </div>
           </AppCard>
         </div>
       </section>
 
-      <section id="features" class="landing__section">
+      <section
+        id="features"
+        class="landing__section"
+      >
         <div class="landing__container">
           <header class="landing__section-header">
             <h2>Что делает FinTree удобным</h2>
@@ -235,7 +279,10 @@ const scrollToSection = (sectionId: string) => {
         </div>
       </section>
 
-      <section id="steps" class="landing__section landing__section--alt">
+      <section
+        id="steps"
+        class="landing__section landing__section--alt"
+      >
         <div class="landing__container">
           <header class="landing__section-header">
             <h2>Три шага до полной прозрачности</h2>
@@ -258,7 +305,10 @@ const scrollToSection = (sectionId: string) => {
         </div>
       </section>
 
-      <section id="pricing" class="landing__section">
+      <section
+        id="pricing"
+        class="landing__section"
+      >
         <div class="landing__container">
           <header class="landing__section-header">
             <h2>Прозрачные тарифы</h2>
@@ -284,8 +334,14 @@ const scrollToSection = (sectionId: string) => {
               </header>
 
               <ul class="landing__pricing-features">
-                <li v-for="feature in plan.features" :key="feature">
-                  <i class="pi pi-check" aria-hidden="true" />
+                <li
+                  v-for="feature in plan.features"
+                  :key="feature"
+                >
+                  <i
+                    class="pi pi-check"
+                    aria-hidden="true"
+                  />
                   <span>{{ feature }}</span>
                 </li>
               </ul>
@@ -301,7 +357,10 @@ const scrollToSection = (sectionId: string) => {
         </div>
       </section>
 
-      <section id="faq" class="landing__section landing__section--alt">
+      <section
+        id="faq"
+        class="landing__section landing__section--alt"
+      >
         <div class="landing__container landing__faq">
           <header class="landing__section-header">
             <h2>Частые вопросы</h2>
@@ -325,7 +384,10 @@ const scrollToSection = (sectionId: string) => {
                 <i :class="['pi', expandedIndex === index ? 'pi-chevron-up' : 'pi-chevron-down']" />
               </button>
               <transition name="faq">
-                <p v-show="expandedIndex === index" class="landing__faq-answer">
+                <p
+                  v-show="expandedIndex === index"
+                  class="landing__faq-answer"
+                >
                   {{ item.answer }}
                 </p>
               </transition>
@@ -343,7 +405,7 @@ const scrollToSection = (sectionId: string) => {
           <AppButton
             label="Создать аккаунт"
             icon="pi pi-arrow-right"
-            iconPos="right"
+            icon-pos="right"
             size="lg"
             @click="router.push('/register')"
           />
@@ -354,7 +416,10 @@ const scrollToSection = (sectionId: string) => {
     <footer class="landing__footer">
       <div class="landing__container landing__footer-inner">
         <div class="landing__footer-brand">
-          <router-link to="/" class="landing__brand">
+          <router-link
+            to="/"
+            class="landing__brand"
+          >
             <i class="pi pi-chart-bar" />
             <span>FinTree</span>
           </router-link>
@@ -363,9 +428,24 @@ const scrollToSection = (sectionId: string) => {
         <nav class="landing__footer-links">
           <div>
             <h4>Продукт</h4>
-            <button type="button" @click="scrollToSection('features')">Возможности</button>
-            <button type="button" @click="scrollToSection('pricing')">Тарифы</button>
-            <button type="button" @click="scrollToSection('faq')">FAQ</button>
+            <button
+              type="button"
+              @click="scrollToSection('features')"
+            >
+              Возможности
+            </button>
+            <button
+              type="button"
+              @click="scrollToSection('pricing')"
+            >
+              Тарифы
+            </button>
+            <button
+              type="button"
+              @click="scrollToSection('faq')"
+            >
+              FAQ
+            </button>
           </div>
           <div>
             <h4>Компания</h4>

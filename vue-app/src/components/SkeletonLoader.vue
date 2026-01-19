@@ -6,7 +6,10 @@ defineProps<{
 </script>
 
 <template>
-  <div class="skeleton" :class="`skeleton--${type || 'text'}`">
+  <div
+    class="skeleton"
+    :class="`skeleton--${type || 'text'}`"
+  >
     <!-- Текстовые линии -->
     <template v-if="type === 'text' || !type">
       <div
@@ -40,7 +43,11 @@ defineProps<{
 
     <!-- Таблица -->
     <template v-if="type === 'table'">
-      <div v-for="row in 5" :key="row" class="skeleton__row">
+      <div
+        v-for="row in 5"
+        :key="row"
+        class="skeleton__row"
+      >
         <div class="skeleton__cell skeleton__cell--small" />
         <div class="skeleton__cell skeleton__cell--medium" />
         <div class="skeleton__cell skeleton__cell--large" />

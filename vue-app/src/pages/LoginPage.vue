@@ -35,7 +35,10 @@ const handleLogin = async () => {
   <div class="auth auth--login">
     <div class="auth__container">
       <div class="auth__intro">
-        <router-link to="/" class="auth__brand">
+        <router-link
+          to="/"
+          class="auth__brand"
+        >
           <i class="pi pi-chart-bar" />
           <span>FinTree</span>
         </router-link>
@@ -43,8 +46,15 @@ const handleLogin = async () => {
         <p>Войдите в пространство аналитики и продолжайте путь к финансовой стабильности.</p>
       </div>
 
-      <UiCard class="auth__card" variant="muted" padding="lg">
-        <form class="auth__form" @submit.prevent="handleLogin">
+      <UiCard
+        class="auth__card"
+        variant="muted"
+        padding="lg"
+      >
+        <form
+          class="auth__form"
+          @submit.prevent="handleLogin"
+        >
           <div class="auth__field">
             <label for="email">Email</label>
             <UiInputText
@@ -67,7 +77,10 @@ const handleLogin = async () => {
             />
           </div>
 
-          <p v-if="authStore.error" class="auth__error">
+          <p
+            v-if="authStore.error"
+            class="auth__error"
+          >
             <i class="pi pi-exclamation-circle" />
             <span>{{ authStore.error }}</span>
           </p>
@@ -84,7 +97,9 @@ const handleLogin = async () => {
 
         <footer class="auth__footer">
           <span>Нет аккаунта?</span>
-          <router-link to="/register">Создать бесплатно</router-link>
+          <router-link to="/register">
+            Создать бесплатно
+          </router-link>
         </footer>
       </UiCard>
     </div>

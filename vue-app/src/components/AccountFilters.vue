@@ -31,35 +31,47 @@ const hasActiveFilters = computed(() => {
   <div class="account-filters">
     <div class="filters-grid">
       <!-- Search -->
-      <FormField class="filter-field filter-field--wide" label="Поиск">
+      <FormField
+        class="filter-field filter-field--wide"
+        label="Поиск"
+      >
         <template #default="{ fieldAttrs }">
           <div class="filter-input">
-            <i class="pi pi-search" aria-hidden="true" />
+            <i
+              class="pi pi-search"
+              aria-hidden="true"
+            />
             <UiInputText
               :id="fieldAttrs.id"
               :model-value="props.searchText"
-              @update:model-value="val => emit('update:searchText', val ?? '')"
               placeholder="Название счёта..."
               autocomplete="off"
+              @update:model-value="val => emit('update:searchText', val ?? '')"
             />
           </div>
         </template>
       </FormField>
 
       <!-- Type filter -->
-      <FormField class="filter-field" label="Тип счёта">
+      <FormField
+        class="filter-field"
+        label="Тип счёта"
+      >
         <template #default="{ fieldAttrs }">
-            <UiSelect
-              :model-value="props.selectedType"
-              @update:model-value="val => emit('update:selectedType', val)"
-              :options="accountTypeOptions"
-              option-label="label"
-              option-value="value"
-              placeholder="Все типы"
-              :inputId="fieldAttrs.id"
-            >
+          <UiSelect
+            :model-value="props.selectedType"
+            :options="accountTypeOptions"
+            option-label="label"
+            option-value="value"
+            placeholder="Все типы"
+            :input-id="fieldAttrs.id"
+            @update:model-value="val => emit('update:selectedType', val)"
+          >
             <template #value="slotProps">
-              <div v-if="slotProps.value !== null && slotProps.value !== undefined" class="filter-option">
+              <div
+                v-if="slotProps.value !== null && slotProps.value !== undefined"
+                class="filter-option"
+              >
                 <i :class="`pi ${getAccountTypeInfo(slotProps.value).icon}`" />
                 <span>{{ getAccountTypeInfo(slotProps.value).label }}</span>
               </div>
@@ -67,7 +79,10 @@ const hasActiveFilters = computed(() => {
             </template>
             <template #option="slotProps">
               <div class="filter-option">
-                <i v-if="slotProps.option.icon" :class="`pi ${slotProps.option.icon}`" />
+                <i
+                  v-if="slotProps.option.icon"
+                  :class="`pi ${slotProps.option.icon}`"
+                />
                 <span>{{ slotProps.option.label }}</span>
               </div>
             </template>
@@ -76,7 +91,11 @@ const hasActiveFilters = computed(() => {
       </FormField>
 
       <!-- Clear button -->
-      <FormField class="filter-field filter-field--compact" label="Сбросить" label-sr-only>
+      <FormField
+        class="filter-field filter-field--compact"
+        label="Сбросить"
+        label-sr-only
+      >
         <template #default>
           <UiButton
             icon="pi pi-filter-slash"
@@ -92,9 +111,15 @@ const hasActiveFilters = computed(() => {
     </div>
 
     <!-- Active filters info -->
-    <div v-if="hasActiveFilters" class="active-filters">
+    <div
+      v-if="hasActiveFilters"
+      class="active-filters"
+    >
       <span class="active-filters__label">
-        <i class="pi pi-filter-fill" aria-hidden="true" />
+        <i
+          class="pi pi-filter-fill"
+          aria-hidden="true"
+        />
         Активные фильтры:
       </span>
       <div class="active-filters__tags">

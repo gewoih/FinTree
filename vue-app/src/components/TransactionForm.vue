@@ -246,36 +246,48 @@ watch(filteredCategories, () => {
 
 <template>
   <Dialog
-      :visible="props.visible"
-      :modal="true"
-      :style="{ width: '620px' }"
-      class="transaction-dialog"
-      :closable="true"
-      :dismissableMask="true"
-      role="dialog"
-      aria-modal="true"
-      :aria-labelledby="isEditMode ? 'transaction-dialog-title-edit' : 'transaction-dialog-title-new'"
-      @update:visible="val => emit('update:visible', val)"
+    :visible="props.visible"
+    :modal="true"
+    :style="{ width: '620px' }"
+    class="transaction-dialog"
+    :closable="true"
+    :dismissable-mask="true"
+    role="dialog"
+    aria-modal="true"
+    :aria-labelledby="isEditMode ? 'transaction-dialog-title-edit' : 'transaction-dialog-title-new'"
+    @update:visible="val => emit('update:visible', val)"
   >
     <template #header>
-      <h2 :id="isEditMode ? 'transaction-dialog-title-edit' : 'transaction-dialog-title-new'" class="dialog-title">
+      <h2
+        :id="isEditMode ? 'transaction-dialog-title-edit' : 'transaction-dialog-title-new'"
+        class="dialog-title"
+      >
         {{ isEditMode ? 'Редактирование' : 'Новая транзакция' }}
       </h2>
     </template>
 
-    <form class="transaction-form" @submit.prevent="handleFormSubmitEvent">
+    <form
+      class="transaction-form"
+      @submit.prevent="handleFormSubmitEvent"
+    >
       <section class="form-fields">
         <!-- Type selector - only in create mode -->
-        <div class="field field--type" v-if="!isEditMode">
-          <label for="transaction-type" class="sr-only">Тип</label>
+        <div
+          v-if="!isEditMode"
+          class="field field--type"
+        >
+          <label
+            for="transaction-type"
+            class="sr-only"
+          >Тип</label>
           <SelectButton
-              id="transaction-type"
-              v-model="transactionType"
-              :options="transactionTypeOptions"
-              optionLabel="label"
-              optionValue="value"
-              :allowEmpty="false"
-              class="w-full"
+            id="transaction-type"
+            v-model="transactionType"
+            :options="transactionTypeOptions"
+            option-label="label"
+            option-value="value"
+            :allow-empty="false"
+            class="w-full"
           />
         </div>
 
@@ -284,20 +296,23 @@ watch(filteredCategories, () => {
           <label for="amount">Сумма *</label>
           <div class="amount-input">
             <InputNumber
-                id="amount"
-                v-model="amount"
-                mode="decimal"
-                :minFractionDigits="2"
-                :maxFractionDigits="2"
-                :min="VALIDATION_RULES.minAmount"
-                autofocus
-                placeholder="0.00"
-                required
-                :class="{ 'p-invalid': !isAmountValid }"
+              id="amount"
+              v-model="amount"
+              mode="decimal"
+              :min-fraction-digits="2"
+              :max-fraction-digits="2"
+              :min="VALIDATION_RULES.minAmount"
+              autofocus
+              placeholder="0.00"
+              required
+              :class="{ 'p-invalid': !isAmountValid }"
             />
             <span class="currency-chip">{{ currencySymbol || currencyCode }}</span>
           </div>
-          <small v-if="!isAmountValid && amount !== null" class="error-text">
+          <small
+            v-if="!isAmountValid && amount !== null"
+            class="error-text"
+          >
             Сумма от {{ VALIDATION_RULES.minAmount }} до {{ VALIDATION_RULES.maxAmount }}
           </small>
         </div>
@@ -306,17 +321,20 @@ watch(filteredCategories, () => {
         <div class="field">
           <label for="category">Категория *</label>
           <Select
-              id="category"
-              v-model="selectedCategory"
-              :options="filteredCategories"
-              option-label="name"
-              placeholder="Выберите категорию"
-              required
-              class="w-full"
+            id="category"
+            v-model="selectedCategory"
+            :options="filteredCategories"
+            option-label="name"
+            placeholder="Выберите категорию"
+            required
+            class="w-full"
           >
             <template #option="slotProps">
               <div class="option-name">
-                <span class="category-dot" :style="{ backgroundColor: slotProps.option.color }"></span>
+                <span
+                  class="category-dot"
+                  :style="{ backgroundColor: slotProps.option.color }"
+                />
                 <span>{{ slotProps.option.name }}</span>
               </div>
             </template>
@@ -326,18 +344,18 @@ watch(filteredCategories, () => {
         <div class="field">
           <label for="account">Счет *</label>
           <Select
-              id="account"
-              v-model="selectedAccount"
-              :options="store.accounts"
-              option-label="name"
-              placeholder="Выберите счет"
-              required
-              class="w-full"
+            id="account"
+            v-model="selectedAccount"
+            :options="store.accounts"
+            option-label="name"
+            placeholder="Выберите счет"
+            required
+            class="w-full"
           >
             <template #option="slotProps">
               <div class="option-line">
                 <div class="option-name">
-                  <i class="pi pi-credit-card"></i>
+                  <i class="pi pi-credit-card" />
                   <span>{{ slotProps.option.name }}</span>
                 </div>
                 <span class="option-currency">
@@ -352,18 +370,28 @@ watch(filteredCategories, () => {
         <div class="field">
           <label for="date">Дата</label>
           <DatePicker
-              id="date"
-              v-model="date"
-              dateFormat="dd.mm.yy"
-              :showIcon="true"
-              required
-              class="w-full"
+            id="date"
+            v-model="date"
+            date-format="dd.mm.yy"
+            :show-icon="true"
+            required
+            class="w-full"
           />
         </div>
 
-        <div class="field field--checkbox" v-if="!isIncome">
-          <label for="isMandatory" class="checkbox-label">
-            <Checkbox id="isMandatory" v-model="isMandatory" binary />
+        <div
+          v-if="!isIncome"
+          class="field field--checkbox"
+        >
+          <label
+            for="isMandatory"
+            class="checkbox-label"
+          >
+            <Checkbox
+              id="isMandatory"
+              v-model="isMandatory"
+              binary
+            />
             <span>Обязательный расход</span>
           </label>
         </div>
@@ -372,40 +400,40 @@ watch(filteredCategories, () => {
         <div class="field field--full">
           <label for="description">Заметка</label>
           <InputText
-              id="description"
-              v-model="description"
-              :placeholder="isIncome ? 'Например: зарплата' : 'Например: утренний кофе'"
-              class="w-full"
+            id="description"
+            v-model="description"
+            :placeholder="isIncome ? 'Например: зарплата' : 'Например: утренний кофе'"
+            class="w-full"
           />
         </div>
       </section>
 
       <footer class="form-actions">
         <Button
-            type="button"
-            label="Отмена"
-            icon="pi pi-times"
-            severity="secondary"
-            outlined
-            @click="emit('update:visible', false)"
+          type="button"
+          label="Отмена"
+          icon="pi pi-times"
+          severity="secondary"
+          outlined
+          @click="emit('update:visible', false)"
         />
         <div class="action-buttons">
           <Button
-              v-if="!isEditMode"
-              type="button"
-              label="Сохранить и добавить еще"
-              icon="pi pi-plus"
-              severity="secondary"
-              :disabled="submitDisabled"
-              :loading="isSubmitting"
-              @click="submitTransaction(true)"
+            v-if="!isEditMode"
+            type="button"
+            label="Сохранить и добавить еще"
+            icon="pi pi-plus"
+            severity="secondary"
+            :disabled="submitDisabled"
+            :loading="isSubmitting"
+            @click="submitTransaction(true)"
           />
           <Button
-              type="submit"
-              :label="isEditMode ? 'Обновить' : 'Сохранить'"
-              icon="pi pi-check"
-              :disabled="submitDisabled"
-              :loading="isSubmitting"
+            type="submit"
+            :label="isEditMode ? 'Обновить' : 'Сохранить'"
+            icon="pi pi-check"
+            :disabled="submitDisabled"
+            :loading="isSubmitting"
           />
         </div>
       </footer>

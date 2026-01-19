@@ -1,13 +1,29 @@
 export const formatCurrency = (
     amount: number,
-    currency: string,
+    currency?: string | null,
     locale: string = 'ru-RU'
 ): string => {
-    return new Intl.NumberFormat(locale, {
-        style: 'currency',
-        currency,
-        minimumFractionDigits: 2,
-    }).format(amount);
+    if (!currency || typeof currency !== 'string') {
+        return new Intl.NumberFormat(locale, {
+            minimumFractionDigits: 2,
+            maximumFractionDigits: 2,
+        }).format(amount);
+    }
+
+    const normalizedCurrency = currency.toUpperCase();
+
+    try {
+        return new Intl.NumberFormat(locale, {
+            style: 'currency',
+            currency: normalizedCurrency,
+            minimumFractionDigits: 2,
+        }).format(amount);
+    } catch {
+        return new Intl.NumberFormat(locale, {
+            minimumFractionDigits: 2,
+            maximumFractionDigits: 2,
+        }).format(amount);
+    }
 };
 
 export const formatDate = (dateString?: string): string => {

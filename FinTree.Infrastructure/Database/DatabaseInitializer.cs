@@ -15,26 +15,29 @@ public sealed class DatabaseInitializer(AppDbContext context, UserManager<User> 
 
         var categories = new[]
         {
-            TransactionCategory.CreateDefault("Без категории", "#000000"),
-            TransactionCategory.CreateSystem("Продукты", "#8fce00"),
-            TransactionCategory.CreateSystem("Кафе", "#c90076"),
-            TransactionCategory.CreateSystem("Здоровье", "#cc0000"),
-            TransactionCategory.CreateSystem("Транспорт", "#0078d7"),
-            TransactionCategory.CreateSystem("Дом", "#8e7cc3"),
-            TransactionCategory.CreateSystem("Развлечения", "#ff9900"),
-            TransactionCategory.CreateSystem("Покупки", "#b45f06"),
-            TransactionCategory.CreateSystem("Подписки", "#674ea7"),
-            TransactionCategory.CreateSystem("Образование", "#3d85c6"),
-            TransactionCategory.CreateSystem("Путешествия", "#45818e"),
-            TransactionCategory.CreateSystem("Подарки", "#e69138"),
-            TransactionCategory.CreateSystem("Налоги", "#351c75"),
-            
-            TransactionCategory.CreateSystem("Зарплата", "#6aa84f", CategoryType.Income),
-            TransactionCategory.CreateSystem("Фриланс", "#3d85c6", CategoryType.Income),
-            TransactionCategory.CreateSystem("Подарки", "#e69138", CategoryType.Income),
-            TransactionCategory.CreateSystem("Инвестиции", "#134f5c", CategoryType.Income),
-            TransactionCategory.CreateSystem("Кэшбэк", "#ff9900", CategoryType.Income),
-            TransactionCategory.CreateSystem("Бизнес", "#351c75", CategoryType.Income),
+            TransactionCategory.CreateDefault("Без категории", "#9e9e9e"),
+
+            TransactionCategory.CreateSystem("Продукты", "#4caf50"),
+            TransactionCategory.CreateSystem("Кафе", "#ff7043"),
+            TransactionCategory.CreateSystem("Здоровье", "#e53935"),
+            TransactionCategory.CreateSystem("Транспорт", "#1e88e5"),
+            TransactionCategory.CreateSystem("Дом", "#8d6e63"),
+            TransactionCategory.CreateSystem("Развлечения", "#fb8c00"),
+            TransactionCategory.CreateSystem("Покупки", "#a1887f"),
+            TransactionCategory.CreateSystem("Подписки", "#7e57c2"),
+            TransactionCategory.CreateSystem("Образование", "#3949ab"),
+            TransactionCategory.CreateSystem("Путешествия", "#00897b"),
+            TransactionCategory.CreateSystem("Подарки", "#fbc02d"),
+            TransactionCategory.CreateSystem("Налоги", "#5e35b1"),
+            TransactionCategory.CreateSystem("Платежи", "#546e7a"),
+            TransactionCategory.CreateSystem("Одежда", "#6d4c41"),
+
+            TransactionCategory.CreateSystem("Зарплата", "#2e7d32", CategoryType.Income),
+            TransactionCategory.CreateSystem("Фриланс", "#1565c0", CategoryType.Income),
+            TransactionCategory.CreateSystem("Подарки", "#f9a825", CategoryType.Income),
+            TransactionCategory.CreateSystem("Инвестиции", "#00695c", CategoryType.Income),
+            TransactionCategory.CreateSystem("Кэшбэк", "#ffb300", CategoryType.Income),
+            TransactionCategory.CreateSystem("Бизнес", "#4527a0", CategoryType.Income),
         };
 
         await context.TransactionCategories.AddRangeAsync(categories);

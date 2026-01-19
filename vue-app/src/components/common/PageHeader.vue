@@ -10,8 +10,14 @@ defineProps<Props>()
 
 <template>
   <div class="page-header">
-    <div v-if="breadcrumbs && breadcrumbs.length" class="page-header__breadcrumbs">
-      <template v-for="(crumb, index) in breadcrumbs" :key="index">
+    <div
+      v-if="breadcrumbs && breadcrumbs.length"
+      class="page-header__breadcrumbs"
+    >
+      <template
+        v-for="(crumb, index) in breadcrumbs"
+        :key="index"
+      >
         <router-link
           v-if="crumb.to"
           :to="crumb.to"
@@ -19,7 +25,10 @@ defineProps<Props>()
         >
           {{ crumb.label }}
         </router-link>
-        <span v-else class="page-header__breadcrumb-current">
+        <span
+          v-else
+          class="page-header__breadcrumb-current"
+        >
           {{ crumb.label }}
         </span>
         <i
@@ -31,11 +40,21 @@ defineProps<Props>()
 
     <div class="page-header__main">
       <div class="page-header__text">
-        <h1 class="page-header__title">{{ title }}</h1>
-        <p v-if="subtitle" class="page-header__subtitle">{{ subtitle }}</p>
+        <h1 class="page-header__title">
+          {{ title }}
+        </h1>
+        <p
+          v-if="subtitle"
+          class="page-header__subtitle"
+        >
+          {{ subtitle }}
+        </p>
       </div>
 
-      <div v-if="$slots.actions" class="page-header__actions">
+      <div
+        v-if="$slots.actions"
+        class="page-header__actions"
+      >
         <slot name="actions" />
       </div>
     </div>

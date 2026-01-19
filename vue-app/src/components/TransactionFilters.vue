@@ -38,63 +38,79 @@ const accountOptions = computed(() => [
 <template>
   <div class="filters-panel transaction-filters">
     <div class="filters-grid">
-      <FormField class="filter-field filter-field--search" label="Поиск">
+      <FormField
+        class="filter-field filter-field--search"
+        label="Поиск"
+      >
         <template #default="{ fieldAttrs }">
           <UiInputText
             :id="fieldAttrs.id"
             :model-value="props.searchText"
-            @update:model-value="val => emit('update:searchText', val ?? '')"
             placeholder="Категория, счёт или заметка…"
             autocomplete="off"
+            @update:model-value="val => emit('update:searchText', val ?? '')"
           />
         </template>
       </FormField>
 
       <div class="filters-grid__controls">
-        <FormField class="filter-field" label="Категория">
+        <FormField
+          class="filter-field"
+          label="Категория"
+        >
           <template #default="{ fieldAttrs }">
             <UiSelect
               :model-value="props.selectedCategory"
-              @update:model-value="val => emit('update:selectedCategory', val)"
               :options="categoryOptions"
               option-label="label"
               option-value="value"
               placeholder="Все категории"
-              :inputId="fieldAttrs.id"
+              :input-id="fieldAttrs.id"
+              @update:model-value="val => emit('update:selectedCategory', val)"
             />
           </template>
         </FormField>
 
-        <FormField class="filter-field" label="Счёт">
+        <FormField
+          class="filter-field"
+          label="Счёт"
+        >
           <template #default="{ fieldAttrs }">
             <UiSelect
               :model-value="props.selectedAccount"
-              @update:model-value="val => emit('update:selectedAccount', val)"
               :options="accountOptions"
               option-label="label"
               option-value="value"
               placeholder="Все счета"
-              :inputId="fieldAttrs.id"
+              :input-id="fieldAttrs.id"
+              @update:model-value="val => emit('update:selectedAccount', val)"
             />
           </template>
         </FormField>
 
-        <FormField class="filter-field" label="Диапазон дат">
+        <FormField
+          class="filter-field"
+          label="Диапазон дат"
+        >
           <template #default="{ fieldAttrs }">
             <UiDatePicker
               :model-value="props.dateRange"
-              @update:model-value="val => emit('update:dateRange', val as Date[] | null)"
               selection-mode="range"
               :manual-input="false"
               date-format="dd.mm.yy"
               placeholder="Выберите период"
               show-button-bar
-              :inputId="fieldAttrs.id"
+              :input-id="fieldAttrs.id"
+              @update:model-value="val => emit('update:dateRange', val as Date[] | null)"
             />
           </template>
         </FormField>
 
-        <FormField class="filter-field filter-field--compact" label="Сбросить фильтры" label-sr-only>
+        <FormField
+          class="filter-field filter-field--compact"
+          label="Сбросить фильтры"
+          label-sr-only
+        >
           <template #default>
             <UiButton
               icon="pi pi-refresh"

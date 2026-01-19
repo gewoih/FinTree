@@ -144,7 +144,11 @@ const handleSubmit = async () => {
     :style="{ width: '440px' }"
     @update:visible="val => emit('update:visible', val)"
   >
-    <form @submit.prevent="handleSubmit" class="category-form" novalidate>
+    <form
+      class="category-form"
+      novalidate
+      @submit.prevent="handleSubmit"
+    >
       <FormField
         v-if="canChooseType"
         label="Тип"
@@ -168,7 +172,11 @@ const handleSubmit = async () => {
         </template>
       </FormField>
 
-      <FormField label="Название" :error="nameError" required>
+      <FormField
+        label="Название"
+        :error="nameError"
+        required
+      >
         <template #default="{ fieldAttrs }">
           <InputText
             v-bind="fieldAttrs"
@@ -180,7 +188,11 @@ const handleSubmit = async () => {
         </template>
       </FormField>
 
-      <FormField label="Цвет" :error="colorError" hint="Цвет используется для легенд и тегов списка.">
+      <FormField
+        label="Цвет"
+        :error="colorError"
+        hint="Цвет используется для легенд и тегов списка."
+      >
         <template #default="{ fieldAttrs }">
           <div class="color-picker">
             <input
@@ -190,7 +202,7 @@ const handleSubmit = async () => {
               class="color-picker__swatch"
               :aria-describedby="fieldAttrs['aria-describedby']"
               :aria-invalid="fieldAttrs['aria-invalid']"
-            />
+            >
             <InputText
               v-model="color"
               maxlength="7"
@@ -201,12 +213,19 @@ const handleSubmit = async () => {
         </template>
       </FormField>
 
-      <div v-if="isSystemCategory" class="system-category-alert">
+      <div
+        v-if="isSystemCategory"
+        class="system-category-alert"
+      >
         Эта категория системная и не может быть изменена.
       </div>
 
       <div class="actions">
-        <AppButton type="button" variant="ghost" @click="emit('update:visible', false)">
+        <AppButton
+          type="button"
+          variant="ghost"
+          @click="emit('update:visible', false)"
+        >
           Отмена
         </AppButton>
         <AppButton

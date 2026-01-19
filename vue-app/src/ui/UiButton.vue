@@ -58,10 +58,16 @@ const buttonClasses = computed(() => [
     :outlined="isOutlined && !isText"
     :class="buttonClasses"
   >
-    <template v-if="$slots.icon" #icon>
+    <template
+      v-if="$slots.icon"
+      #icon
+    >
       <slot name="icon" />
     </template>
-    <template v-if="$slots.default" #default>
+    <template
+      v-if="$slots.default"
+      #default
+    >
       <slot />
     </template>
   </Button>

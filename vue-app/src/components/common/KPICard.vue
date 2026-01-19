@@ -35,29 +35,60 @@ const trendClass = computed(() => {
 </script>
 
 <template>
-  <UiCard class="kpi-card" variant="muted" padding="lg" :class="`kpi-card--${variant}`">
+  <UiCard
+    class="kpi-card"
+    variant="muted"
+    padding="lg"
+    :class="`kpi-card--${variant}`"
+  >
     <template #header>
       <div class="kpi-card__header">
         <span class="kpi-card__title">{{ title }}</span>
-        <i v-if="icon" :class="['pi', icon, 'kpi-card__icon']" />
+        <i
+          v-if="icon"
+          :class="['pi', icon, 'kpi-card__icon']"
+        />
       </div>
     </template>
 
-    <div v-if="loading" class="kpi-card__loading">
-      <UiSkeleton width="80%" height="1.5rem" />
-      <UiSkeleton width="60%" height="2.25rem" />
-      <UiSkeleton width="45%" height="1rem" />
+    <div
+      v-if="loading"
+      class="kpi-card__loading"
+    >
+      <UiSkeleton
+        width="80%"
+        height="1.5rem"
+      />
+      <UiSkeleton
+        width="60%"
+        height="2.25rem"
+      />
+      <UiSkeleton
+        width="45%"
+        height="1rem"
+      />
     </div>
 
     <template v-else>
-      <div class="kpi-card__value">{{ value }}</div>
+      <div class="kpi-card__value">
+        {{ value }}
+      </div>
 
-      <div v-if="trend !== null && trend !== undefined" class="kpi-card__footer">
-        <div class="kpi-card__trend" :class="trendClass">
+      <div
+        v-if="trend !== null && trend !== undefined"
+        class="kpi-card__footer"
+      >
+        <div
+          class="kpi-card__trend"
+          :class="trendClass"
+        >
           <i :class="['pi', trendIcon]" />
           <span>{{ Math.abs(trend) }}%</span>
         </div>
-        <span v-if="trendLabel" class="kpi-card__trend-label">
+        <span
+          v-if="trendLabel"
+          class="kpi-card__trend-label"
+        >
           {{ trendLabel }}
         </span>
       </div>

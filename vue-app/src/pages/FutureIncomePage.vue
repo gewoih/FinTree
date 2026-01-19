@@ -240,10 +240,24 @@ onMounted(async () => {
           Общий прогноз доходов
         </template>
         <template #content>
-          <div v-if="overviewLoading" class="future-income-summary__skeleton">
-            <Skeleton height="28px" width="70%" class="mb-3" />
-            <Skeleton height="18px" width="50%" class="mb-2" />
-            <Skeleton height="18px" width="40%" />
+          <div
+            v-if="overviewLoading"
+            class="future-income-summary__skeleton"
+          >
+            <Skeleton
+              height="28px"
+              width="70%"
+              class="mb-3"
+            />
+            <Skeleton
+              height="18px"
+              width="50%"
+              class="mb-2"
+            />
+            <Skeleton
+              height="18px"
+              width="40%"
+            />
           </div>
 
           <Message
@@ -264,7 +278,10 @@ onMounted(async () => {
             </div>
           </Message>
 
-          <div v-else class="future-income-summary__content">
+          <div
+            v-else
+            class="future-income-summary__content"
+          >
             <p class="future-income-summary__lead">
               {{ formatCurrency(totalMonthlyIncome, baseCurrency) }} в месяц
             </p>
@@ -273,7 +290,10 @@ onMounted(async () => {
             </p>
             <ul class="future-income-summary__insights">
               <li>
-                <i class="pi pi-briefcase" aria-hidden="true" />
+                <i
+                  class="pi pi-briefcase"
+                  aria-hidden="true"
+                />
                 Зарплата: <strong>{{
                   salaryProjection
                     ? formatCurrency(salaryProjection.monthlyAverage, baseCurrency)
@@ -281,7 +301,10 @@ onMounted(async () => {
                 }}</strong>
               </li>
               <li>
-                <i class="pi pi-chart-line" aria-hidden="true" />
+                <i
+                  class="pi pi-chart-line"
+                  aria-hidden="true"
+                />
                 Инструменты: <strong>{{
                   formatCurrency(
                     instruments.reduce(
@@ -315,9 +338,22 @@ onMounted(async () => {
             />
           </div>
 
-          <div v-if="overviewLoading" class="future-income-salary__skeleton">
-            <Skeleton height="48px" width="80%" class="mb-4" />
-            <Skeleton height="18px" width="60%" class="mb-2" v-for="i in 3" :key="i" />
+          <div
+            v-if="overviewLoading"
+            class="future-income-salary__skeleton"
+          >
+            <Skeleton
+              height="48px"
+              width="80%"
+              class="mb-4"
+            />
+            <Skeleton
+              v-for="i in 3"
+              :key="i"
+              height="18px"
+              width="60%"
+              class="mb-2"
+            />
           </div>
 
           <EmptyState
@@ -327,7 +363,10 @@ onMounted(async () => {
             description="Добавьте доходы в транзакциях или создайте инструмент типа 'Зарплата'."
           />
 
-          <div v-else class="future-income-salary__content">
+          <div
+            v-else
+            class="future-income-salary__content"
+          >
             <p class="future-income-salary__lead">
               {{ formatCurrency(salaryProjection?.monthlyAverage ?? 0, baseCurrency) }} в месяц
             </p>
@@ -336,7 +375,11 @@ onMounted(async () => {
             </p>
 
             <ul class="future-income-salary__breakdown">
-              <li v-for="source in salarySources" :key="source.label" class="future-income-salary__item">
+              <li
+                v-for="source in salarySources"
+                :key="source.label"
+                class="future-income-salary__item"
+              >
                 <div class="future-income-salary__item-header">
                   <span class="future-income-salary__item-label">{{ source.label }}</span>
                   <Tag
@@ -363,9 +406,18 @@ onMounted(async () => {
           Отслеживайте вклады, брокерские счета и другие источники дохода
         </template>
         <template #content>
-          <div v-if="overviewLoading" class="future-income-instruments__skeleton">
-            <Skeleton height="48px" class="mb-3" />
-            <Skeleton height="48px" class="mb-3" />
+          <div
+            v-if="overviewLoading"
+            class="future-income-instruments__skeleton"
+          >
+            <Skeleton
+              height="48px"
+              class="mb-3"
+            />
+            <Skeleton
+              height="48px"
+              class="mb-3"
+            />
             <Skeleton height="48px" />
           </div>
 
@@ -379,7 +431,10 @@ onMounted(async () => {
             @action="openInstrumentDialog"
           />
 
-          <div v-else class="future-income-instruments__table">
+          <div
+            v-else
+            class="future-income-instruments__table"
+          >
             <DataTable
               :value="instruments"
               data-key="id"
@@ -387,7 +442,11 @@ onMounted(async () => {
               size="small"
               striped-rows
             >
-              <Column field="name" header="Название" sortable />
+              <Column
+                field="name"
+                header="Название"
+                sortable
+              />
               <Column header="Тип">
                 <template #body="slotProps">
                   {{ instrumentTypeLabels[slotProps.data.type as IncomeInstrumentType] ?? slotProps.data.type }}
@@ -432,11 +491,21 @@ onMounted(async () => {
       :closable="!instrumentSubmitting"
     >
       <div class="future-income-dialog__content">
-        <FormField label="Название" required>
-          <InputText v-model="instrumentForm.name" autocomplete="off" maxlength="120" />
+        <FormField
+          label="Название"
+          required
+        >
+          <InputText
+            v-model="instrumentForm.name"
+            autocomplete="off"
+            maxlength="120"
+          />
         </FormField>
 
-        <FormField label="Тип" required>
+        <FormField
+          label="Тип"
+          required
+        >
           <Select
             v-model="instrumentForm.type"
             :options="instrumentTypeOptions"
@@ -446,7 +515,10 @@ onMounted(async () => {
           />
         </FormField>
 
-        <FormField label="Валюта" required>
+        <FormField
+          label="Валюта"
+          required
+        >
           <Select
             v-model="instrumentForm.currencyCode"
             :options="currencyOptions"
@@ -458,7 +530,11 @@ onMounted(async () => {
           />
         </FormField>
 
-        <FormField label="Основная сумма" helper="Текущий размер вклада или портфеля" required>
+        <FormField
+          label="Основная сумма"
+          helper="Текущий размер вклада или портфеля"
+          required
+        >
           <InputNumber
             v-model="instrumentForm.principalAmount"
             mode="currency"
@@ -470,7 +546,10 @@ onMounted(async () => {
           />
         </FormField>
 
-        <FormField label="Ожидаемая доходность, % годовых" required>
+        <FormField
+          label="Ожидаемая доходность, % годовых"
+          required
+        >
           <InputNumber
             v-model="instrumentForm.expectedAnnualYieldRate"
             mode="decimal"
@@ -483,7 +562,10 @@ onMounted(async () => {
           />
         </FormField>
 
-        <FormField label="Ежемесячный взнос" helper="Необязательно">
+        <FormField
+          label="Ежемесячный взнос"
+          helper="Необязательно"
+        >
           <InputNumber
             v-model="instrumentForm.monthlyContribution"
             mode="currency"
@@ -496,7 +578,12 @@ onMounted(async () => {
         </FormField>
 
         <FormField label="Комментарий">
-          <Textarea v-model="instrumentForm.notes" auto-resize rows="3" maxlength="500" />
+          <Textarea
+            v-model="instrumentForm.notes"
+            auto-resize
+            rows="3"
+            maxlength="500"
+          />
         </FormField>
       </div>
 

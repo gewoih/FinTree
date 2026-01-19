@@ -13,14 +13,26 @@ const tableClasses = computed(() => [
 
 <template>
   <div class="ui-datatable__shell">
-    <DataTable v-bind="attrs" :class="tableClasses">
-      <template v-if="$slots.header" #header>
+    <DataTable
+      v-bind="attrs"
+      :class="tableClasses"
+    >
+      <template
+        v-if="$slots.header"
+        #header
+      >
         <slot name="header" />
       </template>
-      <template v-if="$slots.empty" #empty>
+      <template
+        v-if="$slots.empty"
+        #empty
+      >
         <slot name="empty" />
       </template>
-      <template v-if="$slots.loading" #loading>
+      <template
+        v-if="$slots.loading"
+        #loading
+      >
         <slot name="loading" />
       </template>
       <slot />
