@@ -26,15 +26,15 @@ public partial class TelegramBotHostedService(
     private const string StartMessage =
         "Как добавить расход:\n" +
         "• Одна строка = один расход\n" +
-        "• Формат: `{сумма}{валюта?} {категория} {заметка?}`\n" +
+        "• Формат: `{сумма}{валюта?} {категория} {заметка?} {дата?}`\n" +
         "Примеры:\n" +
         "`2400тг продукты`\n" +
-        "`3000р комиссии сбербанк`";
+        "`3000р комиссии сбербанк 09.01.2026`";
 
     private const string FormatErrorMessage =
         "Не удалось распознать формат{0}.\n" +
-        "Формат: `2400тг продукты` или `3000р комиссии сбербанк`.\n" +
-        "Подсказка: сумму и валюту пиши слитно (например, `2400тг`).";
+        "Формат: `2400тг продукты` или `3000р комиссии сбербанк 09.01.2026`.\n" +
+        "Подсказка: сумму и валюту пиши слитно (например, `2400тг`), дату — последним аргументом (dd.MM.yyyy).";
 
     private const string UserNotFoundMessage =
         "Не нашёл привязанный аккаунт. Свяжите Telegram с профилем в FinTree и попробуйте ещё раз.";
@@ -47,8 +47,8 @@ public partial class TelegramBotHostedService(
 
     private static readonly string[] LineSeparators = ["\r\n", "\n"];
 
-    private sealed record ParsedExpense(decimal Amount, string CategoryName, string? Note);
-    private sealed record ResolvedExpense(decimal Amount, TransactionCategory Category, string? Description);
+    private sealed record ParsedExpense(decimal Amount, string CategoryName, string? Note, DateTime OccurredAt);
+    private sealed record ResolvedExpense(decimal Amount, TransactionCategory Category, string? Description, DateTime OccurredAt);
 
     private readonly ReceiverOptions _receiverOptions = new()
     {
@@ -232,13 +232,13 @@ public partial class TelegramBotHostedService(
 
         for (var i = 0; i < lines.Count; i++)
         {
-            if (!TryParseExpense(lines[i], out var amount, out var categoryName, out var note))
+            if (!TryParseExpense(lines[i], out var amount, out var categoryName, out var note, out var occurredAt))
             {
                 invalidLines.Add(i + 1);
                 continue;
             }
 
-            expenses.Add(new ParsedExpense(amount, categoryName, note));
+            expenses.Add(new ParsedExpense(amount, categoryName, note, occurredAt));
         }
 
         return expenses.Count > 0 && invalidLines.Count == 0;
@@ -257,7 +257,7 @@ public partial class TelegramBotHostedService(
                 return false;
 
             var description = BuildDescription(expense.CategoryName, expense.Note, category.IsDefault);
-            resolvedExpenses.Add(new ResolvedExpense(expense.Amount, category, description));
+            resolvedExpenses.Add(new ResolvedExpense(expense.Amount, category, description, expense.OccurredAt));
         }
 
         return true;
@@ -278,23 +278,44 @@ public partial class TelegramBotHostedService(
     private static void AddTransactions(Account account, IEnumerable<ResolvedExpense> expenses)
     {
         foreach (var expense in expenses)
-            account.AddTransaction(TransactionType.Expense, expense.Category.Id, expense.Amount, DateTime.UtcNow,
+            account.AddTransaction(TransactionType.Expense, expense.Category.Id, expense.Amount, expense.OccurredAt,
                 expense.Description);
     }
 
-    private static bool TryParseExpense(string text, out decimal amount, out string category, out string? note)
+    private static bool TryParseExpense(string text, out decimal amount, out string category, out string? note,
+        out DateTime occurredAt)
     {
         amount = 0;
         category = "";
         note = null;
+        occurredAt = default;
 
-        var parts = text.Split(' ', 3, StringSplitOptions.TrimEntries | StringSplitOptions.RemoveEmptyEntries);
+        var parts = text.Split(' ', StringSplitOptions.TrimEntries | StringSplitOptions.RemoveEmptyEntries);
         if (parts.Length < 2 || !TryParseAmount(parts[0], out amount) || amount <= 0)
             return false;
 
         category = parts[1];
-        note = parts.Length == 3 ? parts[2] : null;
-        return !string.IsNullOrWhiteSpace(category);
+
+        if (string.IsNullOrWhiteSpace(category))
+            return false;
+
+        if (parts.Length == 2)
+        {
+            occurredAt = DateTime.UtcNow;
+            return true;
+        }
+
+        var dateToken = parts[^1];
+        if (TryParseOccurredAt(dateToken, out occurredAt))
+        {
+            note = parts.Length > 3 ? string.Join(' ', parts[2..^1]) : null;
+            return true;
+        }
+
+        occurredAt = DateTime.UtcNow;
+        note = parts.Length > 2 ? string.Join(' ', parts[2..]) : null;
+
+        return true;
     }
 
     private static bool TryParseAmount(string raw, out decimal amount)
@@ -328,7 +349,8 @@ public partial class TelegramBotHostedService(
             "✅ Расход добавлен",
             $"💳 Счёт: {Escape(account.Name)} ({Escape(account.Currency.Code)})",
             $"📂 Категория: {Escape(expense.Category.Name)}",
-            $"💰 Сумма: {FormatAmount(account, expense.Amount)}"
+            $"💰 Сумма: {FormatAmount(account, expense.Amount)}",
+            $"📅 Дата: {FormatDate(expense.OccurredAt)}"
         };
 
         if (!string.IsNullOrWhiteSpace(expense.Description))
@@ -351,7 +373,8 @@ public partial class TelegramBotHostedService(
                 ? string.Empty
                 : $" — {Escape(expense.Description)}";
 
-            lines.Add($"• {Escape(expense.Category.Name)}: {FormatAmount(account, expense.Amount)}{notePart}");
+            lines.Add(
+                $"• {Escape(expense.Category.Name)}: {FormatAmount(account, expense.Amount)} — {FormatDate(expense.OccurredAt)}{notePart}");
         }
 
         return string.Join("\n", lines);
@@ -362,6 +385,22 @@ public partial class TelegramBotHostedService(
 
     private static string Escape(string value)
         => WebUtility.HtmlEncode(value);
+
+    private static string FormatDate(DateTime date)
+        => date.ToString("dd.MM.yyyy", CultureInfo.InvariantCulture);
+
+    private static bool TryParseOccurredAt(string raw, out DateTime occurredAt)
+    {
+        var formats = new[] { "dd.MM.yyyy", "d.M.yyyy", "d.MM.yyyy", "dd.M.yyyy" };
+        if (!DateTime.TryParseExact(raw, formats, CultureInfo.InvariantCulture, DateTimeStyles.None, out var parsed))
+        {
+            occurredAt = default;
+            return false;
+        }
+
+        occurredAt = DateTime.SpecifyKind(parsed, DateTimeKind.Utc);
+        return true;
+    }
 
     [GeneratedRegex("^(?<value>[0-9]+(?:[.,][0-9]+)?)", RegexOptions.Compiled)]
     private static partial Regex AmountRegexCompiled();
