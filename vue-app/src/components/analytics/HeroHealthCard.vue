@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed } from 'vue';
+import { computed, ref } from 'vue';
 import type { FinancialHealthVerdict } from '../../types/analytics';
 
 interface HealthTile {
@@ -15,6 +15,13 @@ interface PeakDayItem {
   amountLabel: string;
   amount: number;
   date: Date;
+  shareLabel: string;
+}
+
+interface PeaksSummary {
+  count: number;
+  totalLabel: string;
+  shareLabel: string;
 }
 
 const props = withDefaults(
@@ -23,6 +30,7 @@ const props = withDefaults(
     error: string | null;
     tiles: HealthTile[];
     peaks: PeakDayItem[];
+    peaksSummary: PeaksSummary;
     monthLabel: string;
     score: number | null;
     verdict: FinancialHealthVerdict | null;
@@ -33,6 +41,7 @@ const props = withDefaults(
     period: 6,
     tiles: () => [],
     peaks: () => [],
+    peaksSummary: () => ({ count: 0, totalLabel: '—', shareLabel: '—' }),
     monthLabel: '',
   }
 );
@@ -68,10 +77,14 @@ const scoreCircleClass = computed(() => {
   return `hero-card__score-circle--${props.verdict.status}`;
 });
 
-const peaksSubtitle = computed(() => {
-  const base = props.monthLabel ? `в ${props.monthLabel}` : 'в текущем месяце';
-  return `Дни с расходами ≥ 2× медианы ${base}`;
+const showAllPeaks = ref(false);
+
+const visiblePeaks = computed(() => {
+  if (showAllPeaks.value) return props.peaks;
+  return props.peaks.slice(0, 3);
 });
+
+const hasMorePeaks = computed(() => props.peaks.length > 3);
 </script>
 
 <template>
@@ -79,15 +92,9 @@ const peaksSubtitle = computed(() => {
     <template #content>
       <div class="hero-card__header">
         <div>
-          <p class="hero-card__eyebrow">
-            Финансовое здоровье
-          </p>
           <h2 class="hero-card__title">
             Финансовое здоровье
           </h2>
-          <p class="hero-card__subtitle">
-            Комплексная оценка ваших финансов на основе последних транзакций.
-          </p>
         </div>
         <SelectButton
           :model-value="period"
@@ -196,6 +203,7 @@ const peaksSubtitle = computed(() => {
               v-for="tile in tiles"
               :key="tile.key"
               class="hero-card__metric"
+              :class="tile.status ? `hero-card__metric--${tile.status}` : null"
               role="listitem"
             >
               <div class="hero-card__metric-content">
@@ -224,11 +232,9 @@ const peaksSubtitle = computed(() => {
 
           <div class="hero-card__peaks">
             <div class="hero-card__peaks-header">
-              <p class="hero-card__peaks-title">
-                Пиковые дни
-              </p>
-              <p class="hero-card__peaks-subtitle">
-                {{ peaksSubtitle }}
+              <p class="hero-card__peaks-title">Пиковые дни</p>
+              <p class="hero-card__peaks-summary">
+                {{ peaksSummary.count }} дней · {{ peaksSummary.totalLabel }} · {{ peaksSummary.shareLabel }} от месяца
               </p>
             </div>
             <div
@@ -236,10 +242,10 @@ const peaksSubtitle = computed(() => {
               role="list"
             >
               <button
-                v-for="peak in peaks"
+                v-for="peak in visiblePeaks"
                 :key="peak.label"
                 type="button"
-                class="hero-card__metric hero-card__metric--clickable"
+                class="hero-card__metric hero-card__metric--clickable hero-card__peak-item"
                 role="listitem"
                 @click="emit('select-peak', peak)"
               >
@@ -250,12 +256,15 @@ const peaksSubtitle = computed(() => {
                   <p class="hero-card__metric-value">
                     {{ peak.amountLabel }}
                   </p>
+                  <p class="hero-card__metric-meta">
+                    {{ peak.shareLabel }} от месяца
+                  </p>
                 </div>
               </button>
 
               <div
                 v-if="!peaks.length"
-                class="hero-card__metric hero-card__metric--empty"
+                class="hero-card__metric hero-card__metric--empty hero-card__peak-item"
                 role="listitem"
               >
                 <div class="hero-card__metric-content">
@@ -268,6 +277,14 @@ const peaksSubtitle = computed(() => {
                 </div>
               </div>
             </div>
+            <button
+              v-if="hasMorePeaks"
+              type="button"
+              class="hero-card__peaks-toggle"
+              @click="showAllPeaks = !showAllPeaks"
+            >
+              {{ showAllPeaks ? 'Свернуть' : 'Показать все' }}
+            </button>
           </div>
         </div>
       </div>
@@ -430,6 +447,8 @@ const peaksSubtitle = computed(() => {
 .hero-card__insights {
   display: grid;
   gap: var(--ft-space-4);
+  grid-template-columns: minmax(0, 1fr) minmax(220px, 280px);
+  align-items: start;
 }
 
 .hero-card__metrics {
@@ -453,6 +472,25 @@ const peaksSubtitle = computed(() => {
 .hero-card__metric:hover {
   transform: translateY(-2px);
   box-shadow: var(--ft-shadow-md);
+}
+
+.hero-card__metric--good {
+  border-color: color-mix(in srgb, var(--ft-success-400) 35%, var(--ft-border-subtle));
+  background: color-mix(in srgb, var(--ft-success-50, #ecfdf5) 35%, var(--ft-surface-raised));
+}
+
+.hero-card__metric--average {
+  border-color: color-mix(in srgb, var(--ft-warning-400) 35%, var(--ft-border-subtle));
+  background: color-mix(in srgb, var(--ft-warning-50, #fff7ed) 35%, var(--ft-surface-raised));
+}
+
+.hero-card__metric--poor {
+  border-color: color-mix(in srgb, var(--ft-danger-400) 35%, var(--ft-border-subtle));
+  background: color-mix(in srgb, var(--ft-danger-50, #fef2f2) 35%, var(--ft-surface-raised));
+}
+
+.hero-card__metric--neutral {
+  border-color: var(--ft-border-subtle);
 }
 
 .hero-card__metric--clickable {
@@ -520,6 +558,9 @@ const peaksSubtitle = computed(() => {
 .hero-card__peaks {
   display: grid;
   gap: var(--ft-space-3);
+  padding: var(--ft-space-3);
+  border-radius: var(--ft-radius-xl);
+  background: color-mix(in srgb, var(--ft-surface-soft) 70%, transparent);
 }
 
 .hero-card__peaks-header {
@@ -542,10 +583,45 @@ const peaksSubtitle = computed(() => {
   font-size: var(--ft-text-xs);
 }
 
+.hero-card__peaks-summary {
+  margin: 0;
+  color: var(--ft-text-secondary);
+  font-size: var(--ft-text-xs);
+}
+
 .hero-card__peaks-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  grid-template-columns: 1fr;
   gap: var(--ft-space-3);
+}
+
+.hero-card__peak-item {
+  padding: var(--ft-space-2);
+  background: var(--ft-surface-base);
+  box-shadow: none;
+}
+
+.hero-card__peak-item .hero-card__metric-label {
+  font-size: var(--ft-text-xs);
+}
+
+.hero-card__peak-item .hero-card__metric-value {
+  font-size: var(--ft-text-lg);
+}
+
+.hero-card__peak-item .hero-card__metric-meta {
+  font-size: var(--ft-text-xs);
+}
+
+.hero-card__peaks-toggle {
+  border: none;
+  background: transparent;
+  color: var(--ft-text-secondary);
+  font-size: var(--ft-text-xs);
+  font-weight: var(--ft-font-semibold);
+  cursor: pointer;
+  padding: 0;
+  text-align: left;
 }
 
 .hero-card__metric-status--good {
@@ -594,6 +670,10 @@ const peaksSubtitle = computed(() => {
   }
 
   .hero-card__metrics {
+    grid-template-columns: 1fr;
+  }
+
+  .hero-card__insights {
     grid-template-columns: 1fr;
   }
 }

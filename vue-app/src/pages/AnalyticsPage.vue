@@ -39,6 +39,7 @@ interface HealthTile {
   value: string;
   meta?: string | null;
   tooltip?: string;
+  status?: HealthStatus | 'neutral';
 }
 
 interface CategoryDeltaItem {
@@ -56,6 +57,7 @@ interface PeakDayItem {
   amount: number;
   amountLabel: string;
   date: Date;
+  shareLabel: string;
 }
 
 const userStore = useUserStore();
@@ -153,6 +155,16 @@ const healthTiles = computed<HealthTile[]>(() => {
     monthOverMonthChange.value == null
       ? 'к прошлому мес. —'
       : `к прошлому мес. ${monthOverMonthChange.value > 0 ? '+' : ''}${monthOverMonthChange.value}%`;
+  const esrValue = meanMedianRatio.value;
+  const esrStatus: HealthTile['status'] =
+    esrValue == null
+      ? 'neutral'
+      : esrValue <= 1.3
+        ? 'good'
+        : esrValue <= 1.8
+          ? 'average'
+          : 'poor';
+  const esrLabel = esrValue == null ? '—' : `${esrValue.toFixed(2)}×`;
 
   return [
     {
@@ -173,6 +185,14 @@ const healthTiles = computed<HealthTile[]>(() => {
       label: 'Средний расход',
       value: formatMoney(dailyMean.value),
       tooltip: 'Средний дневной расход за месяц.',
+    },
+    {
+      key: 'event-skew',
+      label: 'Индекс событийности',
+      value: esrLabel,
+      tooltip:
+        'Показывает, насколько событийные траты влияют на финансовую картину. Чем выше, тем больше вклад редких крупных событий.',
+      status: esrStatus,
     },
   ];
 });
@@ -590,19 +610,41 @@ const meanMedianRatio = computed(() => {
 const peakDays = computed<PeakDayItem[]>(() => {
   if (!currentMonthDaily.value.length || dailyMedian.value == null) return [];
   const threshold = dailyMedian.value * 2;
+  const monthTotal = currentMonthTotal.value ?? 0;
   return [...currentMonthDaily.value]
     .filter((entry) => entry.day != null && Number(entry.amount ?? 0) >= threshold)
     .sort((a, b) => Number(b.amount ?? 0) - Number(a.amount ?? 0))
     .map((entry) => {
       const date = new Date(entry.year, entry.month - 1, entry.day ?? 1);
       const amount = Number(entry.amount ?? 0);
+      const share = monthTotal > 0 ? (amount / monthTotal) * 100 : null;
       return {
         label: new Intl.DateTimeFormat('ru-RU', { day: '2-digit', month: 'short' }).format(date),
         amount,
         amountLabel: formatMoney(amount),
+        shareLabel: share == null ? '—' : `${share.toFixed(1)}%`,
         date,
       };
     });
+});
+
+const peakSummary = computed(() => {
+  const count = peakDays.value.length;
+  const total = peakDays.value.reduce((sum, item) => sum + item.amount, 0);
+  const monthTotal = currentMonthTotal.value;
+  if (!monthTotal) {
+    return {
+      count,
+      totalLabel: '—',
+      shareLabel: '—',
+    };
+  }
+  const share = (total / monthTotal) * 100;
+  return {
+    count,
+    totalLabel: formatMoney(total),
+    shareLabel: `${share.toFixed(1)}%`,
+  };
 });
 
 const sortedNetWorth = computed(() => {
@@ -610,10 +652,6 @@ const sortedNetWorth = computed(() => {
     if (a.year !== b.year) return a.year - b.year;
     return a.month - b.month;
   });
-});
-
-const visibleNetWorth = computed(() => {
-  return sortedNetWorth.value;
 });
 
 function formatMonthLabel(year: number, month: number): string {
@@ -883,7 +921,6 @@ onMounted(async () => {
   <PageContainer class="analytics-page">
     <PageHeader
       title="Аналитика"
-      subtitle="Отслеживайте баланс, структуру расходов и прогноз в одном месте"
     />
 
     <div class="analytics-grid">
@@ -895,6 +932,7 @@ onMounted(async () => {
         :verdict="financialVerdict"
         :tiles="healthTiles"
         :peaks="peakDays"
+        :peaks-summary="peakSummary"
         :month-label="currentMonthLabel"
         :period="selectedHealthPeriod"
         :period-options="healthPeriodOptions"
