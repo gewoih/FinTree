@@ -122,17 +122,6 @@ const healthTiles = computed<HealthTile[]>(() => {
     monthOverMonthChange.value == null
       ? 'к прошлому мес. —'
       : `к прошлому мес. ${monthOverMonthChange.value > 0 ? '+' : ''}${monthOverMonthChange.value}%`;
-  const esrValue = meanMedianRatio.value;
-  const esrStatus: HealthTile['status'] =
-    esrValue == null
-      ? 'neutral'
-      : esrValue <= 1.3
-        ? 'good'
-        : esrValue <= 1.8
-          ? 'average'
-          : 'poor';
-  const esrLabel = esrValue == null ? '—' : `${esrValue.toFixed(2)}×`;
-
   return [
     {
       key: 'month-total',
@@ -142,24 +131,18 @@ const healthTiles = computed<HealthTile[]>(() => {
       tooltip: 'Сумма расходов за текущий месяц.',
     },
     {
-      key: 'median-daily',
-      label: 'Медианный расход',
-      value: formatMoney(dailyMedian.value),
-      tooltip: 'Типичный дневной расход за месяц (медиана).',
-    },
-    {
       key: 'mean-daily',
       label: 'Средний расход',
       value: formatMoney(dailyMean.value),
+      meta: 'включает пиковые дни',
       tooltip: 'Средний дневной расход за месяц.',
     },
     {
-      key: 'event-skew',
-      label: 'Индекс событийности',
-      value: esrLabel,
-      tooltip:
-        'Показывает, насколько событийные траты влияют на финансовую картину. Чем выше, тем больше вклад редких крупных событий.',
-      status: esrStatus,
+      key: 'median-daily',
+      label: 'Медианный расход',
+      value: formatMoney(dailyMedian.value),
+      meta: 'обычный день',
+      tooltip: 'Типичный дневной расход за месяц (медиана).',
     },
   ];
 });
@@ -327,6 +310,20 @@ function handlePeakSelect(peak: PeakDayItem) {
     query: {
       from: formatDateQuery(peak.date),
       to: formatDateQuery(peak.date),
+    },
+  });
+}
+
+function handlePeakSummarySelect() {
+  if (!peakDays.value.length) return;
+  const dates = peakDays.value.map((item) => item.date.getTime());
+  const minDate = new Date(Math.min(...dates));
+  const maxDate = new Date(Math.max(...dates));
+  void router.push({
+    name: 'expenses',
+    query: {
+      from: formatDateQuery(minDate),
+      to: formatDateQuery(maxDate),
     },
   });
 }
@@ -871,6 +868,7 @@ onMounted(async () => {
         @retry="retryHealth"
         @update:period="selectedHealthPeriod = $event"
         @select-peak="handlePeakSelect"
+        @select-peak-summary="handlePeakSummarySelect"
       />
 
       <SpendingPieCard

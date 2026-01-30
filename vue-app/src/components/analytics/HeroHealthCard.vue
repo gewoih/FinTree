@@ -49,6 +49,7 @@ const emit = defineEmits<{
   (event: 'retry'): void;
   (event: 'update:period', value: number): void;
   (event: 'select-peak', value: PeakDayItem): void;
+  (event: 'select-peak-summary'): void;
 }>();
 
 const handlePeriodUpdate = (value: number) => {
@@ -216,17 +217,22 @@ const hasMorePeaks = computed(() => props.peaks.length > 3);
               <p class="hero-card__peaks-title">Пиковые дни</p>
               <p class="hero-card__peaks-subtitle">{{ peaksSubtitle }}</p>
             </div>
-            <div
+            <button
+              type="button"
               class="hero-card__peak-share"
               :class="peaksShareClass"
+              @click="emit('select-peak-summary')"
             >
               <p class="hero-card__peak-share-value">
                 {{ peaksSummary.shareLabel }}
               </p>
+              <p class="hero-card__peak-share-line">
+                {{ peaksSummary.shareLabel }} расходов сформированы пиковыми днями
+              </p>
               <p class="hero-card__peak-share-meta">
                 {{ peaksSummary.count }} дней · {{ peaksSummary.totalLabel }} из {{ peaksSummary.monthLabel }}
               </p>
-            </div>
+            </button>
             <div
               class="hero-card__peaks-grid"
               role="list"
@@ -507,6 +513,19 @@ const hasMorePeaks = computed(() => props.peaks.length > 3);
   padding: var(--ft-space-3);
   display: grid;
   gap: var(--ft-space-1);
+  background: transparent;
+  text-align: left;
+  width: 100%;
+  cursor: pointer;
+}
+
+.hero-card__peak-share:hover {
+  border-color: color-mix(in srgb, var(--ft-border-strong, #94a3b8) 45%, transparent);
+}
+
+.hero-card__peak-share:focus-visible {
+  outline: 2px solid color-mix(in srgb, var(--ft-primary-500, #3b82f6) 55%, transparent);
+  outline-offset: 2px;
 }
 
 .hero-card__peak-share-value {
@@ -515,6 +534,12 @@ const hasMorePeaks = computed(() => props.peaks.length > 3);
   font-weight: var(--ft-font-bold);
   color: var(--ft-text-primary);
   line-height: 1;
+}
+
+.hero-card__peak-share-line {
+  margin: 0;
+  font-size: var(--ft-text-xs);
+  color: var(--ft-text-secondary);
 }
 
 .hero-card__peak-share-meta {
@@ -532,7 +557,7 @@ const hasMorePeaks = computed(() => props.peaks.length > 3);
 }
 
 .hero-card__peak-share--poor {
-  border-color: color-mix(in srgb, var(--ft-danger-400, #f87171) 40%, var(--ft-border-subtle));
+  border-color: color-mix(in srgb, var(--ft-orange-400, #fb923c) 45%, var(--ft-border-subtle));
 }
 
 .hero-card__peak-share--good .hero-card__peak-share-value {
@@ -544,7 +569,7 @@ const hasMorePeaks = computed(() => props.peaks.length > 3);
 }
 
 .hero-card__peak-share--poor .hero-card__peak-share-value {
-  color: var(--ft-danger-400, #f87171);
+  color: var(--ft-orange-400, #fb923c);
 }
 
 .hero-card__peaks-grid {
