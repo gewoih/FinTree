@@ -1,6 +1,5 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue';
-import type { FinancialHealthVerdict } from '../../types/analytics';
 
 interface HealthTile {
   key: string;
@@ -22,6 +21,8 @@ interface PeaksSummary {
   count: number;
   totalLabel: string;
   shareLabel: string;
+  shareValue: number | null;
+  monthLabel: string;
 }
 
 const props = withDefaults(
@@ -32,8 +33,6 @@ const props = withDefaults(
     peaks: PeakDayItem[];
     peaksSummary: PeaksSummary;
     monthLabel: string;
-    score: number | null;
-    verdict: FinancialHealthVerdict | null;
     period: number;
     periodOptions: Array<{ label: string; value: number }>;
   }>(),
@@ -41,7 +40,7 @@ const props = withDefaults(
     period: 6,
     tiles: () => [],
     peaks: () => [],
-    peaksSummary: () => ({ count: 0, totalLabel: '—', shareLabel: '—' }),
+    peaksSummary: () => ({ count: 0, totalLabel: '—', shareLabel: '—', shareValue: null, monthLabel: '—' }),
     monthLabel: '',
   }
 );
@@ -59,22 +58,23 @@ const handlePeriodUpdate = (value: number) => {
   }
 };
 
-const formattedScore = computed(() => {
-  if (props.score == null || Number.isNaN(props.score)) {
-    return '—';
-  }
-  return Math.round(props.score).toString();
-});
-
 const showEmpty = computed(() => {
   if (props.loading || props.error) return false;
   const hasTileData = props.tiles.some(tile => tile.value !== '—');
-  return !hasTileData && props.score == null && props.peaks.length === 0;
+  return !hasTileData && props.peaks.length === 0;
 });
 
-const scoreCircleClass = computed(() => {
-  if (!props.verdict?.status) return null;
-  return `hero-card__score-circle--${props.verdict.status}`;
+const peaksSubtitle = computed(() => {
+  const base = props.monthLabel ? `в ${props.monthLabel}` : 'в текущем месяце';
+  return `Дни с расходами ≥ 2× медианы ${base}`;
+});
+
+const peaksShareClass = computed(() => {
+  const share = props.peaksSummary.shareValue;
+  if (share == null) return 'hero-card__peak-share--neutral';
+  if (share <= 30) return 'hero-card__peak-share--good';
+  if (share <= 50) return 'hero-card__peak-share--average';
+  return 'hero-card__peak-share--poor';
 });
 
 const showAllPeaks = ref(false);
@@ -214,8 +214,17 @@ const hasMorePeaks = computed(() => props.peaks.length > 3);
           <div class="hero-card__peaks">
             <div class="hero-card__peaks-header">
               <p class="hero-card__peaks-title">Пиковые дни</p>
-              <p class="hero-card__peaks-summary">
-                {{ peaksSummary.count }} дней · {{ peaksSummary.totalLabel }} · {{ peaksSummary.shareLabel }} от месяца
+              <p class="hero-card__peaks-subtitle">{{ peaksSubtitle }}</p>
+            </div>
+            <div
+              class="hero-card__peak-share"
+              :class="peaksShareClass"
+            >
+              <p class="hero-card__peak-share-value">
+                {{ peaksSummary.shareLabel }}
+              </p>
+              <p class="hero-card__peak-share-meta">
+                {{ peaksSummary.count }} дней · {{ peaksSummary.totalLabel }} из {{ peaksSummary.monthLabel }}
               </p>
             </div>
             <div
@@ -492,10 +501,50 @@ const hasMorePeaks = computed(() => props.peaks.length > 3);
   font-size: var(--ft-text-xs);
 }
 
-.hero-card__peaks-summary {
+.hero-card__peak-share {
+  border: 1px solid var(--ft-border-subtle);
+  border-radius: var(--ft-radius-lg);
+  padding: var(--ft-space-3);
+  display: grid;
+  gap: var(--ft-space-1);
+}
+
+.hero-card__peak-share-value {
   margin: 0;
+  font-size: clamp(1.6rem, 2.6vw, 2rem);
+  font-weight: var(--ft-font-bold);
+  color: var(--ft-text-primary);
+  line-height: 1;
+}
+
+.hero-card__peak-share-meta {
+  margin: 0;
+  font-size: var(--ft-text-xs);
   color: var(--ft-text-secondary);
-  font-size: var(--ft-text-sm);
+}
+
+.hero-card__peak-share--good {
+  border-color: color-mix(in srgb, var(--ft-success-400, #4ade80) 40%, var(--ft-border-subtle));
+}
+
+.hero-card__peak-share--average {
+  border-color: color-mix(in srgb, var(--ft-warning-400, #fb923c) 40%, var(--ft-border-subtle));
+}
+
+.hero-card__peak-share--poor {
+  border-color: color-mix(in srgb, var(--ft-danger-400, #f87171) 40%, var(--ft-border-subtle));
+}
+
+.hero-card__peak-share--good .hero-card__peak-share-value {
+  color: var(--ft-success-400, #4ade80);
+}
+
+.hero-card__peak-share--average .hero-card__peak-share-value {
+  color: var(--ft-warning-400, #fb923c);
+}
+
+.hero-card__peak-share--poor .hero-card__peak-share-value {
+  color: var(--ft-danger-400, #f87171);
 }
 
 .hero-card__peaks-grid {

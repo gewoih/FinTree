@@ -18,20 +18,10 @@ import type {
 import type {
   CategoryLegendItem,
   ExpenseGranularity,
-  FinancialHealthVerdict,
   ForecastSummary,
   HealthStatus,
 } from '../types/analytics';
 import PageContainer from "@/components/layout/PageContainer.vue";
-
-type FinancialMetricKey = 'savingsRate' | 'expenseVolatility' | 'meanMedianRatio';
-
-interface MetricDefinition {
-  key: FinancialMetricKey;
-  getValue: (metrics: FinancialHealthMetricsDto | null) => number | null;
-  format: (value: number | null, currency: string) => string;
-  evaluate: (value: number | null) => { status: HealthStatus; score: number } | null;
-}
 
 interface HealthTile {
   key: string;
@@ -125,30 +115,7 @@ const chartPalette = reactive({
 
 const baseCurrency = computed(() => userStore.baseCurrencyCode ?? 'RUB');
 
-const scoreMetricDefinitions: MetricDefinition[] = [
-  {
-    key: 'expenseVolatility',
-    getValue: (metrics) => metrics?.expenseVolatility ?? null,
-    format: (value, _currency) => formatPercent(value),
-    evaluate: (value) => {
-      if (value == null) return null;
-      if (value <= 0.2) return { status: 'good', score: 85 };
-      if (value <= 0.45) return { status: 'average', score: 55 };
-      return { status: 'poor', score: 20 };
-    },
-  },
-  {
-    key: 'meanMedianRatio',
-    getValue: () => meanMedianRatio.value,
-    format: (value, _currency) => (value == null ? '—' : `${value.toFixed(2)}×`),
-    evaluate: (value) => {
-      if (value == null) return null;
-      if (value <= 1.15) return { status: 'good', score: 85 };
-      if (value <= 1.35) return { status: 'average', score: 55 };
-      return { status: 'poor', score: 25 };
-    },
-  },
-];
+
 
 const healthTiles = computed<HealthTile[]>(() => {
   const trendText =
@@ -276,44 +243,7 @@ async function loadFinancialHealth(period: number) {
   }
 }
 
-const financialScore = computed(() => {
-  const metrics = financialMetrics.value;
-  if (!metrics) return null;
-  const evaluations = scoreMetricDefinitions
-    .map((definition) => definition.evaluate(definition.getValue(metrics)))
-    .filter((item): item is { status: HealthStatus; score: number } => item != null);
 
-  if (!evaluations.length) return null;
-  const total = evaluations.reduce((sum, item) => sum + item.score, 0);
-  return Math.round(total / evaluations.length);
-});
-
-const financialVerdict = computed<FinancialHealthVerdict | null>(() => {
-  const score = financialScore.value;
-  if (score == null) return null;
-
-  if (score >= 70) {
-    return {
-      label: 'Стабильно',
-      status: 'good',
-      helper: 'Расходы предсказуемы, текущий ритм комфортен.',
-    };
-  }
-
-  if (score >= 45) {
-    return {
-      label: 'Неравномерно',
-      status: 'average',
-      helper: 'Часть расходов приходится на пиковые дни.',
-    };
-  }
-
-  return {
-    label: 'Событийно',
-    status: 'poor',
-    helper: 'Месяц сформирован несколькими крупными тратами.',
-  };
-});
 
 async function loadCategoryExpenses(periodMonths: number) {
   if (categoryLoading.value) return;
@@ -637,6 +567,8 @@ const peakSummary = computed(() => {
       count,
       totalLabel: '—',
       shareLabel: '—',
+      shareValue: null,
+      monthLabel: '—',
     };
   }
   const share = (total / monthTotal) * 100;
@@ -644,6 +576,8 @@ const peakSummary = computed(() => {
     count,
     totalLabel: formatMoney(total),
     shareLabel: `${share.toFixed(1)}%`,
+    shareValue: share,
+    monthLabel: formatMoney(monthTotal),
   };
 });
 
@@ -928,8 +862,6 @@ onMounted(async () => {
         class="analytics-grid__hero"
         :loading="healthLoading"
         :error="healthError"
-        :score="financialScore"
-        :verdict="financialVerdict"
         :tiles="healthTiles"
         :peaks="peakDays"
         :peaks-summary="peakSummary"
