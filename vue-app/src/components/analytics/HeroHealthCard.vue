@@ -477,16 +477,19 @@ const hasMorePeaks = computed(() => props.peaks.length > 3);
 .hero-card__metric--good {
   border-color: color-mix(in srgb, var(--ft-success-400) 35%, var(--ft-border-subtle));
   background: color-mix(in srgb, var(--ft-success-50, #ecfdf5) 35%, var(--ft-surface-raised));
+  color: var(--ft-success-700, #166534);
 }
 
 .hero-card__metric--average {
   border-color: color-mix(in srgb, var(--ft-warning-400) 35%, var(--ft-border-subtle));
   background: color-mix(in srgb, var(--ft-warning-50, #fff7ed) 35%, var(--ft-surface-raised));
+  color: var(--ft-warning-700, #9a3412);
 }
 
 .hero-card__metric--poor {
-  border-color: color-mix(in srgb, var(--ft-danger-400) 35%, var(--ft-border-subtle));
-  background: color-mix(in srgb, var(--ft-danger-50, #fef2f2) 35%, var(--ft-surface-raised));
+  border-color: color-mix(in srgb, var(--ft-danger-400, #f87171) 60%, var(--ft-border-subtle));
+  background: color-mix(in srgb, var(--ft-danger-400, #f87171) 18%, var(--ft-surface-raised));
+  color: var(--ft-danger-300, #fecaca);
 }
 
 .hero-card__metric--neutral {

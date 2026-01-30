@@ -294,24 +294,24 @@ const financialVerdict = computed<FinancialHealthVerdict | null>(() => {
 
   if (score >= 70) {
     return {
-      label: 'Хорошо',
+      label: 'Стабильно',
       status: 'good',
-      helper: 'Продолжайте придерживаться текущей стратегии.',
+      helper: 'Расходы предсказуемы, текущий ритм комфортен.',
     };
   }
 
   if (score >= 45) {
     return {
-      label: 'Средне',
+      label: 'Неравномерно',
       status: 'average',
-      helper: 'Подумайте о сокращении нестабильных расходов.',
+      helper: 'Часть расходов приходится на пиковые дни.',
     };
   }
 
   return {
-    label: 'Плохо',
+    label: 'Событийно',
     status: 'poor',
-    helper: 'Усилите контроль расходов и создайте резерв.',
+    helper: 'Месяц сформирован несколькими крупными тратами.',
   };
 });
 
