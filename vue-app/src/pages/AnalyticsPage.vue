@@ -1,13 +1,12 @@
 <script setup lang="ts">
 import { computed, onMounted, reactive, ref, watch } from 'vue';
+import { useRouter } from 'vue-router';
 import PageHeader from '../components/common/PageHeader.vue';
 import HeroHealthCard from '../components/analytics/HeroHealthCard.vue';
 import SpendingPieCard from '../components/analytics/SpendingPieCard.vue';
-import NetWorthLineCard from '../components/analytics/NetWorthLineCard.vue';
 import SpendingBarsCard from '../components/analytics/SpendingBarsCard.vue';
 import ForecastCard from '../components/analytics/ForecastCard.vue';
 import CategoryDeltaCard from '../components/analytics/CategoryDeltaCard.vue';
-import SpendingPatternsCard from '../components/analytics/SpendingPatternsCard.vue';
 import { useUserStore } from '../stores/user';
 import { apiService } from '../services/api.service';
 import type {
@@ -19,7 +18,6 @@ import type {
 import type {
   CategoryLegendItem,
   ExpenseGranularity,
-  FinancialHealthMetricRow,
   FinancialHealthVerdict,
   ForecastSummary,
   HealthStatus,
@@ -35,13 +33,12 @@ interface MetricDefinition {
   evaluate: (value: number | null) => { status: HealthStatus; score: number } | null;
 }
 
-interface SummaryCard {
-  title: string;
+interface HealthTile {
+  key: string;
+  label: string;
   value: string;
-  icon?: string;
-  trend?: number | null;
-  trendLabel?: string;
-  variant?: 'default' | 'success' | 'warning' | 'danger';
+  meta?: string | null;
+  tooltip?: string;
 }
 
 interface CategoryDeltaItem {
@@ -57,9 +54,12 @@ interface CategoryDeltaItem {
 interface PeakDayItem {
   label: string;
   amount: number;
+  amountLabel: string;
+  date: Date;
 }
 
 const userStore = useUserStore();
+const router = useRouter();
 
 const healthPeriodOptions: Array<{ label: string; value: number }> = [
   { label: '1 месяц', value: 1 },
@@ -70,12 +70,12 @@ const healthPeriodOptions: Array<{ label: string; value: number }> = [
 const selectedHealthPeriod = ref<number>(6);
 
 const categoryPeriodOptions: Array<{ label: string; value: number }> = [
-  { label: '1', value: 1 },
-  { label: '3', value: 3 },
-  { label: '6', value: 6 },
-  { label: '12', value: 12 },
+  { label: '1м', value: 1 },
+  { label: '3м', value: 3 },
+  { label: '6м', value: 6 },
+  { label: '12м', value: 12 },
 ];
-const selectedCategoryPeriod = ref<number>(3);
+const selectedCategoryPeriod = ref<number>(1);
 
 const granularityOptions: Array<{ label: string; value: ExpenseGranularity }> = [
   { label: 'День', value: 'days' },
@@ -123,18 +123,7 @@ const chartPalette = reactive({
 
 const baseCurrency = computed(() => userStore.baseCurrencyCode ?? 'RUB');
 
-const metricDefinitions: MetricDefinition[] = [
-  {
-    key: 'savingsRate',
-    getValue: (metrics) => metrics?.savingsRate ?? null,
-    format: (value, _currency) => formatPercent(value),
-    evaluate: (value) => {
-      if (value == null) return null;
-      if (value >= 0.25) return { status: 'good', score: 90 };
-      if (value >= 0.05) return { status: 'average', score: 60 };
-      return { status: 'poor', score: 25 };
-    },
-  },
+const scoreMetricDefinitions: MetricDefinition[] = [
   {
     key: 'expenseVolatility',
     getValue: (metrics) => metrics?.expenseVolatility ?? null,
@@ -159,43 +148,34 @@ const metricDefinitions: MetricDefinition[] = [
   },
 ];
 
-const metricPresentation: Record<
-  FinancialMetricKey,
-  {
-    label: string;
-    tooltip: string;
-    flair: Record<HealthStatus, { emoji: string; statusLabel: string }>;
-  }
-> = {
-  savingsRate: {
-    label: 'Уровень сбережений',
-    tooltip: 'Доля доходов, которые остаются у вас после всех расходов.',
-    flair: {
-      good: { emoji: '🚀', statusLabel: 'С запасом' },
-      average: { emoji: '🧭', statusLabel: 'Нужен апгрейд' },
-      poor: { emoji: '🌱', statusLabel: 'Тревога' },
+const healthTiles = computed<HealthTile[]>(() => {
+  const trendText =
+    monthOverMonthChange.value == null
+      ? 'к прошлому мес. —'
+      : `к прошлому мес. ${monthOverMonthChange.value > 0 ? '+' : ''}${monthOverMonthChange.value}%`;
+
+  return [
+    {
+      key: 'month-total',
+      label: 'Всего за месяц',
+      value: formatMoney(currentMonthTotal.value),
+      meta: trendText,
+      tooltip: 'Сумма расходов за текущий месяц.',
     },
-  },
-  expenseVolatility: {
-    label: 'Стабильность расходов',
-    tooltip: 'Насколько сильно траты скачут от месяца к месяцу.',
-    flair: {
-      good: { emoji: '🧠', statusLabel: 'Контроль идеален' },
-      average: { emoji: '⚖️', statusLabel: 'Следите внимательнее' },
-      poor: { emoji: '🌪️', statusLabel: 'Сгладьте скачки' },
+    {
+      key: 'median-daily',
+      label: 'Медианный расход',
+      value: formatMoney(dailyMedian.value),
+      tooltip: 'Типичный дневной расход за месяц (медиана).',
     },
-  },
-  meanMedianRatio: {
-    label: 'Соотношение mean/median',
-    tooltip:
-      'Показывает, насколько траты искажаются пиковыми днями. Чем ближе к 1, тем стабильнее.',
-    flair: {
-      good: { emoji: '🎛️', statusLabel: 'Стабильно' },
-      average: { emoji: '⚖️', statusLabel: 'Есть всплески' },
-      poor: { emoji: '⚠️', statusLabel: 'Сильные всплески' },
+    {
+      key: 'mean-daily',
+      label: 'Средний расход',
+      value: formatMoney(dailyMean.value),
+      tooltip: 'Средний дневной расход за месяц.',
     },
-  },
-};
+  ];
+});
 
 function resolveCssVariables() {
   if (typeof window === 'undefined') return;
@@ -276,43 +256,11 @@ async function loadFinancialHealth(period: number) {
   }
 }
 
-function computeFinancialMetricRows(): FinancialHealthMetricRow[] {
-  const metrics = financialMetrics.value;
-  if (!metrics) return [];
-
-  const rows: FinancialHealthMetricRow[] = [];
-  let hasRealData = false;
-
-  for (const definition of metricDefinitions) {
-    const value = definition.getValue(metrics);
-    if (value != null) {
-      hasRealData = true;
-    }
-    const evaluation = definition.evaluate(value);
-    const status = evaluation?.status ?? 'average';
-    const presentation = metricPresentation[definition.key];
-    const flairMeta = presentation.flair[status];
-    rows.push({
-      key: definition.key,
-      label: presentation.label,
-      value: definition.format(value, baseCurrency.value),
-      status,
-      statusLabel: flairMeta.statusLabel,
-      flair: flairMeta.statusLabel,
-      emoji: flairMeta.emoji,
-      tooltip: presentation.tooltip,
-    });
-  }
-  return hasRealData ? rows : [];
-}
-
-const financialMetricRows = computed(() => computeFinancialMetricRows());
-
 const financialScore = computed(() => {
   const metrics = financialMetrics.value;
   if (!metrics) return null;
-  const evaluations = metricDefinitions
-    .map((definition) => definition.evaluate(metrics[definition.key]))
+  const evaluations = scoreMetricDefinitions
+    .map((definition) => definition.evaluate(definition.getValue(metrics)))
     .filter((item): item is { status: HealthStatus; score: number } => item != null);
 
   if (!evaluations.length) return null;
@@ -395,6 +343,42 @@ function resolvePreviousPeriodRange(months: number) {
     Date.UTC(previousEnd.getUTCFullYear(), previousEnd.getUTCMonth() - months, 1, 0, 0, 0)
   );
   return { from: previousStart, to: previousEnd };
+}
+
+function resolveTransactionsPeriodRange(months: number) {
+  const now = new Date();
+  const start = new Date(now.getFullYear(), now.getMonth() + 1 - months, 1);
+  const end = new Date(now.getFullYear(), now.getMonth() + 1, 0);
+  return { from: start, to: end };
+}
+
+function formatDateQuery(date: Date): string {
+  const year = date.getFullYear();
+  const month = `${date.getMonth() + 1}`.padStart(2, '0');
+  const day = `${date.getDate()}`.padStart(2, '0');
+  return `${year}-${month}-${day}`;
+}
+
+function handleCategorySelect(category: CategoryLegendItem) {
+  const range = resolveTransactionsPeriodRange(selectedCategoryPeriod.value);
+  void router.push({
+    name: 'expenses',
+    query: {
+      categoryId: category.id,
+      from: formatDateQuery(range.from),
+      to: formatDateQuery(range.to),
+    },
+  });
+}
+
+function handlePeakSelect(peak: PeakDayItem) {
+  void router.push({
+    name: 'expenses',
+    query: {
+      from: formatDateQuery(peak.date),
+      to: formatDateQuery(peak.date),
+    },
+  });
 }
 
 async function loadNetWorth() {
@@ -555,53 +539,11 @@ const currentMonthTotal = computed(() => {
   return dailyTotal > 0 ? dailyTotal : null;
 });
 
-const currentMonthMaxDay = computed(() => {
-  if (!currentMonthDaily.value.length) return null;
-  return Math.max(...currentMonthDaily.value.map((entry) => Number(entry.amount ?? 0)));
-});
-
 const monthOverMonthChange = computed(() => {
   const current = currentMonthEntry.value?.amount;
   const previous = previousMonthEntry.value?.amount;
   if (current == null || previous == null || Number(previous) === 0) return null;
   return Number((((Number(current) - Number(previous)) / Number(previous)) * 100).toFixed(1));
-});
-
-const topCategory = computed(() => {
-  if (!categoryLegend.value.length) return null;
-  return [...categoryLegend.value].sort((a, b) => b.amount - a.amount)[0] ?? null;
-});
-
-const summaryCards = computed<SummaryCard[]>(() => {
-  const cards: SummaryCard[] = [
-    {
-      title: 'Всего за месяц',
-      value: formatMoney(currentMonthTotal.value),
-      icon: 'pi-wallet',
-      trend: monthOverMonthChange.value,
-      trendLabel: 'к прошлому мес.',
-      variant:
-        monthOverMonthChange.value == null
-          ? 'default'
-          : monthOverMonthChange.value > 0
-            ? 'danger'
-            : 'success',
-    },
-    {
-      title: 'Максимум за день',
-      value: formatMoney(currentMonthMaxDay.value),
-      icon: 'pi-arrow-up-right',
-    },
-    {
-      title: 'Топ-категория',
-      value: topCategory.value
-        ? `${topCategory.value.name} · ${topCategory.value.percent.toFixed(1)}%`
-        : '—',
-      icon: 'pi-chart-pie',
-    },
-  ];
-
-  return cards;
 });
 
 const dailyAmounts = computed(() =>
@@ -616,6 +558,28 @@ const dailyMean = computed(() => {
 
 const dailyMedian = computed(() => computeMedian(dailyAmounts.value));
 
+const forecastDailyMedian = computed(() => {
+  const daily = expensesData.days;
+  if (!daily.length) return null;
+
+  const now = new Date();
+  const endUtc = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate()));
+  const startUtc = new Date(endUtc);
+  startUtc.setUTCDate(endUtc.getUTCDate() - 89);
+
+  const sumsByDay = new Map<string, number>();
+  for (const entry of daily) {
+    if (entry.day == null) continue;
+    const entryDateUtc = new Date(Date.UTC(entry.year, entry.month - 1, entry.day));
+    if (entryDateUtc < startUtc || entryDateUtc > endUtc) continue;
+    const key = entryDateUtc.toISOString().slice(0, 10);
+    sumsByDay.set(key, (sumsByDay.get(key) ?? 0) + Number(entry.amount ?? 0));
+  }
+
+  const values = [...sumsByDay.values()].filter((value) => value > 0);
+  return computeMedian(values);
+});
+
 const meanMedianRatio = computed(() => {
   if (dailyMean.value == null || dailyMedian.value == null || dailyMedian.value === 0) {
     return null;
@@ -623,30 +587,23 @@ const meanMedianRatio = computed(() => {
   return dailyMean.value / dailyMedian.value;
 });
 
-const spikeThreshold = computed(() => {
-  if (dailyMedian.value == null) return null;
-  return dailyMedian.value * 2;
-});
-
-const spikeDaysCount = computed(() => {
-  if (spikeThreshold.value == null) return null;
-  return dailyAmounts.value.filter((amount) => amount > spikeThreshold.value!).length;
-});
-
 const peakDays = computed<PeakDayItem[]>(() => {
-  if (!currentMonthDaily.value.length) return [];
+  if (!currentMonthDaily.value.length || dailyMedian.value == null) return [];
+  const threshold = dailyMedian.value * 2;
   return [...currentMonthDaily.value]
+    .filter((entry) => entry.day != null && Number(entry.amount ?? 0) >= threshold)
     .sort((a, b) => Number(b.amount ?? 0) - Number(a.amount ?? 0))
-    .slice(0, 3)
-    .map((entry) => ({
-      label: new Intl.DateTimeFormat('ru-RU', { day: '2-digit', month: 'short' }).format(
-        new Date(entry.year, entry.month - 1, entry.day ?? 1)
-      ),
-      amount: Number(entry.amount ?? 0),
-    }));
+    .map((entry) => {
+      const date = new Date(entry.year, entry.month - 1, entry.day ?? 1);
+      const amount = Number(entry.amount ?? 0);
+      return {
+        label: new Intl.DateTimeFormat('ru-RU', { day: '2-digit', month: 'short' }).format(date),
+        amount,
+        amountLabel: formatMoney(amount),
+        date,
+      };
+    });
 });
-
-const patternsEmpty = computed(() => !currentMonthDaily.value.length);
 
 const sortedNetWorth = computed(() => {
   return [...netWorthSnapshots.value].sort((a, b) => {
@@ -657,29 +614,6 @@ const sortedNetWorth = computed(() => {
 
 const visibleNetWorth = computed(() => {
   return sortedNetWorth.value;
-});
-
-const netWorthChartData = computed(() => {
-  const entries = visibleNetWorth.value;
-  if (!entries.length) return null;
-  const labels = entries.map((entry) => formatMonthLabel(entry.year, entry.month));
-  return {
-    labels,
-    datasets: [
-      {
-        label: 'Общий баланс',
-        data: entries.map((entry) => Number(entry.totalBalance ?? 0)),
-        borderColor: chartPalette.primary,
-        backgroundColor: `rgba(${extractRgb(chartPalette.primary)}, 0.18)`,
-        fill: true,
-        tension: 0.35,
-        pointRadius: 4,
-        pointBackgroundColor: chartPalette.primary,
-        pointBorderColor: '#ffffff',
-        pointBorderWidth: 2,
-      },
-    ],
-  };
 });
 
 function formatMonthLabel(year: number, month: number): string {
@@ -815,12 +749,14 @@ const forecastModel = computed<{
   }
 
   const currentSpent = actualData[today - 1] ?? cumulative;
-  const daysElapsed = Math.max(today, 1);
-  const dailyAverage = currentSpent / daysElapsed;
-  const forecastTotal = dailyAverage * daysInMonth;
+  const medianDaily = forecastDailyMedian.value;
+  if (medianDaily == null) {
+    return { summary: null, chartData: null };
+  }
+  const forecastTotal = medianDaily * daysInMonth;
 
   const forecastData = Array.from({ length: daysInMonth }, (_, index) =>
-    Number((dailyAverage * (index + 1)).toFixed(2)),
+    Number((medianDaily * (index + 1)).toFixed(2)),
   );
 
   const baselineData = baselineLimit
@@ -904,16 +840,8 @@ function retryCategories() {
   void loadCategoryExpenses(selectedCategoryPeriod.value);
 }
 
-function retryNetWorthData() {
-  void loadNetWorth();
-}
-
 function retryExpensesData() {
   void loadExpenses(selectedGranularity.value, true);
-}
-
-function retryDailyExpenses() {
-  void loadExpenses('days', true);
 }
 
 function retryForecastData() {
@@ -958,41 +886,21 @@ onMounted(async () => {
       subtitle="Отслеживайте баланс, структуру расходов и прогноз в одном месте"
     />
 
-    <section class="analytics-summary">
-      <div class="analytics-summary__header">
-        <div>
-          <h3>Сводка месяца</h3>
-          <p class="analytics-summary__meta">
-            {{ currentMonthLabel ? `Данные за ${currentMonthLabel}` : 'Данные за последний доступный месяц' }}
-          </p>
-        </div>
-      </div>
-      <div class="analytics-summary__grid">
-        <KPICard
-          v-for="card in summaryCards"
-          :key="card.title"
-          :title="card.title"
-          :value="card.value"
-          :icon="card.icon"
-          :trend="card.trend"
-          :trend-label="card.trendLabel"
-          :variant="card.variant"
-        />
-      </div>
-    </section>
-
     <div class="analytics-grid">
       <HeroHealthCard
         class="analytics-grid__hero"
         :loading="healthLoading"
         :error="healthError"
-        :metrics="financialMetricRows"
         :score="financialScore"
         :verdict="financialVerdict"
+        :tiles="healthTiles"
+        :peaks="peakDays"
+        :month-label="currentMonthLabel"
         :period="selectedHealthPeriod"
         :period-options="healthPeriodOptions"
         @retry="retryHealth"
         @update:period="selectedHealthPeriod = $event"
+        @select-peak="handlePeakSelect"
       />
 
       <SpendingPieCard
@@ -1005,6 +913,18 @@ onMounted(async () => {
         :legend="categoryLegend"
         :currency="baseCurrency"
         @update:period="selectedCategoryPeriod = $event"
+        @retry="retryCategories"
+        @select-category="handleCategorySelect"
+      />
+
+      <CategoryDeltaCard
+        class="analytics-grid__delta"
+        :loading="categoryLoading"
+        :error="categoryDeltaError"
+        :period-label="categoryPeriodLabel"
+        :increased="categoryDelta.increased"
+        :decreased="categoryDelta.decreased"
+        :currency="baseCurrency"
         @retry="retryCategories"
       />
 
@@ -1019,40 +939,6 @@ onMounted(async () => {
         :currency="baseCurrency"
         @update:granularity="selectedGranularity = $event"
         @retry="retryExpensesData"
-      />
-
-      <CategoryDeltaCard
-        class="analytics-grid__delta"
-        :loading="categoryLoading"
-        :error="categoryDeltaError"
-        :period-label="categoryPeriodLabel"
-        :increased="categoryDelta.increased"
-        :decreased="categoryDelta.decreased"
-        :currency="baseCurrency"
-        @retry="retryCategories"
-      />
-
-      <SpendingPatternsCard
-        class="analytics-grid__patterns"
-        :loading="expensesLoading.days"
-        :error="expensesError.days"
-        :empty="patternsEmpty"
-        :peaks="peakDays"
-        :spike-count="spikeDaysCount"
-        :median-daily="dailyMedian"
-        :currency="baseCurrency"
-        :month-label="currentMonthLabel"
-        @retry="retryDailyExpenses"
-      />
-
-      <NetWorthLineCard
-        class="analytics-grid__networth"
-        :loading="netWorthLoading"
-        :error="netWorthError"
-        :chart-data="netWorthChartData"
-        :empty="!visibleNetWorth.length"
-        :currency="baseCurrency"
-        @retry="retryNetWorthData"
       />
 
       <ForecastCard
@@ -1074,36 +960,6 @@ onMounted(async () => {
   gap: var(--ft-space-6);
 }
 
-.analytics-summary {
-  display: grid;
-  gap: var(--ft-space-3);
-}
-
-.analytics-summary__header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: var(--ft-space-3);
-}
-
-.analytics-summary__header h3 {
-  margin: 0;
-  font-size: var(--ft-text-xl);
-  font-weight: var(--ft-font-semibold);
-  color: var(--ft-text-primary);
-}
-
-.analytics-summary__meta {
-  margin: var(--ft-space-2) 0 0;
-  color: var(--ft-text-secondary);
-}
-
-.analytics-summary__grid {
-  display: grid;
-  gap: var(--ft-space-3);
-  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-}
-
 .analytics-grid {
   display: grid;
   gap: var(--ft-space-4);
@@ -1113,8 +969,6 @@ onMounted(async () => {
 .analytics-grid__pie,
 .analytics-grid__spending,
 .analytics-grid__delta,
-.analytics-grid__patterns,
-.analytics-grid__networth,
 .analytics-grid__forecast {
   grid-column: 1 / -1;
 }
@@ -1125,7 +979,6 @@ onMounted(async () => {
   }
 
   .analytics-grid__hero,
-  .analytics-grid__networth,
   .analytics-grid__forecast {
     grid-column: 1 / -1;
   }
@@ -1142,8 +995,9 @@ onMounted(async () => {
     grid-column: 1 / span 6;
   }
 
-  .analytics-grid__patterns {
+  .analytics-grid__spending {
     grid-column: 7 / span 6;
   }
+
 }
 </style>

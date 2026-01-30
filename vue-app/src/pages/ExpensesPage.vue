@@ -1,11 +1,13 @@
 <script setup lang="ts">
 import { onMounted, ref } from 'vue'
 import { useFinanceStore } from '../stores/finance'
+import { useUserStore } from '../stores/user'
 import type { Transaction } from '../types'
 import TransactionList from '../components/TransactionList.vue'
 import TransactionForm from '../components/TransactionForm.vue'
 
 const financeStore = useFinanceStore()
+const userStore = useUserStore()
 const transactionDialogVisible = ref(false)
 const editingTransaction = ref<Transaction | null>(null)
 
@@ -20,6 +22,7 @@ const handleEditTransaction = (transaction: Transaction) => {
 }
 
 onMounted(async () => {
+  await userStore.fetchCurrentUser()
   await Promise.all([
     financeStore.fetchCurrencies(),
     financeStore.fetchAccounts(),

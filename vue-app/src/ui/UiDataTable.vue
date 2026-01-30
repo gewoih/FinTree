@@ -35,6 +35,12 @@ const tableClasses = computed(() => [
       >
         <slot name="loading" />
       </template>
+      <template
+        v-if="$slots.footer"
+        #footer
+      >
+        <slot name="footer" />
+      </template>
       <slot />
     </DataTable>
   </div>

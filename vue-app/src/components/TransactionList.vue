@@ -2,7 +2,9 @@
 import { computed, watch } from 'vue'
 import Column from 'primevue/column'
 import Skeleton from 'primevue/skeleton'
+import { useRoute } from 'vue-router'
 import { useFinanceStore } from '../stores/finance'
+import { useUserStore } from '../stores/user'
 import { PAGINATION_OPTIONS } from '../constants'
 import { useTransactionFilters } from '../composables/useTransactionFilters'
 import TransactionFilters from './TransactionFilters.vue'
@@ -10,34 +12,66 @@ import { formatCurrency, formatDate } from '../utils/formatters'
 import type { Transaction } from '../types'
 import { TRANSACTION_TYPE } from '../types'
 
+interface EnrichedTransaction extends Transaction {
+  accountName?: string
+  accountCurrency?: string
+  accountSymbol?: string
+  categoryName?: string
+  categoryColor?: string
+  signedAmount: number
+  signedBaseAmount: number
+  displayAmount: number
+  displayCurrency?: string
+  originalAmount: number
+  originalCurrency?: string
+  showOriginal: boolean
+}
+
 const emit = defineEmits<{
   (e: 'add-transaction'): void
   (e: 'edit-transaction', transaction: Transaction): void
 }>()
 
 const store = useFinanceStore()
+const userStore = useUserStore()
+const route = useRoute()
+
+const baseCurrency = computed(() => userStore.baseCurrencyCode ?? store.primaryAccount?.currencyCode ?? 'RUB')
 
 const transactionsLoading = computed(() => store.isTransactionsLoading)
 
-const enrichedTransactions = computed(() =>
+const enrichedTransactions = computed<EnrichedTransaction[]>(() =>
   store.transactions.map((txn: Transaction) => {
     const account = txn.account
     const category = txn.category
 
-    const baseAmount = Number(txn.amount)
+    const accountCurrency = account?.currency?.code ?? account?.currencyCode
+    const baseAmount = Number(txn.amountInBaseCurrency ?? txn.amount)
     const isIncome = txn.type === TRANSACTION_TYPE.Income
-    const signedAmount = isIncome ? Math.abs(baseAmount) : -Math.abs(baseAmount)
+    const signedAmount = isIncome ? Math.abs(Number(txn.amount)) : -Math.abs(Number(txn.amount))
+    const signedBaseAmount = isIncome ? Math.abs(baseAmount) : -Math.abs(baseAmount)
+    const originalAmount = Number(txn.originalAmount ?? txn.amount)
+    const originalCurrency = txn.originalCurrencyCode ?? accountCurrency
+    const displayAmount = isIncome ? signedAmount : signedBaseAmount
+    const displayCurrency = isIncome ? accountCurrency : baseCurrency.value
+    const showOriginal = !isIncome && originalCurrency != null
 
     return {
       ...txn,
       accountName: account?.name,
-      accountCurrency: account?.currency?.code ?? account?.currencyCode,
+      accountCurrency,
       accountSymbol: account?.currency?.symbol ?? '',
       categoryName: category?.name,
       categoryColor: category?.color,
       signedAmount,
+      signedBaseAmount,
+      displayAmount,
+      displayCurrency,
+      originalAmount,
+      originalCurrency,
+      showOriginal,
       isMandatory: txn.isMandatory
-    }
+    } as EnrichedTransaction
   })
 )
 
@@ -48,16 +82,71 @@ const {
   dateRange,
   filteredTransactions,
   clearFilters: clearFiltersComposable
-} = useTransactionFilters(() => enrichedTransactions.value)
+} = useTransactionFilters<EnrichedTransaction>(() => enrichedTransactions.value)
+
+const totalAmount = computed(() =>
+  filteredTransactions.value.reduce(
+    (sum, txn) => sum + Number(txn.signedBaseAmount ?? txn.signedAmount ?? 0),
+    0
+  )
+)
+
+const formattedTotalAmount = computed(() => {
+  const total = totalAmount.value
+  if (total === 0) {
+    return formatCurrency(0, baseCurrency.value)
+  }
+  const sign = total < 0 ? '−' : '+'
+  const formatted = formatCurrency(Math.abs(total), baseCurrency.value)
+  return `${sign} ${formatted}`
+})
 
 const clearFilters = () => {
   clearFiltersComposable()
   store.fetchTransactions()
 }
 
+const parseDateQuery = (value: string): Date | null => {
+  const trimmed = value.trim()
+  const match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(trimmed)
+  if (match) {
+    const year = Number(match[1])
+    const month = Number(match[2]) - 1
+    const day = Number(match[3])
+    return new Date(year, month, day)
+  }
+  const parsed = new Date(trimmed)
+  return Number.isNaN(parsed.getTime()) ? null : parsed
+}
+
+const applyCategoryFromQuery = () => {
+  const categoryId = typeof route.query.categoryId === 'string' ? route.query.categoryId : null
+  if (!categoryId) return
+  const match = store.categories.find(cat => cat.id === categoryId)
+  if (match) {
+    selectedCategory.value = match
+  }
+}
+
+const applyDateRangeFromQuery = () => {
+  const from = typeof route.query.from === 'string' ? parseDateQuery(route.query.from) : null
+  const to = typeof route.query.to === 'string' ? parseDateQuery(route.query.to) : null
+  if (from && to) {
+    dateRange.value = [from, to]
+  }
+}
+
 // При смене счета сразу подтягиваем свежие транзакции, чтобы таблица не показывала устаревшие данные.
 watch(selectedAccount, account => {
   store.fetchTransactions(account?.id)
+})
+
+watch([() => route.query.categoryId, () => store.categories.length], applyCategoryFromQuery, {
+  immediate: true
+})
+
+watch([() => route.query.from, () => route.query.to], applyDateRangeFromQuery, {
+  immediate: true
 })
 
 const isEmptyState = computed(
@@ -147,6 +236,15 @@ const isEmptyState = computed(
         current-page-report-template="Показано {first} - {last} из {totalRecords}"
         :global-filter-fields="['categoryName', 'accountName', 'description']"
       >
+        <template #footer>
+          <div class="transaction-history__summary">
+            <span>Итого</span>
+            <span class="transaction-history__summary-amount">
+              {{ formattedTotalAmount }}
+            </span>
+          </div>
+        </template>
+
         <Column
           field="occurredAt"
           header="Дата"
@@ -159,7 +257,7 @@ const isEmptyState = computed(
         </Column>
 
         <Column
-          field="signedAmount"
+          field="displayAmount"
           header="Сумма"
           :sortable="true"
           style="min-width: 160px"
@@ -167,14 +265,23 @@ const isEmptyState = computed(
           <template #body="slotProps">
             <div
               class="amount-cell"
-              :class="{ negative: slotProps.data.signedAmount < 0 }"
+              :class="{ negative: slotProps.data.displayAmount < 0 }"
             >
               <span class="amount-value">
-                {{ slotProps.data.signedAmount < 0 ? '−' : '+' }}
-                {{ formatCurrency(Math.abs(slotProps.data.signedAmount), slotProps.data.accountCurrency) }}
+                {{ slotProps.data.displayAmount < 0 ? '−' : '+' }}
+                {{ formatCurrency(Math.abs(slotProps.data.displayAmount), slotProps.data.displayCurrency) }}
               </span>
-              <small class="amount-currency">
-                {{ slotProps.data.accountSymbol || slotProps.data.accountCurrency }}
+              <small
+                v-if="slotProps.data.showOriginal"
+                class="amount-original"
+              >
+                {{ formatCurrency(Math.abs(slotProps.data.originalAmount), slotProps.data.originalCurrency) }}
+              </small>
+              <small
+                v-else
+                class="amount-currency"
+              >
+                {{ slotProps.data.accountSymbol || slotProps.data.displayCurrency }}
               </small>
             </div>
           </template>
@@ -310,6 +417,12 @@ const isEmptyState = computed(
   line-height: 1;
 }
 
+.amount-original {
+  font-size: var(--ft-text-xs);
+  color: var(--ft-text-tertiary);
+  line-height: 1.1;
+}
+
 .category-cell {
   display: flex;
   align-items: center;
@@ -377,6 +490,26 @@ const isEmptyState = computed(
 :deep(.p-datatable .p-paginator-bottom) {
   border-top: 1px solid var(--ft-border-soft);
   padding: var(--ft-space-3);
+}
+
+:deep(.transaction-history__datatable .p-datatable-footer) {
+  display: flex;
+  justify-content: flex-end;
+  padding: var(--ft-space-3);
+  border-top: 1px solid var(--ft-border-soft);
+  background: transparent;
+}
+
+.transaction-history__summary {
+  display: flex;
+  align-items: center;
+  gap: var(--ft-space-3);
+  font-weight: var(--ft-font-semibold);
+  color: var(--ft-text-primary);
+}
+
+.transaction-history__summary-amount {
+  font-size: var(--ft-text-base);
 }
 
 :deep(.p-datatable .p-paginator .p-dropdown) {

@@ -8,13 +8,21 @@ import type { Account, Category, Transaction } from '../types';
  * @param transactions - Computed ref containing the transactions to filter
  * @returns Filter state refs and computed filtered transactions
  */
-export function useTransactionFilters(
-  transactions: () => Transaction[]
+export function useTransactionFilters<T extends Transaction>(
+  transactions: () => T[]
 ) {
   const searchText = ref('');
   const selectedCategory = ref<Category | null>(null);
   const selectedAccount = ref<Account | null>(null);
-  const dateRange = ref<Date[] | null>(null);
+
+  const getCurrentMonthRange = (): [Date, Date] => {
+    const now = new Date();
+    const start = new Date(now.getFullYear(), now.getMonth(), 1);
+    const end = new Date(now.getFullYear(), now.getMonth() + 1, 0);
+    return [start, end];
+  };
+
+  const dateRange = ref<Date[] | null>(getCurrentMonthRange());
 
   /**
    * Filters transactions based on all active filter criteria
@@ -75,7 +83,7 @@ export function useTransactionFilters(
     searchText.value = '';
     selectedCategory.value = null;
     selectedAccount.value = null;
-    dateRange.value = null;
+    dateRange.value = getCurrentMonthRange();
   };
 
   return {

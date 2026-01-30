@@ -15,6 +15,7 @@ const props = defineProps<{
 const emit = defineEmits<{
   (event: 'update:period', value: number): void;
   (event: 'retry'): void;
+  (event: 'select-category', value: CategoryLegendItem): void;
 }>();
 
 const handlePeriodUpdate = (value: number) => {
@@ -22,6 +23,10 @@ const handlePeriodUpdate = (value: number) => {
   if (value && typeof value === 'number' && value > 0) {
     emit('update:period', value);
   }
+};
+
+const handleCategoryClick = (item: CategoryLegendItem) => {
+  emit('select-category', item);
 };
 
 const showEmpty = computed(
@@ -48,13 +53,23 @@ const chartOptions = computed(() => ({
           <h3>Расходы по категориям</h3>
           <p>Распределение трат за выбранный период</p>
         </div>
-        <SelectButton
-          :model-value="period"
-          :options="periodOptions"
-          option-label="label"
-          option-value="value"
-          @update:model-value="handlePeriodUpdate"
-        />
+        <div
+          class="period-toggle"
+          role="radiogroup"
+          aria-label="Период"
+        >
+          <button
+            v-for="option in periodOptions"
+            :key="option.value"
+            type="button"
+            class="period-toggle__button"
+            :class="{ 'period-toggle__button--active': option.value === period }"
+            :aria-pressed="option.value === period"
+            @click="handlePeriodUpdate(option.value)"
+          >
+            {{ option.label }}
+          </button>
+        </div>
       </div>
     </template>
 
@@ -140,6 +155,12 @@ const chartOptions = computed(() => ({
           <li
             v-for="item in legend"
             :key="item.id"
+            class="pie-card__legend-item"
+            role="button"
+            tabindex="0"
+            @click="handleCategoryClick(item)"
+            @keydown.enter.prevent="handleCategoryClick(item)"
+            @keydown.space.prevent="handleCategoryClick(item)"
           >
             <span
               class="pie-card__legend-color"
@@ -196,6 +217,39 @@ const chartOptions = computed(() => ({
 .card-head p {
   margin: var(--ft-space-2) 0 0;
   color: var(--ft-text-secondary);
+}
+
+.period-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.2rem;
+  padding: 0.2rem;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--ft-surface-raised) 85%, transparent);
+  border: 1px solid color-mix(in srgb, var(--ft-border-subtle) 70%, transparent);
+}
+
+.period-toggle__button {
+  border: none;
+  background: transparent;
+  color: var(--ft-text-secondary);
+  font-size: var(--ft-text-xs);
+  font-weight: var(--ft-font-semibold);
+  padding: 0.35rem 0.75rem;
+  border-radius: 999px;
+  cursor: pointer;
+  transition: background-color var(--ft-transition-fast), color var(--ft-transition-fast);
+}
+
+.period-toggle__button--active {
+  background: var(--ft-surface-base);
+  color: var(--ft-text-primary);
+  box-shadow: var(--ft-shadow-xs);
+}
+
+.period-toggle__button:focus-visible {
+  outline: 2px solid color-mix(in srgb, var(--ft-primary-500, #3b82f6) 65%, transparent);
+  outline-offset: 2px;
 }
 
 .card-loading {
@@ -266,7 +320,7 @@ const chartOptions = computed(() => ({
   gap: var(--ft-space-2);
 }
 
-.pie-card__legend li {
+.pie-card__legend-item {
   display: flex;
   align-items: center;
   gap: var(--ft-space-3);
@@ -275,6 +329,18 @@ const chartOptions = computed(() => ({
   background: color-mix(in srgb, var(--ft-surface-raised) 80%, transparent);
   border: 1px solid color-mix(in srgb, var(--ft-border-subtle) 60%, transparent);
   box-shadow: var(--ft-shadow-xs);
+  cursor: pointer;
+  transition: transform var(--ft-transition-fast), border-color var(--ft-transition-fast);
+}
+
+.pie-card__legend-item:hover {
+  border-color: color-mix(in srgb, var(--ft-border-strong, #94a3b8) 45%, transparent);
+  transform: translateY(-1px);
+}
+
+.pie-card__legend-item:focus-visible {
+  outline: 2px solid color-mix(in srgb, var(--ft-primary-500, #3b82f6) 65%, transparent);
+  outline-offset: 2px;
 }
 
 .pie-card__legend-color {

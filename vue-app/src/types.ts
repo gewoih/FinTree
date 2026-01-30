@@ -53,6 +53,9 @@ export interface TransactionDto {
     accountId: string;
     categoryId: string;
     amount: number;
+    amountInBaseCurrency?: number | null;
+    originalAmount?: number | null;
+    originalCurrencyCode?: string | null;
     type: TransactionType | string | number;
     occurredAt: string; // ISO дата (как возвращает API)
     description: string | null;
