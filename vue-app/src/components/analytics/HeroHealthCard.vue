@@ -215,7 +215,6 @@ const hasMorePeaks = computed(() => props.peaks.length > 3);
           <div class="hero-card__peaks">
             <div class="hero-card__peaks-header">
               <p class="hero-card__peaks-title">Пиковые дни</p>
-              <p class="hero-card__peaks-subtitle">{{ peaksSubtitle }}</p>
             </div>
             <button
               type="button"
@@ -227,12 +226,13 @@ const hasMorePeaks = computed(() => props.peaks.length > 3);
                 {{ peaksSummary.shareLabel }}
               </p>
               <p class="hero-card__peak-share-line">
-                {{ peaksSummary.shareLabel }} расходов сформированы пиковыми днями
+                расходов сформированы пиковыми днями
               </p>
               <p class="hero-card__peak-share-meta">
                 {{ peaksSummary.count }} дней · {{ peaksSummary.totalLabel }} из {{ peaksSummary.monthLabel }}
               </p>
             </button>
+            <div class="hero-card__peaks-divider" />
             <div
               class="hero-card__peaks-grid"
               role="list"
@@ -367,20 +367,20 @@ const hasMorePeaks = computed(() => props.peaks.length > 3);
 
 .hero-card__insights {
   display: grid;
-  gap: var(--ft-space-4);
-  grid-template-columns: minmax(0, 1fr) minmax(220px, 280px);
+  gap: var(--ft-space-5);
+  grid-template-columns: minmax(0, 1fr) minmax(300px, 380px);
   align-items: start;
 }
 
 .hero-card__metrics {
   display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: clamp(0.6rem, 1.2vw, 0.9rem);
+  grid-template-columns: 1fr;
+  gap: clamp(0.75rem, 1.4vw, 1rem);
 }
 
 .hero-card__metric {
   position: relative;
-  padding: clamp(1rem, 1.7vw, 1.25rem);
+  padding: clamp(1.1rem, 1.9vw, 1.35rem);
   border-radius: var(--ft-radius-xl);
   border: 1px solid var(--ft-border-subtle);
   display: grid;
@@ -469,7 +469,7 @@ const hasMorePeaks = computed(() => props.peaks.length > 3);
 
 .hero-card__metric-value {
   margin: 0;
-  font-size: clamp(1.45rem, 2vw, 1.8rem);
+  font-size: clamp(1.6rem, 2.4vw, 2rem);
   font-weight: var(--ft-font-bold);
 }
 
@@ -481,7 +481,7 @@ const hasMorePeaks = computed(() => props.peaks.length > 3);
 
 .hero-card__peaks {
   display: grid;
-  gap: var(--ft-space-3);
+  gap: var(--ft-space-4);
   padding: var(--ft-space-4);
   border-radius: var(--ft-radius-xl);
   background: color-mix(in srgb, var(--ft-surface-soft) 70%, transparent);
@@ -494,7 +494,7 @@ const hasMorePeaks = computed(() => props.peaks.length > 3);
 
 .hero-card__peaks-title {
   margin: 0;
-  font-size: var(--ft-text-base);
+  font-size: var(--ft-text-lg);
   font-weight: var(--ft-font-semibold);
   text-transform: uppercase;
   letter-spacing: 0.05em;
@@ -510,9 +510,9 @@ const hasMorePeaks = computed(() => props.peaks.length > 3);
 .hero-card__peak-share {
   border: 1px solid var(--ft-border-subtle);
   border-radius: var(--ft-radius-lg);
-  padding: var(--ft-space-3);
+  padding: var(--ft-space-4);
   display: grid;
-  gap: var(--ft-space-1);
+  gap: var(--ft-space-2);
   background: transparent;
   text-align: left;
   width: 100%;
@@ -530,7 +530,7 @@ const hasMorePeaks = computed(() => props.peaks.length > 3);
 
 .hero-card__peak-share-value {
   margin: 0;
-  font-size: clamp(1.6rem, 2.6vw, 2rem);
+  font-size: clamp(2.4rem, 3.4vw, 3rem);
   font-weight: var(--ft-font-bold);
   color: var(--ft-text-primary);
   line-height: 1;
@@ -538,14 +538,19 @@ const hasMorePeaks = computed(() => props.peaks.length > 3);
 
 .hero-card__peak-share-line {
   margin: 0;
-  font-size: var(--ft-text-xs);
+  font-size: var(--ft-text-sm);
   color: var(--ft-text-secondary);
 }
 
 .hero-card__peak-share-meta {
   margin: 0;
-  font-size: var(--ft-text-xs);
+  font-size: var(--ft-text-sm);
   color: var(--ft-text-secondary);
+}
+
+.hero-card__peaks-divider {
+  height: 1px;
+  background: var(--ft-border-subtle);
 }
 
 .hero-card__peak-share--good {
@@ -626,10 +631,6 @@ const hasMorePeaks = computed(() => props.peaks.length > 3);
 }
 
 @media (max-width: 992px) {
-  .hero-card__metrics {
-    grid-template-columns: 1fr;
-  }
-
   .hero-card__insights {
     grid-template-columns: 1fr;
   }
