@@ -175,25 +175,6 @@ const hasMorePeaks = computed(() => props.peaks.length > 3);
         v-else
         class="hero-card__content"
       >
-        <div class="hero-card__score">
-          <div class="hero-card__score-stack">
-            <div
-              class="hero-card__score-circle"
-              :class="scoreCircleClass"
-            >
-              <span class="hero-card__score-value">{{ formattedScore }}</span>
-              <span class="hero-card__score-max">/ 100</span>
-            </div>
-            <div
-              v-if="verdict"
-              class="hero-card__score-meta"
-            >
-              <p class="hero-card__score-label">{{ verdict.label }}</p>
-              <p class="hero-card__score-helper">{{ verdict.helper }}</p>
-            </div>
-          </div>
-        </div>
-
         <div class="hero-card__insights">
           <div
             class="hero-card__metrics"
@@ -366,82 +347,7 @@ const hasMorePeaks = computed(() => props.peaks.length > 3);
 
 .hero-card__content {
   display: grid;
-  grid-template-columns: auto 1fr;
-  gap: clamp(1.5rem, 3vw, 3rem);
-  align-items: center;
-}
-
-.hero-card__score {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-}
-
-.hero-card__score-stack {
-  display: grid;
-  gap: var(--ft-space-3);
-  justify-items: center;
-  text-align: center;
-}
-
-.hero-card__score-circle {
-  width: clamp(120px, 14vw, 140px);
-  aspect-ratio: 1;
-  border-radius: 999px;
-  background: color-mix(in srgb, var(--ft-primary-100) 35%, transparent);
-  border: 3px solid color-mix(in srgb, var(--ft-primary-400) 60%, transparent);
-  display: grid;
-  place-items: center;
-  position: relative;
-  transition: all var(--ft-transition-base);
-}
-
-.hero-card__score-circle--good {
-  background: linear-gradient(135deg, rgba(34, 197, 94, 0.12) 0%, rgba(34, 197, 94, 0.06) 100%);
-  border-color: rgba(34, 197, 94, 0.4);
-}
-
-.hero-card__score-circle--average {
-  background: linear-gradient(135deg, rgba(251, 146, 60, 0.12) 0%, rgba(251, 146, 60, 0.06) 100%);
-  border-color: rgba(251, 146, 60, 0.4);
-}
-
-.hero-card__score-circle--poor {
-  background: linear-gradient(135deg, rgba(239, 68, 68, 0.12) 0%, rgba(239, 68, 68, 0.06) 100%);
-  border-color: rgba(239, 68, 68, 0.4);
-}
-
-.hero-card__score-value {
-  font-size: clamp(2.25rem, 4vw, 2.75rem);
-  font-weight: var(--ft-font-bold);
-  color: var(--ft-text-primary);
-}
-
-.hero-card__score-max {
-  position: absolute;
-  inset-block-end: 16px;
-  font-size: var(--ft-text-xs);
-  color: var(--ft-text-secondary);
-}
-
-.hero-card__score-meta {
-  display: grid;
-  gap: var(--ft-space-1);
-  max-width: 220px;
-}
-
-.hero-card__score-label {
-  margin: 0;
-  font-size: var(--ft-text-sm);
-  font-weight: var(--ft-font-semibold);
-  color: var(--ft-text-primary);
-}
-
-.hero-card__score-helper {
-  margin: 0;
-  font-size: var(--ft-text-xs);
-  color: var(--ft-text-secondary);
-  line-height: var(--ft-leading-relaxed);
+  gap: var(--ft-space-4);
 }
 
 .hero-card__insights {
@@ -454,12 +360,12 @@ const hasMorePeaks = computed(() => props.peaks.length > 3);
 .hero-card__metrics {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: clamp(0.75rem, 1.5vw, 1rem);
+  gap: clamp(0.6rem, 1.2vw, 0.9rem);
 }
 
 .hero-card__metric {
   position: relative;
-  padding: clamp(1.25rem, 2vw, 1.5rem);
+  padding: clamp(1rem, 1.7vw, 1.25rem);
   border-radius: var(--ft-radius-xl);
   border: 1px solid var(--ft-border-subtle);
   display: grid;
@@ -530,7 +436,7 @@ const hasMorePeaks = computed(() => props.peaks.length > 3);
 
 .hero-card__metric-label {
   margin: 0;
-  font-size: var(--ft-text-sm);
+  font-size: var(--ft-text-xs);
   font-weight: var(--ft-font-medium);
   flex: 1;
 }
@@ -548,7 +454,7 @@ const hasMorePeaks = computed(() => props.peaks.length > 3);
 
 .hero-card__metric-value {
   margin: 0;
-  font-size: clamp(1.75rem, 2.5vw, 2rem);
+  font-size: clamp(1.45rem, 2vw, 1.8rem);
   font-weight: var(--ft-font-bold);
 }
 
@@ -561,7 +467,7 @@ const hasMorePeaks = computed(() => props.peaks.length > 3);
 .hero-card__peaks {
   display: grid;
   gap: var(--ft-space-3);
-  padding: var(--ft-space-3);
+  padding: var(--ft-space-4);
   border-radius: var(--ft-radius-xl);
   background: color-mix(in srgb, var(--ft-surface-soft) 70%, transparent);
 }
@@ -573,7 +479,7 @@ const hasMorePeaks = computed(() => props.peaks.length > 3);
 
 .hero-card__peaks-title {
   margin: 0;
-  font-size: var(--ft-text-sm);
+  font-size: var(--ft-text-base);
   font-weight: var(--ft-font-semibold);
   text-transform: uppercase;
   letter-spacing: 0.05em;
@@ -589,7 +495,7 @@ const hasMorePeaks = computed(() => props.peaks.length > 3);
 .hero-card__peaks-summary {
   margin: 0;
   color: var(--ft-text-secondary);
-  font-size: var(--ft-text-xs);
+  font-size: var(--ft-text-sm);
 }
 
 .hero-card__peaks-grid {
@@ -605,15 +511,15 @@ const hasMorePeaks = computed(() => props.peaks.length > 3);
 }
 
 .hero-card__peak-item .hero-card__metric-label {
-  font-size: var(--ft-text-xs);
+  font-size: var(--ft-text-sm);
 }
 
 .hero-card__peak-item .hero-card__metric-value {
-  font-size: var(--ft-text-lg);
+  font-size: clamp(1.15rem, 1.8vw, 1.4rem);
 }
 
 .hero-card__peak-item .hero-card__metric-meta {
-  font-size: var(--ft-text-xs);
+  font-size: var(--ft-text-sm);
 }
 
 .hero-card__peaks-toggle {
@@ -646,32 +552,6 @@ const hasMorePeaks = computed(() => props.peaks.length > 3);
 }
 
 @media (max-width: 992px) {
-  .hero-card__content {
-    grid-template-columns: 1fr;
-    gap: clamp(1rem, 2vw, 1.5rem);
-  }
-
-  .hero-card__score {
-    justify-content: flex-start;
-  }
-
-  .hero-card__score-stack {
-    justify-items: flex-start;
-    text-align: left;
-  }
-
-  .hero-card__score-circle {
-    width: clamp(90px, 12vw, 100px);
-  }
-
-  .hero-card__score-value {
-    font-size: clamp(1.75rem, 3vw, 2rem);
-  }
-
-  .hero-card__score-max {
-    inset-block-end: 12px;
-  }
-
   .hero-card__metrics {
     grid-template-columns: 1fr;
   }
