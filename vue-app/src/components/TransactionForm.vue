@@ -6,6 +6,8 @@ import { VALIDATION_RULES } from '../constants';
 import { TRANSACTION_TYPE } from '../types.ts';
 import { useFormModal } from '../composables/useFormModal';
 import { validators } from '../services/validation.service';
+import { useConfirm } from 'primevue/useconfirm';
+import { useToast } from 'primevue/usetoast';
 
 // PrimeVue Components
 import Dialog from 'primevue/dialog';
@@ -18,6 +20,8 @@ import Button from 'primevue/button';
 import Checkbox from 'primevue/checkbox';
 
 const store = useFinanceStore();
+const confirm = useConfirm();
+const toast = useToast();
 
 const props = defineProps<{
   visible: boolean;
@@ -38,6 +42,7 @@ const description = ref<string>('');
 const date = ref<Date>(new Date());
 const isMandatory = ref<boolean>(false);
 const selectedCategory = ref<Category | null>(null);
+const isDeleting = ref(false);
 
 const transactionTypeOptions = [
   { label: 'Расход', value: TRANSACTION_TYPE.Expense },
@@ -218,6 +223,37 @@ const submitTransaction = async (addAnother = false) => {
       emit('update:visible', false);
     }
   }
+};
+
+const handleDelete = () => {
+  if (!props.transaction) return;
+
+  confirm.require({
+    message: 'Удалить эту транзакцию? Её можно будет восстановить только вручную.',
+    header: 'Подтверждение удаления',
+    icon: 'pi pi-exclamation-triangle',
+    rejectLabel: 'Отмена',
+    acceptLabel: 'Удалить',
+    acceptClass: 'p-button-danger',
+    accept: async () => {
+      isDeleting.value = true;
+      const success = await store.deleteTransaction(props.transaction!.id);
+      isDeleting.value = false;
+
+      toast.add({
+        severity: success ? 'success' : 'error',
+        summary: success ? 'Транзакция удалена' : 'Не удалось удалить',
+        detail: success
+          ? 'Транзакция больше не отображается в списке.'
+          : 'Пожалуйста, попробуйте еще раз.',
+        life: 3000
+      });
+
+      if (success) {
+        emit('update:visible', false);
+      }
+    }
+  });
 };
 
 const handleFormSubmitEvent = async (event?: SubmitEvent) => {
@@ -409,14 +445,28 @@ watch(filteredCategories, () => {
       </section>
 
       <footer class="form-actions">
-        <Button
-          type="button"
-          label="Отмена"
-          icon="pi pi-times"
-          severity="secondary"
-          outlined
-          @click="emit('update:visible', false)"
-        />
+        <div class="action-secondary">
+          <Button
+            v-if="isEditMode"
+            type="button"
+            label="Удалить"
+            icon="pi pi-trash"
+            severity="danger"
+            outlined
+            :loading="isDeleting"
+            :disabled="isSubmitting"
+            @click="handleDelete"
+          />
+          <Button
+            type="button"
+            label="Отмена"
+            icon="pi pi-times"
+            severity="secondary"
+            outlined
+            :disabled="isDeleting"
+            @click="emit('update:visible', false)"
+          />
+        </div>
         <div class="action-buttons">
           <Button
             v-if="!isEditMode"
@@ -432,7 +482,7 @@ watch(filteredCategories, () => {
             type="submit"
             :label="isEditMode ? 'Обновить' : 'Сохранить'"
             icon="pi pi-check"
-            :disabled="submitDisabled"
+            :disabled="submitDisabled || isDeleting"
             :loading="isSubmitting"
           />
         </div>
@@ -578,6 +628,12 @@ watch(filteredCategories, () => {
   gap: 0.9rem;
 }
 
+.action-secondary {
+  display: flex;
+  gap: 0.6rem;
+  align-items: center;
+}
+
 .action-buttons {
   display: flex;
   gap: 0.6rem;
@@ -590,6 +646,11 @@ watch(filteredCategories, () => {
   }
 
   .form-actions {
+    flex-direction: column;
+  }
+
+  .action-secondary {
+    width: 100%;
     flex-direction: column;
   }
 

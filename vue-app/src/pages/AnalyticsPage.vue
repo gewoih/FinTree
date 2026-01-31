@@ -68,6 +68,7 @@ const categoryPeriodOptions: Array<{ label: string; value: number }> = [
   { label: '12м', value: 12 },
 ];
 const selectedCategoryPeriod = ref<number>(1);
+const selectedCategoryMonthOffset = ref<number>(0);
 
 const granularityOptions: Array<{ label: string; value: ExpenseGranularity }> = [
   { label: 'День', value: 'days' },
@@ -75,6 +76,7 @@ const granularityOptions: Array<{ label: string; value: ExpenseGranularity }> = 
   { label: 'Месяц', value: 'months' },
 ] ;
 const selectedGranularity = ref<ExpenseGranularity>('months');
+const selectedForecastMonthOffset = ref<number>(0);
 
 const financialMetrics = ref<FinancialHealthMetricsDto | null>(null);
 const healthLoading = ref(false);
@@ -192,14 +194,45 @@ function resolveErrorMessage(error: unknown, fallback: string): string {
   return fallback;
 }
 
-function formatMonthPeriod(months: number): string {
-  const lastDigit = months % 10;
-  if (months % 100 >= 11 && months % 100 <= 19) {
-    return `${months} месяцев`;
-  }
-  if (lastDigit === 1) return `${months} месяц`;
-  if (lastDigit >= 2 && lastDigit <= 4) return `${months} месяца`;
-  return `${months} месяцев`;
+function addUtcMonths(date: Date, months: number): Date {
+  return new Date(Date.UTC(date.getUTCFullYear(), date.getUTCMonth() + months, 1, 0, 0, 0));
+}
+
+function addLocalMonths(date: Date, months: number): Date {
+  return new Date(date.getFullYear(), date.getMonth() + months, 1, 0, 0, 0);
+}
+
+function resolvePeriodRange(months: number, offset = 0) {
+  const now = new Date();
+  const endBase = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth() + 1, 1, 0, 0, 0));
+  const end = addUtcMonths(endBase, -offset);
+  const start = addUtcMonths(end, -months);
+  return { from: start, to: end };
+}
+
+function resolvePreviousPeriodRange(months: number, offset = 0) {
+  const current = resolvePeriodRange(months, offset);
+  const previousEnd = current.from;
+  const previousStart = addUtcMonths(previousEnd, -months);
+  return { from: previousStart, to: previousEnd };
+}
+
+function resolveTransactionsPeriodRange(months: number, offset = 0) {
+  const now = new Date();
+  const endBase = new Date(now.getFullYear(), now.getMonth() + 1, 1);
+  const end = addLocalMonths(endBase, -offset);
+  const start = addLocalMonths(end, -months);
+  const endDate = new Date(end.getFullYear(), end.getMonth(), 0);
+  return { from: start, to: endDate };
+}
+
+function resolveMonthLabelRange(months: number, offset = 0): string {
+  const { from, to } = resolvePeriodRange(months, offset);
+  const startLabel = formatMonthLabel(from.getUTCFullYear(), from.getUTCMonth() + 1);
+  const endDate = new Date(Date.UTC(to.getUTCFullYear(), to.getUTCMonth(), 0));
+  const endLabel = formatMonthLabel(endDate.getUTCFullYear(), endDate.getUTCMonth() + 1);
+  if (months <= 1 || startLabel === endLabel) return endLabel;
+  return `${startLabel} — ${endLabel}`;
 }
 
 function computeMedian(values: number[]): number | null {
@@ -228,18 +261,18 @@ async function loadFinancialHealth(period: number) {
 
 
 
-async function loadCategoryExpenses(periodMonths: number) {
+async function loadCategoryExpenses(periodMonths: number, offset = 0) {
   if (categoryLoading.value) return;
   categoryLoading.value = true;
   categoryError.value = null;
   categoryDeltaError.value = null;
   try {
-    const { from, to } = resolvePeriodRange(periodMonths);
+    const { from, to } = resolvePeriodRange(periodMonths, offset);
     const data = await apiService.getExpensesByCategoryByDateRange(from, to);
     categoryExpenses.value = data ?? [];
 
     try {
-      const previousRange = resolvePreviousPeriodRange(periodMonths);
+      const previousRange = resolvePreviousPeriodRange(periodMonths, offset);
       const previousData = await apiService.getExpensesByCategoryByDateRange(
         previousRange.from,
         previousRange.to
@@ -262,29 +295,6 @@ async function loadCategoryExpenses(periodMonths: number) {
   }
 }
 
-function resolvePeriodRange(months: number) {
-  const now = new Date();
-  const end = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth() + 1, 1, 0, 0, 0));
-  const start = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth() + 1 - months, 1, 0, 0, 0));
-  return { from: start, to: end };
-}
-
-function resolvePreviousPeriodRange(months: number) {
-  const current = resolvePeriodRange(months);
-  const previousEnd = current.from;
-  const previousStart = new Date(
-    Date.UTC(previousEnd.getUTCFullYear(), previousEnd.getUTCMonth() - months, 1, 0, 0, 0)
-  );
-  return { from: previousStart, to: previousEnd };
-}
-
-function resolveTransactionsPeriodRange(months: number) {
-  const now = new Date();
-  const start = new Date(now.getFullYear(), now.getMonth() + 1 - months, 1);
-  const end = new Date(now.getFullYear(), now.getMonth() + 1, 0);
-  return { from: start, to: end };
-}
-
 function formatDateQuery(date: Date): string {
   const year = date.getFullYear();
   const month = `${date.getMonth() + 1}`.padStart(2, '0');
@@ -293,7 +303,10 @@ function formatDateQuery(date: Date): string {
 }
 
 function handleCategorySelect(category: CategoryLegendItem) {
-  const range = resolveTransactionsPeriodRange(selectedCategoryPeriod.value);
+  const range = resolveTransactionsPeriodRange(
+    selectedCategoryPeriod.value,
+    selectedCategoryMonthOffset.value
+  );
   void router.push({
     name: 'expenses',
     query: {
@@ -387,7 +400,21 @@ const categoryChartData = computed(() => {
   };
 });
 
-const categoryPeriodLabel = computed(() => formatMonthPeriod(selectedCategoryPeriod.value));
+const categoryPeriodLabel = computed(() =>
+  resolveMonthLabelRange(selectedCategoryPeriod.value, selectedCategoryMonthOffset.value)
+);
+
+const categoryMonthLabel = computed(() =>
+  resolveMonthLabelRange(1, selectedCategoryMonthOffset.value)
+);
+
+const canCategoryNavigateNext = computed(() => selectedCategoryMonthOffset.value > 0);
+
+const forecastMonthLabel = computed(() =>
+  resolveMonthLabelRange(1, selectedForecastMonthOffset.value)
+);
+
+const canForecastNavigateNext = computed(() => selectedForecastMonthOffset.value > 0);
 
 const categoryDelta = computed<{
   increased: CategoryDeltaItem[];
@@ -510,7 +537,15 @@ const forecastDailyMedian = computed(() => {
   if (!daily.length) return null;
 
   const now = new Date();
-  const endUtc = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate()));
+  const selectedBase = new Date(
+    now.getFullYear(),
+    now.getMonth() - selectedForecastMonthOffset.value,
+    1
+  );
+  const isCurrentMonth = selectedForecastMonthOffset.value === 0;
+  const endUtc = isCurrentMonth
+    ? new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate()))
+    : new Date(Date.UTC(selectedBase.getFullYear(), selectedBase.getMonth() + 1, 0));
   const startUtc = new Date(endUtc);
   startUtc.setUTCDate(endUtc.getUTCDate() - 89);
 
@@ -669,9 +704,15 @@ const forecastModel = computed<{
   }
 
   const now = new Date();
-  const currentYear = now.getUTCFullYear();
-  const currentMonth = now.getUTCMonth() + 1;
-  const today = now.getUTCDate();
+  const selectedBase = new Date(
+    now.getFullYear(),
+    now.getMonth() - selectedForecastMonthOffset.value,
+    1
+  );
+  const currentYear = selectedBase.getFullYear();
+  const currentMonth = selectedBase.getMonth() + 1;
+  const isCurrentMonth = selectedForecastMonthOffset.value === 0;
+  const today = isCurrentMonth ? now.getUTCDate() : new Date(currentYear, currentMonth, 0).getDate();
   const daysInMonth = new Date(currentYear, currentMonth, 0).getDate();
 
   const dailyCurrent = daily.filter(
@@ -806,7 +847,7 @@ function retryHealth() {
 }
 
 function retryCategories() {
-  void loadCategoryExpenses(selectedCategoryPeriod.value);
+  void loadCategoryExpenses(selectedCategoryPeriod.value, selectedCategoryMonthOffset.value);
 }
 
 function retryExpensesData() {
@@ -817,6 +858,22 @@ function retryForecastData() {
   void Promise.all([loadExpenses('months', true), loadExpenses('days', true)]);
 }
 
+function navigateCategoryPrev() {
+  selectedCategoryMonthOffset.value += 1;
+}
+
+function navigateCategoryNext() {
+  selectedCategoryMonthOffset.value = Math.max(0, selectedCategoryMonthOffset.value - 1);
+}
+
+function navigateForecastPrev() {
+  selectedForecastMonthOffset.value += 1;
+}
+
+function navigateForecastNext() {
+  selectedForecastMonthOffset.value = Math.max(0, selectedForecastMonthOffset.value - 1);
+}
+
 watch(selectedHealthPeriod, (period) => {
   if (period && period > 0) {
     void loadFinancialHealth(period);
@@ -825,7 +882,13 @@ watch(selectedHealthPeriod, (period) => {
 
 watch(selectedCategoryPeriod, (period) => {
   if (period && period > 0) {
-    void loadCategoryExpenses(period);
+    void loadCategoryExpenses(period, selectedCategoryMonthOffset.value);
+  }
+});
+
+watch(selectedCategoryMonthOffset, (offset) => {
+  if (selectedCategoryPeriod.value && selectedCategoryPeriod.value > 0) {
+    void loadCategoryExpenses(selectedCategoryPeriod.value, offset);
   }
 });
 
@@ -840,7 +903,7 @@ onMounted(async () => {
   await userStore.fetchCurrentUser();
   await Promise.all([
     loadFinancialHealth(selectedHealthPeriod.value),
-    loadCategoryExpenses(selectedCategoryPeriod.value),
+    loadCategoryExpenses(selectedCategoryPeriod.value, selectedCategoryMonthOffset.value),
     loadNetWorth(),
     loadExpenses('months'),
     loadExpenses('days'),
@@ -877,10 +940,14 @@ onMounted(async () => {
         :error="categoryError"
         :period="selectedCategoryPeriod"
         :period-options="categoryPeriodOptions"
+        :month-label="categoryMonthLabel"
+        :can-navigate-next="canCategoryNavigateNext"
         :chart-data="categoryChartData"
         :legend="categoryLegend"
         :currency="baseCurrency"
         @update:period="selectedCategoryPeriod = $event"
+        @navigate-prev="navigateCategoryPrev"
+        @navigate-next="navigateCategoryNext"
         @retry="retryCategories"
         @select-category="handleCategorySelect"
       />
@@ -916,6 +983,10 @@ onMounted(async () => {
         :forecast="forecastSummary"
         :chart-data="forecastChartData"
         :currency="baseCurrency"
+        :month-label="forecastMonthLabel"
+        :can-navigate-next="canForecastNavigateNext"
+        @navigate-prev="navigateForecastPrev"
+        @navigate-next="navigateForecastNext"
         @retry="retryForecastData"
       />
     </div>

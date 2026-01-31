@@ -1,4 +1,5 @@
 using FinTree.Application.Exceptions;
+using FinTree.Application.Currencies;
 using FinTree.Application.Transactions.Dto;
 using FinTree.Application.Users;
 using FinTree.Domain.Transactions;
@@ -8,7 +9,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace FinTree.Application.Transactions;
 
-public sealed class TransactionsService(AppDbContext context, ICurrentUser currentUser)
+public sealed class TransactionsService(AppDbContext context, ICurrentUser currentUser, CurrencyConverter currencyConverter)
 {
     public async Task<Guid> CreateAsync(CreateTransaction command, CancellationToken ct)
     {
@@ -25,6 +26,11 @@ public sealed class TransactionsService(AppDbContext context, ICurrentUser curre
     public async Task<List<TransactionDto>> GetTransactionsAsync(Guid? accountId, CancellationToken ct = default)
     {
         var currentUserId = currentUser.Id;
+        var baseCurrencyCode = await context.Users
+            .Where(u => u.Id == currentUserId)
+            .Select(u => u.BaseCurrencyCode)
+            .SingleAsync(ct);
+
         var userTransactionsQuery = context.Transactions
             .AsNoTracking()
             .Include(t => t.Account)
@@ -33,17 +39,49 @@ public sealed class TransactionsService(AppDbContext context, ICurrentUser curre
         if (accountId.HasValue)
             userTransactionsQuery = userTransactionsQuery.Where(t => t.AccountId == accountId);
 
-        var userTransactions = await userTransactionsQuery
-            .Select(t =>
-                new TransactionDto(
-                    t.Id,
-                    t.AccountId,
-                    t.Money.Amount,
-                    t.CategoryId,
-                    t.Description,
-                    t.OccurredAt,
-                    t.IsMandatory))
+        var rawTransactions = await userTransactionsQuery
+            .Select(t => new
+            {
+                t.Id,
+                t.AccountId,
+                t.Money,
+                t.CategoryId,
+                t.Description,
+                t.OccurredAt,
+                t.IsMandatory,
+                t.Type
+            })
             .ToListAsync(ct);
+
+        var userTransactions = new List<TransactionDto>(rawTransactions.Count);
+
+        foreach (var transaction in rawTransactions)
+        {
+            ct.ThrowIfCancellationRequested();
+
+            var occurredAt = transaction.OccurredAt.Kind == DateTimeKind.Unspecified
+                ? DateTime.SpecifyKind(transaction.OccurredAt, DateTimeKind.Utc)
+                : transaction.OccurredAt.ToUniversalTime();
+
+            var baseMoney = await currencyConverter.ConvertAsync(
+                transaction.Money,
+                baseCurrencyCode,
+                occurredAt,
+                ct);
+
+            userTransactions.Add(new TransactionDto(
+                transaction.Id,
+                transaction.AccountId,
+                transaction.Money.Amount,
+                transaction.CategoryId,
+                transaction.Description,
+                transaction.OccurredAt,
+                transaction.IsMandatory,
+                transaction.Type,
+                baseMoney.Amount,
+                transaction.Money.Amount,
+                transaction.Money.CurrencyCode));
+        }
 
         return userTransactions;
     }
@@ -82,9 +120,14 @@ public sealed class TransactionsService(AppDbContext context, ICurrentUser curre
 
     public async Task DeleteAsync(Guid id, CancellationToken ct)
     {
-        var transaction = await context.Transactions.FirstOrDefaultAsync(t => t.Id == id, ct);
+        var transaction = await context.Transactions
+            .Include(t => t.Account)
+            .FirstOrDefaultAsync(t => t.Id == id, ct);
         if (transaction == null)
             throw new NotFoundException(nameof(Transaction), id);
+
+        if (transaction.Account.UserId != currentUser.Id)
+            throw new InvalidOperationException("Доступ запрещен");
         
         transaction.Delete();
         await context.SaveChangesAsync(ct);

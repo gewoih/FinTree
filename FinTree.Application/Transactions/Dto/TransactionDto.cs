@@ -1,3 +1,5 @@
+using FinTree.Domain.Transactions;
+
 namespace FinTree.Application.Transactions.Dto;
 
 public sealed record TransactionDto(
@@ -7,4 +9,8 @@ public sealed record TransactionDto(
     Guid CategoryId,
     string? Description,
     DateTime OccuredAt,
-    bool IsMandatory = false);
+    bool IsMandatory,
+    TransactionType Type,
+    decimal AmountInBaseCurrency,
+    decimal OriginalAmount,
+    string OriginalCurrencyCode);

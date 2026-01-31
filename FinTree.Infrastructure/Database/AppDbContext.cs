@@ -1,4 +1,5 @@
 using FinTree.Domain.Accounts;
+using FinTree.Domain.Base;
 using FinTree.Domain.Categories;
 using FinTree.Domain.Currencies;
 using FinTree.Domain.Identity;
@@ -6,6 +7,8 @@ using FinTree.Domain.IncomeStreams;
 using FinTree.Domain.Transactions;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
+using System.Linq;
+using System.Linq.Expressions;
 
 namespace FinTree.Infrastructure.Database;
 
@@ -24,5 +27,22 @@ public sealed class AppDbContext(DbContextOptions<AppDbContext> options) : Ident
         
         var assemblyWithConfigurations = GetType().Assembly;
         modelBuilder.ApplyConfigurationsFromAssembly(assemblyWithConfigurations);
+
+        ApplySoftDeleteQueryFilters(modelBuilder);
+    }
+
+    private static void ApplySoftDeleteQueryFilters(ModelBuilder modelBuilder)
+    {
+        var entityTypes = modelBuilder.Model.GetEntityTypes()
+            .Where(entityType => typeof(Entity).IsAssignableFrom(entityType.ClrType));
+
+        foreach (var entityType in entityTypes)
+        {
+            var parameter = Expression.Parameter(entityType.ClrType, "entity");
+            var property = Expression.Property(parameter, nameof(Entity.IsDeleted));
+            var filter = Expression.Lambda(Expression.Equal(property, Expression.Constant(false)), parameter);
+
+            modelBuilder.Entity(entityType.ClrType).HasQueryFilter(filter);
+        }
     }
 }

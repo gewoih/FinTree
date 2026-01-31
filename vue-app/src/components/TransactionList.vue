@@ -54,7 +54,7 @@ const enrichedTransactions = computed<EnrichedTransaction[]>(() =>
     const originalCurrency = txn.originalCurrencyCode ?? accountCurrency
     const displayAmount = isIncome ? signedAmount : signedBaseAmount
     const displayCurrency = isIncome ? accountCurrency : baseCurrency.value
-    const showOriginal = !isIncome && originalCurrency != null
+    const showOriginal = !isIncome && originalCurrency != null && originalCurrency !== baseCurrency.value
 
     return {
       ...txn,
@@ -276,12 +276,6 @@ const isEmptyState = computed(
                 class="amount-original"
               >
                 {{ formatCurrency(Math.abs(slotProps.data.originalAmount), slotProps.data.originalCurrency) }}
-              </small>
-              <small
-                v-else
-                class="amount-currency"
-              >
-                {{ slotProps.data.accountSymbol || slotProps.data.displayCurrency }}
               </small>
             </div>
           </template>

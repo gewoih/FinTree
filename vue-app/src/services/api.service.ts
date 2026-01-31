@@ -161,6 +161,13 @@ export const apiService = {
         await apiClient.patch('/Transaction', updatePayload);
     },
 
+    // Удаление транзакции (soft-delete)
+    async deleteTransaction(id: string): Promise<void> {
+        await apiClient.delete('/Transaction', {
+            params: { id },
+        });
+    },
+
     // Работа со счетами
     async createAccount(payload: CreateAccountPayload): Promise<string> {
         const response = await apiClient.post<string>('/accounts', payload);

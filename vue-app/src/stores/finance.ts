@@ -168,6 +168,22 @@ export const useFinanceStore = defineStore('finance', () => {
     }
 
     /**
+     * Soft-deletes a transaction
+     * @param id - Transaction ID
+     * @returns Success status
+     */
+    async function deleteTransaction(id: string) {
+        try {
+            await apiService.deleteTransaction(id);
+            await fetchTransactions(currentTransactionsAccountId.value ?? undefined);
+            return true;
+        } catch (error) {
+            console.error('Ошибка при удалении транзакции:', error);
+            return false;
+        }
+    }
+
+    /**
      * Creates a new account
      * @param payload - Account data
      * @returns Success status
@@ -298,6 +314,7 @@ export const useFinanceStore = defineStore('finance', () => {
         fetchCurrencies,
         addTransaction,
         updateTransaction,
+        deleteTransaction,
         createAccount,
         setPrimaryAccount,
         createCategory,
