@@ -33,11 +33,8 @@ const props = withDefaults(
     peaks: PeakDayItem[];
     peaksSummary: PeaksSummary;
     monthLabel: string;
-    period: number;
-    periodOptions: Array<{ label: string; value: number }>;
   }>(),
   {
-    period: 6,
     tiles: () => [],
     peaks: () => [],
     peaksSummary: () => ({ count: 0, totalLabel: '—', shareLabel: '—', shareValue: null, monthLabel: '—' }),
@@ -47,17 +44,9 @@ const props = withDefaults(
 
 const emit = defineEmits<{
   (event: 'retry'): void;
-  (event: 'update:period', value: number): void;
   (event: 'select-peak', value: PeakDayItem): void;
   (event: 'select-peak-summary'): void;
 }>();
-
-const handlePeriodUpdate = (value: number) => {
-  // Only emit valid positive numbers
-  if (value && typeof value === 'number' && value > 0) {
-    emit('update:period', value);
-  }
-};
 
 const showEmpty = computed(() => {
   if (props.loading || props.error) return false;
@@ -97,13 +86,6 @@ const hasMorePeaks = computed(() => props.peaks.length > 3);
             Финансовое здоровье
           </h2>
         </div>
-        <SelectButton
-          :model-value="period"
-          :options="periodOptions"
-          option-label="label"
-          option-value="value"
-          @update:model-value="handlePeriodUpdate"
-        />
       </div>
 
       <div

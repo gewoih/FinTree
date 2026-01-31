@@ -8,14 +8,10 @@ const props = defineProps<{
   forecast: ForecastSummary | null;
   chartData: any | null;
   currency: string;
-  monthLabel: string;
-  canNavigateNext: boolean;
 }>();
 
 const emit = defineEmits<{
   (event: 'retry'): void;
-  (event: 'navigate-prev'): void;
-  (event: 'navigate-next'): void;
 }>();
 
 const textColor = ref('#1e293b');
@@ -185,34 +181,12 @@ const chartOptions = computed(() => ({
           <h3>Прогноз расходов</h3>
           <p>Как изменится траектория трат до конца месяца</p>
         </div>
-        <div class="card-controls">
-          <div class="month-nav">
-            <button
-              type="button"
-              class="month-nav__button"
-              aria-label="Предыдущий месяц"
-              @click="emit('navigate-prev')"
-            >
-              <i class="pi pi-chevron-left" />
-            </button>
-            <span class="month-nav__label">{{ monthLabel }}</span>
-            <button
-              type="button"
-              class="month-nav__button"
-              aria-label="Следующий месяц"
-              :disabled="!canNavigateNext"
-              @click="emit('navigate-next')"
-            >
-              <i class="pi pi-chevron-right" />
-            </button>
-          </div>
-          <Tag
-            v-if="statusLabel"
-            :class="['forecast-card__status', statusClass]"
-          >
-            {{ statusLabel }}
-          </Tag>
-        </div>
+        <Tag
+          v-if="statusLabel"
+          :class="['forecast-card__status', statusClass]"
+        >
+          {{ statusLabel }}
+        </Tag>
       </div>
     </template>
 
@@ -353,50 +327,6 @@ const chartOptions = computed(() => ({
   color: var(--ft-text-secondary);
 }
 
-.card-controls {
-  display: grid;
-  justify-items: end;
-  gap: var(--ft-space-2);
-}
-
-.month-nav {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.5rem;
-  padding: 0.3rem 0.5rem;
-  border-radius: 999px;
-  border: 1px solid color-mix(in srgb, var(--ft-border-subtle) 70%, transparent);
-  background: color-mix(in srgb, var(--ft-surface-raised) 85%, transparent);
-}
-
-.month-nav__label {
-  font-size: var(--ft-text-sm);
-  font-weight: var(--ft-font-semibold);
-  color: var(--ft-text-primary);
-  min-width: 120px;
-  text-align: center;
-}
-
-.month-nav__button {
-  border: none;
-  background: transparent;
-  color: var(--ft-text-secondary);
-  font-size: 0.85rem;
-  padding: 0.2rem;
-  border-radius: 999px;
-  cursor: pointer;
-  transition: color var(--ft-transition-fast), background-color var(--ft-transition-fast);
-}
-
-.month-nav__button:hover:not(:disabled) {
-  color: var(--ft-text-primary);
-  background: color-mix(in srgb, var(--ft-surface-base) 70%, transparent);
-}
-
-.month-nav__button:disabled {
-  opacity: 0.4;
-  cursor: default;
-}
 
 .forecast-card__status {
   font-weight: var(--ft-font-semibold);

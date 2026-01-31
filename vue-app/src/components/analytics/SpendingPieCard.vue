@@ -5,29 +5,15 @@ import type { CategoryLegendItem } from '../../types/analytics';
 const props = defineProps<{
   loading: boolean;
   error: string | null;
-  period: number;
-  periodOptions: Array<{ label: string; value: number }>;
-  monthLabel: string;
-  canNavigateNext: boolean;
   chartData: any | null;
   legend: CategoryLegendItem[];
   currency: string;
 }>();
 
 const emit = defineEmits<{
-  (event: 'update:period', value: number): void;
-  (event: 'navigate-prev'): void;
-  (event: 'navigate-next'): void;
   (event: 'retry'): void;
   (event: 'select-category', value: CategoryLegendItem): void;
 }>();
-
-const handlePeriodUpdate = (value: number) => {
-  // Only emit valid positive numbers
-  if (value && typeof value === 'number' && value > 0) {
-    emit('update:period', value);
-  }
-};
 
 const handleCategoryClick = (item: CategoryLegendItem) => {
   emit('select-category', item);
@@ -55,46 +41,7 @@ const chartOptions = computed(() => ({
       <div class="card-head">
         <div>
           <h3>Расходы по категориям</h3>
-          <p>Распределение трат за выбранный период</p>
-        </div>
-        <div class="card-controls">
-          <div class="month-nav">
-            <button
-              type="button"
-              class="month-nav__button"
-              aria-label="Предыдущий месяц"
-              @click="emit('navigate-prev')"
-            >
-              <i class="pi pi-chevron-left" />
-            </button>
-            <span class="month-nav__label">{{ monthLabel }}</span>
-            <button
-              type="button"
-              class="month-nav__button"
-              aria-label="Следующий месяц"
-              :disabled="!canNavigateNext"
-              @click="emit('navigate-next')"
-            >
-              <i class="pi pi-chevron-right" />
-            </button>
-          </div>
-          <div
-            class="period-toggle"
-            role="radiogroup"
-            aria-label="Период"
-          >
-            <button
-              v-for="option in periodOptions"
-              :key="option.value"
-              type="button"
-              class="period-toggle__button"
-              :class="{ 'period-toggle__button--active': option.value === period }"
-              :aria-pressed="option.value === period"
-              @click="handlePeriodUpdate(option.value)"
-            >
-              {{ option.label }}
-            </button>
-          </div>
+          <p>Распределение трат за выбранный месяц</p>
         </div>
       </div>
     </template>
@@ -245,83 +192,6 @@ const chartOptions = computed(() => ({
   color: var(--ft-text-secondary);
 }
 
-.card-controls {
-  display: grid;
-  justify-items: end;
-  gap: var(--ft-space-2);
-}
-
-.month-nav {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.5rem;
-  padding: 0.3rem 0.5rem;
-  border-radius: 999px;
-  border: 1px solid color-mix(in srgb, var(--ft-border-subtle) 70%, transparent);
-  background: color-mix(in srgb, var(--ft-surface-raised) 85%, transparent);
-}
-
-.month-nav__label {
-  font-size: var(--ft-text-sm);
-  font-weight: var(--ft-font-semibold);
-  color: var(--ft-text-primary);
-  min-width: 120px;
-  text-align: center;
-}
-
-.month-nav__button {
-  border: none;
-  background: transparent;
-  color: var(--ft-text-secondary);
-  font-size: 0.85rem;
-  padding: 0.2rem;
-  border-radius: 999px;
-  cursor: pointer;
-  transition: color var(--ft-transition-fast), background-color var(--ft-transition-fast);
-}
-
-.month-nav__button:hover:not(:disabled) {
-  color: var(--ft-text-primary);
-  background: color-mix(in srgb, var(--ft-surface-base) 70%, transparent);
-}
-
-.month-nav__button:disabled {
-  opacity: 0.4;
-  cursor: default;
-}
-
-.period-toggle {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.2rem;
-  padding: 0.2rem;
-  border-radius: 999px;
-  background: color-mix(in srgb, var(--ft-surface-raised) 85%, transparent);
-  border: 1px solid color-mix(in srgb, var(--ft-border-subtle) 70%, transparent);
-}
-
-.period-toggle__button {
-  border: none;
-  background: transparent;
-  color: var(--ft-text-secondary);
-  font-size: var(--ft-text-xs);
-  font-weight: var(--ft-font-semibold);
-  padding: 0.35rem 0.75rem;
-  border-radius: 999px;
-  cursor: pointer;
-  transition: background-color var(--ft-transition-fast), color var(--ft-transition-fast);
-}
-
-.period-toggle__button--active {
-  background: var(--ft-surface-base);
-  color: var(--ft-text-primary);
-  box-shadow: var(--ft-shadow-xs);
-}
-
-.period-toggle__button:focus-visible {
-  outline: 2px solid color-mix(in srgb, var(--ft-primary-500, #3b82f6) 65%, transparent);
-  outline-offset: 2px;
-}
 
 .card-loading {
   display: grid;
