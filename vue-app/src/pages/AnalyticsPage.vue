@@ -1057,7 +1057,7 @@ onMounted(async () => {
   }
 
   .analytics-grid__pie {
-    grid-column: 1 / span 8;
+    grid-column: 1 / -1;
   }
 
   .analytics-grid__spending {
@@ -1066,10 +1066,6 @@ onMounted(async () => {
 
   .analytics-grid__delta {
     grid-column: 1 / span 6;
-  }
-
-  .analytics-grid__spending {
-    grid-column: 7 / span 6;
   }
 
 }
