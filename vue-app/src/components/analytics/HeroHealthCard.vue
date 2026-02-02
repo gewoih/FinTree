@@ -1,12 +1,16 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue';
 
+type MetricAccent = 'good' | 'average' | 'poor' | 'neutral' | 'income' | 'expense';
+
 interface HealthTile {
   key: string;
   label: string;
   value: string;
   meta?: string | null;
   tooltip?: string;
+  icon: string;
+  accent?: MetricAccent;
 }
 
 interface PeakDayItem {
@@ -25,16 +29,22 @@ interface PeaksSummary {
   monthLabel: string;
 }
 
+interface HealthGroup {
+  key: string;
+  title: string;
+  metrics: HealthTile[];
+}
+
 const props = withDefaults(
   defineProps<{
     loading: boolean;
     error: string | null;
-    tiles: HealthTile[];
+    groups: HealthGroup[];
     peaks: PeakDayItem[];
     peaksSummary: PeaksSummary;
   }>(),
   {
-    tiles: () => [],
+    groups: () => [],
     peaks: () => [],
     peaksSummary: () => ({ count: 0, totalLabel: '—', shareLabel: '—', shareValue: null, monthLabel: '—' }),
   }
@@ -48,9 +58,15 @@ const emit = defineEmits<{
 
 const showEmpty = computed(() => {
   if (props.loading || props.error) return false;
-  const hasTileData = props.tiles.some(tile => tile.value !== '—');
-  return !hasTileData && props.peaks.length === 0;
+  const hasMetricData = props.groups.some(group => group.metrics.some(metric => metric.value !== '—'));
+  return !hasMetricData && props.peaks.length === 0;
 });
+
+const metricValueClass = (accent?: MetricAccent) =>
+  accent ? `hero-card__metric-value--${accent}` : null;
+
+const metricIconClass = (accent?: MetricAccent) =>
+  accent ? `hero-card__metric-icon--${accent}` : null;
 
 const peaksShareClass = computed(() => {
   const share = props.peaksSummary.shareValue;
@@ -141,7 +157,7 @@ const hasMorePeaks = computed(() => props.peaks.length > 3);
               Нет данных
             </p>
             <p class="hero-card__message-text">
-              Добавьте несколько транзакций, чтобы увидеть расчёт индекса.
+              Добавьте несколько транзакций, чтобы увидеть метрики.
             </p>
           </div>
         </Message>
@@ -157,32 +173,46 @@ const hasMorePeaks = computed(() => props.peaks.length > 3);
             role="list"
           >
             <article
-              v-for="tile in tiles"
-              :key="tile.key"
-              class="hero-card__metric"
-              :class="tile.status ? `hero-card__metric--${tile.status}` : null"
+              v-for="group in groups"
+              :key="group.key"
+              class="hero-card__metric hero-card__group"
+              :class="group.accent ? `hero-card__group--${group.accent}` : null"
               role="listitem"
             >
-              <div class="hero-card__metric-content">
-                <div class="hero-card__metric-header">
-                  <p class="hero-card__metric-label">
-                    {{ tile.label }}
-                  </p>
-                  <i
-                    v-if="tile.tooltip"
-                    v-tooltip.top="tile.tooltip"
-                    class="pi pi-question-circle hero-card__metric-info"
-                  />
-                </div>
-                <p class="hero-card__metric-value">
-                  {{ tile.value }}
-                </p>
-                <p
-                  v-if="tile.meta"
-                  class="hero-card__metric-meta"
+              <p class="hero-card__group-title">
+                {{ group.title }}
+              </p>
+              <div class="hero-card__group-list">
+                <div
+                  v-for="metric in group.metrics"
+                  :key="metric.key"
+                  class="hero-card__metric-row"
                 >
-                  {{ tile.meta }}
-                </p>
+                  <div class="hero-card__metric-text">
+                    <p class="hero-card__metric-label">
+                      {{ metric.label }}
+                    </p>
+                    <p
+                      class="hero-card__metric-value hero-card__metric-value--compact"
+                      :class="metricValueClass(metric.accent)"
+                    >
+                      {{ metric.value }}
+                    </p>
+                    <p
+                      v-if="metric.meta"
+                      class="hero-card__metric-meta"
+                    >
+                      {{ metric.meta }}
+                    </p>
+                  </div>
+                  <span
+                    class="hero-card__metric-icon"
+                    :class="metricIconClass(metric.accent)"
+                    v-tooltip.top="metric.tooltip"
+                  >
+                    <i :class="metric.icon" />
+                  </span>
+                </div>
               </div>
             </article>
           </div>
@@ -296,13 +326,6 @@ const hasMorePeaks = computed(() => props.peaks.length > 3);
   color: var(--ft-text-primary);
 }
 
-.hero-card__subtitle {
-  margin: var(--ft-space-2) 0 0;
-  color: var(--ft-text-secondary);
-  max-width: 46ch;
-  line-height: var(--ft-leading-relaxed);
-}
-
 .hero-card__loading {
   display: grid;
   gap: var(--ft-space-5);
@@ -355,11 +378,11 @@ const hasMorePeaks = computed(() => props.peaks.length > 3);
 
 .hero-card__metric {
   position: relative;
-  padding: clamp(1.1rem, 1.9vw, 1.35rem);
+  padding: clamp(1rem, 1.7vw, 1.25rem);
   border-radius: var(--ft-radius-xl);
   border: 1px solid var(--ft-border-subtle);
   display: grid;
-  gap: var(--ft-space-2);
+  gap: var(--ft-space-3);
   background: color-mix(in srgb, var(--ft-surface-raised) 85%, transparent);
   color: var(--ft-text-primary);
   transition: transform var(--ft-transition-base), box-shadow var(--ft-transition-base);
@@ -368,28 +391,6 @@ const hasMorePeaks = computed(() => props.peaks.length > 3);
 .hero-card__metric:hover {
   transform: translateY(-2px);
   box-shadow: var(--ft-shadow-md);
-}
-
-.hero-card__metric--good {
-  border-color: color-mix(in srgb, var(--ft-success-400) 35%, var(--ft-border-subtle));
-  background: color-mix(in srgb, var(--ft-success-50, #ecfdf5) 35%, var(--ft-surface-raised));
-  color: var(--ft-success-700, #166534);
-}
-
-.hero-card__metric--average {
-  border-color: color-mix(in srgb, var(--ft-warning-400) 35%, var(--ft-border-subtle));
-  background: color-mix(in srgb, var(--ft-warning-50, #fff7ed) 35%, var(--ft-surface-raised));
-  color: var(--ft-warning-700, #9a3412);
-}
-
-.hero-card__metric--poor {
-  border-color: color-mix(in srgb, var(--ft-danger-400, #f87171) 60%, var(--ft-border-subtle));
-  background: color-mix(in srgb, var(--ft-danger-400, #f87171) 18%, var(--ft-surface-raised));
-  color: var(--ft-danger-300, #fecaca);
-}
-
-.hero-card__metric--neutral {
-  border-color: var(--ft-border-subtle);
 }
 
 .hero-card__metric--clickable {
@@ -413,15 +414,68 @@ const hasMorePeaks = computed(() => props.peaks.length > 3);
   background: color-mix(in srgb, var(--ft-surface-base) 92%, transparent);
 }
 
+.hero-card__group {
+  --group-accent: color-mix(in srgb, var(--ft-border-strong, #94a3b8) 40%, transparent);
+}
+
+.hero-card__group--good {
+  --group-accent: var(--ft-success-400, #4ade80);
+}
+
+.hero-card__group--average {
+  --group-accent: var(--ft-warning-400, #fb923c);
+}
+
+.hero-card__group--poor {
+  --group-accent: var(--ft-danger-400, #f87171);
+}
+
+.hero-card__group-title {
+  margin: 0;
+  font-size: var(--ft-text-sm);
+  font-weight: var(--ft-font-semibold);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--ft-text-secondary);
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+}
+
+.hero-card__group-title::before {
+  content: '';
+  width: 12px;
+  height: 12px;
+  border-radius: 999px;
+  background: var(--group-accent);
+  box-shadow: 0 0 0 6px color-mix(in srgb, var(--group-accent) 14%, transparent);
+}
+
+.hero-card__group-list {
+  display: grid;
+  gap: var(--ft-space-2);
+}
+
+.hero-card__metric-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--ft-space-3);
+  padding: 0.35rem 0;
+}
+
+.hero-card__metric-row + .hero-card__metric-row {
+  border-top: 1px solid var(--ft-border-subtle);
+}
+
+.hero-card__metric-text {
+  display: grid;
+  gap: 0.15rem;
+}
+
 .hero-card__metric-content {
   display: grid;
   gap: var(--ft-space-3);
-}
-
-.hero-card__metric-header {
-  display: flex;
-  align-items: center;
-  gap: var(--ft-space-2);
 }
 
 .hero-card__metric-label {
@@ -431,21 +485,14 @@ const hasMorePeaks = computed(() => props.peaks.length > 3);
   flex: 1;
 }
 
-.hero-card__metric-info {
-  font-size: var(--ft-text-sm);
-  opacity: 0.5;
-  cursor: help;
-  transition: opacity var(--ft-transition-fast);
-}
-
-.hero-card__metric-info:hover {
-  opacity: 0.8;
-}
-
 .hero-card__metric-value {
   margin: 0;
   font-size: clamp(1.6rem, 2.4vw, 2rem);
   font-weight: var(--ft-font-bold);
+}
+
+.hero-card__metric-value--compact {
+  font-size: clamp(1.15rem, 1.9vw, 1.35rem);
 }
 
 .hero-card__metric-meta {
@@ -454,6 +501,74 @@ const hasMorePeaks = computed(() => props.peaks.length > 3);
   color: var(--ft-text-secondary);
 }
 
+.hero-card__metric-icon {
+  width: 34px;
+  height: 34px;
+  border-radius: 999px;
+  display: grid;
+  place-items: center;
+  font-size: 0.95rem;
+  color: var(--ft-text-secondary);
+  background: color-mix(in srgb, var(--ft-surface-base) 75%, transparent);
+  border: 1px solid var(--ft-border-subtle);
+  flex-shrink: 0;
+  cursor: help;
+}
+
+.hero-card__metric-value--good,
+.hero-card__metric-icon--good {
+  color: var(--ft-success-400, #4ade80);
+}
+
+.hero-card__metric-value--average,
+.hero-card__metric-icon--average {
+  color: var(--ft-warning-400, #fb923c);
+}
+
+.hero-card__metric-value--poor,
+.hero-card__metric-icon--poor {
+  color: var(--ft-danger-400, #f87171);
+}
+
+.hero-card__metric-value--income,
+.hero-card__metric-icon--income {
+  color: var(--ft-success-400, #4ade80);
+}
+
+.hero-card__metric-value--expense,
+.hero-card__metric-icon--expense {
+  color: var(--ft-danger-400, #f87171);
+}
+
+.hero-card__metric-value--neutral,
+.hero-card__metric-icon--neutral {
+  color: var(--ft-text-secondary);
+}
+
+.hero-card__metric-icon--good {
+  background: color-mix(in srgb, var(--ft-success-400, #4ade80) 12%, transparent);
+  border-color: color-mix(in srgb, var(--ft-success-400, #4ade80) 25%, var(--ft-border-subtle));
+}
+
+.hero-card__metric-icon--average {
+  background: color-mix(in srgb, var(--ft-warning-400, #fb923c) 12%, transparent);
+  border-color: color-mix(in srgb, var(--ft-warning-400, #fb923c) 25%, var(--ft-border-subtle));
+}
+
+.hero-card__metric-icon--poor {
+  background: color-mix(in srgb, var(--ft-danger-400, #f87171) 12%, transparent);
+  border-color: color-mix(in srgb, var(--ft-danger-400, #f87171) 25%, var(--ft-border-subtle));
+}
+
+.hero-card__metric-icon--income {
+  background: color-mix(in srgb, var(--ft-success-400, #4ade80) 12%, transparent);
+  border-color: color-mix(in srgb, var(--ft-success-400, #4ade80) 25%, var(--ft-border-subtle));
+}
+
+.hero-card__metric-icon--expense {
+  background: color-mix(in srgb, var(--ft-danger-400, #f87171) 12%, transparent);
+  border-color: color-mix(in srgb, var(--ft-danger-400, #f87171) 25%, var(--ft-border-subtle));
+}
 .hero-card__peaks {
   display: grid;
   gap: var(--ft-space-4);
@@ -474,12 +589,6 @@ const hasMorePeaks = computed(() => props.peaks.length > 3);
   text-transform: uppercase;
   letter-spacing: 0.05em;
   color: var(--ft-text-secondary);
-}
-
-.hero-card__peaks-subtitle {
-  margin: 0;
-  color: var(--ft-text-tertiary);
-  font-size: var(--ft-text-xs);
 }
 
 .hero-card__peak-share {
@@ -585,24 +694,6 @@ const hasMorePeaks = computed(() => props.peaks.length > 3);
   cursor: pointer;
   padding: 0;
   text-align: left;
-}
-
-.hero-card__metric-status--good {
-  background: linear-gradient(135deg, rgba(34, 197, 94, 0.08) 0%, rgba(34, 197, 94, 0.04) 100%);
-  border-color: rgba(34, 197, 94, 0.25);
-  color: #4ade80;
-}
-
-.hero-card__metric-status--average {
-  background: linear-gradient(135deg, rgba(251, 146, 60, 0.08) 0%, rgba(251, 146, 60, 0.04) 100%);
-  border-color: rgba(251, 146, 60, 0.25);
-  color: #fb923c;
-}
-
-.hero-card__metric-status--poor {
-  background: linear-gradient(135deg, rgba(239, 68, 68, 0.08) 0%, rgba(239, 68, 68, 0.04) 100%);
-  border-color: rgba(239, 68, 68, 0.25);
-  color: #f87171;
 }
 
 @media (max-width: 992px) {

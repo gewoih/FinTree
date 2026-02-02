@@ -103,11 +103,15 @@ public sealed class AnalyticsService(
         var dailyValues = dailyTotals.Values.Where(v => v > 0).ToList();
         var meanDaily = dailyValues.Count > 0 ? dailyValues.Average() : (decimal?)null;
         var medianDaily = dailyValues.Count > 0 ? ComputeMedian(dailyValues) : null;
+        decimal? meanMedianRatio = null;
+        if (meanDaily.HasValue && medianDaily is > 0m)
+            meanMedianRatio = meanDaily.Value / medianDaily.Value;
+
         var netCashflow = totalIncome - totalExpenses;
         var savingsRate = totalIncome > 0m ? netCashflow / totalIncome : (decimal?)null;
         var discretionaryShare = totalExpenses > 0m ? (discretionaryTotal / totalExpenses) * 100 : (decimal?)null;
         var monthOverMonth = previousMonthExpenses > 0m
-            ? ((totalExpenses - previousMonthExpenses) / previousMonthExpenses) * 100
+            ? (totalExpenses - previousMonthExpenses) / previousMonthExpenses * 100
             : (decimal?)null;
 
         var peaks = BuildPeakDays(dailyTotals, medianDaily, totalExpenses);
@@ -127,9 +131,11 @@ public sealed class AnalyticsService(
         var forecast = await BuildForecastAsync(year, month, dailyTotals, previousMonthExpenses, baseCurrencyCode, ct);
 
         var health = new FinancialHealthSummaryDto(
+            MonthIncome: Round2(totalIncome),
             MonthTotal: Round2(totalExpenses),
             MeanDaily: meanDaily.HasValue ? Round2(meanDaily.Value) : null,
             MedianDaily: medianDaily.HasValue ? Round2(medianDaily.Value) : null,
+            MeanMedianRatio: meanMedianRatio.HasValue ? Round2(meanMedianRatio.Value) : null,
             SavingsRate: savingsRate,
             NetCashflow: Round2(netCashflow),
             DiscretionaryTotal: Round2(discretionaryTotal),
@@ -159,6 +165,7 @@ public sealed class AnalyticsService(
             ? (sorted[mid - 1] + sorted[mid]) / 2m
             : sorted[mid];
     }
+
 
     private static (PeakDaysSummaryDto Summary, List<PeakDayDto> Days) BuildPeakDays(
         Dictionary<DateOnly, decimal> dailyTotals,

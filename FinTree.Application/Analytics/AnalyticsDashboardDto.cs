@@ -13,9 +13,11 @@ public readonly record struct AnalyticsDashboardDto(
     ForecastDto Forecast);
 
 public readonly record struct FinancialHealthSummaryDto(
+    decimal? MonthIncome,
     decimal? MonthTotal,
     decimal? MeanDaily,
     decimal? MedianDaily,
+    decimal? MeanMedianRatio,
     decimal? SavingsRate,
     decimal? NetCashflow,
     decimal? DiscretionaryTotal,

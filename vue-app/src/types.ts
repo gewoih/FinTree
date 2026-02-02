@@ -133,9 +133,11 @@ export interface MonthlyExpenseDto {
 }
 
 export interface FinancialHealthSummaryDto {
+    monthIncome: number | null;
     monthTotal: number | null;
     meanDaily: number | null;
     medianDaily: number | null;
+    meanMedianRatio: number | null;
     savingsRate: number | null;
     netCashflow: number | null;
     discretionaryTotal: number | null;

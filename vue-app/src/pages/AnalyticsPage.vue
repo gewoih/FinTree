@@ -18,7 +18,6 @@ import type {
   CategoryLegendItem,
   ExpenseGranularity,
   ForecastSummary,
-  HealthStatus,
 } from '../types/analytics';
 import PageContainer from "@/components/layout/PageContainer.vue";
 
@@ -28,7 +27,15 @@ interface HealthTile {
   value: string;
   meta?: string | null;
   tooltip?: string;
-  status?: HealthStatus | 'neutral';
+  icon: string;
+  accent?: MetricAccent;
+}
+
+interface HealthGroup {
+  key: string;
+  title: string;
+  metrics: HealthTile[];
+  accent?: MetricAccent;
 }
 
 interface PeakDayItem {
@@ -38,6 +45,8 @@ interface PeakDayItem {
   date: Date;
   shareLabel: string;
 }
+
+type MetricAccent = 'good' | 'average' | 'poor' | 'neutral' | 'income' | 'expense';
 
 const userStore = useUserStore();
 const router = useRouter();
@@ -75,57 +84,113 @@ const chartPalette = reactive({
 
 const baseCurrency = computed(() => userStore.baseCurrencyCode ?? 'RUB');
 
-const healthTiles = computed<HealthTile[]>(() => {
+const healthGroups = computed<HealthGroup[]>(() => {
   const health = dashboard.value?.health;
-  const trendText =
-    health?.monthOverMonthChangePercent == null
-      ? 'к прошлому мес. —'
-      : `к прошлому мес. ${health.monthOverMonthChangePercent > 0 ? '+' : ''}${health.monthOverMonthChangePercent.toFixed(1)}%`;
+  const savingsStatus = resolveSavingsStatus(health?.savingsRate ?? null);
+  const cashflowStatus = resolveCashflowStatus(
+    health?.netCashflow ?? null,
+    health?.monthIncome ?? null
+  );
+  const typicalStatus = resolveMeanMedianStatus(health?.meanMedianRatio ?? null);
+  const discretionaryStatus = resolveDiscretionaryStatus(health?.discretionarySharePercent ?? null);
+
   return [
     {
       key: 'month-total',
-      label: 'Всего за месяц',
-      value: formatMoney(health?.monthTotal ?? null),
-      meta: trendText,
-      tooltip: 'Сумма расходов за текущий месяц.',
+      title: 'Всего за месяц',
+      metrics: [
+        {
+          key: 'income',
+          label: 'Доход',
+          value: formatMoney(health?.monthIncome ?? null),
+          tooltip: 'Сумма всех доходов за выбранный месяц.',
+          icon: 'pi pi-plus-circle',
+          accent: 'income',
+        },
+        {
+          key: 'expense',
+          label: 'Расход',
+          value: formatMoney(health?.monthTotal ?? null),
+          tooltip: 'Сумма всех расходов за выбранный месяц.',
+          icon: 'pi pi-minus-circle',
+          accent: 'expense',
+        },
+      ],
     },
     {
-      key: 'mean-daily',
-      label: 'Средний расход',
-      value: formatMoney(health?.meanDaily ?? null),
-      meta: 'включает пиковые дни',
-      tooltip: 'Средний дневной расход за месяц.',
+      key: 'savings',
+      title: 'Сбережения',
+      accent: savingsStatus,
+      metrics: [
+        {
+          key: 'savings-rate',
+          label: 'Savings Rate',
+          value: health?.savingsRate == null ? '—' : formatPercent(health.savingsRate, 1),
+          tooltip: 'Доля дохода, оставшаяся после расходов.',
+          icon: 'pi pi-percentage',
+          accent: savingsStatus,
+        },
+        {
+          key: 'net-cashflow',
+          label: 'Net Cashflow',
+          value: formatSignedMoney(health?.netCashflow ?? null),
+          tooltip: 'Чистый денежный поток за месяц.',
+          icon: 'pi pi-wallet',
+          accent: cashflowStatus,
+        },
+      ],
     },
     {
-      key: 'median-daily',
-      label: 'Медианный расход',
-      value: formatMoney(health?.medianDaily ?? null),
-      meta: 'обычный день',
-      tooltip: 'Типичный дневной расход за месяц (медиана).',
+      key: 'typical',
+      title: 'Типичный день',
+      accent: typicalStatus,
+      metrics: [
+        {
+          key: 'mean-daily',
+          label: 'Средний расход',
+          value: formatMoney(health?.meanDaily ?? null),
+          tooltip: 'Средний дневной расход за месяц.',
+          icon: 'pi pi-chart-line',
+        },
+        {
+          key: 'median-daily',
+          label: 'Медианный расход',
+          value: formatMoney(health?.medianDaily ?? null),
+          tooltip: 'Типичный дневной расход за месяц (медиана).',
+          icon: 'pi pi-chart-bar',
+        },
+        {
+          key: 'std-median',
+          label: 'Mean / Median',
+          value: formatRatio(health?.meanMedianRatio ?? null),
+          tooltip: 'Отношение среднего дневного расхода к медианному. Чем выше, тем более событийные траты.',
+          icon: 'pi pi-sliders-h',
+          accent: typicalStatus,
+        },
+      ],
     },
     {
       key: 'discretionary',
-      label: 'Необязательные расходы',
-      value: formatMoney(health?.discretionaryTotal ?? null),
-      meta:
-        health?.discretionarySharePercent == null
-          ? 'доля —'
-          : `доля ${health.discretionarySharePercent.toFixed(1)}%`,
-      tooltip: 'Расходы по необязательным категориям за месяц.',
-    },
-    {
-      key: 'savings-rate',
-      label: 'Savings Rate',
-      value: health?.savingsRate == null ? '—' : formatPercent(health.savingsRate, 1),
-      meta: 'доля сбережений',
-      tooltip: 'Доля дохода, оставшаяся после расходов.',
-    },
-    {
-      key: 'net-cashflow',
-      label: 'Net Cashflow',
-      value: formatSignedMoney(health?.netCashflow ?? null),
-      meta: 'доходы минус расходы',
-      tooltip: 'Чистый денежный поток за месяц.',
+      title: 'Необязательные',
+      accent: discretionaryStatus,
+      metrics: [
+        {
+          key: 'discretionary-total',
+          label: 'Необязательные расходы',
+          value: formatMoney(health?.discretionaryTotal ?? null),
+          tooltip: 'Сумма расходов по необязательным категориям за месяц.',
+          icon: 'pi pi-shopping-bag',
+          accent: discretionaryStatus,
+        },
+        {
+          key: 'discretionary-share',
+          label: 'Доля необязательных',
+          value: formatPercentValue(health?.discretionarySharePercent ?? null),
+          tooltip: 'Доля расходов, пришедшаяся на необязательные категории.',
+          icon: 'pi pi-percentage',
+          accent: discretionaryStatus,
+        },
+      ],
     },
   ];
 });
@@ -171,6 +236,44 @@ function formatSignedMoney(value: number | null): string {
   if (value == null || Number.isNaN(value)) return '—';
   const sign = value < 0 ? '−' : '+';
   return `${sign} ${formatMoney(Math.abs(value))}`;
+}
+
+function formatRatio(value: number | null, fractionDigits = 2): string {
+  if (value == null || Number.isNaN(value)) return '—';
+  return `${value.toFixed(fractionDigits)}×`;
+}
+
+function resolveSavingsStatus(value: number | null): MetricAccent {
+  if (value == null || Number.isNaN(value)) return 'neutral';
+  if (value >= 0.2) return 'good';
+  if (value >= 0.1) return 'average';
+  return 'poor';
+}
+
+function resolveCashflowStatus(netCashflow: number | null, monthIncome: number | null): MetricAccent {
+  if (netCashflow == null || Number.isNaN(netCashflow)) return 'neutral';
+  if (monthIncome == null || Number.isNaN(monthIncome) || monthIncome <= 0) {
+    return netCashflow >= 0 ? 'good' : 'poor';
+  }
+
+  const ratio = netCashflow / monthIncome;
+  if (ratio >= 0.1) return 'good';
+  if (ratio >= 0) return 'average';
+  return 'poor';
+}
+
+function resolveDiscretionaryStatus(value: number | null): MetricAccent {
+  if (value == null || Number.isNaN(value)) return 'neutral';
+  if (value <= 25) return 'good';
+  if (value <= 45) return 'average';
+  return 'poor';
+}
+
+function resolveMeanMedianStatus(value: number | null): MetricAccent {
+  if (value == null || Number.isNaN(value)) return 'neutral';
+  if (value <= 1.3) return 'good';
+  if (value <= 1.8) return 'average';
+  return 'poor';
 }
 
 function resolveErrorMessage(error: unknown, fallback: string): string {
@@ -594,7 +697,7 @@ onMounted(async () => {
         class="analytics-grid__item analytics-grid__item--span-12"
         :loading="healthLoading"
         :error="healthError"
-        :tiles="healthTiles"
+        :groups="healthGroups"
         :peaks="peakDays"
         :peaks-summary="peakSummary"
         @retry="retryDashboard"
