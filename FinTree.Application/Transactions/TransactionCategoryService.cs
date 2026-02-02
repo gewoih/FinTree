@@ -17,7 +17,8 @@ public sealed class TransactionCategoryService(AppDbContext context, ICurrentUse
                        .SingleOrDefaultAsync(u => u.Id == userId, ct)
                    ?? throw new NotFoundException(nameof(User), userId);
 
-        var transactionCategory = user.AddTransactionCategory(command.CategoryType, command.Name, command.Color);
+        var transactionCategory = user.AddTransactionCategory(command.CategoryType, command.Name, command.Color,
+            command.IsMandatory);
         await context.SaveChangesAsync(ct);
 
         return transactionCategory.Id;
@@ -31,7 +32,7 @@ public sealed class TransactionCategoryService(AppDbContext context, ICurrentUse
                 .FirstOrDefaultAsync(tc => tc.Id == command.Id, cancellationToken: ct) ??
             throw new NotFoundException("Категория не найдена", command.Id);
 
-        transactionCategory.Update(command.Name, command.Color);
+        transactionCategory.Update(command.Name, command.Color, command.IsMandatory);
         await context.SaveChangesAsync(ct);
     }
 

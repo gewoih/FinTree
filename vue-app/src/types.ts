@@ -31,6 +31,7 @@ export interface TransactionCategoryDto {
     color: string;
     type: CategoryType;
     isSystem: boolean;
+    isMandatory?: boolean;
 }
 
 // Extended interfaces for frontend use
@@ -105,6 +106,7 @@ export interface CreateCategoryPayload {
     categoryType: CategoryType;
     name: string;
     color: string;
+    isMandatory?: boolean;
 }
 
 export interface CategoryFormPayload {
@@ -112,12 +114,14 @@ export interface CategoryFormPayload {
     categoryType: CategoryType;
     name: string;
     color: string;
+    isMandatory?: boolean;
 }
 
 export interface UpdateCategoryPayload {
     id: string;
     name: string;
     color: string;
+    isMandatory?: boolean;
 }
 
 export interface MonthlyExpenseDto {
@@ -133,6 +137,7 @@ export interface CategoryExpenseDto {
     name: string;
     color: string;
     amount: number;
+    isMandatory?: boolean;
 }
 
 export interface NetWorthSnapshotDto {
@@ -147,6 +152,15 @@ export interface FinancialHealthMetricsDto {
     liquidityMonths: number | null;
     expenseVolatility: number | null;
     incomeDiversity: number | null;
+}
+
+export interface CashflowSummaryDto {
+    year: number;
+    month: number;
+    totalIncome: number;
+    totalExpenses: number;
+    netCashflow: number;
+    savingsRate: number | null;
 }
 
 export interface CurrentUserDto {

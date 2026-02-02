@@ -23,6 +23,14 @@ namespace FinTree.Api.Controllers
             return Ok(data);
         }
 
+        [HttpGet("cashflow-summary")]
+        public async Task<IActionResult> GetCashflowSummary([FromQuery] int year, [FromQuery] int month,
+            CancellationToken ct)
+        {
+            var data = await analyticsService.GetCashflowSummaryAsync(year, month, ct);
+            return Ok(data);
+        }
+
         [HttpGet("expenses-by-category")]
         public async Task<IActionResult> GetExpensesByCategory([FromQuery] int year, [FromQuery] int month,
             CancellationToken ct)

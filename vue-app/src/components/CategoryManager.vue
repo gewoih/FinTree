@@ -3,6 +3,7 @@ import { computed, ref, watch } from 'vue'
 import Button from 'primevue/button'
 import Skeleton from 'primevue/skeleton'
 import SelectButton from 'primevue/selectbutton'
+import Tag from 'primevue/tag'
 import { useConfirm } from 'primevue/useconfirm'
 import { useToast } from 'primevue/usetoast'
 import { useFinanceStore } from '../stores/finance'
@@ -182,7 +183,16 @@ defineExpose({
                 class="color-dot"
                 :style="{ backgroundColor: category.color }"
               />
-              <span class="category-name">{{ category.name }}</span>
+              <span class="category-name">
+                {{ category.name }}
+                <Tag
+                  v-if="category.isMandatory"
+                  severity="info"
+                  class="category-mandatory"
+                >
+                  Обязательная
+                </Tag>
+              </span>
             </div>
 
             <div class="category-actions">
@@ -226,7 +236,16 @@ defineExpose({
                 class="color-dot"
                 :style="{ backgroundColor: category.color }"
               />
-              <span class="category-name">{{ category.name }}</span>
+              <span class="category-name">
+                {{ category.name }}
+                <Tag
+                  v-if="category.isMandatory"
+                  severity="info"
+                  class="category-mandatory"
+                >
+                  Обязательная
+                </Tag>
+              </span>
             </div>
           </li>
         </ul>
@@ -355,6 +374,14 @@ defineExpose({
   display: inline-flex;
   align-items: center;
   gap: var(--ft-space-2);
+}
+
+.category-mandatory {
+  font-size: 0.7rem;
+  padding: 0.15rem 0.45rem;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--ft-primary-200, #dbeafe) 55%, transparent) !important;
+  color: var(--ft-primary-700, #1d4ed8) !important;
 }
 
 .category-actions {

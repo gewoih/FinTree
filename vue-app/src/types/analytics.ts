@@ -23,6 +23,7 @@ export interface CategoryLegendItem {
   color: string;
   amount: number;
   percent: number;
+  isMandatory?: boolean;
 }
 
 export type ExpenseGranularity = 'days' | 'weeks' | 'months';

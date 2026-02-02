@@ -3,6 +3,7 @@ import { computed, ref, watch } from 'vue';
 import Dialog from 'primevue/dialog';
 import InputText from 'primevue/inputtext';
 import SelectButton from 'primevue/selectbutton';
+import Checkbox from 'primevue/checkbox';
 import type { Category, CategoryType } from '../types';
 import { CATEGORY_TYPE } from '../types';
 import { useFinanceStore } from '../stores/finance';
@@ -26,9 +27,13 @@ const name = ref('');
 const color = ref(DEFAULT_COLOR);
 const categoryType = ref<CategoryType | null>(null);
 const attemptedSubmit = ref(false);
+const isMandatory = ref(false);
 
 const isEditMode = computed(() => Boolean(props.category));
 const isSystemCategory = computed(() => props.category?.isSystem ?? false);
+const isExpenseCategory = computed(
+  () => (categoryType.value ?? props.defaultType) === CATEGORY_TYPE.Expense
+);
 
 const categoryTypeOptions = [
   { label: 'Доход', value: CATEGORY_TYPE.Income },
@@ -41,6 +46,7 @@ const resetForm = () => {
   name.value = '';
   color.value = DEFAULT_COLOR;
   categoryType.value = props.defaultType ?? null;
+  isMandatory.value = false;
   attemptedSubmit.value = false;
 };
 
@@ -52,6 +58,7 @@ watch(
         name.value = props.category.name;
         color.value = props.category.color;
         categoryType.value = props.category.type;
+        isMandatory.value = props.category.isMandatory ?? false;
       } else {
         resetForm();
       }
@@ -97,6 +104,7 @@ const { isSubmitting, handleSubmit: submitCategory, showWarning } = useFormModal
         categoryType: categoryType.value ?? props.category.type,
         name: name.value.trim(),
         color: color.value,
+        isMandatory: isMandatory.value,
       });
     }
 
@@ -104,6 +112,7 @@ const { isSubmitting, handleSubmit: submitCategory, showWarning } = useFormModal
       categoryType: categoryType.value ?? CATEGORY_TYPE.Expense,
       name: name.value.trim(),
       color: color.value,
+      isMandatory: isMandatory.value,
     });
   },
   {
@@ -213,6 +222,19 @@ const handleSubmit = async () => {
         </template>
       </FormField>
 
+      <FormField
+        v-if="isExpenseCategory"
+        label="Обязательность"
+        hint="Обязательные траты учитываются в метриках устойчивости."
+      >
+        <template #default>
+          <label class="mandatory-toggle">
+            <Checkbox v-model="isMandatory" binary />
+            <span>Обязательная категория</span>
+          </label>
+        </template>
+      </FormField>
+
       <div
         v-if="isSystemCategory"
         class="system-category-alert"
@@ -277,6 +299,14 @@ const handleSubmit = async () => {
 .color-picker__swatch::-webkit-color-swatch {
   border: none;
   border-radius: inherit;
+}
+
+.mandatory-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--ft-space-2);
+  color: var(--ft-text-primary);
+  font-weight: var(--ft-font-medium);
 }
 
 .system-category-alert {

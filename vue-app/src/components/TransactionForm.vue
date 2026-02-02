@@ -153,6 +153,11 @@ const currencySymbol = computed(() => selectedAccount.value?.currency?.symbol ??
 const isAmountValid = computed(() => validators.isAmountValid(amount.value));
 const submitDisabled = computed(() => !transactionType.value || !isAmountValid.value || !selectedCategory.value || !selectedAccount.value);
 
+const toUtcIsoDate = (value: Date) => {
+  const date = new Date(value.getFullYear(), value.getMonth(), value.getDate());
+  return new Date(Date.UTC(date.getFullYear(), date.getMonth(), date.getDate())).toISOString();
+};
+
 // --- Submit handler ---
 const { isSubmitting, handleSubmit: handleFormSubmit, showWarning } = useFormModal(
   async () => {
@@ -164,7 +169,7 @@ const { isSubmitting, handleSubmit: handleFormSubmit, showWarning } = useFormMod
         accountId: selectedAccount.value!.id,
         categoryId: selectedCategory.value!.id,
         amount: amount.value!,
-        occurredAt: date.value.toISOString(),
+        occurredAt: toUtcIsoDate(date.value),
         description: description.value ? description.value.trim() : null,
         isMandatory: isMandatory.value,
       };
@@ -177,7 +182,7 @@ const { isSubmitting, handleSubmit: handleFormSubmit, showWarning } = useFormMod
         accountId: selectedAccount.value!.id,
         categoryId: selectedCategory.value!.id,
         amount: amount.value!,
-        occurredAt: date.value.toISOString(),
+        occurredAt: toUtcIsoDate(date.value),
         description: description.value ? description.value.trim() : null,
         isMandatory: isMandatory.value,
       };

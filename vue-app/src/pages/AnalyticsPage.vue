@@ -12,6 +12,7 @@ import { apiService } from '../services/api.service';
 import DatePicker from 'primevue/datepicker';
 import type {
   CategoryExpenseDto,
+  CashflowSummaryDto,
   MonthlyExpenseDto,
   NetWorthSnapshotDto,
 } from '../types';
@@ -69,6 +70,9 @@ const categoryExpensesPrevious = ref<CategoryExpenseDto[]>([]);
 const categoryLoading = ref(false);
 const categoryError = ref<string | null>(null);
 const categoryDeltaError = ref<string | null>(null);
+const cashflowSummary = ref<CashflowSummaryDto | null>(null);
+const cashflowLoading = ref(false);
+const cashflowError = ref<string | null>(null);
 
 const netWorthSnapshots = ref<NetWorthSnapshotDto[]>([]);
 const netWorthLoading = ref(false);
@@ -90,8 +94,10 @@ const expensesError = reactive<Record<ExpenseGranularity, string | null>>({
   months: null,
 });
 
-const healthLoading = computed(() => expensesLoading.days || expensesLoading.months);
-const healthError = computed(() => expensesError.days ?? expensesError.months);
+const healthLoading = computed(() =>
+  expensesLoading.days || expensesLoading.months || cashflowLoading.value
+);
+const healthError = computed(() => cashflowError.value ?? expensesError.days ?? expensesError.months);
 
 const chartPalette = reactive({
   primary: '#60a5fa',
@@ -107,6 +113,12 @@ const healthTiles = computed<HealthTile[]>(() => {
     monthOverMonthChange.value == null
       ? 'к прошлому мес. —'
       : `к прошлому мес. ${monthOverMonthChange.value > 0 ? '+' : ''}${monthOverMonthChange.value}%`;
+  const savingsRate = cashflowSummary.value?.savingsRate ?? null;
+  const netCashflow = cashflowSummary.value?.netCashflow ?? null;
+  const totalExpenses = currentMonthTotal.value ?? null;
+  const discretionaryTotal = discretionaryExpenses.value;
+  const discretionaryShare =
+    totalExpenses && totalExpenses > 0 ? (discretionaryTotal / totalExpenses) * 100 : null;
   return [
     {
       key: 'month-total',
@@ -128,6 +140,27 @@ const healthTiles = computed<HealthTile[]>(() => {
       value: formatMoney(dailyMedian.value),
       meta: 'обычный день',
       tooltip: 'Типичный дневной расход за месяц (медиана).',
+    },
+    {
+      key: 'discretionary',
+      label: 'Необязательные расходы',
+      value: formatMoney(discretionaryTotal),
+      meta: discretionaryShare == null ? 'доля —' : `доля ${discretionaryShare.toFixed(1)}%`,
+      tooltip: 'Расходы по необязательным категориям за месяц.',
+    },
+    {
+      key: 'savings-rate',
+      label: 'Savings Rate',
+      value: savingsRate == null ? '—' : formatPercent(savingsRate, 1),
+      meta: 'доля сбережений',
+      tooltip: 'Доля дохода, оставшаяся после расходов.',
+    },
+    {
+      key: 'net-cashflow',
+      label: 'Net Cashflow',
+      value: formatSignedMoney(netCashflow),
+      meta: 'доходы минус расходы',
+      tooltip: 'Чистый денежный поток за месяц.',
     },
   ];
 });
@@ -162,6 +195,12 @@ function formatMoney(value: number | null, maximumFractionDigits = 0): string {
     currency: baseCurrency.value,
     maximumFractionDigits,
   });
+}
+
+function formatSignedMoney(value: number | null): string {
+  if (value == null || Number.isNaN(value)) return '—';
+  const sign = value < 0 ? '−' : '+';
+  return `${sign} ${formatMoney(Math.abs(value))}`;
 }
 
 function resolveErrorMessage(error: unknown, fallback: string): string {
@@ -242,6 +281,22 @@ async function loadCategoryExpenses(month: Date) {
     categoryExpensesPrevious.value = [];
   } finally {
     categoryLoading.value = false;
+  }
+}
+
+async function loadCashflowSummary(month: Date) {
+  if (cashflowLoading.value) return;
+  cashflowLoading.value = true;
+  cashflowError.value = null;
+  try {
+    const year = month.getFullYear();
+    const apiMonth = month.getMonth() + 1;
+    cashflowSummary.value = await apiService.getCashflowSummary(year, apiMonth);
+  } catch (error) {
+    cashflowError.value = resolveErrorMessage(error, 'Не удалось загрузить сводку денежных потоков.');
+    cashflowSummary.value = null;
+  } finally {
+    cashflowLoading.value = false;
   }
 }
 
@@ -329,7 +384,15 @@ const categoryLegend = computed<CategoryLegendItem[]>(() => {
     amount: Number(item.amount ?? 0),
     percent: total > 0 ? (Number(item.amount ?? 0) / total) * 100 : 0,
     color: item.color?.trim() ?? chartPalette.categories[index % chartPalette.categories.length],
+    isMandatory: item.isMandatory ?? false,
   }));
+});
+
+const discretionaryExpenses = computed(() => {
+  if (!categoryExpenses.value.length) return 0;
+  return categoryExpenses.value
+    .filter(item => !item.isMandatory)
+    .reduce((sum, item) => sum + Number(item.amount ?? 0), 0);
 });
 
 const categoryChartData = computed(() => {
@@ -851,7 +914,9 @@ watch(selectedGranularity, (granularity) => {
 
 watch(selectedMonth, (value) => {
   if (!value) return;
-  void loadCategoryExpenses(normalizeMonth(value));
+  const normalized = normalizeMonth(value);
+  void loadCategoryExpenses(normalized);
+  void loadCashflowSummary(normalized);
 });
 
 onMounted(async () => {
@@ -859,6 +924,7 @@ onMounted(async () => {
   await userStore.fetchCurrentUser();
   await Promise.all([
     loadCategoryExpenses(normalizedSelectedMonth.value),
+    loadCashflowSummary(normalizedSelectedMonth.value),
     loadNetWorth(),
     loadExpenses('months'),
     loadExpenses('days'),
@@ -913,7 +979,7 @@ onMounted(async () => {
 
     <div class="analytics-grid">
       <HeroHealthCard
-        class="analytics-grid__hero"
+        class="analytics-grid__item analytics-grid__item--span-12"
         :loading="healthLoading"
         :error="healthError"
         :tiles="healthTiles"
@@ -926,7 +992,7 @@ onMounted(async () => {
       />
 
       <SpendingPieCard
-        class="analytics-grid__pie"
+        class="analytics-grid__item analytics-grid__item--span-12"
         :loading="categoryLoading"
         :error="categoryError"
         :chart-data="categoryChartData"
@@ -937,7 +1003,7 @@ onMounted(async () => {
       />
 
       <CategoryDeltaCard
-        class="analytics-grid__delta"
+        class="analytics-grid__item analytics-grid__item--span-6"
         :loading="categoryLoading"
         :error="categoryDeltaError"
         :period-label="selectedMonthLabel"
@@ -948,7 +1014,7 @@ onMounted(async () => {
       />
 
       <SpendingBarsCard
-        class="analytics-grid__spending"
+        class="analytics-grid__item analytics-grid__item--span-6"
         :loading="expensesLoading[selectedGranularity]"
         :error="expensesError[selectedGranularity]"
         :granularity="selectedGranularity"
@@ -961,7 +1027,7 @@ onMounted(async () => {
       />
 
       <ForecastCard
-        class="analytics-grid__forecast"
+        class="analytics-grid__item analytics-grid__item--span-12"
         :loading="forecastLoading"
         :error="forecastError"
         :forecast="forecastSummary"
@@ -984,12 +1050,8 @@ onMounted(async () => {
   gap: var(--ft-space-4);
 }
 
-.analytics-grid__hero,
-.analytics-grid__pie,
-.analytics-grid__spending,
-.analytics-grid__delta,
-.analytics-grid__forecast {
-  grid-column: 1 / -1;
+.analytics-grid__item {
+  grid-column: span 12;
 }
 
 .analytics-month-selector {
@@ -1051,22 +1113,20 @@ onMounted(async () => {
     grid-template-columns: repeat(12, minmax(0, 1fr));
   }
 
-  .analytics-grid__hero,
-  .analytics-grid__forecast {
+  .analytics-grid__item--span-12 {
     grid-column: 1 / -1;
   }
 
-  .analytics-grid__pie {
-    grid-column: 1 / -1;
+  .analytics-grid__item--span-8 {
+    grid-column: span 8;
   }
 
-  .analytics-grid__spending {
-    grid-column: 7 / span 6;
+  .analytics-grid__item--span-6 {
+    grid-column: span 6;
   }
 
-  .analytics-grid__delta {
-    grid-column: 1 / span 6;
+  .analytics-grid__item--span-4 {
+    grid-column: span 4;
   }
-
 }
 </style>

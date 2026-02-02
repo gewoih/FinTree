@@ -14,6 +14,7 @@ import type {
     CategoryExpenseDto,
     NetWorthSnapshotDto,
     FinancialHealthMetricsDto,
+    CashflowSummaryDto,
     CurrentUserDto,
     UpdateUserProfilePayload,
     CreateIncomeInstrumentPayload,
@@ -243,6 +244,13 @@ export const apiService = {
     async getFinancialHealthMetrics(periodMonths: number): Promise<FinancialHealthMetricsDto> {
         const response = await apiClient.get<FinancialHealthMetricsDto>('/analytics/financial-health', {
             params: { months: periodMonths }
+        });
+        return response.data;
+    },
+
+    async getCashflowSummary(year: number, month: number): Promise<CashflowSummaryDto> {
+        const response = await apiClient.get<CashflowSummaryDto>('/analytics/cashflow-summary', {
+            params: { year, month }
         });
         return response.data;
     },

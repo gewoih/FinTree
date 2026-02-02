@@ -235,6 +235,7 @@ export const useFinanceStore = defineStore('finance', () => {
                 name: payload.name,
                 color: payload.color,
                 categoryType: payload.categoryType,
+                isMandatory: payload.isMandatory ?? false,
             });
 
             await fetchCategories(true);
@@ -263,6 +264,7 @@ export const useFinanceStore = defineStore('finance', () => {
                 id: payload.id,
                 name: payload.name,
                 color: payload.color,
+                isMandatory: payload.isMandatory ?? false,
             });
 
             await fetchCategories(true);

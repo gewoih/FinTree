@@ -7,4 +7,5 @@ public readonly record struct TransactionCategoryDto(
     string Name,
     string Color,
     bool IsSystem,
-    CategoryType Type);
+    CategoryType Type,
+    bool IsMandatory);

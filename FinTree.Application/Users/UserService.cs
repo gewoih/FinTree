@@ -74,7 +74,8 @@ public sealed class UserService(AppDbContext context, ICurrentUser currentUser)
                 x.Category.Name,
                 x.Category.Color,
                 x.Category.IsSystem,
-                x.Category.Type
+                x.Category.Type,
+                x.Category.IsMandatory
             ))
             .ToListAsync(ct);
 

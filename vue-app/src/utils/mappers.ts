@@ -45,6 +45,7 @@ export function mapCategory(dto: TransactionCategoryDto): Category {
     color: dto.color,
     type: normalizeCategoryType(dto.type),
     isSystem: dto.isSystem,
+    isMandatory: dto.isMandatory ?? false,
   };
 }
 

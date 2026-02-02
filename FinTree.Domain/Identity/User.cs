@@ -84,7 +84,8 @@ public sealed class User : IdentityUser<Guid>
         TelegramUserId = null;
     }
 
-    public TransactionCategory AddTransactionCategory(CategoryType categoryType, string name, string color)
+    public TransactionCategory AddTransactionCategory(CategoryType categoryType, string name, string color,
+        bool isMandatory = false)
     {
         if (_transactionCategories.Any(t =>
                 string.Equals(t.Name, name, StringComparison.CurrentCultureIgnoreCase) &&
@@ -93,7 +94,7 @@ public sealed class User : IdentityUser<Guid>
             throw new InvalidOperationException("Категория уже существует");
         }
 
-        var transactionCategory = TransactionCategory.CreateUser(Id, name, color, categoryType);
+        var transactionCategory = TransactionCategory.CreateUser(Id, name, color, categoryType, isMandatory);
         _transactionCategories.Add(transactionCategory);
         return transactionCategory;
     }

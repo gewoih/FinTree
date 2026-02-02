@@ -238,6 +238,55 @@ public sealed class AnalyticsService(
         return result;
     }
 
+    public async Task<CashflowSummaryDto> GetCashflowSummaryAsync(int year, int month, CancellationToken ct = default)
+    {
+        var currentUserId = currentUserService.Id;
+        var baseCurrencyCode = await context.Users
+            .Where(u => u.Id == currentUserId)
+            .Select(u => u.BaseCurrencyCode)
+            .SingleAsync(ct);
+
+        var startUtc = new DateTime(year, month, 1, 0, 0, 0, DateTimeKind.Utc);
+        var endUtc = startUtc.AddMonths(1);
+
+        var transactionDatas = await context.Transactions
+            .Where(t => t.Account.UserId == currentUserId &&
+                        t.OccurredAt >= startUtc &&
+                        t.OccurredAt < endUtc)
+            .Select(t => new { t.Money, t.OccurredAt, t.Type })
+            .ToListAsync(ct);
+
+        var totalIncome = 0m;
+        var totalExpenses = 0m;
+
+        foreach (var txn in transactionDatas)
+        {
+            ct.ThrowIfCancellationRequested();
+
+            var baseMoney = await currencyConverter.ConvertAsync(
+                money: txn.Money,
+                toCurrencyCode: baseCurrencyCode,
+                atUtc: txn.OccurredAt,
+                ct: ct);
+
+            if (txn.Type == TransactionType.Income)
+                totalIncome += baseMoney.Amount;
+            else
+                totalExpenses += baseMoney.Amount;
+        }
+
+        var netCashflow = totalIncome - totalExpenses;
+        var savingsRate = totalIncome > 0m ? netCashflow / totalIncome : (decimal?)null;
+
+        return new CashflowSummaryDto(
+            year,
+            month,
+            Math.Round(totalIncome, 2, MidpointRounding.AwayFromZero),
+            Math.Round(totalExpenses, 2, MidpointRounding.AwayFromZero),
+            Math.Round(netCashflow, 2, MidpointRounding.AwayFromZero),
+            savingsRate);
+    }
+
     public async Task<IReadOnlyList<MonthlyExpensesDto>> GetExpensesByGranularityAsync(
         string granularity, CancellationToken ct = default)
     {
@@ -347,7 +396,8 @@ public sealed class AnalyticsService(
             .ToListAsync(cancellationToken: ct);
 
         var userCategories =
-            (await userService.GetUserCategoriesAsync(ct)).ToDictionary(c => c.Id, c => new { c.Name, c.Color });
+            (await userService.GetUserCategoriesAsync(ct))
+            .ToDictionary(c => c.Id, c => new { c.Name, c.Color, c.IsMandatory });
 
         var categoryTotals = new Dictionary<Guid, decimal>();
         foreach (var r in transactionDatas)
@@ -376,7 +426,8 @@ public sealed class AnalyticsService(
             .Select(kv =>
             {
                 var categoryInfo = userCategories[kv.Key];
-                return new CategoryExpenseDto(kv.Key, categoryInfo.Name, categoryInfo.Color, kv.Value);
+                return new CategoryExpenseDto(kv.Key, categoryInfo.Name, categoryInfo.Color, kv.Value,
+                    categoryInfo.IsMandatory);
             })
             .OrderByDescending(x => x.Amount)
             .ToList();

@@ -4,4 +4,5 @@ public readonly record struct CategoryExpenseDto(
     Guid Id,
     string Name,
     string Color,
-    decimal Amount);
+    decimal Amount,
+    bool IsMandatory);

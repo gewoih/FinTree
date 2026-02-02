@@ -356,8 +356,8 @@ const hasMorePeaks = computed(() => props.peaks.length > 3);
 
 .hero-card__metrics {
   display: grid;
-  grid-template-columns: 1fr;
-  gap: clamp(0.75rem, 1.4vw, 1rem);
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: clamp(0.6rem, 1.2vw, 0.9rem);
 }
 
 .hero-card__metric {
@@ -614,6 +614,10 @@ const hasMorePeaks = computed(() => props.peaks.length > 3);
 
 @media (max-width: 992px) {
   .hero-card__insights {
+    grid-template-columns: 1fr;
+  }
+
+  .hero-card__metrics {
     grid-template-columns: 1fr;
   }
 }

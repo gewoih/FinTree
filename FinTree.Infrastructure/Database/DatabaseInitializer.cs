@@ -17,17 +17,17 @@ public sealed class DatabaseInitializer(AppDbContext context, UserManager<User> 
         {
             TransactionCategory.CreateDefault("Без категории", "#9e9e9e"),
 
-            TransactionCategory.CreateSystem("Продукты", "#4caf50"),
+            TransactionCategory.CreateSystem("Продукты", "#4caf50", isMandatory: true),
             TransactionCategory.CreateSystem("Кафе", "#ff7043"),
-            TransactionCategory.CreateSystem("Здоровье", "#e53935"),
-            TransactionCategory.CreateSystem("Транспорт", "#1e88e5"),
-            TransactionCategory.CreateSystem("Дом", "#8d6e63"),
+            TransactionCategory.CreateSystem("Здоровье", "#e53935", isMandatory: true),
+            TransactionCategory.CreateSystem("Транспорт", "#1e88e5", isMandatory: true),
+            TransactionCategory.CreateSystem("Дом", "#8d6e63", isMandatory: true),
             TransactionCategory.CreateSystem("Развлечения", "#fb8c00"),
             TransactionCategory.CreateSystem("Подписки", "#7e57c2"),
             TransactionCategory.CreateSystem("Образование", "#3949ab"),
             TransactionCategory.CreateSystem("Путешествия", "#00897b"),
             TransactionCategory.CreateSystem("Подарки", "#fbc02d"),
-            TransactionCategory.CreateSystem("Платежи", "#546e7a"),
+            TransactionCategory.CreateSystem("Платежи", "#546e7a", isMandatory: true),
             TransactionCategory.CreateSystem("Одежда", "#6d4c41"),
             TransactionCategory.CreateSystem("Хобби", "#ffb74d"),
 
