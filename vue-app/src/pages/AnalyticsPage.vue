@@ -313,13 +313,6 @@ const maxMonthDate = computed(() => {
   return new Date(now.getFullYear(), now.getMonth() + 1, 0);
 });
 
-const selectedMonthShortLabel = computed(() => {
-  const target = normalizedSelectedMonth.value;
-  return formatMonthLabel(target.getFullYear(), target.getMonth() + 1);
-});
-
-const currentMonthLabel = computed(() => selectedMonthShortLabel.value);
-
 const categoryDelta = computed(() => {
   const delta = dashboard.value?.categories.delta;
   return {
@@ -604,7 +597,6 @@ onMounted(async () => {
         :tiles="healthTiles"
         :peaks="peakDays"
         :peaks-summary="peakSummary"
-        :month-label="currentMonthLabel"
         @retry="retryDashboard"
         @select-peak="handlePeakSelect"
         @select-peak-summary="handlePeakSummarySelect"

@@ -132,28 +132,6 @@ export interface MonthlyExpenseDto {
     amount: number;
 }
 
-export interface CategoryExpenseDto {
-    id: string; // Guid from backend
-    name: string;
-    color: string;
-    amount: number;
-    isMandatory?: boolean;
-}
-
-export interface NetWorthSnapshotDto {
-    year: number;
-    month: number;
-    totalBalance: number;
-}
-
-export interface FinancialHealthMetricsDto {
-    periodMonths: number;
-    savingsRate: number | null;
-    liquidityMonths: number | null;
-    expenseVolatility: number | null;
-    incomeDiversity: number | null;
-}
-
 export interface FinancialHealthSummaryDto {
     monthTotal: number | null;
     meanDaily: number | null;
@@ -243,15 +221,6 @@ export interface AnalyticsDashboardDto {
     categories: CategoryBreakdownDto;
     spending: SpendingBreakdownDto;
     forecast: ForecastDto;
-}
-
-export interface CashflowSummaryDto {
-    year: number;
-    month: number;
-    totalIncome: number;
-    totalExpenses: number;
-    netCashflow: number;
-    savingsRate: number | null;
 }
 
 export interface CurrentUserDto {

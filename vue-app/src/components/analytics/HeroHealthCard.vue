@@ -32,13 +32,11 @@ const props = withDefaults(
     tiles: HealthTile[];
     peaks: PeakDayItem[];
     peaksSummary: PeaksSummary;
-    monthLabel: string;
   }>(),
   {
     tiles: () => [],
     peaks: () => [],
     peaksSummary: () => ({ count: 0, totalLabel: '—', shareLabel: '—', shareValue: null, monthLabel: '—' }),
-    monthLabel: '',
   }
 );
 
@@ -52,11 +50,6 @@ const showEmpty = computed(() => {
   if (props.loading || props.error) return false;
   const hasTileData = props.tiles.some(tile => tile.value !== '—');
   return !hasTileData && props.peaks.length === 0;
-});
-
-const peaksSubtitle = computed(() => {
-  const base = props.monthLabel ? `в ${props.monthLabel}` : 'в текущем месяце';
-  return `Дни с расходами ≥ 2× медианы ${base}`;
 });
 
 const peaksShareClass = computed(() => {
