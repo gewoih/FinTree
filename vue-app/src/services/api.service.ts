@@ -15,6 +15,7 @@ import type {
     NetWorthSnapshotDto,
     FinancialHealthMetricsDto,
     CashflowSummaryDto,
+    AnalyticsDashboardDto,
     CurrentUserDto,
     UpdateUserProfilePayload,
     CreateIncomeInstrumentPayload,
@@ -250,6 +251,13 @@ export const apiService = {
 
     async getCashflowSummary(year: number, month: number): Promise<CashflowSummaryDto> {
         const response = await apiClient.get<CashflowSummaryDto>('/analytics/cashflow-summary', {
+            params: { year, month }
+        });
+        return response.data;
+    },
+
+    async getAnalyticsDashboard(year: number, month: number): Promise<AnalyticsDashboardDto> {
+        const response = await apiClient.get<AnalyticsDashboardDto>('/analytics/dashboard', {
             params: { year, month }
         });
         return response.data;

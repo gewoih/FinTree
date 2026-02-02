@@ -11,10 +11,8 @@ import { useUserStore } from '../stores/user';
 import { apiService } from '../services/api.service';
 import DatePicker from 'primevue/datepicker';
 import type {
-  CategoryExpenseDto,
-  CashflowSummaryDto,
+  AnalyticsDashboardDto,
   MonthlyExpenseDto,
-  NetWorthSnapshotDto,
 } from '../types';
 import type {
   CategoryLegendItem,
@@ -31,16 +29,6 @@ interface HealthTile {
   meta?: string | null;
   tooltip?: string;
   status?: HealthStatus | 'neutral';
-}
-
-interface CategoryDeltaItem {
-  id: string;
-  name: string;
-  color: string;
-  currentAmount: number;
-  previousAmount: number;
-  deltaAmount: number;
-  deltaPercent: number | null;
 }
 
 interface PeakDayItem {
@@ -65,39 +53,18 @@ const granularityOptions: Array<{ label: string; value: ExpenseGranularity }> = 
 ] ;
 const selectedGranularity = ref<ExpenseGranularity>('days');
 
-const categoryExpenses = ref<CategoryExpenseDto[]>([]);
-const categoryExpensesPrevious = ref<CategoryExpenseDto[]>([]);
-const categoryLoading = ref(false);
-const categoryError = ref<string | null>(null);
-const categoryDeltaError = ref<string | null>(null);
-const cashflowSummary = ref<CashflowSummaryDto | null>(null);
-const cashflowLoading = ref(false);
-const cashflowError = ref<string | null>(null);
+const dashboard = ref<AnalyticsDashboardDto | null>(null);
+const dashboardLoading = ref(false);
+const dashboardError = ref<string | null>(null);
+const dashboardRequestId = ref(0);
 
-const netWorthSnapshots = ref<NetWorthSnapshotDto[]>([]);
-const netWorthLoading = ref(false);
-const netWorthError = ref<string | null>(null);
-
-const expensesData = reactive<Record<ExpenseGranularity, MonthlyExpenseDto[]>>({
-  days: [],
-  weeks: [],
-  months: [],
-});
-const expensesLoading = reactive<Record<ExpenseGranularity, boolean>>({
-  days: false,
-  weeks: false,
-  months: false,
-});
-const expensesError = reactive<Record<ExpenseGranularity, string | null>>({
-  days: null,
-  weeks: null,
-  months: null,
-});
-
-const healthLoading = computed(() =>
-  expensesLoading.days || expensesLoading.months || cashflowLoading.value
-);
-const healthError = computed(() => cashflowError.value ?? expensesError.days ?? expensesError.months);
+const healthLoading = computed(() => dashboardLoading.value);
+const healthError = computed(() => dashboardError.value);
+const categoryLoading = computed(() => dashboardLoading.value);
+const categoryError = computed(() => dashboardError.value);
+const categoryDeltaError = computed(() => dashboardError.value);
+const forecastLoading = computed(() => dashboardLoading.value);
+const forecastError = computed(() => dashboardError.value);
 
 const chartPalette = reactive({
   primary: '#60a5fa',
@@ -109,56 +76,54 @@ const chartPalette = reactive({
 const baseCurrency = computed(() => userStore.baseCurrencyCode ?? 'RUB');
 
 const healthTiles = computed<HealthTile[]>(() => {
+  const health = dashboard.value?.health;
   const trendText =
-    monthOverMonthChange.value == null
+    health?.monthOverMonthChangePercent == null
       ? 'к прошлому мес. —'
-      : `к прошлому мес. ${monthOverMonthChange.value > 0 ? '+' : ''}${monthOverMonthChange.value}%`;
-  const savingsRate = cashflowSummary.value?.savingsRate ?? null;
-  const netCashflow = cashflowSummary.value?.netCashflow ?? null;
-  const totalExpenses = currentMonthTotal.value ?? null;
-  const discretionaryTotal = discretionaryExpenses.value;
-  const discretionaryShare =
-    totalExpenses && totalExpenses > 0 ? (discretionaryTotal / totalExpenses) * 100 : null;
+      : `к прошлому мес. ${health.monthOverMonthChangePercent > 0 ? '+' : ''}${health.monthOverMonthChangePercent.toFixed(1)}%`;
   return [
     {
       key: 'month-total',
       label: 'Всего за месяц',
-      value: formatMoney(currentMonthTotal.value),
+      value: formatMoney(health?.monthTotal ?? null),
       meta: trendText,
       tooltip: 'Сумма расходов за текущий месяц.',
     },
     {
       key: 'mean-daily',
       label: 'Средний расход',
-      value: formatMoney(dailyMean.value),
+      value: formatMoney(health?.meanDaily ?? null),
       meta: 'включает пиковые дни',
       tooltip: 'Средний дневной расход за месяц.',
     },
     {
       key: 'median-daily',
       label: 'Медианный расход',
-      value: formatMoney(dailyMedian.value),
+      value: formatMoney(health?.medianDaily ?? null),
       meta: 'обычный день',
       tooltip: 'Типичный дневной расход за месяц (медиана).',
     },
     {
       key: 'discretionary',
       label: 'Необязательные расходы',
-      value: formatMoney(discretionaryTotal),
-      meta: discretionaryShare == null ? 'доля —' : `доля ${discretionaryShare.toFixed(1)}%`,
+      value: formatMoney(health?.discretionaryTotal ?? null),
+      meta:
+        health?.discretionarySharePercent == null
+          ? 'доля —'
+          : `доля ${health.discretionarySharePercent.toFixed(1)}%`,
       tooltip: 'Расходы по необязательным категориям за месяц.',
     },
     {
       key: 'savings-rate',
       label: 'Savings Rate',
-      value: savingsRate == null ? '—' : formatPercent(savingsRate, 1),
+      value: health?.savingsRate == null ? '—' : formatPercent(health.savingsRate, 1),
       meta: 'доля сбережений',
       tooltip: 'Доля дохода, оставшаяся после расходов.',
     },
     {
       key: 'net-cashflow',
       label: 'Net Cashflow',
-      value: formatSignedMoney(netCashflow),
+      value: formatSignedMoney(health?.netCashflow ?? null),
       meta: 'доходы минус расходы',
       tooltip: 'Чистый денежный поток за месяц.',
     },
@@ -186,6 +151,11 @@ function resolveCssVariables() {
 function formatPercent(value: number | null, fractionDigits = 0): string {
   if (value == null || Number.isNaN(value)) return '—';
   return `${(value * 100).toFixed(fractionDigits)}%`;
+}
+
+function formatPercentValue(value: number | null, fractionDigits = 1): string {
+  if (value == null || Number.isNaN(value)) return '—';
+  return `${value.toFixed(fractionDigits)}%`;
 }
 
 function formatMoney(value: number | null, maximumFractionDigits = 0): string {
@@ -224,12 +194,6 @@ function addLocalMonths(date: Date, months: number): Date {
   return new Date(date.getFullYear(), date.getMonth() + months, 1);
 }
 
-function getMonthRangeUtc(date: Date) {
-  const start = new Date(Date.UTC(date.getFullYear(), date.getMonth(), 1, 0, 0, 0));
-  const end = new Date(Date.UTC(date.getFullYear(), date.getMonth() + 1, 1, 0, 0, 0));
-  return { from: start, to: end };
-}
-
 function getMonthRangeLocal(date: Date) {
   const start = new Date(date.getFullYear(), date.getMonth(), 1);
   const end = new Date(date.getFullYear(), date.getMonth() + 1, 0);
@@ -238,65 +202,28 @@ function getMonthRangeLocal(date: Date) {
 
 function formatMonthTitle(date: Date): string {
   const label = new Intl.DateTimeFormat('ru-RU', { month: 'long', year: 'numeric' }).format(date);
-  return label.charAt(0).toUpperCase() + label.slice(1);
+  const cleaned = label.replace(/\s*г\.$/i, '');
+  return cleaned.charAt(0).toUpperCase() + cleaned.slice(1);
 }
 
-function computeMedian(values: number[]): number | null {
-  if (!values.length) return null;
-  const sorted = [...values].sort((a, b) => a - b);
-  const mid = Math.floor(sorted.length / 2);
-  return sorted.length % 2 === 0
-    ? (sorted[mid - 1] + sorted[mid]) / 2
-    : sorted[mid];
-}
-
-async function loadCategoryExpenses(month: Date) {
-  if (categoryLoading.value) return;
-  categoryLoading.value = true;
-  categoryError.value = null;
-  categoryDeltaError.value = null;
-  try {
-    const { from, to } = getMonthRangeUtc(month);
-    const data = await apiService.getExpensesByCategoryByDateRange(from, to);
-    categoryExpenses.value = data ?? [];
-
-    try {
-      const previousRange = getMonthRangeUtc(addLocalMonths(month, -1));
-      const previousData = await apiService.getExpensesByCategoryByDateRange(
-        previousRange.from,
-        previousRange.to
-      );
-      categoryExpensesPrevious.value = previousData ?? [];
-    } catch (error) {
-      categoryDeltaError.value = resolveErrorMessage(
-        error,
-        'Не удалось загрузить данные для сравнения.'
-      );
-      categoryExpensesPrevious.value = [];
-    }
-  } catch (error) {
-    categoryError.value = resolveErrorMessage(error, 'Не удалось загрузить расходы по категориям.');
-    categoryExpenses.value = [];
-    categoryDeltaError.value = categoryError.value;
-    categoryExpensesPrevious.value = [];
-  } finally {
-    categoryLoading.value = false;
-  }
-}
-
-async function loadCashflowSummary(month: Date) {
-  if (cashflowLoading.value) return;
-  cashflowLoading.value = true;
-  cashflowError.value = null;
+async function loadDashboard(month: Date) {
+  const requestId = ++dashboardRequestId.value;
+  dashboardLoading.value = true;
+  dashboardError.value = null;
   try {
     const year = month.getFullYear();
     const apiMonth = month.getMonth() + 1;
-    cashflowSummary.value = await apiService.getCashflowSummary(year, apiMonth);
+    const data = await apiService.getAnalyticsDashboard(year, apiMonth);
+    if (requestId !== dashboardRequestId.value) return;
+    dashboard.value = data;
   } catch (error) {
-    cashflowError.value = resolveErrorMessage(error, 'Не удалось загрузить сводку денежных потоков.');
-    cashflowSummary.value = null;
+    if (requestId !== dashboardRequestId.value) return;
+    dashboardError.value = resolveErrorMessage(error, 'Не удалось загрузить аналитику.');
+    dashboard.value = null;
   } finally {
-    cashflowLoading.value = false;
+    if (requestId === dashboardRequestId.value) {
+      dashboardLoading.value = false;
+    }
   }
 }
 
@@ -343,56 +270,18 @@ function handlePeakSummarySelect() {
   });
 }
 
-async function loadNetWorth() {
-  if (netWorthLoading.value) return;
-  netWorthLoading.value = true;
-  netWorthError.value = null;
-  try {
-    const snapshots = await apiService.getNetWorthTrend();
-    netWorthSnapshots.value = snapshots ?? [];
-  } catch (error) {
-    netWorthError.value = resolveErrorMessage(error, 'Не удалось загрузить динамику капитала.');
-    netWorthSnapshots.value = [];
-  } finally {
-    netWorthLoading.value = false;
-  }
-}
-
-async function loadExpenses(granularity: ExpenseGranularity, force = false) {
-  if (expensesLoading[granularity]) return;
-  if (expensesData[granularity].length && !force) return;
-
-  expensesLoading[granularity] = true;
-  expensesError[granularity] = null;
-  try {
-    const data = await apiService.getExpensesByGranularity(granularity);
-    expensesData[granularity] = data ?? [];
-  } catch (error) {
-    expensesError[granularity] = resolveErrorMessage(error, 'Не удалось загрузить расходы.');
-    expensesData[granularity] = [];
-  } finally {
-    expensesLoading[granularity] = false;
-  }
-}
 
 const categoryLegend = computed<CategoryLegendItem[]>(() => {
-  if (!categoryExpenses.value.length) return [];
-  const total = categoryExpenses.value.reduce((sum, item) => sum + Number(item.amount ?? 0), 0);
-  return categoryExpenses.value.map((item, index) => ({
+  const items = dashboard.value?.categories.items ?? [];
+  if (!items.length) return [];
+  return items.map((item, index) => ({
     id: item.id,
     name: item.name,
     amount: Number(item.amount ?? 0),
-    percent: total > 0 ? (Number(item.amount ?? 0) / total) * 100 : 0,
+    percent: Number(item.percent ?? 0),
     color: item.color?.trim() ?? chartPalette.categories[index % chartPalette.categories.length],
     isMandatory: item.isMandatory ?? false,
   }));
-});
-
-const discretionaryExpenses = computed(() => {
-  if (!categoryExpenses.value.length) return 0;
-  return categoryExpenses.value
-    .filter(item => !item.isMandatory)
-    .reduce((sum, item) => sum + Number(item.amount ?? 0), 0);
 });
 
 const categoryChartData = computed(() => {
@@ -424,88 +313,6 @@ const maxMonthDate = computed(() => {
   return new Date(now.getFullYear(), now.getMonth() + 1, 0);
 });
 
-const categoryDelta = computed<{
-  increased: CategoryDeltaItem[];
-  decreased: CategoryDeltaItem[];
-}>(() => {
-  if (!categoryExpenses.value.length || !categoryExpensesPrevious.value.length) {
-    return { increased: [], decreased: [] };
-  }
-
-  const currentMap = new Map<string, CategoryExpenseDto>();
-  const previousMap = new Map<string, CategoryExpenseDto>();
-
-  categoryExpenses.value.forEach((item) => currentMap.set(item.id, item));
-  categoryExpensesPrevious.value.forEach((item) => previousMap.set(item.id, item));
-
-  const allIds = new Set<string>([...currentMap.keys(), ...previousMap.keys()]);
-  const entries: CategoryDeltaItem[] = [];
-
-  allIds.forEach((id) => {
-    const current = currentMap.get(id);
-    const previous = previousMap.get(id);
-    const currentAmount = Number(current?.amount ?? 0);
-    const previousAmount = Number(previous?.amount ?? 0);
-    if (!currentAmount && !previousAmount) return;
-
-    const deltaAmount = currentAmount - previousAmount;
-    const deltaPercent =
-      previousAmount > 0 ? (deltaAmount / previousAmount) * 100 : null;
-
-    entries.push({
-      id,
-      name: current?.name ?? previous?.name ?? 'Без категории',
-      color:
-        current?.color?.trim() ??
-        previous?.color?.trim() ??
-        chartPalette.categories[0],
-      currentAmount,
-      previousAmount,
-      deltaAmount,
-      deltaPercent,
-    });
-  });
-
-  const increased = entries
-    .filter((item) => item.deltaAmount > 0)
-    .sort((a, b) => b.deltaAmount - a.deltaAmount)
-    .slice(0, 4);
-  const decreased = entries
-    .filter((item) => item.deltaAmount < 0)
-    .sort((a, b) => a.deltaAmount - b.deltaAmount)
-    .slice(0, 4);
-
-  return { increased, decreased };
-});
-
-const monthlySortedExpenses = computed(() => {
-  return [...expensesData.months].sort((a, b) => {
-    if (a.year !== b.year) return a.year - b.year;
-    return a.month - b.month;
-  });
-});
-
-const selectedMonthEntry = computed(() => {
-  const target = normalizedSelectedMonth.value;
-  return monthlySortedExpenses.value.find(
-    (entry) => entry.year === target.getFullYear() && entry.month === target.getMonth() + 1
-  ) ?? null;
-});
-
-const previousMonthEntry = computed(() => {
-  const previous = addLocalMonths(normalizedSelectedMonth.value, -1);
-  return monthlySortedExpenses.value.find(
-    (entry) => entry.year === previous.getFullYear() && entry.month === previous.getMonth() + 1
-  ) ?? null;
-});
-
-const currentMonthDaily = computed(() => {
-  const target = normalizedSelectedMonth.value;
-  return expensesData.days.filter(
-    (entry) => entry.year === target.getFullYear() && entry.month === target.getMonth() + 1
-  );
-});
-
 const selectedMonthShortLabel = computed(() => {
   const target = normalizedSelectedMonth.value;
   return formatMonthLabel(target.getFullYear(), target.getMonth() + 1);
@@ -513,118 +320,52 @@ const selectedMonthShortLabel = computed(() => {
 
 const currentMonthLabel = computed(() => selectedMonthShortLabel.value);
 
-const currentMonthTotal = computed(() => {
-  const dailyTotal = currentMonthDaily.value.reduce(
-    (sum, entry) => sum + Number(entry.amount ?? 0),
-    0
-  );
-  const fallback = selectedMonthEntry.value?.amount;
-  if (fallback != null) return Number(fallback);
-  return dailyTotal > 0 ? dailyTotal : null;
-});
-
-const monthOverMonthChange = computed(() => {
-  const current = selectedMonthEntry.value?.amount;
-  const previous = previousMonthEntry.value?.amount;
-  if (current == null || previous == null || Number(previous) === 0) return null;
-  return Number((((Number(current) - Number(previous)) / Number(previous)) * 100).toFixed(1));
-});
-
-const dailyAmounts = computed(() =>
-  currentMonthDaily.value.map((entry) => Number(entry.amount ?? 0)).filter((value) => value > 0)
-);
-
-const dailyMean = computed(() => {
-  if (!dailyAmounts.value.length) return null;
-  const total = dailyAmounts.value.reduce((sum, value) => sum + value, 0);
-  return total / dailyAmounts.value.length;
-});
-
-const dailyMedian = computed(() => computeMedian(dailyAmounts.value));
-
-const forecastDailyMedian = computed(() => {
-  const daily = expensesData.days;
-  if (!daily.length) return null;
-
-  const now = new Date();
-  const selectedBase = normalizedSelectedMonth.value;
-  const isCurrentMonth =
-    selectedBase.getFullYear() === now.getFullYear() && selectedBase.getMonth() === now.getMonth();
-  const endUtc = isCurrentMonth
-    ? new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate()))
-    : new Date(Date.UTC(selectedBase.getFullYear(), selectedBase.getMonth() + 1, 0));
-  const startUtc = new Date(endUtc);
-  startUtc.setUTCDate(endUtc.getUTCDate() - 89);
-
-  const sumsByDay = new Map<string, number>();
-  for (const entry of daily) {
-    if (entry.day == null) continue;
-    const entryDateUtc = new Date(Date.UTC(entry.year, entry.month - 1, entry.day));
-    if (entryDateUtc < startUtc || entryDateUtc > endUtc) continue;
-    const key = entryDateUtc.toISOString().slice(0, 10);
-    sumsByDay.set(key, (sumsByDay.get(key) ?? 0) + Number(entry.amount ?? 0));
-  }
-
-  const values = [...sumsByDay.values()].filter((value) => value > 0);
-  return computeMedian(values);
-});
-
-const meanMedianRatio = computed(() => {
-  if (dailyMean.value == null || dailyMedian.value == null || dailyMedian.value === 0) {
-    return null;
-  }
-  return dailyMean.value / dailyMedian.value;
+const categoryDelta = computed(() => {
+  const delta = dashboard.value?.categories.delta;
+  return {
+    increased: delta?.increased ?? [],
+    decreased: delta?.decreased ?? [],
+  };
 });
 
 const peakDays = computed<PeakDayItem[]>(() => {
-  if (!currentMonthDaily.value.length || dailyMedian.value == null) return [];
-  const threshold = dailyMedian.value * 2;
-  const monthTotal = currentMonthTotal.value ?? 0;
-  return [...currentMonthDaily.value]
-    .filter((entry) => entry.day != null && Number(entry.amount ?? 0) >= threshold)
-    .sort((a, b) => Number(b.amount ?? 0) - Number(a.amount ?? 0))
-    .map((entry) => {
-      const date = new Date(entry.year, entry.month - 1, entry.day ?? 1);
-      const amount = Number(entry.amount ?? 0);
-      const share = monthTotal > 0 ? (amount / monthTotal) * 100 : null;
-      return {
-        label: new Intl.DateTimeFormat('ru-RU', { day: '2-digit', month: 'short' }).format(date),
-        amount,
-        amountLabel: formatMoney(amount),
-        shareLabel: share == null ? '—' : `${share.toFixed(1)}%`,
-        date,
-      };
-    });
+  const items = dashboard.value?.peakDays ?? [];
+  if (!items.length) return [];
+  return items.map((item) => {
+    const date = new Date(item.year, item.month - 1, item.day);
+    const amount = Number(item.amount ?? 0);
+    return {
+      label: new Intl.DateTimeFormat('ru-RU', { day: '2-digit', month: 'short' }).format(date),
+      amount,
+      amountLabel: formatMoney(amount),
+      shareLabel: formatPercentValue(item.sharePercent ?? null),
+      date,
+    };
+  });
 });
 
 const peakSummary = computed(() => {
-  const count = peakDays.value.length;
-  const total = peakDays.value.reduce((sum, item) => sum + item.amount, 0);
-  const monthTotal = currentMonthTotal.value;
-  if (!monthTotal) {
+  const peaks = dashboard.value?.peaks;
+  if (!peaks) {
     return {
-      count,
+      count: 0,
       totalLabel: '—',
       shareLabel: '—',
       shareValue: null,
       monthLabel: '—',
     };
   }
-  const share = (total / monthTotal) * 100;
-  return {
-    count,
-    totalLabel: formatMoney(total),
-    shareLabel: `${share.toFixed(1)}%`,
-    shareValue: share,
-    monthLabel: formatMoney(monthTotal),
-  };
-});
 
-const sortedNetWorth = computed(() => {
-  return [...netWorthSnapshots.value].sort((a, b) => {
-    if (a.year !== b.year) return a.year - b.year;
-    return a.month - b.month;
-  });
+  const hasMonthTotal = peaks.monthTotal != null && peaks.monthTotal > 0;
+  const shareValue = peaks.sharePercent ?? null;
+
+  return {
+    count: peaks.count,
+    totalLabel: hasMonthTotal ? formatMoney(Number(peaks.total ?? 0)) : '—',
+    shareLabel: formatPercentValue(shareValue),
+    shareValue,
+    monthLabel: hasMonthTotal ? formatMoney(Number(peaks.monthTotal ?? 0)) : '—',
+  };
 });
 
 function formatMonthLabel(year: number, month: number): string {
@@ -656,6 +397,8 @@ function extractRgb(color: string): string {
 const expensesChartData = computed(() => {
   const data = getSortedExpenses(selectedGranularity.value);
   if (!data.length) return null;
+  const total = data.reduce((sum, item) => sum + Number(item.amount ?? 0), 0);
+  if (total <= 0) return null;
   const labels = data.map((item) => formatExpenseLabel(item, selectedGranularity.value));
   return {
     labels,
@@ -672,17 +415,8 @@ const expensesChartData = computed(() => {
 });
 
 function getSortedExpenses(granularity: ExpenseGranularity): MonthlyExpenseDto[] {
-  const items = expensesData[granularity] ?? [];
-  const target = normalizedSelectedMonth.value;
-  const filtered = items.filter(
-    (entry) => entry.year === target.getFullYear() && entry.month === target.getMonth() + 1
-  );
-
-  if (granularity === 'months') {
-    return filtered;
-  }
-
-  const sorted = [...filtered].sort((a, b) => {
+  const items = dashboard.value?.spending?.[granularity] ?? [];
+  const sorted = [...items].sort((a, b) => {
     if (a.year !== b.year) return a.year - b.year;
     if (a.month !== b.month) return a.month - b.month;
     if (granularity === 'days') return (a.day ?? 0) - (b.day ?? 0);
@@ -690,8 +424,7 @@ function getSortedExpenses(granularity: ExpenseGranularity): MonthlyExpenseDto[]
     return 0;
   });
 
-  const limit = granularity === 'days' ? 30 : granularity === 'weeks' ? 16 : 18;
-  return sorted.slice(Math.max(sorted.length - limit, 0));
+  return sorted;
 }
 
 function formatExpenseLabel(entry: MonthlyExpenseDto, granularity: ExpenseGranularity): string {
@@ -726,97 +459,25 @@ function getIsoWeekRange(year: number, week: number) {
   };
 }
 
-const forecastModel = computed<{
-  summary: ForecastSummary | null;
-  chartData: any | null;
-}>(() => {
-  const daily = expensesData.days;
-  const monthly = expensesData.months;
-  if (!daily.length) {
-    return { summary: null, chartData: null };
-  }
+const forecastSummary = computed<ForecastSummary | null>(() => {
+  const summary = dashboard.value?.forecast.summary;
+  return summary ?? null;
+});
 
-  const now = new Date();
-  const selectedBase = normalizedSelectedMonth.value;
-  const currentYear = selectedBase.getFullYear();
-  const currentMonth = selectedBase.getMonth() + 1;
-  const isCurrentMonth =
-    selectedBase.getFullYear() === now.getFullYear() && selectedBase.getMonth() === now.getMonth();
-  const today = isCurrentMonth ? now.getUTCDate() : new Date(currentYear, currentMonth, 0).getDate();
-  const daysInMonth = new Date(currentYear, currentMonth, 0).getDate();
+const forecastChartData = computed(() => {
+  const series = dashboard.value?.forecast.series;
+  if (!series || !series.days.length) return null;
 
-  const dailyCurrent = daily.filter(
-    (entry) => entry.year === currentYear && entry.month === currentMonth && entry.day != null,
-  );
+  const labels = series.days.map((day) => day.toString());
+  const baselineData = series.baseline ?? [];
+  const hasBaseline = baselineData.some((value) => value != null);
 
-  if (!dailyCurrent.length) {
-    return { summary: null, chartData: null };
-  }
-
-  const sumsByDay = new Map<number, number>();
-  for (const entry of dailyCurrent) {
-    const day = entry.day ?? 0;
-    if (!day) continue;
-    sumsByDay.set(day, (sumsByDay.get(day) ?? 0) + Number(entry.amount ?? 0));
-  }
-
-  const monthlySorted = [...monthly].sort((a, b) => {
-    if (a.year !== b.year) return a.year - b.year;
-    return a.month - b.month;
-  });
-
-  const currentIndex = monthlySorted.findIndex(
-    (entry) => entry.year === currentYear && entry.month === currentMonth,
-  );
-
-  const previous = currentIndex > 0 ? monthlySorted[currentIndex - 1] : null;
-  const baselineLimit =
-    previous && Number(previous.amount ?? 0) > 0 ? Number(previous.amount ?? 0) : null;
-
-  let cumulative = 0;
-  const labels: string[] = [];
-  const actualData: Array<number | null> = [];
-
-  for (let day = 1; day <= daysInMonth; day += 1) {
-    labels.push(day.toString());
-    const dayAmount = sumsByDay.get(day) ?? 0;
-    cumulative += dayAmount;
-    if (day <= today) {
-      actualData.push(Number(cumulative.toFixed(2)));
-    } else {
-      actualData.push(null);
-    }
-  }
-
-  const currentSpent = actualData[today - 1] ?? cumulative;
-  const medianDaily = forecastDailyMedian.value;
-  if (medianDaily == null) {
-    return { summary: null, chartData: null };
-  }
-  const forecastTotal = medianDaily * daysInMonth;
-
-  const forecastData = Array.from({ length: daysInMonth }, (_, index) =>
-    Number((medianDaily * (index + 1)).toFixed(2)),
-  );
-
-  const baselineData = baselineLimit
-    ? Array.from({ length: daysInMonth }, () => Number(baselineLimit.toFixed(2)))
-    : [];
-
-  const status: HealthStatus | null = baselineLimit
-    ? forecastTotal <= baselineLimit * 0.9
-      ? 'good'
-      : forecastTotal <= baselineLimit * 1.05
-        ? 'average'
-        : 'poor'
-    : null;
-
-  const chartData = {
+  return {
     labels,
     datasets: [
       {
         label: 'Факт',
-        data: actualData,
+        data: series.actual,
         borderColor: chartPalette.accent,
         backgroundColor: `rgba(${extractRgb(chartPalette.accent)}, 0.18)`,
         fill: true,
@@ -829,7 +490,7 @@ const forecastModel = computed<{
       },
       {
         label: 'Прогноз',
-        data: forecastData,
+        data: series.forecast,
         borderColor: chartPalette.primary,
         borderDash: [8, 6],
         borderWidth: 2,
@@ -837,7 +498,7 @@ const forecastModel = computed<{
         fill: false,
         tension: 0.25,
       },
-      ...(baselineLimit
+      ...(hasBaseline
         ? [
             {
               label: 'Лимит прошлого месяца',
@@ -853,39 +514,10 @@ const forecastModel = computed<{
         : []),
     ],
   };
-
-  return {
-    summary: {
-      forecastTotal,
-      currentSpent,
-      baselineLimit,
-      status,
-    },
-    chartData,
-  };
 });
 
-const forecastSummary = computed(() => forecastModel.value.summary);
-const forecastChartData = computed(() => forecastModel.value.chartData);
-
-const forecastLoading = computed(() => expensesLoading.days || expensesLoading.months);
-
-const forecastError = computed(() => expensesError.days ?? expensesError.months);
-
-function retryHealth() {
-  void Promise.all([loadExpenses('months', true), loadExpenses('days', true)]);
-}
-
-function retryCategories() {
-  void loadCategoryExpenses(normalizedSelectedMonth.value);
-}
-
-function retryExpensesData() {
-  void loadExpenses(selectedGranularity.value, true);
-}
-
-function retryForecastData() {
-  void Promise.all([loadExpenses('months', true), loadExpenses('days', true)]);
+function retryDashboard() {
+  void loadDashboard(normalizedSelectedMonth.value);
 }
 
 const updateSelectedMonth = (value: Date | null) => {
@@ -906,29 +538,16 @@ const goToNextMonth = () => {
   selectedMonth.value = addLocalMonths(normalizedSelectedMonth.value, 1);
 };
 
-watch(selectedGranularity, (granularity) => {
-  if (granularity) {
-    void loadExpenses(granularity);
-  }
-});
-
 watch(selectedMonth, (value) => {
   if (!value) return;
   const normalized = normalizeMonth(value);
-  void loadCategoryExpenses(normalized);
-  void loadCashflowSummary(normalized);
+  void loadDashboard(normalized);
 });
 
 onMounted(async () => {
   resolveCssVariables();
   await userStore.fetchCurrentUser();
-  await Promise.all([
-    loadCategoryExpenses(normalizedSelectedMonth.value),
-    loadCashflowSummary(normalizedSelectedMonth.value),
-    loadNetWorth(),
-    loadExpenses('months'),
-    loadExpenses('days'),
-  ]);
+  await loadDashboard(normalizedSelectedMonth.value);
 });
 </script>
 
@@ -986,7 +605,7 @@ onMounted(async () => {
         :peaks="peakDays"
         :peaks-summary="peakSummary"
         :month-label="currentMonthLabel"
-        @retry="retryHealth"
+        @retry="retryDashboard"
         @select-peak="handlePeakSelect"
         @select-peak-summary="handlePeakSummarySelect"
       />
@@ -998,7 +617,7 @@ onMounted(async () => {
         :chart-data="categoryChartData"
         :legend="categoryLegend"
         :currency="baseCurrency"
-        @retry="retryCategories"
+        @retry="retryDashboard"
         @select-category="handleCategorySelect"
       />
 
@@ -1010,20 +629,20 @@ onMounted(async () => {
         :increased="categoryDelta.increased"
         :decreased="categoryDelta.decreased"
         :currency="baseCurrency"
-        @retry="retryCategories"
+        @retry="retryDashboard"
       />
 
       <SpendingBarsCard
         class="analytics-grid__item analytics-grid__item--span-6"
-        :loading="expensesLoading[selectedGranularity]"
-        :error="expensesError[selectedGranularity]"
+        :loading="dashboardLoading"
+        :error="dashboardError"
         :granularity="selectedGranularity"
         :granularity-options="granularityOptions"
         :chart-data="expensesChartData"
         :empty="!expensesChartData"
         :currency="baseCurrency"
         @update:granularity="selectedGranularity = $event"
-        @retry="retryExpensesData"
+        @retry="retryDashboard"
       />
 
       <ForecastCard
@@ -1033,7 +652,7 @@ onMounted(async () => {
         :forecast="forecastSummary"
         :chart-data="forecastChartData"
         :currency="baseCurrency"
-        @retry="retryForecastData"
+        @retry="retryDashboard"
       />
     </div>
   </PageContainer>

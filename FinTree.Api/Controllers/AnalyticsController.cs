@@ -16,6 +16,13 @@ namespace FinTree.Api.Controllers
             return Ok(data);
         }
 
+        [HttpGet("dashboard")]
+        public async Task<IActionResult> GetDashboard([FromQuery] int year, [FromQuery] int month, CancellationToken ct)
+        {
+            var data = await analyticsService.GetDashboardAsync(year, month, ct);
+            return Ok(data);
+        }
+
         [HttpGet("monthly-expenses")]
         public async Task<IActionResult> GetMonthlyExpenses()
         {

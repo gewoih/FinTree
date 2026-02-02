@@ -154,6 +154,97 @@ export interface FinancialHealthMetricsDto {
     incomeDiversity: number | null;
 }
 
+export interface FinancialHealthSummaryDto {
+    monthTotal: number | null;
+    meanDaily: number | null;
+    medianDaily: number | null;
+    savingsRate: number | null;
+    netCashflow: number | null;
+    discretionaryTotal: number | null;
+    discretionarySharePercent: number | null;
+    monthOverMonthChangePercent: number | null;
+}
+
+export interface PeakDaysSummaryDto {
+    count: number;
+    total: number;
+    sharePercent: number | null;
+    monthTotal: number | null;
+}
+
+export interface PeakDayDto {
+    year: number;
+    month: number;
+    day: number;
+    amount: number;
+    sharePercent: number | null;
+}
+
+export interface CategoryBreakdownItemDto {
+    id: string;
+    name: string;
+    color: string;
+    amount: number;
+    percent: number | null;
+    isMandatory: boolean;
+}
+
+export interface CategoryDeltaItemDto {
+    id: string;
+    name: string;
+    color: string;
+    currentAmount: number;
+    previousAmount: number;
+    deltaAmount: number;
+    deltaPercent: number | null;
+}
+
+export interface CategoryDeltaDto {
+    increased: CategoryDeltaItemDto[];
+    decreased: CategoryDeltaItemDto[];
+}
+
+export interface CategoryBreakdownDto {
+    items: CategoryBreakdownItemDto[];
+    delta: CategoryDeltaDto;
+}
+
+export interface SpendingBreakdownDto {
+    days: MonthlyExpenseDto[];
+    weeks: MonthlyExpenseDto[];
+    months: MonthlyExpenseDto[];
+}
+
+export interface ForecastSummaryDto {
+    forecastTotal: number | null;
+    currentSpent: number | null;
+    baselineLimit: number | null;
+    status: 'good' | 'average' | 'poor' | null;
+}
+
+export interface ForecastSeriesDto {
+    days: number[];
+    actual: Array<number | null>;
+    forecast: Array<number | null>;
+    baseline: Array<number | null>;
+}
+
+export interface ForecastDto {
+    summary: ForecastSummaryDto;
+    series: ForecastSeriesDto;
+}
+
+export interface AnalyticsDashboardDto {
+    year: number;
+    month: number;
+    health: FinancialHealthSummaryDto;
+    peaks: PeakDaysSummaryDto;
+    peakDays: PeakDayDto[];
+    categories: CategoryBreakdownDto;
+    spending: SpendingBreakdownDto;
+    forecast: ForecastDto;
+}
+
 export interface CashflowSummaryDto {
     year: number;
     month: number;

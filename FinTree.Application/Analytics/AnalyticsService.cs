@@ -15,6 +15,8 @@ public sealed class AnalyticsService(
     CurrencyConverter currencyConverter,
     UserService userService)
 {
+    private readonly record struct CategoryMeta(string Name, string Color, bool IsMandatory);
+
     private static readonly HashSet<int> SupportedPeriods = new() { 1, 3, 6, 12 };
     private static readonly HashSet<AccountType> LiquidAccountTypes = new() { AccountType.Bank, AccountType.Cash };
 
@@ -285,6 +287,352 @@ public sealed class AnalyticsService(
             Math.Round(totalExpenses, 2, MidpointRounding.AwayFromZero),
             Math.Round(netCashflow, 2, MidpointRounding.AwayFromZero),
             savingsRate);
+    }
+
+    public async Task<AnalyticsDashboardDto> GetDashboardAsync(int year, int month, CancellationToken ct = default)
+    {
+        var currentUserId = currentUserService.Id;
+        var baseCurrencyCode = await context.Users
+            .Where(u => u.Id == currentUserId)
+            .Select(u => u.BaseCurrencyCode)
+            .SingleAsync(ct);
+
+        var monthStartUtc = new DateTime(year, month, 1, 0, 0, 0, DateTimeKind.Utc);
+        var monthEndUtc = monthStartUtc.AddMonths(1);
+        var previousMonthStartUtc = monthStartUtc.AddMonths(-1);
+
+        var categories = (await userService.GetUserCategoriesAsync(ct))
+            .ToDictionary(c => c.Id, c => new CategoryMeta(c.Name, c.Color, c.IsMandatory));
+
+        var transactions = await context.Transactions
+            .Where(t => t.Account.UserId == currentUserId &&
+                        t.OccurredAt >= previousMonthStartUtc &&
+                        t.OccurredAt < monthEndUtc)
+            .Select(t => new { t.CategoryId, t.Money, t.OccurredAt, t.Type })
+            .ToListAsync(ct);
+
+        var dailyTotals = new Dictionary<DateOnly, decimal>();
+        var currentCategoryTotals = new Dictionary<Guid, decimal>();
+        var previousCategoryTotals = new Dictionary<Guid, decimal>();
+
+        decimal totalIncome = 0m;
+        decimal totalExpenses = 0m;
+        decimal previousMonthExpenses = 0m;
+        decimal discretionaryTotal = 0m;
+
+        foreach (var txn in transactions)
+        {
+            ct.ThrowIfCancellationRequested();
+
+            var occurredUtc = txn.OccurredAt.Kind == DateTimeKind.Unspecified
+                ? DateTime.SpecifyKind(txn.OccurredAt, DateTimeKind.Utc)
+                : txn.OccurredAt.ToUniversalTime();
+
+            var baseMoney = await currencyConverter.ConvertAsync(
+                money: txn.Money,
+                toCurrencyCode: baseCurrencyCode,
+                atUtc: occurredUtc,
+                ct: ct);
+
+            var amount = baseMoney.Amount;
+            var isCurrentMonth = occurredUtc >= monthStartUtc && occurredUtc < monthEndUtc;
+            var isPreviousMonth = occurredUtc >= previousMonthStartUtc && occurredUtc < monthStartUtc;
+
+            if (txn.Type == TransactionType.Income)
+            {
+                if (isCurrentMonth)
+                    totalIncome += amount;
+                continue;
+            }
+
+            if (isCurrentMonth)
+            {
+                totalExpenses += amount;
+                var dateKey = DateOnly.FromDateTime(occurredUtc);
+                if (dailyTotals.TryGetValue(dateKey, out var current))
+                    dailyTotals[dateKey] = current + amount;
+                else
+                    dailyTotals[dateKey] = amount;
+
+                if (currentCategoryTotals.TryGetValue(txn.CategoryId, out var categoryTotal))
+                    currentCategoryTotals[txn.CategoryId] = categoryTotal + amount;
+                else
+                    currentCategoryTotals[txn.CategoryId] = amount;
+
+                if (categories.TryGetValue(txn.CategoryId, out var category) && !category.IsMandatory)
+                    discretionaryTotal += amount;
+            }
+
+            if (isPreviousMonth)
+            {
+                previousMonthExpenses += amount;
+                if (previousCategoryTotals.TryGetValue(txn.CategoryId, out var previousTotal))
+                    previousCategoryTotals[txn.CategoryId] = previousTotal + amount;
+                else
+                    previousCategoryTotals[txn.CategoryId] = amount;
+            }
+        }
+
+        var dailyValues = dailyTotals.Values.Where(v => v > 0).ToList();
+        var meanDaily = dailyValues.Count > 0 ? dailyValues.Average() : (decimal?)null;
+        var medianDaily = dailyValues.Count > 0 ? ComputeMedian(dailyValues) : null;
+        var netCashflow = totalIncome - totalExpenses;
+        var savingsRate = totalIncome > 0m ? netCashflow / totalIncome : (decimal?)null;
+        var discretionaryShare = totalExpenses > 0m ? (discretionaryTotal / totalExpenses) * 100 : (decimal?)null;
+        var monthOverMonth = previousMonthExpenses > 0m
+            ? ((totalExpenses - previousMonthExpenses) / previousMonthExpenses) * 100
+            : (decimal?)null;
+
+        var peaks = BuildPeakDays(dailyTotals, medianDaily, totalExpenses);
+
+        var categoryItems = currentCategoryTotals.Select(kv =>
+        {
+            if (!categories.TryGetValue(kv.Key, out var info))
+                info = new CategoryMeta("Без категории", "#9e9e9e", false);
+            var percent = totalExpenses > 0m ? (kv.Value / totalExpenses) * 100 : (decimal?)null;
+            return new CategoryBreakdownItemDto(kv.Key, info.Name, info.Color, kv.Value, percent, info.IsMandatory);
+        }).OrderByDescending(x => x.Amount).ToList();
+
+        var categoryDelta = BuildCategoryDelta(currentCategoryTotals, previousCategoryTotals, categories);
+
+        var spending = BuildSpendingBreakdown(dailyTotals, year, month, totalExpenses);
+
+        var forecast = await BuildForecastAsync(year, month, dailyTotals, previousMonthExpenses, baseCurrencyCode, ct);
+
+        var health = new FinancialHealthSummaryDto(
+            MonthTotal: Round2(totalExpenses),
+            MeanDaily: meanDaily.HasValue ? Round2(meanDaily.Value) : null,
+            MedianDaily: medianDaily.HasValue ? Round2(medianDaily.Value) : null,
+            SavingsRate: savingsRate,
+            NetCashflow: Round2(netCashflow),
+            DiscretionaryTotal: Round2(discretionaryTotal),
+            DiscretionarySharePercent: discretionaryShare,
+            MonthOverMonthChangePercent: monthOverMonth);
+
+        return new AnalyticsDashboardDto(
+            year,
+            month,
+            health,
+            peaks.Summary,
+            peaks.Days,
+            new CategoryBreakdownDto(categoryItems, categoryDelta),
+            spending,
+            forecast);
+    }
+
+    private static decimal Round2(decimal value)
+        => Math.Round(value, 2, MidpointRounding.AwayFromZero);
+
+    private static decimal? ComputeMedian(IReadOnlyList<decimal> values)
+    {
+        if (values.Count == 0) return null;
+        var sorted = values.OrderBy(v => v).ToList();
+        var mid = sorted.Count / 2;
+        return sorted.Count % 2 == 0
+            ? (sorted[mid - 1] + sorted[mid]) / 2m
+            : sorted[mid];
+    }
+
+    private static (PeakDaysSummaryDto Summary, List<PeakDayDto> Days) BuildPeakDays(
+        Dictionary<DateOnly, decimal> dailyTotals,
+        decimal? medianDaily,
+        decimal monthTotal)
+    {
+        if (!medianDaily.HasValue || medianDaily.Value <= 0m || monthTotal <= 0m)
+        {
+            return (new PeakDaysSummaryDto(0, 0m, null, monthTotal), new List<PeakDayDto>());
+        }
+
+        var threshold = medianDaily.Value * 2m;
+        var peakDays = dailyTotals
+            .Where(kv => kv.Value >= threshold)
+            .Select(kv =>
+            {
+                var share = (kv.Value / monthTotal) * 100m;
+                return new PeakDayDto(kv.Key.Year, kv.Key.Month, kv.Key.Day, Round2(kv.Value), share);
+            })
+            .OrderByDescending(x => x.Amount)
+            .ToList();
+
+        var total = peakDays.Sum(x => x.Amount);
+        var sharePercent = total > 0m ? (total / monthTotal) * 100m : (decimal?)null;
+
+        return (new PeakDaysSummaryDto(peakDays.Count, Round2(total), sharePercent, monthTotal), peakDays);
+    }
+
+    private static CategoryDeltaDto BuildCategoryDelta(
+        Dictionary<Guid, decimal> currentTotals,
+        Dictionary<Guid, decimal> previousTotals,
+        Dictionary<Guid, CategoryMeta> categories)
+    {
+        var allIds = new HashSet<Guid>(currentTotals.Keys);
+        foreach (var id in previousTotals.Keys)
+            allIds.Add(id);
+
+        var entries = new List<CategoryDeltaItemDto>();
+        foreach (var id in allIds)
+        {
+            var current = currentTotals.TryGetValue(id, out var currentValue) ? currentValue : 0m;
+            var previous = previousTotals.TryGetValue(id, out var previousValue) ? previousValue : 0m;
+            if (current == 0m && previous == 0m) continue;
+
+            var delta = current - previous;
+            var deltaPercent = previous > 0m ? (delta / previous) * 100m : (decimal?)null;
+            if (!categories.TryGetValue(id, out var info))
+                info = new CategoryMeta("Без категории", "#9e9e9e", false);
+
+            entries.Add(new CategoryDeltaItemDto(
+                id,
+                info.Name,
+                info.Color,
+                Round2(current),
+                Round2(previous),
+                Round2(delta),
+                deltaPercent));
+        }
+
+        var increased = entries
+            .Where(x => x.DeltaAmount > 0)
+            .OrderByDescending(x => x.DeltaAmount)
+            .Take(4)
+            .ToList();
+        var decreased = entries
+            .Where(x => x.DeltaAmount < 0)
+            .OrderBy(x => x.DeltaAmount)
+            .Take(4)
+            .ToList();
+
+        return new CategoryDeltaDto(increased, decreased);
+    }
+
+    private static SpendingBreakdownDto BuildSpendingBreakdown(
+        Dictionary<DateOnly, decimal> dailyTotals,
+        int year,
+        int month,
+        decimal monthTotal)
+    {
+        var daysInMonth = DateTime.DaysInMonth(year, month);
+
+        var days = new List<MonthlyExpensesDto>(daysInMonth);
+        var weeks = new Dictionary<int, decimal>();
+
+        for (var day = 1; day <= daysInMonth; day++)
+        {
+            var date = new DateOnly(year, month, day);
+            var amount = dailyTotals.TryGetValue(date, out var value) ? value : 0m;
+            days.Add(new MonthlyExpensesDto(year, month, day, null, Round2(amount)));
+
+            var dateTime = new DateTime(year, month, day, 0, 0, 0, DateTimeKind.Utc);
+            var weekOfYear = System.Globalization.CultureInfo.InvariantCulture.Calendar
+                .GetWeekOfYear(dateTime, System.Globalization.CalendarWeekRule.FirstDay, DayOfWeek.Monday);
+            if (weeks.TryGetValue(weekOfYear, out var weekTotal))
+                weeks[weekOfYear] = weekTotal + amount;
+            else
+                weeks[weekOfYear] = amount;
+        }
+
+        var weeksResult = weeks
+            .Select(kv => new MonthlyExpensesDto(year, month, null, kv.Key, Round2(kv.Value)))
+            .OrderBy(x => x.Week)
+            .ToList();
+
+        var months = new List<MonthlyExpensesDto>
+        {
+            new MonthlyExpensesDto(year, month, null, null, Round2(monthTotal))
+        };
+
+        return new SpendingBreakdownDto(days, weeksResult, months);
+    }
+
+    private async Task<ForecastDto> BuildForecastAsync(
+        int year,
+        int month,
+        Dictionary<DateOnly, decimal> dailyTotals,
+        decimal previousMonthTotal,
+        string baseCurrencyCode,
+        CancellationToken ct)
+    {
+        var nowUtc = DateTime.UtcNow;
+        var monthStartUtc = new DateTime(year, month, 1, 0, 0, 0, DateTimeKind.Utc);
+        var monthEndUtc = monthStartUtc.AddMonths(1);
+        var isCurrentMonth = monthStartUtc.Year == nowUtc.Year && monthStartUtc.Month == nowUtc.Month;
+        var lastDate = isCurrentMonth ? nowUtc.Date : monthEndUtc.AddDays(-1).Date;
+
+        var forecastEnd = new DateTime(lastDate.Year, lastDate.Month, lastDate.Day, 0, 0, 0, DateTimeKind.Utc);
+        var forecastStart = forecastEnd.AddDays(-89);
+
+        var forecastTransactions = await context.Transactions
+            .Where(t => t.Account.UserId == currentUserService.Id &&
+                        t.Type == TransactionType.Expense &&
+                        t.OccurredAt >= forecastStart &&
+                        t.OccurredAt <= forecastEnd)
+            .Select(t => new { t.Money, t.OccurredAt })
+            .ToListAsync(ct);
+
+        var forecastDailyTotals = new Dictionary<DateOnly, decimal>();
+        foreach (var txn in forecastTransactions)
+        {
+            ct.ThrowIfCancellationRequested();
+
+            var occurredUtc = txn.OccurredAt.Kind == DateTimeKind.Unspecified
+                ? DateTime.SpecifyKind(txn.OccurredAt, DateTimeKind.Utc)
+                : txn.OccurredAt.ToUniversalTime();
+
+            var baseMoney = await currencyConverter.ConvertAsync(
+                money: txn.Money,
+                toCurrencyCode: baseCurrencyCode,
+                atUtc: occurredUtc,
+                ct: ct);
+
+            var dateKey = DateOnly.FromDateTime(occurredUtc);
+            if (forecastDailyTotals.TryGetValue(dateKey, out var current))
+                forecastDailyTotals[dateKey] = current + baseMoney.Amount;
+            else
+                forecastDailyTotals[dateKey] = baseMoney.Amount;
+        }
+
+        var medianDaily = ComputeMedian(forecastDailyTotals.Values.Where(v => v > 0).ToList());
+        var daysInMonth = DateTime.DaysInMonth(year, month);
+
+        var days = new List<int>(daysInMonth);
+        var actual = new List<decimal?>(daysInMonth);
+        var forecast = new List<decimal?>(daysInMonth);
+        var baseline = new List<decimal?>(daysInMonth);
+
+        decimal cumulative = 0m;
+        for (var day = 1; day <= daysInMonth; day++)
+        {
+            days.Add(day);
+            var dateKey = new DateOnly(year, month, day);
+            var dayAmount = dailyTotals.TryGetValue(dateKey, out var value) ? value : 0m;
+            cumulative += dayAmount;
+
+            if (isCurrentMonth && day > nowUtc.Day)
+                actual.Add(null);
+            else
+                actual.Add(Round2(cumulative));
+
+            forecast.Add(medianDaily.HasValue ? Round2(medianDaily.Value * day) : null);
+            baseline.Add(previousMonthTotal > 0m ? Round2(previousMonthTotal) : null);
+        }
+
+        var currentSpent = actual.LastOrDefault(v => v.HasValue) ?? Round2(cumulative);
+        decimal? forecastTotal = medianDaily.HasValue ? Round2(medianDaily.Value * daysInMonth) : null;
+        var baselineLimit = previousMonthTotal > 0m ? Round2(previousMonthTotal) : (decimal?)null;
+
+        string? status = null;
+        if (baselineLimit.HasValue && forecastTotal.HasValue)
+        {
+            status = forecastTotal <= baselineLimit * 0.9m
+                ? "good"
+                : forecastTotal <= baselineLimit * 1.05m
+                    ? "average"
+                    : "poor";
+        }
+
+        var summary = new ForecastSummaryDto(forecastTotal, currentSpent, baselineLimit, status);
+        var series = new ForecastSeriesDto(days, actual, forecast, baseline);
+        return new ForecastDto(summary, series);
     }
 
     public async Task<IReadOnlyList<MonthlyExpensesDto>> GetExpensesByGranularityAsync(
