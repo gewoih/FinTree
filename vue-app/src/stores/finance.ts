@@ -51,7 +51,9 @@ export const useFinanceStore = defineStore('finance', () => {
                 currencyCode: acc.currencyCode,
                 name: acc.name,
                 type: acc.type,
-                isMain: acc.isMain
+                isMain: acc.isMain,
+                balance: acc.balance ?? 0,
+                balanceInBaseCurrency: acc.balanceInBaseCurrency ?? acc.balance ?? 0
             })),
             map
         );

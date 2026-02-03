@@ -15,7 +15,8 @@ import type {
     UpdateUserProfilePayload,
     CreateIncomeInstrumentPayload,
     IncomeInstrumentDto,
-    FutureIncomeOverviewDto
+    FutureIncomeOverviewDto,
+    NetWorthSnapshotDto
 } from '../types.ts';
 
 /**
@@ -205,6 +206,13 @@ export const apiService = {
     async getAnalyticsDashboard(year: number, month: number): Promise<AnalyticsDashboardDto> {
         const response = await apiClient.get<AnalyticsDashboardDto>('/analytics/dashboard', {
             params: { year, month }
+        });
+        return response.data;
+    },
+
+    async getNetWorthTrend(months?: number): Promise<NetWorthSnapshotDto[]> {
+        const response = await apiClient.get<NetWorthSnapshotDto[]>('/analytics/net-worth', {
+            params: months ? { months } : {},
         });
         return response.data;
     },

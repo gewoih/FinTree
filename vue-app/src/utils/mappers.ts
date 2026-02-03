@@ -26,10 +26,14 @@ export function mapAccount(
   dto: AccountDto,
   currencies: Map<string, Currency>
 ): Account {
+  const balance = Number(dto.balance ?? 0);
+  const balanceInBaseCurrency = Number(dto.balanceInBaseCurrency ?? balance);
   return {
     ...dto,
     type: normalizeAccountType(dto.type),
     currency: currencies.get(dto.currencyCode) ?? null,
+    balance,
+    balanceInBaseCurrency,
   };
 }
 

@@ -2,6 +2,8 @@
 import { ref, computed } from 'vue'
 import type { Account, AccountType } from '../types'
 import { getAccountTypeInfo, getCurrencyFlag } from '../utils/accountHelpers'
+import { formatCurrency } from '../utils/formatters'
+import { useUserStore } from '../stores/user'
 import Menu from 'primevue/menu'
 import type { MenuItem } from 'primevue/menuitem'
 
@@ -18,6 +20,7 @@ const emit = defineEmits<{
 
 const menuRef = ref()
 const isMenuOpen = ref(false)
+const userStore = useUserStore()
 
 const accountTypeInfo = computed(() => getAccountTypeInfo(props.account.type as AccountType))
 const currencyFlag = computed(() => getCurrencyFlag(props.account.currencyCode))
@@ -28,6 +31,24 @@ const currencyDisplay = computed(() => {
 
   return flag ? `${flag} ${symbol} ${code}` : `${symbol} ${code}`
 })
+
+const baseCurrencyCode = computed(() => userStore.baseCurrencyCode ?? props.account.currencyCode)
+
+const balanceInBase = computed(() => props.account.balanceInBaseCurrency ?? 0)
+const balanceInAccount = computed(() => props.account.balance ?? 0)
+
+const showSecondaryBalance = computed(() => {
+  if (!baseCurrencyCode.value) return false
+  return baseCurrencyCode.value.toUpperCase() !== props.account.currencyCode.toUpperCase()
+})
+
+const formattedBaseBalance = computed(() =>
+  formatCurrency(balanceInBase.value, baseCurrencyCode.value)
+)
+
+const formattedAccountBalance = computed(() =>
+  formatCurrency(balanceInAccount.value, props.account.currencyCode)
+)
 
 const menuItems = computed<MenuItem[]>(() => {
   const items: MenuItem[] = []
@@ -126,6 +147,29 @@ const toggleMenu = (event: Event) => {
           <span class="currency-chip">
             {{ currencyDisplay }}
           </span>
+        </dd>
+      </div>
+
+      <div class="meta-row">
+        <dt>
+          <i
+            class="pi pi-wallet"
+            aria-hidden="true"
+          />
+          Баланс
+        </dt>
+        <dd>
+          <div class="balance-summary">
+            <span class="balance-summary__main">
+              {{ formattedBaseBalance }}
+            </span>
+            <span
+              v-if="showSecondaryBalance"
+              class="balance-summary__secondary"
+            >
+              {{ formattedAccountBalance }}
+            </span>
+          </div>
         </dd>
       </div>
     </dl>
@@ -297,6 +341,24 @@ const toggleMenu = (event: Event) => {
 .dark-mode .currency-chip {
   background: rgba(37, 99, 235, 0.2);
   color: var(--ft-primary-400);
+}
+
+.balance-summary {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 2px;
+}
+
+.balance-summary__main {
+  font-size: var(--ft-text-base);
+  font-weight: var(--ft-font-semibold);
+  color: var(--ft-heading);
+}
+
+.balance-summary__secondary {
+  font-size: var(--ft-text-xs);
+  color: var(--ft-text-muted);
 }
 
 .account-card__footer {

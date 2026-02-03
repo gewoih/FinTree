@@ -3,12 +3,14 @@ import { computed, onMounted, ref } from 'vue'
 import { useToast } from 'primevue/usetoast'
 import { useConfirm } from 'primevue/useconfirm'
 import { useFinanceStore } from '../stores/finance'
+import { useUserStore } from '../stores/user'
 import AccountFormModal from '../components/AccountFormModal.vue'
 import AccountCard from '../components/AccountCard.vue'
 import AccountFilters from '../components/AccountFilters.vue'
 import type { Account, AccountType } from '../types'
 
 const financeStore = useFinanceStore()
+const userStore = useUserStore()
 const toast = useToast()
 const confirm = useConfirm()
 
@@ -106,6 +108,7 @@ const clearFilters = () => {
 }
 
 onMounted(async () => {
+  await userStore.fetchCurrentUser()
   await Promise.all([
     financeStore.fetchCurrencies(),
     financeStore.fetchAccounts()

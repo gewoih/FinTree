@@ -23,6 +23,8 @@ export interface AccountDto {
     name: string;
     type: AccountType | string | number; // Backend may return string "Bank", "Cash", "Crypto" or numbers
     isMain: boolean;
+    balance: number;
+    balanceInBaseCurrency: number;
 }
 
 export interface TransactionCategoryDto {
@@ -236,6 +238,12 @@ export interface CurrentUserDto {
 export interface UpdateUserProfilePayload {
     baseCurrencyCode: string;
     telegramUsername: string;
+}
+
+export interface NetWorthSnapshotDto {
+    year: number;
+    month: number;
+    netWorth: number;
 }
 
 export type IncomeInstrumentType = 'Salary' | 'Deposit' | 'Investment' | 'Other';

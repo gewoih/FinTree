@@ -153,8 +153,136 @@ public sealed class AnalyticsService(
             forecast);
     }
 
+    public async Task<List<NetWorthSnapshotDto>> GetNetWorthTrendAsync(int months = 12, CancellationToken ct = default)
+    {
+        if (months <= 0)
+            return [];
+
+        var currentUserId = currentUserService.Id;
+        var userMeta = await context.Users
+            .AsNoTracking()
+            .Where(u => u.Id == currentUserId)
+            .Select(u => new { u.BaseCurrencyCode })
+            .SingleAsync(ct);
+
+        var accounts = await context.Accounts
+            .AsNoTracking()
+            .Where(a => a.UserId == currentUserId)
+            .Select(a => new { a.Id, a.CurrencyCode })
+            .ToListAsync(ct);
+
+        if (accounts.Count == 0)
+        {
+            return BuildEmptyNetWorth(months);
+        }
+
+        var nowUtc = DateTime.UtcNow;
+        var startMonthUtc = new DateTime(nowUtc.Year, nowUtc.Month, 1, 0, 0, 0, DateTimeKind.Utc)
+            .AddMonths(-(months - 1));
+        var endMonthUtc = startMonthUtc.AddMonths(months);
+
+        var rateByCurrency = new Dictionary<string, decimal>(StringComparer.OrdinalIgnoreCase);
+        foreach (var code in accounts.Select(a => a.CurrencyCode).Distinct())
+        {
+            if (string.Equals(code, userMeta.BaseCurrencyCode, StringComparison.OrdinalIgnoreCase))
+            {
+                rateByCurrency[code] = 1m;
+                continue;
+            }
+
+            var converted = await currencyConverter.ConvertAsync(
+                new Money(code, 1m),
+                userMeta.BaseCurrencyCode,
+                nowUtc,
+                ct);
+            rateByCurrency[code] = converted.Amount;
+        }
+
+        var balancesByAccount = accounts.ToDictionary(a => a.Id, _ => 0m);
+        var monthlyDeltas = new Dictionary<Guid, decimal>[months];
+        for (var i = 0; i < months; i++)
+            monthlyDeltas[i] = new Dictionary<Guid, decimal>();
+
+        var rawTransactions = await context.Transactions
+            .AsNoTracking()
+            .Where(t => t.Account.UserId == currentUserId)
+            .Select(t => new { t.AccountId, t.Money, t.OccurredAt, t.Type })
+            .ToListAsync(ct);
+
+        foreach (var txn in rawTransactions)
+        {
+            ct.ThrowIfCancellationRequested();
+
+            var occurredUtc = txn.OccurredAt.Kind == DateTimeKind.Unspecified
+                ? DateTime.SpecifyKind(txn.OccurredAt, DateTimeKind.Utc)
+                : txn.OccurredAt.ToUniversalTime();
+
+            var delta = txn.Type == TransactionType.Income ? txn.Money.Amount : -txn.Money.Amount;
+
+            if (occurredUtc < startMonthUtc)
+            {
+                if (balancesByAccount.ContainsKey(txn.AccountId))
+                    balancesByAccount[txn.AccountId] += delta;
+                continue;
+            }
+
+            if (occurredUtc >= endMonthUtc)
+                continue;
+
+            var monthIndex = (occurredUtc.Year - startMonthUtc.Year) * 12 + (occurredUtc.Month - startMonthUtc.Month);
+            if (monthIndex < 0 || monthIndex >= months)
+                continue;
+
+            var bucket = monthlyDeltas[monthIndex];
+            bucket[txn.AccountId] = bucket.TryGetValue(txn.AccountId, out var current)
+                ? current + delta
+                : delta;
+        }
+
+        var result = new List<NetWorthSnapshotDto>(months);
+        for (var i = 0; i < months; i++)
+        {
+            foreach (var (accountId, delta) in monthlyDeltas[i])
+            {
+                if (balancesByAccount.ContainsKey(accountId))
+                    balancesByAccount[accountId] += delta;
+            }
+
+            var netWorth = 0m;
+            foreach (var account in accounts)
+            {
+                var balance = balancesByAccount[account.Id];
+                var rate = rateByCurrency.TryGetValue(account.CurrencyCode, out var foundRate) ? foundRate : 1m;
+                netWorth += balance * rate;
+            }
+
+            var monthDate = startMonthUtc.AddMonths(i);
+            result.Add(new NetWorthSnapshotDto(
+                monthDate.Year,
+                monthDate.Month,
+                Round2(netWorth)));
+        }
+
+        return result;
+    }
+
     private static decimal Round2(decimal value)
         => Math.Round(value, 2, MidpointRounding.AwayFromZero);
+
+    private static List<NetWorthSnapshotDto> BuildEmptyNetWorth(int months)
+    {
+        if (months <= 0) return [];
+        var nowUtc = DateTime.UtcNow;
+        var startMonthUtc = new DateTime(nowUtc.Year, nowUtc.Month, 1, 0, 0, 0, DateTimeKind.Utc)
+            .AddMonths(-(months - 1));
+        var result = new List<NetWorthSnapshotDto>(months);
+        for (var i = 0; i < months; i++)
+        {
+            var monthDate = startMonthUtc.AddMonths(i);
+            result.Add(new NetWorthSnapshotDto(monthDate.Year, monthDate.Month, 0m));
+        }
+        return result;
+    }
 
     private static decimal? ComputeMedian(IReadOnlyList<decimal> values)
     {
