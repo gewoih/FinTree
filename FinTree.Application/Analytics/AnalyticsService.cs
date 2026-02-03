@@ -198,17 +198,19 @@ public sealed class AnalyticsService(
             rateByCurrency[code] = converted.Amount;
         }
 
-        var balancesByAccount = accounts.ToDictionary(a => a.Id, _ => 0m);
-        var monthlyDeltas = new Dictionary<Guid, decimal>[months];
-        for (var i = 0; i < months; i++)
-            monthlyDeltas[i] = new Dictionary<Guid, decimal>();
-
         var rawTransactions = await context.Transactions
             .AsNoTracking()
             .Where(t => t.Account.UserId == currentUserId)
             .Select(t => new { t.AccountId, t.Money, t.OccurredAt, t.Type })
             .ToListAsync(ct);
 
+        var rawAdjustments = await context.AccountBalanceAdjustments
+            .AsNoTracking()
+            .Where(a => a.Account.UserId == currentUserId)
+            .Select(a => new { a.AccountId, a.Amount, a.OccurredAt })
+            .ToListAsync(ct);
+
+        var eventsByAccount = accounts.ToDictionary(a => a.Id, _ => new List<BalanceEvent>());
         foreach (var txn in rawTransactions)
         {
             ct.ThrowIfCancellationRequested();
@@ -218,34 +220,60 @@ public sealed class AnalyticsService(
                 : txn.OccurredAt.ToUniversalTime();
 
             var delta = txn.Type == TransactionType.Income ? txn.Money.Amount : -txn.Money.Amount;
+            eventsByAccount[txn.AccountId].Add(new BalanceEvent(occurredUtc, delta, false));
+        }
 
-            if (occurredUtc < startMonthUtc)
+        foreach (var adjustment in rawAdjustments)
+        {
+            ct.ThrowIfCancellationRequested();
+
+            var occurredUtc = adjustment.OccurredAt.Kind == DateTimeKind.Unspecified
+                ? DateTime.SpecifyKind(adjustment.OccurredAt, DateTimeKind.Utc)
+                : adjustment.OccurredAt.ToUniversalTime();
+
+            eventsByAccount[adjustment.AccountId].Add(new BalanceEvent(occurredUtc, adjustment.Amount, true));
+        }
+
+        foreach (var list in eventsByAccount.Values)
+            list.Sort((a, b) => a.OccurredAt.CompareTo(b.OccurredAt));
+
+        var balancesByAccount = accounts.ToDictionary(a => a.Id, _ => 0m);
+        var eventIndexByAccount = accounts.ToDictionary(a => a.Id, _ => 0);
+
+        foreach (var account in accounts)
+        {
+            var events = eventsByAccount[account.Id];
+            var idx = 0;
+            var currentBalance = 0m;
+            while (idx < events.Count && events[idx].OccurredAt < startMonthUtc)
             {
-                if (balancesByAccount.ContainsKey(txn.AccountId))
-                    balancesByAccount[txn.AccountId] += delta;
-                continue;
+                currentBalance = ApplyBalanceEvent(currentBalance, events[idx]);
+                idx++;
             }
 
-            if (occurredUtc >= endMonthUtc)
-                continue;
-
-            var monthIndex = (occurredUtc.Year - startMonthUtc.Year) * 12 + (occurredUtc.Month - startMonthUtc.Month);
-            if (monthIndex < 0 || monthIndex >= months)
-                continue;
-
-            var bucket = monthlyDeltas[monthIndex];
-            bucket[txn.AccountId] = bucket.TryGetValue(txn.AccountId, out var current)
-                ? current + delta
-                : delta;
+            balancesByAccount[account.Id] = currentBalance;
+            eventIndexByAccount[account.Id] = idx;
         }
 
         var result = new List<NetWorthSnapshotDto>(months);
         for (var i = 0; i < months; i++)
         {
-            foreach (var (accountId, delta) in monthlyDeltas[i])
+            var boundary = startMonthUtc.AddMonths(i + 1);
+
+            foreach (var account in accounts)
             {
-                if (balancesByAccount.ContainsKey(accountId))
-                    balancesByAccount[accountId] += delta;
+                var events = eventsByAccount[account.Id];
+                var idx = eventIndexByAccount[account.Id];
+                var currentBalance = balancesByAccount[account.Id];
+
+                while (idx < events.Count && events[idx].OccurredAt < boundary)
+                {
+                    currentBalance = ApplyBalanceEvent(currentBalance, events[idx]);
+                    idx++;
+                }
+
+                balancesByAccount[account.Id] = currentBalance;
+                eventIndexByAccount[account.Id] = idx;
             }
 
             var netWorth = 0m;
@@ -268,6 +296,11 @@ public sealed class AnalyticsService(
 
     private static decimal Round2(decimal value)
         => Math.Round(value, 2, MidpointRounding.AwayFromZero);
+
+    private readonly record struct BalanceEvent(DateTime OccurredAt, decimal Amount, bool IsAdjustment);
+
+    private static decimal ApplyBalanceEvent(decimal currentBalance, BalanceEvent balanceEvent)
+        => balanceEvent.IsAdjustment ? balanceEvent.Amount : currentBalance + balanceEvent.Amount;
 
     private static List<NetWorthSnapshotDto> BuildEmptyNetWorth(int months)
     {

@@ -79,6 +79,6 @@ export const TOAST_CONFIG = {
 
 export const ACCOUNT_TYPE_OPTIONS = [
   { label: 'Банковский счет', value: 0 },
-  { label: 'Наличные', value: 1 },
-  { label: 'Криптовалюта', value: 2 }
+  { label: 'Криптовалюта', value: 2 },
+  { label: 'Инвестиционный счет', value: 3 }
 ] as const;

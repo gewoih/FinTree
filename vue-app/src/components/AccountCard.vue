@@ -16,6 +16,7 @@ const emit = defineEmits<{
   setPrimary: []
   edit: []
   delete: []
+  open: []
 }>()
 
 const menuRef = ref()
@@ -80,6 +81,7 @@ const toggleMenu = (event: Event) => {
   <article
     class="account-card ft-card"
     :class="{ 'account-card--primary': account.isMain }"
+    @click="emit('open')"
   >
     <!-- Header with icon, name, and menu -->
     <header class="account-card__header">
@@ -186,7 +188,7 @@ const toggleMenu = (event: Event) => {
         size="sm"
         block
         :loading="isPrimaryLoading"
-        @click="emit('setPrimary')"
+        @click.stop="emit('setPrimary')"
       />
     </footer>
 
@@ -208,6 +210,7 @@ const toggleMenu = (event: Event) => {
     box-shadow var(--ft-transition-base),
     border-color var(--ft-transition-base);
   overflow: hidden;
+  cursor: pointer;
 }
 
 .account-card:hover {

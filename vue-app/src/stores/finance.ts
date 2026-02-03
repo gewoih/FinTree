@@ -196,6 +196,7 @@ export const useFinanceStore = defineStore('finance', () => {
                 currencyCode: payload.currencyCode,
                 type: payload.type,
                 name: payload.name,
+                initialBalance: payload.initialBalance ?? 0,
             });
 
             await fetchAccounts(true);

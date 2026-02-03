@@ -17,6 +17,7 @@ public sealed class AppDbContext(DbContextOptions<AppDbContext> options) : Ident
     public DbSet<User> Users => Set<User>();
     public DbSet<TransactionCategory> TransactionCategories => Set<TransactionCategory>();
     public DbSet<Account> Accounts => Set<Account>();
+    public DbSet<AccountBalanceAdjustment> AccountBalanceAdjustments => Set<AccountBalanceAdjustment>();
     public DbSet<Transaction> Transactions => Set<Transaction>();
     public DbSet<FxUsdRate> FxUsdRates => Set<FxUsdRate>();
     public DbSet<IncomeInstrument> IncomeInstruments => Set<IncomeInstrument>();

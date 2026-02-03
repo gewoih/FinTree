@@ -7,6 +7,7 @@ import { useUserStore } from '../stores/user'
 import AccountFormModal from '../components/AccountFormModal.vue'
 import AccountCard from '../components/AccountCard.vue'
 import AccountFilters from '../components/AccountFilters.vue'
+import AccountBalanceAdjustmentsModal from '../components/AccountBalanceAdjustmentsModal.vue'
 import type { Account, AccountType } from '../types'
 
 const financeStore = useFinanceStore()
@@ -16,6 +17,8 @@ const confirm = useConfirm()
 
 const modalVisible = ref(false)
 const pendingPrimaryId = ref<string | null>(null)
+const adjustmentsVisible = ref(false)
+const selectedAccount = ref<Account | null>(null)
 
 // Filter state
 const searchText = ref('')
@@ -53,6 +56,11 @@ const hasActiveFilters = computed(() =>
 
 const openModal = () => {
   modalVisible.value = true
+}
+
+const openAdjustments = (account: Account) => {
+  selectedAccount.value = account
+  adjustmentsVisible.value = true
 }
 
 const handleSetPrimary = async (accountId: string) => {
@@ -198,6 +206,7 @@ onMounted(async () => {
           @set-primary="handleSetPrimary(account.id)"
           @edit="handleEditAccount(account)"
           @delete="handleDeleteAccount(account)"
+          @open="openAdjustments(account)"
         />
       </div>
 
@@ -217,6 +226,10 @@ onMounted(async () => {
     </UiSection>
 
     <AccountFormModal v-model:visible="modalVisible" />
+    <AccountBalanceAdjustmentsModal
+      v-model:visible="adjustmentsVisible"
+      :account="selectedAccount"
+    />
     <UiSkeleton
       v-if="loadingCurrencies"
       class="visually-hidden"

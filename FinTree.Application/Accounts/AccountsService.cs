@@ -1,6 +1,7 @@
 using FinTree.Application.Currencies;
 using FinTree.Application.Exceptions;
 using FinTree.Application.Users;
+using FinTree.Domain.Accounts;
 using FinTree.Domain.Identity;
 using FinTree.Domain.Transactions;
 using FinTree.Domain.ValueObjects;
@@ -29,20 +30,39 @@ public sealed class AccountsService(
             .Select(a => new { a.Id, a.CurrencyCode, a.Name, a.Type })
             .ToListAsync(ct);
 
-        var balances = await context.Transactions
+        var latestAdjustments = await context.AccountBalanceAdjustments
+            .AsNoTracking()
+            .Where(a => a.Account.UserId == currentUserId)
+            .Select(a => new { a.AccountId, a.Amount, a.OccurredAt })
+            .ToListAsync(ct);
+
+        var latestAdjustmentByAccount = latestAdjustments
+            .GroupBy(a => a.AccountId)
+            .ToDictionary(
+                g => g.Key,
+                g => g.OrderByDescending(x => x.OccurredAt).First());
+
+        var transactions = await context.Transactions
             .AsNoTracking()
             .Where(t => t.Account.UserId == currentUserId)
-            .GroupBy(t => t.AccountId)
             .Select(g => new
             {
-                AccountId = g.Key,
-                Balance = g.Sum(t => t.Type == TransactionType.Income
-                    ? t.Money.Amount
-                    : -t.Money.Amount)
+                g.AccountId,
+                g.Type,
+                g.Money,
+                g.OccurredAt
             })
             .ToListAsync(ct);
 
-        var balanceByAccountId = balances.ToDictionary(x => x.AccountId, x => x.Balance);
+        var transactionDeltas = transactions
+            .GroupBy(t => t.AccountId)
+            .ToDictionary(
+                g => g.Key,
+                g => g.Select(t => new
+                {
+                    Delta = t.Type == TransactionType.Income ? t.Money.Amount : -t.Money.Amount,
+                    t.OccurredAt
+                }).ToList());
 
         var rateByCurrency = new Dictionary<string, decimal>(StringComparer.OrdinalIgnoreCase);
         if (!string.IsNullOrWhiteSpace(userMeta.BaseCurrencyCode))
@@ -68,7 +88,22 @@ public sealed class AccountsService(
         var result = new List<AccountDto>(accounts.Count);
         foreach (var account in accounts)
         {
-            var balance = balanceByAccountId.GetValueOrDefault(account.Id, 0m);
+            decimal balance = 0m;
+            DateTime? lastAdjustmentAt = null;
+            if (latestAdjustmentByAccount.TryGetValue(account.Id, out var adjustment))
+            {
+                balance = adjustment.Amount;
+                lastAdjustmentAt = adjustment.OccurredAt;
+            }
+
+            if (transactionDeltas.TryGetValue(account.Id, out var deltas))
+            {
+                var deltaSum = deltas
+                    .Where(t => !lastAdjustmentAt.HasValue || t.OccurredAt > lastAdjustmentAt.Value)
+                    .Sum(t => t.Delta);
+                balance += deltaSum;
+            }
+
             var rate = rateByCurrency.TryGetValue(account.CurrencyCode, out var foundRate) ? foundRate : 1m;
             var balanceInBase = Math.Round(balance * rate, 2, MidpointRounding.AwayFromZero);
             var roundedBalance = Math.Round(balance, 2, MidpointRounding.AwayFromZero);
@@ -94,8 +129,46 @@ public sealed class AccountsService(
             throw new UnauthorizedAccessException();
         
         var account = user.AddAccount(command.CurrencyCode, command.Type, command.Name);
+        if (command.InitialBalance != 0m)
+        {
+            var adjustment = new AccountBalanceAdjustment(account, command.InitialBalance, DateTime.UtcNow);
+            await context.AccountBalanceAdjustments.AddAsync(adjustment, ct);
+        }
         await context.SaveChangesAsync(ct);
         
         return account.Id;
+    }
+
+    public async Task<List<AccountBalanceAdjustmentDto>> GetBalanceAdjustmentsAsync(Guid accountId,
+        CancellationToken ct = default)
+    {
+        var currentUserId = currentUser.Id;
+        var adjustments = await context.AccountBalanceAdjustments
+            .AsNoTracking()
+            .Where(a => a.AccountId == accountId && a.Account.UserId == currentUserId)
+            .OrderByDescending(a => a.OccurredAt)
+            .Select(a => new AccountBalanceAdjustmentDto(a.Id, a.AccountId, a.Amount, a.OccurredAt))
+            .ToListAsync(ct);
+
+        return adjustments;
+    }
+
+    public async Task<Guid> CreateBalanceAdjustmentAsync(Guid accountId, decimal amount,
+        CancellationToken ct = default)
+    {
+        var currentUserId = currentUser.Id;
+        var account = await context.Accounts
+            .Include(a => a.User)
+            .FirstOrDefaultAsync(a => a.Id == accountId, ct);
+        if (account is null)
+            throw new NotFoundException("Счет не найден", accountId);
+        if (account.UserId != currentUserId)
+            throw new InvalidOperationException("Доступ запрещен");
+
+        var adjustment = new AccountBalanceAdjustment(accountId, amount, DateTime.UtcNow);
+        await context.AccountBalanceAdjustments.AddAsync(adjustment, ct);
+        await context.SaveChangesAsync(ct);
+
+        return adjustment.Id;
     }
 }

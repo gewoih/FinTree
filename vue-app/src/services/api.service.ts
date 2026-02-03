@@ -16,7 +16,8 @@ import type {
     CreateIncomeInstrumentPayload,
     IncomeInstrumentDto,
     FutureIncomeOverviewDto,
-    NetWorthSnapshotDto
+    NetWorthSnapshotDto,
+    AccountBalanceAdjustmentDto
 } from '../types.ts';
 
 /**
@@ -176,6 +177,21 @@ export const apiService = {
         await apiClient.patch('/users/main-account', JSON.stringify(accountId), {
             headers: { 'Content-Type': 'application/json' },
         });
+    },
+
+    async getAccountBalanceAdjustments(accountId: string): Promise<AccountBalanceAdjustmentDto[]> {
+        const response = await apiClient.get<AccountBalanceAdjustmentDto[]>(
+            `/accounts/${accountId}/balance-adjustments`
+        );
+        return response.data;
+    },
+
+    async createAccountBalanceAdjustment(accountId: string, amount: number): Promise<string> {
+        const response = await apiClient.post<string>(
+            `/accounts/${accountId}/balance-adjustments`,
+            { amount }
+        );
+        return response.data;
     },
 
     // Инвестиционные инструменты

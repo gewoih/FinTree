@@ -1,6 +1,6 @@
 // src/types.ts
 
-export type AccountType = 0 | 1 | 2; // 0 - Bank, 1 - Cash, 2 - Crypto
+export type AccountType = 0 | 1 | 2 | 3; // 0 - Bank, 1 - Cash, 2 - Crypto, 3 - Investment
 
 export const CATEGORY_TYPE = {
     Income: 'Income',
@@ -96,12 +96,14 @@ export interface CreateAccountPayload {
     currencyCode: string;
     type: AccountType;
     name: string;
+    initialBalance?: number | null;
 }
 
 export interface AccountFormPayload {
     name: string;
     type: AccountType;
     currencyCode: string;
+    initialBalance?: number | null;
 }
 
 export interface CreateCategoryPayload {
@@ -244,6 +246,13 @@ export interface NetWorthSnapshotDto {
     year: number;
     month: number;
     netWorth: number;
+}
+
+export interface AccountBalanceAdjustmentDto {
+    id: string;
+    accountId: string;
+    amount: number;
+    occurredAt: string;
 }
 
 export type IncomeInstrumentType = 'Salary' | 'Deposit' | 'Investment' | 'Other';

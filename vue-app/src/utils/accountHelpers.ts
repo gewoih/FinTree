@@ -35,6 +35,13 @@ export function getAccountTypeInfo(type: AccountType): AccountTypeInfo {
         color: '#F59E0B', // Warning/Orange
         description: 'Криптовалютные кошельки и биржи'
       }
+    case 3: // Investment
+      return {
+        label: 'Инвестиции',
+        icon: 'pi-chart-line',
+        color: '#8B5CF6', // Violet
+        description: 'Брокерские счета и инвестиционные портфели'
+      }
     default:
       return {
         label: 'Неизвестный тип',

@@ -166,7 +166,7 @@ function normalizeCategoryType(value: unknown): CategoryType {
  */
 function normalizeAccountType(value: unknown): AccountType {
   // Already correct type
-  if (value === 0 || value === 1 || value === 2) {
+  if (value === 0 || value === 1 || value === 2 || value === 3) {
     return value as AccountType;
   }
 
@@ -176,6 +176,7 @@ function normalizeAccountType(value: unknown): AccountType {
     if (normalized === 'bank') return 0;
     if (normalized === 'cash') return 1;
     if (normalized === 'crypto') return 2;
+    if (normalized === 'investment') return 3;
   }
 
   console.warn('Не удалось распознать тип счета, используем Bank по умолчанию:', value);

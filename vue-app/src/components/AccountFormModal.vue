@@ -3,6 +3,7 @@ import { computed, ref, watch, onMounted } from 'vue';
 import Dialog from 'primevue/dialog';
 import InputText from 'primevue/inputtext';
 import Select from 'primevue/select';
+import InputNumber from 'primevue/inputnumber';
 import { useFinanceStore } from '../stores/finance';
 import { ACCOUNT_TYPE_OPTIONS } from '../constants';
 import { useFormModal } from '../composables/useFormModal';
@@ -25,6 +26,7 @@ const accountTypeSelectOptions = computed(() =>
 );
 const selectedCurrencyCode = ref<string | null>(null);
 const attemptedSubmit = ref(false);
+const initialBalance = ref<number | null>(null);
 
 const availableCurrencies = computed(() => store.currencies);
 
@@ -75,6 +77,7 @@ function resetForm() {
   name.value = '';
   accountType.value = ACCOUNT_TYPE_OPTIONS[0].value;
   attemptedSubmit.value = false;
+  initialBalance.value = null;
   setDefaultCurrency();
 }
 
@@ -100,6 +103,7 @@ const { isSubmitting, handleSubmit: handleFormSubmit, showWarning } = useFormMod
       name: name.value.trim(),
       type: accountType.value,
       currencyCode: currencyCodeForSubmit.value,
+      initialBalance: initialBalance.value,
     });
   },
   {
@@ -195,6 +199,23 @@ const handleSubmit = async () => {
           <span v-else-if="!currencyOptions.length">Не удалось загрузить валюты. Проверьте соединение.</span>
           <span v-else-if="currencySummary">{{ currencySummary }}</span>
           <span v-else>Выберите валюту для нового счёта.</span>
+        </template>
+      </FormField>
+
+      <FormField label="Начальный остаток">
+        <template #default="{ fieldAttrs }">
+          <InputNumber
+            v-model="initialBalance"
+            :input-id="fieldAttrs.id"
+            :min-fraction-digits="2"
+            :max-fraction-digits="2"
+            :use-grouping="true"
+            class="w-full"
+            placeholder="0.00"
+          />
+        </template>
+        <template #hint>
+          Можно оставить пустым и скорректировать позже.
         </template>
       </FormField>
 
