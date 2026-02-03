@@ -140,7 +140,10 @@ const formatPercent = (value: number | null) =>
                 />
                 <div class="delta-item__body">
                   <span class="delta-item__name">{{ item.name }}</span>
-                  <span class="delta-item__amount">{{ formatMoney(item.currentAmount) }}</span>
+                  <span class="delta-item__meta">
+                    Этот месяц: {{ formatMoney(item.currentAmount) }} ·
+                    Среднее 6м: {{ formatMoney(item.previousAmount) }}
+                  </span>
                 </div>
                 <Tag severity="danger">
                   {{ formatDelta(item.deltaAmount) }} · {{ formatPercent(item.deltaPercent) }}
@@ -170,7 +173,10 @@ const formatPercent = (value: number | null) =>
                 />
                 <div class="delta-item__body">
                   <span class="delta-item__name">{{ item.name }}</span>
-                  <span class="delta-item__amount">{{ formatMoney(item.currentAmount) }}</span>
+                  <span class="delta-item__meta">
+                    Этот месяц: {{ formatMoney(item.currentAmount) }} ·
+                    Среднее 6м: {{ formatMoney(item.previousAmount) }}
+                  </span>
                 </div>
                 <Tag severity="success">
                   {{ formatDelta(item.deltaAmount) }} · {{ formatPercent(item.deltaPercent) }}
@@ -303,8 +309,8 @@ const formatPercent = (value: number | null) =>
   color: var(--ft-text-primary);
 }
 
-.delta-item__amount {
-  font-size: var(--ft-text-sm);
-  color: var(--ft-text-secondary);
+.delta-item__meta {
+  font-size: var(--ft-text-xs);
+  color: var(--ft-text-tertiary);
 }
 </style>

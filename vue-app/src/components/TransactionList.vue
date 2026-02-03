@@ -18,6 +18,9 @@ interface EnrichedTransaction extends Transaction {
   accountSymbol?: string
   categoryName?: string
   categoryColor?: string
+  dateKey: string
+  dateLabel: string
+  isDayStart?: boolean
   signedAmount: number
   signedBaseAmount: number
   displayAmount: number
@@ -40,6 +43,27 @@ const baseCurrency = computed(() => userStore.baseCurrencyCode ?? store.primaryA
 
 const transactionsLoading = computed(() => store.isTransactionsLoading)
 
+const formatDateKey = (value?: string): string => {
+  if (!value) return 'unknown'
+  const date = new Date(value)
+  if (Number.isNaN(date.getTime())) return 'unknown'
+  const year = date.getFullYear()
+  const month = `${date.getMonth() + 1}`.padStart(2, '0')
+  const day = `${date.getDate()}`.padStart(2, '0')
+  return `${year}-${month}-${day}`
+}
+
+const formatDateLabel = (value?: string): string => {
+  if (!value) return '—'
+  const date = new Date(value)
+  if (Number.isNaN(date.getTime())) return '—'
+  return date.toLocaleDateString('ru-RU', {
+    day: '2-digit',
+    month: 'long',
+    year: 'numeric'
+  })
+}
+
 const enrichedTransactions = computed<EnrichedTransaction[]>(() =>
   store.transactions.map((txn: Transaction) => {
     const account = txn.account
@@ -55,6 +79,8 @@ const enrichedTransactions = computed<EnrichedTransaction[]>(() =>
     const displayAmount = isIncome ? signedAmount : signedBaseAmount
     const displayCurrency = isIncome ? accountCurrency : baseCurrency.value
     const showOriginal = !isIncome && originalCurrency != null && originalCurrency !== baseCurrency.value
+    const dateKey = formatDateKey(txn.occurredAt)
+    const dateLabel = formatDateLabel(txn.occurredAt)
 
     return {
       ...txn,
@@ -70,7 +96,9 @@ const enrichedTransactions = computed<EnrichedTransaction[]>(() =>
       originalAmount,
       originalCurrency,
       showOriginal,
-      isMandatory: txn.isMandatory
+      isMandatory: txn.isMandatory,
+      dateKey,
+      dateLabel
     } as EnrichedTransaction
   })
 )
@@ -83,6 +111,27 @@ const {
   filteredTransactions,
   clearFilters: clearFiltersComposable
 } = useTransactionFilters<EnrichedTransaction>(() => enrichedTransactions.value)
+
+const sortedTransactions = computed(() => {
+  const sorted = [...filteredTransactions.value].sort((a, b) => {
+    const timeA = new Date(a.occurredAt).getTime()
+    const timeB = new Date(b.occurredAt).getTime()
+    return timeB - timeA
+  })
+
+  return sorted.map((item, index) => {
+    const prev = sorted[index - 1]
+    const isDayStart = !prev || prev.dateKey !== item.dateKey
+    return {
+      ...item,
+      isDayStart
+    }
+  })
+})
+
+const rowClass = (data: EnrichedTransaction) => ({
+  'transaction-row--day-start': data.isDayStart
+})
 
 const totalAmount = computed(() =>
   filteredTransactions.value.reduce(
@@ -198,32 +247,9 @@ const isEmptyState = computed(
       class="transaction-history__table"
       padding="lg"
     >
-      <template #header>
-        <div class="table-shell__header">
-          <div>
-            <h3 class="table-shell__title">
-              История транзакций
-            </h3>
-            <p class="table-shell__meta">
-              {{ filteredTransactions.length }}
-              {{ filteredTransactions.length === 1 ? 'транзакция' : filteredTransactions.length < 5 ? 'транзакции' : 'транзакций' }}
-              по {{ store.accounts.length }}
-              {{ store.accounts.length === 1 ? 'счету' : store.accounts.length < 5 ? 'счетам' : 'счетам' }}
-            </p>
-          </div>
-          <div class="table-shell__actions">
-            <UiButton
-              variant="ghost"
-              icon="pi pi-plus"
-              label="Добавить"
-              @click="emit('add-transaction')"
-            />
-          </div>
-        </div>
-      </template>
       <UiDataTable
         class="transaction-history__datatable"
-        :value="filteredTransactions"
+        :value="sortedTransactions"
         sort-field="occurredAt"
         :sort-order="-1"
         striped-rows
@@ -235,6 +261,10 @@ const isEmptyState = computed(
         paginator-template="FirstPageLink PrevPageLink PageLinks NextPageLink LastPageLink CurrentPageReport RowsPerPageDropdown"
         current-page-report-template="Показано {first} - {last} из {totalRecords}"
         :global-filter-fields="['categoryName', 'accountName', 'description']"
+        :row-class="rowClass"
+        selection-mode="single"
+        data-key="id"
+        @row-click="emit('edit-transaction', $event.data)"
       >
         <template #footer>
           <div class="transaction-history__summary">
@@ -249,10 +279,12 @@ const isEmptyState = computed(
           field="occurredAt"
           header="Дата"
           :sortable="true"
-          style="min-width: 120px"
+          style="width: 140px"
         >
           <template #body="slotProps">
-            <span class="date-cell">{{ formatDate(slotProps.data.occurredAt) }}</span>
+            <div class="date-cell">
+              <span class="date-cell__main">{{ formatDate(slotProps.data.occurredAt) }}</span>
+            </div>
           </template>
         </Column>
 
@@ -260,7 +292,7 @@ const isEmptyState = computed(
           field="displayAmount"
           header="Сумма"
           :sortable="true"
-          style="min-width: 160px"
+          style="width: 170px"
         >
           <template #body="slotProps">
             <div
@@ -285,7 +317,7 @@ const isEmptyState = computed(
           field="categoryName"
           header="Категория"
           :sortable="true"
-          style="min-width: 180px"
+          style="width: 200px"
         >
           <template #body="slotProps">
             <div class="category-cell">
@@ -306,7 +338,7 @@ const isEmptyState = computed(
           field="accountName"
           header="Счет"
           :sortable="true"
-          style="min-width: 160px"
+          style="width: 220px"
         >
           <template #body="slotProps">
             <div class="account-cell">
@@ -322,7 +354,7 @@ const isEmptyState = computed(
         <Column
           field="description"
           header="Заметки"
-          style="min-width: 220px"
+          style="width: 200px"
         >
           <template #body="slotProps">
             <span
@@ -335,20 +367,6 @@ const isEmptyState = computed(
               v-else
               class="description-empty"
             >—</span>
-          </template>
-        </Column>
-
-        <Column
-          header="Действия"
-          style="min-width: 120px"
-        >
-          <template #body="slotProps">
-            <UiButton
-              icon="pi pi-pencil"
-              variant="ghost"
-              aria-label="Редактировать транзакцию"
-              @click="emit('edit-transaction', slotProps.data)"
-            />
           </template>
         </Column>
       </UiDataTable>
@@ -383,14 +401,20 @@ const isEmptyState = computed(
 }
 
 .date-cell {
+  display: grid;
+  gap: 2px;
+}
+
+.date-cell__main {
   font-weight: var(--ft-font-semibold);
   color: var(--ft-text-primary);
 }
 
+
 .amount-cell {
   display: flex;
   flex-direction: column;
-  align-items: flex-end;
+  align-items: flex-start;
   gap: var(--ft-space-1);
   font-weight: var(--ft-font-semibold);
   color: var(--ft-success-400);
@@ -403,6 +427,7 @@ const isEmptyState = computed(
 
 .amount-value {
   font-size: var(--ft-text-base);
+  font-variant-numeric: tabular-nums;
 }
 
 .amount-currency {
@@ -437,6 +462,10 @@ const isEmptyState = computed(
 
 .description-text {
   color: var(--ft-text-secondary);
+  display: block;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .description-empty {
@@ -458,15 +487,14 @@ const isEmptyState = computed(
   border-right: none;
 }
 
-:deep(.transaction-history__datatable .p-datatable .p-datatable-thead > tr > th:last-child),
-:deep(.transaction-history__datatable .p-datatable .p-datatable-tbody > tr > td:last-child) {
-  text-align: center;
-}
-
 :deep(.transaction-history__datatable .p-datatable .p-column-header-content) {
   display: inline-flex;
   align-items: center;
   gap: var(--space-2);
+}
+
+:deep(.transaction-history__datatable .p-datatable-tbody > tr.transaction-row--day-start > td) {
+  border-top: 2px solid color-mix(in srgb, var(--ft-primary-500, #3b82f6) 35%, transparent);
 }
 
 :deep(.p-datatable .p-datatable-tbody > tr > td) {
@@ -479,7 +507,13 @@ const isEmptyState = computed(
   text-transform: uppercase;
   letter-spacing: 0.04em;
   color: var(--ft-text-tertiary);
+  background: color-mix(in srgb, var(--ft-surface-raised) 90%, transparent);
 }
+
+:deep(.transaction-history__datatable .p-datatable-tbody > tr) {
+  cursor: pointer;
+}
+
 
 :deep(.p-datatable .p-paginator-bottom) {
   border-top: 1px solid var(--ft-border-soft);

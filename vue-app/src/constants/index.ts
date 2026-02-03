@@ -59,8 +59,8 @@ export const DATE_FORMATS = {
 } as const;
 
 export const PAGINATION_OPTIONS = {
-  defaultRows: 15,
-  options: [10, 15, 25, 50] as const
+  defaultRows: 25,
+  options: [25, 50, 100] as const
 } as const;
 
 export const VALIDATION_RULES = {

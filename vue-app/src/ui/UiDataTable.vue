@@ -41,6 +41,24 @@ const tableClasses = computed(() => [
       >
         <slot name="footer" />
       </template>
+      <template
+        v-if="$slots.groupheader"
+        #groupheader="slotProps"
+      >
+        <slot
+          name="groupheader"
+          v-bind="slotProps"
+        />
+      </template>
+      <template
+        v-if="$slots.groupfooter"
+        #groupfooter="slotProps"
+      >
+        <slot
+          name="groupfooter"
+          v-bind="slotProps"
+        />
+      </template>
       <slot />
     </DataTable>
   </div>
