@@ -51,8 +51,8 @@ const formatPercent = (value: number | null) =>
     <template #title>
       <div class="card-head">
         <div>
-          <h3>Сдвиги по категориям</h3>
-          <p>Сравнение с предыдущим периодом ({{ periodLabel }})</p>
+          <h3>Изменения по категориям</h3>
+          <p>Сравнение с прошлым месяцем ({{ periodLabel }})</p>
         </div>
       </div>
     </template>
@@ -121,11 +121,11 @@ const formatPercent = (value: number | null) =>
         class="delta-card__grid"
       >
         <div class="delta-card__column">
-          <p class="delta-card__title">Рост расходов</p>
+          <p class="delta-card__title">Где траты выросли</p>
           <ul class="delta-card__list">
             <template v-if="!increased.length">
               <li class="delta-item delta-item--empty">
-                Нет заметного роста
+                Существенного роста нет
               </li>
             </template>
             <template v-else>
@@ -151,11 +151,11 @@ const formatPercent = (value: number | null) =>
         </div>
 
         <div class="delta-card__column">
-          <p class="delta-card__title">Снижение расходов</p>
+          <p class="delta-card__title">Где траты снизились</p>
           <ul class="delta-card__list">
             <template v-if="!decreased.length">
               <li class="delta-item delta-item--empty">
-                Нет заметного снижения
+                Существенного снижения нет
               </li>
             </template>
             <template v-else>

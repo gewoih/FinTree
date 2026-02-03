@@ -41,7 +41,7 @@ const chartOptions = computed(() => ({
       <div class="card-head">
         <div>
           <h3>Расходы по категориям</h3>
-          <p>Распределение трат за выбранный месяц</p>
+          <p>Распределение расходов за выбранный месяц</p>
         </div>
       </div>
     </template>

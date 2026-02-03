@@ -79,16 +79,26 @@ const remainingAmount = computed(() => {
   return forecastTotal - currentSpent;
 });
 
+const isOverForecast = computed(() => remainingAmount.value != null && remainingAmount.value < 0);
+
 const remainingText = computed(() => {
-  if (remainingAmount.value == null) return null;
+  if (remainingAmount.value == null || isOverForecast.value) return null;
   const formatted = Math.abs(remainingAmount.value).toLocaleString('ru-RU', {
     style: 'currency',
     currency: props.currency,
     minimumFractionDigits: 0,
   });
-  return remainingAmount.value >= 0
-    ? `Осталось ориентировочно ${formatted} до конца месяца.`
-    : `Вы уже превысили прогноз на ${formatted}.`;
+  return `Осталось ориентировочно ${formatted} до конца месяца.`;
+});
+
+const overForecastText = computed(() => {
+  if (!isOverForecast.value || remainingAmount.value == null) return null;
+  const formatted = Math.abs(remainingAmount.value).toLocaleString('ru-RU', {
+    style: 'currency',
+    currency: props.currency,
+    minimumFractionDigits: 0,
+  });
+  return `Превышение прогноза: ${formatted}.`;
 });
 
 const statusLabel = computed(() => {
@@ -179,7 +189,7 @@ const chartOptions = computed(() => ({
       <div class="card-head">
         <div>
           <h3>Прогноз расходов</h3>
-          <p>Как изменится траектория трат до конца месяца</p>
+          <p>Оценка расходов до конца месяца</p>
         </div>
         <Tag
           v-if="statusLabel"
@@ -262,8 +272,14 @@ const chartOptions = computed(() => ({
       >
         <div class="forecast-card__summary">
           <p class="forecast-card__lead">
-            При текущем темпе трат вы выйдете на сумму ≈
-            <strong>{{ formattedForecast }}</strong> к концу месяца.
+            <template v-if="isOverForecast">
+              Ориентир по медианному расходу ≈ <strong>{{ formattedForecast }}</strong>,
+              но фактически уже потрачено <strong>{{ formattedCurrent }}</strong>.
+            </template>
+            <template v-else>
+              Ориентир по медианному расходу ≈
+              <strong>{{ formattedForecast }}</strong> к концу месяца.
+            </template>
           </p>
           <p
             v-if="remainingText"
@@ -271,13 +287,18 @@ const chartOptions = computed(() => ({
           >
             {{ remainingText }}
           </p>
+          <p
+            v-else-if="overForecastText"
+            class="forecast-card__remaining"
+          >
+            {{ overForecastText }}
+          </p>
           <p class="forecast-card__support">
-            Уже потрачено: <strong>{{ formattedCurrent }}</strong>
             <template v-if="hasBaseline">
-              из ориентировочного лимита {{ formattedLimit }}.
+              Справочно: лимит прошлого месяца — {{ formattedLimit }}.
             </template>
             <template v-else>
-              за текущий период без установленного лимита.
+              Лимит прошлого месяца недоступен.
             </template>
           </p>
         </div>

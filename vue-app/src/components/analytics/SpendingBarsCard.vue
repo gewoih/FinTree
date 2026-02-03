@@ -88,7 +88,7 @@ const chartOptions = computed(() => ({
       <div class="card-head">
         <div>
           <h3>Динамика расходов</h3>
-          <p>Интенсивность трат по выбранной детализации</p>
+          <p>Как менялись расходы по выбранной детализации</p>
         </div>
         <SelectButton
           :model-value="granularity"
