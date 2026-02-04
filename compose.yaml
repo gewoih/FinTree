@@ -24,7 +24,9 @@
     environment:
       ASPNETCORE_URLS: "http://+:5000"
       ASPNETCORE_ENVIRONMENT: "Development"
-      ConnectionStrings__DefaultConnection: "Host=fintree-postgres;Port=5432;Database=fin_tree;Username=postgres;Password=postgres"
+      Auth__JwtSecretKey: ${AUTH_JWT_SECRET_KEY}
+      Telegram__BotToken: ${TELEGRAM_BOT_TOKEN}
+      ConnectionStrings__DefaultConnection: ${CONNECTION_STRINGS_DEFAULT}
     ports:
       - "5000:5000"
     depends_on:

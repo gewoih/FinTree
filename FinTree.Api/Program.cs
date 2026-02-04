@@ -43,11 +43,29 @@ builder.Services.AddCors(options =>
 {
     options.AddPolicy("VueFrontend", policy =>
     {
-        policy.WithOrigins("http://localhost:8080")
+        var allowedOrigins = builder.Configuration.GetSection("Cors:AllowedOrigins")
+            .Get<string[]>() ?? ["http://localhost:8080"];
+        policy.WithOrigins(allowedOrigins)
             .AllowAnyHeader()
             .AllowAnyMethod()
             .AllowCredentials();
     });
+});
+
+var authOptions = builder.Configuration.GetSection("Auth").Get<AuthOptions>() ?? new AuthOptions();
+if (string.IsNullOrWhiteSpace(authOptions.JwtSecretKey))
+    throw new InvalidOperationException("Auth:JwtSecretKey is missing.");
+if (string.IsNullOrWhiteSpace(authOptions.Issuer))
+    throw new InvalidOperationException("Auth:Issuer is missing.");
+if (string.IsNullOrWhiteSpace(authOptions.Audience))
+    throw new InvalidOperationException("Auth:Audience is missing.");
+
+builder.Services.Configure<AuthOptions>(options =>
+{
+    options.JwtSecretKey = authOptions.JwtSecretKey;
+    options.Issuer = authOptions.Issuer;
+    options.Audience = authOptions.Audience;
+    options.TokenLifetimeDays = authOptions.TokenLifetimeDays;
 });
 
 builder.Services.AddIdentity<User, Role>(o =>
@@ -57,6 +75,9 @@ builder.Services.AddIdentity<User, Role>(o =>
         o.Password.RequireNonAlphanumeric = false;
         o.Password.RequiredUniqueChars = 4;
         o.Password.RequiredLength = 8;
+        o.Lockout.AllowedForNewUsers = true;
+        o.Lockout.MaxFailedAccessAttempts = 5;
+        o.Lockout.DefaultLockoutTimeSpan = TimeSpan.FromMinutes(15);
     })
     .AddEntityFrameworkStores<AppDbContext>()
     .AddDefaultTokenProviders();
@@ -74,12 +95,14 @@ builder.Services.AddAuthentication(options =>
             ValidateAudience = true,
             ValidateLifetime = true,
             ValidateIssuerSigningKey = true,
-            IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(AuthService.JwtSecretKey)),
-            ValidIssuer = AuthService.ValidIssuer,
-            ValidAudience = AuthService.ValidAudience,
+            IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(authOptions.JwtSecretKey)),
+            ValidIssuer = authOptions.Issuer,
+            ValidAudience = authOptions.Audience,
             ClockSkew = TimeSpan.FromSeconds(30)
         };
+        options.RequireHttpsMetadata = !builder.Environment.IsDevelopment();
     });
+
 builder.Services.AddAuthorization();
 
 builder.Services.AddHttpContextAccessor();
@@ -90,10 +113,13 @@ var connectionString = builder.Configuration.GetConnectionString("DefaultConnect
 builder.Services.AddDbContext<AppDbContext>(options =>
 {
     options.UseNpgsql(connectionString);
-    options.EnableSensitiveDataLogging();
+    if (builder.Environment.IsDevelopment())
+        options.EnableSensitiveDataLogging();
 });
 
-builder.Services.AddSingleton<TelegramBotClient>(_ => new TelegramBotClient("8320550185:AAHAOWsd3jUUz_Ko0YkBAZgHKp8GFkDXbrU"));
+var telegramToken = builder.Configuration["Telegram:BotToken"];
+if (!string.IsNullOrWhiteSpace(telegramToken))
+    builder.Services.AddSingleton<TelegramBotClient>(_ => new TelegramBotClient(telegramToken));
 
 builder.Services.AddScoped<TransactionCategoryService>();
 builder.Services.AddScoped<TransactionsService>();
@@ -105,8 +131,9 @@ builder.Services.AddScoped<AnalyticsService>();
 builder.Services.AddScoped<IncomeInstrumentsService>();
 builder.Services.AddScoped<CurrencyConverter>();
 builder.Services.AddScoped<DatabaseInitializer>();
-    
-builder.Services.AddHostedService<TelegramBotHostedService>();
+
+if (!string.IsNullOrWhiteSpace(telegramToken))
+    builder.Services.AddHostedService<TelegramBotHostedService>();
 builder.Services.AddHostedService<FxLoader>();
 
 var app = builder.Build();
@@ -116,7 +143,12 @@ if (app.Environment.IsDevelopment())
     app.UseSwaggerUI();
 }
 
-//app.UseHttpsRedirection();
+if (!app.Environment.IsDevelopment())
+{
+    app.UseHsts();
+    app.UseHttpsRedirection();
+}
+
 app.UseAuthentication();
 app.UseAuthorization();
 
@@ -135,7 +167,10 @@ app.UseExceptionHandler(b =>
             _ => StatusCodes.Status500InternalServerError
         };
 
-        await context.Response.WriteAsync(JsonSerializer.Serialize(new { error = error?.Message }));
+        var message = app.Environment.IsDevelopment()
+            ? error?.Message
+            : "Произошла ошибка. Попробуйте позже.";
+        await context.Response.WriteAsync(JsonSerializer.Serialize(new { error = message }));
     });
 });
 
