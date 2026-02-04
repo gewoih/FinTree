@@ -72,6 +72,11 @@ public sealed class User : IdentityUser<Guid>
         MainAccountId = accountId;
     }
 
+    public void ClearMainAccount()
+    {
+        MainAccountId = null;
+    }
+
     public void LinkTelegramAccount(string telegramUserId)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(telegramUserId);
@@ -84,7 +89,7 @@ public sealed class User : IdentityUser<Guid>
         TelegramUserId = null;
     }
 
-    public TransactionCategory AddTransactionCategory(CategoryType categoryType, string name, string color,
+    public TransactionCategory AddTransactionCategory(CategoryType categoryType, string name, string color, string icon,
         bool isMandatory = false)
     {
         if (_transactionCategories.Any(t =>
@@ -94,7 +99,7 @@ public sealed class User : IdentityUser<Guid>
             throw new InvalidOperationException("Категория уже существует");
         }
 
-        var transactionCategory = TransactionCategory.CreateUser(Id, name, color, categoryType, isMandatory);
+        var transactionCategory = TransactionCategory.CreateUser(Id, name, color, icon, categoryType, isMandatory);
         _transactionCategories.Add(transactionCategory);
         return transactionCategory;
     }

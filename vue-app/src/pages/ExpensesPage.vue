@@ -1,15 +1,17 @@
 <script setup lang="ts">
 import { onMounted, ref } from 'vue'
+import { useToast } from 'primevue/usetoast'
 import { useFinanceStore } from '../stores/finance'
-import { useUserStore } from '../stores/user'
 import type { Transaction } from '../types'
 import TransactionList from '../components/TransactionList.vue'
 import TransactionForm from '../components/TransactionForm.vue'
+import { apiService } from '../services/api.service'
 
 const financeStore = useFinanceStore()
-const userStore = useUserStore()
+const toast = useToast()
 const transactionDialogVisible = ref(false)
 const editingTransaction = ref<Transaction | null>(null)
+const isExporting = ref(false)
 
 const openTransactionDialog = () => {
   editingTransaction.value = null
@@ -21,8 +23,40 @@ const handleEditTransaction = (transaction: Transaction) => {
   transactionDialogVisible.value = true
 }
 
+const exportTransactions = async () => {
+  if (isExporting.value) return
+  isExporting.value = true
+  try {
+    const { blob, fileName } = await apiService.exportTransactions()
+    const url = URL.createObjectURL(blob)
+    const link = document.createElement('a')
+    link.href = url
+    link.download = fileName
+    document.body.appendChild(link)
+    link.click()
+    link.remove()
+    URL.revokeObjectURL(url)
+
+    toast.add({
+      severity: 'success',
+      summary: 'Экспорт завершен',
+      detail: 'Файл с транзакциями сохранен.',
+      life: 2500
+    })
+  } catch (error) {
+    console.error('Не удалось экспортировать транзакции:', error)
+    toast.add({
+      severity: 'error',
+      summary: 'Ошибка экспорта',
+      detail: 'Не удалось сформировать файл.',
+      life: 2500
+    })
+  } finally {
+    isExporting.value = false
+  }
+}
+
 onMounted(async () => {
-  await userStore.fetchCurrentUser()
   await Promise.all([
     financeStore.fetchCurrencies(),
     financeStore.fetchAccounts(),
@@ -43,6 +77,13 @@ onMounted(async () => {
       ]"
     >
       <template #actions>
+        <UiButton
+          label="Экспорт"
+          icon="pi pi-download"
+          variant="ghost"
+          :loading="isExporting"
+          @click="exportTransactions"
+        />
         <UiButton
           label="Добавить транзакцию"
           icon="pi pi-plus"

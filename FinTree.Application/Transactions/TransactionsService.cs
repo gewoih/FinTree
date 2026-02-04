@@ -6,6 +6,8 @@ using FinTree.Domain.Transactions;
 using FinTree.Domain.ValueObjects;
 using FinTree.Infrastructure.Database;
 using Microsoft.EntityFrameworkCore;
+using System.Globalization;
+using System.Text;
 
 namespace FinTree.Application.Transactions;
 
@@ -84,6 +86,105 @@ public sealed class TransactionsService(AppDbContext context, ICurrentUser curre
         }
 
         return userTransactions;
+    }
+
+    public async Task<(byte[] Content, string FileName)> ExportAsync(CancellationToken ct)
+    {
+        var currentUserId = currentUser.Id;
+
+        var accounts = await context.Accounts.AsNoTracking()
+            .Where(a => a.UserId == currentUserId)
+            .Select(a => new
+            {
+                a.Id,
+                a.Name,
+                a.CurrencyCode
+            })
+            .OrderBy(a => a.Name)
+            .ToListAsync(ct);
+
+        if (accounts.Count == 0)
+        {
+            const string emptyContent = "Транзакции отсутствуют.";
+            var emptyFileName = $"transactions_{DateTime.UtcNow:yyyy-MM-dd}.txt";
+            return (Encoding.UTF8.GetBytes(emptyContent), emptyFileName);
+        }
+
+        var accountIds = accounts.Select(a => a.Id).ToArray();
+
+        var categories = await context.TransactionCategories.AsNoTracking()
+            .Where(c => c.UserId == currentUserId || c.UserId == null)
+            .Select(c => new { c.Id, c.Name })
+            .ToListAsync(ct);
+
+        var categoryLookup = categories.ToDictionary(c => c.Id, c => c.Name);
+
+        var transactions = await context.Transactions.AsNoTracking()
+            .Where(t => accountIds.Contains(t.AccountId))
+            .Select(t => new
+            {
+                t.AccountId,
+                t.Money,
+                t.Type,
+                t.OccurredAt,
+                t.Description,
+                t.CategoryId
+            })
+            .OrderBy(t => t.OccurredAt)
+            .ToListAsync(ct);
+
+        if (transactions.Count == 0)
+        {
+            var emptyContent = "Транзакции отсутствуют.";
+            var emptyFileName = $"transactions_{DateTime.UtcNow:yyyy-MM-dd}.txt";
+            return (Encoding.UTF8.GetBytes(emptyContent), emptyFileName);
+        }
+
+        var transactionsByAccount = transactions
+            .GroupBy(t => t.AccountId)
+            .ToDictionary(g => g.Key, g => g.ToList());
+
+        var culture = CultureInfo.GetCultureInfo("ru-RU");
+        var content = new StringBuilder();
+
+        foreach (var account in accounts)
+        {
+            if (!transactionsByAccount.TryGetValue(account.Id, out var accountTransactions) ||
+                accountTransactions.Count == 0)
+            {
+                continue;
+            }
+
+            content.Append("Счет: ")
+                .Append(account.Name)
+                .Append(" (")
+                .Append(account.CurrencyCode.ToUpperInvariant())
+                .AppendLine(")");
+
+            foreach (var transaction in accountTransactions)
+            {
+                ct.ThrowIfCancellationRequested();
+
+                var note = transaction.Description?.Trim().Replace("\t", " ").Replace("\r", " ").Replace("\n", " ");
+                var dateLabel = transaction.OccurredAt.ToString("dd.MM.yyyy", culture);
+                var categoryLabel = categoryLookup[transaction.CategoryId];
+
+                content.Append(transaction.Money.Amount)
+                    .Append(' ')
+                    .Append(categoryLabel)
+                    .Append(' ');
+                    
+                if (!string.IsNullOrWhiteSpace(note))
+                    content.Append(note).Append(' ');
+                
+                content.Append(dateLabel).AppendLine();
+            }
+
+            content.AppendLine();
+        }
+
+        var fileName = $"transactions_{DateTime.UtcNow:yyyy-MM-dd}.txt";
+        return (Encoding.UTF8.GetBytes(content.ToString()), fileName);
     }
 
     public async Task AssignCategoryAsync(AssignCategory command, CancellationToken ct)

@@ -8,50 +8,57 @@ public sealed class TransactionCategory : Entity
     public Guid? UserId { get; private set; }
     [MaxLength(50)] public string Name { get; private set; }
     [MaxLength(9)] public string Color { get; private set; }
+    [MaxLength(40)] public string Icon { get; private set; }
     public CategoryType Type { get; private set; }
     public bool IsDefault { get; private set; }
     public bool IsMandatory { get; private set; }
     public bool IsSystem => UserId == null;
 
-    private TransactionCategory(string name, string color, CategoryType type = CategoryType.Expense,
+    private TransactionCategory(string name, string color, string icon, CategoryType type = CategoryType.Expense,
         bool isDefault = false, Guid? userId = null, bool isMandatory = false)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(name);
         ArgumentException.ThrowIfNullOrWhiteSpace(color);
+        ArgumentException.ThrowIfNullOrWhiteSpace(icon);
 
         UserId = userId;
         Name = name.Trim();
         Color = color.Trim();
+        Icon = icon.Trim();
         Type = type;
         IsDefault = isDefault;
         IsMandatory = isMandatory;
     }
 
-    public static TransactionCategory CreateDefault(string name, string color, CategoryType type = CategoryType.Expense,
+    public static TransactionCategory CreateDefault(string name, string color, string icon = "pi-tag",
+        CategoryType type = CategoryType.Expense,
         bool isMandatory = false)
     {
-        return new TransactionCategory(name, color, type, true, null, isMandatory);
+        return new TransactionCategory(name, color, icon, type, true, null, isMandatory);
     }
 
-    public static TransactionCategory CreateSystem(string name, string color, CategoryType type = CategoryType.Expense,
+    public static TransactionCategory CreateSystem(string name, string color, string icon = "pi-tag",
+        CategoryType type = CategoryType.Expense,
         bool isMandatory = false)
     {
-        return new TransactionCategory(name, color, type, false, null, isMandatory);
+        return new TransactionCategory(name, color, icon, type, false, null, isMandatory);
     }
 
-    public static TransactionCategory CreateUser(Guid userId, string name, string color,
+    public static TransactionCategory CreateUser(Guid userId, string name, string color, string icon = "pi-tag",
         CategoryType type = CategoryType.Expense, bool isMandatory = false)
     {
-        return new TransactionCategory(name, color, type, false, userId, isMandatory);
+        return new TransactionCategory(name, color, icon, type, false, userId, isMandatory);
     }
 
-    public void Update(string? name = null, string? color = null, bool? isMandatory = null)
+    public void Update(string? name = null, string? color = null, string? icon = null, bool? isMandatory = null)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(name);
         ArgumentException.ThrowIfNullOrWhiteSpace(color);
+        ArgumentException.ThrowIfNullOrWhiteSpace(icon);
 
         Name = name.Trim();
         Color = color.Trim();
+        Icon = icon.Trim();
         if (isMandatory.HasValue)
             IsMandatory = isMandatory.Value;
     }

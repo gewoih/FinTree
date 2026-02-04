@@ -227,6 +227,20 @@ export const useFinanceStore = defineStore('finance', () => {
         }
     }
 
+    async function deleteAccount(accountId: string) {
+        try {
+            await apiService.deleteAccount(accountId);
+            await fetchAccounts(true);
+            if (currentTransactionsAccountId.value === accountId) {
+                await fetchTransactions(undefined);
+            }
+            return true;
+        } catch (error) {
+            console.error('Не удалось удалить счет', error);
+            return false;
+        }
+    }
+
     /**
      * Creates a new transaction category
      * @param payload - Category data
@@ -237,6 +251,7 @@ export const useFinanceStore = defineStore('finance', () => {
             await apiService.createCategory({
                 name: payload.name,
                 color: payload.color,
+                icon: payload.icon,
                 categoryType: payload.categoryType,
                 isMandatory: payload.isMandatory ?? false,
             });
@@ -267,6 +282,7 @@ export const useFinanceStore = defineStore('finance', () => {
                 id: payload.id,
                 name: payload.name,
                 color: payload.color,
+                icon: payload.icon,
                 isMandatory: payload.isMandatory ?? false,
             });
 
@@ -322,6 +338,7 @@ export const useFinanceStore = defineStore('finance', () => {
         deleteTransaction,
         createAccount,
         setPrimaryAccount,
+        deleteAccount,
         createCategory,
         updateCategory,
         deleteCategory,

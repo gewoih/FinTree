@@ -171,4 +171,43 @@ public sealed class AccountsService(
 
         return adjustment.Id;
     }
+
+    public async Task DeleteAsync(Guid accountId, CancellationToken ct = default)
+    {
+        var currentUserId = currentUser.Id;
+        var account = await context.Accounts
+            .Include(a => a.User)
+            .ThenInclude(u => u.Accounts)
+            .Include(a => a.Transactions)
+            .FirstOrDefaultAsync(a => a.Id == accountId, ct);
+
+        if (account is null)
+            throw new NotFoundException("Счет не найден", accountId);
+
+        if (account.UserId != currentUserId)
+            throw new InvalidOperationException("Доступ запрещен");
+
+        var adjustments = await context.AccountBalanceAdjustments
+            .Where(a => a.AccountId == accountId)
+            .ToListAsync(ct);
+
+        foreach (var transaction in account.Transactions)
+            transaction.Delete();
+
+        foreach (var adjustment in adjustments)
+            adjustment.Delete();
+
+        var user = account.User;
+        if (user.MainAccountId == accountId)
+        {
+            var nextAccount = user.Accounts.FirstOrDefault(a => a.Id != accountId);
+            if (nextAccount is not null)
+                user.SetMainAccount(nextAccount.Id);
+            else
+                user.ClearMainAccount();
+        }
+
+        account.Delete();
+        await context.SaveChangesAsync(ct);
+    }
 }

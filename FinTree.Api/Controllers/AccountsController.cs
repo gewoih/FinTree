@@ -33,4 +33,11 @@ public class AccountsController(AccountsService accountsService) : ControllerBas
         var adjustmentId = await accountsService.CreateBalanceAdjustmentAsync(accountId, request.Amount, ct);
         return Ok(adjustmentId);
     }
+
+    [HttpDelete("{accountId:guid}")]
+    public async Task<IActionResult> DeleteAccount(Guid accountId, CancellationToken ct = default)
+    {
+        await accountsService.DeleteAsync(accountId, ct);
+        return Ok();
+    }
 }

@@ -31,6 +31,7 @@ export interface TransactionCategoryDto {
     id: string; // Guid
     name: string;
     color: string;
+    icon: string;
     type: CategoryType;
     isSystem: boolean;
     isMandatory?: boolean;
@@ -110,6 +111,7 @@ export interface CreateCategoryPayload {
     categoryType: CategoryType;
     name: string;
     color: string;
+    icon: string;
     isMandatory?: boolean;
 }
 
@@ -118,6 +120,7 @@ export interface CategoryFormPayload {
     categoryType: CategoryType;
     name: string;
     color: string;
+    icon: string;
     isMandatory?: boolean;
 }
 
@@ -125,6 +128,7 @@ export interface UpdateCategoryPayload {
     id: string;
     name: string;
     color: string;
+    icon: string;
     isMandatory?: boolean;
 }
 

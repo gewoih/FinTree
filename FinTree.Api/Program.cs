@@ -151,6 +151,5 @@ await appDbContext.Database.MigrateAsync();
 
 var dbInitializer = serviceProvider.GetRequiredService<DatabaseInitializer>();
 await dbInitializer.SeedTransactionCategories();
-await dbInitializer.SeedTestUser();
 
 await app.RunAsync();

@@ -4,4 +4,4 @@ using FinTree.Domain.Transactions;
 namespace FinTree.Application.Transactions.Dto;
 
 public readonly record struct CreateTransactionCategory(CategoryType CategoryType, string Name, string Color,
-    bool IsMandatory = false);
+    string Icon, bool IsMandatory = false);

@@ -17,8 +17,9 @@ public sealed class TransactionCategoryService(AppDbContext context, ICurrentUse
                        .SingleOrDefaultAsync(u => u.Id == userId, ct)
                    ?? throw new NotFoundException(nameof(User), userId);
 
+        var icon = string.IsNullOrWhiteSpace(command.Icon) ? "pi-tag" : command.Icon;
         var transactionCategory = user.AddTransactionCategory(command.CategoryType, command.Name, command.Color,
-            command.IsMandatory);
+            icon, command.IsMandatory);
         await context.SaveChangesAsync(ct);
 
         return transactionCategory.Id;
@@ -32,7 +33,8 @@ public sealed class TransactionCategoryService(AppDbContext context, ICurrentUse
                 .FirstOrDefaultAsync(tc => tc.Id == command.Id, cancellationToken: ct) ??
             throw new NotFoundException("Категория не найдена", command.Id);
 
-        transactionCategory.Update(command.Name, command.Color, command.IsMandatory);
+        var icon = string.IsNullOrWhiteSpace(command.Icon) ? transactionCategory.Icon : command.Icon;
+        transactionCategory.Update(command.Name, command.Color, icon, command.IsMandatory);
         await context.SaveChangesAsync(ct);
     }
 

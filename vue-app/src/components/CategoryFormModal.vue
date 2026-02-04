@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, ref, watch } from 'vue';
+import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue';
 import Dialog from 'primevue/dialog';
 import InputText from 'primevue/inputtext';
 import SelectButton from 'primevue/selectbutton';
@@ -8,6 +8,7 @@ import type { Category, CategoryType } from '../types';
 import { CATEGORY_TYPE } from '../types';
 import { useFinanceStore } from '../stores/finance';
 import { useFormModal } from '../composables/useFormModal';
+import { CATEGORY_ICON_OPTIONS } from '../constants';
 
 const props = defineProps<{
   visible: boolean;
@@ -25,6 +26,9 @@ const HEX_COLOR_REGEX = /^#([0-9A-Fa-f]{6})$/;
 
 const name = ref('');
 const color = ref(DEFAULT_COLOR);
+const icon = ref('pi-tag');
+const iconPickerOpen = ref(false);
+const iconPickerRef = ref<HTMLElement | null>(null);
 const categoryType = ref<CategoryType | null>(null);
 const attemptedSubmit = ref(false);
 const isMandatory = ref(false);
@@ -45,6 +49,8 @@ const canChooseType = computed(() => !isEditMode.value);
 const resetForm = () => {
   name.value = '';
   color.value = DEFAULT_COLOR;
+  icon.value = 'pi-tag';
+  iconPickerOpen.value = false;
   categoryType.value = props.defaultType ?? null;
   isMandatory.value = false;
   attemptedSubmit.value = false;
@@ -57,6 +63,7 @@ watch(
       if (props.category) {
         name.value = props.category.name;
         color.value = props.category.color;
+        icon.value = props.category.icon ?? 'pi-tag';
         categoryType.value = props.category.type;
         isMandatory.value = props.category.isMandatory ?? false;
       } else {
@@ -70,6 +77,7 @@ watch(
 
 const isNameValid = computed(() => name.value.trim().length > 0);
 const isColorValid = computed(() => HEX_COLOR_REGEX.test(color.value));
+const isIconValid = computed(() => icon.value.trim().length > 0);
 const isTypeValid = computed(() => !canChooseType.value || Boolean(categoryType.value));
 
 const nameError = computed(() => {
@@ -88,8 +96,32 @@ const colorError = computed(() => {
 });
 
 const isFormValid = computed(
-  () => isNameValid.value && isColorValid.value && isTypeValid.value && !isSystemCategory.value
+  () => isNameValid.value && isColorValid.value && isIconValid.value && isTypeValid.value && !isSystemCategory.value
 );
+
+const toggleIconPicker = () => {
+  iconPickerOpen.value = !iconPickerOpen.value;
+};
+
+const closeIconPicker = () => {
+  iconPickerOpen.value = false;
+};
+
+const handleDocumentClick = (event: MouseEvent) => {
+  if (!iconPickerOpen.value) return;
+  const target = event.target as Node | null;
+  if (iconPickerRef.value && target && !iconPickerRef.value.contains(target)) {
+    iconPickerOpen.value = false;
+  }
+};
+
+onMounted(() => {
+  document.addEventListener('click', handleDocumentClick);
+});
+
+onBeforeUnmount(() => {
+  document.removeEventListener('click', handleDocumentClick);
+});
 
 const { isSubmitting, handleSubmit: submitCategory, showWarning } = useFormModal(
   async () => {
@@ -104,6 +136,7 @@ const { isSubmitting, handleSubmit: submitCategory, showWarning } = useFormModal
         categoryType: categoryType.value ?? props.category.type,
         name: name.value.trim(),
         color: color.value,
+        icon: icon.value,
         isMandatory: isMandatory.value,
       });
     }
@@ -112,6 +145,7 @@ const { isSubmitting, handleSubmit: submitCategory, showWarning } = useFormModal
       categoryType: categoryType.value ?? CATEGORY_TYPE.Expense,
       name: name.value.trim(),
       color: color.value,
+      icon: icon.value,
       isMandatory: isMandatory.value,
     });
   },
@@ -131,6 +165,8 @@ const handleSubmit = async () => {
       showWarning('Введите название категории.');
     } else if (!isColorValid.value) {
       showWarning('Введите корректный цвет в формате #RRGGBB.');
+    } else if (!isIconValid.value) {
+      showWarning('Выберите иконку для категории.');
     } else if (isSystemCategory.value) {
       showWarning('Системные категории нельзя редактировать.');
     }
@@ -194,6 +230,54 @@ const handleSubmit = async () => {
             class="w-full"
             autocomplete="off"
           />
+        </template>
+      </FormField>
+
+      <FormField label="Иконка">
+        <template #default="{ fieldAttrs }">
+          <div
+            ref="iconPickerRef"
+            class="icon-picker"
+          >
+            <button
+              type="button"
+              class="icon-picker__trigger"
+              :aria-expanded="iconPickerOpen"
+              @click="toggleIconPicker"
+            >
+              <i :class="['pi', icon]" />
+              <span>Выбрать иконку</span>
+            </button>
+            <div
+              v-if="iconPickerOpen"
+              class="icon-grid"
+              role="listbox"
+              :aria-describedby="fieldAttrs['aria-describedby']"
+              :aria-invalid="fieldAttrs['aria-invalid']"
+              :aria-activedescendant="icon ? `icon-${icon}` : undefined"
+            >
+              <button
+                v-for="option in CATEGORY_ICON_OPTIONS"
+                :key="option.value"
+                type="button"
+                :id="`icon-${option.value}`"
+                class="icon-grid__item"
+                :class="{ 'is-selected': option.value === icon }"
+                :aria-pressed="option.value === icon"
+                @click="
+                  () => {
+                    icon = option.value;
+                    closeIconPicker();
+                  }
+                "
+              >
+                <i :class="['pi', option.value]" />
+              </button>
+            </div>
+          </div>
+        </template>
+        <template #hint>
+          Иконка отображается в списках и аналитике.
         </template>
       </FormField>
 
@@ -279,6 +363,68 @@ const handleSubmit = async () => {
   grid-template-columns: auto 1fr;
   gap: var(--ft-space-3);
   align-items: center;
+}
+
+.icon-picker {
+  display: grid;
+  gap: var(--ft-space-2);
+  position: relative;
+}
+
+.icon-picker__trigger {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--ft-space-2);
+  padding: var(--ft-space-2) var(--ft-space-3);
+  border-radius: var(--ft-radius-lg);
+  border: 1px solid var(--ft-border-subtle);
+  background: transparent;
+  color: var(--ft-text-primary);
+  cursor: pointer;
+}
+
+.icon-picker__trigger i {
+  font-size: 1.1rem;
+}
+
+.icon-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(38px, 1fr));
+  gap: var(--ft-space-2);
+  max-height: 220px;
+  padding: var(--ft-space-2);
+  border: 1px solid var(--ft-border-subtle);
+  border-radius: var(--ft-radius-lg);
+  background: var(--ft-surface);
+  overflow: auto;
+  box-shadow: 0 12px 32px rgba(15, 23, 42, 0.08);
+}
+
+.icon-grid__item {
+  display: grid;
+  place-items: center;
+  inline-size: 38px;
+  block-size: 38px;
+  border-radius: var(--ft-radius-md);
+  border: 1px solid transparent;
+  background: transparent;
+  cursor: pointer;
+  color: var(--ft-text-secondary);
+}
+
+.icon-grid__item i {
+  font-size: 1.1rem;
+}
+
+.icon-grid__item:hover {
+  border-color: var(--ft-border-strong);
+  color: var(--ft-text-primary);
+}
+
+.icon-grid__item.is-selected {
+  border-color: var(--ft-primary-500);
+  color: var(--ft-primary-600);
+  background: rgba(59, 130, 246, 0.08);
 }
 
 .color-picker__swatch {

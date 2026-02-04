@@ -183,6 +183,10 @@ defineExpose({
                 class="color-dot"
                 :style="{ backgroundColor: category.color }"
               />
+              <i
+                :class="['pi', category.icon || 'pi-tag', 'category-icon']"
+                aria-hidden="true"
+              />
               <span class="category-name">
                 {{ category.name }}
                 <Tag
@@ -235,6 +239,10 @@ defineExpose({
               <span
                 class="color-dot"
                 :style="{ backgroundColor: category.color }"
+              />
+              <i
+                :class="['pi', category.icon || 'pi-tag', 'category-icon']"
+                aria-hidden="true"
               />
               <span class="category-name">
                 {{ category.name }}
@@ -366,6 +374,11 @@ defineExpose({
   border-radius: 50%;
   border: 1px solid rgba(15, 20, 25, 0.2);
   box-shadow: 0 0 0 2px rgba(15, 20, 25, 0.2);
+}
+
+.category-icon {
+  font-size: 1rem;
+  color: var(--ft-text-secondary);
 }
 
 .category-name {

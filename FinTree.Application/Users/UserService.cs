@@ -73,6 +73,7 @@ public sealed class UserService(AppDbContext context, ICurrentUser currentUser)
                 x.Category.Id,
                 x.Category.Name,
                 x.Category.Color,
+                x.Category.Icon,
                 x.Category.IsSystem,
                 x.Category.Type,
                 x.Category.IsMandatory

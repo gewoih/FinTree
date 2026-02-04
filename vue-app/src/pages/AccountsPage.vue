@@ -98,14 +98,14 @@ const handleDeleteAccount = (account: Account) => {
     rejectLabel: 'Отмена',
     acceptLabel: 'Удалить',
     acceptClass: 'p-button-danger',
-    accept: () => {
+    accept: async () => {
+      const success = await financeStore.deleteAccount(account.id)
       toast.add({
-        severity: 'info',
-        summary: 'В разработке',
-        detail: 'Функция удаления счетов скоро будет доступна.',
+        severity: success ? 'success' : 'error',
+        summary: success ? 'Счет удален' : 'Ошибка удаления',
+        detail: success ? 'Счет и связанные транзакции удалены.' : 'Не удалось удалить счет. Попробуйте позже.',
         life: 3000
       })
-      // TODO: Implement account deletion
     }
   })
 }

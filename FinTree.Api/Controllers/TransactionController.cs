@@ -16,6 +16,13 @@ public class TransactionController(TransactionsService transactionsService) : Co
         var transactions = await transactionsService.GetTransactionsAsync(accountId, ct);
         return Ok(transactions);
     }
+
+    [HttpGet("export")]
+    public async Task<IActionResult> Export(CancellationToken ct)
+    {
+        var (content, fileName) = await transactionsService.ExportAsync(ct);
+        return File(content, "text/plain; charset=utf-8", fileName);
+    }
     
     [HttpPost]
     public async Task<IActionResult> Post([FromBody] CreateTransaction command, CancellationToken ct)
