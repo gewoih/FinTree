@@ -1,4 +1,4 @@
-﻿services:
+services:
   fintree-postgres:
     restart: unless-stopped
     image: postgres:18-alpine
@@ -7,13 +7,11 @@
       POSTGRES_DB: fin_tree
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: postgres
-    ports:
-      - "5432:5432"
     volumes:
       - pgdata:/var/lib/postgresql/data
     networks:
       - fintree-net
-  
+
   fintree.api:
     restart: unless-stopped
     container_name: fintree-api
@@ -22,37 +20,57 @@
       dockerfile: FinTree.Api/Dockerfile
     image: fintree.api:local
     environment:
-      ASPNETCORE_URLS: "http://+:5000"
-      ASPNETCORE_ENVIRONMENT: "Development"
+      ASPNETCORE_URLS: "http://+:8080"
+      ASPNETCORE_ENVIRONMENT: "Production"
       Auth__JwtSecretKey: ${AUTH_JWT_SECRET_KEY}
       Telegram__BotToken: ${TELEGRAM_BOT_TOKEN}
       ConnectionStrings__DefaultConnection: ${CONNECTION_STRINGS_DEFAULT}
-    ports:
-      - "5000:5000"
     depends_on:
       - fintree-postgres
     networks:
       - fintree-net
-      
-  fintree.frontend:
+
+  fintree.nginx:
     restart: unless-stopped
-    container_name: fintree-frontend
+    container_name: fintree-nginx
     build:
-      context: ./vue-app
-      dockerfile: Dockerfile
-    image: fintree.frontend:local
+      context: .
+      dockerfile: deploy/nginx/Dockerfile
+      args:
+        VITE_API_BASE_URL: "/api"
+    image: fintree.nginx:local
     environment:
-      VITE_API_BASE_URL: "/api"
-      VITE_API_PROXY_TARGET: "http://fintree.api:5000"
+      NGINX_SERVER_NAME: ${NGINX_SERVER_NAME:-localhost}
+      NGINX_SSL_CERT: /etc/letsencrypt/live/${NGINX_SERVER_NAME:-localhost}/fullchain.pem
+      NGINX_SSL_KEY: /etc/letsencrypt/live/${NGINX_SERVER_NAME:-localhost}/privkey.pem
     ports:
-      - "8080:8080"
+      - "80:80"
+      - "443:443"
+    volumes:
+      - certbot-etc:/etc/letsencrypt
+      - certbot-var:/var/lib/letsencrypt
+      - certbot-www:/var/www/certbot
     depends_on:
       - fintree.api
     networks:
       - fintree-net
 
+  certbot:
+    image: certbot/certbot:latest
+    restart: unless-stopped
+    volumes:
+      - certbot-etc:/etc/letsencrypt
+      - certbot-var:/var/lib/letsencrypt
+      - certbot-www:/var/www/certbot
+    entrypoint: /bin/sh -c "trap exit TERM; while :; do certbot renew --webroot -w /var/www/certbot; sleep 12h; done"
+    networks:
+      - fintree-net
+
 volumes:
   pgdata:
+  certbot-etc:
+  certbot-var:
+  certbot-www:
 
 networks:
   fintree-net:
