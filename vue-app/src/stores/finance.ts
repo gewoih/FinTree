@@ -9,7 +9,8 @@ import type {
     Currency,
     NewTransactionPayload,
     UpdateTransactionPayload,
-    Transaction
+    Transaction,
+    CreateTransferPayload
 } from '../types.ts';
 
 import {
@@ -149,6 +150,22 @@ export const useFinanceStore = defineStore('finance', () => {
             return true;
         } catch (error) {
             console.error('Ошибка при добавлении транзакции:', error);
+            return false;
+        }
+    }
+
+    /**
+     * Creates a new transfer between accounts
+     * @param payload - Transfer data
+     * @returns Success status
+     */
+    async function createTransfer(payload: CreateTransferPayload) {
+        try {
+            await apiService.createTransfer(payload);
+            await fetchTransactions(currentTransactionsAccountId.value ?? undefined);
+            return true;
+        } catch (error) {
+            console.error('Ошибка при создании перевода:', error);
             return false;
         }
     }
@@ -336,6 +353,7 @@ export const useFinanceStore = defineStore('finance', () => {
         addTransaction,
         updateTransaction,
         deleteTransaction,
+        createTransfer,
         createAccount,
         setPrimaryAccount,
         deleteAccount,

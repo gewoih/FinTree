@@ -5,17 +5,23 @@ import { useFinanceStore } from '../stores/finance'
 import type { Transaction } from '../types'
 import TransactionList from '../components/TransactionList.vue'
 import TransactionForm from '../components/TransactionForm.vue'
+import TransferFormModal from '../components/TransferFormModal.vue'
 import { apiService } from '../services/api.service'
 
 const financeStore = useFinanceStore()
 const toast = useToast()
 const transactionDialogVisible = ref(false)
 const editingTransaction = ref<Transaction | null>(null)
+const transferDialogVisible = ref(false)
 const isExporting = ref(false)
 
 const openTransactionDialog = () => {
   editingTransaction.value = null
   transactionDialogVisible.value = true
+}
+
+const openTransferDialog = () => {
+  transferDialogVisible.value = true
 }
 
 const handleEditTransaction = (transaction: Transaction) => {
@@ -85,6 +91,12 @@ onMounted(async () => {
           @click="exportTransactions"
         />
         <UiButton
+          label="Перевод"
+          icon="pi pi-arrow-right-arrow-left"
+          variant="secondary"
+          @click="openTransferDialog"
+        />
+        <UiButton
           label="Добавить транзакцию"
           icon="pi pi-plus"
           @click="openTransactionDialog"
@@ -103,6 +115,8 @@ onMounted(async () => {
       v-model:visible="transactionDialogVisible"
       :transaction="editingTransaction"
     />
+
+    <TransferFormModal v-model:visible="transferDialogVisible" />
   </PageContainer>
 </template>
 

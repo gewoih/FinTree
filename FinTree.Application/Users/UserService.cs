@@ -59,7 +59,7 @@ public sealed class UserService(AppDbContext context, ICurrentUser currentUser)
         var categoriesByUsage = await context.TransactionCategories
             .Where(tc => tc.UserId == userId || tc.UserId == null)
             .GroupJoin(
-                context.Transactions.Where(t => t.Account.UserId == userId),
+                context.Transactions.Where(t => t.Account.UserId == userId && !t.IsTransfer),
                 tc => tc.Id,
                 t => t.CategoryId,
                 (tc, transactions) => new

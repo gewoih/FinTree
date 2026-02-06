@@ -14,6 +14,8 @@ public sealed class Transaction : Entity
     public TransactionType Type { get; private set; }
     public DateTime OccurredAt { get; private set; }
     public bool IsMandatory { get; private set; }
+    public bool IsTransfer { get; private set; }
+    public Guid? TransferId { get; private set; }
     [MaxLength(100)] public string? Description { get; private set; }
 
     private Transaction()
@@ -21,11 +23,13 @@ public sealed class Transaction : Entity
     }
 
     internal Transaction(TransactionType type, Guid accountId, Guid categoryId, Money money, DateTime occurredAt,
-        string? description = null, bool isMandatory = false)
+        string? description = null, bool isMandatory = false, bool isTransfer = false, Guid? transferId = null)
     {
         ArgumentOutOfRangeException.ThrowIfEqual(categoryId, Guid.Empty, nameof(categoryId));
         ArgumentOutOfRangeException.ThrowIfEqual(accountId, Guid.Empty, nameof(accountId));
         ArgumentOutOfRangeException.ThrowIfGreaterThan(occurredAt, DateTime.UtcNow, nameof(occurredAt));
+        if (isTransfer && transferId is null)
+            throw new ArgumentException("TransferId is required for transfer transactions.", nameof(transferId));
 
         Type = type;
         AccountId = accountId;
@@ -34,6 +38,8 @@ public sealed class Transaction : Entity
         OccurredAt = occurredAt;
         Description = description;
         IsMandatory = isMandatory;
+        IsTransfer = isTransfer;
+        TransferId = transferId;
     }
 
     public void AssignCategory(Guid categoryId)

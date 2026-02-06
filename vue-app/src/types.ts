@@ -64,12 +64,16 @@ export interface TransactionDto {
     occurredAt: string; // ISO дата (как возвращает API)
     description: string | null;
     isMandatory: boolean;
+    isTransfer?: boolean;
+    transferId?: string | null;
 }
 
 export interface Transaction extends Omit<TransactionDto, 'type'> {
     type: TransactionType;
     account?: Account;
     category?: Category | null;
+    isTransfer?: boolean;
+    transferId?: string | null;
 }
 
 export interface NewTransactionPayload {
@@ -91,6 +95,16 @@ export interface UpdateTransactionPayload {
     occurredAt: string;
     description: string | null;
     isMandatory: boolean;
+}
+
+export interface CreateTransferPayload {
+    fromAccountId: string;
+    toAccountId: string;
+    fromAmount: number;
+    toAmount: number;
+    occurredAt: string;
+    feeAmount?: number | null;
+    description?: string | null;
 }
 
 export interface CreateAccountPayload {

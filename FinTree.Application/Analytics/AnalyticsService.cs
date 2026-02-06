@@ -33,6 +33,7 @@ public sealed class AnalyticsService(
 
         var transactions = await context.Transactions
             .Where(t => t.Account.UserId == currentUserId &&
+                        !t.IsTransfer &&
                         t.OccurredAt >= previousMonthStartUtc &&
                         t.OccurredAt < monthEndUtc)
             .Select(t => new { t.CategoryId, t.Money, t.OccurredAt, t.Type })
@@ -458,6 +459,7 @@ public sealed class AnalyticsService(
 
         var forecastTransactions = await context.Transactions
             .Where(t => t.Account.UserId == currentUserService.Id &&
+                        !t.IsTransfer &&
                         t.Type == TransactionType.Expense &&
                         t.OccurredAt >= forecastStart &&
                         t.OccurredAt <= forecastEnd)

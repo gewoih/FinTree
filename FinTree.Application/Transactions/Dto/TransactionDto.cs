@@ -11,6 +11,8 @@ public sealed record TransactionDto(
     DateTime OccuredAt,
     bool IsMandatory,
     TransactionType Type,
+    bool IsTransfer,
+    Guid? TransferId,
     decimal AmountInBaseCurrency,
     decimal OriginalAmount,
     string OriginalCurrencyCode);

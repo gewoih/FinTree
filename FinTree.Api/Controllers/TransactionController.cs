@@ -31,6 +31,13 @@ public class TransactionController(TransactionsService transactionsService) : Co
         return Ok(transactionId);
     }
 
+    [HttpPost("transfer")]
+    public async Task<IActionResult> CreateTransfer([FromBody] CreateTransfer command, CancellationToken ct)
+    {
+        var transferId = await transactionsService.CreateTransferAsync(command, ct);
+        return Ok(transferId);
+    }
+
     [HttpPatch]
     public async Task<IActionResult> Update([FromBody] UpdateTransaction command, CancellationToken ct)
     {

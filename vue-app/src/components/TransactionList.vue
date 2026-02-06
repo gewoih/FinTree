@@ -28,6 +28,16 @@ interface EnrichedTransaction extends Transaction {
   originalAmount: number
   originalCurrency?: string
   showOriginal: boolean
+  isTransferSummary?: boolean
+  transferFromAccountId?: string
+  transferToAccountId?: string
+  transferFromAmount?: number
+  transferToAmount?: number
+  transferFromCurrency?: string
+  transferToCurrency?: string
+  transferFeeAmount?: number
+  transferRate?: number
+  transferRateLabel?: string
 }
 
 const emit = defineEmits<{
@@ -42,6 +52,26 @@ const route = useRoute()
 const baseCurrency = computed(() => userStore.baseCurrencyCode ?? store.primaryAccount?.currencyCode ?? 'RUB')
 
 const transactionsLoading = computed(() => store.isTransactionsLoading)
+
+const formatRate = (value: number): string =>
+  new Intl.NumberFormat('ru-RU', {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 6
+  }).format(value)
+
+const buildRateLabel = (
+  rate: number,
+  fromCurrency?: string,
+  toCurrency?: string,
+  feeAmount?: number
+): string | null => {
+  if (!fromCurrency || !toCurrency || fromCurrency === toCurrency) {
+    return null
+  }
+
+  const label = feeAmount && feeAmount > 0 ? 'Курс (с комиссией)' : 'Курс'
+  return `${label}: 1 ${fromCurrency} = ${formatRate(rate)} ${toCurrency}`
+}
 
 const formatDateKey = (value?: string): string => {
   if (!value) return 'unknown'
@@ -64,8 +94,93 @@ const formatDateLabel = (value?: string): string => {
   })
 }
 
-const enrichedTransactions = computed<EnrichedTransaction[]>(() =>
-  store.transactions.map((txn: Transaction) => {
+const enrichedTransactions = computed<EnrichedTransaction[]>(() => {
+  const transferGroups = new Map<string, Transaction[]>()
+  const transferFees = new Map<string, number>()
+  const regularTransactions: Transaction[] = []
+
+  store.transactions.forEach((txn: Transaction) => {
+    if (txn.transferId && !txn.isTransfer) {
+      const feeAmount = Math.abs(Number(txn.amount ?? 0))
+      if (feeAmount > 0) {
+        const current = transferFees.get(txn.transferId) ?? 0
+        transferFees.set(txn.transferId, current + feeAmount)
+      }
+    }
+
+    if (txn.isTransfer && txn.transferId) {
+      const key = txn.transferId
+      const group = transferGroups.get(key) ?? []
+      group.push(txn)
+      transferGroups.set(key, group)
+      return
+    }
+    regularTransactions.push(txn)
+  })
+
+  const transferSummaries: EnrichedTransaction[] = []
+  transferGroups.forEach((group, transferId) => {
+    const expense = group.find(item => item.type === TRANSACTION_TYPE.Expense)
+    const income = group.find(item => item.type === TRANSACTION_TYPE.Income)
+    if (!expense || !income) {
+      return
+    }
+
+    const fromAccount = expense.account
+    const toAccount = income.account
+    const fromCurrency = expense.originalCurrencyCode ?? fromAccount?.currency?.code ?? fromAccount?.currencyCode
+    const toCurrency = income.originalCurrencyCode ?? toAccount?.currency?.code ?? toAccount?.currencyCode
+    const fromAmount = Number(expense.amount)
+    const toAmount = Number(income.amount)
+    const feeAmount = transferFees.get(transferId) ?? 0
+    const effectiveFromAmount = fromAmount + feeAmount
+    const transferRate =
+      effectiveFromAmount > 0 &&
+      toAmount > 0 &&
+      fromCurrency &&
+      toCurrency &&
+      fromCurrency !== toCurrency
+        ? toAmount / effectiveFromAmount
+        : undefined
+    const transferRateLabel = transferRate
+      ? buildRateLabel(transferRate, fromCurrency, toCurrency, feeAmount) ?? undefined
+      : undefined
+
+    const dateKey = formatDateKey(expense.occurredAt)
+    const dateLabel = formatDateLabel(expense.occurredAt)
+
+    transferSummaries.push({
+      ...expense,
+      id: transferId,
+      isTransferSummary: true,
+      transferFromAccountId: expense.accountId,
+      transferToAccountId: income.accountId,
+      transferFromAmount: fromAmount,
+      transferToAmount: toAmount,
+      transferFromCurrency: fromCurrency,
+      transferToCurrency: toCurrency,
+      transferFeeAmount: feeAmount > 0 ? feeAmount : undefined,
+      transferRate,
+      transferRateLabel,
+      accountName: `${fromAccount?.name ?? '—'} → ${toAccount?.name ?? '—'}`,
+      accountCurrency: fromAccount?.currency?.code ?? fromAccount?.currencyCode,
+      accountSymbol: fromAccount?.currency?.symbol ?? '',
+      categoryName: 'Перевод',
+      categoryColor: '#94a3b8',
+      signedAmount: 0,
+      signedBaseAmount: 0,
+      displayAmount: 0,
+      displayCurrency: baseCurrency.value,
+      originalAmount: Number(expense.originalAmount ?? expense.amount),
+      originalCurrency: fromCurrency,
+      showOriginal: false,
+      isMandatory: false,
+      dateKey,
+      dateLabel
+    } as EnrichedTransaction)
+  })
+
+  const mappedRegular = regularTransactions.map((txn: Transaction) => {
     const account = txn.account
     const category = txn.category
 
@@ -101,7 +216,9 @@ const enrichedTransactions = computed<EnrichedTransaction[]>(() =>
       dateLabel
     } as EnrichedTransaction
   })
-)
+
+  return [...transferSummaries, ...mappedRegular]
+})
 
 const {
   searchText,
@@ -130,12 +247,16 @@ const sortedTransactions = computed(() => {
 })
 
 const rowClass = (data: EnrichedTransaction) => ({
-  'transaction-row--day-start': data.isDayStart
+  'transaction-row--day-start': data.isDayStart,
+  'transaction-row--transfer': data.isTransferSummary
 })
 
 const totalAmount = computed(() =>
   filteredTransactions.value.reduce(
-    (sum, txn) => sum + Number(txn.signedBaseAmount ?? txn.signedAmount ?? 0),
+    (sum, txn) =>
+      txn.isTransferSummary
+        ? sum
+        : sum + Number(txn.signedBaseAmount ?? txn.signedAmount ?? 0),
     0
   )
 )
@@ -186,8 +307,8 @@ const applyDateRangeFromQuery = () => {
 }
 
 // При смене счета сразу подтягиваем свежие транзакции, чтобы таблица не показывала устаревшие данные.
-watch(selectedAccount, account => {
-  store.fetchTransactions(account?.id)
+watch(selectedAccount, () => {
+  store.fetchTransactions()
 })
 
 watch([() => route.query.categoryId, () => store.categories.length], applyCategoryFromQuery, {
@@ -201,6 +322,13 @@ watch([() => route.query.from, () => route.query.to], applyDateRangeFromQuery, {
 const isEmptyState = computed(
   () => !transactionsLoading.value && filteredTransactions.value.length === 0
 )
+
+const handleRowClick = (event: { data: EnrichedTransaction }) => {
+  if (event.data.isTransferSummary) {
+    return
+  }
+  emit('edit-transaction', event.data)
+}
 </script>
 
 <template>
@@ -264,7 +392,7 @@ const isEmptyState = computed(
         :row-class="rowClass"
         selection-mode="single"
         data-key="id"
-        @row-click="emit('edit-transaction', $event.data)"
+        @row-click="handleRowClick"
       >
         <template #footer>
           <div class="transaction-history__summary">
@@ -295,7 +423,16 @@ const isEmptyState = computed(
           style="width: 170px"
         >
           <template #body="slotProps">
+            <div v-if="slotProps.data.isTransferSummary" class="transfer-amount">
+              <div class="transfer-amount__row negative">
+                − {{ formatCurrency(slotProps.data.transferFromAmount ?? 0, slotProps.data.transferFromCurrency) }}
+              </div>
+              <div class="transfer-amount__row positive">
+                + {{ formatCurrency(slotProps.data.transferToAmount ?? 0, slotProps.data.transferToCurrency) }}
+              </div>
+            </div>
             <div
+              v-else
               class="amount-cell"
               :class="{ negative: slotProps.data.displayAmount < 0 }"
             >
@@ -326,7 +463,12 @@ const isEmptyState = computed(
                 :color="slotProps.data.categoryColor"
               />
               <i
-                v-if="slotProps.data.isMandatory"
+                v-if="slotProps.data.isTransferSummary"
+                class="pi pi-arrow-right-arrow-left transfer-icon"
+                title="Перевод между счетами"
+              />
+              <i
+                v-else-if="slotProps.data.isMandatory"
                 class="pi pi-lock mandatory-icon"
                 title="Обязательный платеж"
               />
@@ -357,8 +499,26 @@ const isEmptyState = computed(
           style="width: 200px"
         >
           <template #body="slotProps">
+            <div v-if="slotProps.data.isTransferSummary" class="description-transfer">
+              <span
+                v-if="slotProps.data.description"
+                class="description-text"
+              >
+                {{ slotProps.data.description }}
+              </span>
+              <small
+                v-if="slotProps.data.transferRateLabel"
+                class="transfer-rate"
+              >
+                {{ slotProps.data.transferRateLabel }}
+              </small>
+              <span
+                v-if="!slotProps.data.description && !slotProps.data.transferRateLabel"
+                class="description-empty"
+              >—</span>
+            </div>
             <span
-              v-if="slotProps.data.description"
+              v-else-if="slotProps.data.description"
               class="description-text"
             >
               {{ slotProps.data.description }}
@@ -442,6 +602,28 @@ const isEmptyState = computed(
   line-height: 1.1;
 }
 
+.transfer-amount {
+  display: grid;
+  gap: 2px;
+  font-weight: var(--ft-font-semibold);
+  font-variant-numeric: tabular-nums;
+}
+
+.transfer-amount__row {
+  display: flex;
+  align-items: center;
+  gap: var(--ft-space-1);
+  font-size: var(--ft-text-sm);
+}
+
+.transfer-amount__row.negative {
+  color: var(--ft-danger-400);
+}
+
+.transfer-amount__row.positive {
+  color: var(--ft-success-400);
+}
+
 .category-cell {
   display: flex;
   align-items: center;
@@ -468,12 +650,27 @@ const isEmptyState = computed(
   text-overflow: ellipsis;
 }
 
+.description-transfer {
+  display: grid;
+  gap: 2px;
+}
+
 .description-empty {
+  color: var(--ft-text-tertiary);
+}
+
+.transfer-rate {
+  font-size: var(--ft-text-xs);
   color: var(--ft-text-tertiary);
 }
 
 .mandatory-icon {
   color: var(--ft-warning-400);
+  font-size: var(--ft-text-sm);
+}
+
+.transfer-icon {
+  color: var(--ft-primary-400);
   font-size: var(--ft-text-sm);
 }
 

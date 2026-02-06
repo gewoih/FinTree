@@ -17,7 +17,8 @@ import type {
     IncomeInstrumentDto,
     FutureIncomeOverviewDto,
     NetWorthSnapshotDto,
-    AccountBalanceAdjustmentDto
+    AccountBalanceAdjustmentDto,
+    CreateTransferPayload
 } from '../types.ts';
 
 /**
@@ -155,6 +156,20 @@ export const apiService = {
             isMandatory: payload.isMandatory ?? false,
         };
         const response = await apiClient.post<string>('/Transaction', transactionPayload);
+        return response.data;
+    },
+
+    async createTransfer(payload: CreateTransferPayload): Promise<string> {
+        const transferPayload = {
+            fromAccountId: payload.fromAccountId,
+            toAccountId: payload.toAccountId,
+            fromAmount: Math.abs(payload.fromAmount),
+            toAmount: Math.abs(payload.toAmount),
+            occurredAt: payload.occurredAt,
+            feeAmount: payload.feeAmount != null ? Math.abs(payload.feeAmount) : null,
+            description: payload.description,
+        };
+        const response = await apiClient.post<string>('/Transaction/transfer', transferPayload);
         return response.data;
     },
 

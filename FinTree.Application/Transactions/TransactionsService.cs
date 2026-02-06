@@ -51,7 +51,9 @@ public sealed class TransactionsService(AppDbContext context, ICurrentUser curre
                 t.Description,
                 t.OccurredAt,
                 t.IsMandatory,
-                t.Type
+                t.Type,
+                t.IsTransfer,
+                t.TransferId
             })
             .ToListAsync(ct);
 
@@ -80,12 +82,95 @@ public sealed class TransactionsService(AppDbContext context, ICurrentUser curre
                 transaction.OccurredAt,
                 transaction.IsMandatory,
                 transaction.Type,
+                transaction.IsTransfer,
+                transaction.TransferId,
                 baseMoney.Amount,
                 transaction.Money.Amount,
                 transaction.Money.CurrencyCode));
         }
 
         return userTransactions;
+    }
+
+    public async Task<Guid> CreateTransferAsync(CreateTransfer command, CancellationToken ct)
+    {
+        if (command.FromAccountId == command.ToAccountId)
+            throw new InvalidOperationException("Счет списания и счет зачисления должны быть разными.");
+        if (command.FromAmount <= 0)
+            throw new InvalidOperationException("Сумма списания должна быть больше нуля.");
+        if (command.ToAmount <= 0)
+            throw new InvalidOperationException("Сумма зачисления должна быть больше нуля.");
+        if (command.FeeAmount is < 0)
+            throw new InvalidOperationException("Комиссия не может быть отрицательной.");
+
+        var currentUserId = currentUser.Id;
+        var accounts = await context.Accounts
+            .Where(a => a.UserId == currentUserId &&
+                        (a.Id == command.FromAccountId || a.Id == command.ToAccountId))
+            .ToListAsync(ct);
+
+        var fromAccount = accounts.FirstOrDefault(a => a.Id == command.FromAccountId);
+        if (fromAccount is null)
+            throw new InvalidOperationException("Счет списания не найден.");
+
+        var toAccount = accounts.FirstOrDefault(a => a.Id == command.ToAccountId);
+        if (toAccount is null)
+            throw new InvalidOperationException("Счет зачисления не найден.");
+
+        var transferCategoryId = await GetSystemCategoryIdAsync("Без категории", ct);
+        if (transferCategoryId == Guid.Empty)
+        {
+            transferCategoryId = await context.TransactionCategories
+                .Where(c => c.UserId == null)
+                .Select(c => c.Id)
+                .FirstOrDefaultAsync(ct);
+        }
+
+        if (transferCategoryId == Guid.Empty)
+            throw new InvalidOperationException("Не удалось подобрать категорию для перевода.");
+
+        var feeCategoryId = await GetSystemCategoryIdAsync("Платежи", ct);
+        if (feeCategoryId == Guid.Empty)
+            feeCategoryId = transferCategoryId;
+
+        var transferId = Guid.NewGuid();
+        var description = string.IsNullOrWhiteSpace(command.Description) ? null : command.Description.Trim();
+
+        fromAccount.AddTransaction(
+            TransactionType.Expense,
+            transferCategoryId,
+            command.FromAmount,
+            command.OccurredAt,
+            description,
+            isMandatory: false,
+            isTransfer: true,
+            transferId: transferId);
+
+        toAccount.AddTransaction(
+            TransactionType.Income,
+            transferCategoryId,
+            command.ToAmount,
+            command.OccurredAt,
+            description,
+            isMandatory: false,
+            isTransfer: true,
+            transferId: transferId);
+
+        if (command.FeeAmount is > 0)
+        {
+            fromAccount.AddTransaction(
+                TransactionType.Expense,
+                feeCategoryId,
+                command.FeeAmount.Value,
+                command.OccurredAt,
+                description,
+                isMandatory: false,
+                isTransfer: false,
+                transferId: transferId);
+        }
+
+        await context.SaveChangesAsync(ct);
+        return transferId;
     }
 
     public async Task<(byte[] Content, string FileName)> ExportAsync(CancellationToken ct)
@@ -192,6 +277,9 @@ public sealed class TransactionsService(AppDbContext context, ICurrentUser curre
         var transaction = await context.Transactions.FirstOrDefaultAsync(t => t.Id == command.TransactionId, ct) ??
                           throw new NotFoundException("Transaction not found", command.TransactionId);
 
+        if (transaction.TransferId is not null)
+            throw new InvalidOperationException("Переводы нельзя редактировать как обычные транзакции.");
+
         transaction.AssignCategory(command.CategoryId);
         await context.SaveChangesAsync(ct);
     }
@@ -205,6 +293,8 @@ public sealed class TransactionsService(AppDbContext context, ICurrentUser curre
 
         if (transaction.Account.UserId != currentUser.Id)
             throw new InvalidOperationException("Доступ запрещен");
+        if (transaction.TransferId is not null)
+            throw new InvalidOperationException("Переводы нельзя редактировать как обычные транзакции.");
 
         var newAccount = await context.Accounts.FirstOrDefaultAsync(a => a.Id == command.AccountId, ct) ??
                          throw new InvalidOperationException("Счет не найден");
@@ -229,8 +319,29 @@ public sealed class TransactionsService(AppDbContext context, ICurrentUser curre
 
         if (transaction.Account.UserId != currentUser.Id)
             throw new InvalidOperationException("Доступ запрещен");
-        
+
+        if (transaction.TransferId is not null)
+        {
+            var transferTransactions = await context.Transactions
+                .Where(t => t.TransferId == transaction.TransferId)
+                .ToListAsync(ct);
+
+            foreach (var item in transferTransactions)
+                item.Delete();
+
+            await context.SaveChangesAsync(ct);
+            return;
+        }
+
         transaction.Delete();
         await context.SaveChangesAsync(ct);
+    }
+
+    private async Task<Guid> GetSystemCategoryIdAsync(string name, CancellationToken ct)
+    {
+        return await context.TransactionCategories
+            .Where(c => c.UserId == null && c.Name == name)
+            .Select(c => c.Id)
+            .FirstOrDefaultAsync(ct);
     }
 }

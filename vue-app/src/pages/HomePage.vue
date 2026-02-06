@@ -13,6 +13,9 @@ const userStore = useUserStore()
 const isLoading = ref(true)
 
 const transactions = computed(() => financeStore.transactions ?? [])
+const nonTransferTransactions = computed(() =>
+  transactions.value.filter(tx => !tx.isTransfer)
+)
 const accounts = computed(() => financeStore.accounts ?? [])
 
 const quickActions = [
@@ -50,12 +53,12 @@ const sumExpensesForPeriod = (items: Transaction[], month: number, year: number)
     })
     .reduce((total, tx) => total + Math.abs(Number(tx.amount)), 0)
 
-const totalBalance = computed(() => computeBalance(transactions.value))
+const totalBalance = computed(() => computeBalance(nonTransferTransactions.value))
 
 const previousBalance = computed(() => {
   const now = new Date()
   const startOfCurrentMonth = new Date(now.getFullYear(), now.getMonth(), 1)
-  const previousTransactions = transactions.value.filter(tx => {
+  const previousTransactions = nonTransferTransactions.value.filter(tx => {
     const txDate = new Date(tx.occurredAt)
     return txDate < startOfCurrentMonth
   })
@@ -71,13 +74,13 @@ const balanceTrend = computed(() => {
 
 const monthlyExpenses = computed(() => {
   const today = new Date()
-  return sumExpensesForPeriod(transactions.value, today.getMonth(), today.getFullYear())
+  return sumExpensesForPeriod(nonTransferTransactions.value, today.getMonth(), today.getFullYear())
 })
 
 const previousMonthExpenses = computed(() => {
   const today = new Date()
   const prev = new Date(today.getFullYear(), today.getMonth() - 1, 1)
-  return sumExpensesForPeriod(transactions.value, prev.getMonth(), prev.getFullYear())
+  return sumExpensesForPeriod(nonTransferTransactions.value, prev.getMonth(), prev.getFullYear())
 })
 
 const expensesTrend = computed(() => {
@@ -95,7 +98,7 @@ const formattedMonthlyExpenses = computed(() =>
 )
 
 const recentTransactions = computed(() =>
-  [...transactions.value]
+  [...nonTransferTransactions.value]
     .sort(
       (a, b) => new Date(b.occurredAt).getTime() - new Date(a.occurredAt).getTime()
     )

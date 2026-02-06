@@ -81,6 +81,8 @@ export function mapTransaction(
     amount: Number(dto.amount),
     description: dto.description ?? null,
     isMandatory: dto.isMandatory ?? false,
+    isTransfer: dto.isTransfer ?? false,
+    transferId: dto.transferId ?? null,
     account: account ?? undefined,
     category,
   };

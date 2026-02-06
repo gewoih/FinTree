@@ -34,12 +34,13 @@ public sealed class Account : Entity
     }
 
     public Transaction AddTransaction(TransactionType type, Guid categoryId, decimal amount, DateTime occuredAt,
-        string? description = null, bool isMandatory = false)
+        string? description = null, bool isMandatory = false, bool isTransfer = false, Guid? transferId = null)
     {
         ValidateTransaction(categoryId);
 
         var money = new Money(CurrencyCode, amount);
-        var transaction = new Transaction(type, Id, categoryId, money, occuredAt, description, isMandatory);
+        var transaction = new Transaction(type, Id, categoryId, money, occuredAt, description, isMandatory, isTransfer,
+            transferId);
         _transactions.Add(transaction);
 
         return transaction;

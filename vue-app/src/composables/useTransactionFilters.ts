@@ -34,8 +34,8 @@ export function useTransactionFilters<T extends Transaction>(
     if (searchText.value) {
       const search = searchText.value.toLowerCase();
       filtered = filtered.filter(txn => {
-        const categoryName = txn.category?.name ?? '';
-        const accountName = txn.account?.name ?? '';
+        const categoryName = (txn as any).categoryName ?? txn.category?.name ?? '';
+        const accountName = (txn as any).accountName ?? txn.account?.name ?? '';
         const description = txn.description ?? '';
 
         return (
@@ -48,12 +48,22 @@ export function useTransactionFilters<T extends Transaction>(
 
     // Filter by category
     if (selectedCategory.value) {
-      filtered = filtered.filter(txn => txn.categoryId === selectedCategory.value!.id);
+      filtered = filtered.filter(txn => {
+        if ((txn as any).isTransferSummary) return false;
+        return txn.categoryId === selectedCategory.value!.id;
+      });
     }
 
     // Filter by account
     if (selectedAccount.value) {
-      filtered = filtered.filter(txn => txn.accountId === selectedAccount.value!.id);
+      filtered = filtered.filter(txn => {
+        if ((txn as any).isTransferSummary) {
+          const fromId = (txn as any).transferFromAccountId;
+          const toId = (txn as any).transferToAccountId;
+          return fromId === selectedAccount.value!.id || toId === selectedAccount.value!.id;
+        }
+        return txn.accountId === selectedAccount.value!.id;
+      });
     }
 
     // Filter by date range
