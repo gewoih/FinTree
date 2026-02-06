@@ -16,7 +16,7 @@ public sealed class User : IdentityUser<Guid>
     private readonly List<IncomeInstrument> _incomeInstruments = [];
 
     public string BaseCurrencyCode { get; private set; }
-    public string? TelegramUserId { get; private set; }
+    public long? TelegramUserId { get; private set; }
     public Guid? MainAccountId { get; private set; }
     [NotMapped] public Currency BaseCurrency => Currency.FromCode(BaseCurrencyCode);
     public IReadOnlyCollection<Account> Accounts => _accounts;
@@ -77,11 +77,12 @@ public sealed class User : IdentityUser<Guid>
         MainAccountId = null;
     }
 
-    public void LinkTelegramAccount(string telegramUserId)
+    public void LinkTelegramAccount(long telegramUserId)
     {
-        ArgumentException.ThrowIfNullOrWhiteSpace(telegramUserId);
+        if (telegramUserId <= 0)
+            throw new InvalidOperationException("Telegram user id must be positive.");
 
-        TelegramUserId = telegramUserId.Trim();
+        TelegramUserId = telegramUserId;
     }
 
     public void UnlinkTelegramAccount()

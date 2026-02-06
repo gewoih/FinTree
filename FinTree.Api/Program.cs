@@ -77,7 +77,10 @@ builder.Services.AddIdentity<User, Role>(o =>
     {
         o.User.RequireUniqueEmail = true;
         o.SignIn.RequireConfirmedEmail = false;
-        o.Password.RequireNonAlphanumeric = false;
+        o.Password.RequireNonAlphanumeric = true;
+        o.Password.RequireDigit = true;
+        o.Password.RequireLowercase = true;
+        o.Password.RequireUppercase = true;
         o.Password.RequiredUniqueChars = 4;
         o.Password.RequiredLength = 8;
         o.Lockout.AllowedForNewUsers = true;

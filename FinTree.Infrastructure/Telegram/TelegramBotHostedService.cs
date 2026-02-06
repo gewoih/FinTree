@@ -29,7 +29,8 @@ public partial class TelegramBotHostedService(
         "• Формат: `{сумма}{валюта?} {категория} {заметка?} {дата?}`\n" +
         "Примеры:\n" +
         "`2400тг продукты`\n" +
-        "`3000р комиссии сбербанк 09.01.2026`";
+        "`3000р комиссии сбербанк 09.01.2026`\n" +
+        "Команда `/id` покажет ваш Telegram ID для привязки в профиле.";
 
     private const string FormatErrorMessage =
         "Не удалось распознать формат{0}.\n" +
@@ -37,7 +38,7 @@ public partial class TelegramBotHostedService(
         "Подсказка: сумму и валюту пиши слитно (например, `2400тг`), дату — последним аргументом (dd.MM.yyyy).";
 
     private const string UserNotFoundMessage =
-        "Не нашёл привязанный аккаунт. Свяжите Telegram с профилем в FinTree и попробуйте ещё раз.";
+        "Не нашёл привязанный аккаунт. Укажите ваш Telegram ID в профиле FinTree и попробуйте ещё раз.";
 
     private const string MainAccountMissingMessage =
         "Основной счёт не назначен. Выберите основной счёт в приложении и повторите.";
@@ -57,7 +58,8 @@ public partial class TelegramBotHostedService(
 
     private readonly BotCommand[] _availableCommands =
     [
-        new() { Command = "expense", Description = "Добавить расход" }
+        new() { Command = "expense", Description = "Добавить расход" },
+        new() { Command = "id", Description = "Показать Telegram ID" }
     ];
 
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
@@ -98,6 +100,16 @@ public partial class TelegramBotHostedService(
         if (IsStartCommand(text))
         {
             await botClient.SendMessage(chatId, StartMessage, parseMode: ParseMode.Markdown, cancellationToken: ct);
+            return;
+        }
+
+        if (IsIdCommand(text))
+        {
+            if (msg.From is not null)
+            {
+                var idValue = msg.From.Id.ToString(CultureInfo.InvariantCulture);
+                await botClient.SendMessage(chatId, $"Ваш Telegram ID: {idValue}", cancellationToken: ct);
+            }
             return;
         }
 
@@ -181,9 +193,11 @@ public partial class TelegramBotHostedService(
         if (msg.From is null)
             return null;
 
+        var telegramUserId = msg.From.Id;
+
         return await context.Users
             .Include(u => u.Accounts)
-            .Where(u => u.TelegramUserId == msg.From.Username)
+            .Where(u => u.TelegramUserId == telegramUserId)
             .FirstOrDefaultAsync(cancellationToken: ct);
     }
 
@@ -192,6 +206,9 @@ public partial class TelegramBotHostedService(
 
     private static bool IsStartCommand(string text)
         => text.Equals("/start", StringComparison.OrdinalIgnoreCase);
+
+    private static bool IsIdCommand(string text)
+        => text.Equals("/id", StringComparison.OrdinalIgnoreCase);
 
     private static IReadOnlyList<string> SplitLines(string text)
         => text.Split(LineSeparators, StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);

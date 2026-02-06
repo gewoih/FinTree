@@ -14,7 +14,7 @@ const { currentUser, isLoading: isUserLoading, isSaving: isUserSaving } = storeT
 
 const form = reactive({
   baseCurrencyCode: '',
-  telegramHandle: '',
+  telegramUserId: '',
 });
 
 const isLoading = computed(() => isUserLoading.value || areCurrenciesLoading.value);
@@ -36,24 +36,27 @@ const selectedCurrencySummary = computed(() => {
   return `${selectedCurrency.value.symbol} ${selectedCurrency.value.code} · ${selectedCurrency.value.name}`;
 });
 
-function normalizeTelegram(value: string | null | undefined): string {
-  // Приводим никнейм к единому виду, чтобы не отправлять на бэк разные форматы.
+function normalizeTelegramId(value: string | null | undefined): string {
+  // Приводим ID к единому виду и убираем пробелы.
   if (!value) return '';
   const trimmed = value.trim();
   if (!trimmed.length) return '';
-  return trimmed.startsWith('@') ? trimmed.slice(1).trim() : trimmed;
+  return trimmed.replace(/\s+/g, '');
 }
 
-const sanitizedFormTelegram = computed(() => normalizeTelegram(form.telegramHandle));
+const sanitizedFormTelegramId = computed(() => normalizeTelegramId(form.telegramUserId));
+const isTelegramIdValid = computed(() =>
+  !sanitizedFormTelegramId.value || /^\d+$/.test(sanitizedFormTelegramId.value)
+);
 
 const hasChanges = computed(() => {
   if (!currentUser.value) return false;
   const currentCurrency = currentUser.value.baseCurrencyCode ?? '';
-  const currentTelegram = normalizeTelegram(currentUser.value.telegramUsername);
+  const currentTelegram = currentUser.value.telegramUserId?.toString() ?? '';
 
   return (
     currentCurrency !== (form.baseCurrencyCode || '') ||
-    currentTelegram !== sanitizedFormTelegram.value
+    currentTelegram !== sanitizedFormTelegramId.value
   );
 });
 
@@ -62,8 +65,7 @@ const canSubmit = computed(() => Boolean(form.baseCurrencyCode) && hasChanges.va
 function resetForm() {
   if (!currentUser.value) return;
   form.baseCurrencyCode = currentUser.value.baseCurrencyCode ?? '';
-  const username = normalizeTelegram(currentUser.value.telegramUsername);
-  form.telegramHandle = username ? `@${username}` : '';
+  form.telegramUserId = currentUser.value.telegramUserId?.toString() ?? '';
 }
 
 watch(currentUser, user => {
@@ -94,9 +96,23 @@ async function handleSubmit() {
     return;
   }
 
+  if (!isTelegramIdValid.value) {
+    toast.add({
+      severity: 'warn',
+      summary: 'Некорректный Telegram ID',
+      detail: 'Введите только цифры или оставьте поле пустым.',
+      life: 3000,
+    });
+    return;
+  }
+
+  const parsedTelegramId = sanitizedFormTelegramId.value
+    ? Number(sanitizedFormTelegramId.value)
+    : null;
+
   const success = await userStore.saveProfileSettings({
     baseCurrencyCode: form.baseCurrencyCode,
-    telegramUsername: sanitizedFormTelegram.value,
+    telegramUserId: parsedTelegramId,
   });
 
   if (success) {
@@ -118,7 +134,7 @@ async function handleSubmit() {
 }
 
 function handleClearTelegram() {
-  form.telegramHandle = '';
+  form.telegramUserId = '';
 }
 </script>
 
@@ -218,12 +234,12 @@ function handleClearTelegram() {
             <label
               class="profile-label"
               for="profileTelegram"
-            >Telegram</label>
+            >Telegram ID</label>
             <div class="telegram-input">
               <UiInputText
                 id="profileTelegram"
-                v-model="form.telegramHandle"
-                placeholder="@username"
+                v-model="form.telegramUserId"
+                placeholder="123456789"
                 autocomplete="off"
                 :disabled="isSaving"
               />
@@ -237,7 +253,7 @@ function handleClearTelegram() {
               />
             </div>
             <small class="helper-text">
-              Введите никнейм без пробелов. Оставьте пустым, чтобы отвязать Telegram.
+              Отправьте `/id` боту и вставьте цифры. Оставьте пустым, чтобы отвязать Telegram.
             </small>
           </div>
         </div>

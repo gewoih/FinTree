@@ -40,11 +40,17 @@ public sealed class UserService(AppDbContext context, ICurrentUser currentUser)
 
         user.SetBaseCurrency(request.BaseCurrencyCode);
 
-        var telegramUsername = request.TelegramUsername;
-        if (!string.IsNullOrWhiteSpace(telegramUsername))
-            user.LinkTelegramAccount(telegramUsername);
+        var telegramUserId = request.TelegramUserId;
+        if (telegramUserId.HasValue)
+        {
+            if (telegramUserId.Value <= 0)
+                throw new InvalidOperationException("Некорректный Telegram ID");
+            user.LinkTelegramAccount(telegramUserId.Value);
+        }
         else
+        {
             user.UnlinkTelegramAccount();
+        }
 
         await context.SaveChangesAsync(ct);
 

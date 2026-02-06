@@ -20,7 +20,7 @@ public class AuthController(
     {
         var response = await authService.RegisterAsync(request, ct);
         SetAuthCookie(response.Token);
-        return Ok(response);
+        return Ok(new AuthPublicResponse(response.Email, response.UserId));
     }
 
     [HttpPost("login")]
@@ -28,7 +28,7 @@ public class AuthController(
     {
         var response = await authService.LoginAsync(request, ct);
         SetAuthCookie(response.Token);
-        return Ok(response);
+        return Ok(new AuthPublicResponse(response.Email, response.UserId));
     }
 
     [HttpPost("logout")]

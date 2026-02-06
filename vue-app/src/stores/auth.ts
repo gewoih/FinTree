@@ -4,7 +4,6 @@ import axios from 'axios';
 import { apiService } from '../services/api.service.ts';
 
 interface AuthResponse {
-    token: string;
     email: string;
     userId: string;
 }
@@ -37,8 +36,7 @@ export const useAuthStore = defineStore('auth', () => {
             const response = await axios.post<AuthResponse>('/api/auth/login', payload, {
                 withCredentials: true,
             });
-            const { token: jwtToken, email } = response.data;
-            void jwtToken;
+            const { email } = response.data;
             setAuthenticated(email);
 
             return true;
@@ -59,8 +57,7 @@ export const useAuthStore = defineStore('auth', () => {
             const response = await axios.post<AuthResponse>('/api/auth/register', payload, {
                 withCredentials: true,
             });
-            const { token: jwtToken, email } = response.data;
-            void jwtToken;
+            const { email } = response.data;
             setAuthenticated(email);
 
             return true;

@@ -1,3 +1,3 @@
 namespace FinTree.Application.Users;
 
-public readonly record struct UpdateUserProfileRequest(string BaseCurrencyCode, string? TelegramUsername);
+public readonly record struct UpdateUserProfileRequest(string BaseCurrencyCode, long? TelegramUserId);

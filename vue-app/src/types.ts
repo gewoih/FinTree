@@ -251,13 +251,13 @@ export interface CurrentUserDto {
     id: string;
     name: string;
     email: string | null;
-    telegramUsername: string | null;
+    telegramUserId: number | null;
     baseCurrencyCode: string;
 }
 
 export interface UpdateUserProfilePayload {
     baseCurrencyCode: string;
-    telegramUsername: string;
+    telegramUserId: number | null;
 }
 
 export interface NetWorthSnapshotDto {
