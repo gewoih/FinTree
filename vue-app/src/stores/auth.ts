@@ -1,6 +1,7 @@
 import { ref, computed } from 'vue';
 import { defineStore } from 'pinia';
 import axios from 'axios';
+import { apiService } from '../services/api.service.ts';
 
 interface AuthResponse {
     token: string;
@@ -19,30 +20,26 @@ interface RegisterPayload {
     passwordConfirmation: string;
 }
 
-const TOKEN_KEY = 'fintree_jwt_token';
-const USER_EMAIL_KEY = 'fintree_user_email';
-
 export const useAuthStore = defineStore('auth', () => {
-    const token = ref<string | null>(localStorage.getItem(TOKEN_KEY));
-    const userEmail = ref<string | null>(localStorage.getItem(USER_EMAIL_KEY));
+    const userEmail = ref<string | null>(null);
     const isLoading = ref(false);
     const error = ref<string | null>(null);
+    const isSessionChecked = ref(false);
+    const isLoggedIn = ref(false);
 
-    const isAuthenticated = computed(() => !!token.value);
+    const isAuthenticated = computed(() => isSessionChecked.value && isLoggedIn.value);
 
     async function login(payload: LoginPayload): Promise<boolean> {
         isLoading.value = true;
         error.value = null;
 
         try {
-            const response = await axios.post<AuthResponse>('/api/auth/login', payload);
+            const response = await axios.post<AuthResponse>('/api/auth/login', payload, {
+                withCredentials: true,
+            });
             const { token: jwtToken, email } = response.data;
-
-            token.value = jwtToken;
-            userEmail.value = email;
-
-            localStorage.setItem(TOKEN_KEY, jwtToken);
-            localStorage.setItem(USER_EMAIL_KEY, email);
+            void jwtToken;
+            setAuthenticated(email);
 
             return true;
         } catch (err: any) {
@@ -59,14 +56,12 @@ export const useAuthStore = defineStore('auth', () => {
         error.value = null;
 
         try {
-            const response = await axios.post<AuthResponse>('/api/auth/register', payload);
+            const response = await axios.post<AuthResponse>('/api/auth/register', payload, {
+                withCredentials: true,
+            });
             const { token: jwtToken, email } = response.data;
-
-            token.value = jwtToken;
-            userEmail.value = email;
-
-            localStorage.setItem(TOKEN_KEY, jwtToken);
-            localStorage.setItem(USER_EMAIL_KEY, email);
+            void jwtToken;
+            setAuthenticated(email);
 
             return true;
         } catch (err: any) {
@@ -78,25 +73,44 @@ export const useAuthStore = defineStore('auth', () => {
         }
     }
 
-    function logout() {
-        token.value = null;
-        userEmail.value = null;
-        localStorage.removeItem(TOKEN_KEY);
-        localStorage.removeItem(USER_EMAIL_KEY);
+    async function logout() {
+        try {
+            await axios.post('/api/auth/logout', null, { withCredentials: true });
+        } catch (err) {
+            console.error('Logout failed:', err);
+        } finally {
+            isLoggedIn.value = false;
+            isSessionChecked.value = true;
+            userEmail.value = null;
+        }
     }
 
     function clearError() {
         error.value = null;
     }
 
-    // Initialize auth state from localStorage on app start
-    function initAuth() {
-        token.value = localStorage.getItem(TOKEN_KEY);
-        userEmail.value = localStorage.getItem(USER_EMAIL_KEY);
+    async function ensureSession(): Promise<boolean> {
+        if (isSessionChecked.value) return isLoggedIn.value;
+
+        isSessionChecked.value = true;
+        try {
+            const me = await apiService.getCurrentUser();
+            setAuthenticated(me.email);
+            return true;
+        } catch {
+            isLoggedIn.value = false;
+            userEmail.value = null;
+            return false;
+        }
+    }
+
+    function setAuthenticated(email: string | null) {
+        isLoggedIn.value = true;
+        isSessionChecked.value = true;
+        userEmail.value = email;
     }
 
     return {
-        token,
         userEmail,
         isAuthenticated,
         isLoading,
@@ -105,6 +119,6 @@ export const useAuthStore = defineStore('auth', () => {
         register,
         logout,
         clearError,
-        initAuth,
+        ensureSession,
     };
 });

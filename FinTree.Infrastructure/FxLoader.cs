@@ -2,21 +2,35 @@ using FinTree.Domain.Currencies;
 using FinTree.Domain.ValueObjects;
 using FinTree.Infrastructure.Database;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.Logging;
 using Newtonsoft.Json.Linq;
+using System.Globalization;
 
 namespace FinTree.Infrastructure;
 
-public class FxLoader(IServiceProvider serviceProvider, IHttpClientFactory httpClientFactory) : BackgroundService
+public class FxLoader(
+    IServiceProvider serviceProvider,
+    IHttpClientFactory httpClientFactory,
+    IConfiguration configuration,
+    ILogger<FxLoader> logger) : BackgroundService
 {
-    private const string Url =
-        "https://api.forexrateapi.com/v1/latest?api_key=288e24a304aa81b41cf582f566db8000&base=USD&currencies={0}";
+    private const string UrlTemplate =
+        "https://api.forexrateapi.com/v1/latest?api_key={0}&base=USD&currencies={1}";
 
     private readonly TimeSpan _defaultDelay = TimeSpan.FromHours(24);
+    private readonly string? _apiKey = configuration["FxRates:ApiKey"];
 
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
+        if (string.IsNullOrWhiteSpace(_apiKey))
+        {
+            logger.LogWarning("FxRates:ApiKey is missing. FxLoader is disabled.");
+            return;
+        }
+
         while (!stoppingToken.IsCancellationRequested)
         {
             var httpClient = httpClientFactory.CreateClient();
@@ -37,7 +51,7 @@ public class FxLoader(IServiceProvider serviceProvider, IHttpClientFactory httpC
 
             var currencies = Currency.All;
             var currencyCodes = string.Join(',', currencies.Select(c => c.Code));
-            var url = string.Format(Url, currencyCodes);
+            var url = string.Format(CultureInfo.InvariantCulture, UrlTemplate, _apiKey, currencyCodes);
 
             var result = await httpClient.GetAsync(url, stoppingToken);
             result.EnsureSuccessStatusCode();

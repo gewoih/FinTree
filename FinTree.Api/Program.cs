@@ -1,4 +1,5 @@
 using System.ComponentModel.DataAnnotations;
+using System.Net;
 using System.Text;
 using System.Text.Json;
 using System.Text.Json.Serialization;
@@ -22,6 +23,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Serilog;
 using Telegram.Bot;
+using IPNetwork = System.Net.IPNetwork;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -53,13 +55,6 @@ builder.Services.AddCors(options =>
     });
 });
 
-builder.Services.Configure<ForwardedHeadersOptions>(options =>
-{
-    options.ForwardedHeaders = ForwardedHeaders.XForwardedFor | ForwardedHeaders.XForwardedProto;
-    options.KnownIPNetworks.Clear();
-    options.KnownProxies.Clear();
-});
-
 var authOptions = builder.Configuration.GetSection("Auth").Get<AuthOptions>() ?? new AuthOptions();
 if (string.IsNullOrWhiteSpace(authOptions.JwtSecretKey))
     throw new InvalidOperationException("Auth:JwtSecretKey is missing.");
@@ -67,6 +62,8 @@ if (string.IsNullOrWhiteSpace(authOptions.Issuer))
     throw new InvalidOperationException("Auth:Issuer is missing.");
 if (string.IsNullOrWhiteSpace(authOptions.Audience))
     throw new InvalidOperationException("Auth:Audience is missing.");
+if (authOptions.TokenLifetimeDays <= 0)
+    throw new InvalidOperationException("Auth:TokenLifetimeDays must be greater than zero.");
 
 builder.Services.Configure<AuthOptions>(options =>
 {
@@ -109,6 +106,16 @@ builder.Services.AddAuthentication(options =>
             ClockSkew = TimeSpan.FromSeconds(30)
         };
         options.RequireHttpsMetadata = !builder.Environment.IsDevelopment();
+        options.Events = new JwtBearerEvents
+        {
+            OnMessageReceived = context =>
+            {
+                var token = context.Request.Cookies[AuthConstants.AuthCookieName];
+                if (!string.IsNullOrWhiteSpace(token))
+                    context.Token = token;
+                return Task.CompletedTask;
+            }
+        };
     });
 
 builder.Services.AddAuthorization();

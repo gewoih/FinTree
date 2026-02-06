@@ -23,8 +23,10 @@ services:
       ASPNETCORE_URLS: "http://+:8080"
       ASPNETCORE_ENVIRONMENT: "Production"
       Auth__JwtSecretKey: ${AUTH_JWT_SECRET_KEY}
+      Auth__TokenLifetimeDays: ${AUTH_TOKEN_LIFETIME_DAYS}
       Telegram__BotToken: ${TELEGRAM_BOT_TOKEN}
       ConnectionStrings__DefaultConnection: ${CONNECTION_STRINGS_DEFAULT}
+      FxRates__ApiKey: ${FXRATES_API_KEY}
     depends_on:
       - fintree-postgres
     networks:

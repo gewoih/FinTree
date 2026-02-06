@@ -27,24 +27,11 @@ import type {
  */
 const apiClient = axios.create({
     baseURL: import.meta.env.VITE_API_BASE_URL,
+    withCredentials: true,
     headers: {
         'Content-Type': 'application/json',
     },
 });
-
-/**
- * Request interceptor to add JWT token to requests
- */
-apiClient.interceptors.request.use(
-    config => {
-        const token = localStorage.getItem('fintree_jwt_token');
-        if (token) {
-            config.headers.Authorization = `Bearer ${token}`;
-        }
-        return config;
-    },
-    error => Promise.reject(error)
-);
 
 /**
  * Response interceptor for centralized error handling
@@ -62,8 +49,6 @@ apiClient.interceptors.response.use(
 
         // If 401 Unauthorized, clear auth and redirect to login
         if (error.response?.status === 401) {
-            localStorage.removeItem('fintree_jwt_token');
-            localStorage.removeItem('fintree_user_email');
             if (window.location.pathname !== '/login') {
                 window.location.href = '/login';
             }

@@ -1,4 +1,5 @@
 import { createRouter, createWebHistory } from 'vue-router';
+import { useAuthStore } from '../stores/auth';
 
 export const router = createRouter({
   history: createWebHistory(),
@@ -74,22 +75,22 @@ export const router = createRouter({
 });
 
 // Navigation guard to check authentication
-router.beforeEach((to, _from, next) => {
-  const token = localStorage.getItem('fintree_jwt_token');
-  const isAuthenticated = !!token;
+router.beforeEach(async to => {
+  const needsAuthCheck = !!to.meta.requiresAuth || to.name === 'login' || to.name === 'register';
+  if (!needsAuthCheck) return true;
 
-  // If route requires auth and user is not authenticated, redirect to login
+  const authStore = useAuthStore();
+  const isAuthenticated = await authStore.ensureSession();
+
   if (to.meta.requiresAuth && !isAuthenticated) {
-    next('/login');
+    return '/login';
   }
-  // If user is authenticated and trying to access login/register, redirect to dashboard
-  else if ((to.name === 'login' || to.name === 'register') && isAuthenticated) {
-    next('/dashboard');
+
+  if ((to.name === 'login' || to.name === 'register') && isAuthenticated) {
+    return '/dashboard';
   }
-  // Otherwise, proceed
-  else {
-    next();
-  }
+
+  return true;
 });
 
 router.afterEach(to => {

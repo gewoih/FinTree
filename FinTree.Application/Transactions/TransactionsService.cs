@@ -8,6 +8,7 @@ using FinTree.Infrastructure.Database;
 using Microsoft.EntityFrameworkCore;
 using System.Globalization;
 using System.Text;
+using FinTree.Domain.Accounts;
 
 namespace FinTree.Application.Transactions;
 
@@ -16,7 +17,12 @@ public sealed class TransactionsService(AppDbContext context, ICurrentUser curre
     public async Task<Guid> CreateAsync(CreateTransaction command, CancellationToken ct)
     {
         var account = await context.Accounts.FirstOrDefaultAsync(a => a.Id == command.AccountId, ct) ??
-                      throw new InvalidOperationException("Счет не найден.");
+                      throw new NotFoundException(nameof(Account), command.AccountId);
+        
+        if (account.UserId != currentUser.Id)
+            throw new UnauthorizedAccessException("Доступ запрещен");
+
+        await EnsureCategoryAccessAsync(command.CategoryId, ct);
 
         var newTransaction = account.AddTransaction(command.Type, command.CategoryId, command.Amount,
             command.OccurredAt, command.Description, command.IsMandatory);
@@ -274,11 +280,18 @@ public sealed class TransactionsService(AppDbContext context, ICurrentUser curre
 
     public async Task AssignCategoryAsync(AssignCategory command, CancellationToken ct)
     {
-        var transaction = await context.Transactions.FirstOrDefaultAsync(t => t.Id == command.TransactionId, ct) ??
+        var transaction = await context.Transactions
+                              .Include(t => t.Account)
+                              .FirstOrDefaultAsync(t => t.Id == command.TransactionId, ct) ??
                           throw new NotFoundException("Transaction not found", command.TransactionId);
+
+        if (transaction.Account.UserId != currentUser.Id)
+            throw new InvalidOperationException("Доступ запрещен");
 
         if (transaction.TransferId is not null)
             throw new InvalidOperationException("Переводы нельзя редактировать как обычные транзакции.");
+
+        await EnsureCategoryAccessAsync(command.CategoryId, ct);
 
         transaction.AssignCategory(command.CategoryId);
         await context.SaveChangesAsync(ct);
@@ -301,6 +314,8 @@ public sealed class TransactionsService(AppDbContext context, ICurrentUser curre
 
         if (newAccount.UserId != currentUser.Id)
             throw new InvalidOperationException("Доступ запрещен");
+
+        await EnsureCategoryAccessAsync(command.CategoryId, ct);
 
         var money = new Money(newAccount.CurrencyCode, command.Amount);
         transaction.Update(command.AccountId, command.CategoryId, money, command.OccurredAt,
@@ -343,5 +358,23 @@ public sealed class TransactionsService(AppDbContext context, ICurrentUser curre
             .Where(c => c.UserId == null && c.Name == name)
             .Select(c => c.Id)
             .FirstOrDefaultAsync(ct);
+    }
+
+    private async Task EnsureCategoryAccessAsync(Guid categoryId, CancellationToken ct)
+    {
+        if (categoryId == Guid.Empty)
+            throw new InvalidOperationException("Категория не найдена");
+
+        var categoryMeta = await context.TransactionCategories
+            .AsNoTracking()
+            .Where(c => c.Id == categoryId)
+            .Select(c => new { c.Id, c.UserId })
+            .SingleOrDefaultAsync(ct);
+
+        if (categoryMeta is null)
+            throw new InvalidOperationException("Категория не найдена");
+
+        if (categoryMeta.UserId is not null && categoryMeta.UserId != currentUser.Id)
+            throw new InvalidOperationException("Доступ запрещен");
     }
 }
