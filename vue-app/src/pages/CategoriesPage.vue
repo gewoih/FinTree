@@ -2,9 +2,9 @@
 import { onMounted, ref } from 'vue'
 import CategoryManager from '../components/CategoryManager.vue'
 import { useFinanceStore } from '../stores/finance'
-import PageContainer from "@/components/layout/PageContainer.vue";
-import PageHeader from "@/components/common/PageHeader.vue";
-import UiSection from "@/ui/UiSection.vue";
+import PageContainer from '../components/layout/PageContainer.vue'
+import PageHeader from '../components/common/PageHeader.vue'
+import UiSection from '../ui/UiSection.vue'
 
 const financeStore = useFinanceStore()
 const managerRef = ref<InstanceType<typeof CategoryManager> | null>(null)

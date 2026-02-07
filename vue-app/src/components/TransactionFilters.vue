@@ -33,6 +33,33 @@ const accountOptions = computed(() => [
   { label: 'All accounts', value: null },
   ...props.accounts.map(acc => ({ label: acc.name, value: acc }))
 ]);
+
+const handleSearchUpdate = (value: string | null | undefined) => {
+  emit('update:searchText', value ?? '');
+};
+
+const handleCategoryUpdate = (value: Category | null | undefined) => {
+  emit('update:selectedCategory', value ?? null);
+};
+
+const handleAccountUpdate = (value: Account | null | undefined) => {
+  emit('update:selectedAccount', value ?? null);
+};
+
+const handleDateRangeUpdate = (
+  value: Date | Date[] | (Date | null)[] | null | undefined
+) => {
+  if (!value) {
+    emit('update:dateRange', null);
+    return;
+  }
+  if (Array.isArray(value)) {
+    const dates = value.filter((item): item is Date => item instanceof Date);
+    emit('update:dateRange', dates.length ? dates : null);
+    return;
+  }
+  emit('update:dateRange', [value]);
+};
 </script>
 
 <template>
@@ -48,7 +75,7 @@ const accountOptions = computed(() => [
             :model-value="props.searchText"
             placeholder="Категория, счёт или заметка…"
             autocomplete="off"
-            @update:model-value="val => emit('update:searchText', val ?? '')"
+            @update:model-value="handleSearchUpdate"
           />
         </template>
       </FormField>
@@ -66,7 +93,7 @@ const accountOptions = computed(() => [
               option-value="value"
               placeholder="Все категории"
               :input-id="fieldAttrs.id"
-              @update:model-value="val => emit('update:selectedCategory', val)"
+              @update:model-value="handleCategoryUpdate"
             />
           </template>
         </FormField>
@@ -83,7 +110,7 @@ const accountOptions = computed(() => [
               option-value="value"
               placeholder="Все счета"
               :input-id="fieldAttrs.id"
-              @update:model-value="val => emit('update:selectedAccount', val)"
+              @update:model-value="handleAccountUpdate"
             />
           </template>
         </FormField>
@@ -101,7 +128,7 @@ const accountOptions = computed(() => [
               placeholder="Выберите период"
               show-button-bar
               :input-id="fieldAttrs.id"
-              @update:model-value="val => emit('update:dateRange', val as Date[] | null)"
+              @update:model-value="handleDateRangeUpdate"
             />
           </template>
         </FormField>

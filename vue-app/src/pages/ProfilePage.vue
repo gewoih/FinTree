@@ -248,7 +248,7 @@ function handleClearTelegram() {
                 label="Очистить"
                 variant="ghost"
                 size="sm"
-                :disabled="!form.telegramHandle || isSaving"
+                :disabled="!form.telegramUserId || isSaving"
                 @click="handleClearTelegram"
               />
             </div>

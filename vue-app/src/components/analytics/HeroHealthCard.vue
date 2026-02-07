@@ -33,6 +33,7 @@ interface HealthGroup {
   key: string;
   title: string;
   metrics: HealthTile[];
+  accent?: MetricAccent;
 }
 
 const props = withDefaults(

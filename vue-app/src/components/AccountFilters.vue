@@ -25,6 +25,14 @@ const accountTypeOptions = computed<Array<{ label: string; value: AccountType | 
 const hasActiveFilters = computed(() => {
   return props.searchText.length > 0 || props.selectedType !== null
 })
+
+const handleSearchUpdate = (value: string | null | undefined) => {
+  emit('update:searchText', value ?? '')
+}
+
+const handleTypeUpdate = (value: AccountType | null | undefined) => {
+  emit('update:selectedType', value ?? null)
+}
 </script>
 
 <template>
@@ -46,7 +54,7 @@ const hasActiveFilters = computed(() => {
               :model-value="props.searchText"
               placeholder="Название счёта..."
               autocomplete="off"
-              @update:model-value="val => emit('update:searchText', val ?? '')"
+              @update:model-value="handleSearchUpdate"
             />
           </div>
         </template>
@@ -58,15 +66,15 @@ const hasActiveFilters = computed(() => {
         label="Тип счёта"
       >
         <template #default="{ fieldAttrs }">
-          <UiSelect
-            :model-value="props.selectedType"
-            :options="accountTypeOptions"
-            option-label="label"
-            option-value="value"
-            placeholder="Все типы"
-            :input-id="fieldAttrs.id"
-            @update:model-value="val => emit('update:selectedType', val)"
-          >
+            <UiSelect
+              :model-value="props.selectedType"
+              :options="accountTypeOptions"
+              option-label="label"
+              option-value="value"
+              placeholder="Все типы"
+              :input-id="fieldAttrs.id"
+              @update:model-value="handleTypeUpdate"
+            >
             <template #value="slotProps">
               <div
                 v-if="slotProps.value !== null && slotProps.value !== undefined"

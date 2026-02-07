@@ -3,17 +3,21 @@ import { useAttrs } from 'vue';
 import InputText from 'primevue/inputtext';
 
 const props = defineProps<{
-  modelValue?: string | number | null;
+  modelValue?: string | null;
   placeholder?: string;
   disabled?: boolean;
   type?: string;
 }>();
 
 const emit = defineEmits<{
-  (e: 'update:modelValue', value: string | number | null): void;
+  (e: 'update:modelValue', value: string | null): void;
 }>();
 
 const attrs = useAttrs();
+
+const handleUpdateModelValue = (value: string | null | undefined) => {
+  emit('update:modelValue', value ?? '');
+};
 </script>
 
 <template>
@@ -24,7 +28,7 @@ const attrs = useAttrs();
     :placeholder="props.placeholder"
     :disabled="props.disabled"
     :type="props.type"
-    @update:model-value="val => emit('update:modelValue', val ?? '')"
+    @update:model-value="handleUpdateModelValue"
   />
 </template>
 

@@ -35,11 +35,11 @@ const selectedSalaryWindow = ref<number>(6);
 const instrumentDialogVisible = ref(false);
 const instrumentSubmitting = ref(false);
 
-const salaryWindowOptions = [
+const salaryWindowOptions: Array<{ label: string; value: number }> = [
   { label: '3 месяца', value: 3 },
   { label: '6 месяцев', value: 6 },
   { label: '12 месяцев', value: 12 },
-] as const;
+];
 
 const instrumentTypeOptions = [
   { label: 'Зарплата', value: 'Salary' },

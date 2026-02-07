@@ -21,7 +21,7 @@ import type {
   ExpenseGranularity,
   ForecastSummary,
 } from '../types/analytics';
-import PageContainer from "@/components/layout/PageContainer.vue";
+import PageContainer from '../components/layout/PageContainer.vue';
 
 interface HealthTile {
   key: string;
@@ -668,8 +668,8 @@ function retryNetWorth() {
   void loadNetWorth();
 }
 
-const updateSelectedMonth = (value: Date | null) => {
-  if (!value) return;
+const updateSelectedMonth = (value: Date | Date[] | (Date | null)[] | null | undefined) => {
+  if (!value || Array.isArray(value)) return;
   selectedMonth.value = normalizeMonth(value);
 };
 
