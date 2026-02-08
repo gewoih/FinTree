@@ -10,7 +10,8 @@ import type {
     NewTransactionPayload,
     UpdateTransactionPayload,
     Transaction,
-    CreateTransferPayload
+    CreateTransferPayload,
+    UpdateTransferPayload
 } from '../types.ts';
 
 import {
@@ -170,6 +171,17 @@ export const useFinanceStore = defineStore('finance', () => {
         }
     }
 
+    async function updateTransfer(payload: UpdateTransferPayload) {
+        try {
+            await apiService.updateTransfer(payload);
+            await fetchTransactions(currentTransactionsAccountId.value ?? undefined);
+            return true;
+        } catch (error) {
+            console.error('Ошибка при обновлении перевода:', error);
+            return false;
+        }
+    }
+
     /**
      * Updates an existing transaction
      * @param payload - Updated transaction data including ID
@@ -198,6 +210,17 @@ export const useFinanceStore = defineStore('finance', () => {
             return true;
         } catch (error) {
             console.error('Ошибка при удалении транзакции:', error);
+            return false;
+        }
+    }
+
+    async function deleteTransfer(transferId: string) {
+        try {
+            await apiService.deleteTransfer(transferId);
+            await fetchTransactions(currentTransactionsAccountId.value ?? undefined);
+            return true;
+        } catch (error) {
+            console.error('Ошибка при удалении перевода:', error);
             return false;
         }
     }
@@ -339,7 +362,9 @@ export const useFinanceStore = defineStore('finance', () => {
         addTransaction,
         updateTransaction,
         deleteTransaction,
+        deleteTransfer,
         createTransfer,
+        updateTransfer,
         createAccount,
         setPrimaryAccount,
         deleteAccount,

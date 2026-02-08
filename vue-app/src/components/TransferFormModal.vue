@@ -6,16 +6,21 @@ import InputNumber from 'primevue/inputnumber';
 import InputText from 'primevue/inputtext';
 import DatePicker from 'primevue/datepicker';
 import Button from 'primevue/button';
+import { useConfirm } from 'primevue/useconfirm';
+import { useToast } from 'primevue/usetoast';
 import { useFinanceStore } from '../stores/finance';
-import type { Account, CreateTransferPayload } from '../types';
+import type { Account, CreateTransferPayload, UpdateTransferPayload } from '../types';
 import { VALIDATION_RULES } from '../constants';
 import { useFormModal } from '../composables/useFormModal';
 import { validators } from '../services/validation.service';
 
 const store = useFinanceStore();
+const confirm = useConfirm();
+const toast = useToast();
 
 const props = defineProps<{
   visible: boolean;
+  transfer?: UpdateTransferPayload | null;
 }>();
 
 const emit = defineEmits<{
@@ -29,6 +34,9 @@ const toAmount = ref<number | null>(null);
 const feeAmount = ref<number | null>(null);
 const description = ref<string>('');
 const date = ref<Date>(new Date());
+const isDeleting = ref(false);
+
+const isEditMode = computed(() => !!props.transfer);
 
 const resetForm = () => {
   fromAccount.value = store.primaryAccount ?? store.accounts[0] ?? null;
@@ -40,11 +48,34 @@ const resetForm = () => {
   date.value = new Date();
 };
 
+const applyTransfer = (transfer: UpdateTransferPayload) => {
+  fromAccount.value = store.accounts.find(a => a.id === transfer.fromAccountId) ?? null;
+  toAccount.value = store.accounts.find(a => a.id === transfer.toAccountId) ?? null;
+  fromAmount.value = transfer.fromAmount;
+  toAmount.value = transfer.toAmount;
+  feeAmount.value = transfer.feeAmount ?? null;
+  description.value = transfer.description ?? '';
+  date.value = new Date(transfer.occurredAt);
+};
+
 watch(
   () => props.visible,
   visible => {
     if (visible) {
-      resetForm();
+      if (isEditMode.value && props.transfer) {
+        applyTransfer(props.transfer);
+      } else {
+        resetForm();
+      }
+    }
+  }
+);
+
+watch(
+  () => props.transfer,
+  transfer => {
+    if (props.visible && transfer) {
+      applyTransfer(transfer);
     }
   }
 );
@@ -58,6 +89,10 @@ watch(fromAccount, account => {
 watch(
   () => store.accounts,
   accounts => {
+    if (isEditMode.value && props.transfer) {
+      applyTransfer(props.transfer);
+      return;
+    }
     if (!fromAccount.value && accounts.length) {
       fromAccount.value = store.primaryAccount ?? accounts[0] ?? null;
     }
@@ -152,6 +187,21 @@ const toUtcIsoDate = (value: Date) => {
 
 const { isSubmitting, handleSubmit: submitTransfer, showWarning } = useFormModal(
   async () => {
+    if (isEditMode.value && props.transfer) {
+      const payload: UpdateTransferPayload = {
+        transferId: props.transfer.transferId,
+        fromAccountId: fromAccount.value!.id,
+        toAccountId: toAccount.value!.id,
+        fromAmount: fromAmount.value!,
+        toAmount: resolvedToAmount.value!,
+        feeAmount: feeAmount.value ?? null,
+        occurredAt: toUtcIsoDate(date.value),
+        description: description.value ? description.value.trim() : null,
+      };
+
+      return await store.updateTransfer(payload);
+    }
+
     const payload: CreateTransferPayload = {
       fromAccountId: fromAccount.value!.id,
       toAccountId: toAccount.value!.id,
@@ -166,7 +216,7 @@ const { isSubmitting, handleSubmit: submitTransfer, showWarning } = useFormModal
   },
   {
     successMessage: 'Перевод сохранен.',
-    errorMessage: 'Не удалось создать перевод.',
+    errorMessage: 'Не удалось сохранить перевод.',
   }
 );
 
@@ -189,12 +239,43 @@ const handleSubmit = async () => {
     emit('update:visible', false);
   }
 };
+
+const handleDelete = () => {
+  if (!props.transfer) return;
+
+  confirm.require({
+    message: 'Удалить этот перевод? Все связанные транзакции будут удалены.',
+    header: 'Подтверждение удаления',
+    icon: 'pi pi-exclamation-triangle',
+    rejectLabel: 'Отмена',
+    acceptLabel: 'Удалить',
+    acceptClass: 'p-button-danger',
+    accept: async () => {
+      isDeleting.value = true;
+      const success = await store.deleteTransfer(props.transfer!.transferId);
+      isDeleting.value = false;
+
+      toast.add({
+        severity: success ? 'success' : 'error',
+        summary: success ? 'Перевод удален' : 'Не удалось удалить',
+        detail: success
+          ? 'Перевод больше не отображается в списке.'
+          : 'Пожалуйста, попробуйте еще раз.',
+        life: 3000
+      });
+
+      if (success) {
+        emit('update:visible', false);
+      }
+    }
+  });
+};
 </script>
 
 <template>
   <Dialog
     :visible="props.visible"
-    header="Новый перевод"
+    :header="isEditMode ? 'Редактирование перевода' : 'Новый перевод'"
     modal
     class="transfer-dialog"
     :style="{ width: '560px' }"
@@ -328,22 +409,37 @@ const handleSubmit = async () => {
       </div>
 
       <footer class="form-actions">
-        <Button
-          type="button"
-          label="Отмена"
-          icon="pi pi-times"
-          severity="secondary"
-          outlined
-          :disabled="isSubmitting"
-          @click="emit('update:visible', false)"
-        />
-        <Button
-          type="submit"
-          label="Сохранить"
-          icon="pi pi-check"
-          :disabled="submitDisabled"
-          :loading="isSubmitting"
-        />
+        <div class="form-actions__left">
+          <Button
+            v-if="isEditMode"
+            type="button"
+            label="Удалить"
+            icon="pi pi-trash"
+            severity="danger"
+            outlined
+            :loading="isDeleting"
+            :disabled="isSubmitting"
+            @click="handleDelete"
+          />
+        </div>
+        <div class="form-actions__right">
+          <Button
+            type="button"
+            label="Отмена"
+            icon="pi pi-times"
+            severity="secondary"
+            outlined
+            :disabled="isSubmitting || isDeleting"
+            @click="emit('update:visible', false)"
+          />
+          <Button
+            type="submit"
+            :label="isEditMode ? 'Обновить' : 'Сохранить'"
+            icon="pi pi-check"
+            :disabled="submitDisabled || isDeleting"
+            :loading="isSubmitting"
+          />
+        </div>
       </footer>
     </form>
   </Dialog>
@@ -411,9 +507,17 @@ const handleSubmit = async () => {
 .form-actions {
   grid-column: 1 / -1;
   display: flex;
-  justify-content: flex-end;
+  justify-content: space-between;
+  align-items: center;
   gap: var(--ft-space-3);
   margin-top: var(--ft-space-2);
+}
+
+.form-actions__left,
+.form-actions__right {
+  display: flex;
+  align-items: center;
+  gap: var(--ft-space-3);
 }
 
 .rate-hint {

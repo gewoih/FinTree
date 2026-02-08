@@ -106,6 +106,17 @@ export interface CreateTransferPayload {
     description?: string | null;
 }
 
+export interface UpdateTransferPayload {
+    transferId: string;
+    fromAccountId: string;
+    toAccountId: string;
+    fromAmount: number;
+    toAmount: number;
+    occurredAt: string;
+    feeAmount?: number | null;
+    description?: string | null;
+}
+
 export interface CreateAccountPayload {
     currencyCode: string;
     type: AccountType;

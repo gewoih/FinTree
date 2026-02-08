@@ -15,7 +15,8 @@ import type {
     UpdateUserProfilePayload,
     NetWorthSnapshotDto,
     AccountBalanceAdjustmentDto,
-    CreateTransferPayload
+    CreateTransferPayload,
+    UpdateTransferPayload
 } from '../types.ts';
 
 /**
@@ -155,6 +156,20 @@ export const apiService = {
         return response.data;
     },
 
+    async updateTransfer(payload: UpdateTransferPayload): Promise<void> {
+        const transferPayload = {
+            transferId: payload.transferId,
+            fromAccountId: payload.fromAccountId,
+            toAccountId: payload.toAccountId,
+            fromAmount: Math.abs(payload.fromAmount),
+            toAmount: Math.abs(payload.toAmount),
+            occurredAt: payload.occurredAt,
+            feeAmount: payload.feeAmount != null ? Math.abs(payload.feeAmount) : null,
+            description: payload.description,
+        };
+        await apiClient.patch('/Transaction/transfer', transferPayload);
+    },
+
     // Обновление существующей транзакции
     async updateTransaction(payload: UpdateTransactionPayload): Promise<void> {
         const updatePayload = {
@@ -173,6 +188,12 @@ export const apiService = {
     async deleteTransaction(id: string): Promise<void> {
         await apiClient.delete('/Transaction', {
             params: { id },
+        });
+    },
+
+    async deleteTransfer(transferId: string): Promise<void> {
+        await apiClient.delete('/Transaction/transfer', {
+            params: { transferId },
         });
     },
 

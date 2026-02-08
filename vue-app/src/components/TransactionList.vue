@@ -9,7 +9,7 @@ import { PAGINATION_OPTIONS } from '../constants'
 import { useTransactionFilters } from '../composables/useTransactionFilters'
 import TransactionFilters from './TransactionFilters.vue'
 import { formatCurrency, formatDate } from '../utils/formatters'
-import type { Transaction } from '../types'
+import type { Transaction, UpdateTransferPayload } from '../types'
 import { TRANSACTION_TYPE } from '../types'
 
 interface EnrichedTransaction extends Transaction {
@@ -43,6 +43,7 @@ interface EnrichedTransaction extends Transaction {
 const emit = defineEmits<{
   (e: 'add-transaction'): void
   (e: 'edit-transaction', transaction: Transaction): void
+  (e: 'edit-transfer', transfer: UpdateTransferPayload): void
 }>()
 
 const store = useFinanceStore()
@@ -325,6 +326,20 @@ const isEmptyState = computed(
 
 const handleRowClick = (event: { data: EnrichedTransaction }) => {
   if (event.data.isTransferSummary) {
+    if (!event.data.transferFromAccountId || !event.data.transferToAccountId) {
+      return
+    }
+
+    emit('edit-transfer', {
+      transferId: event.data.id,
+      fromAccountId: event.data.transferFromAccountId,
+      toAccountId: event.data.transferToAccountId,
+      fromAmount: event.data.transferFromAmount ?? 0,
+      toAmount: event.data.transferToAmount ?? 0,
+      feeAmount: event.data.transferFeeAmount ?? null,
+      occurredAt: event.data.occurredAt,
+      description: event.data.description ?? null
+    })
     return
   }
   emit('edit-transaction', event.data)

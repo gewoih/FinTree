@@ -38,6 +38,13 @@ public class TransactionController(TransactionsService transactionsService) : Co
         return Ok(transferId);
     }
 
+    [HttpPatch("transfer")]
+    public async Task<IActionResult> UpdateTransfer([FromBody] UpdateTransfer command, CancellationToken ct)
+    {
+        await transactionsService.UpdateTransferAsync(command, ct);
+        return Ok();
+    }
+
     [HttpPatch]
     public async Task<IActionResult> Update([FromBody] UpdateTransaction command, CancellationToken ct)
     {
@@ -56,6 +63,13 @@ public class TransactionController(TransactionsService transactionsService) : Co
     public async Task<IActionResult> Delete([FromQuery] Guid id, CancellationToken ct)
     {
         await transactionsService.DeleteAsync(id, ct);
+        return Ok();
+    }
+
+    [HttpDelete("transfer")]
+    public async Task<IActionResult> DeleteTransfer([FromQuery] Guid transferId, CancellationToken ct)
+    {
+        await transactionsService.DeleteTransferAsync(transferId, ct);
         return Ok();
     }
 }

@@ -3,7 +3,7 @@ import { onMounted, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { useToast } from 'primevue/usetoast'
 import { useFinanceStore } from '../stores/finance'
-import type { Transaction } from '../types'
+import type { Transaction, UpdateTransferPayload } from '../types'
 import TransactionList from '../components/TransactionList.vue'
 import TransactionForm from '../components/TransactionForm.vue'
 import TransferFormModal from '../components/TransferFormModal.vue'
@@ -15,6 +15,7 @@ const router = useRouter()
 const transactionDialogVisible = ref(false)
 const editingTransaction = ref<Transaction | null>(null)
 const transferDialogVisible = ref(false)
+const editingTransfer = ref<UpdateTransferPayload | null>(null)
 const isExporting = ref(false)
 
 const openTransactionDialog = () => {
@@ -23,12 +24,18 @@ const openTransactionDialog = () => {
 }
 
 const openTransferDialog = () => {
+  editingTransfer.value = null
   transferDialogVisible.value = true
 }
 
 const handleEditTransaction = (transaction: Transaction) => {
   editingTransaction.value = transaction
   transactionDialogVisible.value = true
+}
+
+const handleEditTransfer = (transfer: UpdateTransferPayload) => {
+  editingTransfer.value = transfer
+  transferDialogVisible.value = true
 }
 
 const exportTransactions = async () => {
@@ -116,6 +123,7 @@ onMounted(async () => {
       <TransactionList
         @add-transaction="openTransactionDialog"
         @edit-transaction="handleEditTransaction"
+        @edit-transfer="handleEditTransfer"
       />
     </UiSection>
 
@@ -124,7 +132,10 @@ onMounted(async () => {
       :transaction="editingTransaction"
     />
 
-    <TransferFormModal v-model:visible="transferDialogVisible" />
+    <TransferFormModal
+      v-model:visible="transferDialogVisible"
+      :transfer="editingTransfer"
+    />
   </PageContainer>
 </template>
 

@@ -181,6 +181,132 @@ public sealed class TransactionsService(AppDbContext context, ICurrentUser curre
         return transferId;
     }
 
+    public async Task UpdateTransferAsync(UpdateTransfer command, CancellationToken ct)
+    {
+        if (command.TransferId == Guid.Empty)
+            throw new InvalidOperationException("Не указан перевод для обновления.");
+        if (command.FromAccountId == command.ToAccountId)
+            throw new InvalidOperationException("Счет списания и счет зачисления должны быть разными.");
+        if (command.FromAmount <= 0)
+            throw new InvalidOperationException("Сумма списания должна быть больше нуля.");
+        if (command.ToAmount <= 0)
+            throw new InvalidOperationException("Сумма зачисления должна быть больше нуля.");
+        if (command.FeeAmount is < 0)
+            throw new InvalidOperationException("Комиссия не может быть отрицательной.");
+
+        var currentUserId = currentUser.Id;
+        var accounts = await context.Accounts
+            .Where(a => a.UserId == currentUserId &&
+                        (a.Id == command.FromAccountId || a.Id == command.ToAccountId))
+            .ToListAsync(ct);
+
+        var fromAccount = accounts.FirstOrDefault(a => a.Id == command.FromAccountId);
+        if (fromAccount is null)
+            throw new InvalidOperationException("Счет списания не найден.");
+
+        var toAccount = accounts.FirstOrDefault(a => a.Id == command.ToAccountId);
+        if (toAccount is null)
+            throw new InvalidOperationException("Счет зачисления не найден.");
+
+        var categories = await context.TransactionCategories
+            .AsNoTracking()
+            .Where(c => c.UserId == currentUserId)
+            .Select(c => new { c.Id, c.Name, c.IsDefault })
+            .ToListAsync(ct);
+
+        if (categories.Count == 0)
+            throw new InvalidOperationException("Не удалось подобрать категорию для перевода.");
+
+        var transferCategoryId = categories
+                                     .FirstOrDefault(c => c.Name == "Без категории")?.Id
+                                 ?? categories.FirstOrDefault(c => c.IsDefault)?.Id
+                                 ?? categories[0].Id;
+
+        var feeCategoryId = categories
+                                .FirstOrDefault(c => c.Name == "Платежи")?.Id
+                            ?? transferCategoryId;
+
+        var transferTransactions = await context.Transactions
+            .Include(t => t.Account)
+            .Where(t => t.TransferId == command.TransferId)
+            .ToListAsync(ct);
+
+        if (transferTransactions.Count == 0)
+            throw new NotFoundException("Перевод не найден", command.TransferId);
+
+        if (transferTransactions.Any(t => t.Account.UserId != currentUserId))
+            throw new InvalidOperationException("Доступ запрещен");
+
+        var expenseTransfer = transferTransactions.FirstOrDefault(t =>
+            t.IsTransfer && t.Type == TransactionType.Expense);
+        var incomeTransfer = transferTransactions.FirstOrDefault(t =>
+            t.IsTransfer && t.Type == TransactionType.Income);
+
+        if (expenseTransfer is null || incomeTransfer is null)
+            throw new InvalidOperationException("Перевод поврежден и не может быть обновлен.");
+
+        var description = string.IsNullOrWhiteSpace(command.Description) ? null : command.Description.Trim();
+
+        expenseTransfer.Update(
+            fromAccount.Id,
+            transferCategoryId,
+            new Money(fromAccount.CurrencyCode, command.FromAmount),
+            command.OccurredAt,
+            description,
+            false);
+
+        incomeTransfer.Update(
+            toAccount.Id,
+            transferCategoryId,
+            new Money(toAccount.CurrencyCode, command.ToAmount),
+            command.OccurredAt,
+            description,
+            false);
+
+        var feeTransactions = transferTransactions
+            .Where(t => !t.IsTransfer)
+            .ToList();
+
+        if (command.FeeAmount is > 0)
+        {
+            var feeMoney = new Money(fromAccount.CurrencyCode, command.FeeAmount.Value);
+
+            if (feeTransactions.Count > 0)
+            {
+                var feeTransaction = feeTransactions[0];
+                feeTransaction.Update(
+                    fromAccount.Id,
+                    feeCategoryId,
+                    feeMoney,
+                    command.OccurredAt,
+                    description,
+                    false);
+
+                foreach (var extra in feeTransactions.Skip(1))
+                    extra.Delete();
+            }
+            else
+            {
+                fromAccount.AddTransaction(
+                    TransactionType.Expense,
+                    feeCategoryId,
+                    command.FeeAmount.Value,
+                    command.OccurredAt,
+                    description,
+                    isMandatory: false,
+                    isTransfer: false,
+                    transferId: command.TransferId);
+            }
+        }
+        else
+        {
+            foreach (var fee in feeTransactions)
+                fee.Delete();
+        }
+
+        await context.SaveChangesAsync(ct);
+    }
+
     public async Task<(byte[] Content, string FileName)> ExportAsync(CancellationToken ct)
     {
         var currentUserId = currentUser.Id;
@@ -351,6 +477,29 @@ public sealed class TransactionsService(AppDbContext context, ICurrentUser curre
         }
 
         transaction.Delete();
+        await context.SaveChangesAsync(ct);
+    }
+
+    public async Task DeleteTransferAsync(Guid transferId, CancellationToken ct)
+    {
+        if (transferId == Guid.Empty)
+            throw new InvalidOperationException("Перевод не найден.");
+
+        var currentUserId = currentUser.Id;
+        var transferTransactions = await context.Transactions
+            .Include(t => t.Account)
+            .Where(t => t.TransferId == transferId)
+            .ToListAsync(ct);
+
+        if (transferTransactions.Count == 0)
+            throw new NotFoundException("Перевод не найден", transferId);
+
+        if (transferTransactions.Any(t => t.Account.UserId != currentUserId))
+            throw new InvalidOperationException("Доступ запрещен");
+
+        foreach (var item in transferTransactions)
+            item.Delete();
+
         await context.SaveChangesAsync(ct);
     }
 
