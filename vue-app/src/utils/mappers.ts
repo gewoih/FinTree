@@ -31,6 +31,7 @@ export function mapAccount(
   return {
     ...dto,
     type: normalizeAccountType(dto.type),
+    isLiquid: dto.isLiquid ?? false,
     currency: currencies.get(dto.currencyCode) ?? null,
     balance,
     balanceInBaseCurrency,
@@ -168,17 +169,22 @@ function normalizeCategoryType(value: unknown): CategoryType {
  */
 function normalizeAccountType(value: unknown): AccountType {
   // Already correct type
-  if (value === 0 || value === 1 || value === 2 || value === 3) {
+  if (value === 0 || value === 2 || value === 3 || value === 4) {
     return value as AccountType;
+  }
+  if (value === 1) {
+    return 0;
   }
 
   // String values from backend
   if (typeof value === 'string') {
     const normalized = value.toLowerCase();
     if (normalized === 'bank') return 0;
-    if (normalized === 'cash') return 1;
+    if (normalized === 'cash') return 0;
     if (normalized === 'crypto') return 2;
+    if (normalized === 'brokerage') return 3;
     if (normalized === 'investment') return 3;
+    if (normalized === 'deposit') return 4;
   }
 
   console.warn('Не удалось распознать тип счета, используем Bank по умолчанию:', value);

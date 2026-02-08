@@ -1,6 +1,6 @@
 // src/types.ts
 
-export type AccountType = 0 | 1 | 2 | 3; // 0 - Bank, 1 - Cash, 2 - Crypto, 3 - Investment
+export type AccountType = 0 | 2 | 3 | 4; // 0 - Bank, 2 - Crypto, 3 - Brokerage, 4 - Deposit
 
 export const CATEGORY_TYPE = {
     Income: 'Income',
@@ -22,6 +22,7 @@ export interface AccountDto {
     currencyCode: string;
     name: string;
     type: AccountType | string | number; // Backend may return string "Bank", "Cash", "Crypto" or numbers
+    isLiquid: boolean;
     isMain: boolean;
     balance: number;
     balanceInBaseCurrency: number;
@@ -122,6 +123,7 @@ export interface CreateAccountPayload {
     type: AccountType;
     name: string;
     initialBalance?: number | null;
+    isLiquid?: boolean | null;
 }
 
 export interface AccountFormPayload {
@@ -129,6 +131,7 @@ export interface AccountFormPayload {
     type: AccountType;
     currencyCode: string;
     initialBalance?: number | null;
+    isLiquid?: boolean | null;
 }
 
 export interface CreateCategoryPayload {
@@ -175,6 +178,9 @@ export interface FinancialHealthSummaryDto {
     discretionaryTotal: number | null;
     discretionarySharePercent: number | null;
     monthOverMonthChangePercent: number | null;
+    liquidAssets: number | null;
+    liquidMonths: number | null;
+    liquidMonthsStatus: 'good' | 'average' | 'poor' | null;
 }
 
 export interface PeakDaysSummaryDto {
@@ -281,4 +287,25 @@ export interface AccountBalanceAdjustmentDto {
     accountId: string;
     amount: number;
     occurredAt: string;
+}
+
+export interface InvestmentAccountOverviewDto {
+    id: string;
+    name: string;
+    currencyCode: string;
+    type: AccountType | string | number;
+    isLiquid: boolean;
+    balance: number;
+    balanceInBaseCurrency: number;
+    lastAdjustedAt: string | null;
+    returnPercent: number | null;
+}
+
+export interface InvestmentsOverviewDto {
+    periodFrom: string;
+    periodTo: string;
+    totalValueInBaseCurrency: number;
+    liquidValueInBaseCurrency: number;
+    totalReturnPercent: number | null;
+    accounts: InvestmentAccountOverviewDto[];
 }

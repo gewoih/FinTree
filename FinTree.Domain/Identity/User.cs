@@ -39,9 +39,10 @@ public sealed class User : IdentityUser<Guid>
         BaseCurrencyCode = currencyCode;
     }
 
-    public Account AddAccount(string currencyCode, AccountType type, string name)
+    public Account AddAccount(string currencyCode, AccountType type, string name, bool? isLiquid = null)
     {
-        var account = new Account(Id, name, currencyCode, type);
+        var resolvedIsLiquid = isLiquid ?? type == AccountType.Bank;
+        var account = new Account(Id, name, currencyCode, type, resolvedIsLiquid);
         _accounts.Add(account);
 
         return account;

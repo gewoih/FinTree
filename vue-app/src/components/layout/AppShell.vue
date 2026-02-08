@@ -23,8 +23,9 @@ const isDrawerVisible = computed(() => {
 
 const navigationItems = [
   { label: 'Аналитика', icon: 'pi-chart-line', to: '/analytics' },
+  { label: 'Транзакции', icon: 'pi-list', to: '/expenses' },
   { label: 'Счета', icon: 'pi-wallet', to: '/accounts' },
-  { label: 'Транзакции', icon: 'pi-list', to: '/expenses' }
+  { label: 'Инвестиции', icon: 'pi-briefcase', to: '/investments' }
 ]
 
 const userMenuItems = [
@@ -359,28 +360,35 @@ onMounted(() => {
 }
 
 .app-shell__user-menu :deep(.p-menu) {
-  min-width: 200px;
+  min-width: 190px;
   margin-top: var(--space-2);
   padding: var(--space-2);
-  border-radius: var(--ft-radius-lg);
-  border: 1px solid color-mix(in srgb, var(--border) 70%, transparent);
-  background: color-mix(in srgb, var(--surface-2) 92%, transparent);
-  box-shadow: 0 12px 32px rgba(15, 23, 42, 0.22);
-  backdrop-filter: blur(6px);
+  border-radius: var(--ft-radius-xl);
+  border: 1px solid color-mix(in srgb, var(--border) 65%, transparent);
+  background: linear-gradient(
+    160deg,
+    color-mix(in srgb, var(--surface-1) 92%, transparent),
+    color-mix(in srgb, var(--surface-2) 92%, transparent)
+  );
+  box-shadow:
+    0 16px 32px rgba(15, 23, 42, 0.22),
+    inset 0 1px 0 rgba(255, 255, 255, 0.04);
+  backdrop-filter: blur(10px);
 }
 
 .app-shell__user-menu :deep(.p-menu .p-menuitem-link) {
-  padding: 0.65rem 0.75rem;
+  padding: 0.7rem 0.85rem;
   gap: var(--space-3);
-  border-radius: var(--ft-radius-md);
+  border-radius: var(--ft-radius-lg);
   min-height: 44px;
   color: var(--text);
-  transition: background var(--ft-transition-fast), color var(--ft-transition-fast);
+  transition: background var(--ft-transition-fast), color var(--ft-transition-fast), transform var(--ft-transition-fast);
 }
 
 .app-shell__user-menu :deep(.p-menu .p-menuitem-link:hover) {
-  background: color-mix(in srgb, var(--accent) 14%, transparent);
+  background: color-mix(in srgb, var(--accent) 18%, transparent);
   color: var(--text);
+  transform: translateY(-1px);
 }
 
 .app-shell__user-menu :deep(.p-menu .p-menuitem-link:focus-visible) {

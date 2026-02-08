@@ -17,6 +17,7 @@ const confirm = useConfirm()
 
 const modalVisible = ref(false)
 const pendingPrimaryId = ref<string | null>(null)
+const pendingLiquidityId = ref<string | null>(null)
 const adjustmentsVisible = ref(false)
 const selectedAccount = ref<Account | null>(null)
 
@@ -24,7 +25,9 @@ const selectedAccount = ref<Account | null>(null)
 const searchText = ref('')
 const selectedType = ref<AccountType | null>(null)
 
-const allAccounts = computed(() => financeStore.accounts ?? [])
+const allAccounts = computed(() =>
+  (financeStore.accounts ?? []).filter(account => account.type === 0)
+)
 const loadingAccounts = computed(() => financeStore.areAccountsLoading)
 const loadingCurrencies = computed(() => financeStore.areCurrenciesLoading)
 
@@ -90,6 +93,24 @@ const handleEditAccount = (account: Account) => {
   // TODO: Implement account editing
 }
 
+const handleLiquidityToggle = async (account: Account, value: boolean) => {
+  if (pendingLiquidityId.value) return
+  pendingLiquidityId.value = account.id
+  try {
+    const success = await financeStore.updateAccountLiquidity(account.id, value)
+    if (!success) {
+      toast.add({
+        severity: 'error',
+        summary: 'Не удалось обновить',
+        detail: 'Попробуйте еще раз.',
+        life: 2500
+      })
+    }
+  } finally {
+    pendingLiquidityId.value = null
+  }
+}
+
 const handleDeleteAccount = (account: Account) => {
   confirm.require({
     message: `Вы уверены, что хотите удалить счет "${account.name}"? Все связанные транзакции также будут удалены.`,
@@ -121,6 +142,7 @@ onMounted(async () => {
     financeStore.fetchCurrencies(),
     financeStore.fetchAccounts()
   ])
+  selectedType.value = null
 })
 </script>
 
@@ -128,7 +150,7 @@ onMounted(async () => {
   <PageContainer class="accounts">
     <PageHeader
       title="Счета"
-      subtitle="Управляйте всеми банковскими счетами и кошельками в одном месте"
+      subtitle="Управляйте банковскими счетами и картами в одном месте"
       :breadcrumbs="[
         { label: 'Главная', to: '/analytics' },
         { label: 'Счета' }
@@ -154,6 +176,7 @@ onMounted(async () => {
         <AccountFilters
           v-model:search-text="searchText"
           v-model:selected-type="selectedType"
+          :available-types="[0]"
           @clear-filters="clearFilters"
         />
       </UiCard>
@@ -203,10 +226,12 @@ onMounted(async () => {
           :key="account.id"
           :account="account"
           :is-primary-loading="pendingPrimaryId === account.id"
+          :is-liquidity-loading="pendingLiquidityId === account.id"
           @set-primary="handleSetPrimary(account.id)"
           @edit="handleEditAccount(account)"
           @delete="handleDeleteAccount(account)"
           @open="openAdjustments(account)"
+          @update-liquidity="handleLiquidityToggle(account, $event)"
         />
       </div>
 

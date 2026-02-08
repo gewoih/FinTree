@@ -18,10 +18,11 @@ public sealed class Account : Entity
     [MaxLength(3)] public string CurrencyCode { get; private set; }
     [NotMapped] public Currency Currency => Currency.FromCode(CurrencyCode);
     public AccountType Type { get; private set; }
+    public bool IsLiquid { get; private set; }
     public bool IsMain => User.MainAccountId == Id;
     public IReadOnlyCollection<Transaction> Transactions => _transactions.AsReadOnly();
 
-    internal Account(Guid userId, string name, string currencyCode, AccountType type)
+    internal Account(Guid userId, string name, string currencyCode, AccountType type, bool isLiquid)
     {
         ArgumentOutOfRangeException.ThrowIfEqual(userId, Guid.Empty);
         ArgumentException.ThrowIfNullOrWhiteSpace(currencyCode);
@@ -31,6 +32,7 @@ public sealed class Account : Entity
         Name = name;
         CurrencyCode = currencyCode;
         Type = type;
+        IsLiquid = isLiquid;
     }
 
     public Transaction AddTransaction(TransactionType type, Guid categoryId, decimal amount, DateTime occuredAt,
@@ -44,6 +46,11 @@ public sealed class Account : Entity
         _transactions.Add(transaction);
 
         return transaction;
+    }
+
+    public void SetLiquidity(bool isLiquid)
+    {
+        IsLiquid = isLiquid;
     }
 
     private static void ValidateTransaction(Guid categoryId)

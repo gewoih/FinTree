@@ -10,12 +10,23 @@ namespace FinTree.Api.Controllers;
 public class AccountsController(AccountsService accountsService) : ControllerBase
 {
     public sealed record CreateBalanceAdjustmentRequest(decimal Amount);
+    public sealed record UpdateLiquidityRequest(bool IsLiquid);
 
     [HttpPost]
     public async Task<IActionResult> CreateAsync([FromBody] CreateAccount command, CancellationToken ct = default)
     {
         var accountId = await accountsService.CreateAsync(command, ct);
         return Ok(accountId);
+    }
+
+    [HttpGet("investments")]
+    public async Task<IActionResult> GetInvestmentsOverview(
+        [FromQuery] DateTime? from,
+        [FromQuery] DateTime? to,
+        CancellationToken ct = default)
+    {
+        var data = await accountsService.GetInvestmentsOverviewAsync(from, to, ct);
+        return Ok(data);
     }
 
     [HttpGet("{accountId:guid}/balance-adjustments")]
@@ -32,6 +43,15 @@ public class AccountsController(AccountsService accountsService) : ControllerBas
     {
         var adjustmentId = await accountsService.CreateBalanceAdjustmentAsync(accountId, request.Amount, ct);
         return Ok(adjustmentId);
+    }
+
+    [HttpPatch("{accountId:guid}/liquidity")]
+    public async Task<IActionResult> UpdateLiquidity(Guid accountId,
+        [FromBody] UpdateLiquidityRequest request,
+        CancellationToken ct = default)
+    {
+        await accountsService.UpdateLiquidityAsync(accountId, request.IsLiquid, ct);
+        return Ok();
     }
 
     [HttpDelete("{accountId:guid}")]

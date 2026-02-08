@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { ref, computed } from 'vue'
+import InputSwitch from 'primevue/inputswitch'
 import type { Account, AccountType } from '../types'
 import { getAccountTypeInfo, getCurrencyFlag } from '../utils/accountHelpers'
 import { formatCurrency } from '../utils/formatters'
@@ -10,6 +11,7 @@ import type { MenuItem } from 'primevue/menuitem'
 const props = defineProps<{
   account: Account
   isPrimaryLoading?: boolean
+  isLiquidityLoading?: boolean
 }>()
 
 const emit = defineEmits<{
@@ -17,6 +19,7 @@ const emit = defineEmits<{
   edit: []
   delete: []
   open: []
+  updateLiquidity: [value: boolean]
 }>()
 
 const menuRef = ref()
@@ -34,6 +37,13 @@ const currencyDisplay = computed(() => {
 })
 
 const baseCurrencyCode = computed(() => userStore.baseCurrencyCode ?? props.account.currencyCode)
+
+const liquidityModel = computed({
+  get: () => props.account.isLiquid,
+  set: (value: boolean) => emit('updateLiquidity', value),
+})
+
+const liquidityLabel = computed(() => (props.account.isLiquid ? 'Ликвидный' : 'Неликвидный'))
 
 const balanceInBase = computed(() => props.account.balanceInBaseCurrency ?? 0)
 const balanceInAccount = computed(() => props.account.balance ?? 0)
@@ -171,6 +181,28 @@ const toggleMenu = (event: Event) => {
             >
               {{ formattedAccountBalance }}
             </span>
+          </div>
+        </dd>
+      </div>
+
+      <div class="meta-row">
+        <dt>
+          <i
+            class="pi pi-bolt"
+            aria-hidden="true"
+          />
+          Ликвидность
+        </dt>
+        <dd>
+          <div
+            class="liquidity-control"
+            @click.stop
+          >
+            <InputSwitch
+              v-model="liquidityModel"
+              :disabled="isLiquidityLoading"
+            />
+            <span>{{ liquidityLabel }}</span>
           </div>
         </dd>
       </div>
@@ -362,6 +394,18 @@ const toggleMenu = (event: Event) => {
 .balance-summary__secondary {
   font-size: var(--ft-text-xs);
   color: var(--ft-text-muted);
+}
+
+.liquidity-control {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--ft-space-2);
+  font-size: var(--ft-text-sm);
+  color: var(--ft-text-muted);
+}
+
+.liquidity-control :deep(.p-inputswitch) {
+  transform: scale(0.9);
 }
 
 .account-card__footer {

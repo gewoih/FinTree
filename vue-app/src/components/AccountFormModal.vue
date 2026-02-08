@@ -4,6 +4,7 @@ import Dialog from 'primevue/dialog';
 import InputText from 'primevue/inputtext';
 import Select from 'primevue/select';
 import InputNumber from 'primevue/inputnumber';
+import InputSwitch from 'primevue/inputswitch';
 import { useFinanceStore } from '../stores/finance';
 import { ACCOUNT_TYPE_OPTIONS } from '../constants';
 import { useFormModal } from '../composables/useFormModal';
@@ -27,6 +28,8 @@ const accountTypeSelectOptions = computed(() =>
 const selectedCurrencyCode = ref<string | null>(null);
 const attemptedSubmit = ref(false);
 const initialBalance = ref<number | null>(null);
+const isLiquid = ref(true);
+const isLiquidTouched = ref(false);
 
 const availableCurrencies = computed(() => store.currencies);
 
@@ -78,8 +81,16 @@ function resetForm() {
   accountType.value = ACCOUNT_TYPE_OPTIONS[0].value;
   attemptedSubmit.value = false;
   initialBalance.value = null;
+  isLiquid.value = accountType.value === 0;
+  isLiquidTouched.value = false;
   setDefaultCurrency();
 }
+
+watch(accountType, (newType) => {
+  if (!isLiquidTouched.value) {
+    isLiquid.value = newType === 0;
+  }
+});
 
 watch(
   () => props.visible,
@@ -104,6 +115,7 @@ const { isSubmitting, handleSubmit: handleFormSubmit, showWarning } = useFormMod
       type: accountType.value,
       currencyCode: currencyCodeForSubmit.value,
       initialBalance: initialBalance.value,
+      isLiquid: isLiquid.value,
     });
   },
   {
@@ -219,6 +231,22 @@ const handleSubmit = async () => {
         </template>
       </FormField>
 
+      <FormField label="Ликвидный счет">
+        <template #default="{ fieldAttrs }">
+          <div class="liquidity-toggle">
+            <InputSwitch
+              v-bind="fieldAttrs"
+              v-model="isLiquid"
+              @update:modelValue="isLiquidTouched = true"
+            />
+            <span>{{ isLiquid ? 'Учитывать в ликвидных' : 'Не учитывать в ликвидных' }}</span>
+          </div>
+        </template>
+        <template #hint>
+          Учитывается при расчете «ликвидных месяцев» в аналитике.
+        </template>
+      </FormField>
+
       <div class="actions">
         <AppButton
           type="button"
@@ -251,6 +279,14 @@ const handleSubmit = async () => {
   justify-content: flex-end;
   gap: var(--ft-space-3);
   margin-top: var(--ft-space-4);
+}
+
+.liquidity-toggle {
+  display: flex;
+  align-items: center;
+  gap: var(--ft-space-3);
+  font-size: var(--ft-text-sm);
+  color: var(--ft-text-secondary);
 }
 
 @media (max-width: 576px) {

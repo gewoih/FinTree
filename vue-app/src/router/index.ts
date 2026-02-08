@@ -35,6 +35,12 @@ export const router = createRouter({
       meta: { title: 'Accounts', requiresAuth: true },
     },
     {
+      path: '/investments',
+      name: 'investments',
+      component: () => import('../pages/InvestmentsPage.vue'),
+      meta: { title: 'Investments', requiresAuth: true },
+    },
+    {
       path: '/categories',
       name: 'categories',
       redirect: { path: '/profile', hash: '#categories' },
@@ -51,12 +57,6 @@ export const router = createRouter({
       name: 'analytics',
       component: () => import('../pages/AnalyticsPage.vue'),
       meta: { title: 'Analytics', requiresAuth: true },
-    },
-    {
-      path: '/future-income',
-      name: 'future-income',
-      redirect: '/analytics',
-      meta: { requiresAuth: true },
     },
     {
       path: '/profile',

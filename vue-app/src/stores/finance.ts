@@ -53,6 +53,7 @@ export const useFinanceStore = defineStore('finance', () => {
                 currencyCode: acc.currencyCode,
                 name: acc.name,
                 type: acc.type,
+                isLiquid: acc.isLiquid ?? false,
                 isMain: acc.isMain,
                 balance: acc.balance ?? 0,
                 balanceInBaseCurrency: acc.balanceInBaseCurrency ?? acc.balance ?? 0
@@ -237,12 +238,31 @@ export const useFinanceStore = defineStore('finance', () => {
                 type: payload.type,
                 name: payload.name,
                 initialBalance: payload.initialBalance ?? 0,
+                isLiquid: payload.isLiquid ?? null,
             });
 
             await fetchAccounts(true);
             return true;
         } catch (error) {
             console.error('Не удалось создать счет', error);
+            return false;
+        }
+    }
+
+    async function updateAccountLiquidity(accountId: string, isLiquid: boolean) {
+        const previous = accounts.value.find(acc => acc.id === accountId)?.isLiquid;
+        accounts.value = accounts.value.map(acc => (
+            acc.id === accountId ? { ...acc, isLiquid } : acc
+        ));
+
+        try {
+            await apiService.updateAccountLiquidity(accountId, isLiquid);
+            return true;
+        } catch (error) {
+            console.error('Не удалось обновить ликвидность счета', error);
+            accounts.value = accounts.value.map(acc => (
+                acc.id === accountId ? { ...acc, isLiquid: previous ?? acc.isLiquid } : acc
+            ));
             return false;
         }
     }
@@ -368,6 +388,7 @@ export const useFinanceStore = defineStore('finance', () => {
         createAccount,
         setPrimaryAccount,
         deleteAccount,
+        updateAccountLiquidity,
         createCategory,
         updateCategory,
         deleteCategory,

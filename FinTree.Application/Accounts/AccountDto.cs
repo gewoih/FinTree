@@ -7,6 +7,7 @@ public readonly record struct AccountDto(
     string CurrencyCode,
     string Name,
     AccountType Type,
+    bool IsLiquid,
     bool IsMain,
     decimal Balance,
     decimal BalanceInBaseCurrency);

@@ -3,7 +3,7 @@ namespace FinTree.Domain.Accounts;
 public enum AccountType
 {
     Bank = 0,
-    Cash = 1,
     Crypto = 2,
-    Investment = 3
+    Brokerage = 3,
+    Deposit = 4
 }

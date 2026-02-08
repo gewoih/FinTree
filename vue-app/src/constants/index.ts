@@ -15,6 +15,12 @@ export const NAVIGATION_ITEMS = [
     route: '/analytics'
   },
   {
+    id: 'investments',
+    label: 'Investments',
+    icon: 'pi pi-briefcase',
+    route: '/investments'
+  },
+  {
     id: 'accounts',
     label: 'Accounts',
     icon: 'pi pi-wallet',
@@ -55,8 +61,9 @@ export const TOAST_CONFIG = {
 
 export const ACCOUNT_TYPE_OPTIONS = [
   { label: 'Банковский счет', value: 0 },
-  { label: 'Криптовалюта', value: 2 },
-  { label: 'Инвестиционный счет', value: 3 }
+  { label: 'Брокерский счет', value: 3 },
+  { label: 'Криптовалютный счет', value: 2 },
+  { label: 'Вклад', value: 4 }
 ] as const;
 
 const PRIME_ICON_VALUES = [

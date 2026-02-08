@@ -1,4 +1,5 @@
 using FinTree.Application.Currencies;
+using FinTree.Application.Accounts;
 using FinTree.Application.Users;
 using FinTree.Domain.Transactions;
 using FinTree.Domain.ValueObjects;
@@ -11,7 +12,8 @@ public sealed class AnalyticsService(
     AppDbContext context,
     ICurrentUser currentUserService,
     CurrencyConverter currencyConverter,
-    UserService userService)
+    UserService userService,
+    AccountsService accountsService)
 {
     private readonly record struct CategoryMeta(string Name, string Color, bool IsMandatory);
 
@@ -130,6 +132,12 @@ public sealed class AnalyticsService(
 
         var forecast = await BuildForecastAsync(year, month, dailyTotals, previousMonthExpenses, baseCurrencyCode, ct);
 
+        var (liquidAssets, liquidMonths, liquidStatus) = await BuildLiquidMetricsAsync(
+            baseCurrencyCode,
+            monthStartUtc,
+            monthEndUtc,
+            ct);
+
         var health = new FinancialHealthSummaryDto(
             MonthIncome: Round2(totalIncome),
             MonthTotal: Round2(totalExpenses),
@@ -140,7 +148,10 @@ public sealed class AnalyticsService(
             NetCashflow: Round2(netCashflow),
             DiscretionaryTotal: Round2(discretionaryTotal),
             DiscretionarySharePercent: discretionaryShare,
-            MonthOverMonthChangePercent: monthOverMonth);
+            MonthOverMonthChangePercent: monthOverMonth,
+            LiquidAssets: Round2(liquidAssets),
+            LiquidMonths: liquidMonths,
+            LiquidMonthsStatus: liquidStatus);
 
         return new AnalyticsDashboardDto(
             year,
@@ -353,6 +364,92 @@ public sealed class AnalyticsService(
         var sharePercent = total > 0m ? (total / monthTotal) * 100m : (decimal?)null;
 
         return (new PeakDaysSummaryDto(peakDays.Count, Round2(total), sharePercent, monthTotal), peakDays);
+    }
+
+    private async Task<(decimal LiquidAssets, decimal? LiquidMonths, string? LiquidStatus)> BuildLiquidMetricsAsync(
+        string baseCurrencyCode,
+        DateTime monthStartUtc,
+        DateTime monthEndUtc,
+        CancellationToken ct)
+    {
+        var accounts = await accountsService.GetAccounts(ct);
+        var liquidAssets = accounts
+            .Where(a => a.IsLiquid)
+            .Sum(a => a.BalanceInBaseCurrency);
+
+        var medianMonthlyExpense = await GetAverageMonthlyExpensesAsync(
+            baseCurrencyCode,
+            monthStartUtc,
+            monthEndUtc,
+            ct);
+
+        decimal? liquidMonths = null;
+        if (medianMonthlyExpense.HasValue && medianMonthlyExpense.Value > 0m)
+        {
+            liquidMonths = Math.Round(liquidAssets / medianMonthlyExpense.Value, 2, MidpointRounding.AwayFromZero);
+        }
+
+        var status = ResolveLiquidStatus(liquidMonths);
+        return (liquidAssets, liquidMonths, status);
+    }
+
+    private async Task<decimal?> GetAverageMonthlyExpensesAsync(
+        string baseCurrencyCode,
+        DateTime monthStartUtc,
+        DateTime monthEndUtc,
+        CancellationToken ct)
+    {
+        var windowStartUtc = monthStartUtc.AddMonths(-5);
+        var windowEndUtc = monthEndUtc;
+
+        var rawExpenses = await context.Transactions
+            .AsNoTracking()
+            .Where(t => t.Account.UserId == currentUserService.Id &&
+                        !t.IsTransfer &&
+                        t.Type == TransactionType.Expense &&
+                        t.OccurredAt >= windowStartUtc &&
+                        t.OccurredAt < windowEndUtc)
+            .Select(t => new { t.Money, t.OccurredAt })
+            .ToListAsync(ct);
+
+        var dailyTotals = new Dictionary<DateOnly, decimal>();
+        foreach (var expense in rawExpenses)
+        {
+            ct.ThrowIfCancellationRequested();
+
+            var occurredUtc = expense.OccurredAt.Kind == DateTimeKind.Unspecified
+                ? DateTime.SpecifyKind(expense.OccurredAt, DateTimeKind.Utc)
+                : expense.OccurredAt.ToUniversalTime();
+
+            var baseMoney = await currencyConverter.ConvertAsync(
+                money: expense.Money,
+                toCurrencyCode: baseCurrencyCode,
+                atUtc: occurredUtc,
+                ct: ct);
+
+            var dayKey = DateOnly.FromDateTime(occurredUtc);
+            if (dailyTotals.TryGetValue(dayKey, out var current))
+                dailyTotals[dayKey] = current + baseMoney.Amount;
+            else
+                dailyTotals[dayKey] = baseMoney.Amount;
+        }
+
+        if (dailyTotals.Count == 0)
+            return null;
+
+        var expenseDayTotals = dailyTotals.Values.ToList();
+        if (expenseDayTotals.Count <= 0)
+            return null;
+
+        return expenseDayTotals.Average() * 30;
+    }
+
+    private static string? ResolveLiquidStatus(decimal? liquidMonths)
+    {
+        if (!liquidMonths.HasValue) return null;
+        if (liquidMonths.Value > 6m) return "good";
+        if (liquidMonths.Value >= 3m) return "average";
+        return "poor";
     }
 
     private static CategoryDeltaDto BuildCategoryDelta(

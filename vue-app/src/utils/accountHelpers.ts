@@ -21,26 +21,33 @@ export function getAccountTypeInfo(type: AccountType): AccountTypeInfo {
         color: '#2563EB', // Primary blue
         description: 'Дебетовые карты и банковские счета'
       }
-    case 1: // Cash
+    case 1:
       return {
-        label: 'Наличные',
-        icon: 'pi-wallet',
-        color: '#22C55E', // Success green
-        description: 'Наличные деньги в кошельке'
+        label: 'Банковский счет',
+        icon: 'pi-building',
+        color: '#2563EB',
+        description: 'Дебетовые карты и банковские счета'
       }
     case 2: // Crypto
       return {
-        label: 'Криптовалюта',
+        label: 'Криптовалютный счет',
         icon: 'pi-bitcoin',
         color: '#F59E0B', // Warning/Orange
         description: 'Криптовалютные кошельки и биржи'
       }
-    case 3: // Investment
+    case 3: // Brokerage
       return {
-        label: 'Инвестиции',
+        label: 'Брокерский счет',
         icon: 'pi-chart-line',
         color: '#8B5CF6', // Violet
         description: 'Брокерские счета и инвестиционные портфели'
+      }
+    case 4: // Deposit
+      return {
+        label: 'Вклад',
+        icon: 'pi-lock',
+        color: '#0EA5E9', // Sky
+        description: 'Депозиты и накопительные счета'
       }
     default:
       return {

@@ -6,6 +6,7 @@ import { getAccountTypeInfo } from '../utils/accountHelpers'
 const props = defineProps<{
   searchText: string
   selectedType: AccountType | null
+  availableTypes?: AccountType[]
 }>()
 
 const emit = defineEmits<{
@@ -15,12 +16,20 @@ const emit = defineEmits<{
 }>()
 
 // Account type filter options
+const resolvedTypes = computed<AccountType[]>(() =>
+  props.availableTypes?.length ? props.availableTypes : [0, 3, 2, 4]
+)
+
 const accountTypeOptions = computed<Array<{ label: string; value: AccountType | null; icon?: string }>>(() => [
   { label: 'Все типы', value: null },
-  { label: getAccountTypeInfo(0).label, value: 0, icon: getAccountTypeInfo(0).icon },
-  { label: getAccountTypeInfo(1).label, value: 1, icon: getAccountTypeInfo(1).icon },
-  { label: getAccountTypeInfo(2).label, value: 2, icon: getAccountTypeInfo(2).icon },
+  ...resolvedTypes.value.map(type => ({
+    label: getAccountTypeInfo(type).label,
+    value: type,
+    icon: getAccountTypeInfo(type).icon
+  }))
 ])
+
+const showTypeFilter = computed(() => resolvedTypes.value.length > 1)
 
 const hasActiveFilters = computed(() => {
   return props.searchText.length > 0 || props.selectedType !== null
@@ -37,7 +46,10 @@ const handleTypeUpdate = (value: AccountType | null | undefined) => {
 
 <template>
   <div class="account-filters">
-    <div class="filters-grid">
+    <div
+      class="filters-grid"
+      :class="{ 'filters-grid--compact': !showTypeFilter }"
+    >
       <!-- Search -->
       <FormField
         class="filter-field filter-field--wide"
@@ -62,19 +74,20 @@ const handleTypeUpdate = (value: AccountType | null | undefined) => {
 
       <!-- Type filter -->
       <FormField
+        v-if="showTypeFilter"
         class="filter-field"
         label="Тип счёта"
       >
         <template #default="{ fieldAttrs }">
-            <UiSelect
-              :model-value="props.selectedType"
-              :options="accountTypeOptions"
-              option-label="label"
-              option-value="value"
-              placeholder="Все типы"
-              :input-id="fieldAttrs.id"
-              @update:model-value="handleTypeUpdate"
-            >
+          <UiSelect
+            :model-value="props.selectedType"
+            :options="accountTypeOptions"
+            option-label="label"
+            option-value="value"
+            placeholder="Все типы"
+            :input-id="fieldAttrs.id"
+            @update:model-value="handleTypeUpdate"
+          >
             <template #value="slotProps">
               <div
                 v-if="slotProps.value !== null && slotProps.value !== undefined"
@@ -168,6 +181,10 @@ const handleTypeUpdate = (value: AccountType | null | undefined) => {
   grid-template-columns: 2fr 1fr auto;
   gap: var(--ft-space-3);
   align-items: end;
+}
+
+.filters-grid--compact {
+  grid-template-columns: 2fr auto;
 }
 
 .filter-field {

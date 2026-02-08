@@ -22,7 +22,10 @@ public readonly record struct FinancialHealthSummaryDto(
     decimal? NetCashflow,
     decimal? DiscretionaryTotal,
     decimal? DiscretionarySharePercent,
-    decimal? MonthOverMonthChangePercent);
+    decimal? MonthOverMonthChangePercent,
+    decimal? LiquidAssets,
+    decimal? LiquidMonths,
+    string? LiquidMonthsStatus);
 
 public readonly record struct PeakDaysSummaryDto(
     int Count,

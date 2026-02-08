@@ -14,6 +14,7 @@ import type {
     CurrentUserDto,
     UpdateUserProfilePayload,
     NetWorthSnapshotDto,
+    InvestmentsOverviewDto,
     AccountBalanceAdjustmentDto,
     CreateTransferPayload,
     UpdateTransferPayload
@@ -224,8 +225,22 @@ export const apiService = {
         return response.data;
     },
 
+    async updateAccountLiquidity(accountId: string, isLiquid: boolean): Promise<void> {
+        await apiClient.patch(`/accounts/${accountId}/liquidity`, { isLiquid });
+    },
+
     async deleteAccount(accountId: string): Promise<void> {
         await apiClient.delete(`/accounts/${accountId}`);
+    },
+
+    async getInvestmentsOverview(from?: string, to?: string): Promise<InvestmentsOverviewDto> {
+        const response = await apiClient.get<InvestmentsOverviewDto>('/accounts/investments', {
+            params: {
+                ...(from ? { from } : {}),
+                ...(to ? { to } : {}),
+            },
+        });
+        return response.data;
     },
 
     // Работа с категориями

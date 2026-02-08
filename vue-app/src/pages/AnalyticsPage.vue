@@ -99,6 +99,7 @@ const healthGroups = computed<HealthGroup[]>(() => {
   );
   const typicalStatus = resolveMeanMedianStatus(health?.meanMedianRatio ?? null);
   const discretionaryStatus = resolveDiscretionaryStatus(health?.discretionarySharePercent ?? null);
+  const liquidityStatus = resolveLiquidityStatus(health?.liquidMonthsStatus ?? null);
 
   return [
     {
@@ -143,6 +144,29 @@ const healthGroups = computed<HealthGroup[]>(() => {
           tooltip: 'Доходы минус расходы за месяц.',
           icon: 'pi pi-wallet',
           accent: cashflowStatus,
+        },
+      ],
+    },
+    {
+      key: 'liquidity',
+      title: 'Ликвидность',
+      accent: liquidityStatus,
+      metrics: [
+        {
+          key: 'liquid-months',
+          label: 'Ликвидные месяцы',
+          value: health?.liquidMonths == null ? '—' : `${health.liquidMonths.toFixed(1)} мес.`,
+          tooltip: 'Ликвидные активы / медианный расход в день с расходами × среднее число таких дней в месяц (за 6 мес.).',
+          icon: 'pi pi-shield',
+          accent: liquidityStatus,
+        },
+        {
+          key: 'liquid-assets',
+          label: 'Ликвидные активы',
+          value: formatMoney(health?.liquidAssets ?? null),
+          tooltip: 'Сумма средств на счетах, отмеченных как ликвидные.',
+          icon: 'pi pi-bolt',
+          accent: liquidityStatus,
         },
       ],
     },
@@ -280,6 +304,14 @@ function resolveMeanMedianStatus(value: number | null): MetricAccent {
   if (value <= 1.3) return 'good';
   if (value <= 1.8) return 'average';
   return 'poor';
+}
+
+function resolveLiquidityStatus(status: string | null): MetricAccent {
+  if (!status) return 'neutral';
+  if (status === 'good') return 'good';
+  if (status === 'average') return 'average';
+  if (status === 'poor') return 'poor';
+  return 'neutral';
 }
 
 function resolveErrorMessage(error: unknown, fallback: string): string {
