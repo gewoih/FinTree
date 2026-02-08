@@ -650,6 +650,10 @@ watch(filteredCategories, () => {
     padding: 1.5rem;
   }
 
+  .form-fields {
+    grid-template-columns: 1fr;
+  }
+
   .form-actions {
     flex-direction: column;
   }

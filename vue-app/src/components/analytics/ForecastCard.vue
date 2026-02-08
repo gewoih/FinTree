@@ -442,4 +442,28 @@ const chartOptions = computed(() => ({
   max-height: 100%;
   height: 100%;
 }
+
+@media (max-width: 640px) {
+  .card-head {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .card-head p {
+    font-size: var(--ft-text-sm);
+  }
+
+  .forecast-card__status {
+    align-self: flex-start;
+  }
+
+  .forecast-card__lead {
+    font-size: var(--ft-text-base);
+  }
+
+  .forecast-card__chart {
+    height: 280px;
+    padding: var(--ft-space-3) var(--ft-space-2);
+  }
+}
 </style>

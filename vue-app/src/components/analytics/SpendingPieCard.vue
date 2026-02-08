@@ -318,4 +318,37 @@ const chartOptions = computed(() => ({
     padding-right: var(--ft-space-1);
   }
 }
+
+@media (max-width: 640px) {
+  .card-head {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .card-head p {
+    font-size: var(--ft-text-sm);
+  }
+
+  .pie-card__chart {
+    padding: var(--ft-space-2);
+  }
+
+  .pie-card__chart :deep(.p-chart) {
+    max-width: 280px;
+  }
+
+  .pie-card__legend-item {
+    flex-wrap: wrap;
+    align-items: flex-start;
+  }
+
+  .pie-card__legend-item :deep(.p-tag) {
+    width: 100%;
+    justify-content: flex-start;
+  }
+
+  .pie-card__legend-amount {
+    word-break: break-word;
+  }
+}
 </style>

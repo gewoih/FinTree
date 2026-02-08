@@ -7,6 +7,7 @@ import { useFinanceStore } from '../stores/finance'
 import { useUserStore } from '../stores/user'
 import { PAGINATION_OPTIONS } from '../constants'
 import { useTransactionFilters } from '../composables/useTransactionFilters'
+import { useViewport } from '../composables/useViewport'
 import TransactionFilters from './TransactionFilters.vue'
 import { formatCurrency, formatDate } from '../utils/formatters'
 import type { Transaction, UpdateTransferPayload } from '../types'
@@ -49,6 +50,7 @@ const emit = defineEmits<{
 const store = useFinanceStore()
 const userStore = useUserStore()
 const route = useRoute()
+const { isMobile } = useViewport()
 
 const baseCurrency = computed(() => userStore.baseCurrencyCode ?? store.primaryAccount?.currencyCode ?? 'RUB')
 
@@ -272,6 +274,16 @@ const formattedTotalAmount = computed(() => {
   return `${sign} ${formatted}`
 })
 
+const paginatorTemplate = computed(() =>
+  isMobile.value
+    ? 'PrevPageLink PageLinks NextPageLink'
+    : 'FirstPageLink PrevPageLink PageLinks NextPageLink LastPageLink CurrentPageReport RowsPerPageDropdown'
+)
+
+const currentPageReportTemplate = computed(() =>
+  isMobile.value ? '' : 'Показано {first} - {last} из {totalRecords}'
+)
+
 const clearFilters = () => {
   clearFiltersComposable()
   store.fetchTransactions()
@@ -397,12 +409,13 @@ const handleRowClick = (event: { data: EnrichedTransaction }) => {
         :sort-order="-1"
         striped-rows
         row-hover
-        responsive-layout="scroll"
+        :responsive-layout="isMobile ? 'stack' : 'scroll'"
+        breakpoint="768px"
         :paginator="true"
         :rows="PAGINATION_OPTIONS.defaultRows"
         :rows-per-page-options="[...PAGINATION_OPTIONS.options]"
-        paginator-template="FirstPageLink PrevPageLink PageLinks NextPageLink LastPageLink CurrentPageReport RowsPerPageDropdown"
-        current-page-report-template="Показано {first} - {last} из {totalRecords}"
+        :paginator-template="paginatorTemplate"
+        :current-page-report-template="currentPageReportTemplate"
         :global-filter-fields="['categoryName', 'accountName', 'description']"
         :row-class="rowClass"
         selection-mode="single"
@@ -754,5 +767,48 @@ const handleRowClick = (event: { data: EnrichedTransaction }) => {
 
 :deep(.p-datatable .p-paginator .p-dropdown) {
   min-width: 6.5rem;
+}
+
+@media (max-width: 768px) {
+  :deep(.transaction-history__datatable .p-datatable) {
+    border: none;
+    background: transparent;
+  }
+
+  :deep(.transaction-history__datatable .p-datatable-thead) {
+    display: none;
+  }
+
+  :deep(.transaction-history__datatable .p-datatable-tbody > tr) {
+    display: block;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    margin-bottom: var(--space-3);
+    overflow: hidden;
+  }
+
+  :deep(.transaction-history__datatable .p-datatable-tbody > tr > td) {
+    display: flex;
+    justify-content: space-between;
+    gap: var(--space-3);
+    padding: var(--space-3) var(--space-4);
+    border-bottom: 1px solid var(--border);
+  }
+
+  :deep(.transaction-history__datatable .p-datatable-tbody > tr > td:last-child) {
+    border-bottom: none;
+  }
+
+  :deep(.transaction-history__datatable .p-datatable-tbody > tr > td .p-column-title) {
+    font-size: var(--ft-text-xs);
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    color: var(--ft-text-tertiary);
+    font-weight: var(--ft-font-semibold);
+  }
+
+  .description-text {
+    white-space: normal;
+  }
 }
 </style>

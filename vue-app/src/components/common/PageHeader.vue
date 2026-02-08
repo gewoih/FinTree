@@ -132,6 +132,10 @@ defineProps<Props>()
 
 /* Responsive */
 @media (max-width: 768px) {
+  .page-header__breadcrumbs {
+    display: none;
+  }
+
   .page-header__main {
     flex-direction: column;
     align-items: stretch;
@@ -141,12 +145,24 @@ defineProps<Props>()
     font-size: var(--ft-text-2xl);
   }
 
+  .page-header__subtitle {
+    font-size: var(--ft-text-sm);
+  }
+
   .page-header__actions {
     width: 100%;
+    flex-wrap: wrap;
   }
 
   .page-header__actions :deep(button) {
-    flex: 1;
+    flex: 1 1 auto;
+    min-width: 140px;
+  }
+}
+
+@media (max-width: 480px) {
+  .page-header__subtitle {
+    display: none;
   }
 }
 </style>

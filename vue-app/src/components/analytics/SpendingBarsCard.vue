@@ -95,6 +95,7 @@ const chartOptions = computed(() => ({
           :options="granularityOptions"
           option-label="label"
           option-value="value"
+          class="bars-card__toggle"
           @update:model-value="emit('update:granularity', $event)"
         />
       </div>
@@ -254,5 +255,34 @@ const chartOptions = computed(() => ({
 .bars-card__chart-container :deep(canvas) {
   max-height: 100%;
   height: 100%;
+}
+
+@media (max-width: 640px) {
+  .card-head {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .card-head p {
+    font-size: var(--ft-text-sm);
+  }
+
+  .bars-card__toggle {
+    width: 100%;
+  }
+
+  .bars-card__toggle :deep(.p-button) {
+    flex: 1 1 0;
+    min-width: 0;
+  }
+
+  .bars-card__toggle :deep(.p-button-label) {
+    font-size: var(--ft-text-xs);
+  }
+
+  .bars-card__chart {
+    height: 280px;
+    padding: var(--ft-space-3) var(--ft-space-2);
+  }
 }
 </style>

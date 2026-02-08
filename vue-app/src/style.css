@@ -168,6 +168,30 @@ button {
 }
 
 @media (max-width: 768px) {
+  .card-grid {
+    gap: var(--space-4);
+  }
+
+  .card-grid--auto,
+  .card-grid--balanced {
+    grid-template-columns: 1fr;
+  }
+
+  .surface-panel {
+    padding: var(--space-4);
+  }
+
+  .section-header {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .section-header__actions {
+    width: 100%;
+    justify-content: flex-start;
+    flex-wrap: wrap;
+  }
+
   .table-shell__header {
     align-items: flex-start;
   }

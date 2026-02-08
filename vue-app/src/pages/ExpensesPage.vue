@@ -1,13 +1,16 @@
 <script setup lang="ts">
-import { onMounted, ref } from 'vue'
+import { computed, onMounted, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { useToast } from 'primevue/usetoast'
+import Menu from 'primevue/menu'
+import type { MenuItem } from 'primevue/menuitem'
 import { useFinanceStore } from '../stores/finance'
 import type { Transaction, UpdateTransferPayload } from '../types'
 import TransactionList from '../components/TransactionList.vue'
 import TransactionForm from '../components/TransactionForm.vue'
 import TransferFormModal from '../components/TransferFormModal.vue'
 import { apiService } from '../services/api.service'
+import { useViewport } from '../composables/useViewport'
 
 const financeStore = useFinanceStore()
 const toast = useToast()
@@ -17,6 +20,30 @@ const editingTransaction = ref<Transaction | null>(null)
 const transferDialogVisible = ref(false)
 const editingTransfer = ref<UpdateTransferPayload | null>(null)
 const isExporting = ref(false)
+const actionMenuRef = ref<{ toggle: (event: Event) => void } | null>(null)
+const { isMobile } = useViewport()
+
+const actionMenuItems = computed<MenuItem[]>(() => [
+  {
+    label: 'Перевод',
+    icon: 'pi pi-arrow-right-arrow-left',
+    command: () => openTransferDialog()
+  },
+  {
+    label: 'Категории',
+    icon: 'pi pi-tags',
+    command: () => router.push('/profile#categories')
+  },
+  {
+    label: 'Экспорт',
+    icon: 'pi pi-download',
+    command: () => exportTransactions()
+  }
+])
+
+const toggleActionMenu = (event: Event) => {
+  actionMenuRef.value?.toggle(event)
+}
 
 const openTransactionDialog = () => {
   editingTransaction.value = null
@@ -93,6 +120,7 @@ onMounted(async () => {
     >
       <template #actions>
         <UiButton
+          v-if="!isMobile"
           label="Экспорт"
           icon="pi pi-download"
           variant="ghost"
@@ -100,12 +128,14 @@ onMounted(async () => {
           @click="exportTransactions"
         />
         <UiButton
+          v-if="!isMobile"
           label="Категории"
           icon="pi pi-tags"
           variant="ghost"
           @click="router.push('/profile#categories')"
         />
         <UiButton
+          v-if="!isMobile"
           label="Перевод"
           icon="pi pi-arrow-right-arrow-left"
           variant="secondary"
@@ -115,6 +145,19 @@ onMounted(async () => {
           label="Добавить транзакцию"
           icon="pi pi-plus"
           @click="openTransactionDialog"
+        />
+        <UiButton
+          v-if="isMobile"
+          icon="pi pi-ellipsis-h"
+          variant="ghost"
+          aria-label="Дополнительные действия"
+          @click="toggleActionMenu"
+        />
+        <Menu
+          ref="actionMenuRef"
+          :model="actionMenuItems"
+          popup
+          class="transactions__action-menu"
         />
       </template>
     </PageHeader>
@@ -146,5 +189,9 @@ onMounted(async () => {
 
 .transactions__content {
   gap: var(--space-5);
+}
+
+.transactions__action-menu :deep(.p-menu) {
+  min-width: 200px;
 }
 </style>

@@ -115,6 +115,24 @@
     background: var(--surface-2);
   }
 
+  @media (max-width: 640px) {
+    .p-dialog {
+      width: calc(100vw - 32px) !important;
+      max-height: 90vh;
+      margin: 0 auto;
+      border-radius: var(--radius-xl);
+    }
+
+    .p-dialog .p-dialog-header,
+    .p-dialog .p-dialog-content {
+      padding: var(--ft-space-4);
+    }
+
+    .p-dialog .p-dialog-footer {
+      padding: var(--ft-space-3) var(--ft-space-4) var(--ft-space-4);
+    }
+  }
+
   /* ━━━ Dropdowns and Panels ━━━ */
   .p-datepicker,
   .p-select-panel,

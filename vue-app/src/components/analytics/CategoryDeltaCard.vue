@@ -313,4 +313,25 @@ const formatPercent = (value: number | null) =>
   font-size: var(--ft-text-xs);
   color: var(--ft-text-tertiary);
 }
+
+@media (max-width: 640px) {
+  .card-head {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .card-head p {
+    font-size: var(--ft-text-sm);
+  }
+
+  .delta-item {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .delta-item :deep(.p-tag) {
+    width: 100%;
+    justify-content: flex-start;
+  }
+}
 </style>

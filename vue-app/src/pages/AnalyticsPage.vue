@@ -918,6 +918,18 @@ onMounted(async () => {
   height: 0;
 }
 
+@media (max-width: 640px) {
+  .analytics-month-selector {
+    width: 100%;
+    justify-content: space-between;
+  }
+
+  .analytics-month-selector__label {
+    flex: 1;
+    text-align: center;
+  }
+}
+
 @media (min-width: 1024px) {
   .analytics-grid {
     grid-template-columns: repeat(12, minmax(0, 1fr));
@@ -937,6 +949,16 @@ onMounted(async () => {
 
   .analytics-grid__item--span-4 {
     grid-column: span 4;
+  }
+}
+
+@media (max-width: 640px) {
+  .analytics-page {
+    gap: var(--ft-space-4);
+  }
+
+  .analytics-grid {
+    gap: var(--ft-space-3);
   }
 }
 </style>

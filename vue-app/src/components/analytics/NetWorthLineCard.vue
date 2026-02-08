@@ -233,4 +233,19 @@ const chartOptions = computed(() => ({
   width: 100%;
   height: 300px;
 }
+
+@media (max-width: 640px) {
+  .card-head {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .card-head p {
+    font-size: var(--ft-text-sm);
+  }
+
+  .networth-card__chart-container {
+    height: 240px;
+  }
+}
 </style>

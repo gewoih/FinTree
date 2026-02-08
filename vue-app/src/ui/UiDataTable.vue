@@ -90,4 +90,10 @@ const tableClasses = computed(() => [
   border-top: 1px solid var(--border);
   padding: var(--space-3);
 }
+
+@media (max-width: 768px) {
+  .ui-datatable :deep(.p-datatable-table) {
+    min-width: 100%;
+  }
+}
 </style>

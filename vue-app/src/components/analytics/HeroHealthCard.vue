@@ -706,4 +706,48 @@ const hasMorePeaks = computed(() => props.peaks.length > 3);
     grid-template-columns: 1fr;
   }
 }
+
+@media (max-width: 640px) {
+  .hero-card {
+    padding: var(--ft-space-4);
+    gap: var(--ft-space-4);
+  }
+
+  .hero-card__header {
+    flex-direction: column;
+    gap: var(--ft-space-2);
+  }
+
+  .hero-card__metric {
+    padding: var(--ft-space-3);
+  }
+
+  .hero-card__metric-row {
+    align-items: flex-start;
+    gap: var(--ft-space-2);
+  }
+
+  .hero-card__metric-icon {
+    width: 30px;
+    height: 30px;
+    font-size: 0.85rem;
+  }
+
+  .hero-card__metric-value {
+    font-size: 1.4rem;
+  }
+
+  .hero-card__metric-value--compact {
+    font-size: 1.1rem;
+  }
+
+  .hero-card__peaks {
+    padding: var(--ft-space-3);
+    gap: var(--ft-space-3);
+  }
+
+  .hero-card__peak-share {
+    padding: var(--ft-space-3);
+  }
+}
 </style>

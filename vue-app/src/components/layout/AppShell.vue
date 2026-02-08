@@ -3,6 +3,7 @@ import { ref, computed, onMounted, watch } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { useAuthStore } from '../../stores/auth'
 import { useTheme } from '../../composables/useTheme'
+import { useViewport } from '../../composables/useViewport'
 
 const authStore = useAuthStore()
 const router = useRouter()
@@ -15,11 +16,12 @@ const { initTheme } = useTheme()
 
 const userEmail = computed(() => authStore.userEmail ?? 'Аккаунт')
 
+const { isMobile, isTablet } = useViewport()
+
 // Only show drawer on mobile (width < 1024px)
-const isDrawerVisible = computed(() => {
-  if (typeof window === 'undefined') return false
-  return window.innerWidth < 1024
-})
+const isDrawerVisible = computed(() => isTablet.value)
+
+const userButtonLabel = computed(() => (isMobile.value ? undefined : userEmail.value))
 
 const navigationItems = [
   { label: 'Аналитика', icon: 'pi-chart-line', to: '/analytics' },
@@ -88,9 +90,10 @@ onMounted(() => {
         <div class="app-shell__user-menu">
           <Button
             type="button"
-            :label="userEmail"
+            :label="userButtonLabel"
             icon="pi pi-user"
             text
+            class="app-shell__user-button"
             @click="handleUserMenuToggle"
           />
           <Menu
@@ -357,6 +360,31 @@ onMounted(() => {
 /* User Menu */
 .app-shell__user-menu {
   position: relative;
+}
+
+.app-shell__user-button :deep(.p-button-label) {
+  max-width: 220px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+@media (max-width: 640px) {
+  .app-shell__topnav {
+    padding: var(--space-3) var(--space-4);
+  }
+
+  .app-shell__logo span {
+    font-size: 1rem;
+  }
+
+  .app-shell__user-button :deep(.p-button-label) {
+    display: none;
+  }
+
+  .app-shell__user-button {
+    min-width: 44px;
+    padding-inline: 0.6rem;
+  }
 }
 
 .app-shell__user-menu :deep(.p-menu) {
