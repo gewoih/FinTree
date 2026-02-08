@@ -49,7 +49,6 @@ export function mapCategory(dto: TransactionCategoryDto): Category {
     color: dto.color,
     icon: dto.icon ?? 'pi-tag',
     type: normalizeCategoryType(dto.type),
-    isSystem: dto.isSystem,
     isMandatory: dto.isMandatory ?? false,
   };
 }

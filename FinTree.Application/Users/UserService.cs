@@ -63,7 +63,7 @@ public sealed class UserService(AppDbContext context, ICurrentUser currentUser)
         ArgumentOutOfRangeException.ThrowIfEqual(userId, Guid.Empty, nameof(userId));
 
         var categoriesByUsage = await context.TransactionCategories
-            .Where(tc => tc.UserId == userId || tc.UserId == null)
+            .Where(tc => tc.UserId == userId)
             .GroupJoin(
                 context.Transactions.Where(t => t.Account.UserId == userId && !t.IsTransfer),
                 tc => tc.Id,
@@ -80,7 +80,6 @@ public sealed class UserService(AppDbContext context, ICurrentUser currentUser)
                 x.Category.Name,
                 x.Category.Color,
                 x.Category.Icon,
-                x.Category.IsSystem,
                 x.Category.Type,
                 x.Category.IsMandatory
             ))

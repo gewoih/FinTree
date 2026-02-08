@@ -283,17 +283,10 @@ export const useFinanceStore = defineStore('finance', () => {
 
     /**
      * Updates an existing category
-     * System categories cannot be updated
      * @param payload - Updated category data including ID
      * @returns Success status
      */
     async function updateCategory(payload: CategoryFormPayload & { id: string }) {
-        const existing = categories.value.find(cat => cat.id === payload.id);
-        if (existing?.isSystem) {
-            console.warn('Нельзя редактировать системную категорию');
-            return false;
-        }
-
         try {
             await apiService.updateCategory({
                 id: payload.id,
@@ -313,17 +306,10 @@ export const useFinanceStore = defineStore('finance', () => {
 
     /**
      * Deletes a category
-     * System categories cannot be deleted
      * @param categoryId - ID of category to delete
      * @returns Success status
      */
     async function deleteCategory(categoryId: string) {
-        const existing = categories.value.find(cat => cat.id === categoryId);
-        if (existing?.isSystem) {
-            console.warn('Нельзя удалить системную категорию');
-            return false;
-        }
-
         try {
             await apiService.deleteCategory(categoryId);
             await fetchCategories(true);

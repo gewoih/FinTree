@@ -33,7 +33,6 @@ export interface TransactionCategoryDto {
     color: string;
     icon: string;
     type: CategoryType;
-    isSystem: boolean;
     isMandatory?: boolean;
 }
 

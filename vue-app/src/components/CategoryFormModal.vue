@@ -34,7 +34,6 @@ const attemptedSubmit = ref(false);
 const isMandatory = ref(false);
 
 const isEditMode = computed(() => Boolean(props.category));
-const isSystemCategory = computed(() => props.category?.isSystem ?? false);
 const isExpenseCategory = computed(
   () => (categoryType.value ?? props.defaultType) === CATEGORY_TYPE.Expense
 );
@@ -96,7 +95,7 @@ const colorError = computed(() => {
 });
 
 const isFormValid = computed(
-  () => isNameValid.value && isColorValid.value && isIconValid.value && isTypeValid.value && !isSystemCategory.value
+  () => isNameValid.value && isColorValid.value && isIconValid.value && isTypeValid.value
 );
 
 const toggleIconPicker = () => {
@@ -125,11 +124,6 @@ onBeforeUnmount(() => {
 
 const { isSubmitting, handleSubmit: submitCategory, showWarning } = useFormModal(
   async () => {
-    if (isSystemCategory.value) {
-      showWarning('Системные категории нельзя редактировать.');
-      return false;
-    }
-
     if (props.category) {
       return await store.updateCategory({
         id: props.category.id,
@@ -167,8 +161,6 @@ const handleSubmit = async () => {
       showWarning('Введите корректный цвет в формате #RRGGBB.');
     } else if (!isIconValid.value) {
       showWarning('Выберите иконку для категории.');
-    } else if (isSystemCategory.value) {
-      showWarning('Системные категории нельзя редактировать.');
     }
     return;
   }
@@ -319,13 +311,6 @@ const handleSubmit = async () => {
         </template>
       </FormField>
 
-      <div
-        v-if="isSystemCategory"
-        class="system-category-alert"
-      >
-        Эта категория системная и не может быть изменена.
-      </div>
-
       <div class="actions">
         <AppButton
           type="button"
@@ -338,7 +323,7 @@ const handleSubmit = async () => {
           type="submit"
           icon="pi pi-check"
           :loading="isSubmitting"
-          :disabled="isSystemCategory || isSubmitting"
+          :disabled="isSubmitting"
         >
           {{ props.category ? 'Сохранить' : 'Создать' }}
         </AppButton>
@@ -453,14 +438,6 @@ const handleSubmit = async () => {
   gap: var(--ft-space-2);
   color: var(--ft-text-primary);
   font-weight: var(--ft-font-medium);
-}
-
-.system-category-alert {
-  padding: var(--ft-space-3);
-  border-radius: var(--ft-radius-lg);
-  background: rgba(234, 179, 8, 0.12);
-  color: var(--ft-warning-700);
-  font-size: var(--ft-text-sm);
 }
 
 .actions {

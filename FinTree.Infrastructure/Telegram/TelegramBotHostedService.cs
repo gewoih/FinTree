@@ -236,7 +236,7 @@ public partial class TelegramBotHostedService(
     {
         return await context.TransactionCategories
             .Where(t => t.Type == CategoryType.Expense)
-            .Where(t => t.UserId == userId || t.UserId == null)
+            .Where(t => t.UserId == userId)
             .AsNoTracking()
             .ToListAsync(ct);
     }

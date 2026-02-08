@@ -32,13 +32,6 @@ const filteredCategories = computed(() =>
   categories.value.filter((category: Category) => category.type === selectedCategoryType.value)
 )
 
-const systemCategories = computed(() =>
-  filteredCategories.value.filter((category: Category) => category.isSystem)
-)
-const userCategories = computed(() =>
-  filteredCategories.value.filter((category: Category) => !category.isSystem)
-)
-
 // Следим за перечнем категорий, чтобы автоматически переключать фильтр,
 // если, например, пользователь удалил последний элемент выбранного типа.
 watch(
@@ -60,31 +53,11 @@ watch(
 )
 
 const openModal = (category?: Category) => {
-  if (category?.isSystem) {
-    toast.add({
-      severity: 'info',
-      summary: 'Системная категория',
-      detail: 'Встроенные категории нельзя редактировать.',
-      life: 2500
-    })
-    return
-  }
-
   editingCategory.value = category ?? null
   modalVisible.value = true
 }
 
 const handleDelete = (category: Category) => {
-  if (category.isSystem) {
-    toast.add({
-      severity: 'warn',
-      summary: 'Защищенная категория',
-      detail: 'Системные категории нельзя удалить.',
-      life: 2500
-    })
-    return
-  }
-
   confirm.require({
     message: `Удалить категорию "${category.name}"?`,
     header: 'Подтверждение удаления',
@@ -160,104 +133,49 @@ defineExpose({
       v-else
       class="categories__sections"
     >
-      <div
-        v-if="userCategories.length"
-        class="category-section"
-      >
-        <h4>
-          <i
-            class="pi pi-user"
-            aria-hidden="true"
-          />
-          Личные категории
-        </h4>
+      <ul class="category-list">
+        <li
+          v-for="category in filteredCategories"
+          :key="category.id"
+          class="category-item"
+        >
+          <div class="category-info">
+            <span
+              class="color-dot"
+              :style="{ backgroundColor: category.color }"
+            />
+            <i
+              :class="['pi', category.icon || 'pi-tag', 'category-icon']"
+              aria-hidden="true"
+            />
+            <span class="category-name">
+              {{ category.name }}
+              <Tag
+                v-if="category.isMandatory"
+                severity="info"
+                class="category-mandatory"
+              >
+                Обязательная
+              </Tag>
+            </span>
+          </div>
 
-        <ul class="category-list">
-          <li
-            v-for="category in userCategories"
-            :key="category.id"
-            class="category-item"
-          >
-            <div class="category-info">
-              <span
-                class="color-dot"
-                :style="{ backgroundColor: category.color }"
-              />
-              <i
-                :class="['pi', category.icon || 'pi-tag', 'category-icon']"
-                aria-hidden="true"
-              />
-              <span class="category-name">
-                {{ category.name }}
-                <Tag
-                  v-if="category.isMandatory"
-                  severity="info"
-                  class="category-mandatory"
-                >
-                  Обязательная
-                </Tag>
-              </span>
-            </div>
-
-            <div class="category-actions">
-              <Button
-                label="Изменить"
-                text
-                @click="openModal(category)"
-              />
-              <Button
-                label="Удалить"
-                text
-                severity="danger"
-                :loading="pendingCategoryId === category.id"
-                @click="handleDelete(category)"
-              />
-            </div>
-          </li>
-        </ul>
-      </div>
-
-      <div
-        v-if="systemCategories.length"
-        class="category-section"
-      >
-        <h4>
-          <i
-            class="pi pi-lock"
-            aria-hidden="true"
-          />
-          Системные категории
-        </h4>
-
-        <ul class="category-list">
-          <li
-            v-for="category in systemCategories"
-            :key="category.id"
-            class="category-item category-item--system"
-          >
-            <div class="category-info">
-              <span
-                class="color-dot"
-                :style="{ backgroundColor: category.color }"
-              />
-              <i
-                :class="['pi', category.icon || 'pi-tag', 'category-icon']"
-                aria-hidden="true"
-              />
-              <span class="category-name">
-                {{ category.name }}
-                <Tag
-                  v-if="category.isMandatory"
-                  severity="info"
-                  class="category-mandatory"
-                >
-                  Обязательная
-                </Tag>
-              </span>
-            </div>
-          </li>
-        </ul>
-      </div>
+          <div class="category-actions">
+            <Button
+              label="Изменить"
+              text
+              @click="openModal(category)"
+            />
+            <Button
+              label="Удалить"
+              text
+              severity="danger"
+              :loading="pendingCategoryId === category.id"
+              @click="handleDelete(category)"
+            />
+          </div>
+        </li>
+      </ul>
     </div>
 
     <CategoryFormModal
@@ -309,26 +227,6 @@ defineExpose({
   gap: clamp(var(--ft-space-4), 2vw, var(--ft-space-5));
 }
 
-.category-section {
-  display: flex;
-  flex-direction: column;
-  gap: var(--ft-space-3);
-}
-
-.category-section h4 {
-  margin: 0;
-  font-size: var(--ft-text-base);
-  font-weight: var(--ft-font-semibold);
-  color: var(--ft-text-primary);
-  display: flex;
-  align-items: center;
-  gap: var(--ft-space-2);
-}
-
-.category-section h4 i {
-  color: var(--ft-primary-400);
-}
-
 .category-list {
   list-style: none;
   display: flex;
@@ -353,13 +251,6 @@ defineExpose({
   transform: translateY(-2px);
   box-shadow: var(--ft-shadow-soft);
   border-color: var(--ft-border-default);
-}
-
-.category-item--system {
-  cursor: not-allowed;
-  border-style: dashed;
-  border-color: var(--ft-border-subtle);
-  opacity: 0.85;
 }
 
 .category-info {

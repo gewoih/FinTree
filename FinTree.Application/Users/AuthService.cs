@@ -1,7 +1,9 @@
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Text;
+using FinTree.Domain.Categories;
 using FinTree.Domain.Identity;
+using FinTree.Infrastructure.Database;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
@@ -11,13 +13,16 @@ namespace FinTree.Application.Users;
 public sealed class AuthService(
     UserManager<User> userManager,
     SignInManager<User> signInManager,
-    IOptions<AuthOptions> authOptionsAccessor)
+    IOptions<AuthOptions> authOptionsAccessor,
+    AppDbContext context)
 {
     private readonly AuthOptions _authOptions = authOptionsAccessor.Value;
 
     public async Task<AuthResponse> RegisterAsync(RegisterRequest request, CancellationToken ct)
     {
         var user = new User(request.Email, request.Email, "RUB");
+        await using var transaction = await context.Database.BeginTransactionAsync(ct);
+
         var result = await userManager.CreateAsync(user, request.Password);
 
         if (!result.Succeeded)
@@ -25,6 +30,10 @@ public sealed class AuthService(
             var errors = string.Join(", ", result.Errors.Select(e => e.Description));
             throw new InvalidOperationException($"User registration failed: {errors}");
         }
+
+        await SeedDefaultCategoriesAsync(user, ct);
+        await context.SaveChangesAsync(ct);
+        await transaction.CommitAsync(ct);
 
         var token = GenerateJwtToken(user);
         return new AuthResponse(token, user.Email!, user.Id);
@@ -66,5 +75,18 @@ public sealed class AuthService(
         );
 
         return new JwtSecurityTokenHandler().WriteToken(token);
+    }
+
+    private Task SeedDefaultCategoriesAsync(User user, CancellationToken ct)
+    {
+        var categories = DefaultTransactionCategories.All
+            .Select(template => template.IsDefault
+                ? TransactionCategory.CreateDefault(user.Id, template.Name, template.Color, template.Icon,
+                    template.Type, template.IsMandatory)
+                : TransactionCategory.CreateUser(user.Id, template.Name, template.Color, template.Icon,
+                    template.Type, template.IsMandatory))
+            .ToList();
+
+        return context.TransactionCategories.AddRangeAsync(categories, ct);
     }
 }

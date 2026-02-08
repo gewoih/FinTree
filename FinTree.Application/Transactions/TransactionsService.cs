@@ -123,21 +123,23 @@ public sealed class TransactionsService(AppDbContext context, ICurrentUser curre
         if (toAccount is null)
             throw new InvalidOperationException("Счет зачисления не найден.");
 
-        var transferCategoryId = await GetSystemCategoryIdAsync("Без категории", ct);
-        if (transferCategoryId == Guid.Empty)
-        {
-            transferCategoryId = await context.TransactionCategories
-                .Where(c => c.UserId == null)
-                .Select(c => c.Id)
-                .FirstOrDefaultAsync(ct);
-        }
+        var categories = await context.TransactionCategories
+            .AsNoTracking()
+            .Where(c => c.UserId == currentUserId)
+            .Select(c => new { c.Id, c.Name, c.IsDefault })
+            .ToListAsync(ct);
 
-        if (transferCategoryId == Guid.Empty)
+        if (categories.Count == 0)
             throw new InvalidOperationException("Не удалось подобрать категорию для перевода.");
 
-        var feeCategoryId = await GetSystemCategoryIdAsync("Платежи", ct);
-        if (feeCategoryId == Guid.Empty)
-            feeCategoryId = transferCategoryId;
+        var transferCategoryId = categories
+                                     .FirstOrDefault(c => c.Name == "Без категории")?.Id
+                                 ?? categories.FirstOrDefault(c => c.IsDefault)?.Id
+                                 ?? categories[0].Id;
+
+        var feeCategoryId = categories
+                                .FirstOrDefault(c => c.Name == "Платежи")?.Id
+                            ?? transferCategoryId;
 
         var transferId = Guid.NewGuid();
         var description = string.IsNullOrWhiteSpace(command.Description) ? null : command.Description.Trim();
@@ -204,7 +206,7 @@ public sealed class TransactionsService(AppDbContext context, ICurrentUser curre
         var accountIds = accounts.Select(a => a.Id).ToArray();
 
         var categories = await context.TransactionCategories.AsNoTracking()
-            .Where(c => c.UserId == currentUserId || c.UserId == null)
+            .Where(c => c.UserId == currentUserId)
             .Select(c => new { c.Id, c.Name })
             .ToListAsync(ct);
 
@@ -352,14 +354,6 @@ public sealed class TransactionsService(AppDbContext context, ICurrentUser curre
         await context.SaveChangesAsync(ct);
     }
 
-    private async Task<Guid> GetSystemCategoryIdAsync(string name, CancellationToken ct)
-    {
-        return await context.TransactionCategories
-            .Where(c => c.UserId == null && c.Name == name)
-            .Select(c => c.Id)
-            .FirstOrDefaultAsync(ct);
-    }
-
     private async Task EnsureCategoryAccessAsync(Guid categoryId, CancellationToken ct)
     {
         if (categoryId == Guid.Empty)
@@ -374,7 +368,7 @@ public sealed class TransactionsService(AppDbContext context, ICurrentUser curre
         if (categoryMeta is null)
             throw new InvalidOperationException("Категория не найдена");
 
-        if (categoryMeta.UserId is not null && categoryMeta.UserId != currentUser.Id)
+        if (categoryMeta.UserId != currentUser.Id)
             throw new InvalidOperationException("Доступ запрещен");
     }
 }
