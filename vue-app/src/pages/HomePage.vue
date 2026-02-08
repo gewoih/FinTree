@@ -22,7 +22,7 @@ const quickActions = [
   { label: 'Добавить расход', icon: 'pi pi-plus-circle', variant: 'primary', to: '/expenses' },
   { label: 'Счета', icon: 'pi pi-wallet', variant: 'secondary', to: '/accounts' },
   { label: 'Аналитика', icon: 'pi pi-chart-bar', variant: 'secondary', to: '/analytics' },
-  { label: 'Категории', icon: 'pi pi-tags', variant: 'ghost', to: '/categories' }
+  { label: 'Настроить категории', icon: 'pi pi-tags', variant: 'ghost', to: '/profile#categories' }
 ]
 
 const baseCurrencyCode = computed(() => {

@@ -37,7 +37,7 @@ export const router = createRouter({
     {
       path: '/categories',
       name: 'categories',
-      component: () => import('../pages/CategoriesPage.vue'),
+      redirect: { path: '/profile', hash: '#categories' },
       meta: { title: 'Categories', requiresAuth: true },
     },
     {
@@ -69,7 +69,13 @@ export const router = createRouter({
       redirect: '/',
     },
   ],
-  scrollBehavior() {
+  scrollBehavior(to, from) {
+    if (to.path === from.path) {
+      return false;
+    }
+    if (to.hash) {
+      return { el: to.hash, behavior: 'smooth' };
+    }
     return { top: 0 };
   },
 });

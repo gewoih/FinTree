@@ -36,7 +36,7 @@ export const NAVIGATION_ITEMS = [
     id: 'categories',
     label: 'Categories',
     icon: 'pi pi-tags',
-    route: '/categories'
+    route: '/profile#categories'
   },
   {
     id: 'expenses',

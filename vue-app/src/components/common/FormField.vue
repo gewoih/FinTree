@@ -29,29 +29,45 @@ const fieldAttrs = computed(() => ({
     class="form-field"
     :class="{ 'form-field--error': error, 'form-field--required': required }"
   >
-    <label
+    <div
       v-if="label"
-      :for="fieldId"
-      class="form-field__label"
+      class="form-field__label-row"
       :class="{ 'sr-only': labelSrOnly }"
     >
-      {{ label }}
-      <span
-        v-if="required"
-        class="form-field__required"
-        aria-label="обязательное поле"
-      >*</span>
-    </label>
+      <label
+        :for="fieldId"
+        class="form-field__label"
+      >
+        {{ label }}
+        <span
+          v-if="required"
+          class="form-field__required"
+          aria-label="обязательное поле"
+        >*</span>
+      </label>
+      <button
+        v-if="hint && !error && !labelSrOnly"
+        type="button"
+        class="form-field__info"
+        aria-label="Подсказка"
+      >
+        <i
+          class="pi pi-info"
+          aria-hidden="true"
+        />
+      </button>
+      <small
+        v-if="hint && !error"
+        :id="hintId"
+        class="form-field__hint"
+        role="note"
+      >{{ hint }}</small>
+    </div>
 
     <div class="form-field__control">
       <slot :field-attrs="fieldAttrs" />
     </div>
 
-    <small
-      v-if="hint && !error"
-      :id="hintId"
-      class="form-field__hint"
-    >{{ hint }}</small>
     <small
       v-if="error"
       :id="errorId"
@@ -75,6 +91,14 @@ const fieldAttrs = computed(() => ({
   gap: var(--ft-space-2);
 }
 
+.form-field__label-row {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--ft-space-2);
+  position: relative;
+  width: fit-content;
+}
+
 .form-field__label {
   font-weight: var(--ft-font-semibold);
   font-size: var(--ft-text-sm);
@@ -82,6 +106,30 @@ const fieldAttrs = computed(() => ({
   display: flex;
   align-items: center;
   gap: var(--ft-space-1);
+}
+
+.form-field__info {
+  inline-size: 18px;
+  block-size: 18px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  background: transparent;
+  color: var(--ft-text-tertiary);
+  line-height: 1;
+  padding: 0;
+  cursor: help;
+}
+
+.form-field__info i {
+  font-size: 0.7rem;
+  line-height: 1;
+}
+
+.form-field__info:hover,
+.form-field__info:focus-visible {
+  color: var(--ft-text-primary);
 }
 
 .form-field__required {
@@ -94,9 +142,25 @@ const fieldAttrs = computed(() => ({
 }
 
 .form-field__hint {
+  position: absolute;
+  top: 50%;
+  left: 100%;
+  margin-left: var(--ft-space-2);
+  font-size: 0.7rem;
   color: var(--ft-text-tertiary);
-  font-size: var(--ft-text-sm);
-  line-height: var(--ft-leading-normal);
+  white-space: nowrap;
+  opacity: 0;
+  pointer-events: none;
+  transform: translateY(-50%);
+  transition:
+    opacity var(--ft-transition-fast),
+    transform var(--ft-transition-fast);
+}
+
+.form-field__info:hover + .form-field__hint,
+.form-field__info:focus-visible + .form-field__hint {
+  opacity: 1;
+  transform: translateY(-50%);
 }
 
 .form-field__error {

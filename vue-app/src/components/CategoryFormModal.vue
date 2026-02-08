@@ -4,6 +4,8 @@ import Dialog from 'primevue/dialog';
 import InputText from 'primevue/inputtext';
 import SelectButton from 'primevue/selectbutton';
 import Checkbox from 'primevue/checkbox';
+import { useConfirm } from 'primevue/useconfirm';
+import { useToast } from 'primevue/usetoast';
 import type { Category, CategoryType } from '../types';
 import { CATEGORY_TYPE } from '../types';
 import { useFinanceStore } from '../stores/finance';
@@ -21,6 +23,8 @@ const emit = defineEmits<{
 }>();
 
 const store = useFinanceStore();
+const confirm = useConfirm();
+const toast = useToast();
 const DEFAULT_COLOR = '#10b981';
 const HEX_COLOR_REGEX = /^#([0-9A-Fa-f]{6})$/;
 
@@ -32,12 +36,12 @@ const iconPickerRef = ref<HTMLElement | null>(null);
 const categoryType = ref<CategoryType | null>(null);
 const attemptedSubmit = ref(false);
 const isMandatory = ref(false);
+const isDeleting = ref(false);
 
 const isEditMode = computed(() => Boolean(props.category));
 const isExpenseCategory = computed(
-  () => (categoryType.value ?? props.defaultType) === CATEGORY_TYPE.Expense
+  () => (categoryType.value ?? props.category?.type ?? props.defaultType) === CATEGORY_TYPE.Expense
 );
-
 const categoryTypeOptions = [
   { label: 'Доход', value: CATEGORY_TYPE.Income },
   { label: 'Расход', value: CATEGORY_TYPE.Expense },
@@ -171,137 +175,182 @@ const handleSubmit = async () => {
     emit('update:visible', false);
   }
 };
+
+const handleDelete = () => {
+  if (!props.category || isDeleting.value) return;
+
+  confirm.require({
+    message: `Удалить категорию "${props.category.name}"? Все транзакции будут перенесены в «Без категории».`,
+    header: 'Удаление категории',
+    acceptLabel: 'Удалить',
+    rejectLabel: 'Отмена',
+    icon: 'pi pi-exclamation-triangle',
+    acceptClass: 'p-button-danger',
+    accept: async () => {
+      isDeleting.value = true;
+      const success = await store.deleteCategory(props.category!.id);
+      isDeleting.value = false;
+      toast.add({
+        severity: success ? 'success' : 'error',
+        summary: success ? 'Категория удалена' : 'Ошибка удаления',
+        detail: success ? 'Категория больше недоступна.' : 'Пожалуйста, попробуйте позже.',
+        life: 2500
+      });
+
+      if (success) {
+        emit('update:visible', false);
+      }
+    },
+  });
+};
 </script>
 
 <template>
   <Dialog
     :visible="props.visible"
-    :header="props.category ? 'Редактирование категории' : 'Создание категории'"
     modal
-    :style="{ width: '440px' }"
+    :dismissable-mask="true"
+    :style="{ width: '560px' }"
+    class="category-dialog"
     @update:visible="val => emit('update:visible', val)"
   >
+    <template #header>
+      <div class="category-dialog__header">
+        <div>
+          <h2 class="category-dialog__title">
+            {{ props.category ? 'Категория' : 'Новая категория' }}
+          </h2>
+          <p class="category-dialog__subtitle">
+            {{ props.category ? 'Обновите параметры категории.' : 'Создайте категорию для удобной аналитики.' }}
+          </p>
+        </div>
+      </div>
+    </template>
     <form
       class="category-form"
       novalidate
       @submit.prevent="handleSubmit"
     >
-      <FormField
-        v-if="canChooseType"
-        label="Тип"
-        :error="typeError"
-        required
-      >
-        <template #default="{ fieldAttrs }">
-          <SelectButton
-            v-model="categoryType"
-            :options="categoryTypeOptions"
-            option-label="label"
-            option-value="value"
-            :allow-empty="false"
-            class="w-full"
-            :aria-describedby="fieldAttrs['aria-describedby']"
-            :aria-invalid="fieldAttrs['aria-invalid']"
-            :pt="{
-              button: { class: 'category-form__type-button' },
-            }"
-          />
-        </template>
-      </FormField>
+      <div class="category-form__grid">
+        <FormField
+          label="Название"
+          :error="nameError"
+          required
+        >
+          <template #default="{ fieldAttrs }">
+            <InputText
+              v-bind="fieldAttrs"
+              v-model="name"
+              placeholder="Например, «Транспорт»"
+              class="w-full"
+              autocomplete="off"
+            />
+          </template>
+        </FormField>
 
-      <FormField
-        label="Название"
-        :error="nameError"
-        required
-      >
-        <template #default="{ fieldAttrs }">
-          <InputText
-            v-bind="fieldAttrs"
-            v-model="name"
-            placeholder="Например, «Транспорт»"
-            class="w-full"
-            autocomplete="off"
-          />
-        </template>
-      </FormField>
-
-      <FormField label="Иконка">
-        <template #default="{ fieldAttrs }">
-          <div
-            ref="iconPickerRef"
-            class="icon-picker"
-          >
-            <button
-              type="button"
-              class="icon-picker__trigger"
-              :aria-expanded="iconPickerOpen"
-              @click="toggleIconPicker"
-            >
-              <i :class="['pi', icon]" />
-              <span>Выбрать иконку</span>
-            </button>
-            <div
-              v-if="iconPickerOpen"
-              class="icon-grid"
-              role="listbox"
+        <FormField
+          v-if="canChooseType"
+          label="Тип"
+          :error="typeError"
+          required
+        >
+          <template #default="{ fieldAttrs }">
+            <SelectButton
+              v-model="categoryType"
+              :options="categoryTypeOptions"
+              option-label="label"
+              option-value="value"
+              :allow-empty="false"
+              class="w-full"
               :aria-describedby="fieldAttrs['aria-describedby']"
               :aria-invalid="fieldAttrs['aria-invalid']"
-              :aria-activedescendant="icon ? `icon-${icon}` : undefined"
+              :pt="{
+                button: { class: 'category-form__type-button' },
+              }"
+            />
+          </template>
+        </FormField>
+      </div>
+
+      <div class="category-form__grid category-form__grid--two">
+        <FormField
+          label="Иконка"
+          hint="Иконка используется в списках и аналитике."
+        >
+          <template #default="{ fieldAttrs }">
+            <div
+              ref="iconPickerRef"
+              class="icon-picker"
             >
               <button
-                v-for="option in CATEGORY_ICON_OPTIONS"
-                :key="option.value"
                 type="button"
-                :id="`icon-${option.value}`"
-                class="icon-grid__item"
-                :class="{ 'is-selected': option.value === icon }"
-                :aria-pressed="option.value === icon"
-                @click="
-                  () => {
-                    icon = option.value;
-                    closeIconPicker();
-                  }
-                "
+                class="icon-picker__trigger"
+                :aria-expanded="iconPickerOpen"
+                @click="toggleIconPicker"
               >
-                <i :class="['pi', option.value]" />
+                <i :class="['pi', icon]" />
+                <span>Выбрать иконку</span>
               </button>
+              <div
+                v-if="iconPickerOpen"
+                class="icon-grid"
+                role="listbox"
+                :aria-describedby="fieldAttrs['aria-describedby']"
+                :aria-invalid="fieldAttrs['aria-invalid']"
+                :aria-activedescendant="icon ? `icon-${icon}` : undefined"
+              >
+                <button
+                  v-for="option in CATEGORY_ICON_OPTIONS"
+                  :key="option.value"
+                  type="button"
+                  :id="`icon-${option.value}`"
+                  class="icon-grid__item"
+                  :class="{ 'is-selected': option.value === icon }"
+                  :aria-pressed="option.value === icon"
+                  @click="
+                    () => {
+                      icon = option.value;
+                      closeIconPicker();
+                    }
+                  "
+                >
+                  <i :class="['pi', option.value]" />
+                </button>
+              </div>
             </div>
-          </div>
-        </template>
-        <template #hint>
-          Иконка отображается в списках и аналитике.
-        </template>
-      </FormField>
+          </template>
+        </FormField>
 
-      <FormField
-        label="Цвет"
-        :error="colorError"
-        hint="Цвет используется для легенд и тегов списка."
-      >
-        <template #default="{ fieldAttrs }">
-          <div class="color-picker">
-            <input
-              :id="fieldAttrs.id"
-              v-model="color"
-              type="color"
-              class="color-picker__swatch"
-              :aria-describedby="fieldAttrs['aria-describedby']"
-              :aria-invalid="fieldAttrs['aria-invalid']"
-            >
-            <InputText
-              v-model="color"
-              maxlength="7"
-              class="w-full"
-              placeholder="#10B981"
-            />
-          </div>
-        </template>
-      </FormField>
+        <FormField
+          label="Цвет"
+          :error="colorError"
+          hint="Цвет категории в легендах и тегах."
+        >
+          <template #default="{ fieldAttrs }">
+            <div class="color-picker">
+              <input
+                :id="fieldAttrs.id"
+                v-model="color"
+                type="color"
+                class="color-picker__swatch"
+                :aria-describedby="fieldAttrs['aria-describedby']"
+                :aria-invalid="fieldAttrs['aria-invalid']"
+              >
+              <InputText
+                v-model="color"
+                maxlength="7"
+                class="w-full"
+                placeholder="#10B981"
+              />
+            </div>
+          </template>
+        </FormField>
+      </div>
 
       <FormField
         v-if="isExpenseCategory"
-        label="Обязательность"
-        hint="Обязательные траты учитываются в метриках устойчивости."
+        label="Учет в аналитике"
+        hint="Влияет на метрики устойчивости."
       >
         <template #default>
           <label class="mandatory-toggle">
@@ -311,22 +360,41 @@ const handleSubmit = async () => {
         </template>
       </FormField>
 
-      <div class="actions">
+      <div
+        v-if="isEditMode"
+        class="category-form__danger"
+      >
+        <div>
+          <p class="category-form__danger-title">
+            Удалить категорию
+          </p>
+          <p class="category-form__danger-hint">
+            Транзакции перейдут в «Без категории».
+          </p>
+        </div>
         <AppButton
           type="button"
-          variant="ghost"
-          @click="emit('update:visible', false)"
-        >
-          Отмена
-        </AppButton>
-        <AppButton
-          type="submit"
-          icon="pi pi-check"
-          :loading="isSubmitting"
-          :disabled="isSubmitting"
-        >
-          {{ props.category ? 'Сохранить' : 'Создать' }}
-        </AppButton>
+          variant="danger"
+          icon="pi pi-trash"
+          class="category-form__danger-button"
+          :loading="isDeleting"
+          :disabled="isSubmitting || isDeleting"
+          aria-label="Удалить категорию"
+          @click="handleDelete"
+        />
+      </div>
+
+      <div class="category-form__footer">
+        <div class="actions">
+          <AppButton
+            type="submit"
+            icon="pi pi-check"
+            :loading="isSubmitting"
+            :disabled="isSubmitting || isDeleting"
+          >
+            {{ props.category ? 'Сохранить' : 'Создать' }}
+          </AppButton>
+        </div>
       </div>
     </form>
   </Dialog>
@@ -334,13 +402,59 @@ const handleSubmit = async () => {
 
 <style scoped>
 .category-form {
-  display: grid;
+  display: flex;
+  flex-direction: column;
   gap: var(--ft-space-4);
+}
+
+.category-dialog :deep(.p-dialog-header) {
+  padding: var(--ft-space-4) var(--ft-space-5) var(--ft-space-3);
+  border-bottom: none;
+}
+
+.category-dialog :deep(.p-dialog-content) {
+  padding: 0 var(--ft-space-5) var(--ft-space-5);
+}
+
+.category-dialog__header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--ft-space-4);
+}
+
+.category-dialog__title {
+  margin: 0 0 var(--ft-space-1);
+  font-size: var(--ft-text-xl);
+  font-weight: var(--ft-font-semibold);
+  color: var(--ft-text-primary);
+}
+
+.category-dialog__subtitle {
+  margin: 0;
+  font-size: var(--ft-text-sm);
+  color: var(--ft-text-tertiary);
+  max-width: 360px;
 }
 
 .category-form__type-button {
   flex: 1;
   padding: var(--ft-space-2) var(--ft-space-3);
+}
+
+.category-form__grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: var(--ft-space-4);
+  align-items: start;
+}
+
+.category-form__grid--two {
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+}
+
+.category-form :deep(.p-inputtext) {
+  width: 100%;
 }
 
 .color-picker {
@@ -366,6 +480,7 @@ const handleSubmit = async () => {
   background: transparent;
   color: var(--ft-text-primary);
   cursor: pointer;
+  min-height: var(--control-height);
 }
 
 .icon-picker__trigger i {
@@ -440,16 +555,106 @@ const handleSubmit = async () => {
   font-weight: var(--ft-font-medium);
 }
 
+.category-form__footer {
+  display: flex;
+  flex-direction: column;
+  gap: var(--ft-space-3);
+  margin-top: var(--ft-space-3);
+  width: 100%;
+}
+
+
 .actions {
+  width: 100%;
   display: flex;
   justify-content: flex-end;
   gap: var(--ft-space-3);
-  margin-top: var(--ft-space-3);
+  flex-wrap: wrap;
+  align-items: center;
+}
+
+.actions :deep(.app-button) {
+  width: auto;
+  min-width: max-content;
+  justify-content: center;
+}
+
+.actions :deep(.p-button-label) {
+  white-space: nowrap;
+}
+
+.category-form__danger {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: var(--ft-space-3);
+  padding-top: var(--ft-space-3);
+  border-top: 1px solid var(--ft-border-soft);
+}
+
+.category-form__danger-button {
+  width: 40px;
+  min-width: 40px;
+  height: 40px;
+  min-height: 40px;
+  padding: 0;
+  border-radius: 999px;
+  box-shadow: none;
+  border: 1px solid color-mix(in srgb, var(--ft-danger-500) 40%, transparent);
+  background: transparent;
+  color: var(--ft-danger-500);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 1;
+}
+
+.category-form__danger-button.app-button--danger {
+  box-shadow: none;
+}
+
+.category-form__danger-button:hover {
+  background: color-mix(in srgb, var(--ft-danger-500) 12%, transparent);
+  border-color: var(--ft-danger-500);
+}
+
+.category-form__danger-button :deep(.p-button-label) {
+  display: none;
+}
+
+.category-form__danger-button :deep(.p-button-icon) {
+  margin: 0;
+  font-size: 1rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.category-form__danger-title {
+  margin: 0;
+  font-size: var(--ft-text-sm);
+  font-weight: var(--ft-font-semibold);
+  color: var(--ft-text-primary);
+}
+
+.category-form__danger-hint {
+  margin: var(--ft-space-1) 0 0;
+  font-size: var(--ft-text-xs);
+  color: var(--ft-text-tertiary);
 }
 
 @media (max-width: 576px) {
   .category-form {
     gap: var(--ft-space-3);
+  }
+
+  .category-dialog :deep(.p-dialog) {
+    width: 92vw !important;
+  }
+
+  .category-form__danger {
+    grid-template-columns: 1fr;
+    align-items: stretch;
   }
 
   .actions {

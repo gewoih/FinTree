@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { onMounted, ref } from 'vue'
+import { useRouter } from 'vue-router'
 import { useToast } from 'primevue/usetoast'
 import { useFinanceStore } from '../stores/finance'
 import type { Transaction } from '../types'
@@ -10,6 +11,7 @@ import { apiService } from '../services/api.service'
 
 const financeStore = useFinanceStore()
 const toast = useToast()
+const router = useRouter()
 const transactionDialogVisible = ref(false)
 const editingTransaction = ref<Transaction | null>(null)
 const transferDialogVisible = ref(false)
@@ -89,6 +91,12 @@ onMounted(async () => {
           variant="ghost"
           :loading="isExporting"
           @click="exportTransactions"
+        />
+        <UiButton
+          label="Категории"
+          icon="pi pi-tags"
+          variant="ghost"
+          @click="router.push('/profile#categories')"
         />
         <UiButton
           label="Перевод"
