@@ -22,18 +22,13 @@ const isDrawerVisible = computed(() => {
 })
 
 const navigationItems = [
-  { label: 'Дашборд', icon: 'pi-home', to: '/dashboard' },
-  { label: 'Счета', icon: 'pi-wallet', to: '/accounts' },
-  { label: 'Транзакции', icon: 'pi-list', to: '/expenses' },
   { label: 'Аналитика', icon: 'pi-chart-line', to: '/analytics' },
-  { label: 'План доходов', icon: 'pi-chart-bar', to: '/future-income' },
-  { label: 'Профиль', icon: 'pi-cog', to: '/profile' }
+  { label: 'Счета', icon: 'pi-wallet', to: '/accounts' },
+  { label: 'Транзакции', icon: 'pi-list', to: '/expenses' }
 ]
 
 const userMenuItems = [
-  { label: 'Профиль', icon: 'pi pi-user', command: () => router.push('/profile') },
   { label: 'Настройки', icon: 'pi pi-cog', command: () => router.push('/profile') },
-  { separator: true },
   { label: 'Выйти', icon: 'pi pi-sign-out', command: () => handleLogout() }
 ]
 
@@ -80,7 +75,7 @@ onMounted(() => {
           @click="toggleSidebar"
         />
         <router-link
-          to="/dashboard"
+          to="/analytics"
           class="app-shell__logo"
         >
           <i class="pi pi-chart-bar" />
@@ -364,32 +359,45 @@ onMounted(() => {
 }
 
 .app-shell__user-menu :deep(.p-menu) {
-  min-width: 220px;
+  min-width: 200px;
   margin-top: var(--space-2);
   padding: var(--space-2);
-  border-radius: var(--radius-lg);
-  border: 1px solid var(--border);
-  background: var(--surface-2);
-  box-shadow: var(--shadow-soft);
+  border-radius: var(--ft-radius-lg);
+  border: 1px solid color-mix(in srgb, var(--border) 70%, transparent);
+  background: color-mix(in srgb, var(--surface-2) 92%, transparent);
+  box-shadow: 0 12px 32px rgba(15, 23, 42, 0.22);
+  backdrop-filter: blur(6px);
 }
 
 .app-shell__user-menu :deep(.p-menu .p-menuitem-link) {
-  padding: var(--space-2) var(--space-3);
+  padding: 0.65rem 0.75rem;
   gap: var(--space-3);
   border-radius: var(--ft-radius-md);
   min-height: 44px;
+  color: var(--text);
+  transition: background var(--ft-transition-fast), color var(--ft-transition-fast);
+}
+
+.app-shell__user-menu :deep(.p-menu .p-menuitem-link:hover) {
+  background: color-mix(in srgb, var(--accent) 14%, transparent);
+  color: var(--text);
+}
+
+.app-shell__user-menu :deep(.p-menu .p-menuitem-link:focus-visible) {
+  outline: 2px solid color-mix(in srgb, var(--accent) 60%, transparent);
+  outline-offset: 2px;
 }
 
 .app-shell__user-menu :deep(.p-menu .p-menuitem-icon) {
   color: var(--text-muted);
 }
 
+.app-shell__user-menu :deep(.p-menu .p-menuitem-link:hover .p-menuitem-icon) {
+  color: var(--accent);
+}
+
 .app-shell__user-menu :deep(.p-menu .p-menuitem-text) {
   font-size: var(--ft-text-sm);
   font-weight: var(--ft-font-medium);
-}
-
-.app-shell__user-menu :deep(.p-menu .p-menu-separator) {
-  margin: var(--space-2);
 }
 </style>

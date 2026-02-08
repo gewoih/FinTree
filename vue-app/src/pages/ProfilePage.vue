@@ -170,7 +170,7 @@ function handleClearTelegram() {
       title="Профиль"
       subtitle="Обновите базовую валюту и Telegram для более умной аналитики"
       :breadcrumbs="[
-        { label: 'Главная', to: '/dashboard' },
+        { label: 'Главная', to: '/analytics' },
         { label: 'Профиль' }
       ]"
     />

@@ -8,7 +8,6 @@ using FinTree.Application.Accounts;
 using FinTree.Application.Analytics;
 using FinTree.Application.Currencies;
 using FinTree.Application.Exceptions;
-using FinTree.Application.IncomeInstruments;
 using FinTree.Application.Transactions;
 using FinTree.Application.Users;
 using FinTree.Domain.Identity;
@@ -146,7 +145,6 @@ builder.Services.AddScoped<UserService>();
 builder.Services.AddScoped<AuthService>();
 builder.Services.AddScoped<ICurrentUser, HttpCurrentUser>();
 builder.Services.AddScoped<AnalyticsService>();
-builder.Services.AddScoped<IncomeInstrumentsService>();
 builder.Services.AddScoped<CurrencyConverter>();
 builder.Services.AddScoped<DatabaseInitializer>();
 

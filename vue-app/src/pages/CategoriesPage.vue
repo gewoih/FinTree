@@ -20,7 +20,7 @@ onMounted(() => {
       title="Категории"
       subtitle="Настройте группировки для расходов и доходов, чтобы аналитика была точнее"
       :breadcrumbs="[
-        { label: 'Главная', to: '/dashboard' },
+        { label: 'Главная', to: '/analytics' },
         { label: 'Категории' }
       ]"
     >

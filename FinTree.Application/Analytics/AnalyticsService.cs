@@ -1,6 +1,5 @@
 using FinTree.Application.Currencies;
 using FinTree.Application.Users;
-using FinTree.Domain.IncomeStreams;
 using FinTree.Domain.Transactions;
 using FinTree.Domain.ValueObjects;
 using FinTree.Infrastructure.Database;
@@ -530,109 +529,5 @@ public sealed class AnalyticsService(
         var summary = new ForecastSummaryDto(forecastTotal, currentSpent, baselineLimit, status);
         var series = new ForecastSeriesDto(days, actual, forecast, baseline);
         return new ForecastDto(summary, series);
-    }
-    public async Task<FutureIncomeOverviewDto> GetFutureIncomeOverviewAsync(CancellationToken ct = default)
-    {
-        var currentUserId = currentUserService.Id;
-        var nowUtc = DateTime.UtcNow;
-
-        var baseCurrencyCode = await context.Users
-            .Where(u => u.Id == currentUserId)
-            .Select(u => u.BaseCurrencyCode)
-            .SingleAsync(ct);
-
-        SalaryProjectionDto? salaryProjection = null;
-
-        var instruments = await context.IncomeInstruments
-            .AsNoTracking()
-            .Where(i => i.UserId == currentUserId)
-            .OrderBy(i => i.CreatedAt)
-            .ToListAsync(ct);
-
-        var instrumentProjections = new List<IncomeInstrumentProjectionDto>(instruments.Count);
-
-        foreach (var instrument in instruments)
-        {
-            ct.ThrowIfCancellationRequested();
-
-            var principalMoney = new Money(instrument.CurrencyCode, instrument.PrincipalAmount);
-            var principalInBase = await currencyConverter.ConvertAsync(principalMoney, baseCurrencyCode, nowUtc, ct);
-
-            decimal? contributionInBase = null;
-            if (instrument.MonthlyContribution is { } contribution && contribution > 0m)
-            {
-                var contributionMoney = new Money(instrument.CurrencyCode, contribution);
-                contributionInBase =
-                    (await currencyConverter.ConvertAsync(contributionMoney, baseCurrencyCode, nowUtc, ct)).Amount;
-            }
-
-            var expectedAnnualIncome = instrument.CalculateExpectedAnnualIncome();
-            var expectedMonthlyIncome = expectedAnnualIncome / 12m;
-
-            decimal expectedAnnualIncomeInBase;
-            decimal expectedMonthlyIncomeInBase;
-            switch (instrument.InstrumentType)
-            {
-                case IncomeInstrumentType.Salary:
-                {
-                    var monthlyInBase = principalInBase.Amount;
-                    expectedMonthlyIncomeInBase = monthlyInBase;
-                    expectedAnnualIncomeInBase = monthlyInBase * 12m;
-                    break;
-                }
-
-                default:
-                {
-                    var r = instrument.ExpectedAnnualYieldRate;
-                    if (r <= 0m)
-                    {
-                        expectedAnnualIncomeInBase = 0m;
-                        expectedMonthlyIncomeInBase = 0m;
-                    }
-                    else
-                    {
-                        var interestOnPrincipalBase = principalInBase.Amount * r;
-                        var interestOnContribsBase = (contributionInBase ?? 0m) * 12m * r * 0.5m;
-
-                        expectedAnnualIncomeInBase = interestOnPrincipalBase + interestOnContribsBase;
-                        expectedMonthlyIncomeInBase = expectedAnnualIncomeInBase / 12m;
-                    }
-
-                    break;
-                }
-            }
-
-            instrumentProjections.Add(new IncomeInstrumentProjectionDto(
-                Id: instrument.Id,
-                Name: instrument.Name,
-                Type: instrument.InstrumentType,
-                OriginalCurrencyCode: instrument.CurrencyCode,
-                PrincipalAmount: instrument.PrincipalAmount,
-                ExpectedAnnualYieldRate: instrument.ExpectedAnnualYieldRate,
-                MonthlyContribution: instrument.MonthlyContribution,
-                ExpectedMonthlyIncome: R2(expectedMonthlyIncome),
-                ExpectedAnnualIncome: R2(expectedAnnualIncome),
-                PrincipalAmountInBaseCurrency: R2(principalInBase.Amount),
-                MonthlyContributionInBaseCurrency: contributionInBase is null ? null : R2(contributionInBase.Value),
-                ExpectedMonthlyIncomeInBaseCurrency: R2(expectedMonthlyIncomeInBase),
-                ExpectedAnnualIncomeInBaseCurrency: R2(expectedAnnualIncomeInBase)
-            ));
-            continue;
-
-            decimal R2(decimal v) => Math.Round(v, 2, MidpointRounding.AwayFromZero);
-        }
-
-        var salaryMonthly = salaryProjection?.MonthlyAverage ?? 0m;
-        var instrumentsMonthly = instrumentProjections.Sum(i => i.ExpectedMonthlyIncomeInBaseCurrency);
-        var totalMonthly = salaryMonthly + instrumentsMonthly;
-        var totalAnnual = totalMonthly * 12m;
-
-        return new FutureIncomeOverviewDto(
-            BaseCurrencyCode: baseCurrencyCode,
-            Salary: salaryProjection,
-            Instruments: instrumentProjections,
-            TotalExpectedMonthlyIncome: Math.Round(totalMonthly, 2, MidpointRounding.AwayFromZero),
-            TotalExpectedAnnualIncome: Math.Round(totalAnnual, 2, MidpointRounding.AwayFromZero)
-        );
     }
 }

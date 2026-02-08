@@ -14,7 +14,7 @@ const isDisabled = computed(() => !email.value || !password.value || authStore.i
 onMounted(() => {
   authStore.clearError()
   if (authStore.isAuthenticated) {
-    void router.push('/dashboard')
+    void router.push('/analytics')
   }
 })
 
@@ -26,7 +26,7 @@ const handleLogin = async () => {
   })
 
   if (success) {
-    router.push('/dashboard')
+    router.push('/analytics')
   }
 }
 </script>

@@ -16,13 +16,6 @@ namespace FinTree.Api.Controllers
             return Ok(data);
         }
 
-        [HttpGet("future-income")]
-        public async Task<IActionResult> GetFutureIncome(CancellationToken ct)
-        {
-            var data = await analyticsService.GetFutureIncomeOverviewAsync(ct);
-            return Ok(data);
-        }
-
         [HttpGet("net-worth")]
         public async Task<IActionResult> GetNetWorthTrend([FromQuery] int months = 12, CancellationToken ct = default)
         {

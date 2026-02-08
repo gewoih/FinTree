@@ -72,8 +72,20 @@ const fromCurrencySymbol = computed(() => fromAccount.value?.currency?.symbol ??
 const toCurrency = computed(() => toAccount.value?.currency?.code ?? toAccount.value?.currencyCode ?? '—');
 const toCurrencySymbol = computed(() => toAccount.value?.currency?.symbol ?? '');
 
+const isSameCurrency = computed(() => {
+  const from = fromCurrency.value;
+  const to = toCurrency.value;
+  return !!from && !!to && from !== '—' && from === to;
+});
+
+const resolvedToAmount = computed(() => (isSameCurrency.value ? fromAmount.value : toAmount.value));
+
 const isFromAmountValid = computed(() => validators.isAmountValid(fromAmount.value));
-const isToAmountValid = computed(() => validators.isAmountValid(toAmount.value));
+const isToAmountValid = computed(() =>
+  isSameCurrency.value
+    ? validators.isAmountValid(fromAmount.value)
+    : validators.isAmountValid(toAmount.value)
+);
 const isFeeValid = computed(() => feeAmount.value == null || feeAmount.value >= 0);
 const isAccountsValid = computed(
   () => fromAccount.value && toAccount.value && fromAccount.value.id !== toAccount.value.id
@@ -86,12 +98,15 @@ const formatRate = (value: number) =>
   }).format(value);
 
 const exchangeRate = computed(() => {
+  if (isSameCurrency.value) {
+    return null;
+  }
   if (!isAccountsValid.value || !isFromAmountValid.value || !isToAmountValid.value || !isFeeValid.value) {
     return null;
   }
 
   const fromValue = fromAmount.value ?? 0;
-  const toValue = toAmount.value ?? 0;
+  const toValue = resolvedToAmount.value ?? 0;
   const feeValue = feeAmount.value ?? 0;
 
   if (fromValue <= 0 || toValue <= 0 || feeValue < 0) {
@@ -141,7 +156,7 @@ const { isSubmitting, handleSubmit: submitTransfer, showWarning } = useFormModal
       fromAccountId: fromAccount.value!.id,
       toAccountId: toAccount.value!.id,
       fromAmount: fromAmount.value!,
-      toAmount: toAmount.value!,
+      toAmount: resolvedToAmount.value!,
       feeAmount: feeAmount.value ?? null,
       occurredAt: toUtcIsoDate(date.value),
       description: description.value ? description.value.trim() : null,
@@ -251,7 +266,7 @@ const handleSubmit = async () => {
         </div>
       </div>
 
-      <div class="field field--amount">
+      <div v-if="!isSameCurrency" class="field field--amount">
         <label for="to-amount">Сумма зачисления *</label>
         <div class="amount-input">
           <InputNumber

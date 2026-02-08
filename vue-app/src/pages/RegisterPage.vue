@@ -22,7 +22,7 @@ const isDisabled = computed(() => {
 onMounted(() => {
   authStore.clearError()
   if (authStore.isAuthenticated) {
-    void router.push('/dashboard')
+    void router.push('/analytics')
   }
 })
 
@@ -35,7 +35,7 @@ const handleRegister = async () => {
   })
 
   if (success) {
-    router.push('/dashboard')
+    router.push('/analytics')
   }
 }
 </script>

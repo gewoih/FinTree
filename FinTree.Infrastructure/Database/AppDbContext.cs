@@ -3,11 +3,9 @@ using FinTree.Domain.Base;
 using FinTree.Domain.Categories;
 using FinTree.Domain.Currencies;
 using FinTree.Domain.Identity;
-using FinTree.Domain.IncomeStreams;
 using FinTree.Domain.Transactions;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
-using System.Linq;
 using System.Linq.Expressions;
 
 namespace FinTree.Infrastructure.Database;
@@ -20,7 +18,6 @@ public sealed class AppDbContext(DbContextOptions<AppDbContext> options) : Ident
     public DbSet<AccountBalanceAdjustment> AccountBalanceAdjustments => Set<AccountBalanceAdjustment>();
     public DbSet<Transaction> Transactions => Set<Transaction>();
     public DbSet<FxUsdRate> FxUsdRates => Set<FxUsdRate>();
-    public DbSet<IncomeInstrument> IncomeInstruments => Set<IncomeInstrument>();
     
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {

@@ -13,9 +13,6 @@ import type {
     AnalyticsDashboardDto,
     CurrentUserDto,
     UpdateUserProfilePayload,
-    CreateIncomeInstrumentPayload,
-    IncomeInstrumentDto,
-    FutureIncomeOverviewDto,
     NetWorthSnapshotDto,
     AccountBalanceAdjustmentDto,
     CreateTransferPayload
@@ -210,17 +207,6 @@ export const apiService = {
         await apiClient.delete(`/accounts/${accountId}`);
     },
 
-    // Инвестиционные инструменты
-    async getIncomeInstruments(): Promise<IncomeInstrumentDto[]> {
-        const response = await apiClient.get<IncomeInstrumentDto[]>('/income-instruments');
-        return response.data;
-    },
-
-    async createIncomeInstrument(payload: CreateIncomeInstrumentPayload): Promise<string> {
-        const response = await apiClient.post<string>('/income-instruments', payload);
-        return response.data;
-    },
-
     // Работа с категориями
     async createCategory(payload: CreateCategoryPayload): Promise<string> {
         const response = await apiClient.post<string>('/TransactionCategory', payload);
@@ -245,13 +231,6 @@ export const apiService = {
     async getNetWorthTrend(months?: number): Promise<NetWorthSnapshotDto[]> {
         const response = await apiClient.get<NetWorthSnapshotDto[]>('/analytics/net-worth', {
             params: months ? { months } : {},
-        });
-        return response.data;
-    },
-
-    async getFutureIncomeOverview(salaryMonths?: number): Promise<FutureIncomeOverviewDto> {
-        const response = await apiClient.get<FutureIncomeOverviewDto>('/analytics/future-income', {
-            params: salaryMonths ? { salaryMonths } : {},
         });
         return response.data;
     },

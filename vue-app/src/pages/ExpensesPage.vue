@@ -80,7 +80,7 @@ onMounted(async () => {
       title="Транзакции"
       subtitle="Фильтруйте, изучайте и управляйте всеми расходами и доходами"
       :breadcrumbs="[
-        { label: 'Главная', to: '/dashboard' },
+        { label: 'Главная', to: '/analytics' },
         { label: 'Транзакции' }
       ]"
     >

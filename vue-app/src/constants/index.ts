@@ -9,22 +9,10 @@ export const APP_CONFIG = {
 
 export const NAVIGATION_ITEMS = [
   {
-    id: 'home',
-    label: 'Home',
-    icon: 'pi pi-home',
-    route: '/'
-  },
-  {
     id: 'analytics',
     label: 'Analytics',
     icon: 'pi pi-chart-line',
     route: '/analytics'
-  },
-  {
-    id: 'future-income',
-    label: 'Future Income',
-    icon: 'pi pi-chart-bar',
-    route: '/future-income'
   },
   {
     id: 'accounts',
@@ -33,22 +21,10 @@ export const NAVIGATION_ITEMS = [
     route: '/accounts'
   },
   {
-    id: 'categories',
-    label: 'Categories',
-    icon: 'pi pi-tags',
-    route: '/profile#categories'
-  },
-  {
     id: 'expenses',
     label: 'Transactions',
     icon: 'pi pi-arrow-circle-down',
     route: '/expenses'
-  },
-  {
-    id: 'profile',
-    label: 'Profile',
-    icon: 'pi pi-user',
-    route: '/profile'
   }
 ] as const;
 

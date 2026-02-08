@@ -130,7 +130,7 @@ onMounted(async () => {
       title="Счета"
       subtitle="Управляйте всеми банковскими счетами и кошельками в одном месте"
       :breadcrumbs="[
-        { label: 'Главная', to: '/dashboard' },
+        { label: 'Главная', to: '/analytics' },
         { label: 'Счета' }
       ]"
     >

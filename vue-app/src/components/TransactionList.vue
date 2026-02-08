@@ -430,6 +430,12 @@ const handleRowClick = (event: { data: EnrichedTransaction }) => {
               <div class="transfer-amount__row positive">
                 + {{ formatCurrency(slotProps.data.transferToAmount ?? 0, slotProps.data.transferToCurrency) }}
               </div>
+              <div
+                v-if="slotProps.data.transferRateLabel"
+                class="transfer-amount__rate"
+              >
+                {{ slotProps.data.transferRateLabel }}
+              </div>
             </div>
             <div
               v-else
@@ -506,14 +512,8 @@ const handleRowClick = (event: { data: EnrichedTransaction }) => {
               >
                 {{ slotProps.data.description }}
               </span>
-              <small
-                v-if="slotProps.data.transferRateLabel"
-                class="transfer-rate"
-              >
-                {{ slotProps.data.transferRateLabel }}
-              </small>
               <span
-                v-if="!slotProps.data.description && !slotProps.data.transferRateLabel"
+                v-if="!slotProps.data.description"
                 class="description-empty"
               >—</span>
             </div>
@@ -624,6 +624,11 @@ const handleRowClick = (event: { data: EnrichedTransaction }) => {
   color: var(--ft-success-400);
 }
 
+.transfer-amount__rate {
+  font-size: var(--ft-text-xs);
+  color: var(--ft-text-tertiary);
+}
+
 .category-cell {
   display: flex;
   align-items: center;
@@ -656,11 +661,6 @@ const handleRowClick = (event: { data: EnrichedTransaction }) => {
 }
 
 .description-empty {
-  color: var(--ft-text-tertiary);
-}
-
-.transfer-rate {
-  font-size: var(--ft-text-xs);
   color: var(--ft-text-tertiary);
 }
 

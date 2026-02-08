@@ -25,8 +25,8 @@ export const router = createRouter({
     {
       path: '/dashboard',
       name: 'dashboard',
-      component: () => import('../pages/HomePage.vue'),
-      meta: { title: 'Dashboard', requiresAuth: true },
+      redirect: '/analytics',
+      meta: { requiresAuth: true },
     },
     {
       path: '/accounts',
@@ -55,8 +55,8 @@ export const router = createRouter({
     {
       path: '/future-income',
       name: 'future-income',
-      component: () => import('../pages/FutureIncomePage.vue'),
-      meta: { title: 'Future Income', requiresAuth: true },
+      redirect: '/analytics',
+      meta: { requiresAuth: true },
     },
     {
       path: '/profile',
@@ -82,7 +82,8 @@ export const router = createRouter({
 
 // Navigation guard to check authentication
 router.beforeEach(async to => {
-  const needsAuthCheck = !!to.meta.requiresAuth || to.name === 'login' || to.name === 'register';
+  const needsAuthCheck =
+    !!to.meta.requiresAuth || to.name === 'login' || to.name === 'register' || to.name === 'landing';
   if (!needsAuthCheck) return true;
 
   const authStore = useAuthStore();
@@ -93,7 +94,11 @@ router.beforeEach(async to => {
   }
 
   if ((to.name === 'login' || to.name === 'register') && isAuthenticated) {
-    return '/dashboard';
+    return '/analytics';
+  }
+
+  if (to.name === 'landing' && isAuthenticated) {
+    return '/analytics';
   }
 
   return true;
