@@ -21,13 +21,6 @@ export function getAccountTypeInfo(type: AccountType): AccountTypeInfo {
         color: '#2563EB', // Primary blue
         description: 'Дебетовые карты и банковские счета'
       }
-    case 1:
-      return {
-        label: 'Банковский счет',
-        icon: 'pi-building',
-        color: '#2563EB',
-        description: 'Дебетовые карты и банковские счета'
-      }
     case 2: // Crypto
       return {
         label: 'Криптовалютный счет',
@@ -105,43 +98,4 @@ export function getCurrencyFlag(currencyCode: string): string {
   }
 
   return flagMap[currencyCode.toUpperCase()] || ''
-}
-
-/**
- * Format account balance with currency
- */
-export function formatAccountBalance(balance: number, currencySymbol: string): string {
-  return `${currencySymbol} ${balance.toLocaleString('ru-RU', {
-    minimumFractionDigits: 2,
-    maximumFractionDigits: 2
-  })}`
-}
-
-/**
- * Get account status badge info
- */
-export interface AccountStatusInfo {
-  label: string
-  severity: 'success' | 'info' | 'warning' | 'danger' | 'secondary'
-  icon?: string
-}
-
-export function getAccountStatus(isMain: boolean, isArchived: boolean = false): AccountStatusInfo | null {
-  if (isArchived) {
-    return {
-      label: 'Архивный',
-      severity: 'secondary',
-      icon: 'pi-archive'
-    }
-  }
-
-  if (isMain) {
-    return {
-      label: 'Основной',
-      severity: 'success',
-      icon: 'pi-star-fill'
-    }
-  }
-
-  return null
 }

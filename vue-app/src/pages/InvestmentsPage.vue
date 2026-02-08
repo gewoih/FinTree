@@ -12,7 +12,7 @@ import InvestmentAccountCard from '../components/Investments/InvestmentAccountCa
 import { mapAccount } from '../utils/mappers';
 import { formatCurrency, formatDate } from '../utils/formatters';
 
-interface InvestmentAccount extends InvestmentAccountOverviewDto {
+interface InvestmentAccount extends Omit<InvestmentAccountOverviewDto, 'type'> {
   type: AccountType;
   currency?: Account['currency'];
   balance: number;
@@ -46,6 +46,7 @@ const accounts = computed<InvestmentAccount[]>(() => {
     return {
       ...item,
       ...mapped,
+      type: mapped.type,
       returnPercent: item.returnPercent,
       lastAdjustedAt: item.lastAdjustedAt,
       isMain: false,

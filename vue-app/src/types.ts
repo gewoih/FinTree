@@ -38,7 +38,8 @@ export interface TransactionCategoryDto {
 }
 
 // Extended interfaces for frontend use
-export interface Account extends AccountDto {
+export interface Account extends Omit<AccountDto, 'type'> {
+    type: AccountType;
     currency?: Currency | null;
 }
 
