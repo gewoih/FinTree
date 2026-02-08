@@ -232,7 +232,39 @@ public sealed class AccountsService(
                 .Where(flow => flow.OccurredAt >= periodFrom && flow.OccurredAt < periodToExclusive)
                 .ToList();
 
-            var returnPercent = ComputeModifiedDietz(periodFrom, periodToExclusive, startBalance, endBalance, periodCashFlows);
+            var hasAnchorAdjustment = accountAdjustments.Any(a => a.OccurredAt <= periodFrom);
+            var effectiveFrom = periodFrom;
+            var effectiveStartBalance = startBalance;
+            var effectiveCashFlows = periodCashFlows;
+            var canComputeReturn = true;
+
+            if (!hasAnchorAdjustment)
+            {
+                var firstAdjustmentInPeriod = accountAdjustments
+                    .FirstOrDefault(a => a.OccurredAt >= periodFrom && a.OccurredAt < periodToExclusive);
+
+                if (firstAdjustmentInPeriod.OccurredAt == default)
+                {
+                    canComputeReturn = false;
+                }
+                else
+                {
+                    effectiveFrom = firstAdjustmentInPeriod.OccurredAt;
+                    effectiveStartBalance = firstAdjustmentInPeriod.Amount;
+                    effectiveCashFlows = periodCashFlows
+                        .Where(flow => flow.OccurredAt > effectiveFrom)
+                        .ToList();
+                }
+            }
+
+            var returnPercent = canComputeReturn
+                ? ComputeModifiedDietz(
+                    effectiveFrom,
+                    periodToExclusive,
+                    effectiveStartBalance,
+                    endBalance,
+                    effectiveCashFlows)
+                : null;
 
             var rate = rateByCurrency.TryGetValue(account.CurrencyCode, out var foundRate) ? foundRate : 1m;
             var balanceInBase = Round2(endBalance * rate);
@@ -413,7 +445,7 @@ public sealed class AccountsService(
             .FirstOrDefault();
 
         var balance = anchorAdjustment.OccurredAt == default
-            ? 0m
+            ? 0
             : anchorAdjustment.Amount;
 
         var anchorAt = anchorAdjustment.OccurredAt == default ? (DateTime?)null : anchorAdjustment.OccurredAt;
@@ -465,6 +497,7 @@ public sealed class AccountsService(
         var rate = (endBalance - startBalance - totalFlow) / denominator;
         return Math.Round(rate, 4, MidpointRounding.AwayFromZero);
     }
+
 
     private static decimal Round2(decimal value)
         => Math.Round(value, 2, MidpointRounding.AwayFromZero);
