@@ -66,6 +66,7 @@ builder.Services.Configure<AuthOptions>(options =>
     options.Audience = authOptions.Audience;
     options.TokenLifetimeDays = authOptions.TokenLifetimeDays;
 });
+builder.Services.Configure<TelegramAuthOptions>(builder.Configuration.GetSection("Telegram"));
 
 builder.Services.AddIdentity<User, Role>(o =>
     {

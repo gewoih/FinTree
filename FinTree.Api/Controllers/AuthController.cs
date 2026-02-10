@@ -31,6 +31,14 @@ public class AuthController(
         return Ok(new AuthPublicResponse(response.Email, response.UserId));
     }
 
+    [HttpPost("telegram")]
+    public async Task<IActionResult> TelegramLogin([FromBody] TelegramLoginRequest request, CancellationToken ct)
+    {
+        var response = await authService.LoginWithTelegramAsync(request, ct);
+        SetAuthCookie(response.Token);
+        return Ok(new AuthPublicResponse(response.Email, response.UserId));
+    }
+
     [HttpPost("logout")]
     public IActionResult Logout()
     {

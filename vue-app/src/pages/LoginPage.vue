@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, onMounted, ref } from 'vue'
+import { computed, onBeforeUnmount, onMounted, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuthStore } from '../stores/auth'
 
@@ -8,6 +8,8 @@ const authStore = useAuthStore()
 
 const email = ref('')
 const password = ref('')
+const telegramMount = ref<HTMLElement | null>(null)
+const telegramScript = ref<HTMLScriptElement | null>(null)
 
 const isDisabled = computed(() => !email.value || !password.value || authStore.isLoading)
 
@@ -15,6 +17,50 @@ onMounted(() => {
   authStore.clearError()
   if (authStore.isAuthenticated) {
     void router.push('/analytics')
+  }
+
+  const botName = (import.meta.env.VITE_TELEGRAM_BOT_NAME as string | undefined) ?? 'financetree_bot'
+  const mount = telegramMount.value
+  if (!mount) return
+
+  const handleTelegramAuth = async (payload: {
+    id: number
+    auth_date: number
+    hash: string
+    first_name?: string
+    last_name?: string
+    username?: string
+    photo_url?: string
+  }) => {
+    const success = await authStore.loginWithTelegram(payload)
+    if (success) {
+      router.push('/analytics')
+    }
+  }
+
+  ;(window as Window & { onTelegramAuth?: typeof handleTelegramAuth }).onTelegramAuth = handleTelegramAuth
+
+  const script = document.createElement('script')
+  script.async = true
+  script.src = 'https://telegram.org/js/telegram-widget.js?22'
+  script.setAttribute('data-telegram-login', botName)
+  script.setAttribute('data-size', 'large')
+  script.setAttribute('data-radius', '12')
+  script.setAttribute('data-userpic', 'false')
+  script.setAttribute('data-onauth', 'onTelegramAuth(user)')
+  script.setAttribute('data-request-access', 'write')
+
+  mount.appendChild(script)
+  telegramScript.value = script
+})
+
+onBeforeUnmount(() => {
+  const script = telegramScript.value
+  if (script?.parentElement) {
+    script.parentElement.removeChild(script)
+  }
+  if ((window as Window & { onTelegramAuth?: unknown }).onTelegramAuth) {
+    delete (window as Window & { onTelegramAuth?: unknown }).onTelegramAuth
   }
 })
 
@@ -97,6 +143,18 @@ const handleLogin = async () => {
             block
           />
         </form>
+
+        <div class="auth__divider">
+          <span>или</span>
+        </div>
+
+        <div class="auth__telegram">
+          <p>Войти через Telegram</p>
+          <div
+            ref="telegramMount"
+            class="auth__telegram-widget"
+          />
+        </div>
 
         <footer class="auth__footer">
           <span>Нет аккаунта?</span>
@@ -226,6 +284,49 @@ const handleLogin = async () => {
   font-size: var(--ft-text-sm);
   color: var(--ft-text-secondary);
   margin-top: var(--ft-space-4);
+}
+
+.auth__divider {
+  position: relative;
+  display: grid;
+  place-items: center;
+  margin: var(--ft-space-2) 0;
+  color: var(--ft-text-tertiary);
+  font-size: var(--ft-text-xs);
+  text-transform: uppercase;
+  letter-spacing: 0.16em;
+}
+
+.auth__divider::before {
+  content: '';
+  position: absolute;
+  inset: 50% 0 auto;
+  height: 1px;
+  background: var(--ft-border-subtle);
+  opacity: 0.6;
+}
+
+.auth__divider span {
+  position: relative;
+  padding: 0 var(--ft-space-3);
+  background: var(--ft-surface-base);
+}
+
+.auth__telegram {
+  display: grid;
+  gap: var(--ft-space-2);
+  justify-items: center;
+  text-align: center;
+  color: var(--ft-text-secondary);
+  font-size: var(--ft-text-sm);
+}
+
+.auth__telegram p {
+  margin: 0;
+}
+
+.auth__telegram-widget :deep(script) {
+  display: block;
 }
 
 .auth__footer a {

@@ -1,5 +1,7 @@
+using System.Globalization;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
+using System.Security.Cryptography;
 using System.Text;
 using FinTree.Domain.Categories;
 using FinTree.Domain.Identity;
@@ -7,6 +9,7 @@ using FinTree.Infrastructure.Database;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
+using Microsoft.EntityFrameworkCore;
 
 namespace FinTree.Application.Users;
 
@@ -14,9 +17,11 @@ public sealed class AuthService(
     UserManager<User> userManager,
     SignInManager<User> signInManager,
     IOptions<AuthOptions> authOptionsAccessor,
+    IOptions<TelegramAuthOptions> telegramOptionsAccessor,
     AppDbContext context)
 {
     private readonly AuthOptions _authOptions = authOptionsAccessor.Value;
+    private readonly TelegramAuthOptions _telegramOptions = telegramOptionsAccessor.Value;
 
     public async Task<AuthResponse> RegisterAsync(RegisterRequest request, CancellationToken ct)
     {
@@ -51,6 +56,40 @@ public sealed class AuthService(
 
         var token = GenerateJwtToken(user);
         return new AuthResponse(token, user.Email!, user.Id);
+    }
+
+    public async Task<AuthResponse> LoginWithTelegramAsync(TelegramLoginRequest request, CancellationToken ct)
+    {
+        if (string.IsNullOrWhiteSpace(_telegramOptions.BotToken))
+            throw new InvalidOperationException("Telegram login is not configured.");
+
+        ValidateTelegramLogin(request, _telegramOptions.BotToken);
+
+        var user = await userManager.Users.FirstOrDefaultAsync(u => u.TelegramUserId == request.Id, ct);
+        if (user != null)
+            return new AuthResponse(GenerateJwtToken(user), user.Email!, user.Id);
+
+        var email = $"tg-{request.Id}@fin-tree.ru";
+        var username = !string.IsNullOrWhiteSpace(request.Username)
+            ? request.Username
+            : $"tg_{request.Id}";
+
+        var newUser = new User(username, email, "RUB");
+        newUser.LinkTelegramAccount(request.Id);
+
+        await using var transaction = await context.Database.BeginTransactionAsync(ct);
+        var result = await userManager.CreateAsync(newUser);
+        if (!result.Succeeded)
+        {
+            var errors = string.Join(", ", result.Errors.Select(e => e.Description));
+            throw new InvalidOperationException($"Telegram login failed: {errors}");
+        }
+
+        await SeedDefaultCategoriesAsync(newUser, ct);
+        await context.SaveChangesAsync(ct);
+        await transaction.CommitAsync(ct);
+
+        return new AuthResponse(GenerateJwtToken(newUser), newUser.Email!, newUser.Id);
     }
 
     private string GenerateJwtToken(User user)
@@ -88,5 +127,48 @@ public sealed class AuthService(
             .ToList();
 
         return context.TransactionCategories.AddRangeAsync(categories, ct);
+    }
+
+    private static void ValidateTelegramLogin(TelegramLoginRequest request, string botToken)
+    {
+        if (request.Id <= 0)
+            throw new UnauthorizedAccessException("Invalid Telegram user id.");
+
+        if (string.IsNullOrWhiteSpace(request.Hash))
+            throw new UnauthorizedAccessException("Invalid Telegram hash.");
+
+        var authDate = DateTimeOffset.FromUnixTimeSeconds(request.AuthDate);
+        if (DateTimeOffset.UtcNow - authDate > TimeSpan.FromDays(1))
+            throw new UnauthorizedAccessException("Telegram login expired.");
+
+        var data = new SortedDictionary<string, string>
+        {
+            ["auth_date"] = request.AuthDate.ToString(CultureInfo.InvariantCulture),
+            ["id"] = request.Id.ToString(CultureInfo.InvariantCulture)
+        };
+
+        if (!string.IsNullOrWhiteSpace(request.FirstName))
+            data["first_name"] = request.FirstName;
+        if (!string.IsNullOrWhiteSpace(request.LastName))
+            data["last_name"] = request.LastName;
+        if (!string.IsNullOrWhiteSpace(request.Username))
+            data["username"] = request.Username;
+        if (!string.IsNullOrWhiteSpace(request.PhotoUrl))
+            data["photo_url"] = request.PhotoUrl;
+
+        var dataCheckString = string.Join("\n", data.Select(kvp => $"{kvp.Key}={kvp.Value}"));
+        var secretKey = SHA256.HashData(Encoding.UTF8.GetBytes(botToken));
+
+        using var hmac = new HMACSHA256(secretKey);
+        var computedHash = hmac.ComputeHash(Encoding.UTF8.GetBytes(dataCheckString));
+        var computedHex = Convert.ToHexString(computedHash).ToLowerInvariant();
+
+        var receivedHash = request.Hash.Trim().ToLowerInvariant();
+        var receivedBytes = Encoding.UTF8.GetBytes(receivedHash);
+        var computedBytes = Encoding.UTF8.GetBytes(computedHex);
+
+        if (receivedBytes.Length != computedBytes.Length ||
+            !CryptographicOperations.FixedTimeEquals(receivedBytes, computedBytes))
+            throw new UnauthorizedAccessException("Telegram login validation failed.");
     }
 }

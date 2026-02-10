@@ -19,6 +19,16 @@ interface RegisterPayload {
     passwordConfirmation: string;
 }
 
+interface TelegramLoginPayload {
+    id: number;
+    auth_date: number;
+    hash: string;
+    first_name?: string;
+    last_name?: string;
+    username?: string;
+    photo_url?: string;
+}
+
 export const useAuthStore = defineStore('auth', () => {
     const userEmail = ref<string | null>(null);
     const isLoading = ref(false);
@@ -70,6 +80,27 @@ export const useAuthStore = defineStore('auth', () => {
         }
     }
 
+    async function loginWithTelegram(payload: TelegramLoginPayload): Promise<boolean> {
+        isLoading.value = true;
+        error.value = null;
+
+        try {
+            const response = await axios.post<AuthResponse>('/api/auth/telegram', payload, {
+                withCredentials: true,
+            });
+            const { email } = response.data;
+            setAuthenticated(email);
+
+            return true;
+        } catch (err: any) {
+            console.error('Telegram login failed:', err);
+            error.value = err.response?.data?.error || 'Не удалось войти через Telegram.';
+            return false;
+        } finally {
+            isLoading.value = false;
+        }
+    }
+
     async function logout() {
         try {
             await axios.post('/api/auth/logout', null, { withCredentials: true });
@@ -114,6 +145,7 @@ export const useAuthStore = defineStore('auth', () => {
         error,
         login,
         register,
+        loginWithTelegram,
         logout,
         clearError,
         ensureSession,
