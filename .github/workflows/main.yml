@@ -1,0 +1,17 @@
+name: Deploy (self-hosted)
+
+on:
+  push:
+    branches: [ main ]
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    runs-on: [self-hosted, linux, x64, fintree, prod]
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Build & up via docker compose
+        run: |
+          docker compose --env-file /opt/fintree/.env up -d --build
