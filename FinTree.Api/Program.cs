@@ -70,15 +70,11 @@ builder.Services.Configure<AuthOptions>(options =>
 builder.Services.AddIdentity<User, Role>(o =>
     {
         o.User.RequireUniqueEmail = true;
-        o.SignIn.RequireConfirmedEmail = false;
         o.Password.RequireNonAlphanumeric = true;
         o.Password.RequireDigit = true;
         o.Password.RequireLowercase = true;
         o.Password.RequireUppercase = true;
         o.Password.RequiredLength = 8;
-        o.Lockout.AllowedForNewUsers = true;
-        o.Lockout.MaxFailedAccessAttempts = 5;
-        o.Lockout.DefaultLockoutTimeSpan = TimeSpan.FromMinutes(15);
     })
     .AddEntityFrameworkStores<AppDbContext>()
     .AddDefaultTokenProviders();
