@@ -6,86 +6,77 @@ const router = useRouter()
 
 const features = [
   {
-    icon: 'pi-wallet',
-    title: 'Мультивалютные счета',
-    description: 'Подключайте любые банки и кошельки, контролируйте баланс в одной панели.'
+    icon: 'pi-telegram',
+    title: 'Учёт расходов в Telegram',
+    description: 'Записывайте траты одной строкой через @financetree_bot. В среднем это занимает меньше 10 секунд.'
   },
   {
     icon: 'pi-chart-line',
-    title: 'Глубокая аналитика',
-    description: 'От диаграмм до прогнозов — принимайте решения на основе данных, а не интуиции.'
+    title: 'Честная аналитика бюджета',
+    description: 'Доля сбережений, чистый поток, пики трат и необязательные расходы — все по делу.'
   },
   {
-    icon: 'pi-tags',
-    title: 'Умные категории',
-    description: 'Автокатегоризация, гибкие фильтры и контроль обязательных платежей.'
+    icon: 'pi-wallet',
+    title: 'Контроль ликвидного капитала',
+    description: 'Счета, наличные и инвестиции в одном месте без лишних деталей.'
   },
   {
     icon: 'pi-shield',
-    title: 'Корпоративная защита',
-    description: 'Шифрование, 2FA и приватность по умолчанию. Мы не продаем и не делимся данными.'
+    title: 'Безопасность без компромиссов',
+    description: 'Мы не подключаемся к банкам и не продаем данные. Все вводится только вами.'
   }
 ] as const
 
 const steps = [
   {
     number: '01',
-    title: 'Подключите счета',
-    description: 'Добавьте свои карты и кошельки — валюта и страна значения не имеют.'
+    title: 'Привяжите Telegram',
+    description: 'Отправьте `/id` боту @financetree_bot и вставьте цифры в профиле FinTree.'
   },
   {
     number: '02',
-    title: 'Импортируйте операции',
-    description: 'Загрузите CSV или подтягивайте движения автоматически через интеграции.'
+    title: 'Добавляйте операции',
+    description: 'Пишите траты в бота @financetree_bot сразу или переносите пачкой из заметок.'
   },
   {
     number: '03',
-    title: 'Получайте инсайты',
-    description: 'Отслеживайте динамику, ставьте цели и улучшайте финансовое здоровье.'
+    title: 'Анализируйте раз в неделю',
+    description: 'Веб-кабинет покажет, где теряются деньги и сколько вы реально откладываете.'
   }
 ] as const
 
 const pricing = [
   {
-    name: 'Starter',
-    price: '0 ₽',
-    accent: false,
-    description: 'Для личного контроля расходов и простых бюджетов.',
-    features: [
-      'Неограниченные счета и категории',
-      'Синхронизация банков вручную',
-      'Базовая аналитика и экспорт CSV'
-    ]
-  },
-  {
-    name: 'Pro',
-    price: '690 ₽',
+    name: 'Единый тариф',
+    price: '1 месяц бесплатно',
+    subprice: 'Далее 390 ₽/мес или 3 900 ₽/год (2 месяца в подарок)',
     accent: true,
-    description: 'Для продвинутых аналитиков и управления капиталом.',
+    description: 'Полный доступ к FinTree без ограничений.',
     features: [
-      'Автосинхронизация по API',
-      'Прогнозирование и алерты',
-      'Командный доступ и PDF-отчеты'
-    ]
+      'Telegram-бот для учёта расходов',
+      'Полная аналитика бюджета и капитала',
+      'Счета, категории и инвестиции'
+    ],
+    ctaLabel: 'Начать бесплатный месяц'
   }
 ] as const
 
 const faq = [
   {
-    question: 'FinTree действительно бесплатен?',
-    answer: 'Тариф Starter останется бесплатным. Вы платите только за дополнительные инструменты и автоматизацию.'
+    question: 'Почему ввод вручную — это нормально?',
+    answer: 'Так вы сохраняете точность и контролируете привычки. Telegram-бот делает ввод быстрым.'
   },
   {
-    question: 'Как вы защищаете мои данные?',
-    answer: 'Данные шифруются на клиенте, хранятся в изолированной инфраструктуре и не передаются третьим лицам.'
+    question: 'Как привязать Telegram?',
+    answer: 'Отправьте боту @financetree_bot команду `/id`, скопируйте цифры и вставьте их в профиле FinTree.'
   },
   {
-    question: 'Можно ли импортировать историю из банка?',
-    answer: 'Да. Мы поддерживаем CSV, MT940 и прямые интеграции с банками и фин-сервисами.'
+    question: 'Что с безопасностью данных?',
+    answer: 'Мы не подключаемся к банкам. Доступ к данным есть только у вас.'
   },
   {
-    question: 'Поддерживаете ли вы бизнес-пользователей?',
-    answer: 'В Pro-доступе предусмотрены рабочие пространства, совместная работа и расширенные отчеты.'
+    question: 'Что будет после бесплатного месяца?',
+    answer: 'Вы сможете продолжить пользоваться сервисом по подписке или оформить год со скидкой.'
   }
 ] as const
 
@@ -167,26 +158,26 @@ const scrollToSection = (sectionId: string) => {
                 class="pi pi-bolt"
                 aria-hidden="true"
               />
-              <span>Полный контроль личных финансов</span>
+              <span>Telegram для учёта · Веб для аналитики</span>
             </span>
             <h1 class="landing__hero-title">
-              Финансовый помощник,<br>
-              который работает за вас
+              Финансы под контролем<br>
+              без сложных таблиц
             </h1>
             <p class="landing__hero-subtitle">
-              Соедините счета, структурируйте расходы и моментально получайте аналитику, которой доверяют продвинутые инвесторы.
+              Вносите траты в Telegram за 10 секунд и получайте понятную аналитику на сайте раз в неделю.
             </p>
 
             <div class="landing__hero-actions">
               <AppButton
-                label="Начать бесплатно"
+                label="Начать бесплатный месяц"
                 icon="pi pi-arrow-right"
                 icon-pos="right"
                 size="lg"
                 @click="router.push('/register')"
               />
               <AppButton
-                label="Посмотреть веб-интерфейс"
+                label="Посмотреть аналитику"
                 variant="ghost"
                 size="lg"
                 icon="pi pi-play"
@@ -197,15 +188,15 @@ const scrollToSection = (sectionId: string) => {
             <div class="landing__trust">
               <div class="landing__trust-item">
                 <i class="pi pi-shield" />
-                <span>Шифрование от клиента до сервера</span>
+                <span>Без подключения банков</span>
               </div>
               <div class="landing__trust-item">
                 <i class="pi pi-check-circle" />
-                <span>Данные остаются только у вас</span>
+                <span>Данные не покидают FinTree</span>
               </div>
               <div class="landing__trust-item">
                 <i class="pi pi-sparkles" />
-                <span>Готовый UI в тёмной теме</span>
+                <span>Аналитика по делу, без шума</span>
               </div>
             </div>
           </div>
@@ -224,20 +215,20 @@ const scrollToSection = (sectionId: string) => {
             </template>
             <div class="landing__hero-card-body">
               <div class="landing__hero-metric">
-                <span class="landing__hero-metric-label">Финансовое здоровье</span>
-                <strong>82 / 100</strong>
-                <small>+12 за последние 30 дней</small>
+                <span class="landing__hero-metric-label">Доля сбережений</span>
+                <strong>24%</strong>
+                <small>+6% за месяц</small>
               </div>
               <div class="landing__hero-metric landing__hero-metric--split">
                 <article>
-                  <span class="landing__hero-metric-label">Подушка безопасности</span>
-                  <strong>6.3 мес</strong>
-                  <small>цель: 8 месяцев</small>
+                  <span class="landing__hero-metric-label">Ликвидные месяцы</span>
+                  <strong>5.1 мес</strong>
+                  <small>цель: 6 месяцев</small>
                 </article>
                 <article>
-                  <span class="landing__hero-metric-label">Темп сбережений</span>
-                  <strong>28%</strong>
-                  <small>+6% к прошлому месяцу</small>
+                  <span class="landing__hero-metric-label">Чистый поток</span>
+                  <strong>+32 400 ₽</strong>
+                  <small>текущий месяц</small>
                 </article>
               </div>
               <div class="landing__hero-chart">
@@ -257,8 +248,8 @@ const scrollToSection = (sectionId: string) => {
       >
         <div class="landing__container">
           <header class="landing__section-header">
-            <h2>Что делает FinTree удобным</h2>
-            <p>Лучшие практики наблюдаемости и планирования денег в одном месте.</p>
+            <h2>Почему FinTree работает</h2>
+            <p>Минимум действий каждый день — максимум ясности на отчётах.</p>
           </header>
 
           <div class="card-grid card-grid--balanced card-grid--dense landing__feature-grid">
@@ -285,8 +276,8 @@ const scrollToSection = (sectionId: string) => {
       >
         <div class="landing__container">
           <header class="landing__section-header">
-            <h2>Три шага до полной прозрачности</h2>
-            <p>Интеграция занимает меньше 5 минут — дальше система работает сама.</p>
+            <h2>Понятный процесс без лишних шагов</h2>
+            <p>Телеграм закрывает ввод, веб — аналитику и выводы.</p>
           </header>
 
           <div class="card-grid card-grid--balanced landing__steps">
@@ -311,8 +302,8 @@ const scrollToSection = (sectionId: string) => {
       >
         <div class="landing__container">
           <header class="landing__section-header">
-            <h2>Прозрачные тарифы</h2>
-            <p>Платите только за автоматизацию и расширенные отчеты — базовый контроль бесплатен.</p>
+            <h2>Прозрачная подписка</h2>
+            <p>Один тариф, один месяц бесплатно и полный доступ ко всем возможностям.</p>
           </header>
 
           <div class="card-grid landing__pricing">
@@ -330,7 +321,10 @@ const scrollToSection = (sectionId: string) => {
                   <h3>{{ plan.name }}</h3>
                   <p>{{ plan.description }}</p>
                 </div>
-                <strong>{{ plan.price }}</strong>
+                <div class="landing__pricing-price">
+                  <strong>{{ plan.price }}</strong>
+                  <span v-if="plan.subprice">{{ plan.subprice }}</span>
+                </div>
               </header>
 
               <ul class="landing__pricing-features">
@@ -347,7 +341,7 @@ const scrollToSection = (sectionId: string) => {
               </ul>
 
               <AppButton
-                :label="plan.accent ? 'Попробовать 14 дней' : 'Начать бесплатно'"
+                :label="plan.ctaLabel"
                 block
                 :variant="plan.accent ? 'primary' : 'ghost'"
                 @click="router.push('/register')"
@@ -399,8 +393,8 @@ const scrollToSection = (sectionId: string) => {
       <section class="landing__cta">
         <div class="landing__container landing__cta-inner">
           <div>
-            <h2>Готовы к спокойствию за финансы?</h2>
-            <p>Запустите FinTree сегодня и получите прозрачность денежных потоков уже завтра.</p>
+            <h2>Готовы увидеть реальную картину бюджета?</h2>
+            <p>Начните бесплатный месяц и получите первые выводы уже через неделю.</p>
           </div>
           <AppButton
             label="Создать аккаунт"
@@ -423,7 +417,7 @@ const scrollToSection = (sectionId: string) => {
             <i class="pi pi-chart-bar" />
             <span>FinTree</span>
           </router-link>
-          <p>Интеллектуальный финансовый ассистент с тёплой тёмной темой.</p>
+          <p>Финансовый помощник для тех, кто хочет тратить осознанно.</p>
         </div>
         <nav class="landing__footer-links">
           <div>
@@ -450,16 +444,16 @@ const scrollToSection = (sectionId: string) => {
           <div>
             <h4>Компания</h4>
             <a href="mailto:hello@fintree.app">Написать нам</a>
-            <a href="#">Блог</a>
-            <a href="#">Карьера</a>
+            <router-link to="/blog">Блог</router-link>
+            <router-link to="/careers">Карьера</router-link>
           </div>
         </nav>
       </div>
       <div class="landing__footer-meta">
         <span>© {{ currentYear }} FinTree. Все права защищены.</span>
         <div class="landing__footer-meta-links">
-          <a href="#">Политика конфиденциальности</a>
-          <a href="#">Условия использования</a>
+          <router-link to="/privacy">Политика конфиденциальности</router-link>
+          <router-link to="/terms">Условия использования</router-link>
         </div>
       </div>
     </footer>
@@ -796,6 +790,19 @@ const scrollToSection = (sectionId: string) => {
 .landing__pricing-header strong {
   font-size: var(--ft-text-2xl);
   color: var(--ft-text-primary);
+}
+
+.landing__pricing-price {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: var(--ft-space-1);
+  text-align: right;
+}
+
+.landing__pricing-price span {
+  font-size: var(--ft-text-sm);
+  color: var(--ft-text-secondary);
 }
 
 .landing__pricing-features {

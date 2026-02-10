@@ -9,6 +9,7 @@ import ForecastCard from '../components/analytics/ForecastCard.vue';
 import CategoryDeltaCard from '../components/analytics/CategoryDeltaCard.vue';
 import NetWorthLineCard from '../components/analytics/NetWorthLineCard.vue';
 import { useUserStore } from '../stores/user';
+import { useFinanceStore } from '../stores/finance';
 import { apiService } from '../services/api.service';
 import DatePicker from 'primevue/datepicker';
 import type {
@@ -48,9 +49,19 @@ interface PeakDayItem {
   shareLabel: string;
 }
 
+interface OnboardingStep {
+  key: string;
+  title: string;
+  description: string;
+  completed: boolean;
+  actionLabel?: string;
+  actionTo?: string;
+}
+
 type MetricAccent = 'good' | 'average' | 'poor' | 'neutral' | 'income' | 'expense';
 
 const userStore = useUserStore();
+const financeStore = useFinanceStore();
 const router = useRouter();
 
 const now = new Date();
@@ -89,6 +100,50 @@ const chartPalette = reactive({
 });
 
 const baseCurrency = computed(() => userStore.baseCurrencyCode ?? 'RUB');
+
+const hasAccounts = computed(() => financeStore.accounts.length > 0);
+const hasMainAccount = computed(() => financeStore.accounts.some(account => account.isMain));
+const isTelegramLinked = computed(() => Boolean(userStore.currentUser?.telegramUserId));
+const hasTransactions = computed(() => {
+  if (!dashboard.value) return false;
+  const hasCategories = (dashboard.value.categories?.items?.length ?? 0) > 0;
+  const hasSpending = (dashboard.value.spending?.days ?? []).some(item => item.amount > 0);
+  return hasCategories || hasSpending;
+});
+
+const onboardingSteps = computed<OnboardingStep[]>(() => [
+  {
+    key: 'account',
+    title: hasAccounts.value ? 'Выберите основной счёт' : 'Создайте первый счёт',
+    description: hasAccounts.value
+      ? 'Основной счёт нужен боту для записи расходов.'
+      : 'Добавьте счёт, чтобы фиксировать траты и доходы.',
+    completed: hasMainAccount.value,
+    actionLabel: 'Открыть счета',
+    actionTo: '/accounts',
+  },
+  {
+    key: 'telegram',
+    title: 'Привяжите Telegram',
+    description: 'Отправьте `/id` боту @financetree_bot и вставьте цифры в профиль.',
+    completed: isTelegramLinked.value,
+    actionLabel: 'Открыть профиль',
+    actionTo: '/profile#telegram',
+  },
+  {
+    key: 'transactions',
+    title: 'Добавьте первые операции',
+    description: 'Пишите траты в бота @financetree_bot или добавьте вручную.',
+    completed: hasTransactions.value,
+    actionLabel: 'Открыть транзакции',
+    actionTo: '/expenses',
+  },
+]);
+
+const showOnboarding = computed(() => onboardingSteps.value.some(step => !step.completed));
+const completedOnboardingCount = computed(
+  () => onboardingSteps.value.filter(step => step.completed).length
+);
 
 const healthGroups = computed<HealthGroup[]>(() => {
   const health = dashboard.value?.health;
@@ -730,6 +785,7 @@ onMounted(async () => {
   await Promise.all([
     loadDashboard(normalizedSelectedMonth.value),
     loadNetWorth(12),
+    financeStore.fetchAccounts(),
   ]);
 });
 </script>
@@ -778,6 +834,48 @@ onMounted(async () => {
         </div>
       </template>
     </PageHeader>
+
+    <AppCard
+      v-if="showOnboarding"
+      class="onboarding-card"
+      variant="muted"
+      padding="lg"
+      elevated
+    >
+      <div class="onboarding-card__header">
+        <div>
+          <h2>Быстрый старт</h2>
+          <p>Выполните несколько шагов и получите первые инсайты.</p>
+        </div>
+        <div class="onboarding-card__progress">
+          {{ completedOnboardingCount }} / {{ onboardingSteps.length }}
+        </div>
+      </div>
+
+      <div class="onboarding-card__steps">
+        <div
+          v-for="step in onboardingSteps"
+          :key="step.key"
+          class="onboarding-card__step"
+          :class="{ 'onboarding-card__step--done': step.completed }"
+        >
+          <div class="onboarding-card__status">
+            <i :class="['pi', step.completed ? 'pi-check' : 'pi-circle-on']" />
+          </div>
+          <div class="onboarding-card__info">
+            <h3>{{ step.title }}</h3>
+            <p>{{ step.description }}</p>
+          </div>
+          <UiButton
+            v-if="!step.completed && step.actionTo"
+            :label="step.actionLabel"
+            size="sm"
+            variant="secondary"
+            @click="router.push(step.actionTo)"
+          />
+        </div>
+      </div>
+    </AppCard>
 
     <div class="analytics-grid">
       <HeroHealthCard
@@ -935,9 +1033,106 @@ onMounted(async () => {
     grid-template-columns: repeat(12, minmax(0, 1fr));
   }
 
-  .analytics-grid__item--span-12 {
+.analytics-grid__item--span-12 {
+  grid-column: 1 / -1;
+}
+
+.onboarding-card {
+  display: grid;
+  gap: var(--ft-space-4);
+  border: 1px solid rgba(59, 130, 246, 0.2);
+  background: linear-gradient(135deg, rgba(59, 130, 246, 0.12), rgba(15, 118, 110, 0.12));
+}
+
+.onboarding-card__header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: var(--ft-space-4);
+}
+
+.onboarding-card__header h2 {
+  margin: 0;
+  font-size: var(--ft-text-lg);
+  color: var(--ft-text-primary);
+}
+
+.onboarding-card__header p {
+  margin: var(--ft-space-1) 0 0;
+  color: var(--ft-text-secondary);
+}
+
+.onboarding-card__progress {
+  padding: var(--ft-space-2) var(--ft-space-3);
+  border-radius: var(--ft-radius-full);
+  background: rgba(15, 23, 42, 0.35);
+  color: var(--ft-text-primary);
+  font-weight: var(--ft-font-semibold);
+}
+
+.onboarding-card__steps {
+  display: grid;
+  gap: var(--ft-space-3);
+}
+
+.onboarding-card__step {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  align-items: center;
+  gap: var(--ft-space-3);
+  padding: var(--ft-space-3);
+  border-radius: var(--ft-radius-lg);
+  background: rgba(15, 23, 42, 0.25);
+  border: 1px solid rgba(148, 163, 184, 0.15);
+}
+
+.onboarding-card__step--done {
+  opacity: 0.7;
+}
+
+.onboarding-card__status {
+  width: 36px;
+  height: 36px;
+  border-radius: 999px;
+  display: grid;
+  place-items: center;
+  background: rgba(59, 130, 246, 0.2);
+  color: var(--ft-primary-300);
+  font-size: 1rem;
+}
+
+.onboarding-card__step--done .onboarding-card__status {
+  background: rgba(16, 185, 129, 0.2);
+  color: var(--ft-success-400);
+}
+
+.onboarding-card__info h3 {
+  margin: 0;
+  font-size: var(--ft-text-base);
+  color: var(--ft-text-primary);
+}
+
+.onboarding-card__info p {
+  margin: var(--ft-space-1) 0 0;
+  color: var(--ft-text-secondary);
+  font-size: var(--ft-text-sm);
+}
+
+@media (max-width: 640px) {
+  .onboarding-card__header {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .onboarding-card__step {
+    grid-template-columns: auto 1fr;
+    grid-template-rows: auto auto;
+  }
+
+  .onboarding-card__step :deep(.ui-button) {
     grid-column: 1 / -1;
   }
+}
 
   .analytics-grid__item--span-8 {
     grid-column: span 8;

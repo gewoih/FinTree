@@ -247,7 +247,10 @@ function handleClearTelegram() {
             @submit.prevent="handleSubmit"
           >
             <div class="profile-grid">
-              <div class="profile-row">
+              <div
+                id="telegram"
+                class="profile-row"
+              >
                 <span class="profile-label">Имя</span>
                 <p>{{ currentUser?.name ?? '—' }}</p>
               </div>
@@ -328,7 +331,13 @@ function handleClearTelegram() {
                   />
                 </div>
                 <small class="helper-text">
-                  Отправьте `/id` боту и вставьте цифры. Оставьте пустым, чтобы отвязать Telegram.
+                  Отправьте `/id` боту
+                  <a
+                    href="https://t.me/financetree_bot"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                  >@financetree_bot</a>
+                  и вставьте цифры. Оставьте пустым, чтобы отвязать Telegram.
                 </small>
               </div>
             </div>

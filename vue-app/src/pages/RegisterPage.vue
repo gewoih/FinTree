@@ -57,11 +57,11 @@ const handleRegister = async () => {
           <span>FinTree</span>
         </router-link>
         <h1>Создайте аккаунт FinTree</h1>
-        <p>Получите доступ к аналитике, автоматизации и персональным трекерам с первого дня.</p>
+        <p>Учёт расходов через Telegram и аналитика бюджета — всё в одном простом интерфейсе.</p>
         <ul class="auth__benefits">
-          <li><i class="pi pi-check" />Базовый тариф бесплатен навсегда</li>
-          <li><i class="pi pi-check" />Система работает с мультивалютой</li>
-          <li><i class="pi pi-check" />Export CSV/PDF по одному клику</li>
+          <li><i class="pi pi-check" />1 месяц бесплатного доступа</li>
+          <li><i class="pi pi-check" />Быстрый ввод трат через @financetree_bot</li>
+          <li><i class="pi pi-check" />Никаких подключений к банкам</li>
         </ul>
       </div>
 

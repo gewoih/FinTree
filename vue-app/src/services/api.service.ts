@@ -7,6 +7,7 @@ import type {
     NewTransactionPayload,
     UpdateTransactionPayload,
     CreateAccountPayload,
+    UpdateAccountPayload,
     CreateCategoryPayload,
     UpdateCategoryPayload,
     Currency,
@@ -202,6 +203,10 @@ export const apiService = {
     async createAccount(payload: CreateAccountPayload): Promise<string> {
         const response = await apiClient.post<string>('/accounts', payload);
         return response.data;
+    },
+
+    async updateAccount(payload: UpdateAccountPayload): Promise<void> {
+        await apiClient.patch(`/accounts/${payload.id}`, { name: payload.name });
     },
 
     async setPrimaryAccount(accountId: string): Promise<void> {

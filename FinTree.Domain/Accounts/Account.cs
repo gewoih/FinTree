@@ -48,6 +48,12 @@ public sealed class Account : Entity
         return transaction;
     }
 
+    public void Rename(string name)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(name);
+        Name = name.Trim();
+    }
+
     public void SetLiquidity(bool isLiquid)
     {
         IsLiquid = isLiquid;

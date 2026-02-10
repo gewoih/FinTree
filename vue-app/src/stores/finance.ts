@@ -4,6 +4,7 @@ import { apiService } from '../services/api.service.ts';
 import type {
     Account,
     AccountFormPayload,
+    UpdateAccountPayload,
     Category,
     CategoryFormPayload,
     Currency,
@@ -249,6 +250,22 @@ export const useFinanceStore = defineStore('finance', () => {
         }
     }
 
+    /**
+     * Updates an existing account
+     * @param payload - Account update data
+     * @returns Success status
+     */
+    async function updateAccount(payload: UpdateAccountPayload) {
+        try {
+            await apiService.updateAccount(payload);
+            await fetchAccounts(true);
+            return true;
+        } catch (error) {
+            console.error('Не удалось обновить счет', error);
+            return false;
+        }
+    }
+
     async function updateAccountLiquidity(accountId: string, isLiquid: boolean) {
         const previous = accounts.value.find(acc => acc.id === accountId)?.isLiquid;
         accounts.value = accounts.value.map(acc => (
@@ -386,6 +403,7 @@ export const useFinanceStore = defineStore('finance', () => {
         createTransfer,
         updateTransfer,
         createAccount,
+        updateAccount,
         setPrimaryAccount,
         deleteAccount,
         updateAccountLiquidity,

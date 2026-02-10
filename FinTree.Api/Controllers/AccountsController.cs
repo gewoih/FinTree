@@ -11,6 +11,7 @@ public class AccountsController(AccountsService accountsService) : ControllerBas
 {
     public sealed record CreateBalanceAdjustmentRequest(decimal Amount);
     public sealed record UpdateLiquidityRequest(bool IsLiquid);
+    public sealed record UpdateAccountRequest(string Name);
 
     [HttpPost]
     public async Task<IActionResult> CreateAsync([FromBody] CreateAccount command, CancellationToken ct = default)
@@ -51,6 +52,15 @@ public class AccountsController(AccountsService accountsService) : ControllerBas
         CancellationToken ct = default)
     {
         await accountsService.UpdateLiquidityAsync(accountId, request.IsLiquid, ct);
+        return Ok();
+    }
+
+    [HttpPatch("{accountId:guid}")]
+    public async Task<IActionResult> UpdateAccount(Guid accountId,
+        [FromBody] UpdateAccountRequest request,
+        CancellationToken ct = default)
+    {
+        await accountsService.UpdateAsync(accountId, new UpdateAccount(request.Name), ct);
         return Ok();
     }
 

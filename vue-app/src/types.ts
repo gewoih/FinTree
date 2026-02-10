@@ -135,6 +135,11 @@ export interface AccountFormPayload {
     isLiquid?: boolean | null;
 }
 
+export interface UpdateAccountPayload {
+    id: string;
+    name: string;
+}
+
 export interface CreateCategoryPayload {
     categoryType: CategoryType;
     name: string;

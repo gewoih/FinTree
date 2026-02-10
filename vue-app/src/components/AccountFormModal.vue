@@ -8,10 +8,11 @@ import InputSwitch from 'primevue/inputswitch';
 import { useFinanceStore } from '../stores/finance';
 import { ACCOUNT_TYPE_OPTIONS } from '../constants';
 import { useFormModal } from '../composables/useFormModal';
-import type { AccountType } from '../types';
+import type { Account, AccountType } from '../types';
 
 const props = defineProps<{
   visible: boolean;
+  account?: Account | null;
 }>();
 
 const emit = defineEmits<{
@@ -52,7 +53,7 @@ const currencyCodeForSubmit = computed(
 );
 
 const isFormReady = computed(
-  () => Boolean(name.value.trim()) && Boolean(currencyCodeForSubmit.value)
+  () => Boolean(name.value.trim()) && (isEditing.value || Boolean(currencyCodeForSubmit.value))
 );
 
 const nameError = computed(() => {
@@ -61,6 +62,7 @@ const nameError = computed(() => {
 });
 
 const currencyError = computed(() => {
+  if (isEditing.value) return null;
   if (!attemptedSubmit.value) return null;
   return currencyCodeForSubmit.value ? null : 'Выберите валюту';
 });
@@ -70,6 +72,19 @@ const currencySummary = computed(() => {
   return `${selectedCurrency.value.symbol} ${selectedCurrency.value.code} · ${selectedCurrency.value.name}`;
 });
 
+const isEditing = computed(() => Boolean(props.account));
+const editingAccountId = computed(() => props.account?.id ?? null);
+const dialogTitle = computed(() => (isEditing.value ? 'Редактировать счёт' : 'Добавить счёт'));
+const submitLabel = computed(() => (isEditing.value ? 'Сохранить' : 'Создать'));
+const submitIcon = computed(() => (isEditing.value ? 'pi pi-check' : 'pi pi-plus'));
+const currencyHint = computed(() => {
+  if (isEditing.value) return 'Валюту нельзя изменить после создания.';
+  if (store.areCurrenciesLoading) return 'Загрузка валют…';
+  if (!currencyOptions.value.length) return 'Не удалось загрузить валюты. Проверьте соединение.';
+  if (currencySummary.value) return currencySummary.value;
+  return 'Выберите валюту для нового счёта.';
+});
+
 function setDefaultCurrency() {
   if (!selectedCurrencyCode.value) {
     selectedCurrencyCode.value = defaultCurrencyCode.value;
@@ -77,16 +92,26 @@ function setDefaultCurrency() {
 }
 
 function resetForm() {
-  name.value = '';
-  accountType.value = ACCOUNT_TYPE_OPTIONS[0].value;
   attemptedSubmit.value = false;
   initialBalance.value = null;
-  isLiquid.value = accountType.value === 0;
   isLiquidTouched.value = false;
+
+  if (props.account) {
+    name.value = props.account.name;
+    accountType.value = props.account.type as AccountType;
+    selectedCurrencyCode.value = props.account.currencyCode;
+    isLiquid.value = props.account.isLiquid ?? accountType.value === 0;
+    return;
+  }
+
+  name.value = '';
+  accountType.value = ACCOUNT_TYPE_OPTIONS[0].value;
+  isLiquid.value = accountType.value === 0;
   setDefaultCurrency();
 }
 
 watch(accountType, (newType) => {
+  if (isEditing.value) return;
   if (!isLiquidTouched.value) {
     isLiquid.value = newType === 0;
   }
@@ -101,6 +126,15 @@ watch(
   }
 );
 
+watch(
+  () => props.account,
+  () => {
+    if (props.visible) {
+      resetForm();
+    }
+  }
+);
+
 watch(availableCurrencies, () => setDefaultCurrency(), { immediate: true });
 
 onMounted(async () => {
@@ -110,6 +144,13 @@ onMounted(async () => {
 
 const { isSubmitting, handleSubmit: handleFormSubmit, showWarning } = useFormModal(
   async () => {
+    if (isEditing.value && editingAccountId.value) {
+      return await store.updateAccount({
+        id: editingAccountId.value,
+        name: name.value.trim(),
+      });
+    }
+
     return await store.createAccount({
       name: name.value.trim(),
       type: accountType.value,
@@ -119,8 +160,8 @@ const { isSubmitting, handleSubmit: handleFormSubmit, showWarning } = useFormMod
     });
   },
   {
-    successMessage: 'Счёт успешно создан.',
-    errorMessage: 'Не удалось создать счёт. Проверьте данные и попробуйте снова.',
+    successMessage: 'Счёт сохранён.',
+    errorMessage: 'Не удалось сохранить счёт. Проверьте данные и попробуйте снова.',
   }
 );
 
@@ -143,7 +184,7 @@ const handleSubmit = async () => {
 <template>
   <Dialog
     :visible="props.visible"
-    header="Добавить счёт"
+    :header="dialogTitle"
     modal
     :style="{ width: '520px' }"
     dismissable-mask
@@ -179,10 +220,17 @@ const handleSubmit = async () => {
             option-label="label"
             option-value="value"
             class="w-full"
+            :disabled="isEditing"
             :input-id="fieldAttrs.id"
             :aria-describedby="fieldAttrs['aria-describedby']"
             :aria-invalid="fieldAttrs['aria-invalid']"
           />
+        </template>
+        <template
+          v-if="isEditing"
+          #hint
+        >
+          Тип счёта нельзя изменить после создания.
         </template>
       </FormField>
 
@@ -199,7 +247,7 @@ const handleSubmit = async () => {
             option-value="value"
             placeholder="Выберите валюту"
             class="w-full"
-            :disabled="store.areCurrenciesLoading || !currencyOptions.length"
+            :disabled="isEditing || store.areCurrenciesLoading || !currencyOptions.length"
             :input-id="fieldAttrs.id"
             :aria-describedby="fieldAttrs['aria-describedby']"
             :aria-invalid="fieldAttrs['aria-invalid']"
@@ -207,14 +255,14 @@ const handleSubmit = async () => {
         </template>
 
         <template #hint>
-          <span v-if="store.areCurrenciesLoading">Загрузка валют…</span>
-          <span v-else-if="!currencyOptions.length">Не удалось загрузить валюты. Проверьте соединение.</span>
-          <span v-else-if="currencySummary">{{ currencySummary }}</span>
-          <span v-else>Выберите валюту для нового счёта.</span>
+          <span>{{ currencyHint }}</span>
         </template>
       </FormField>
 
-      <FormField label="Начальный остаток">
+      <FormField
+        v-if="!isEditing"
+        label="Начальный остаток"
+      >
         <template #default="{ fieldAttrs }">
           <InputNumber
             v-model="initialBalance"
@@ -231,7 +279,10 @@ const handleSubmit = async () => {
         </template>
       </FormField>
 
-      <FormField label="Ликвидный счет">
+      <FormField
+        v-if="!isEditing"
+        label="Ликвидный счет"
+      >
         <template #default="{ fieldAttrs }">
           <div class="liquidity-toggle">
             <InputSwitch
@@ -257,11 +308,11 @@ const handleSubmit = async () => {
         </AppButton>
         <AppButton
           type="submit"
-          icon="pi pi-plus"
+          :icon="submitIcon"
           :loading="isSubmitting"
           :disabled="!isFormReady || isSubmitting"
         >
-          Создать
+          {{ submitLabel }}
         </AppButton>
       </div>
     </form>

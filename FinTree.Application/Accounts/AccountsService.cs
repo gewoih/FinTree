@@ -323,6 +323,21 @@ public sealed class AccountsService(
         return account.Id;
     }
 
+    public async Task UpdateAsync(Guid accountId, UpdateAccount command, CancellationToken ct = default)
+    {
+        var currentUserId = currentUser.Id;
+        var account = await context.Accounts
+            .FirstOrDefaultAsync(a => a.Id == accountId, ct);
+
+        if (account is null)
+            throw new NotFoundException("Счет не найден", accountId);
+        if (account.UserId != currentUserId)
+            throw new InvalidOperationException("Доступ запрещен");
+
+        account.Rename(command.Name);
+        await context.SaveChangesAsync(ct);
+    }
+
     public async Task UpdateLiquidityAsync(Guid accountId, bool isLiquid, CancellationToken ct = default)
     {
         var currentUserId = currentUser.Id;

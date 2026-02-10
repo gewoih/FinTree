@@ -16,6 +16,7 @@ const toast = useToast()
 const confirm = useConfirm()
 
 const modalVisible = ref(false)
+const editingAccount = ref<Account | null>(null)
 const pendingPrimaryId = ref<string | null>(null)
 const pendingLiquidityId = ref<string | null>(null)
 const adjustmentsVisible = ref(false)
@@ -58,6 +59,7 @@ const hasActiveFilters = computed(() =>
 )
 
 const openModal = () => {
+  editingAccount.value = null
   modalVisible.value = true
 }
 
@@ -84,13 +86,8 @@ const handleSetPrimary = async (accountId: string) => {
 }
 
 const handleEditAccount = (account: Account) => {
-  toast.add({
-    severity: 'info',
-    summary: 'В разработке',
-    detail: `Редактирование счёта «${account.name}» скоро будет доступно.`,
-    life: 3000
-  })
-  // TODO: Implement account editing
+  editingAccount.value = account
+  modalVisible.value = true
 }
 
 const handleLiquidityToggle = async (account: Account, value: boolean) => {
@@ -250,7 +247,10 @@ onMounted(async () => {
       </div>
     </UiSection>
 
-    <AccountFormModal v-model:visible="modalVisible" />
+    <AccountFormModal
+      v-model:visible="modalVisible"
+      :account="editingAccount"
+    />
     <AccountBalanceAdjustmentsModal
       v-model:visible="adjustmentsVisible"
       :account="selectedAccount"
