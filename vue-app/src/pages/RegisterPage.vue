@@ -10,6 +10,20 @@ const email = ref('')
 const password = ref('')
 const passwordConfirmation = ref('')
 
+const hasPasswordInput = computed(() => password.value.length > 0)
+
+const passwordRules = computed(() => {
+  const value = password.value
+
+  return [
+    { key: 'length', label: 'Минимум 8 символов', met: value.length >= 8 },
+    { key: 'digit', label: 'Хотя бы 1 цифра', met: /\d/.test(value) },
+    { key: 'lower', label: 'Хотя бы 1 строчная буква', met: /[a-z]/.test(value) },
+    { key: 'upper', label: 'Хотя бы 1 заглавная буква', met: /[A-Z]/.test(value) },
+    { key: 'symbol', label: 'Хотя бы 1 спецсимвол', met: /[^a-zA-Z0-9]/.test(value) },
+  ]
+})
+
 const validationError = computed(() => {
   if (!password.value || !passwordConfirmation.value) return null
   return password.value !== passwordConfirmation.value ? 'Пароли не совпадают' : null
@@ -98,7 +112,22 @@ const handleRegister = async () => {
               placeholder="Минимум 8 символов"
               autocomplete="new-password"
             />
-            <small>Используйте минимум 8 символов и смешайте регистры для лучшей защиты.</small>
+            <ul
+              v-if="hasPasswordInput"
+              class="auth__password-hints"
+            >
+              <li
+                v-for="rule in passwordRules"
+                :key="rule.key"
+                :class="[
+                  'auth__password-rule',
+                  { 'auth__password-rule--ok': rule.met, 'auth__password-rule--warn': hasPasswordInput && !rule.met }
+                ]"
+              >
+                <i :class="rule.met ? 'pi pi-check' : hasPasswordInput ? 'pi pi-times' : 'pi pi-circle'" />
+                <span>{{ rule.label }}</span>
+              </li>
+            </ul>
           </div>
 
           <div class="auth__field">
@@ -292,6 +321,34 @@ const handleRegister = async () => {
 .auth__field small {
   color: var(--ft-text-tertiary);
   font-size: var(--ft-text-xs);
+}
+
+.auth__password-hints {
+  list-style: none;
+  display: grid;
+  gap: var(--ft-space-1);
+  margin: 0;
+  padding: 0;
+}
+
+.auth__password-rule {
+  display: flex;
+  align-items: center;
+  gap: var(--ft-space-2);
+  font-size: var(--ft-text-xs);
+  color: var(--ft-text-tertiary);
+}
+
+.auth__password-rule i {
+  font-size: 0.75rem;
+}
+
+.auth__password-rule--ok {
+  color: var(--ft-success-400);
+}
+
+.auth__password-rule--warn {
+  color: var(--ft-danger-400);
 }
 
 .auth__error {

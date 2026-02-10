@@ -1,5 +1,5 @@
 // src/services/api.service.ts
-import axios, { type AxiosError } from 'axios';
+import axios, { type AxiosError, type AxiosRequestConfig } from 'axios';
 import type {
     AccountDto,
     TransactionCategoryDto,
@@ -20,6 +20,8 @@ import type {
     CreateTransferPayload,
     UpdateTransferPayload
 } from '../types.ts';
+
+type AuthRedirectConfig = AxiosRequestConfig & { skipAuthRedirect?: boolean };
 
 /**
  * Axios client instance configured for the FinTree API
@@ -49,7 +51,8 @@ apiClient.interceptors.response.use(
 
         // If 401 Unauthorized, clear auth and redirect to login
         if (error.response?.status === 401) {
-            if (window.location.pathname !== '/login') {
+            const skipAuthRedirect = (error.config as AuthRedirectConfig | undefined)?.skipAuthRedirect;
+            if (!skipAuthRedirect && window.location.pathname !== '/login') {
                 window.location.href = '/login';
             }
         }
@@ -278,7 +281,9 @@ export const apiService = {
 
     // Текущий пользователь
     async getCurrentUser(): Promise<CurrentUserDto> {
-        const response = await apiClient.get<CurrentUserDto>('/users/me');
+        const response = await apiClient.get<CurrentUserDto>('/users/me', {
+            skipAuthRedirect: true,
+        } as AuthRedirectConfig);
         return response.data;
     },
 
