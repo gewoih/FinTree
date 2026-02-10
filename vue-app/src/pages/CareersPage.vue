@@ -34,6 +34,10 @@ p {
 }
 
 a {
-  color: var(--ft-primary-300);
+  color: var(--ft-text-link);
+}
+
+a:hover {
+  color: var(--ft-text-link-hover);
 }
 </style>

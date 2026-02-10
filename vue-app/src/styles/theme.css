@@ -1,8 +1,8 @@
 :root {
-  --ft-primary: var(--ft-primary-600);
-  --ft-primary-hover: var(--ft-primary-700);
+  --ft-primary: var(--ft-primary-500);
+  --ft-primary-hover: var(--ft-primary-600);
   --ft-primary-light: var(--ft-primary-400);
-  --ft-secondary: var(--ft-success-500);
+  --ft-secondary: var(--ft-info-500);
   --ft-success: var(--ft-success-500);
   --ft-warning: var(--ft-warning-500);
   --ft-danger: var(--ft-danger-500);
@@ -13,37 +13,17 @@
   --ft-border-soft: var(--ft-border-subtle);
   --ft-surface-soft: var(--ft-surface-base);
   --ft-surface-muted: var(--ft-surface-raised);
-  --ft-surface-elevated: var(--ft-surface-raised);
-  --ft-glass: rgba(37, 99, 235, 0.08);
-  --ft-glass-border: rgba(37, 99, 235, 0.16);
-  --ft-accent: var(--ft-primary-600);
-  --ft-accent-light: var(--ft-primary-400);
-  --ft-accent-soft: rgba(37, 99, 235, 0.12);
+  --ft-surface-elevated: var(--ft-surface-overlay);
+  --ft-glass: color-mix(in srgb, var(--ft-primary-500) 16%, transparent);
+  --ft-glass-border: color-mix(in srgb, var(--ft-primary-500) 38%, transparent);
+  --ft-accent: var(--ft-primary-500);
+  --ft-accent-light: var(--ft-primary-300);
+  --ft-accent-soft: color-mix(in srgb, var(--ft-primary-500) 20%, transparent);
   --ft-shadow-soft: var(--ft-shadow-md);
   --ft-shadow-card: var(--ft-shadow-lg);
-  --ft-shadow-hero: var(--ft-shadow-xl);
+  --ft-shadow-hero: var(--ft-shadow-2xl);
   --ft-radius-card: var(--ft-radius-2xl);
   --ft-radius-section: var(--ft-radius-xl);
-}
-
-.dark-mode {
-  --ft-primary: var(--ft-primary-500);
-  --ft-primary-hover: var(--ft-primary-400);
-  --ft-primary-light: var(--ft-primary-300);
-  --ft-secondary: var(--ft-success-400);
-  --ft-success: var(--ft-success-400);
-  --ft-warning: var(--ft-warning-400);
-  --ft-danger: var(--ft-danger-400);
-  --ft-info: var(--ft-info-400);
-  --ft-glass: rgba(15, 23, 42, 0.6);
-  --ft-glass-border: rgba(255, 255, 255, 0.12);
-  --ft-border-soft: var(--ft-border-default);
-  --ft-surface-soft: var(--ft-surface-base);
-  --ft-surface-muted: var(--ft-surface-raised);
-  --ft-surface-elevated: var(--ft-surface-raised);
-  --ft-accent: var(--ft-primary-400);
-  --ft-accent-light: var(--ft-primary-300);
-  --ft-accent-soft: rgba(59, 130, 246, 0.18);
 }
 
 .ft-card {
@@ -150,7 +130,11 @@
 }
 
 .ft-hero__content {
-  background: linear-gradient(135deg, rgba(37, 99, 235, 0.12), rgba(34, 197, 94, 0.08));
+  background: linear-gradient(
+    135deg,
+    color-mix(in srgb, var(--ft-primary-500) 18%, transparent),
+    color-mix(in srgb, var(--ft-success-400) 12%, transparent)
+  );
   border-radius: var(--ft-radius-section);
   padding: clamp(var(--ft-space-6), 3vw, var(--ft-space-8));
   box-shadow: var(--ft-shadow-hero);
@@ -199,7 +183,7 @@
 }
 
 .ft-stat:hover::before {
-  border-color: rgba(37, 99, 235, 0.12);
+  border-color: color-mix(in srgb, var(--ft-primary-500) 20%, transparent);
 }
 
 .ft-stat__label {
@@ -295,7 +279,7 @@
   width: 40px;
   height: 40px;
   border-radius: var(--ft-radius-md);
-  background: rgba(37, 99, 235, 0.12);
+  background: color-mix(in srgb, var(--ft-primary-500) 18%, transparent);
   display: grid;
   place-items: center;
   color: var(--ft-accent);
@@ -316,7 +300,7 @@
 
 .ft-empty {
   border-radius: var(--ft-radius-section);
-  border: 1px dashed rgba(37, 99, 235, 0.16);
+  border: 1px dashed color-mix(in srgb, var(--ft-primary-500) 24%, transparent);
   padding: clamp(var(--ft-space-6), 3vw, var(--ft-space-8));
   text-align: center;
   color: var(--ft-text-muted);
@@ -327,8 +311,8 @@
 }
 
 .ft-empty:hover {
-  border-color: rgba(37, 99, 235, 0.28);
-  background: rgba(37, 99, 235, 0.04);
+  border-color: color-mix(in srgb, var(--ft-primary-500) 36%, transparent);
+  background: color-mix(in srgb, var(--ft-primary-500) 8%, transparent);
 }
 
 .ft-empty i {

@@ -495,9 +495,9 @@ const handleDelete = () => {
   padding: var(--ft-space-2);
   border: 1px solid var(--ft-border-subtle);
   border-radius: var(--ft-radius-lg);
-  background: var(--ft-surface);
+  background: var(--ft-surface-base);
   overflow: auto;
-  box-shadow: 0 12px 32px rgba(15, 23, 42, 0.08);
+  box-shadow: var(--ft-shadow-md);
 }
 
 .icon-grid__item {
@@ -524,7 +524,7 @@ const handleDelete = () => {
 .icon-grid__item.is-selected {
   border-color: var(--ft-primary-500);
   color: var(--ft-primary-600);
-  background: rgba(59, 130, 246, 0.08);
+  background: color-mix(in srgb, var(--ft-primary-500) 12%, transparent);
 }
 
 .color-picker__swatch {

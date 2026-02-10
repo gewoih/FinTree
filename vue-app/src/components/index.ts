@@ -8,6 +8,7 @@ import FormField from './common/FormField.vue'
 import KPICard from './common/KPICard.vue'
 import PageHeader from './common/PageHeader.vue'
 import StatusBadge from './common/StatusBadge.vue'
+import ThemeToggle from './common/ThemeToggle.vue'
 import PageContainer from './layout/PageContainer.vue'
 import UiBadge from '../ui/UiBadge.vue'
 import UiButton from '../ui/UiButton.vue'
@@ -53,6 +54,7 @@ export function registerComponents(app: App) {
   app.component('KPICard', KPICard)
   app.component('PageHeader', PageHeader)
   app.component('StatusBadge', StatusBadge)
+  app.component('ThemeToggle', ThemeToggle)
   app.component('PageContainer', PageContainer)
   app.component('UiBadge', UiBadge)
   app.component('UiButton', UiButton)

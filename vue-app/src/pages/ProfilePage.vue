@@ -417,8 +417,8 @@ function handleClearTelegram() {
 
 .profile-tab.is-active {
   background: color-mix(in srgb, var(--accent) 75%, transparent);
-  color: #ffffff;
-  box-shadow: 0 8px 20px rgba(15, 23, 42, 0.25);
+  color: var(--ft-text-inverse);
+  box-shadow: var(--ft-shadow-md);
 }
 
 .profile-tab i {

@@ -93,10 +93,11 @@ const forecastLoading = computed(() => dashboardLoading.value);
 const forecastError = computed(() => dashboardError.value);
 
 const chartPalette = reactive({
-  primary: '#60a5fa',
-  surface: '#94a3b8',
-  accent: '#f97316',
-  categories: ['#60a5fa', '#14b8a6', '#a855f7', '#06b6d4', '#fb923c'],
+  primary: '#2e5bff',
+  surface: '#283449',
+  accent: '#0ea5e9',
+  pointBorder: '#0b111a',
+  categories: ['#2e5bff', '#0ea5e9', '#22c55e', '#a855f7', '#f59e0b'],
 });
 
 const baseCurrency = computed(() => userStore.baseCurrencyCode ?? 'RUB');
@@ -283,15 +284,16 @@ const healthGroups = computed<HealthGroup[]>(() => {
 function resolveCssVariables() {
   if (typeof window === 'undefined') return;
   const styles = getComputedStyle(document.documentElement);
-  chartPalette.primary = styles.getPropertyValue('--primary-400').trim() || chartPalette.primary;
-  chartPalette.surface = styles.getPropertyValue('--surface-500').trim() || chartPalette.surface;
-  chartPalette.accent = styles.getPropertyValue('--orange-400').trim() || chartPalette.accent;
+  chartPalette.primary = styles.getPropertyValue('--ft-primary-400').trim() || chartPalette.primary;
+  chartPalette.surface = styles.getPropertyValue('--ft-border-default').trim() || chartPalette.surface;
+  chartPalette.accent = styles.getPropertyValue('--ft-info-400').trim() || chartPalette.accent;
+  chartPalette.pointBorder = styles.getPropertyValue('--ft-surface-base').trim() || chartPalette.pointBorder;
   const fallback = [
-    styles.getPropertyValue('--blue-400').trim(),
-    styles.getPropertyValue('--teal-400').trim(),
-    styles.getPropertyValue('--violet-400').trim(),
-    styles.getPropertyValue('--cyan-400').trim(),
-    styles.getPropertyValue('--orange-400').trim(),
+    styles.getPropertyValue('--ft-primary-400').trim(),
+    styles.getPropertyValue('--ft-info-400').trim(),
+    styles.getPropertyValue('--ft-success-400').trim(),
+    styles.getPropertyValue('--ft-warning-400').trim(),
+    styles.getPropertyValue('--ft-danger-400').trim(),
   ].filter(Boolean);
   if (fallback.length) {
     chartPalette.categories = fallback;
@@ -578,11 +580,11 @@ function formatMonthLabel(year: number, month: number): string {
 
 function extractRgb(color: string): string {
   if (typeof document === 'undefined') {
-    return '59,130,246';
+    return '46,91,255';
   }
   const canvas = document.createElement('canvas');
   const ctx = canvas.getContext('2d');
-  if (!ctx) return '59,130,246';
+  if (!ctx) return '46,91,255';
   ctx.fillStyle = color;
   const computed = ctx.fillStyle as string;
   const rgbMatch = computed.match(/rgba?\((\d+),\s*(\d+),\s*(\d+)/i);
@@ -590,7 +592,7 @@ function extractRgb(color: string): string {
     return `${rgbMatch[1]},${rgbMatch[2]},${rgbMatch[3]}`;
   }
   const match = computed.match(/^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i);
-  if (!match || !match[1] || !match[2] || !match[3]) return '59,130,246';
+  if (!match || !match[1] || !match[2] || !match[3]) return '46,91,255';
   const r = parseInt(match[1], 16);
   const g = parseInt(match[2], 16);
   const b = parseInt(match[3], 16);
@@ -688,7 +690,7 @@ const forecastChartData = computed(() => {
         tension: 0.35,
         pointRadius: 3,
         pointBackgroundColor: chartPalette.accent,
-        pointBorderColor: '#ffffff',
+        pointBorderColor: chartPalette.pointBorder,
         spanGaps: false,
       },
       {
@@ -741,7 +743,7 @@ const netWorthChartData = computed(() => {
         tension: 0.35,
         pointRadius: 3,
         pointBackgroundColor: chartPalette.primary,
-        pointBorderColor: '#ffffff',
+        pointBorderColor: chartPalette.pointBorder,
       },
     ],
   };
@@ -1040,8 +1042,12 @@ onMounted(async () => {
 .onboarding-card {
   display: grid;
   gap: var(--ft-space-4);
-  border: 1px solid rgba(59, 130, 246, 0.2);
-  background: linear-gradient(135deg, rgba(59, 130, 246, 0.12), rgba(15, 118, 110, 0.12));
+  border: 1px solid var(--ft-border-subtle);
+  background: linear-gradient(
+    135deg,
+    color-mix(in srgb, var(--ft-primary-500) 20%, transparent),
+    color-mix(in srgb, var(--ft-info-500) 10%, transparent)
+  );
 }
 
 .onboarding-card__header {
@@ -1065,8 +1071,8 @@ onMounted(async () => {
 .onboarding-card__progress {
   padding: var(--ft-space-2) var(--ft-space-3);
   border-radius: var(--ft-radius-full);
-  background: rgba(15, 23, 42, 0.35);
-  color: var(--ft-text-primary);
+  background: color-mix(in srgb, var(--ft-primary-500) 55%, transparent);
+  color: var(--ft-text-inverse);
   font-weight: var(--ft-font-semibold);
 }
 
@@ -1082,8 +1088,8 @@ onMounted(async () => {
   gap: var(--ft-space-3);
   padding: var(--ft-space-3);
   border-radius: var(--ft-radius-lg);
-  background: rgba(15, 23, 42, 0.25);
-  border: 1px solid rgba(148, 163, 184, 0.15);
+  background: var(--ft-surface-base);
+  border: 1px solid var(--ft-border-subtle);
 }
 
 .onboarding-card__step--done {
@@ -1096,8 +1102,8 @@ onMounted(async () => {
   border-radius: 999px;
   display: grid;
   place-items: center;
-  background: rgba(59, 130, 246, 0.2);
-  color: var(--ft-primary-300);
+  background: color-mix(in srgb, var(--ft-primary-500) 55%, transparent);
+  color: var(--ft-text-inverse);
   font-size: 1rem;
 }
 

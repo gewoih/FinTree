@@ -72,8 +72,8 @@ const emit = defineEmits<{
   margin-bottom: var(--space-6);
   background: linear-gradient(
     135deg,
-    rgba(37, 99, 235, 0.1) 0%,
-    rgba(34, 197, 94, 0.1) 100%
+    color-mix(in srgb, var(--ft-primary-500) 14%, transparent) 0%,
+    color-mix(in srgb, var(--ft-success-400) 14%, transparent) 100%
   );
   border-radius: var(--radius-lg);
   border: 1px solid var(--border);
@@ -107,8 +107,8 @@ const emit = defineEmits<{
 .dark-mode .empty-state__icon-wrapper {
   background: linear-gradient(
     135deg,
-    rgba(59, 130, 246, 0.15) 0%,
-    rgba(34, 197, 94, 0.15) 100%
+    color-mix(in srgb, var(--ft-primary-500) 22%, transparent) 0%,
+    color-mix(in srgb, var(--ft-success-400) 20%, transparent) 100%
   );
   border-color: var(--ft-border-default);
 }

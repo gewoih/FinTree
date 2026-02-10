@@ -78,9 +78,9 @@ withDefaults(defineProps<Props>(), {
 }
 
 .status-badge--info {
-  background: rgba(59, 130, 246, 0.1);
+  background: color-mix(in srgb, var(--ft-info-500) 12%, transparent);
   color: var(--ft-info-700);
-  border-color: rgba(59, 130, 246, 0.2);
+  border-color: color-mix(in srgb, var(--ft-info-500) 22%, transparent);
 }
 
 .status-badge--secondary {
@@ -109,9 +109,9 @@ withDefaults(defineProps<Props>(), {
 }
 
 .dark-mode .status-badge--info {
-  background: rgba(59, 130, 246, 0.15);
+  background: color-mix(in srgb, var(--ft-info-500) 18%, transparent);
   color: var(--ft-info-400);
-  border-color: rgba(59, 130, 246, 0.3);
+  border-color: color-mix(in srgb, var(--ft-info-500) 32%, transparent);
 }
 
 .dark-mode .status-badge--secondary {

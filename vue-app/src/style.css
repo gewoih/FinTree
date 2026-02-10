@@ -15,6 +15,10 @@
   color-scheme: dark;
 }
 
+.light-mode {
+  color-scheme: light;
+}
+
 *,
 *::before,
 *::after {
@@ -32,6 +36,15 @@ body {
   min-height: 100vh;
   background-color: var(--ft-bg-base);
   color: var(--ft-text-primary);
+}
+
+h1,
+h2,
+h3,
+h4,
+.ft-display {
+  font-family: var(--ft-font-display);
+  letter-spacing: var(--ft-letter-spacing-display);
 }
 
 #app {
@@ -223,6 +236,6 @@ button {
 }
 
 ::selection {
-  background-color: rgba(37, 99, 235, 0.18);
+  background-color: color-mix(in srgb, var(--ft-primary-500) 35%, transparent);
   color: var(--ft-text-primary);
 }

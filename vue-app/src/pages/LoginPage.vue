@@ -33,6 +33,9 @@ const handleLogin = async () => {
 
 <template>
   <div class="auth auth--login">
+    <div class="auth__theme-toggle">
+      <ThemeToggle />
+    </div>
     <div class="auth__container">
       <div class="auth__intro">
         <router-link
@@ -111,17 +114,34 @@ const handleLogin = async () => {
   min-height: 100vh;
   display: grid;
   place-items: center;
-  padding: clamp(var(--space-6), 6vw, var(--space-8)) clamp(var(--space-4), 6vw, var(--space-7));
-  background: radial-gradient(120% 120% at 100% 0%, rgba(59, 130, 246, 0.2), rgba(15, 20, 25, 0.9)),
-    radial-gradient(60% 60% at 0% 100%, rgba(15, 118, 110, 0.18), transparent),
-    linear-gradient(180deg, rgba(15, 20, 25, 0.96) 0%, rgba(15, 20, 25, 1) 100%);
-  color: var(--text);
+  padding: clamp(var(--ft-space-6), 6vw, var(--ft-space-10)) clamp(var(--ft-space-4), 6vw, var(--ft-space-8));
+  background:
+    radial-gradient(
+      760px 560px at 12% -10%,
+      color-mix(in srgb, var(--ft-primary-500) 28%, transparent),
+      transparent
+    ),
+    radial-gradient(
+      700px 520px at 88% 8%,
+      color-mix(in srgb, var(--ft-info-500) 12%, transparent),
+      transparent
+    ),
+    linear-gradient(180deg, var(--ft-bg-base) 0%, var(--ft-bg-muted) 100%);
+  color: var(--ft-text-primary);
+  position: relative;
+}
+
+.auth__theme-toggle {
+  position: absolute;
+  top: clamp(var(--ft-space-4), 4vw, var(--ft-space-6));
+  right: clamp(var(--ft-space-4), 4vw, var(--ft-space-6));
+  z-index: 1;
 }
 
 .auth__container {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
-  gap: clamp(var(--space-6), 6vw, var(--space-7));
+  gap: clamp(var(--ft-space-6), 6vw, var(--ft-space-8));
   align-items: center;
   max-width: var(--ft-container-xl);
   width: 100%;
@@ -130,18 +150,19 @@ const handleLogin = async () => {
 .auth__intro {
   display: flex;
   flex-direction: column;
-  gap: var(--space-4);
+  gap: var(--ft-space-4);
   max-width: 52ch;
 }
 
 .auth__brand {
   display: inline-flex;
   align-items: center;
-  gap: var(--space-2);
+  gap: var(--ft-space-2);
   font-weight: var(--ft-font-semibold);
-  color: var(--accent);
+  color: var(--ft-primary-200);
   letter-spacing: 0.08em;
   text-transform: uppercase;
+  font-family: var(--ft-font-display);
 }
 
 .auth__brand i {
@@ -151,11 +172,12 @@ const handleLogin = async () => {
 .auth__intro h1 {
   margin: 0;
   font-size: clamp(2rem, 4vw, 2.75rem);
+  font-family: var(--ft-font-display);
 }
 
 .auth__intro p {
   margin: 0;
-  color: var(--text-muted);
+  color: var(--ft-text-secondary);
   max-width: 44ch;
   line-height: 1.6;
 }
@@ -163,47 +185,51 @@ const handleLogin = async () => {
 .auth__card {
   width: min(420px, 100%);
   justify-self: end;
+  border: 1px solid var(--ft-border-subtle);
+  background: var(--ft-surface-base);
+  box-shadow: var(--ft-shadow-xl);
+  backdrop-filter: blur(18px);
 }
 
 .auth__form {
   display: flex;
   flex-direction: column;
-  gap: var(--space-4);
+  gap: var(--ft-space-4);
 }
 
 .auth__field {
   display: flex;
   flex-direction: column;
-  gap: var(--space-2);
+  gap: var(--ft-space-2);
 }
 
 .auth__field label {
   font-size: var(--ft-text-xs);
   text-transform: uppercase;
   letter-spacing: 0.14em;
-  color: var(--text-muted);
+  color: var(--ft-text-tertiary);
 }
 
 .auth__error {
   display: flex;
   align-items: center;
-  gap: var(--space-2);
+  gap: var(--ft-space-2);
   margin: 0;
   font-size: var(--ft-text-sm);
-  color: var(--danger);
+  color: var(--ft-danger-400);
 }
 
 .auth__footer {
   display: flex;
   justify-content: center;
-  gap: var(--space-2);
+  gap: var(--ft-space-2);
   font-size: var(--ft-text-sm);
-  color: var(--text-muted);
-  margin-top: var(--space-4);
+  color: var(--ft-text-secondary);
+  margin-top: var(--ft-space-4);
 }
 
 .auth__footer a {
-  color: var(--text);
+  color: var(--ft-text-primary);
   font-weight: var(--ft-font-medium);
   text-decoration: none;
 }
@@ -212,9 +238,13 @@ const handleLogin = async () => {
   text-decoration: underline;
 }
 
+.light-mode .auth__brand {
+  color: var(--ft-primary-700);
+}
+
 @media (max-width: 768px) {
   .auth {
-    padding-block: clamp(var(--space-6), 8vw, var(--space-7));
+    padding-block: clamp(var(--ft-space-6), 8vw, var(--ft-space-8));
   }
 
   .auth__container {

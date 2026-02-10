@@ -39,6 +39,6 @@ const attrs = useAttrs();
 
 .ui-badge[style*='--ui-badge-color'] {
   background: var(--ui-badge-color);
-  color: #fff;
+  color: var(--ft-text-inverse);
 }
 </style>

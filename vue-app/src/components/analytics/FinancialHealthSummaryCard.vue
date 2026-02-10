@@ -106,8 +106,12 @@ const showEmptyState = computed(() => !props.loading && (!props.hasData || !prop
 <style scoped>
 .analytics-card {
   padding: clamp(var(--ft-space-5), 3vw, var(--ft-space-6));
-  background: linear-gradient(135deg, rgba(34, 197, 94, 0.16), rgba(59, 130, 246, 0.1));
-  border: 1px solid rgba(34, 197, 94, 0.22);
+  background: linear-gradient(
+    135deg,
+    color-mix(in srgb, var(--ft-success-500) 22%, transparent),
+    color-mix(in srgb, var(--ft-primary-500) 12%, transparent)
+  );
+  border: 1px solid color-mix(in srgb, var(--ft-success-500) 35%, transparent);
   border-radius: var(--ft-radius-2xl);
   box-shadow: var(--ft-shadow-card);
 }
@@ -132,7 +136,7 @@ const showEmptyState = computed(() => !props.loading && (!props.hasData || !prop
   width: 40px;
   height: 40px;
   border-radius: var(--ft-radius-lg);
-  background: rgba(34, 197, 94, 0.2);
+  background: color-mix(in srgb, var(--ft-success-500) 24%, transparent);
   color: var(--ft-success-500);
 }
 
@@ -167,12 +171,12 @@ const showEmptyState = computed(() => !props.loading && (!props.hasData || !prop
   gap: var(--ft-space-2);
   padding: var(--ft-space-4);
   border-radius: var(--ft-radius-xl);
-  background: rgba(255, 255, 255, 0.04);
-  border: 1px solid rgba(148, 163, 184, 0.22);
+  background: color-mix(in srgb, var(--ft-surface-base) 88%, transparent);
+  border: 1px solid var(--ft-border-default);
 }
 
 .health-metric:hover {
-  border-color: rgba(148, 163, 184, 0.38);
+  border-color: var(--ft-border-strong);
   transform: translateY(-2px);
 }
 
@@ -181,7 +185,7 @@ const showEmptyState = computed(() => !props.loading && (!props.hasData || !prop
   font-size: var(--ft-text-xs);
   text-transform: uppercase;
   letter-spacing: 0.08em;
-  color: rgba(15, 23, 42, 0.55);
+  color: var(--ft-text-tertiary);
 }
 
 .health-metric__value {
@@ -193,7 +197,7 @@ const showEmptyState = computed(() => !props.loading && (!props.hasData || !prop
 
 .health-metric__description {
   margin: 0;
-  color: rgba(15, 23, 42, 0.65);
+  color: var(--ft-text-secondary);
   font-size: var(--ft-text-sm);
   line-height: var(--ft-leading-relaxed);
 }
@@ -204,7 +208,7 @@ const showEmptyState = computed(() => !props.loading && (!props.hasData || !prop
   place-items: center;
   text-align: center;
   padding: var(--ft-space-6) var(--ft-space-4);
-  color: rgba(15, 23, 42, 0.72);
+  color: var(--ft-text-secondary);
 }
 
 .health-state__icon {
@@ -221,7 +225,7 @@ const showEmptyState = computed(() => !props.loading && (!props.hasData || !prop
   margin: 0;
   font-size: var(--ft-text-sm);
   max-width: 32ch;
-  color: rgba(15, 23, 42, 0.6);
+  color: var(--ft-text-tertiary);
 }
 
 @media (max-width: 768px) {

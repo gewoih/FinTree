@@ -1,11 +1,26 @@
 <!doctype html>
-<html lang="ru">
+<html lang="ru" class="dark-mode">
   <head>
     <meta charset="UTF-8" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Golos+Text:wght@400;500;600;700&family=Golos+UI:wght@500;600;700&family=JetBrains+Mono:wght@400;500&display=swap"
+      rel="stylesheet"
+    />
     <link rel="icon" type="image/svg+xml" href="/vite.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>FinTree — учёт расходов через Telegram</title>
     <meta name="description" content="FinTree помогает вести расходы через Telegram и получать понятную аналитику бюджета в вебе." />
+    <script>
+      try {
+        const savedTheme = localStorage.getItem('fintree-theme');
+        if (savedTheme === 'light') {
+          document.documentElement.classList.remove('dark-mode');
+          document.documentElement.classList.add('light-mode');
+        }
+      } catch {}
+    </script>
   </head>
   <body>
     <div id="app"></div>

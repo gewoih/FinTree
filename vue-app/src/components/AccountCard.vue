@@ -254,8 +254,8 @@ const toggleMenu = (event: Event) => {
   border-color: var(--ft-primary-300);
   background: linear-gradient(
     135deg,
-    rgba(37, 99, 235, 0.02) 0%,
-    rgba(37, 99, 235, 0.05) 100%
+    color-mix(in srgb, var(--ft-primary-500) 6%, transparent) 0%,
+    color-mix(in srgb, var(--ft-primary-500) 12%, transparent) 100%
   );
 }
 
@@ -366,16 +366,20 @@ const toggleMenu = (event: Event) => {
   align-items: center;
   gap: var(--ft-space-2);
   border-radius: var(--ft-radius-full);
-  background: rgba(37, 99, 235, 0.1);
-  color: var(--ft-primary-700);
+  background: color-mix(in srgb, var(--ft-primary-500) 16%, transparent);
+  color: var(--ft-primary-500);
   font-size: var(--ft-text-sm);
   font-weight: var(--ft-font-semibold);
   padding: var(--ft-space-1) var(--ft-space-3);
 }
 
 .dark-mode .currency-chip {
-  background: rgba(37, 99, 235, 0.2);
-  color: var(--ft-primary-400);
+  background: color-mix(in srgb, var(--ft-primary-500) 24%, transparent);
+  color: var(--ft-primary-300);
+}
+
+.light-mode .currency-chip {
+  color: var(--ft-primary-700);
 }
 
 .balance-summary {
@@ -433,7 +437,7 @@ const toggleMenu = (event: Event) => {
   position: absolute;
   top: 4px;
   right: -36px;
-  color: white;
+  color: var(--ft-text-inverse);
   font-size: 12px;
 }
 

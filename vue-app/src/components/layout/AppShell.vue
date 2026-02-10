@@ -87,6 +87,7 @@ onMounted(() => {
       </div>
 
       <div class="app-shell__topnav-right">
+        <ThemeToggle />
         <div class="app-shell__user-menu">
           <Button
             type="button"
@@ -315,28 +316,15 @@ onMounted(() => {
 }
 
 .app-shell__nav-link:hover {
-  background: rgba(37, 99, 235, 0.08);
+  background: color-mix(in srgb, var(--accent) 18%, var(--surface-1));
   color: var(--text);
 }
 
 .app-shell__nav-link.router-link-active {
-  background: linear-gradient(
-    135deg,
-    rgba(37, 99, 235, 0.1) 0%,
-    rgba(59, 130, 246, 0.05) 100%
-  );
-  color: var(--accent);
+  background: color-mix(in srgb, var(--accent) 24%, var(--surface-1));
+  color: var(--text);
   font-weight: var(--ft-font-semibold);
-  box-shadow: inset 0 0 0 1px rgba(37, 99, 235, 0.1);
-}
-
-.dark-mode .app-shell__nav-link.router-link-active {
-  background: linear-gradient(
-    135deg,
-    rgba(59, 130, 246, 0.15) 0%,
-    rgba(96, 165, 250, 0.1) 100%
-  );
-  color: var(--ft-primary-400);
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--accent) 45%, transparent);
 }
 
 .app-shell__nav-link i {

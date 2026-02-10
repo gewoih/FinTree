@@ -141,7 +141,7 @@ const computedAttrs = computed(() => ({
 
 .app-card:focus-within {
   border-color: var(--ft-primary-500);
-  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+  box-shadow: 0 0 0 3px var(--ft-focus-ring);
 }
 
 .dark-mode .app-card--ghost {

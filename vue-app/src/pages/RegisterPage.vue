@@ -42,6 +42,9 @@ const handleRegister = async () => {
 
 <template>
   <div class="auth auth--register">
+    <div class="auth__theme-toggle">
+      <ThemeToggle />
+    </div>
     <div
       class="auth__gradient"
       aria-hidden="true"
@@ -152,19 +155,45 @@ const handleRegister = async () => {
   display: grid;
   place-items: center;
   padding: clamp(var(--ft-space-6), 6vw, var(--ft-space-12)) clamp(var(--ft-space-4), 6vw, var(--ft-space-10));
-  background: radial-gradient(120% 120% at -10% 10%, rgba(59, 130, 246, 0.22), rgba(15, 20, 25, 0.92)),
-    linear-gradient(160deg, rgba(15, 20, 25, 1) 0%, rgba(17, 24, 39, 1) 100%);
+  background:
+    radial-gradient(
+      820px 620px at 12% -12%,
+      color-mix(in srgb, var(--ft-primary-500) 30%, transparent),
+      transparent
+    ),
+    radial-gradient(
+      720px 540px at 88% 8%,
+      color-mix(in srgb, var(--ft-info-500) 12%, transparent),
+      transparent
+    ),
+    linear-gradient(180deg, var(--ft-bg-base) 0%, var(--ft-bg-muted) 100%);
   color: var(--ft-text-primary);
   position: relative;
   overflow: hidden;
 }
 
+.auth__theme-toggle {
+  position: absolute;
+  top: clamp(var(--ft-space-4), 4vw, var(--ft-space-6));
+  right: clamp(var(--ft-space-4), 4vw, var(--ft-space-6));
+  z-index: 2;
+}
+
 .auth__gradient {
   position: absolute;
   inset: 0;
-  background: radial-gradient(60% 60% at 100% 100%, rgba(59, 130, 246, 0.18), transparent),
-    radial-gradient(40% 40% at 20% 80%, rgba(236, 72, 153, 0.18), transparent);
-  opacity: 0.6;
+  background:
+    radial-gradient(
+      60% 60% at 80% 90%,
+      color-mix(in srgb, var(--ft-primary-500) 18%, transparent),
+      transparent
+    ),
+    radial-gradient(
+      40% 40% at 20% 70%,
+      color-mix(in srgb, var(--ft-info-500) 8%, transparent),
+      transparent
+    );
+  opacity: 0.7;
   pointer-events: none;
 }
 
@@ -190,14 +219,16 @@ const handleRegister = async () => {
   align-items: center;
   gap: var(--ft-space-2);
   font-weight: var(--ft-font-semibold);
-  color: var(--ft-primary-300);
+  color: var(--ft-primary-200);
   letter-spacing: 0.08em;
   text-transform: uppercase;
+  font-family: var(--ft-font-display);
 }
 
 .auth__intro h1 {
   margin: 0;
   font-size: clamp(2rem, 4vw, 2.75rem);
+  font-family: var(--ft-font-display);
 }
 
 .auth__intro p {
@@ -229,7 +260,14 @@ const handleRegister = async () => {
 
 .auth__card {
   width: min(460px, 100%);
+  border: 1px solid var(--ft-border-subtle);
+  background: var(--ft-surface-base);
+  box-shadow: var(--ft-shadow-xl);
   backdrop-filter: blur(18px);
+}
+
+.light-mode .auth__brand {
+  color: var(--ft-primary-700);
 }
 
 .auth__form {

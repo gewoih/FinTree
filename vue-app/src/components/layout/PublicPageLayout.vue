@@ -22,6 +22,7 @@ const currentYear = new Date().getFullYear();
       </router-link>
 
       <div class="public-page__actions">
+        <ThemeToggle />
         <AppButton
           variant="ghost"
           label="Войти"
@@ -62,8 +63,18 @@ const currentYear = new Date().getFullYear();
   min-height: 100vh;
   display: grid;
   grid-template-rows: auto 1fr auto;
-  background: radial-gradient(120% 120% at 20% -10%, rgba(59, 130, 246, 0.2), rgba(15, 20, 25, 0.98)),
-    linear-gradient(180deg, rgba(15, 20, 25, 0.98) 0%, rgba(12, 17, 23, 1) 100%);
+  background:
+    radial-gradient(
+      820px 620px at 12% -12%,
+      color-mix(in srgb, var(--ft-primary-500) 26%, transparent),
+      transparent
+    ),
+    radial-gradient(
+      700px 520px at 88% 8%,
+      color-mix(in srgb, var(--ft-info-500) 12%, transparent),
+      transparent
+    ),
+    linear-gradient(180deg, var(--ft-bg-base) 0%, var(--ft-bg-muted) 100%);
   color: var(--ft-text-primary);
 }
 
@@ -73,8 +84,9 @@ const currentYear = new Date().getFullYear();
   justify-content: space-between;
   gap: var(--ft-space-4);
   padding: clamp(var(--ft-space-4), 4vw, var(--ft-space-6)) clamp(var(--ft-space-4), 5vw, var(--ft-space-8));
-  border-bottom: 1px solid rgba(148, 163, 184, 0.15);
+  border-bottom: 1px solid var(--ft-border-subtle);
   backdrop-filter: blur(12px);
+  background: color-mix(in srgb, var(--ft-bg-base) 85%, transparent);
 }
 
 .public-page__brand {
@@ -84,6 +96,7 @@ const currentYear = new Date().getFullYear();
   font-weight: var(--ft-font-bold);
   color: var(--ft-text-primary);
   text-decoration: none;
+  font-family: var(--ft-font-display);
 }
 
 .public-page__brand i {
@@ -92,6 +105,8 @@ const currentYear = new Date().getFullYear();
 
 .public-page__actions {
   display: flex;
+  align-items: center;
+  flex-wrap: wrap;
   gap: var(--ft-space-3);
 }
 
@@ -111,6 +126,7 @@ const currentYear = new Date().getFullYear();
 .public-page__title h1 {
   margin: 0;
   font-size: clamp(2rem, 4vw, 2.75rem);
+  font-family: var(--ft-font-display);
 }
 
 .public-page__title p {
@@ -130,7 +146,7 @@ const currentYear = new Date().getFullYear();
   align-items: center;
   gap: var(--ft-space-3);
   padding: var(--ft-space-4) clamp(var(--ft-space-4), 5vw, var(--ft-space-8));
-  border-top: 1px solid rgba(148, 163, 184, 0.12);
+  border-top: 1px solid color-mix(in srgb, var(--ft-border-default) 50%, transparent);
   color: var(--ft-text-tertiary);
   font-size: var(--ft-text-sm);
 }
@@ -157,7 +173,7 @@ const currentYear = new Date().getFullYear();
 
   .public-page__actions {
     width: 100%;
-    justify-content: space-between;
+    justify-content: flex-start;
   }
 
   .public-page__footer {

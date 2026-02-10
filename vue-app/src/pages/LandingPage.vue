@@ -136,6 +136,7 @@ const scrollToSection = (sectionId: string) => {
         </nav>
 
         <div class="landing__actions">
+          <ThemeToggle />
           <AppButton
             variant="ghost"
             label="Войти"
@@ -465,8 +466,18 @@ const scrollToSection = (sectionId: string) => {
   min-height: 100vh;
   display: flex;
   flex-direction: column;
-  background: radial-gradient(120% 120% at 50% -20%, rgba(59, 130, 246, 0.18), rgba(15, 20, 25, 0.98)),
-    linear-gradient(180deg, rgba(15, 20, 25, 0.95) 0%, rgba(15, 20, 25, 1) 100%);
+  background:
+    radial-gradient(
+      900px 600px at 8% -15%,
+      color-mix(in srgb, var(--ft-primary-500) 28%, transparent),
+      transparent
+    ),
+    radial-gradient(
+      700px 520px at 92% 8%,
+      color-mix(in srgb, var(--ft-info-500) 14%, transparent),
+      transparent
+    ),
+    linear-gradient(180deg, var(--ft-bg-base) 0%, var(--ft-bg-muted) 100%);
   color: var(--ft-text-primary);
 }
 
@@ -481,9 +492,9 @@ const scrollToSection = (sectionId: string) => {
   position: sticky;
   top: 0;
   z-index: var(--ft-z-sticky);
-  backdrop-filter: blur(16px);
-  border-bottom: 1px solid rgba(226, 232, 240, 0.08);
-  background: rgba(15, 20, 25, 0.72);
+  backdrop-filter: blur(14px);
+  border-bottom: 1px solid var(--ft-border-subtle);
+  background: color-mix(in srgb, var(--ft-bg-base) 85%, transparent);
 }
 
 .landing__nav-inner {
@@ -503,11 +514,13 @@ const scrollToSection = (sectionId: string) => {
   gap: var(--ft-space-2);
   font-weight: var(--ft-font-bold);
   font-size: var(--ft-text-lg);
+  font-family: var(--ft-font-display);
+  letter-spacing: -0.01em;
   color: var(--ft-text-primary);
 }
 
 .landing__brand i {
-  color: var(--ft-primary-400);
+  color: var(--ft-primary-600);
   font-size: 1.25rem;
 }
 
@@ -533,20 +546,32 @@ const scrollToSection = (sectionId: string) => {
 
 .landing__actions {
   display: flex;
+  align-items: center;
+  flex-wrap: wrap;
   gap: var(--ft-space-3);
 }
 
 .landing__hero {
   position: relative;
+  overflow: hidden;
 }
 
 .landing__hero::after {
   content: '';
   position: absolute;
   inset: 0;
-  background: radial-gradient(60% 60% at 80% 20%, rgba(59, 130, 246, 0.28), transparent),
-    radial-gradient(40% 40% at 10% 80%, rgba(236, 72, 153, 0.15), transparent);
-  opacity: 0.6;
+  background:
+    radial-gradient(
+      55% 55% at 75% 10%,
+      color-mix(in srgb, var(--ft-primary-500) 20%, transparent),
+      transparent
+    ),
+    radial-gradient(
+      45% 45% at 15% 70%,
+      color-mix(in srgb, var(--ft-info-500) 12%, transparent),
+      transparent
+    );
+  opacity: 0.8;
   pointer-events: none;
 }
 
@@ -563,6 +588,7 @@ const scrollToSection = (sectionId: string) => {
   display: flex;
   flex-direction: column;
   gap: clamp(var(--ft-space-4), 3vw, var(--ft-space-6));
+  animation: fadeUp 720ms var(--ft-ease-in-out) both;
 }
 
 .landing__hero-badge {
@@ -571,24 +597,28 @@ const scrollToSection = (sectionId: string) => {
   gap: var(--ft-space-2);
   border-radius: var(--ft-radius-full);
   padding: var(--ft-space-1) var(--ft-space-3);
-  background: rgba(59, 130, 246, 0.12);
-  color: var(--ft-primary-300);
+  background: color-mix(in srgb, var(--ft-primary-500) 20%, transparent);
+  border: 1px solid color-mix(in srgb, var(--ft-primary-500) 40%, transparent);
+  color: var(--ft-primary-200);
   font-size: var(--ft-text-xs);
   text-transform: uppercase;
-  letter-spacing: 0.12em;
+  letter-spacing: 0.16em;
+  font-weight: var(--ft-font-semibold);
 }
 
 .landing__hero-title {
   margin: 0;
-  font-size: clamp(2.5rem, 4vw, 3.5rem);
+  font-size: clamp(2.6rem, 4vw, 3.6rem);
   line-height: 1.1;
+  font-family: var(--ft-font-display);
+  letter-spacing: var(--ft-letter-spacing-display);
 }
 
 .landing__hero-subtitle {
   margin: 0;
   color: var(--ft-text-secondary);
   font-size: clamp(var(--ft-text-base), 2.2vw, 1.1rem);
-  max-width: 42ch;
+  max-width: 46ch;
 }
 
 .landing__hero-actions {
@@ -609,21 +639,31 @@ const scrollToSection = (sectionId: string) => {
   gap: var(--ft-space-2);
   padding: var(--ft-space-3);
   border-radius: var(--ft-radius-lg);
-  background: rgba(148, 163, 184, 0.08);
+  background: var(--ft-surface-base);
+  border: 1px solid var(--ft-border-subtle);
   color: var(--ft-text-secondary);
 }
 
 .landing__hero-card {
   position: relative;
   overflow: hidden;
+  border: 1px solid var(--ft-border-subtle);
+  background: var(--ft-surface-base);
+  animation: fadeUp 720ms var(--ft-ease-in-out) both;
+  animation-delay: 120ms;
+  box-shadow: var(--ft-shadow-2xl);
 }
 
 .landing__hero-card::after {
   content: '';
   position: absolute;
   inset: 0;
-  background: linear-gradient(135deg, rgba(59, 130, 246, 0.18), rgba(13, 148, 136, 0.12));
-  opacity: 0.4;
+  background: linear-gradient(
+    135deg,
+    color-mix(in srgb, var(--ft-primary-500) 24%, transparent),
+    color-mix(in srgb, var(--ft-info-500) 12%, transparent)
+  );
+  opacity: 0.5;
   pointer-events: none;
 }
 
@@ -668,7 +708,7 @@ const scrollToSection = (sectionId: string) => {
   position: relative;
   height: 6px;
   border-radius: var(--ft-radius-full);
-  background: rgba(148, 163, 184, 0.2);
+  background: color-mix(in srgb, var(--ft-border-default) 65%, transparent);
   overflow: hidden;
 }
 
@@ -681,10 +721,13 @@ const scrollToSection = (sectionId: string) => {
 
 .landing__section {
   position: relative;
+  scroll-margin-top: 110px;
 }
 
 .landing__section--alt {
-  background: rgba(148, 163, 184, 0.04);
+  background: var(--ft-bg-subtle);
+  border-top: 1px solid var(--ft-border-subtle);
+  border-bottom: 1px solid var(--ft-border-subtle);
 }
 
 .landing__section-header {
@@ -697,7 +740,8 @@ const scrollToSection = (sectionId: string) => {
 
 .landing__section-header h2 {
   margin: 0;
-  font-size: clamp(1.75rem, 3vw, 2.5rem);
+  font-size: clamp(1.85rem, 3vw, 2.6rem);
+  font-family: var(--ft-font-display);
 }
 
 .landing__section-header p {
@@ -707,7 +751,32 @@ const scrollToSection = (sectionId: string) => {
 
 .landing__feature-card {
   gap: var(--ft-space-3);
-  backdrop-filter: blur(12px);
+  border: 1px solid var(--ft-border-subtle);
+  background: var(--ft-surface-base);
+  transition: transform var(--ft-transition-fast), border-color var(--ft-transition-fast), box-shadow var(--ft-transition-fast);
+  animation: fadeUp 680ms var(--ft-ease-in-out) both;
+}
+
+.landing__feature-card:nth-child(1) {
+  animation-delay: 60ms;
+}
+
+.landing__feature-card:nth-child(2) {
+  animation-delay: 120ms;
+}
+
+.landing__feature-card:nth-child(3) {
+  animation-delay: 180ms;
+}
+
+.landing__feature-card:nth-child(4) {
+  animation-delay: 240ms;
+}
+
+.landing__feature-card:hover {
+  transform: translateY(-4px);
+  border-color: color-mix(in srgb, var(--ft-primary-500) 45%, var(--ft-border-subtle));
+  box-shadow: var(--ft-shadow-lg);
 }
 
 .landing__feature-card h3 {
@@ -727,8 +796,8 @@ const scrollToSection = (sectionId: string) => {
   display: grid;
   place-items: center;
   border-radius: var(--ft-radius-lg);
-  background: rgba(59, 130, 246, 0.16);
-  color: var(--ft-primary-300);
+  background: color-mix(in srgb, var(--ft-primary-500) 20%, transparent);
+  color: var(--ft-primary-500);
   font-size: 1.5rem;
 }
 
@@ -738,6 +807,15 @@ const scrollToSection = (sectionId: string) => {
 
 .landing__step-card {
   gap: var(--ft-space-3);
+  background: var(--ft-surface-base);
+  border: 1px solid var(--ft-border-subtle);
+  transition: transform var(--ft-transition-fast), border-color var(--ft-transition-fast), box-shadow var(--ft-transition-fast);
+}
+
+.landing__step-card:hover {
+  transform: translateY(-4px);
+  border-color: color-mix(in srgb, var(--ft-primary-500) 40%, var(--ft-border-subtle));
+  box-shadow: var(--ft-shadow-lg);
 }
 
 .landing__step-card h3 {
@@ -759,15 +837,19 @@ const scrollToSection = (sectionId: string) => {
 
 .landing__pricing {
   gap: var(--ft-space-4);
+  align-items: stretch;
 }
 
 .landing__pricing-card {
   gap: var(--ft-space-4);
+  border: 1px solid var(--ft-border-subtle);
+  background: var(--ft-surface-base);
 }
 
 .landing__pricing-card--accent {
   border-width: 2px;
-  border-color: rgba(59, 130, 246, 0.6);
+  border-color: color-mix(in srgb, var(--ft-primary-500) 70%, transparent);
+  box-shadow: var(--ft-shadow-xl);
 }
 
 .landing__pricing-header {
@@ -838,6 +920,8 @@ const scrollToSection = (sectionId: string) => {
 
 .landing__faq-item {
   gap: var(--ft-space-2);
+  border: 1px solid var(--ft-border-subtle);
+  background: var(--ft-surface-base);
 }
 
 .landing__faq-question {
@@ -874,7 +958,13 @@ const scrollToSection = (sectionId: string) => {
 
 .landing__cta {
   padding-block: clamp(var(--ft-space-8), 6vw, var(--ft-space-12));
-  background: linear-gradient(135deg, rgba(59, 130, 246, 0.2), rgba(15, 118, 110, 0.16));
+  background: linear-gradient(
+    135deg,
+    color-mix(in srgb, var(--ft-primary-500) 26%, transparent),
+    color-mix(in srgb, var(--ft-primary-500) 8%, transparent)
+  );
+  border-top: 1px solid var(--ft-border-subtle);
+  border-bottom: 1px solid var(--ft-border-subtle);
 }
 
 .landing__cta-inner {
@@ -886,7 +976,8 @@ const scrollToSection = (sectionId: string) => {
 
 .landing__cta-inner h2 {
   margin: 0;
-  font-size: clamp(1.75rem, 3vw, 2.25rem);
+  font-size: clamp(1.85rem, 3vw, 2.4rem);
+  font-family: var(--ft-font-display);
 }
 
 .landing__cta-inner p {
@@ -896,8 +987,8 @@ const scrollToSection = (sectionId: string) => {
 
 .landing__footer {
   margin-top: auto;
-  border-top: 1px solid rgba(148, 163, 184, 0.14);
-  background: rgba(15, 20, 25, 0.92);
+  border-top: 1px solid var(--ft-border-subtle);
+  background: var(--ft-bg-base);
 }
 
 .landing__footer-inner {
@@ -954,7 +1045,11 @@ const scrollToSection = (sectionId: string) => {
   gap: var(--ft-space-3);
   font-size: var(--ft-text-sm);
   color: var(--ft-text-tertiary);
-  border-top: 1px solid rgba(148, 163, 184, 0.12);
+  border-top: 1px solid color-mix(in srgb, var(--ft-border-default) 50%, transparent);
+}
+
+.light-mode .landing__hero-badge {
+  color: var(--ft-primary-700);
 }
 
 .landing__footer-meta-links {
@@ -970,6 +1065,17 @@ const scrollToSection = (sectionId: string) => {
 
 .landing__footer-meta-links a:hover {
   color: var(--ft-text-primary);
+}
+
+@keyframes fadeUp {
+  from {
+    opacity: 0;
+    transform: translateY(14px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 @media (max-width: 960px) {
@@ -989,7 +1095,7 @@ const scrollToSection = (sectionId: string) => {
   }
 
   .landing__actions {
-    justify-content: space-between;
+    justify-content: flex-start;
   }
 
   .landing__hero-actions {
