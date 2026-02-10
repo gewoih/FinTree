@@ -14,4 +14,4 @@ jobs:
 
       - name: Build & up via docker compose
         run: |
-          docker compose --env-file /opt/fintree/.env up -d --build
+          docker-compose --env-file /opt/fintree/.env up -d --build
