@@ -332,7 +332,7 @@ public sealed class AccountsService(
         if (account is null)
             throw new NotFoundException("Счет не найден", accountId);
         if (account.UserId != currentUserId)
-            throw new InvalidOperationException("Доступ запрещен");
+            throw new ForbiddenException();
 
         account.Rename(command.Name);
         await context.SaveChangesAsync(ct);
@@ -347,7 +347,7 @@ public sealed class AccountsService(
         if (account is null)
             throw new NotFoundException("Счет не найден", accountId);
         if (account.UserId != currentUserId)
-            throw new InvalidOperationException("Доступ запрещен");
+            throw new ForbiddenException();
 
         account.SetLiquidity(isLiquid);
         await context.SaveChangesAsync(ct);
@@ -377,7 +377,7 @@ public sealed class AccountsService(
         if (account is null)
             throw new NotFoundException("Счет не найден", accountId);
         if (account.UserId != currentUserId)
-            throw new InvalidOperationException("Доступ запрещен");
+            throw new ForbiddenException();
 
         var adjustment = new AccountBalanceAdjustment(accountId, amount, DateTime.UtcNow);
         await context.AccountBalanceAdjustments.AddAsync(adjustment, ct);
@@ -399,7 +399,7 @@ public sealed class AccountsService(
             throw new NotFoundException("Счет не найден", accountId);
 
         if (account.UserId != currentUserId)
-            throw new InvalidOperationException("Доступ запрещен");
+            throw new ForbiddenException();
 
         var adjustments = await context.AccountBalanceAdjustments
             .Where(a => a.AccountId == accountId)

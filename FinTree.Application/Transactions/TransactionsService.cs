@@ -101,13 +101,13 @@ public sealed class TransactionsService(AppDbContext context, ICurrentUser curre
     public async Task<Guid> CreateTransferAsync(CreateTransfer command, CancellationToken ct)
     {
         if (command.FromAccountId == command.ToAccountId)
-            throw new InvalidOperationException("Счет списания и счет зачисления должны быть разными.");
+            throw new DomainValidationException("Счет списания и счет зачисления должны быть разными.");
         if (command.FromAmount <= 0)
-            throw new InvalidOperationException("Сумма списания должна быть больше нуля.");
+            throw new DomainValidationException("Сумма списания должна быть больше нуля.");
         if (command.ToAmount <= 0)
-            throw new InvalidOperationException("Сумма зачисления должна быть больше нуля.");
+            throw new DomainValidationException("Сумма зачисления должна быть больше нуля.");
         if (command.FeeAmount is < 0)
-            throw new InvalidOperationException("Комиссия не может быть отрицательной.");
+            throw new DomainValidationException("Комиссия не может быть отрицательной.");
 
         var currentUserId = currentUser.Id;
         var accounts = await context.Accounts
@@ -117,11 +117,11 @@ public sealed class TransactionsService(AppDbContext context, ICurrentUser curre
 
         var fromAccount = accounts.FirstOrDefault(a => a.Id == command.FromAccountId);
         if (fromAccount is null)
-            throw new InvalidOperationException("Счет списания не найден.");
+            throw new NotFoundException(nameof(Account), command.FromAccountId);
 
         var toAccount = accounts.FirstOrDefault(a => a.Id == command.ToAccountId);
         if (toAccount is null)
-            throw new InvalidOperationException("Счет зачисления не найден.");
+            throw new NotFoundException(nameof(Account), command.ToAccountId);
 
         var categories = await context.TransactionCategories
             .AsNoTracking()
@@ -130,7 +130,7 @@ public sealed class TransactionsService(AppDbContext context, ICurrentUser curre
             .ToListAsync(ct);
 
         if (categories.Count == 0)
-            throw new InvalidOperationException("Не удалось подобрать категорию для перевода.");
+            throw new ConflictException("Не удалось подобрать категорию для перевода.");
 
         var transferCategoryId = categories
                                      .FirstOrDefault(c => c.Name == "Без категории")?.Id
@@ -184,15 +184,15 @@ public sealed class TransactionsService(AppDbContext context, ICurrentUser curre
     public async Task UpdateTransferAsync(UpdateTransfer command, CancellationToken ct)
     {
         if (command.TransferId == Guid.Empty)
-            throw new InvalidOperationException("Не указан перевод для обновления.");
+            throw new DomainValidationException("Не указан перевод для обновления.");
         if (command.FromAccountId == command.ToAccountId)
-            throw new InvalidOperationException("Счет списания и счет зачисления должны быть разными.");
+            throw new DomainValidationException("Счет списания и счет зачисления должны быть разными.");
         if (command.FromAmount <= 0)
-            throw new InvalidOperationException("Сумма списания должна быть больше нуля.");
+            throw new DomainValidationException("Сумма списания должна быть больше нуля.");
         if (command.ToAmount <= 0)
-            throw new InvalidOperationException("Сумма зачисления должна быть больше нуля.");
+            throw new DomainValidationException("Сумма зачисления должна быть больше нуля.");
         if (command.FeeAmount is < 0)
-            throw new InvalidOperationException("Комиссия не может быть отрицательной.");
+            throw new DomainValidationException("Комиссия не может быть отрицательной.");
 
         var currentUserId = currentUser.Id;
         var accounts = await context.Accounts
@@ -202,11 +202,11 @@ public sealed class TransactionsService(AppDbContext context, ICurrentUser curre
 
         var fromAccount = accounts.FirstOrDefault(a => a.Id == command.FromAccountId);
         if (fromAccount is null)
-            throw new InvalidOperationException("Счет списания не найден.");
+            throw new NotFoundException(nameof(Account), command.FromAccountId);
 
         var toAccount = accounts.FirstOrDefault(a => a.Id == command.ToAccountId);
         if (toAccount is null)
-            throw new InvalidOperationException("Счет зачисления не найден.");
+            throw new NotFoundException(nameof(Account), command.ToAccountId);
 
         var categories = await context.TransactionCategories
             .AsNoTracking()
@@ -215,7 +215,7 @@ public sealed class TransactionsService(AppDbContext context, ICurrentUser curre
             .ToListAsync(ct);
 
         if (categories.Count == 0)
-            throw new InvalidOperationException("Не удалось подобрать категорию для перевода.");
+            throw new ConflictException("Не удалось подобрать категорию для перевода.");
 
         var transferCategoryId = categories
                                      .FirstOrDefault(c => c.Name == "Без категории")?.Id
@@ -235,7 +235,7 @@ public sealed class TransactionsService(AppDbContext context, ICurrentUser curre
             throw new NotFoundException("Перевод не найден", command.TransferId);
 
         if (transferTransactions.Any(t => t.Account.UserId != currentUserId))
-            throw new InvalidOperationException("Доступ запрещен");
+            throw new ForbiddenException("Доступ запрещен");
 
         var expenseTransfer = transferTransactions.FirstOrDefault(t =>
             t.IsTransfer && t.Type == TransactionType.Expense);
@@ -243,7 +243,7 @@ public sealed class TransactionsService(AppDbContext context, ICurrentUser curre
             t.IsTransfer && t.Type == TransactionType.Income);
 
         if (expenseTransfer is null || incomeTransfer is null)
-            throw new InvalidOperationException("Перевод поврежден и не может быть обновлен.");
+            throw new ConflictException("Перевод поврежден и не может быть обновлен.");
 
         var description = string.IsNullOrWhiteSpace(command.Description) ? null : command.Description.Trim();
 
@@ -414,10 +414,10 @@ public sealed class TransactionsService(AppDbContext context, ICurrentUser curre
                           throw new NotFoundException("Transaction not found", command.TransactionId);
 
         if (transaction.Account.UserId != currentUser.Id)
-            throw new InvalidOperationException("Доступ запрещен");
+            throw new ForbiddenException("Доступ запрещен");
 
         if (transaction.TransferId is not null)
-            throw new InvalidOperationException("Переводы нельзя редактировать как обычные транзакции.");
+            throw new ConflictException("Переводы нельзя редактировать как обычные транзакции.");
 
         await EnsureCategoryAccessAsync(command.CategoryId, ct);
 
@@ -433,15 +433,15 @@ public sealed class TransactionsService(AppDbContext context, ICurrentUser curre
                           throw new NotFoundException("Транзакция не найдена", command.Id);
 
         if (transaction.Account.UserId != currentUser.Id)
-            throw new InvalidOperationException("Доступ запрещен");
+            throw new ForbiddenException("Доступ запрещен");
         if (transaction.TransferId is not null)
-            throw new InvalidOperationException("Переводы нельзя редактировать как обычные транзакции.");
+            throw new ConflictException("Переводы нельзя редактировать как обычные транзакции.");
 
         var newAccount = await context.Accounts.FirstOrDefaultAsync(a => a.Id == command.AccountId, ct) ??
-                         throw new InvalidOperationException("Счет не найден");
+                         throw new NotFoundException(nameof(Account), command.AccountId);
 
         if (newAccount.UserId != currentUser.Id)
-            throw new InvalidOperationException("Доступ запрещен");
+            throw new ForbiddenException("Доступ запрещен");
 
         await EnsureCategoryAccessAsync(command.CategoryId, ct);
 
@@ -461,7 +461,7 @@ public sealed class TransactionsService(AppDbContext context, ICurrentUser curre
             throw new NotFoundException(nameof(Transaction), id);
 
         if (transaction.Account.UserId != currentUser.Id)
-            throw new InvalidOperationException("Доступ запрещен");
+            throw new ForbiddenException("Доступ запрещен");
 
         if (transaction.TransferId is not null)
         {
@@ -483,7 +483,7 @@ public sealed class TransactionsService(AppDbContext context, ICurrentUser curre
     public async Task DeleteTransferAsync(Guid transferId, CancellationToken ct)
     {
         if (transferId == Guid.Empty)
-            throw new InvalidOperationException("Перевод не найден.");
+            throw new DomainValidationException("Перевод не найден.");
 
         var currentUserId = currentUser.Id;
         var transferTransactions = await context.Transactions
@@ -495,7 +495,7 @@ public sealed class TransactionsService(AppDbContext context, ICurrentUser curre
             throw new NotFoundException("Перевод не найден", transferId);
 
         if (transferTransactions.Any(t => t.Account.UserId != currentUserId))
-            throw new InvalidOperationException("Доступ запрещен");
+            throw new ForbiddenException("Доступ запрещен");
 
         foreach (var item in transferTransactions)
             item.Delete();
@@ -506,7 +506,7 @@ public sealed class TransactionsService(AppDbContext context, ICurrentUser curre
     private async Task<bool> EnsureCategoryAccessAsync(Guid categoryId, CancellationToken ct)
     {
         if (categoryId == Guid.Empty)
-            throw new InvalidOperationException("Категория не найдена");
+            throw new DomainValidationException("Категория не найдена");
 
         var categoryMeta = await context.TransactionCategories
             .AsNoTracking()
@@ -515,10 +515,10 @@ public sealed class TransactionsService(AppDbContext context, ICurrentUser curre
             .SingleOrDefaultAsync(ct);
 
         if (categoryMeta is null)
-            throw new InvalidOperationException("Категория не найдена");
+            throw new NotFoundException("Категория", categoryId);
 
         if (categoryMeta.UserId != currentUser.Id)
-            throw new InvalidOperationException("Доступ запрещен");
+            throw new ForbiddenException();
 
         return categoryMeta.IsMandatory;
     }

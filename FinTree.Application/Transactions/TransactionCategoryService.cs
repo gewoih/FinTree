@@ -49,7 +49,7 @@ public sealed class TransactionCategoryService(AppDbContext context, ICurrentUse
 
         if (transactionCategory.IsDefault ||
             string.Equals(transactionCategory.Name, "Без категории", StringComparison.OrdinalIgnoreCase))
-            throw new InvalidOperationException("Категорию \"Без категории\" нельзя удалить.");
+            throw new ConflictException("Категорию \"Без категории\" нельзя удалить.");
 
         await using var transaction = await context.Database.BeginTransactionAsync(ct);
 

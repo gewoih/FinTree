@@ -25,6 +25,7 @@ public sealed class RefreshToken
         ArgumentException.ThrowIfNullOrWhiteSpace(tokenHash);
         ArgumentOutOfRangeException.ThrowIfLessThanOrEqual(expiresAt, createdAt);
 
+        Id = Guid.NewGuid();
         UserId = userId;
         TokenHash = tokenHash.Trim();
         CreatedAt = createdAt;
