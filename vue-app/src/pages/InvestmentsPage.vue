@@ -9,6 +9,7 @@ import AccountFormModal from '../components/AccountFormModal.vue';
 import AccountFilters from '../components/AccountFilters.vue';
 import AccountBalanceAdjustmentsModal from '../components/AccountBalanceAdjustmentsModal.vue';
 import InvestmentAccountCard from '../components/Investments/InvestmentAccountCard.vue';
+import InvestmentsAllocationPie from '../components/Investments/InvestmentsAllocationPie.vue';
 import { mapAccount } from '../utils/mappers';
 import { formatCurrency, formatDate } from '../utils/formatters';
 
@@ -246,6 +247,13 @@ onMounted(async () => {
           />
         </div>
       </UiCard>
+
+      <InvestmentsAllocationPie
+        v-if="accounts.length > 0"
+        :accounts="accounts"
+        :base-currency-code="baseCurrency"
+        :loading="overviewLoading"
+      />
 
       <UiCard
         v-if="accounts.length > 0"
