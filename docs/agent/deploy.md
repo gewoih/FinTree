@@ -26,3 +26,10 @@
 - Commands and runbooks must use a single up-to-date stack standard.
 - Manual workaround flows must not become the default operating path.
 - Infrastructure changes must include corresponding runbook updates.
+
+## Compose runbook
+- Base production stack is `compose.yaml` (no public Postgres port, secrets from environment only).
+- Local development stack is standalone in `compose.dev.yaml` (no nginx/certbot).
+- Local run command: `docker compose -f compose.dev.yaml up -d`.
+- Production run command: `docker compose -f compose.yaml up -d`.
+- Required variables are documented in `.env.example`; real values must stay outside git.

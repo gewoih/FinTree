@@ -1,0 +1,61 @@
+services:
+  fintree-postgres:
+    restart: unless-stopped
+    image: postgres:18-alpine
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    networks:
+      - fintree-net
+
+  fintree.api:
+    restart: unless-stopped
+    build:
+      context: .
+      dockerfile: FinTree.Api/Dockerfile
+    image: fintree.api:local
+    environment:
+      ASPNETCORE_URLS: "http://+:8080"
+      ASPNETCORE_ENVIRONMENT: "Development"
+      Auth__JwtSecretKey: ${AUTH_JWT_SECRET_KEY}
+      Auth__Issuer: ${AUTH_ISSUER}
+      Auth__Audience: ${AUTH_AUDIENCE}
+      Auth__TokenLifetimeDays: ${AUTH_TOKEN_LIFETIME_DAYS}
+      Telegram__BotToken: ${TELEGRAM_BOT_TOKEN}
+      ConnectionStrings__DefaultConnection: ${CONNECTION_STRINGS_DEFAULT}
+      FxRates__ApiKey: ${FXRATES_API_KEY}
+      Cors__AllowedOrigins__0: "http://localhost:8080"
+    ports:
+      - "8081:8080"
+    depends_on:
+      - fintree-postgres
+    networks:
+      - fintree-net
+
+  fintree-frontend:
+    restart: unless-stopped
+    build:
+      context: ./vue-app
+      dockerfile: Dockerfile
+    image: fintree.frontend:local
+    environment:
+      VITE_API_BASE_URL: "/api"
+      VITE_API_PROXY_TARGET: "http://fintree.api:8080"
+    ports:
+      - "8080:8080"
+    depends_on:
+      - fintree.api
+    networks:
+      - fintree-net
+
+volumes:
+  pgdata:
+
+networks:
+  fintree-net:
+    driver: bridge

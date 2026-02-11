@@ -4,11 +4,9 @@ services:
     image: postgres:18-alpine
     container_name: fintree-postgres
     environment:
-      POSTGRES_DB: fin_tree
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: postgres
-    ports:
-      - "5432:5432"
+      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
     volumes:
       - pgdata:/var/lib/postgresql/data
     networks:
@@ -31,6 +29,8 @@ services:
       Telegram__BotToken: ${TELEGRAM_BOT_TOKEN}
       ConnectionStrings__DefaultConnection: ${CONNECTION_STRINGS_DEFAULT}
       FxRates__ApiKey: ${FXRATES_API_KEY}
+      Cors__AllowedOrigins__0: ${CORS_ALLOWED_ORIGIN_0}
+      Cors__AllowedOrigins__1: ${CORS_ALLOWED_ORIGIN_1}
     depends_on:
       - fintree-postgres
     networks:
@@ -46,9 +46,9 @@ services:
         VITE_API_BASE_URL: "/api"
     image: fintree.nginx:local
     environment:
-      NGINX_SERVER_NAME: ${NGINX_SERVER_NAME:-localhost}
-      NGINX_SSL_CERT: /etc/letsencrypt/live/${NGINX_SERVER_NAME:-localhost}/fullchain.pem
-      NGINX_SSL_KEY: /etc/letsencrypt/live/${NGINX_SERVER_NAME:-localhost}/privkey.pem
+      NGINX_SERVER_NAME: ${NGINX_SERVER_NAME}
+      NGINX_SSL_CERT: /etc/letsencrypt/live/${NGINX_SERVER_NAME}/fullchain.pem
+      NGINX_SSL_KEY: /etc/letsencrypt/live/${NGINX_SERVER_NAME}/privkey.pem
     ports:
       - "80:80"
       - "443:443"

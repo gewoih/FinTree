@@ -38,11 +38,31 @@ Log.Logger = new LoggerConfiguration()
 
 builder.Services.AddSerilog();
 
+var allowedCorsOrigins = builder.Configuration.GetSection("Cors:AllowedOrigins")
+    .Get<string[]>()
+    ?.Where(origin => !string.IsNullOrWhiteSpace(origin))
+    .Select(origin =>
+    {
+        if (!Uri.TryCreate(origin, UriKind.Absolute, out var parsedOrigin))
+            throw new InvalidOperationException($"Cors:AllowedOrigins contains invalid URI: {origin}");
+
+        if (!string.Equals(parsedOrigin.Scheme, Uri.UriSchemeHttp, StringComparison.OrdinalIgnoreCase) &&
+            !string.Equals(parsedOrigin.Scheme, Uri.UriSchemeHttps, StringComparison.OrdinalIgnoreCase))
+            throw new InvalidOperationException($"Cors:AllowedOrigins supports only HTTP/HTTPS schemes: {origin}");
+
+        return $"{parsedOrigin.Scheme}://{parsedOrigin.Authority}";
+    })
+    .Distinct(StringComparer.OrdinalIgnoreCase)
+    .ToArray() ?? [];
+
+if (allowedCorsOrigins.Length == 0)
+    throw new InvalidOperationException("Cors:AllowedOrigins must contain at least one explicit origin.");
+
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("VueFrontend", policy =>
     {
-        policy.SetIsOriginAllowed(_ => true)
+        policy.WithOrigins(allowedCorsOrigins)
             .AllowAnyHeader()
             .AllowAnyMethod()
             .AllowCredentials();
