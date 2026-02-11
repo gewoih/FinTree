@@ -9,11 +9,15 @@
 - Auth behavior must be consistent across clients and endpoint flows.
 - Session handling must not break public pages or marketing routes.
 - Auth failures must be deterministic: clear UI signal, no redirect loops.
+- JWT access token must be short-lived and rotated via refresh-token flow.
+- Refresh tokens must be one-time (rotation on refresh) and server-revocable.
 
 ## Cookie and session rules
 - For production (HTTPS): `Secure=true`, `HttpOnly=true`, and a correct `SameSite` policy for the chosen model.
 - Local/dev may use a separate cookie profile.
 - Cookie behavior must not rely on implicit environment magic without explicit logic and validation.
+- Access-token cookie and refresh-token cookie must be split (different names, scoped paths).
+- Refresh tokens must not be stored in plain form in DB; only token hashes are allowed.
 
 ## CORS rules
 - Wildcard origins are forbidden for credentialed requests.

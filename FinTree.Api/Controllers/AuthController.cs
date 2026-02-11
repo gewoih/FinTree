@@ -19,7 +19,7 @@ public class AuthController(
     public async Task<IActionResult> Register([FromBody] RegisterRequest request, CancellationToken ct)
     {
         var response = await authService.RegisterAsync(request, ct);
-        SetAuthCookie(response.Token);
+        SetAuthCookies(response.AccessToken, response.RefreshToken);
         return Ok(new AuthPublicResponse(response.Email, response.UserId));
     }
 
@@ -27,7 +27,7 @@ public class AuthController(
     public async Task<IActionResult> Login([FromBody] LoginRequest request, CancellationToken ct)
     {
         var response = await authService.LoginAsync(request, ct);
-        SetAuthCookie(response.Token);
+        SetAuthCookies(response.AccessToken, response.RefreshToken);
         return Ok(new AuthPublicResponse(response.Email, response.UserId));
     }
 
@@ -35,30 +35,41 @@ public class AuthController(
     public async Task<IActionResult> TelegramLogin([FromBody] TelegramLoginRequest request, CancellationToken ct)
     {
         var response = await authService.LoginWithTelegramAsync(request, ct);
-        SetAuthCookie(response.Token);
+        SetAuthCookies(response.AccessToken, response.RefreshToken);
+        return Ok(new AuthPublicResponse(response.Email, response.UserId));
+    }
+
+    [HttpPost("refresh")]
+    public async Task<IActionResult> Refresh(CancellationToken ct)
+    {
+        var refreshToken = Request.Cookies[AuthConstants.RefreshTokenCookieName];
+        var response = await authService.RefreshAsync(refreshToken ?? string.Empty, ct);
+        SetAuthCookies(response.AccessToken, response.RefreshToken);
         return Ok(new AuthPublicResponse(response.Email, response.UserId));
     }
 
     [HttpPost("logout")]
-    public IActionResult Logout()
+    public async Task<IActionResult> Logout(CancellationToken ct)
     {
-        ClearAuthCookie();
+        var refreshToken = Request.Cookies[AuthConstants.RefreshTokenCookieName];
+        await authService.RevokeRefreshTokenAsync(refreshToken, ct);
+        ClearAuthCookies();
         return Ok();
     }
 
-    private void SetAuthCookie(string token)
+    private void SetAuthCookies(string accessToken, string refreshToken)
     {
-        var options = BuildAuthCookieOptions();
-        Response.Cookies.Append(AuthConstants.AuthCookieName, token, options);
+        Response.Cookies.Append(AuthConstants.AccessTokenCookieName, accessToken, BuildAccessCookieOptions());
+        Response.Cookies.Append(AuthConstants.RefreshTokenCookieName, refreshToken, BuildRefreshCookieOptions());
     }
 
-    private void ClearAuthCookie()
+    private void ClearAuthCookies()
     {
-        var options = BuildDeleteCookieOptions();
-        Response.Cookies.Delete(AuthConstants.AuthCookieName, options);
+        Response.Cookies.Delete(AuthConstants.AccessTokenCookieName, BuildDeleteAccessCookieOptions());
+        Response.Cookies.Delete(AuthConstants.RefreshTokenCookieName, BuildDeleteRefreshCookieOptions());
     }
 
-    private CookieOptions BuildAuthCookieOptions()
+    private CookieOptions BuildAccessCookieOptions()
     {
         return new CookieOptions
         {
@@ -66,11 +77,23 @@ public class AuthController(
             Secure = !environment.IsDevelopment(),
             SameSite = SameSiteMode.Strict,
             Path = "/",
-            Expires = DateTimeOffset.UtcNow.AddDays(_authOptions.TokenLifetimeDays)
+            Expires = DateTimeOffset.UtcNow.AddMinutes(_authOptions.AccessTokenLifetimeMinutes)
         };
     }
 
-    private CookieOptions BuildDeleteCookieOptions()
+    private CookieOptions BuildRefreshCookieOptions()
+    {
+        return new CookieOptions
+        {
+            HttpOnly = true,
+            Secure = !environment.IsDevelopment(),
+            SameSite = SameSiteMode.Strict,
+            Path = "/api/auth",
+            Expires = DateTimeOffset.UtcNow.AddDays(_authOptions.RefreshTokenLifetimeDays)
+        };
+    }
+
+    private CookieOptions BuildDeleteAccessCookieOptions()
     {
         return new CookieOptions
         {
@@ -78,6 +101,17 @@ public class AuthController(
             Secure = !environment.IsDevelopment(),
             SameSite = SameSiteMode.Strict,
             Path = "/"
+        };
+    }
+
+    private CookieOptions BuildDeleteRefreshCookieOptions()
+    {
+        return new CookieOptions
+        {
+            HttpOnly = true,
+            Secure = !environment.IsDevelopment(),
+            SameSite = SameSiteMode.Strict,
+            Path = "/api/auth"
         };
     }
 }

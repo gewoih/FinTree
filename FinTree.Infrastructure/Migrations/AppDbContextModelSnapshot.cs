@@ -276,6 +276,42 @@ namespace FinTree.Infrastructure.Migrations
                     b.ToTable("AspNetUsers", (string)null);
                 });
 
+            modelBuilder.Entity("FinTree.Domain.Identity.RefreshToken", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<DateTime>("ExpiresAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid?>("ReplacedByTokenId")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime?>("RevokedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("TokenHash")
+                        .IsRequired()
+                        .HasMaxLength(64)
+                        .HasColumnType("character varying(64)");
+
+                    b.Property<Guid>("UserId")
+                        .HasColumnType("uuid");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("TokenHash")
+                        .IsUnique();
+
+                    b.HasIndex("UserId", "ExpiresAt");
+
+                    b.ToTable("RefreshTokens");
+                });
+
             modelBuilder.Entity("FinTree.Domain.Transactions.Transaction", b =>
                 {
                     b.Property<Guid>("Id")
@@ -472,6 +508,17 @@ namespace FinTree.Infrastructure.Migrations
                         .IsRequired();
                 });
 
+            modelBuilder.Entity("FinTree.Domain.Identity.RefreshToken", b =>
+                {
+                    b.HasOne("FinTree.Domain.Identity.User", "User")
+                        .WithMany("RefreshTokens")
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("User");
+                });
+
             modelBuilder.Entity("FinTree.Domain.Transactions.Transaction", b =>
                 {
                     b.HasOne("FinTree.Domain.Accounts.Account", "Account")
@@ -542,6 +589,8 @@ namespace FinTree.Infrastructure.Migrations
             modelBuilder.Entity("FinTree.Domain.Identity.User", b =>
                 {
                     b.Navigation("Accounts");
+
+                    b.Navigation("RefreshTokens");
 
                     b.Navigation("TransactionCategories");
                 });

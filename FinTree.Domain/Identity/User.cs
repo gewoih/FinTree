@@ -10,6 +10,7 @@ public sealed class User : IdentityUser<Guid>
 {
     private readonly List<Account> _accounts = [];
     private readonly List<TransactionCategory> _transactionCategories = [];
+    private readonly List<RefreshToken> _refreshTokens = [];
 
     public string BaseCurrencyCode { get; private set; }
     public long? TelegramUserId { get; private set; }
@@ -17,6 +18,7 @@ public sealed class User : IdentityUser<Guid>
     [NotMapped] public Currency BaseCurrency => Currency.FromCode(BaseCurrencyCode);
     public IReadOnlyCollection<Account> Accounts => _accounts;
     public IReadOnlyCollection<TransactionCategory> TransactionCategories => _transactionCategories;
+    public IReadOnlyCollection<RefreshToken> RefreshTokens => _refreshTokens;
 
     private User()
     {

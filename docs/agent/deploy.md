@@ -33,3 +33,9 @@
 - Local run command: `docker compose -f compose.dev.yaml up -d`.
 - Production run command: `docker compose -f compose.yaml up -d`.
 - Required variables are documented in `.env.example`; real values must stay outside git.
+- Auth environment variables must include:
+  - `AUTH_JWT_SECRET_KEY`
+  - `AUTH_ISSUER`
+  - `AUTH_AUDIENCE`
+  - `AUTH_ACCESS_TOKEN_LIFETIME_MINUTES`
+  - `AUTH_REFRESH_TOKEN_LIFETIME_DAYS`

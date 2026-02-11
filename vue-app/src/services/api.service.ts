@@ -21,7 +21,11 @@ import type {
     UpdateTransferPayload
 } from '../types.ts';
 
-type AuthRedirectConfig = AxiosRequestConfig & { skipAuthRedirect?: boolean };
+type AuthRedirectConfig = AxiosRequestConfig & {
+    skipAuthRedirect?: boolean;
+    skipAuthRefresh?: boolean;
+    _retry?: boolean;
+};
 
 /**
  * Axios client instance configured for the FinTree API
@@ -35,12 +39,27 @@ const apiClient = axios.create({
     },
 });
 
+let refreshRequest: Promise<void> | null = null;
+
+async function refreshSession(): Promise<void> {
+    if (!refreshRequest) {
+        refreshRequest = axios.post('/api/auth/refresh', null, {
+            withCredentials: true,
+        }).then(() => undefined)
+            .finally(() => {
+                refreshRequest = null;
+            });
+    }
+
+    return refreshRequest;
+}
+
 /**
  * Response interceptor for centralized error handling
  */
 apiClient.interceptors.response.use(
     response => response,
-    (error: AxiosError) => {
+    async (error: AxiosError) => {
         // Log error details for debugging
         console.error('API Error:', {
             message: error.message,
@@ -49,9 +68,25 @@ apiClient.interceptors.response.use(
             url: error.config?.url
         });
 
-        // If 401 Unauthorized, clear auth and redirect to login
+        const requestConfig = (error.config ?? {}) as AuthRedirectConfig;
+        const requestUrl = typeof requestConfig.url === 'string' ? requestConfig.url : '';
+        const isRefreshRequest = requestUrl.includes('/auth/refresh');
+
+        // Try refresh-token flow once on 401 before redirecting user.
         if (error.response?.status === 401) {
-            const skipAuthRedirect = (error.config as AuthRedirectConfig | undefined)?.skipAuthRedirect;
+            const shouldTryRefresh = !requestConfig.skipAuthRefresh && !requestConfig._retry && !isRefreshRequest;
+            if (shouldTryRefresh) {
+                requestConfig._retry = true;
+
+                try {
+                    await refreshSession();
+                    return apiClient(requestConfig);
+                } catch (refreshError) {
+                    console.error('Session refresh failed:', refreshError);
+                }
+            }
+
+            const skipAuthRedirect = requestConfig.skipAuthRedirect;
             if (!skipAuthRedirect && window.location.pathname !== '/login') {
                 window.location.href = '/login';
             }

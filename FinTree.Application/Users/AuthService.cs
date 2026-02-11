@@ -40,8 +40,7 @@ public sealed class AuthService(
         await context.SaveChangesAsync(ct);
         await transaction.CommitAsync(ct);
 
-        var token = GenerateJwtToken(user);
-        return new AuthResponse(token, user.Email!, user.Id);
+        return await IssueTokensAsync(user, ct);
     }
 
     public async Task<AuthResponse> LoginAsync(LoginRequest request, CancellationToken ct)
@@ -54,8 +53,7 @@ public sealed class AuthService(
         if (!result.Succeeded)
             throw new UnauthorizedAccessException("Invalid email or password");
 
-        var token = GenerateJwtToken(user);
-        return new AuthResponse(token, user.Email!, user.Id);
+        return await IssueTokensAsync(user, ct);
     }
 
     public async Task<AuthResponse> LoginWithTelegramAsync(TelegramLoginRequest request, CancellationToken ct)
@@ -67,7 +65,7 @@ public sealed class AuthService(
 
         var user = await userManager.Users.FirstOrDefaultAsync(u => u.TelegramUserId == request.Id, ct);
         if (user != null)
-            return new AuthResponse(GenerateJwtToken(user), user.Email!, user.Id);
+            return await IssueTokensAsync(user, ct);
 
         var email = $"tg-{request.Id}@fin-tree.ru";
         var username = !string.IsNullOrWhiteSpace(request.Username)
@@ -89,10 +87,51 @@ public sealed class AuthService(
         await context.SaveChangesAsync(ct);
         await transaction.CommitAsync(ct);
 
-        return new AuthResponse(GenerateJwtToken(newUser), newUser.Email!, newUser.Id);
+        return await IssueTokensAsync(newUser, ct);
     }
 
-    private string GenerateJwtToken(User user)
+    public async Task<AuthResponse> RefreshAsync(string refreshToken, CancellationToken ct)
+    {
+        if (string.IsNullOrWhiteSpace(refreshToken))
+            throw new UnauthorizedAccessException("Refresh token is missing.");
+
+        var tokenHash = ComputeTokenHash(refreshToken);
+        var storedToken = await context.RefreshTokens
+            .Include(t => t.User)
+            .FirstOrDefaultAsync(t => t.TokenHash == tokenHash, ct);
+
+        if (storedToken is null || !storedToken.IsActive)
+            throw new UnauthorizedAccessException("Refresh token is invalid.");
+
+        var now = DateTime.UtcNow;
+        var nextRefreshValue = GenerateRefreshTokenValue();
+        var nextRefreshToken = CreateRefreshToken(storedToken.UserId, nextRefreshValue, now);
+
+        storedToken.Revoke(now, nextRefreshToken.Id);
+        await context.RefreshTokens.AddAsync(nextRefreshToken, ct);
+        await context.SaveChangesAsync(ct);
+
+        var accessToken = GenerateAccessToken(storedToken.User);
+        return new AuthResponse(accessToken, nextRefreshValue, storedToken.User.Email!, storedToken.User.Id);
+    }
+
+    public async Task RevokeRefreshTokenAsync(string? refreshToken, CancellationToken ct)
+    {
+        if (string.IsNullOrWhiteSpace(refreshToken))
+            return;
+
+        var tokenHash = ComputeTokenHash(refreshToken);
+        var storedToken = await context.RefreshTokens
+            .FirstOrDefaultAsync(t => t.TokenHash == tokenHash, ct);
+
+        if (storedToken is null || storedToken.RevokedAt is not null)
+            return;
+
+        storedToken.Revoke(DateTime.UtcNow);
+        await context.SaveChangesAsync(ct);
+    }
+
+    private string GenerateAccessToken(User user)
     {
         var claims = new[]
         {
@@ -109,11 +148,48 @@ public sealed class AuthService(
             issuer: _authOptions.Issuer,
             audience: _authOptions.Audience,
             claims: claims,
-            expires: DateTime.UtcNow.AddDays(_authOptions.TokenLifetimeDays),
+            expires: DateTime.UtcNow.AddMinutes(_authOptions.AccessTokenLifetimeMinutes),
             signingCredentials: credentials
         );
 
         return new JwtSecurityTokenHandler().WriteToken(token);
+    }
+
+    private async Task<AuthResponse> IssueTokensAsync(User user, CancellationToken ct)
+    {
+        var now = DateTime.UtcNow;
+        var refreshTokenValue = GenerateRefreshTokenValue();
+        var refreshToken = CreateRefreshToken(user.Id, refreshTokenValue, now);
+
+        await context.RefreshTokens.AddAsync(refreshToken, ct);
+        await context.SaveChangesAsync(ct);
+
+        var accessToken = GenerateAccessToken(user);
+        return new AuthResponse(accessToken, refreshTokenValue, user.Email!, user.Id);
+    }
+
+    private RefreshToken CreateRefreshToken(Guid userId, string refreshTokenValue, DateTime createdAtUtc)
+    {
+        var expiresAtUtc = createdAtUtc.AddDays(_authOptions.RefreshTokenLifetimeDays);
+        var tokenHash = ComputeTokenHash(refreshTokenValue);
+        return new RefreshToken(userId, tokenHash, createdAtUtc, expiresAtUtc);
+    }
+
+    private static string GenerateRefreshTokenValue()
+    {
+        Span<byte> bytes = stackalloc byte[64];
+        RandomNumberGenerator.Fill(bytes);
+
+        return Convert.ToBase64String(bytes)
+            .TrimEnd('=')
+            .Replace('+', '-')
+            .Replace('/', '_');
+    }
+
+    private static string ComputeTokenHash(string token)
+    {
+        var hash = SHA256.HashData(Encoding.UTF8.GetBytes(token));
+        return Convert.ToHexString(hash);
     }
 
     private Task SeedDefaultCategoriesAsync(User user, CancellationToken ct)

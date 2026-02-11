@@ -13,6 +13,7 @@ namespace FinTree.Infrastructure.Database;
 public sealed class AppDbContext(DbContextOptions<AppDbContext> options) : IdentityDbContext<User, Role, Guid>(options)
 {
     public DbSet<User> Users => Set<User>();
+    public DbSet<RefreshToken> RefreshTokens => Set<RefreshToken>();
     public DbSet<TransactionCategory> TransactionCategories => Set<TransactionCategory>();
     public DbSet<Account> Accounts => Set<Account>();
     public DbSet<AccountBalanceAdjustment> AccountBalanceAdjustments => Set<AccountBalanceAdjustment>();
@@ -26,7 +27,18 @@ public sealed class AppDbContext(DbContextOptions<AppDbContext> options) : Ident
         var assemblyWithConfigurations = GetType().Assembly;
         modelBuilder.ApplyConfigurationsFromAssembly(assemblyWithConfigurations);
 
+        ConfigureRefreshTokens(modelBuilder);
         ApplySoftDeleteQueryFilters(modelBuilder);
+    }
+
+    private static void ConfigureRefreshTokens(ModelBuilder modelBuilder)
+    {
+        modelBuilder.Entity<RefreshToken>(entity =>
+        {
+            entity.Property(x => x.TokenHash).HasMaxLength(64);
+            entity.HasIndex(x => x.TokenHash).IsUnique();
+            entity.HasIndex(x => new { x.UserId, x.ExpiresAt });
+        });
     }
 
     private static void ApplySoftDeleteQueryFilters(ModelBuilder modelBuilder)

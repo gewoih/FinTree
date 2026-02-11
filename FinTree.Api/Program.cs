@@ -76,15 +76,18 @@ if (string.IsNullOrWhiteSpace(authOptions.Issuer))
     throw new InvalidOperationException("Auth:Issuer is missing.");
 if (string.IsNullOrWhiteSpace(authOptions.Audience))
     throw new InvalidOperationException("Auth:Audience is missing.");
-if (authOptions.TokenLifetimeDays <= 0)
-    throw new InvalidOperationException("Auth:TokenLifetimeDays must be greater than zero.");
+if (authOptions.AccessTokenLifetimeMinutes <= 0)
+    throw new InvalidOperationException("Auth:AccessTokenLifetimeMinutes must be greater than zero.");
+if (authOptions.RefreshTokenLifetimeDays <= 0)
+    throw new InvalidOperationException("Auth:RefreshTokenLifetimeDays must be greater than zero.");
 
 builder.Services.Configure<AuthOptions>(options =>
 {
     options.JwtSecretKey = authOptions.JwtSecretKey;
     options.Issuer = authOptions.Issuer;
     options.Audience = authOptions.Audience;
-    options.TokenLifetimeDays = authOptions.TokenLifetimeDays;
+    options.AccessTokenLifetimeMinutes = authOptions.AccessTokenLifetimeMinutes;
+    options.RefreshTokenLifetimeDays = authOptions.RefreshTokenLifetimeDays;
 });
 builder.Services.Configure<TelegramAuthOptions>(builder.Configuration.GetSection("Telegram"));
 
@@ -123,7 +126,7 @@ builder.Services.AddAuthentication(options =>
         {
             OnMessageReceived = context =>
             {
-                var token = context.Request.Cookies[AuthConstants.AuthCookieName];
+                var token = context.Request.Cookies[AuthConstants.AccessTokenCookieName];
                 if (!string.IsNullOrWhiteSpace(token))
                     context.Token = token;
                 return Task.CompletedTask;
