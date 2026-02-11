@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { ref, computed } from 'vue'
-import InputSwitch from 'primevue/inputswitch'
+import ToggleSwitch from 'primevue/toggleswitch'
 import type { Account, AccountType } from '../types'
 import { getAccountTypeInfo, getCurrencyFlag } from '../utils/accountHelpers'
 import { formatCurrency } from '../utils/formatters'
@@ -198,7 +198,7 @@ const toggleMenu = (event: Event) => {
             class="liquidity-control"
             @click.stop
           >
-            <InputSwitch
+            <ToggleSwitch
               v-model="liquidityModel"
               :disabled="isLiquidityLoading"
             />
@@ -408,7 +408,7 @@ const toggleMenu = (event: Event) => {
   color: var(--ft-text-muted);
 }
 
-.liquidity-control :deep(.p-inputswitch) {
+.liquidity-control :deep(.p-toggleswitch) {
   transform: scale(0.9);
 }
 

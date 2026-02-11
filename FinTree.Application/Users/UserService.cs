@@ -13,7 +13,12 @@ public sealed class UserService(AppDbContext context, ICurrentUser currentUser)
         var currentUserId = currentUser.Id;
         var userData = await context.Users
             .Where(u => u.Id == currentUserId)
-            .Select(u => new MeDto(u.Id, u.Email, u.TelegramUserId, u.BaseCurrencyCode))
+            .Select(u => new MeDto(
+                u.Id,
+                u.UserName ?? u.Email ?? string.Empty,
+                u.Email,
+                u.TelegramUserId,
+                u.BaseCurrencyCode))
             .SingleOrDefaultAsync(cancellationToken: ct);
 
         return userData;
@@ -44,7 +49,8 @@ public sealed class UserService(AppDbContext context, ICurrentUser currentUser)
         if (telegramUserId.HasValue)
         {
             if (telegramUserId.Value <= 0)
-                throw new InvalidOperationException("Некорректный Telegram ID");
+                throw new DomainValidationException("Некорректный Telegram ID");
+           
             user.LinkTelegramAccount(telegramUserId.Value);
         }
         else
@@ -54,7 +60,12 @@ public sealed class UserService(AppDbContext context, ICurrentUser currentUser)
 
         await context.SaveChangesAsync(ct);
 
-        return new MeDto(user.Id, user.Email, user.TelegramUserId, user.BaseCurrencyCode);
+        return new MeDto(
+            user.Id,
+            user.UserName ?? user.Email ?? string.Empty,
+            user.Email,
+            user.TelegramUserId,
+            user.BaseCurrencyCode);
     }
 
     public async Task<List<TransactionCategoryDto>> GetUserCategoriesAsync(CancellationToken ct)

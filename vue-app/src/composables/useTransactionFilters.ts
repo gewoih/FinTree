@@ -1,6 +1,14 @@
 import { ref, computed } from 'vue';
 import type { Account, Category, Transaction } from '../types';
 
+type ExtendedTransaction = Transaction & {
+  categoryName?: string;
+  accountName?: string;
+  isTransferSummary?: boolean;
+  transferFromAccountId?: string;
+  transferToAccountId?: string;
+};
+
 /**
  * Composable for managing transaction filters
  * Handles search text, category, account, and date range filtering
@@ -34,8 +42,9 @@ export function useTransactionFilters<T extends Transaction>(
     if (searchText.value) {
       const search = searchText.value.toLowerCase();
       filtered = filtered.filter(txn => {
-        const categoryName = (txn as any).categoryName ?? txn.category?.name ?? '';
-        const accountName = (txn as any).accountName ?? txn.account?.name ?? '';
+        const extendedTxn = txn as ExtendedTransaction;
+        const categoryName = extendedTxn.categoryName ?? extendedTxn.category?.name ?? '';
+        const accountName = extendedTxn.accountName ?? extendedTxn.account?.name ?? '';
         const description = txn.description ?? '';
 
         return (
@@ -49,7 +58,7 @@ export function useTransactionFilters<T extends Transaction>(
     // Filter by category
     if (selectedCategory.value) {
       filtered = filtered.filter(txn => {
-        if ((txn as any).isTransferSummary) return false;
+        if ((txn as ExtendedTransaction).isTransferSummary) return false;
         return txn.categoryId === selectedCategory.value!.id;
       });
     }
@@ -57,9 +66,10 @@ export function useTransactionFilters<T extends Transaction>(
     // Filter by account
     if (selectedAccount.value) {
       filtered = filtered.filter(txn => {
-        if ((txn as any).isTransferSummary) {
-          const fromId = (txn as any).transferFromAccountId;
-          const toId = (txn as any).transferToAccountId;
+        const extendedTxn = txn as ExtendedTransaction;
+        if (extendedTxn.isTransferSummary) {
+          const fromId = extendedTxn.transferFromAccountId;
+          const toId = extendedTxn.transferToAccountId;
           return fromId === selectedAccount.value!.id || toId === selectedAccount.value!.id;
         }
         return txn.accountId === selectedAccount.value!.id;
