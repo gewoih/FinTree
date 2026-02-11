@@ -27,8 +27,18 @@ public sealed class AppDbContext(DbContextOptions<AppDbContext> options) : Ident
         var assemblyWithConfigurations = GetType().Assembly;
         modelBuilder.ApplyConfigurationsFromAssembly(assemblyWithConfigurations);
 
+        ConfigureFxUsdRates(modelBuilder);
         ConfigureRefreshTokens(modelBuilder);
         ApplySoftDeleteQueryFilters(modelBuilder);
+    }
+
+    private static void ConfigureFxUsdRates(ModelBuilder modelBuilder)
+    {
+        modelBuilder.Entity<FxUsdRate>(entity =>
+        {
+            entity.Property(x => x.CurrencyCode).HasMaxLength(5);
+            entity.HasIndex(x => new { x.CurrencyCode, x.EffectiveDate }).IsUnique();
+        });
     }
 
     private static void ConfigureRefreshTokens(ModelBuilder modelBuilder)
