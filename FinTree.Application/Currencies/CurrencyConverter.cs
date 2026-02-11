@@ -1,4 +1,5 @@
 using FinTree.Domain.ValueObjects;
+using FinTree.Application.Exceptions;
 using FinTree.Infrastructure.Database;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Caching.Memory;
@@ -24,10 +25,16 @@ public sealed class CurrencyConverter(AppDbContext context, IMemoryCache cache)
         if (from == to)
             return 1m;
 
-        var d = atUtc.Date;
+        var requestedAtUtc = atUtc.Kind switch
+        {
+            DateTimeKind.Utc => atUtc,
+            DateTimeKind.Unspecified => DateTime.SpecifyKind(atUtc, DateTimeKind.Utc),
+            _ => atUtc.ToUniversalTime()
+        };
+        var requestedDayStartUtc = requestedAtUtc.Date;
 
-        var fromUnitsPerUsd = await GetUnitsPerUsdAsync(from, d, ct);
-        var toUnitsPerUsd = await GetUnitsPerUsdAsync(to, d, ct);
+        var fromUnitsPerUsd = await GetUnitsPerUsdAsync(from, requestedDayStartUtc, ct);
+        var toUnitsPerUsd = await GetUnitsPerUsdAsync(to, requestedDayStartUtc, ct);
 
         return toUnitsPerUsd / fromUnitsPerUsd;
     }
@@ -37,19 +44,33 @@ public sealed class CurrencyConverter(AppDbContext context, IMemoryCache cache)
         if (currency == "USD")
             return 1m;
 
-        var key = (currency, dateUtc);
+        var dayStartUtc = DateTime.SpecifyKind(dateUtc.Date, DateTimeKind.Utc);
+        var dayEndUtcExclusive = dayStartUtc.AddDays(1);
+        var key = (currency, dayStartUtc);
 
         if (cache.TryGetValue(key, out decimal cached))
             return cached;
 
         var rate = await context.FxUsdRates
-            .Where(r => r.CurrencyCode == currency)
+            .Where(r => r.CurrencyCode == currency && r.EffectiveDate < dayEndUtcExclusive)
             .OrderByDescending(r => r.EffectiveDate)
             .Select(r => (decimal?)r.Rate)
             .FirstOrDefaultAsync(ct);
 
         if (rate is null)
-            throw new InvalidOperationException();
+        {
+            rate = await context.FxUsdRates
+                .Where(r => r.CurrencyCode == currency)
+                .OrderBy(r => r.EffectiveDate)
+                .Select(r => (decimal?)r.Rate)
+                .FirstOrDefaultAsync(ct);
+        }
+
+        if (rate is null)
+            throw new DomainValidationException(
+                $"Курс валюты {currency} не найден.",
+                "fx_rate_not_found",
+                new { currency, requestedAt = dayStartUtc });
 
         cache.Set(key, rate.Value, CacheTtl);
         return rate.Value;
