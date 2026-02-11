@@ -22,10 +22,10 @@ public sealed class TransactionsService(AppDbContext context, ICurrentUser curre
         if (account.UserId != currentUser.Id)
             throw new UnauthorizedAccessException("Доступ запрещен");
 
-        await EnsureCategoryAccessAsync(command.CategoryId, ct);
+        var isMandatory = await EnsureCategoryAccessAsync(command.CategoryId, ct);
 
         var newTransaction = account.AddTransaction(command.Type, command.CategoryId, command.Amount,
-            command.OccurredAt, command.Description, command.IsMandatory);
+            command.OccurredAt, command.Description, isMandatory);
 
         await context.SaveChangesAsync(ct);
         return newTransaction.Id;
@@ -503,7 +503,7 @@ public sealed class TransactionsService(AppDbContext context, ICurrentUser curre
         await context.SaveChangesAsync(ct);
     }
 
-    private async Task EnsureCategoryAccessAsync(Guid categoryId, CancellationToken ct)
+    private async Task<bool> EnsureCategoryAccessAsync(Guid categoryId, CancellationToken ct)
     {
         if (categoryId == Guid.Empty)
             throw new InvalidOperationException("Категория не найдена");
@@ -511,7 +511,7 @@ public sealed class TransactionsService(AppDbContext context, ICurrentUser curre
         var categoryMeta = await context.TransactionCategories
             .AsNoTracking()
             .Where(c => c.Id == categoryId)
-            .Select(c => new { c.Id, c.UserId })
+            .Select(c => new { c.Id, c.UserId, c.IsMandatory })
             .SingleOrDefaultAsync(ct);
 
         if (categoryMeta is null)
@@ -519,5 +519,7 @@ public sealed class TransactionsService(AppDbContext context, ICurrentUser curre
 
         if (categoryMeta.UserId != currentUser.Id)
             throw new InvalidOperationException("Доступ запрещен");
+
+        return categoryMeta.IsMandatory;
     }
 }
