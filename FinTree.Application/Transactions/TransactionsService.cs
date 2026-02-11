@@ -20,7 +20,7 @@ public sealed class TransactionsService(AppDbContext context, ICurrentUser curre
                       throw new NotFoundException(nameof(Account), command.AccountId);
         
         if (account.UserId != currentUser.Id)
-            throw new UnauthorizedAccessException("Доступ запрещен");
+            throw new ForbiddenException("Доступ запрещен");
 
         var isMandatory = await EnsureCategoryAccessAsync(command.CategoryId, ct);
 

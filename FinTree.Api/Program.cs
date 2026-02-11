@@ -180,9 +180,6 @@ if (!app.Environment.IsDevelopment())
     app.UseHttpsRedirection();
 }
 
-app.UseAuthentication();
-app.UseAuthorization();
-
 app.UseExceptionHandler(b =>
 {
     b.Run(async context =>
@@ -217,6 +214,8 @@ app.UseExceptionHandler(b =>
 });
 
 app.UseCors("VueFrontend");
+app.UseAuthentication();
+app.UseAuthorization();
 
 app.MapControllers();
 

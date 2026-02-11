@@ -21,6 +21,9 @@ public sealed class UserService(AppDbContext context, ICurrentUser currentUser)
                 u.BaseCurrencyCode))
             .SingleOrDefaultAsync(cancellationToken: ct);
 
+        if (userData.Id == Guid.Empty)
+            throw new NotFoundException(nameof(User), currentUserId);
+
         return userData;
     }
 

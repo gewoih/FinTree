@@ -21,7 +21,6 @@ public class FxLoader(
         "https://api.forexrateapi.com/v1/latest?api_key={0}&base=USD&currencies={1}";
 
     private readonly TimeSpan _defaultDelay = TimeSpan.FromHours(24);
-    private readonly TimeSpan _retryDelay = TimeSpan.FromHours(1);
     private readonly string? _apiKey = configuration["FxRates:ApiKey"];
 
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
@@ -36,9 +35,7 @@ public class FxLoader(
         {
             try
             {
-                var targetDate = DateOnly.FromDateTime(DateTime.UtcNow.AddDays(-1));
-                var delay = await LoadMissingRatesForDayAsync(targetDate, stoppingToken);
-                await Task.Delay(delay, stoppingToken);
+                await LoadLatestRatesAsync(stoppingToken);
             }
             catch (OperationCanceledException) when (stoppingToken.IsCancellationRequested)
             {
@@ -46,20 +43,18 @@ public class FxLoader(
             }
             catch (Exception ex)
             {
-                logger.LogError(ex, "FxLoader failed. Retrying in {Delay}.", _retryDelay);
-                await Task.Delay(_retryDelay, stoppingToken);
+                logger.LogError(ex, "FxLoader failed. Next run in {Delay}.", _defaultDelay);
             }
+
+            await Task.Delay(_defaultDelay, stoppingToken);
         }
     }
 
-    private async Task<TimeSpan> LoadMissingRatesForDayAsync(DateOnly targetDate, CancellationToken ct)
+    private async Task LoadLatestRatesAsync(CancellationToken ct)
     {
         using var scope = serviceProvider.CreateScope();
         var context = scope.ServiceProvider.GetRequiredService<AppDbContext>();
         using var httpClient = httpClientFactory.CreateClient();
-
-        var dayStartUtc = targetDate.ToDateTime(TimeOnly.MinValue, DateTimeKind.Utc);
-        var nextDayStartUtc = targetDate.AddDays(1).ToDateTime(TimeOnly.MinValue, DateTimeKind.Utc);
 
         // USD is a base currency and always equals 1, storing it in table is unnecessary.
         var expectedCurrencyCodes = Currency.All
@@ -68,34 +63,49 @@ public class FxLoader(
             .Distinct(StringComparer.OrdinalIgnoreCase)
             .ToHashSet(StringComparer.OrdinalIgnoreCase);
 
-        var existingCodes = await context.FxUsdRates
-            .Where(r => r.EffectiveDate >= dayStartUtc && r.EffectiveDate < nextDayStartUtc)
-            .Select(r => r.CurrencyCode)
-            .Distinct()
-            .ToListAsync(ct);
+        if (expectedCurrencyCodes.Count == 0)
+        {
+            logger.LogWarning("FxLoader has no expected currencies configured.");
+            return;
+        }
 
-        var missingCodes = expectedCurrencyCodes
-            .Except(existingCodes, StringComparer.OrdinalIgnoreCase)
-            .OrderBy(code => code, StringComparer.OrdinalIgnoreCase)
-            .ToArray();
-
-        if (missingCodes.Length == 0)
-            return _defaultDelay;
-
-        var url = string.Format(CultureInfo.InvariantCulture, UrlTemplate, _apiKey, string.Join(',', missingCodes));
+        var url = string.Format(
+            CultureInfo.InvariantCulture,
+            UrlTemplate,
+            _apiKey,
+            string.Join(',', expectedCurrencyCodes.OrderBy(code => code, StringComparer.OrdinalIgnoreCase)));
         var result = await httpClient.GetAsync(url, ct);
         result.EnsureSuccessStatusCode();
 
         var content = await result.Content.ReadAsStringAsync(ct);
         var payload = JObject.Parse(content);
         var ratesPayload = payload["rates"]?.ToObject<Dictionary<string, decimal>>() ?? [];
-        var requestedCodes = missingCodes.ToHashSet(StringComparer.OrdinalIgnoreCase);
 
-        var toInsert = new List<FxUsdRate>(missingCodes.Length);
+        if (!long.TryParse(payload["timestamp"]?.ToString(), out var timestamp))
+        {
+            logger.LogWarning("FxLoader response has no valid timestamp. Rates were skipped.");
+            return;
+        }
+
+        var dayStartUtc = DateTime.SpecifyKind(
+            DateTimeOffset.FromUnixTimeSeconds(timestamp).UtcDateTime.Date,
+            DateTimeKind.Utc);
+        var nextDayStartUtc = dayStartUtc.AddDays(1);
+
+        var existingCodes = await context.FxUsdRates
+            .Where(r => r.EffectiveDate >= dayStartUtc && r.EffectiveDate < nextDayStartUtc)
+            .Select(r => r.CurrencyCode)
+            .Distinct()
+            .ToListAsync(ct);
+        var existingCodeSet = existingCodes
+            .Select(code => code.Trim().ToUpperInvariant())
+            .ToHashSet(StringComparer.OrdinalIgnoreCase);
+
+        var toInsert = new List<FxUsdRate>(expectedCurrencyCodes.Count);
         foreach (var (rawCode, value) in ratesPayload)
         {
             var normalizedCode = rawCode.Trim().ToUpperInvariant();
-            if (!requestedCodes.Contains(normalizedCode) || value <= 0m)
+            if (!expectedCurrencyCodes.Contains(normalizedCode) || value <= 0m || existingCodeSet.Contains(normalizedCode))
                 continue;
 
             toInsert.Add(new FxUsdRate(normalizedCode, dayStartUtc, value));
@@ -110,30 +120,29 @@ public class FxLoader(
             }
             catch (DbUpdateException ex)
             {
-                logger.LogWarning(ex, "FxLoader detected duplicate insert race for day {Day}.", dayStartUtc);
+                logger.LogWarning(ex, "FxLoader detected duplicate insert race for day {Day}.", dayStartUtc.Date);
             }
         }
 
-        var loadedCodes = await context.FxUsdRates
-            .Where(r => r.EffectiveDate >= dayStartUtc && r.EffectiveDate < nextDayStartUtc)
-            .Select(r => r.CurrencyCode)
-            .Distinct()
-            .ToListAsync(ct);
-
-        var remainingCodes = expectedCurrencyCodes
-            .Except(loadedCodes, StringComparer.OrdinalIgnoreCase)
+        var providerCodes = ratesPayload.Keys
+            .Select(code => code.Trim().ToUpperInvariant())
+            .ToHashSet(StringComparer.OrdinalIgnoreCase);
+        var missingFromProvider = expectedCurrencyCodes
+            .Except(providerCodes, StringComparer.OrdinalIgnoreCase)
             .OrderBy(code => code, StringComparer.OrdinalIgnoreCase)
             .ToArray();
 
-        if (remainingCodes.Length == 0)
-            return _defaultDelay;
+        if (missingFromProvider.Length > 0)
+        {
+            logger.LogWarning(
+                "FxLoader provider did not return currencies for {Day}: {Currencies}. They were skipped until next run.",
+                dayStartUtc.Date,
+                string.Join(',', missingFromProvider));
+        }
 
-        logger.LogWarning(
-            "FxLoader loaded partial dataset for {Day}. Missing currencies: {Currencies}. Next retry in {Delay}.",
-            dayStartUtc,
-            string.Join(',', remainingCodes),
-            _retryDelay);
-
-        return _retryDelay;
+        logger.LogInformation(
+            "FxLoader stored {InsertedCount} FX rates for {Day}.",
+            toInsert.Count,
+            dayStartUtc.Date);
     }
 }

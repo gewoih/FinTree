@@ -405,6 +405,22 @@ public sealed class AccountsService(
             .Where(a => a.AccountId == accountId)
             .ToListAsync(ct);
 
+        var transferIds = account.Transactions
+            .Where(t => t.TransferId.HasValue)
+            .Select(t => t.TransferId!.Value)
+            .Distinct()
+            .ToArray();
+
+        if (transferIds.Length > 0)
+        {
+            var relatedTransferTransactions = await context.Transactions
+                .Where(t => t.TransferId.HasValue && transferIds.Contains(t.TransferId.Value))
+                .ToListAsync(ct);
+
+            foreach (var relatedTransaction in relatedTransferTransactions)
+                relatedTransaction.Delete();
+        }
+
         foreach (var transaction in account.Transactions)
             transaction.Delete();
 
