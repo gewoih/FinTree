@@ -17,6 +17,8 @@ const props = withDefaults(
     block?: boolean;
   }>(),
   {
+    label: '',
+    icon: '',
     type: 'button',
     variant: 'primary',
     size: 'md',

@@ -12,6 +12,9 @@ interface Props {
 }
 
 const props = withDefaults(defineProps<Props>(), {
+  icon: '',
+  trend: null,
+  trendLabel: '',
   loading: false,
   variant: 'default'
 })

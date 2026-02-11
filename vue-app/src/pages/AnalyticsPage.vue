@@ -59,6 +59,10 @@ interface OnboardingStep {
 }
 
 type MetricAccent = 'good' | 'average' | 'poor' | 'neutral' | 'income' | 'expense';
+type MonthPickerInstance = {
+  show?: () => void;
+  hide?: () => void;
+};
 
 const userStore = useUserStore();
 const financeStore = useFinanceStore();
@@ -66,7 +70,7 @@ const router = useRouter();
 
 const now = new Date();
 const selectedMonth = ref<Date>(new Date(now.getFullYear(), now.getMonth(), 1));
-const monthPickerRef = ref<any>(null);
+const monthPickerRef = ref<MonthPickerInstance | null>(null);
 
 const granularityOptions: Array<{ label: string; value: ExpenseGranularity }> = [
   { label: 'День', value: 'days' },

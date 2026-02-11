@@ -281,7 +281,10 @@ const handleDelete = () => {
     :style="{ width: '560px' }"
     @update:visible="val => emit('update:visible', val)"
   >
-    <form class="transfer-form" @submit.prevent="handleSubmit">
+    <form
+      class="transfer-form"
+      @submit.prevent="handleSubmit"
+    >
       <div class="field">
         <label for="from-account">Счет списания *</label>
         <Select
@@ -347,7 +350,10 @@ const handleDelete = () => {
         </div>
       </div>
 
-      <div v-if="!isSameCurrency" class="field field--amount">
+      <div
+        v-if="!isSameCurrency"
+        class="field field--amount"
+      >
         <label for="to-amount">Сумма зачисления *</label>
         <div class="amount-input">
           <InputNumber
@@ -380,9 +386,15 @@ const handleDelete = () => {
         </div>
       </div>
 
-      <div v-if="exchangeRateLabel" class="field field--full">
+      <div
+        v-if="exchangeRateLabel"
+        class="field field--full"
+      >
         <div class="rate-hint">
-          <i class="pi pi-chart-line" aria-hidden="true" />
+          <i
+            class="pi pi-chart-line"
+            aria-hidden="true"
+          />
           <span>{{ exchangeRateLabel }}</span>
         </div>
       </div>

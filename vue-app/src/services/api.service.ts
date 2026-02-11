@@ -161,7 +161,7 @@ export const apiService = {
         });
 
         const disposition = response.headers['content-disposition'] as string | undefined;
-        const match = disposition?.match(/filename="?([^\";]+)"?/i);
+        const match = disposition?.match(/filename="?([^";]+)"?/i);
         const fileName = match?.[1] ?? `transactions_${new Date().toISOString().slice(0, 10)}.txt`;
 
         return { blob: response.data, fileName };

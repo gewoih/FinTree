@@ -4,7 +4,7 @@ import Dialog from 'primevue/dialog';
 import InputText from 'primevue/inputtext';
 import Select from 'primevue/select';
 import InputNumber from 'primevue/inputnumber';
-import InputSwitch from 'primevue/inputswitch';
+import ToggleSwitch from 'primevue/toggleswitch';
 import { useFinanceStore } from '../stores/finance';
 import { ACCOUNT_TYPE_OPTIONS } from '../constants';
 import { useFormModal } from '../composables/useFormModal';
@@ -285,10 +285,10 @@ const handleSubmit = async () => {
       >
         <template #default="{ fieldAttrs }">
           <div class="liquidity-toggle">
-            <InputSwitch
+            <ToggleSwitch
               v-bind="fieldAttrs"
               v-model="isLiquid"
-              @update:modelValue="isLiquidTouched = true"
+              @update:model-value="isLiquidTouched = true"
             />
             <span>{{ isLiquid ? 'Учитывать в ликвидных' : 'Не учитывать в ликвидных' }}</span>
           </div>

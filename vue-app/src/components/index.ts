@@ -1,3 +1,4 @@
+/* eslint-disable vue/multi-word-component-names, vue/no-reserved-component-names */
 import type { App } from 'vue'
 
 // Common components

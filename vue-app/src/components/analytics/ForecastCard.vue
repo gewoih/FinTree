@@ -1,12 +1,13 @@
 <script setup lang="ts">
 import { computed, ref, onMounted } from 'vue';
+import type { ChartData, TooltipItem } from 'chart.js';
 import type { ForecastSummary } from '../../types/analytics';
 
 const props = defineProps<{
   loading: boolean;
   error: string | null;
   forecast: ForecastSummary | null;
-  chartData: any | null;
+  chartData: ChartData<'line', Array<number | null>, string> | null;
   currency: string;
 }>();
 
@@ -167,7 +168,7 @@ const chartOptions = computed(() => ({
     },
     tooltip: {
       callbacks: {
-        label(context: any) {
+        label(context: TooltipItem<'line'>) {
           const label = context.dataset.label ?? '';
           const value = context.parsed.y ?? 0;
           const formatted = value.toLocaleString('ru-RU', {

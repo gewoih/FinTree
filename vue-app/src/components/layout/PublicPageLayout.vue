@@ -39,7 +39,9 @@ const currentYear = new Date().getFullYear();
       <div class="public-page__container">
         <div class="public-page__title">
           <h1>{{ title }}</h1>
-          <p v-if="subtitle">{{ subtitle }}</p>
+          <p v-if="subtitle">
+            {{ subtitle }}
+          </p>
         </div>
 
         <div class="public-page__content">
@@ -51,8 +53,12 @@ const currentYear = new Date().getFullYear();
     <footer class="public-page__footer">
       <span>© {{ currentYear }} FinTree</span>
       <div class="public-page__footer-links">
-        <router-link to="/privacy">Политика</router-link>
-        <router-link to="/terms">Условия</router-link>
+        <router-link to="/privacy">
+          Политика
+        </router-link>
+        <router-link to="/terms">
+          Условия
+        </router-link>
       </div>
     </footer>
   </div>

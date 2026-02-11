@@ -133,7 +133,10 @@ watch(
       </div>
 
       <div class="adjustments-modal__form">
-        <FormField label="Новый баланс" required>
+        <FormField
+          label="Новый баланс"
+          required
+        >
           <template #default="{ fieldAttrs }">
             <InputNumber
               v-model="newBalance"

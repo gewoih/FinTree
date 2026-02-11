@@ -9,6 +9,7 @@ const props = withDefaults(
     color?: string;
   }>(),
   {
+    label: '',
     severity: 'secondary',
     color: '',
   }

@@ -207,9 +207,9 @@ const hasMorePeaks = computed(() => props.peaks.length > 3);
                     </p>
                   </div>
                   <span
+                    v-tooltip.top="metric.tooltip"
                     class="hero-card__metric-icon"
                     :class="metricIconClass(metric.accent)"
-                    v-tooltip.top="metric.tooltip"
                   >
                     <i :class="metric.icon" />
                   </span>
@@ -220,7 +220,9 @@ const hasMorePeaks = computed(() => props.peaks.length > 3);
 
           <div class="hero-card__peaks">
             <div class="hero-card__peaks-header">
-              <p class="hero-card__peaks-title">Пиковые дни</p>
+              <p class="hero-card__peaks-title">
+                Пиковые дни
+              </p>
             </div>
             <button
               type="button"

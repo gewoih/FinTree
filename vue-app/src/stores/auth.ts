@@ -29,6 +29,13 @@ interface TelegramLoginPayload {
     photo_url?: string;
 }
 
+function resolveAuthErrorMessage(err: unknown, fallback: string): string {
+    if (axios.isAxiosError<{ error?: string }>(err)) {
+        return err.response?.data?.error ?? fallback;
+    }
+    return fallback;
+}
+
 export const useAuthStore = defineStore('auth', () => {
     const userEmail = ref<string | null>(null);
     const isLoading = ref(false);
@@ -50,9 +57,9 @@ export const useAuthStore = defineStore('auth', () => {
             setAuthenticated(email);
 
             return true;
-        } catch (err: any) {
+        } catch (err: unknown) {
             console.error('Login failed:', err);
-            error.value = err.response?.data?.error || 'Unable to sign in. Check your email and password.';
+            error.value = resolveAuthErrorMessage(err, 'Unable to sign in. Check your email and password.');
             return false;
         } finally {
             isLoading.value = false;
@@ -71,9 +78,9 @@ export const useAuthStore = defineStore('auth', () => {
             setAuthenticated(email);
 
             return true;
-        } catch (err: any) {
+        } catch (err: unknown) {
             console.error('Registration failed:', err);
-            error.value = err.response?.data?.error || 'Registration failed. Please try again.';
+            error.value = resolveAuthErrorMessage(err, 'Registration failed. Please try again.');
             return false;
         } finally {
             isLoading.value = false;
@@ -92,9 +99,9 @@ export const useAuthStore = defineStore('auth', () => {
             setAuthenticated(email);
 
             return true;
-        } catch (err: any) {
+        } catch (err: unknown) {
             console.error('Telegram login failed:', err);
-            error.value = err.response?.data?.error || 'Не удалось войти через Telegram.';
+            error.value = resolveAuthErrorMessage(err, 'Не удалось войти через Telegram.');
             return false;
         } finally {
             isLoading.value = false;

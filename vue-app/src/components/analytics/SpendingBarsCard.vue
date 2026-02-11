@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { computed, ref, onMounted } from 'vue';
+import type { ChartData, TooltipItem } from 'chart.js';
 import type { ExpenseGranularity } from '../../types/analytics';
 
 const props = defineProps<{
@@ -7,7 +8,7 @@ const props = defineProps<{
   error: string | null;
   granularity: ExpenseGranularity;
   granularityOptions: Array<{ label: string; value: ExpenseGranularity }>;
-  chartData: any | null;
+  chartData: ChartData<'bar', number[], string> | null;
   empty: boolean;
   currency: string;
 }>();
@@ -67,7 +68,7 @@ const chartOptions = computed(() => ({
     },
     tooltip: {
       callbacks: {
-        label(context: any) {
+        label(context: TooltipItem<'bar'>) {
           const value = context.parsed.y ?? 0;
           const formatted = value.toLocaleString('ru-RU', {
             style: 'currency',

@@ -1,10 +1,11 @@
 <script setup lang="ts">
 import { computed, onMounted, ref } from 'vue';
+import type { ChartData, TooltipItem } from 'chart.js';
 
 const props = defineProps<{
   loading: boolean;
   error: string | null;
-  chartData: any | null;
+  chartData: ChartData<'line', number[], string> | null;
   currency: string;
 }>();
 
@@ -64,7 +65,7 @@ const chartOptions = computed(() => ({
     },
     tooltip: {
       callbacks: {
-        label(context: any) {
+        label(context: TooltipItem<'line'>) {
           const value = context.parsed.y ?? 0;
           const formatted = value.toLocaleString('ru-RU', {
             style: 'currency',

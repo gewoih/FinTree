@@ -11,6 +11,10 @@ import type {
 } from '../types';
 import { CATEGORY_TYPE } from '../types';
 
+type LegacyTransactionDto = TransactionDto & {
+  occuredAt?: string;
+};
+
 /**
  * Data mapping utilities for converting DTOs to UI models
  * Centralizes data transformation logic for cleaner store code
@@ -62,7 +66,7 @@ export function mapCategory(dto: TransactionCategoryDto): Category {
  * @returns Enriched Transaction object
  */
 export function mapTransaction(
-  dto: any, // Use any to handle API inconsistency with occurredAt/occuredAt
+  dto: LegacyTransactionDto,
   accounts: Account[],
   categories: Category[]
 ): Transaction {
@@ -72,7 +76,7 @@ export function mapTransaction(
   const type = normalizeCategoryType(rawType);
 
   // Handle API inconsistency: occuredAt (wrong) vs occurredAt (correct)
-  const occurredAt = dto.occurredAt || dto.occuredAt;
+  const occurredAt = dto.occurredAt ?? dto.occuredAt ?? '';
 
   return {
     ...dto,

@@ -9,6 +9,8 @@ interface Props {
 
 const props = withDefaults(defineProps<Props>(), {
   icon: 'pi-inbox',
+  description: '',
+  actionLabel: '',
   actionIcon: 'pi-plus'
 })
 

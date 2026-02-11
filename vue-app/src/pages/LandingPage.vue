@@ -445,16 +445,24 @@ const scrollToSection = (sectionId: string) => {
           <div>
             <h4>Компания</h4>
             <a href="mailto:hello@fintree.app">Написать нам</a>
-            <router-link to="/blog">Блог</router-link>
-            <router-link to="/careers">Карьера</router-link>
+            <router-link to="/blog">
+              Блог
+            </router-link>
+            <router-link to="/careers">
+              Карьера
+            </router-link>
           </div>
         </nav>
       </div>
       <div class="landing__footer-meta">
         <span>© {{ currentYear }} FinTree. Все права защищены.</span>
         <div class="landing__footer-meta-links">
-          <router-link to="/privacy">Политика конфиденциальности</router-link>
-          <router-link to="/terms">Условия использования</router-link>
+          <router-link to="/privacy">
+            Политика конфиденциальности
+          </router-link>
+          <router-link to="/terms">
+            Условия использования
+          </router-link>
         </div>
       </div>
     </footer>

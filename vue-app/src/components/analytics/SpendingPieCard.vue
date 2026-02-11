@@ -1,11 +1,12 @@
 <script setup lang="ts">
 import { computed } from 'vue';
+import type { ChartData } from 'chart.js';
 import type { CategoryLegendItem } from '../../types/analytics';
 
 const props = defineProps<{
   loading: boolean;
   error: string | null;
-  chartData: any | null;
+  chartData: ChartData<'pie', number[], string> | null;
   legend: CategoryLegendItem[];
   currency: string;
 }>();

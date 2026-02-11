@@ -301,9 +301,9 @@ const handleDelete = () => {
               >
                 <button
                   v-for="option in CATEGORY_ICON_OPTIONS"
+                  :id="`icon-${option.value}`"
                   :key="option.value"
                   type="button"
-                  :id="`icon-${option.value}`"
                   class="icon-grid__item"
                   :class="{ 'is-selected': option.value === icon }"
                   :aria-pressed="option.value === icon"
@@ -354,7 +354,10 @@ const handleDelete = () => {
       >
         <template #default>
           <label class="mandatory-toggle">
-            <Checkbox v-model="isMandatory" binary />
+            <Checkbox
+              v-model="isMandatory"
+              binary
+            />
             <span>Обязательная категория</span>
           </label>
         </template>

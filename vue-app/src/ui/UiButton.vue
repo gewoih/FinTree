@@ -17,6 +17,8 @@ const props = withDefaults(
     block?: boolean;
   }>(),
   {
+    label: '',
+    icon: '',
     type: 'button',
     loading: false,
     disabled: false,

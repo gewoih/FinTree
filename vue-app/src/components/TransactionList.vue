@@ -451,7 +451,10 @@ const handleRowClick = (event: { data: EnrichedTransaction }) => {
           style="width: 170px"
         >
           <template #body="slotProps">
-            <div v-if="slotProps.data.isTransferSummary" class="transfer-amount">
+            <div
+              v-if="slotProps.data.isTransferSummary"
+              class="transfer-amount"
+            >
               <div class="transfer-amount__row negative">
                 − {{ formatCurrency(slotProps.data.transferFromAmount ?? 0, slotProps.data.transferFromCurrency) }}
               </div>
@@ -533,7 +536,10 @@ const handleRowClick = (event: { data: EnrichedTransaction }) => {
           style="width: 200px"
         >
           <template #body="slotProps">
-            <div v-if="slotProps.data.isTransferSummary" class="description-transfer">
+            <div
+              v-if="slotProps.data.isTransferSummary"
+              class="description-transfer"
+            >
               <span
                 v-if="slotProps.data.description"
                 class="description-text"

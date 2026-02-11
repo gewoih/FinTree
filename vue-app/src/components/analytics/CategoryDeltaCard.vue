@@ -121,7 +121,9 @@ const formatPercent = (value: number | null) =>
         class="delta-card__grid"
       >
         <div class="delta-card__column">
-          <p class="delta-card__title">Где траты выросли</p>
+          <p class="delta-card__title">
+            Где траты выросли
+          </p>
           <ul class="delta-card__list">
             <template v-if="!increased.length">
               <li class="delta-item delta-item--empty">
@@ -154,7 +156,9 @@ const formatPercent = (value: number | null) =>
         </div>
 
         <div class="delta-card__column">
-          <p class="delta-card__title">Где траты снизились</p>
+          <p class="delta-card__title">
+            Где траты снизились
+          </p>
           <ul class="delta-card__list">
             <template v-if="!decreased.length">
               <li class="delta-item delta-item--empty">

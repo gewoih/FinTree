@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { computed } from 'vue';
-import InputSwitch from 'primevue/inputswitch';
+import ToggleSwitch from 'primevue/toggleswitch';
 import type { AccountType, Currency, InvestmentAccountOverviewDto } from '../../types';
 import { getAccountTypeInfo, getCurrencyFlag } from '../../utils/accountHelpers';
 import { formatCurrency, formatDate } from '../../utils/formatters';
@@ -93,7 +93,7 @@ const liquidityModel = computed({
         @click.stop
       >
         <span>{{ account.isLiquid ? 'Ликвидный' : 'Неликвидный' }}</span>
-        <InputSwitch
+        <ToggleSwitch
           v-model="liquidityModel"
           :disabled="isLiquidityLoading"
         />

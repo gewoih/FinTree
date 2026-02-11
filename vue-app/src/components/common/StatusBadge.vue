@@ -9,6 +9,7 @@ interface Props {
 
 withDefaults(defineProps<Props>(), {
   severity: 'secondary',
+  icon: '',
   size: 'md',
   dot: false
 })
