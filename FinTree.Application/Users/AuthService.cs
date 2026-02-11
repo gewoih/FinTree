@@ -3,6 +3,7 @@ using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Security.Cryptography;
 using System.Text;
+using FinTree.Application.Exceptions;
 using FinTree.Domain.Categories;
 using FinTree.Domain.Identity;
 using FinTree.Infrastructure.Database;
@@ -32,8 +33,8 @@ public sealed class AuthService(
 
         if (!result.Succeeded)
         {
-            var errors = string.Join(", ", result.Errors.Select(e => e.Description));
-            throw new InvalidOperationException($"User registration failed: {errors}");
+            var errors = result.Errors.Select(e => e.Description).ToArray();
+            throw new ConflictException("Регистрация не выполнена.", "registration_failed", errors);
         }
 
         await SeedDefaultCategoriesAsync(user, ct);
@@ -59,7 +60,7 @@ public sealed class AuthService(
     public async Task<AuthResponse> LoginWithTelegramAsync(TelegramLoginRequest request, CancellationToken ct)
     {
         if (string.IsNullOrWhiteSpace(_telegramOptions.BotToken))
-            throw new InvalidOperationException("Telegram login is not configured.");
+            throw new DomainValidationException("Вход через Telegram недоступен.", "telegram_auth_unavailable");
 
         ValidateTelegramLogin(request, _telegramOptions.BotToken);
 
@@ -79,8 +80,8 @@ public sealed class AuthService(
         var result = await userManager.CreateAsync(newUser);
         if (!result.Succeeded)
         {
-            var errors = string.Join(", ", result.Errors.Select(e => e.Description));
-            throw new InvalidOperationException($"Telegram login failed: {errors}");
+            var errors = result.Errors.Select(e => e.Description).ToArray();
+            throw new ConflictException("Не удалось выполнить вход через Telegram.", "telegram_auth_failed", errors);
         }
 
         await SeedDefaultCategoriesAsync(newUser, ct);
@@ -96,20 +97,33 @@ public sealed class AuthService(
             throw new UnauthorizedAccessException("Refresh token is missing.");
 
         var tokenHash = ComputeTokenHash(refreshToken);
+        var now = DateTime.UtcNow;
         var storedToken = await context.RefreshTokens
+            .AsNoTracking()
             .Include(t => t.User)
             .FirstOrDefaultAsync(t => t.TokenHash == tokenHash, ct);
 
         if (storedToken is null || !storedToken.IsActive)
             throw new UnauthorizedAccessException("Refresh token is invalid.");
 
-        var now = DateTime.UtcNow;
         var nextRefreshValue = GenerateRefreshTokenValue();
         var nextRefreshToken = CreateRefreshToken(storedToken.UserId, nextRefreshValue, now);
 
-        storedToken.Revoke(now, nextRefreshToken.Id);
+        await using var transaction = await context.Database.BeginTransactionAsync(ct);
+
+        var revokedRows = await context.RefreshTokens
+            .Where(t => t.Id == storedToken.Id && t.RevokedAt == null && t.ExpiresAt > now)
+            .ExecuteUpdateAsync(setters => setters
+                    .SetProperty(t => t.RevokedAt, now)
+                    .SetProperty(t => t.ReplacedByTokenId, nextRefreshToken.Id),
+                ct);
+
+        if (revokedRows == 0)
+            throw new UnauthorizedAccessException("Refresh token is invalid.");
+
         await context.RefreshTokens.AddAsync(nextRefreshToken, ct);
         await context.SaveChangesAsync(ct);
+        await transaction.CommitAsync(ct);
 
         var accessToken = GenerateAccessToken(storedToken.User);
         return new AuthResponse(accessToken, nextRefreshValue, storedToken.User.Email!, storedToken.User.Id);

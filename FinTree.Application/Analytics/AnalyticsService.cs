@@ -190,24 +190,11 @@ public sealed class AnalyticsService(
         var nowUtc = DateTime.UtcNow;
         var startMonthUtc = new DateTime(nowUtc.Year, nowUtc.Month, 1, 0, 0, 0, DateTimeKind.Utc)
             .AddMonths(-(months - 1));
-        var endMonthUtc = startMonthUtc.AddMonths(months);
 
-        var rateByCurrency = new Dictionary<string, decimal>(StringComparer.OrdinalIgnoreCase);
-        foreach (var code in accounts.Select(a => a.CurrencyCode).Distinct())
-        {
-            if (string.Equals(code, userMeta.BaseCurrencyCode, StringComparison.OrdinalIgnoreCase))
-            {
-                rateByCurrency[code] = 1m;
-                continue;
-            }
-
-            var converted = await currencyConverter.ConvertAsync(
-                new Money(code, 1m),
-                userMeta.BaseCurrencyCode,
-                nowUtc,
-                ct);
-            rateByCurrency[code] = converted.Amount;
-        }
+        var distinctAccountCurrencies = accounts
+            .Select(a => a.CurrencyCode)
+            .Distinct(StringComparer.OrdinalIgnoreCase)
+            .ToArray();
 
         var rawTransactions = await context.Transactions
             .AsNoTracking()
@@ -270,6 +257,24 @@ public sealed class AnalyticsService(
         for (var i = 0; i < months; i++)
         {
             var boundary = startMonthUtc.AddMonths(i + 1);
+            var rateAtUtc = boundary.AddTicks(-1);
+
+            var rateByCurrency = new Dictionary<string, decimal>(StringComparer.OrdinalIgnoreCase);
+            foreach (var code in distinctAccountCurrencies)
+            {
+                if (string.Equals(code, userMeta.BaseCurrencyCode, StringComparison.OrdinalIgnoreCase))
+                {
+                    rateByCurrency[code] = 1m;
+                    continue;
+                }
+
+                var converted = await currencyConverter.ConvertAsync(
+                    new Money(code, 1m),
+                    userMeta.BaseCurrencyCode,
+                    rateAtUtc,
+                    ct);
+                rateByCurrency[code] = converted.Amount;
+            }
 
             foreach (var account in accounts)
             {
