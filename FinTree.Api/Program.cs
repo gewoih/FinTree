@@ -190,18 +190,29 @@ app.UseExceptionHandler(b =>
         var error = context.Features.Get<IExceptionHandlerFeature>()?.Error;
         context.Response.ContentType = "application/json";
 
-        context.Response.StatusCode = error switch
+        var (statusCode, errorCode, details) = error switch
         {
-            NotFoundException => StatusCodes.Status404NotFound,
-            ValidationException => StatusCodes.Status400BadRequest,
-            UnauthorizedAccessException => StatusCodes.Status401Unauthorized,
-            _ => StatusCodes.Status500InternalServerError
+            ValidationException => (StatusCodes.Status400BadRequest, "validation_error", null),
+            DomainValidationException ex => (StatusCodes.Status400BadRequest, ex.Code, ex.Details),
+            InvalidOperationException => (StatusCodes.Status400BadRequest, "invalid_operation", null),
+            UnauthorizedAccessException => (StatusCodes.Status401Unauthorized, "unauthorized", null),
+            ForbiddenException ex => (StatusCodes.Status403Forbidden, ex.Code, ex.Details),
+            NotFoundException => (StatusCodes.Status404NotFound, "not_found", null),
+            ConflictException ex => (StatusCodes.Status409Conflict, ex.Code, ex.Details),
+            _ => (StatusCodes.Status500InternalServerError, "internal_error", null)
         };
 
-        var message = app.Environment.IsDevelopment()
-            ? error?.Message
-            : "Произошла ошибка. Попробуйте позже.";
-        await context.Response.WriteAsync(JsonSerializer.Serialize(new { error = message }));
+        context.Response.StatusCode = statusCode;
+
+        var message = statusCode >= StatusCodes.Status500InternalServerError && !app.Environment.IsDevelopment()
+            ? "Произошла ошибка. Попробуйте позже."
+            : error?.Message;
+        await context.Response.WriteAsync(JsonSerializer.Serialize(new
+        {
+            error = message,
+            code = errorCode,
+            details
+        }));
     });
 });
 
