@@ -1,12 +1,12 @@
+using FinTree.Application.Abstractions;
 using FinTree.Domain.ValueObjects;
 using FinTree.Application.Exceptions;
-using FinTree.Infrastructure.Database;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Caching.Memory;
 
 namespace FinTree.Application.Currencies;
 
-public sealed class CurrencyConverter(AppDbContext context, IMemoryCache cache)
+public sealed class CurrencyConverter(IAppDbContext context, IMemoryCache cache)
 {
     private static readonly TimeSpan CacheTtl = TimeSpan.FromHours(1);
 

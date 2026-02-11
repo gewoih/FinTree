@@ -1,12 +1,12 @@
+using FinTree.Application.Abstractions;
 using FinTree.Application.Exceptions;
 using FinTree.Application.Transactions.Dto;
 using FinTree.Domain.Identity;
-using FinTree.Infrastructure.Database;
 using Microsoft.EntityFrameworkCore;
 
 namespace FinTree.Application.Users;
 
-public sealed class UserService(AppDbContext context, ICurrentUser currentUser)
+public sealed class UserService(IAppDbContext context, ICurrentUser currentUser)
 {
     public async Task<MeDto> GetCurrentUserDataAsync(CancellationToken ct)
     {

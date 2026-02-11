@@ -1,15 +1,15 @@
+using FinTree.Application.Abstractions;
 using FinTree.Application.Currencies;
 using FinTree.Application.Accounts;
 using FinTree.Application.Users;
 using FinTree.Domain.Transactions;
 using FinTree.Domain.ValueObjects;
-using FinTree.Infrastructure.Database;
 using Microsoft.EntityFrameworkCore;
 
 namespace FinTree.Application.Analytics;
 
 public sealed class AnalyticsService(
-    AppDbContext context,
+    IAppDbContext context,
     ICurrentUser currentUserService,
     CurrencyConverter currencyConverter,
     UserService userService,

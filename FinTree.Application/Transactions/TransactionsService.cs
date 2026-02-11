@@ -1,10 +1,10 @@
+using FinTree.Application.Abstractions;
 using FinTree.Application.Exceptions;
 using FinTree.Application.Currencies;
 using FinTree.Application.Transactions.Dto;
 using FinTree.Application.Users;
 using FinTree.Domain.Transactions;
 using FinTree.Domain.ValueObjects;
-using FinTree.Infrastructure.Database;
 using Microsoft.EntityFrameworkCore;
 using System.Globalization;
 using System.Text;
@@ -12,7 +12,7 @@ using FinTree.Domain.Accounts;
 
 namespace FinTree.Application.Transactions;
 
-public sealed class TransactionsService(AppDbContext context, ICurrentUser currentUser, CurrencyConverter currencyConverter)
+public sealed class TransactionsService(IAppDbContext context, ICurrentUser currentUser, CurrencyConverter currencyConverter)
 {
     public async Task<Guid> CreateAsync(CreateTransaction command, CancellationToken ct)
     {

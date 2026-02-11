@@ -1,14 +1,14 @@
+using FinTree.Application.Abstractions;
 using FinTree.Application.Exceptions;
 using FinTree.Application.Transactions.Dto;
 using FinTree.Application.Users;
 using FinTree.Domain.Categories;
 using FinTree.Domain.Identity;
-using FinTree.Infrastructure.Database;
 using Microsoft.EntityFrameworkCore;
 
 namespace FinTree.Application.Transactions;
 
-public sealed class TransactionCategoryService(AppDbContext context, ICurrentUser currentUser)
+public sealed class TransactionCategoryService(IAppDbContext context, ICurrentUser currentUser)
 {
     public async Task<Guid> CreateCategoryAsync(CreateTransactionCategory command, CancellationToken ct)
     {
@@ -51,7 +51,7 @@ public sealed class TransactionCategoryService(AppDbContext context, ICurrentUse
             string.Equals(transactionCategory.Name, "Без категории", StringComparison.OrdinalIgnoreCase))
             throw new ConflictException("Категорию \"Без категории\" нельзя удалить.");
 
-        await using var transaction = await context.Database.BeginTransactionAsync(ct);
+        await using var transaction = await context.BeginTransactionAsync(ct);
 
         var fallbackCategory = await context.TransactionCategories
             .Where(tc => tc.UserId == currentUser.Id && tc.Name == "Без категории")

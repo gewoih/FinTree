@@ -14,9 +14,11 @@
 - Application layer:
   - implements use cases;
   - orchestrates repositories/services and transactional workflows;
+  - depends on abstractions (for example, `IAppDbContext`) instead of infrastructure implementations;
   - contains no UI logic.
 - Infrastructure layer:
   - handles persistence and integrations;
+  - implements application abstractions and DI bindings;
   - does not define business invariants.
 - API layer:
   - is a transport/mapping/auth boundary;

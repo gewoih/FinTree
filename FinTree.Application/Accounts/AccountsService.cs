@@ -1,16 +1,16 @@
+using FinTree.Application.Abstractions;
 using FinTree.Application.Currencies;
 using FinTree.Application.Exceptions;
 using FinTree.Application.Users;
 using FinTree.Domain.Accounts;
 using FinTree.Domain.Transactions;
 using FinTree.Domain.ValueObjects;
-using FinTree.Infrastructure.Database;
 using Microsoft.EntityFrameworkCore;
 
 namespace FinTree.Application.Accounts;
 
 public sealed class AccountsService(
-    AppDbContext context,
+    IAppDbContext context,
     ICurrentUser currentUser,
     CurrencyConverter currencyConverter)
 {

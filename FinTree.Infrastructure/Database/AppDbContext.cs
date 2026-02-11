@@ -1,3 +1,4 @@
+using FinTree.Application.Abstractions;
 using FinTree.Domain.Accounts;
 using FinTree.Domain.Base;
 using FinTree.Domain.Categories;
@@ -6,11 +7,12 @@ using FinTree.Domain.Identity;
 using FinTree.Domain.Transactions;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Storage;
 using System.Linq.Expressions;
 
 namespace FinTree.Infrastructure.Database;
 
-public sealed class AppDbContext(DbContextOptions<AppDbContext> options) : IdentityDbContext<User, Role, Guid>(options)
+public sealed class AppDbContext(DbContextOptions<AppDbContext> options) : IdentityDbContext<User, Role, Guid>(options), IAppDbContext
 {
     public DbSet<User> Users => Set<User>();
     public DbSet<RefreshToken> RefreshTokens => Set<RefreshToken>();
@@ -19,6 +21,9 @@ public sealed class AppDbContext(DbContextOptions<AppDbContext> options) : Ident
     public DbSet<AccountBalanceAdjustment> AccountBalanceAdjustments => Set<AccountBalanceAdjustment>();
     public DbSet<Transaction> Transactions => Set<Transaction>();
     public DbSet<FxUsdRate> FxUsdRates => Set<FxUsdRate>();
+
+    public Task<IDbContextTransaction> BeginTransactionAsync(CancellationToken cancellationToken = default)
+        => Database.BeginTransactionAsync(cancellationToken);
     
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {

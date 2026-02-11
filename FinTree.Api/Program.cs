@@ -3,6 +3,7 @@ using System.Text;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using FinTree.Api;
+using FinTree.Application.Abstractions;
 using FinTree.Application.Accounts;
 using FinTree.Application.Analytics;
 using FinTree.Application.Currencies;
@@ -147,6 +148,7 @@ builder.Services.AddDbContext<AppDbContext>(options =>
     if (builder.Environment.IsDevelopment())
         options.EnableSensitiveDataLogging();
 });
+builder.Services.AddScoped<IAppDbContext>(sp => sp.GetRequiredService<AppDbContext>());
 
 var telegramToken = builder.Configuration["Telegram:BotToken"];
 if (!string.IsNullOrWhiteSpace(telegramToken))

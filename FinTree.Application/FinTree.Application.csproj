@@ -8,10 +8,13 @@
     </PropertyGroup>
 
     <ItemGroup>
-      <ProjectReference Include="..\FinTree.Infrastructure\FinTree.Infrastructure.csproj" />
+      <ProjectReference Include="..\FinTree.Domain\FinTree.Domain.csproj" />
     </ItemGroup>
 
     <ItemGroup>
+      <PackageReference Include="Microsoft.EntityFrameworkCore" Version="10.0.3" />
+      <PackageReference Include="Microsoft.EntityFrameworkCore.Relational" Version="10.0.3" />
+      <PackageReference Include="Microsoft.Extensions.Caching.Abstractions" Version="10.0.3" />
       <PackageReference Include="System.IdentityModel.Tokens.Jwt" Version="8.15.0" />
     </ItemGroup>
 

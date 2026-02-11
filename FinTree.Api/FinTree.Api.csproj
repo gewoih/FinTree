@@ -36,6 +36,7 @@
 
     <ItemGroup>
       <ProjectReference Include="..\FinTree.Application\FinTree.Application.csproj" />
+      <ProjectReference Include="..\FinTree.Infrastructure\FinTree.Infrastructure.csproj" />
     </ItemGroup>
 
 </Project>

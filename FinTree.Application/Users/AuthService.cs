@@ -3,10 +3,10 @@ using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Security.Cryptography;
 using System.Text;
+using FinTree.Application.Abstractions;
 using FinTree.Application.Exceptions;
 using FinTree.Domain.Categories;
 using FinTree.Domain.Identity;
-using FinTree.Infrastructure.Database;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
@@ -19,7 +19,7 @@ public sealed class AuthService(
     SignInManager<User> signInManager,
     IOptions<AuthOptions> authOptionsAccessor,
     IOptions<TelegramAuthOptions> telegramOptionsAccessor,
-    AppDbContext context)
+    IAppDbContext context)
 {
     private readonly AuthOptions _authOptions = authOptionsAccessor.Value;
     private readonly TelegramAuthOptions _telegramOptions = telegramOptionsAccessor.Value;
@@ -27,7 +27,7 @@ public sealed class AuthService(
     public async Task<AuthResponse> RegisterAsync(RegisterRequest request, CancellationToken ct)
     {
         var user = new User(request.Email, request.Email, "RUB");
-        await using var transaction = await context.Database.BeginTransactionAsync(ct);
+        await using var transaction = await context.BeginTransactionAsync(ct);
 
         var result = await userManager.CreateAsync(user, request.Password);
 
@@ -76,7 +76,7 @@ public sealed class AuthService(
         var newUser = new User(username, email, "RUB");
         newUser.LinkTelegramAccount(request.Id);
 
-        await using var transaction = await context.Database.BeginTransactionAsync(ct);
+        await using var transaction = await context.BeginTransactionAsync(ct);
         var result = await userManager.CreateAsync(newUser);
         if (!result.Succeeded)
         {
@@ -109,7 +109,7 @@ public sealed class AuthService(
         var nextRefreshValue = GenerateRefreshTokenValue();
         var nextRefreshToken = CreateRefreshToken(storedToken.UserId, nextRefreshValue, now);
 
-        await using var transaction = await context.Database.BeginTransactionAsync(ct);
+        await using var transaction = await context.BeginTransactionAsync(ct);
 
         var revokedRows = await context.RefreshTokens
             .Where(t => t.Id == storedToken.Id && t.RevokedAt == null && t.ExpiresAt > now)
