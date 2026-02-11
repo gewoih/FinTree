@@ -19,14 +19,13 @@ Before coding, structure the task using this template:
 Run checks relevant to touched scope. Do not skip silently.
 
 - Backend changes:
-  - `dotnet restore FinTree.sln`
-  - `dotnet build FinTree.sln -c Release`
-  - `dotnet test FinTree.sln -c Release --no-build`
+  - Do not run backend restore/build/test commands.
+  - Backend build/test execution is disabled by project instruction.
 - Frontend changes (in `vue-app/`):
   - `npm ci`
   - `npm run build`
 - Contract/auth/shared-flow changes:
-  - run both backend and frontend check sets.
+  - run frontend check set only (backend checks are intentionally disabled).
 - Deployment/config changes:
   - validate compose config before reporting done:
   - `docker compose config`
