@@ -42,7 +42,7 @@ public sealed class AnalyticsService(
                         !t.IsTransfer &&
                         t.OccurredAt >= previousMonthStartUtc &&
                         t.OccurredAt < monthEndUtc)
-            .Select(t => new { t.CategoryId, t.Money, t.OccurredAt, t.Type })
+            .Select(t => new { t.CategoryId, t.Money, t.OccurredAt, t.Type, t.IsMandatory })
             .ToListAsync(ct);
 
         var normalizedTransactions = transactions.Select(txn => new
@@ -50,7 +50,8 @@ public sealed class AnalyticsService(
             txn.CategoryId,
             txn.Money,
             txn.Type,
-            OccurredUtc = NormalizeUtc(txn.OccurredAt)
+            OccurredUtc = NormalizeUtc(txn.OccurredAt),
+            txn.IsMandatory
         }).ToList();
 
         var rateByCurrencyAndDay = await currencyConverter.GetCrossRatesAsync(
@@ -62,10 +63,10 @@ public sealed class AnalyticsService(
         var currentCategoryTotals = new Dictionary<Guid, decimal>();
         var previousCategoryTotals = new Dictionary<Guid, decimal>();
 
-        decimal totalIncome = 0m;
-        decimal totalExpenses = 0m;
-        decimal previousMonthExpenses = 0m;
-        decimal discretionaryTotal = 0m;
+        var totalIncome = 0m;
+        var totalExpenses = 0m;
+        var previousMonthExpenses = 0m;
+        var discretionaryTotal = 0m;
 
         foreach (var txn in normalizedTransactions)
         {
@@ -98,7 +99,7 @@ public sealed class AnalyticsService(
                 else
                     currentCategoryTotals[txn.CategoryId] = amount;
 
-                if (categories.TryGetValue(txn.CategoryId, out var category) && !category.IsMandatory)
+                if (!txn.IsMandatory)
                     discretionaryTotal += amount;
             }
 
