@@ -36,6 +36,7 @@ export function mapAccount(
     ...dto,
     type: normalizeAccountType(dto.type),
     isLiquid: dto.isLiquid ?? false,
+    isArchived: dto.isArchived ?? false,
     currency: currencies.get(dto.currencyCode) ?? null,
     balance,
     balanceInBaseCurrency,

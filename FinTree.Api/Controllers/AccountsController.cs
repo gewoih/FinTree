@@ -64,6 +64,20 @@ public class AccountsController(AccountsService accountsService) : ControllerBas
         return Ok();
     }
 
+    [HttpPatch("{accountId:guid}/archive")]
+    public async Task<IActionResult> ArchiveAccount(Guid accountId, CancellationToken ct = default)
+    {
+        await accountsService.ArchiveAsync(accountId, ct);
+        return Ok();
+    }
+
+    [HttpPatch("{accountId:guid}/unarchive")]
+    public async Task<IActionResult> UnarchiveAccount(Guid accountId, CancellationToken ct = default)
+    {
+        await accountsService.UnarchiveAsync(accountId, ct);
+        return Ok();
+    }
+
     [HttpDelete("{accountId:guid}")]
     public async Task<IActionResult> DeleteAccount(Guid accountId, CancellationToken ct = default)
     {

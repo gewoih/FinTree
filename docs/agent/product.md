@@ -28,6 +28,8 @@ FinTree helps people control personal finances without complex tooling: fast tra
 - Deleting a category preserves transactions and reassigns them to `"Uncategorized"`.
 - Domain workflows use soft-delete, not hard-delete.
 - Deleted entities must not participate in user-facing behavior.
+- Accounts support archive/unarchive: archived accounts are hidden from active operational flows, unavailable for new operations, and can be restored.
+- Account archiving must preserve historical transactions and analytics continuity.
 
 ## Confirmed IA/navigation decisions
 - Default authenticated page is `/analytics`.

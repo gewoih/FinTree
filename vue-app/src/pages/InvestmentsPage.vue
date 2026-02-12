@@ -54,7 +54,7 @@ const accounts = computed<InvestmentAccount[]>(() => {
   if (!overview.value) return [];
   const currencyMap = financeStore.currencyByCode;
   return overview.value.accounts.map(item => {
-    const mapped = mapAccount({ ...item, isMain: false } as AccountDto, currencyMap);
+    const mapped = mapAccount({ ...item, isMain: false, isArchived: false } as AccountDto, currencyMap);
     return {
       ...item,
       ...mapped,

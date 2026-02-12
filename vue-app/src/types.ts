@@ -23,6 +23,7 @@ export interface AccountDto {
     name: string;
     type: AccountType | string | number; // Backend may return string "Bank", "Cash", "Crypto" or numbers
     isLiquid: boolean;
+    isArchived: boolean;
     isMain: boolean;
     balance: number;
     balanceInBaseCurrency: number;

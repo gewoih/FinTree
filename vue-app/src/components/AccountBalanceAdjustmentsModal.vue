@@ -1,37 +1,45 @@
 <script setup lang="ts">
-import { computed, ref, watch } from 'vue';
-import { useToast } from 'primevue/usetoast';
-import type { Account, AccountBalanceAdjustmentDto } from '../types';
-import { apiService } from '../services/api.service';
-import { formatCurrency, formatDate } from '../utils/formatters';
-import { useFinanceStore } from '../stores/finance';
+import { computed, ref, watch } from 'vue'
+import { useToast } from 'primevue/usetoast'
+import type { Account, AccountBalanceAdjustmentDto } from '../types'
+import { apiService } from '../services/api.service'
+import { formatCurrency, formatDate } from '../utils/formatters'
+import { useFinanceStore } from '../stores/finance'
+
+type BalanceAdjustableAccount = {
+  id: string
+  name: string
+  currencyCode: string
+  balance?: number | null
+  currency?: Account['currency'] | null
+}
 
 const props = defineProps<{
-  visible: boolean;
-  account: Account | null;
-}>();
+  visible: boolean
+  account: BalanceAdjustableAccount | null
+}>()
 
 const emit = defineEmits<{
-  (e: 'update:visible', value: boolean): void;
-}>();
+  (e: 'update:visible', value: boolean): void
+}>()
 
-const toast = useToast();
-const financeStore = useFinanceStore();
+const toast = useToast()
+const financeStore = useFinanceStore()
 
-const adjustments = ref<AccountBalanceAdjustmentDto[]>([]);
-const loading = ref(false);
-const error = ref<string | null>(null);
-const newBalance = ref<number | null>(null);
-const saving = ref(false);
+const adjustments = ref<AccountBalanceAdjustmentDto[]>([])
+const loading = ref(false)
+const error = ref<string | null>(null)
+const newBalance = ref<number | null>(null)
+const saving = ref(false)
 
 const accountCurrency = computed(
   () => props.account?.currency?.code ?? props.account?.currencyCode ?? 'RUB'
-);
+)
 
 const currentBalanceLabel = computed(() => {
-  if (!props.account) return '—';
-  return formatCurrency(props.account.balance ?? 0, accountCurrency.value);
-});
+  if (!props.account) return '—'
+  return formatCurrency(props.account.balance ?? 0, accountCurrency.value)
+})
 
 const formattedAdjustments = computed(() =>
   adjustments.value.map(adj => ({
@@ -39,141 +47,135 @@ const formattedAdjustments = computed(() =>
     dateLabel: formatDate(adj.occurredAt),
     amountLabel: formatCurrency(Number(adj.amount ?? 0), accountCurrency.value),
   }))
-);
+)
 
 const loadAdjustments = async () => {
-  if (!props.account) return;
-  loading.value = true;
-  error.value = null;
+  if (!props.account) return
+  loading.value = true
+  error.value = null
   try {
-    const data = await apiService.getAccountBalanceAdjustments(props.account.id);
-    adjustments.value = data ?? [];
+    const data = await apiService.getAccountBalanceAdjustments(props.account.id)
+    adjustments.value = data ?? []
   } catch (err) {
-    console.error('Не удалось загрузить корректировки:', err);
-    error.value = 'Не удалось загрузить корректировки.';
-    adjustments.value = [];
+    console.error('Не удалось загрузить корректировки:', err)
+    error.value = 'Не удалось загрузить корректировки.'
+    adjustments.value = []
   } finally {
-    loading.value = false;
+    loading.value = false
   }
-};
+}
 
 const submitAdjustment = async () => {
-  if (!props.account) return;
+  if (!props.account) return
   if (newBalance.value == null) {
     toast.add({
       severity: 'warn',
       summary: 'Введите баланс',
-      detail: 'Укажите текущий баланс для корректировки.',
+      detail: 'Укажите фактический баланс для корректировки.',
       life: 2500,
-    });
-    return;
+    })
+    return
   }
 
-  saving.value = true;
+  saving.value = true
   try {
-    await apiService.createAccountBalanceAdjustment(props.account.id, newBalance.value);
-    await loadAdjustments();
-    await financeStore.fetchAccounts(true);
+    await apiService.createAccountBalanceAdjustment(props.account.id, newBalance.value)
+    await loadAdjustments()
+    await financeStore.fetchAccounts(true)
     toast.add({
       severity: 'success',
       summary: 'Баланс обновлен',
       detail: 'Корректировка сохранена.',
       life: 2500,
-    });
-    newBalance.value = null;
+    })
+    newBalance.value = null
   } catch (err) {
-    console.error('Не удалось сохранить корректировку:', err);
+    console.error('Не удалось сохранить корректировку:', err)
     toast.add({
       severity: 'error',
       summary: 'Ошибка',
       detail: 'Не удалось сохранить корректировку.',
       life: 2500,
-    });
+    })
   } finally {
-    saving.value = false;
+    saving.value = false
   }
-};
+}
 
 watch(
   () => props.visible,
-  (visible) => {
+  visible => {
     if (visible) {
-      newBalance.value = props.account?.balance ?? null;
-      void loadAdjustments();
+      newBalance.value = props.account?.balance ?? null
+      void loadAdjustments()
     }
   }
-);
+)
 
 watch(
   () => props.account?.id,
   () => {
     if (props.visible) {
-      newBalance.value = props.account?.balance ?? null;
-      void loadAdjustments();
+      newBalance.value = props.account?.balance ?? null
+      void loadAdjustments()
     }
   }
-);
+)
 </script>
 
 <template>
   <Dialog
     :visible="props.visible"
-    header="Корректировки баланса"
+    header="Корректировка баланса"
     modal
-    :style="{ width: '560px' }"
+    :style="{ width: '420px' }"
+    :breakpoints="{ '640px': 'calc(100vw - 1rem)' }"
     dismissable-mask
     @update:visible="val => emit('update:visible', val)"
   >
     <div class="adjustments-modal">
-      <div class="adjustments-modal__header">
-        <div>
-          <h4>{{ props.account?.name ?? 'Счет' }}</h4>
-          <p>Текущий баланс: <strong>{{ currentBalanceLabel }}</strong></p>
-        </div>
+      <div class="adjustments-account">
+        <h4>{{ props.account?.name ?? 'Счет' }}</h4>
+        <p>Текущий баланс: <strong>{{ currentBalanceLabel }}</strong></p>
       </div>
 
-      <div class="adjustments-modal__form">
-        <FormField
-          label="Новый баланс"
-          required
+      <p class="adjustments-note">
+        Укажите фактический баланс на текущий момент. Транзакции и история операций не изменяются.
+      </p>
+
+      <FormField
+        label="Фактический баланс"
+        required
+      >
+        <template #default="{ fieldAttrs }">
+          <InputNumber
+            v-model="newBalance"
+            :input-id="fieldAttrs.id"
+            :min-fraction-digits="2"
+            :max-fraction-digits="2"
+            :use-grouping="true"
+            class="w-full"
+            placeholder="Введите сумму"
+          />
+        </template>
+        <template #hint>
+          Баланс указывается в валюте счёта ({{ accountCurrency }}).
+        </template>
+      </FormField>
+
+      <div class="adjustments-modal__actions">
+        <AppButton
+          type="button"
+          icon="pi pi-check"
+          :loading="saving"
+          :disabled="saving"
+          @click="submitAdjustment"
         >
-          <template #default="{ fieldAttrs }">
-            <InputNumber
-              v-model="newBalance"
-              :input-id="fieldAttrs.id"
-              :min-fraction-digits="2"
-              :max-fraction-digits="2"
-              :use-grouping="true"
-              class="w-full"
-              placeholder="Введите текущий баланс"
-            />
-          </template>
-          <template #hint>
-            Баланс указывается в валюте счёта ({{ accountCurrency }}).
-          </template>
-        </FormField>
-
-        <div class="adjustments-modal__actions">
-          <AppButton
-            variant="ghost"
-            type="button"
-            @click="emit('update:visible', false)"
-          >
-            Закрыть
-          </AppButton>
-          <AppButton
-            type="button"
-            icon="pi pi-check"
-            :loading="saving"
-            :disabled="saving"
-            @click="submitAdjustment"
-          >
-            Сохранить корректировку
-          </AppButton>
-        </div>
+          Сохранить
+        </AppButton>
       </div>
 
-      <div class="adjustments-modal__list">
+      <section class="adjustments-history">
         <h5>История корректировок</h5>
 
         <div
@@ -226,7 +228,7 @@ watch(
             </div>
           </li>
         </ul>
-      </div>
+      </section>
     </div>
   </Dialog>
 </template>
@@ -237,29 +239,48 @@ watch(
   gap: var(--ft-space-4);
 }
 
-.adjustments-modal__header h4 {
+.adjustments-account {
+  padding: var(--ft-space-3);
+  border-radius: var(--ft-radius-lg);
+  border: 1px solid var(--ft-border-soft);
+  background: var(--ft-surface-soft);
+}
+
+.adjustments-account h4 {
   margin: 0;
   font-size: var(--ft-text-lg);
   font-weight: var(--ft-font-semibold);
 }
 
-.adjustments-modal__header p {
+.adjustments-account p {
   margin: var(--ft-space-1) 0 0;
   color: var(--ft-text-secondary);
 }
 
-.adjustments-modal__form {
-  display: grid;
-  gap: var(--ft-space-3);
+.adjustments-note {
+  margin: 0;
+  font-size: var(--ft-text-sm);
+  color: var(--ft-text-secondary);
 }
 
 .adjustments-modal__actions {
   display: flex;
+  flex-wrap: wrap;
   justify-content: flex-end;
   gap: var(--ft-space-3);
 }
 
-.adjustments-modal__list h5 {
+.adjustments-modal__actions :deep(.app-button) {
+  min-height: 44px;
+  min-width: 156px;
+  flex: 0 0 auto;
+}
+
+.adjustments-modal__actions :deep(.p-button-label) {
+  white-space: nowrap;
+}
+
+.adjustments-history h5 {
   margin: 0 0 var(--ft-space-2);
   font-size: var(--ft-text-base);
   font-weight: var(--ft-font-semibold);
@@ -276,6 +297,8 @@ watch(
   padding: 0;
   display: grid;
   gap: var(--ft-space-2);
+  max-height: 220px;
+  overflow-y: auto;
 }
 
 .adjustments-list__item {
@@ -296,5 +319,22 @@ watch(
 .adjustments-list__date {
   font-size: var(--ft-text-xs);
   color: var(--ft-text-muted);
+}
+
+:deep(.p-dialog-header-actions .p-dialog-header-icon) {
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
+}
+
+:deep(.p-dialog-header-actions .p-button-icon) {
+  margin: 0;
+}
+
+@media (max-width: 576px) {
+  .adjustments-modal__actions :deep(.app-button) {
+    width: 100%;
+    min-width: 0;
+  }
 }
 </style>

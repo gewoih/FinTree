@@ -56,9 +56,9 @@ public sealed class User : IdentityUser<Guid>
 
     public void SetMainAccount(Guid accountId)
     {
-        var isAccountExists = _accounts.Any(a => a.Id == accountId);
+        var isAccountExists = _accounts.Any(a => a.Id == accountId && !a.IsArchived);
         if (!isAccountExists)
-            throw new InvalidOperationException("Счет не существует");
+            throw new InvalidOperationException("Счет не существует или находится в архиве");
 
         MainAccountId = accountId;
     }

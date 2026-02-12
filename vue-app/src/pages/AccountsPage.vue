@@ -6,9 +6,11 @@ import { useFinanceStore } from '../stores/finance'
 import { useUserStore } from '../stores/user'
 import AccountFormModal from '../components/AccountFormModal.vue'
 import AccountCard from '../components/AccountCard.vue'
-import AccountFilters from '../components/AccountFilters.vue'
 import AccountBalanceAdjustmentsModal from '../components/AccountBalanceAdjustmentsModal.vue'
-import type { Account, AccountType } from '../types'
+import type { Account } from '../types'
+
+type AccountsView = 'active' | 'archived'
+type AccountsSort = 'balance-desc' | 'balance-asc' | 'name-asc'
 
 const financeStore = useFinanceStore()
 const userStore = useUserStore()
@@ -19,44 +21,66 @@ const modalVisible = ref(false)
 const editingAccount = ref<Account | null>(null)
 const pendingPrimaryId = ref<string | null>(null)
 const pendingLiquidityId = ref<string | null>(null)
+const pendingArchiveId = ref<string | null>(null)
+const pendingUnarchiveId = ref<string | null>(null)
 const adjustmentsVisible = ref(false)
 const selectedAccount = ref<Account | null>(null)
 
-// Filter state
+const view = ref<AccountsView>('active')
 const searchText = ref('')
-const selectedType = ref<AccountType | null>(null)
+const sortBy = ref<AccountsSort>('balance-desc')
 
-const allAccounts = computed(() =>
+const sortOptions: Array<{ label: string; value: AccountsSort }> = [
+  { label: 'По балансу (убыв.)', value: 'balance-desc' },
+  { label: 'По балансу (возр.)', value: 'balance-asc' },
+  { label: 'По названию', value: 'name-asc' },
+]
+
+const activeBankAccounts = computed(() =>
   (financeStore.accounts ?? []).filter(account => account.type === 0)
 )
-const loadingAccounts = computed(() => financeStore.areAccountsLoading)
-const loadingCurrencies = computed(() => financeStore.areCurrenciesLoading)
 
-// Filtered accounts
+const archivedBankAccounts = computed(() =>
+  (financeStore.archivedAccounts ?? []).filter(account => account.type === 0)
+)
+
+const visibleAccounts = computed(() =>
+  view.value === 'active' ? activeBankAccounts.value : archivedBankAccounts.value
+)
+
+const loadingCurrentList = computed(() =>
+  view.value === 'active'
+    ? financeStore.areAccountsLoading
+    : financeStore.areArchivedAccountsLoading
+)
+
 const filteredAccounts = computed(() => {
-  let result = allAccounts.value
+  let result = [...visibleAccounts.value]
 
-  // Filter by search text
   if (searchText.value.trim()) {
-    const search = searchText.value.toLowerCase().trim()
+    const query = searchText.value.toLowerCase().trim()
     result = result.filter(account =>
-      account.name.toLowerCase().includes(search) ||
-      account.currencyCode.toLowerCase().includes(search) ||
-      account.currency?.name.toLowerCase().includes(search)
+      account.name.toLowerCase().includes(query) ||
+      account.currencyCode.toLowerCase().includes(query) ||
+      account.currency?.name.toLowerCase().includes(query)
     )
   }
 
-  // Filter by account type
-  if (selectedType.value !== null) {
-    result = result.filter(account => account.type === selectedType.value)
+  if (sortBy.value === 'name-asc') {
+    result.sort((a, b) => a.name.localeCompare(b.name, 'ru'))
+    return result
   }
 
+  if (sortBy.value === 'balance-asc') {
+    result.sort((a, b) => (a.balanceInBaseCurrency ?? 0) - (b.balanceInBaseCurrency ?? 0))
+    return result
+  }
+
+  result.sort((a, b) => (b.balanceInBaseCurrency ?? 0) - (a.balanceInBaseCurrency ?? 0))
   return result
 })
 
-const hasActiveFilters = computed(() =>
-  searchText.value.length > 0 || selectedType.value !== null
-)
+const hasActiveFilters = computed(() => searchText.value.trim().length > 0)
 
 const openModal = () => {
   editingAccount.value = null
@@ -64,6 +88,7 @@ const openModal = () => {
 }
 
 const openAdjustments = (account: Account) => {
+  if (view.value === 'archived') return
   selectedAccount.value = account
   adjustmentsVisible.value = true
 }
@@ -108,38 +133,63 @@ const handleLiquidityToggle = async (account: Account, value: boolean) => {
   }
 }
 
-const handleDeleteAccount = (account: Account) => {
+const handleArchiveAccount = (account: Account) => {
+  if (pendingArchiveId.value) return
+
   confirm.require({
-    message: `Вы уверены, что хотите удалить счет "${account.name}"? Все связанные транзакции также будут удалены.`,
-    header: 'Подтверждение удаления',
-    icon: 'pi pi-exclamation-triangle',
+    message: `Архивировать счет "${account.name}"? Счет будет скрыт из активных операций, но история сохранится.`,
+    header: 'Архивация счета',
+    icon: 'pi pi-inbox',
     rejectLabel: 'Отмена',
-    acceptLabel: 'Удалить',
-    acceptClass: 'p-button-danger',
+    acceptLabel: 'Архивировать',
     accept: async () => {
-      const success = await financeStore.deleteAccount(account.id)
-      toast.add({
-        severity: success ? 'success' : 'error',
-        summary: success ? 'Счет удален' : 'Ошибка удаления',
-        detail: success ? 'Счет и связанные транзакции удалены.' : 'Не удалось удалить счет. Попробуйте позже.',
-        life: 3000
-      })
+      pendingArchiveId.value = account.id
+      try {
+        const success = await financeStore.archiveAccount(account.id)
+        toast.add({
+          severity: success ? 'success' : 'error',
+          summary: success ? 'Счет архивирован' : 'Ошибка архивации',
+          detail: success
+            ? 'Счет перемещен в архив и недоступен для новых операций.'
+            : 'Не удалось архивировать счет. Попробуйте позже.',
+          life: 3000
+        })
+      } finally {
+        pendingArchiveId.value = null
+      }
     }
   })
 }
 
+const handleUnarchiveAccount = async (account: Account) => {
+  if (pendingUnarchiveId.value) return
+  pendingUnarchiveId.value = account.id
+  try {
+    const success = await financeStore.unarchiveAccount(account.id)
+    toast.add({
+      severity: success ? 'success' : 'error',
+      summary: success ? 'Счет разархивирован' : 'Ошибка',
+      detail: success
+        ? 'Счет снова доступен в активном списке.'
+        : 'Не удалось разархивировать счет.',
+      life: 3000
+    })
+  } finally {
+    pendingUnarchiveId.value = null
+  }
+}
+
 const clearFilters = () => {
   searchText.value = ''
-  selectedType.value = null
 }
 
 onMounted(async () => {
   await userStore.fetchCurrentUser()
   await Promise.all([
     financeStore.fetchCurrencies(),
-    financeStore.fetchAccounts()
+    financeStore.fetchAccounts(),
+    financeStore.fetchArchivedAccounts(),
   ])
-  selectedType.value = null
 })
 </script>
 
@@ -147,7 +197,7 @@ onMounted(async () => {
   <PageContainer class="accounts">
     <PageHeader
       title="Счета"
-      subtitle="Управляйте банковскими счетами и картами в одном месте"
+      subtitle="Управляйте банковскими счетами в одном месте"
       :breadcrumbs="[
         { label: 'Главная', to: '/analytics' },
         { label: 'Счета' }
@@ -163,24 +213,83 @@ onMounted(async () => {
     </PageHeader>
 
     <UiSection class="accounts__content">
-      <!-- Filters -->
       <UiCard
-        v-if="allAccounts.length > 0"
-        class="accounts__filters"
+        class="accounts-toolbar"
         variant="muted"
-        padding="lg"
+        padding="md"
       >
-        <AccountFilters
-          v-model:search-text="searchText"
-          v-model:selected-type="selectedType"
-          :available-types="[0]"
-          @clear-filters="clearFilters"
-        />
+        <div
+          class="accounts-tabs"
+          role="tablist"
+          aria-label="Фильтр счетов по статусу"
+        >
+          <button
+            class="accounts-tab"
+            :class="{ 'is-active': view === 'active' }"
+            type="button"
+            role="tab"
+            :aria-selected="view === 'active'"
+            @click="view = 'active'"
+          >
+            <span>Активные</span>
+            <strong>{{ activeBankAccounts.length }}</strong>
+          </button>
+          <button
+            class="accounts-tab"
+            :class="{ 'is-active': view === 'archived' }"
+            type="button"
+            role="tab"
+            :aria-selected="view === 'archived'"
+            @click="view = 'archived'"
+          >
+            <span>Архив</span>
+            <strong>{{ archivedBankAccounts.length }}</strong>
+          </button>
+        </div>
+
+        <div class="accounts-controls">
+          <div class="accounts-search">
+            <i
+              class="pi pi-search"
+              aria-hidden="true"
+            />
+            <UiInputText
+              v-model="searchText"
+              placeholder="Поиск по названию или валюте..."
+              autocomplete="off"
+              aria-label="Поиск счета"
+            />
+          </div>
+
+          <UiSelect
+            v-model="sortBy"
+            class="accounts-sort"
+            :options="sortOptions"
+            option-label="label"
+            option-value="value"
+            placeholder="Сортировка"
+            aria-label="Сортировка счетов"
+          />
+
+          <UiButton
+            variant="ghost"
+            :disabled="!hasActiveFilters"
+            @click="clearFilters"
+          >
+            Сбросить
+          </UiButton>
+        </div>
+
+        <p
+          v-if="view === 'active'"
+          class="accounts-toolbar__hint"
+        >
+          Корректировка баланса доступна по кнопке внутри карточки счета.
+        </p>
       </UiCard>
 
-      <!-- Loading skeleton -->
       <div
-        v-if="loadingAccounts && allAccounts.length === 0"
+        v-if="loadingCurrentList && visibleAccounts.length === 0"
         class="accounts__skeleton"
       >
         <UiSkeleton
@@ -191,48 +300,58 @@ onMounted(async () => {
         />
       </div>
 
-      <!-- Empty state (no accounts at all) -->
       <EmptyState
-        v-else-if="allAccounts.length === 0"
+        v-else-if="view === 'active' && activeBankAccounts.length === 0"
         icon="pi-wallet"
-        title="Нет подключенных счетов"
-        description="Добавьте банковский счет или кошелек, чтобы начать отслеживать ваши финансы."
+        title="Нет активных счетов"
+        description="Добавьте банковский счет, чтобы начать отслеживать баланс и операции."
         action-label="Добавить счет"
         action-icon="pi pi-plus"
         @action="openModal"
       />
 
-      <!-- Empty state (no accounts match filters) -->
+      <EmptyState
+        v-else-if="view === 'archived' && archivedBankAccounts.length === 0"
+        icon="pi-inbox"
+        title="Архив пуст"
+        description="Здесь будут отображаться архивированные счета."
+        action-label="К активным счетам"
+        action-icon="pi pi-arrow-left"
+        @action="view = 'active'"
+      />
+
       <EmptyState
         v-else-if="filteredAccounts.length === 0 && hasActiveFilters"
         icon="pi-filter-slash"
         title="Ничего не найдено"
-        description="По вашему запросу не найдено ни одного счета. Попробуйте изменить фильтры."
+        description="По вашему запросу не найдено ни одного счета. Попробуйте изменить поиск."
         action-label="Сбросить фильтры"
         action-icon="pi pi-refresh"
         @action="clearFilters"
       />
 
-      <!-- Accounts grid -->
       <div
         v-else
-        class="accounts-grid card-grid card-grid--balanced"
+        class="accounts-grid"
+        :class="{ 'accounts-grid--few': filteredAccounts.length < 3 }"
       >
         <AccountCard
           v-for="account in filteredAccounts"
           :key="account.id"
           :account="account"
+          :readonly="view === 'archived'"
           :is-primary-loading="pendingPrimaryId === account.id"
           :is-liquidity-loading="pendingLiquidityId === account.id"
+          :is-archive-loading="pendingArchiveId === account.id || pendingUnarchiveId === account.id"
           @set-primary="handleSetPrimary(account.id)"
           @edit="handleEditAccount(account)"
-          @delete="handleDeleteAccount(account)"
+          @archive="handleArchiveAccount(account)"
+          @unarchive="handleUnarchiveAccount(account)"
           @open="openAdjustments(account)"
           @update-liquidity="handleLiquidityToggle(account, $event)"
         />
       </div>
 
-      <!-- Results count -->
       <div
         v-if="filteredAccounts.length > 0 && hasActiveFilters"
         class="surface-panel accounts__results"
@@ -242,7 +361,7 @@ onMounted(async () => {
             class="pi pi-info-circle"
             aria-hidden="true"
           />
-          Показано счетов: <strong>{{ filteredAccounts.length }}</strong> из <strong>{{ allAccounts.length }}</strong>
+          Показано счетов: <strong>{{ filteredAccounts.length }}</strong> из <strong>{{ visibleAccounts.length }}</strong>
         </p>
       </div>
     </UiSection>
@@ -255,11 +374,6 @@ onMounted(async () => {
       v-model:visible="adjustmentsVisible"
       :account="selectedAccount"
     />
-    <UiSkeleton
-      v-if="loadingCurrencies"
-      class="visually-hidden"
-      height="0"
-    />
   </PageContainer>
 </template>
 
@@ -269,21 +383,109 @@ onMounted(async () => {
 }
 
 .accounts__content {
-  gap: var(--space-5);
+  gap: var(--space-4);
+}
+
+.accounts-toolbar {
+  gap: var(--space-3);
+}
+
+.accounts-toolbar__hint {
+  margin: 0;
+  color: var(--text-muted);
+  font-size: var(--ft-text-sm);
+}
+
+.accounts-tabs {
+  display: inline-flex;
+  gap: var(--space-2);
+  padding: var(--space-1);
+  border-radius: var(--radius-md);
+  background: var(--surface-0);
+  border: 1px solid var(--border);
+}
+
+.accounts-tab {
+  min-height: 44px;
+  border: none;
+  background: transparent;
+  color: var(--text-muted);
+  border-radius: var(--radius-sm);
+  padding: var(--space-2) var(--space-3);
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  cursor: pointer;
+  font-weight: var(--ft-font-medium);
+}
+
+.accounts-tab strong {
+  font-size: var(--ft-text-sm);
+}
+
+.accounts-tab.is-active {
+  background: color-mix(in srgb, var(--primary) 18%, transparent);
+  color: var(--text);
+}
+
+.accounts-tab:focus-visible {
+  outline: 2px solid var(--primary);
+  outline-offset: 1px;
+}
+
+.accounts-controls {
+  display: grid;
+  grid-template-columns: minmax(260px, 1fr) minmax(220px, 280px) auto;
+  gap: var(--space-3);
+  align-items: center;
+}
+
+.accounts-search {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  min-height: 44px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  background: var(--surface-0);
+  padding: 0 var(--space-3);
+}
+
+.accounts-search i {
+  color: var(--text-muted);
+}
+
+.accounts-search :deep(.p-inputtext) {
+  border: none;
+  background: transparent;
+  box-shadow: none;
+  width: 100%;
+  padding: 0;
+}
+
+.accounts-sort {
+  min-height: 44px;
 }
 
 .accounts__skeleton {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
   gap: var(--space-4);
 }
 
 .accounts-grid {
-  gap: var(--space-5);
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: var(--space-4);
+}
+
+.accounts-grid--few {
+  grid-template-columns: repeat(auto-fit, minmax(300px, 380px));
+  justify-content: start;
 }
 
 .accounts__results {
-  padding: var(--space-4);
+  padding: var(--space-3);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -298,25 +500,33 @@ onMounted(async () => {
   color: var(--text-muted);
 }
 
-.results-text i {
-  color: var(--accent);
-}
-
 .results-text strong {
   color: var(--text);
   font-weight: var(--ft-font-semibold);
 }
 
-.visually-hidden {
-  position: absolute;
-  width: 1px;
-  height: 1px;
-  overflow: hidden;
-  clip: rect(0, 0, 0, 0);
+@media (max-width: 960px) {
+  .accounts-controls {
+    grid-template-columns: 1fr;
+  }
 }
 
 @media (max-width: 640px) {
+  .accounts-tabs {
+    width: 100%;
+    justify-content: space-between;
+  }
+
+  .accounts-tab {
+    flex: 1;
+    justify-content: center;
+  }
+
   .accounts-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .accounts__skeleton {
     grid-template-columns: 1fr;
   }
 }

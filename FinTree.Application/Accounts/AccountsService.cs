@@ -19,7 +19,7 @@ public sealed class AccountsService(
     private readonly record struct CashFlowEvent(DateTime OccurredAt, decimal Amount);
     private readonly record struct BalanceAdjustmentEvent(DateTime OccurredAt, decimal Amount);
 
-    public async Task<List<AccountDto>> GetAccounts(CancellationToken ct = default)
+    public async Task<List<AccountDto>> GetAccounts(bool archived = false, CancellationToken ct = default)
     {
         var currentUserId = currentUser.Id;
         var userMeta = await context.Users
@@ -30,16 +30,21 @@ public sealed class AccountsService(
 
         var accounts = await context.Accounts
             .AsNoTracking()
-            .Where(a => a.UserId == currentUserId)
-            .Select(a => new { a.Id, a.CurrencyCode, a.Name, a.Type, a.IsLiquid, a.CreatedAt })
+            .Where(a => a.UserId == currentUserId && a.IsArchived == archived)
+            .Select(a => new { a.Id, a.CurrencyCode, a.Name, a.Type, a.IsLiquid, a.IsArchived, a.CreatedAt })
             .ToListAsync(ct);
+
+        if (accounts.Count == 0)
+            return [];
+
+        var accountIds = accounts.Select(a => a.Id).ToList();
 
         var accountCreatedAtById = accounts
             .ToDictionary(a => a.Id, a => NormalizeUtc(a.CreatedAt.UtcDateTime));
 
         var latestAdjustments = await context.AccountBalanceAdjustments
             .AsNoTracking()
-            .Where(a => a.Account.UserId == currentUserId)
+            .Where(a => accountIds.Contains(a.AccountId))
             .Select(a => new { a.AccountId, a.Amount, a.OccurredAt })
             .ToListAsync(ct);
 
@@ -57,7 +62,7 @@ public sealed class AccountsService(
 
         var transactions = await context.Transactions
             .AsNoTracking()
-            .Where(t => t.Account.UserId == currentUserId)
+            .Where(t => accountIds.Contains(t.AccountId))
             .Select(g => new
             {
                 g.AccountId,
@@ -127,6 +132,7 @@ public sealed class AccountsService(
                 account.Name,
                 account.Type,
                 account.IsLiquid,
+                account.IsArchived,
                 account.Id == userMeta.MainAccountId,
                 roundedBalance,
                 balanceInBase));
@@ -353,6 +359,7 @@ public sealed class AccountsService(
             throw new NotFoundException("Счет не найден", accountId);
         if (account.UserId != currentUserId)
             throw new ForbiddenException();
+        EnsureAccountIsNotArchived(account);
 
         account.Rename(command.Name);
         await context.SaveChangesAsync(ct);
@@ -368,6 +375,7 @@ public sealed class AccountsService(
             throw new NotFoundException("Счет не найден", accountId);
         if (account.UserId != currentUserId)
             throw new ForbiddenException();
+        EnsureAccountIsNotArchived(account);
 
         account.SetLiquidity(isLiquid);
         await context.SaveChangesAsync(ct);
@@ -398,12 +406,63 @@ public sealed class AccountsService(
             throw new NotFoundException("Счет не найден", accountId);
         if (account.UserId != currentUserId)
             throw new ForbiddenException();
+        EnsureAccountIsNotArchived(account);
 
         var adjustment = new AccountBalanceAdjustment(accountId, amount, DateTime.UtcNow);
         await context.AccountBalanceAdjustments.AddAsync(adjustment, ct);
         await context.SaveChangesAsync(ct);
 
         return adjustment.Id;
+    }
+
+    public async Task ArchiveAsync(Guid accountId, CancellationToken ct = default)
+    {
+        var currentUserId = currentUser.Id;
+        var account = await context.Accounts
+            .Include(a => a.User)
+            .ThenInclude(u => u.Accounts)
+            .FirstOrDefaultAsync(a => a.Id == accountId, ct);
+
+        if (account is null)
+            throw new NotFoundException("Счет не найден", accountId);
+        if (account.UserId != currentUserId)
+            throw new ForbiddenException();
+        if (account.IsArchived)
+            return;
+
+        var user = account.User;
+        if (user.MainAccountId == accountId)
+        {
+            var nextAccount = user.Accounts
+                .Where(a => a.Id != accountId && !a.IsArchived)
+                .OrderBy(a => a.CreatedAt)
+                .FirstOrDefault();
+
+            if (nextAccount is not null)
+                user.SetMainAccount(nextAccount.Id);
+            else
+                user.ClearMainAccount();
+        }
+
+        account.Archive();
+        await context.SaveChangesAsync(ct);
+    }
+
+    public async Task UnarchiveAsync(Guid accountId, CancellationToken ct = default)
+    {
+        var currentUserId = currentUser.Id;
+        var account = await context.Accounts
+            .FirstOrDefaultAsync(a => a.Id == accountId, ct);
+
+        if (account is null)
+            throw new NotFoundException("Счет не найден", accountId);
+        if (account.UserId != currentUserId)
+            throw new ForbiddenException();
+        if (!account.IsArchived)
+            return;
+
+        account.Unarchive();
+        await context.SaveChangesAsync(ct);
     }
 
     public async Task DeleteAsync(Guid accountId, CancellationToken ct = default)
@@ -450,7 +509,10 @@ public sealed class AccountsService(
         var user = account.User;
         if (user.MainAccountId == accountId)
         {
-            var nextAccount = user.Accounts.FirstOrDefault(a => a.Id != accountId);
+            var nextAccount = user.Accounts
+                .Where(a => a.Id != accountId && !a.IsArchived)
+                .OrderBy(a => a.CreatedAt)
+                .FirstOrDefault();
             if (nextAccount is not null)
                 user.SetMainAccount(nextAccount.Id);
             else
@@ -459,6 +521,12 @@ public sealed class AccountsService(
 
         account.Delete();
         await context.SaveChangesAsync(ct);
+    }
+
+    private static void EnsureAccountIsNotArchived(Account account)
+    {
+        if (account.IsArchived)
+            throw new ConflictException("Архивный счет недоступен для изменений. Сначала разархивируйте счет.");
     }
 
     private static DateTime NormalizeUtc(DateTime value)

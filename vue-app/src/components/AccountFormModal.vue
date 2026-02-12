@@ -1,146 +1,126 @@
 <script setup lang="ts">
-import { computed, ref, watch, onMounted } from 'vue';
-import Dialog from 'primevue/dialog';
-import InputText from 'primevue/inputtext';
-import Select from 'primevue/select';
-import InputNumber from 'primevue/inputnumber';
-import ToggleSwitch from 'primevue/toggleswitch';
-import { useFinanceStore } from '../stores/finance';
-import { ACCOUNT_TYPE_OPTIONS } from '../constants';
-import { useFormModal } from '../composables/useFormModal';
-import type { Account, AccountType } from '../types';
+import { computed, onMounted, ref, watch } from 'vue'
+import Dialog from 'primevue/dialog'
+import InputNumber from 'primevue/inputnumber'
+import InputText from 'primevue/inputtext'
+import Select from 'primevue/select'
+import ToggleSwitch from 'primevue/toggleswitch'
+import { useFinanceStore } from '../stores/finance'
+import { useFormModal } from '../composables/useFormModal'
+import type { Account, AccountType } from '../types'
+
+const BANK_ACCOUNT_TYPE: AccountType = 0
 
 const props = defineProps<{
-  visible: boolean;
-  account?: Account | null;
-}>();
+  visible: boolean
+  account?: Account | null
+}>()
 
 const emit = defineEmits<{
-  (e: 'update:visible', value: boolean): void;
-}>();
+  (e: 'update:visible', value: boolean): void
+}>()
 
-const store = useFinanceStore();
+const store = useFinanceStore()
 
-const name = ref('');
-const accountType = ref<AccountType>(ACCOUNT_TYPE_OPTIONS[0].value);
-const accountTypeSelectOptions = computed(() =>
-  ACCOUNT_TYPE_OPTIONS.map(option => ({ ...option }))
-);
-const selectedCurrencyCode = ref<string | null>(null);
-const attemptedSubmit = ref(false);
-const initialBalance = ref<number | null>(null);
-const isLiquid = ref(true);
-const isLiquidTouched = ref(false);
+const name = ref('')
+const selectedCurrencyCode = ref<string | null>(null)
+const attemptedSubmit = ref(false)
+const initialBalance = ref<number | null>(null)
+const isLiquid = ref(true)
 
-const availableCurrencies = computed(() => store.currencies);
+const availableCurrencies = computed(() => store.currencies)
 
 const currencyOptions = computed(() =>
   availableCurrencies.value.map(currency => ({
     label: `${currency.symbol} ${currency.code} · ${currency.name}`,
     value: currency.code,
   }))
-);
+)
 
 const selectedCurrency = computed(() => {
-  if (!selectedCurrencyCode.value) return null;
-  return availableCurrencies.value.find(currency => currency.code === selectedCurrencyCode.value) ?? null;
-});
+  if (!selectedCurrencyCode.value) return null
+  return availableCurrencies.value.find(currency => currency.code === selectedCurrencyCode.value) ?? null
+})
 
-const defaultCurrencyCode = computed(() => availableCurrencies.value[0]?.code ?? null);
+const defaultCurrencyCode = computed(() => availableCurrencies.value[0]?.code ?? null)
 
 const currencyCodeForSubmit = computed(
   () => selectedCurrency.value?.code ?? selectedCurrencyCode.value ?? ''
-);
+)
+
+const isEditing = computed(() => Boolean(props.account))
+const editingAccountId = computed(() => props.account?.id ?? null)
+const dialogTitle = computed(() => (isEditing.value ? 'Редактировать счёт' : 'Добавить счёт'))
+const submitLabel = computed(() => (isEditing.value ? 'Сохранить' : 'Создать'))
+const submitIcon = computed(() => (isEditing.value ? 'pi pi-check' : 'pi pi-plus'))
 
 const isFormReady = computed(
   () => Boolean(name.value.trim()) && (isEditing.value || Boolean(currencyCodeForSubmit.value))
-);
+)
 
 const nameError = computed(() => {
-  if (!attemptedSubmit.value) return null;
-  return name.value.trim().length ? null : 'Введите название счёта';
-});
+  if (!attemptedSubmit.value) return null
+  return name.value.trim().length ? null : 'Введите название счёта'
+})
 
 const currencyError = computed(() => {
-  if (isEditing.value) return null;
-  if (!attemptedSubmit.value) return null;
-  return currencyCodeForSubmit.value ? null : 'Выберите валюту';
-});
+  if (isEditing.value) return null
+  if (!attemptedSubmit.value) return null
+  return currencyCodeForSubmit.value ? null : 'Выберите валюту'
+})
 
-const currencySummary = computed(() => {
-  if (!selectedCurrency.value) return '';
-  return `${selectedCurrency.value.symbol} ${selectedCurrency.value.code} · ${selectedCurrency.value.name}`;
-});
-
-const isEditing = computed(() => Boolean(props.account));
-const editingAccountId = computed(() => props.account?.id ?? null);
-const dialogTitle = computed(() => (isEditing.value ? 'Редактировать счёт' : 'Добавить счёт'));
-const submitLabel = computed(() => (isEditing.value ? 'Сохранить' : 'Создать'));
-const submitIcon = computed(() => (isEditing.value ? 'pi pi-check' : 'pi pi-plus'));
 const currencyHint = computed(() => {
-  if (isEditing.value) return 'Валюту нельзя изменить после создания.';
-  if (store.areCurrenciesLoading) return 'Загрузка валют…';
-  if (!currencyOptions.value.length) return 'Не удалось загрузить валюты. Проверьте соединение.';
-  if (currencySummary.value) return currencySummary.value;
-  return 'Выберите валюту для нового счёта.';
-});
+  if (isEditing.value) return 'Валюту нельзя изменить после создания.'
+  if (store.areCurrenciesLoading) return 'Загрузка валют…'
+  if (!currencyOptions.value.length) return 'Не удалось загрузить валюты. Проверьте соединение.'
+  if (selectedCurrency.value) {
+    return `${selectedCurrency.value.symbol} ${selectedCurrency.value.code} · ${selectedCurrency.value.name}`
+  }
+  return 'Выберите валюту для нового счёта.'
+})
 
 function setDefaultCurrency() {
   if (!selectedCurrencyCode.value) {
-    selectedCurrencyCode.value = defaultCurrencyCode.value;
+    selectedCurrencyCode.value = defaultCurrencyCode.value
   }
 }
 
 function resetForm() {
-  attemptedSubmit.value = false;
-  initialBalance.value = null;
-  isLiquidTouched.value = false;
+  attemptedSubmit.value = false
+  initialBalance.value = null
 
   if (props.account) {
-    name.value = props.account.name;
-    accountType.value = props.account.type as AccountType;
-    selectedCurrencyCode.value = props.account.currencyCode;
-    isLiquid.value = props.account.isLiquid ?? accountType.value === 0;
-    return;
+    name.value = props.account.name
+    selectedCurrencyCode.value = props.account.currencyCode
+    isLiquid.value = props.account.isLiquid ?? true
+    return
   }
 
-  name.value = '';
-  accountType.value = ACCOUNT_TYPE_OPTIONS[0].value;
-  isLiquid.value = accountType.value === 0;
-  setDefaultCurrency();
+  name.value = ''
+  isLiquid.value = true
+  setDefaultCurrency()
 }
-
-watch(accountType, (newType) => {
-  if (isEditing.value) return;
-  if (!isLiquidTouched.value) {
-    isLiquid.value = newType === 0;
-  }
-});
 
 watch(
   () => props.visible,
   visible => {
-    if (visible) {
-      resetForm();
-    }
+    if (visible) resetForm()
   }
-);
+)
 
 watch(
   () => props.account,
   () => {
-    if (props.visible) {
-      resetForm();
-    }
+    if (props.visible) resetForm()
   }
-);
+)
 
-watch(availableCurrencies, () => setDefaultCurrency(), { immediate: true });
+watch(availableCurrencies, () => setDefaultCurrency(), { immediate: true })
 
 onMounted(async () => {
-  await store.fetchCurrencies();
-  setDefaultCurrency();
-});
+  await store.fetchCurrencies()
+  setDefaultCurrency()
+})
 
 const { isSubmitting, handleSubmit: handleFormSubmit, showWarning } = useFormModal(
   async () => {
@@ -148,37 +128,37 @@ const { isSubmitting, handleSubmit: handleFormSubmit, showWarning } = useFormMod
       return await store.updateAccount({
         id: editingAccountId.value,
         name: name.value.trim(),
-      });
+      })
     }
 
     return await store.createAccount({
       name: name.value.trim(),
-      type: accountType.value,
+      type: BANK_ACCOUNT_TYPE,
       currencyCode: currencyCodeForSubmit.value,
       initialBalance: initialBalance.value,
       isLiquid: isLiquid.value,
-    });
+    })
   },
   {
     successMessage: 'Счёт сохранён.',
     errorMessage: 'Не удалось сохранить счёт. Проверьте данные и попробуйте снова.',
   }
-);
+)
 
 const handleSubmit = async () => {
-  attemptedSubmit.value = true;
+  attemptedSubmit.value = true
 
   if (!isFormReady.value) {
-    showWarning('Введите название счёта и выберите валюту.');
-    return;
+    showWarning('Введите название счёта и выберите валюту.')
+    return
   }
 
-  const success = await handleFormSubmit();
+  const success = await handleFormSubmit()
   if (success) {
-    attemptedSubmit.value = false;
-    emit('update:visible', false);
+    attemptedSubmit.value = false
+    emit('update:visible', false)
   }
-};
+}
 </script>
 
 <template>
@@ -186,7 +166,8 @@ const handleSubmit = async () => {
     :visible="props.visible"
     :header="dialogTitle"
     modal
-    :style="{ width: '520px' }"
+    :style="{ width: '400px' }"
+    :breakpoints="{ '640px': 'calc(100vw - 1rem)' }"
     dismissable-mask
     @update:visible="val => emit('update:visible', val)"
   >
@@ -204,8 +185,8 @@ const handleSubmit = async () => {
           <InputText
             v-bind="fieldAttrs"
             v-model="name"
-            placeholder="Например, «Основная карта»"
             class="w-full"
+            placeholder="Например, «Основная карта»"
             autocomplete="off"
             :autofocus="props.visible"
           />
@@ -213,24 +194,17 @@ const handleSubmit = async () => {
       </FormField>
 
       <FormField label="Тип счёта">
-        <template #default="{ fieldAttrs }">
-          <Select
-            v-model="accountType"
-            :options="accountTypeSelectOptions"
-            option-label="label"
-            option-value="value"
-            class="w-full"
-            :disabled="isEditing"
-            :input-id="fieldAttrs.id"
-            :aria-describedby="fieldAttrs['aria-describedby']"
-            :aria-invalid="fieldAttrs['aria-invalid']"
-          />
+        <template #default>
+          <div class="static-field">
+            <i
+              class="pi pi-wallet"
+              aria-hidden="true"
+            />
+            <span>Банковский счёт</span>
+          </div>
         </template>
-        <template
-          v-if="isEditing"
-          #hint
-        >
-          Тип счёта нельзя изменить после создания.
+        <template #hint>
+          На этой странице доступны только банковские счета.
         </template>
       </FormField>
 
@@ -253,7 +227,6 @@ const handleSubmit = async () => {
             :aria-invalid="fieldAttrs['aria-invalid']"
           />
         </template>
-
         <template #hint>
           <span>{{ currencyHint }}</span>
         </template>
@@ -288,7 +261,6 @@ const handleSubmit = async () => {
             <ToggleSwitch
               v-bind="fieldAttrs"
               v-model="isLiquid"
-              @update:model-value="isLiquidTouched = true"
             />
             <span>{{ isLiquid ? 'Учитывать в ликвидных' : 'Не учитывать в ликвидных' }}</span>
           </div>
@@ -299,13 +271,6 @@ const handleSubmit = async () => {
       </FormField>
 
       <div class="actions">
-        <AppButton
-          type="button"
-          variant="ghost"
-          @click="emit('update:visible', false)"
-        >
-          Отмена
-        </AppButton>
         <AppButton
           type="submit"
           :icon="submitIcon"
@@ -325,11 +290,53 @@ const handleSubmit = async () => {
   gap: var(--ft-space-4);
 }
 
+.form-layout :deep(.p-inputtext),
+.form-layout :deep(.p-inputnumber),
+.form-layout :deep(.p-inputnumber-input),
+.form-layout :deep(.p-select) {
+  width: 100%;
+}
+
+.form-layout :deep(.p-select-label) {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.static-field {
+  min-height: 44px;
+  display: inline-flex;
+  align-items: center;
+  gap: var(--ft-space-2);
+  width: 100%;
+  border-radius: var(--ft-radius-lg);
+  border: 1px solid var(--ft-border-soft);
+  background: var(--ft-surface-soft);
+  color: var(--ft-text-primary);
+  font-weight: var(--ft-font-medium);
+  padding: 0 var(--ft-space-3);
+}
+
+.static-field i {
+  color: var(--ft-text-muted);
+}
+
 .actions {
   display: flex;
+  flex-wrap: wrap;
   justify-content: flex-end;
   gap: var(--ft-space-3);
   margin-top: var(--ft-space-4);
+}
+
+.actions :deep(.app-button) {
+  min-height: 44px;
+  min-width: 148px;
+  flex: 0 0 auto;
+}
+
+.actions :deep(.p-button-label) {
+  white-space: nowrap;
 }
 
 .liquidity-toggle {
@@ -340,13 +347,20 @@ const handleSubmit = async () => {
   color: var(--ft-text-secondary);
 }
 
-@media (max-width: 576px) {
-  .actions {
-    flex-direction: column;
-  }
+:deep(.p-dialog-header-actions .p-dialog-header-icon) {
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
+}
 
+:deep(.p-dialog-header-actions .p-button-icon) {
+  margin: 0;
+}
+
+@media (max-width: 576px) {
   .actions :deep(.app-button) {
     width: 100%;
+    min-width: 0;
   }
 }
 </style>

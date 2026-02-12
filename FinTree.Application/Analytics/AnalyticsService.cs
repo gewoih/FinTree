@@ -420,7 +420,7 @@ public sealed class AnalyticsService(
         DateTime monthEndUtc,
         CancellationToken ct)
     {
-        var accounts = await accountsService.GetAccounts(ct);
+        var accounts = await accountsService.GetAccounts(ct: ct);
         var liquidAssets = accounts
             .Where(a => a.IsLiquid)
             .Sum(a => a.BalanceInBaseCurrency);

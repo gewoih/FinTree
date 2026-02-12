@@ -1,57 +1,53 @@
 <script setup lang="ts">
-import { ref, computed } from 'vue'
+import { computed, ref } from 'vue'
 import ToggleSwitch from 'primevue/toggleswitch'
-import type { Account, AccountType } from '../types'
-import { getAccountTypeInfo, getCurrencyFlag } from '../utils/accountHelpers'
-import { formatCurrency } from '../utils/formatters'
-import { useUserStore } from '../stores/user'
 import Menu from 'primevue/menu'
 import type { MenuItem } from 'primevue/menuitem'
+import type { Account } from '../types'
+import { getCurrencyFlag } from '../utils/accountHelpers'
+import { formatCurrency } from '../utils/formatters'
+import { useUserStore } from '../stores/user'
 
-const props = defineProps<{
+const props = withDefaults(defineProps<{
   account: Account
+  readonly?: boolean
   isPrimaryLoading?: boolean
   isLiquidityLoading?: boolean
-}>()
+  isArchiveLoading?: boolean
+}>(), {
+  readonly: false,
+  isPrimaryLoading: false,
+  isLiquidityLoading: false,
+  isArchiveLoading: false,
+})
 
 const emit = defineEmits<{
   setPrimary: []
   edit: []
-  delete: []
+  archive: []
+  unarchive: []
   open: []
   updateLiquidity: [value: boolean]
 }>()
 
 const menuRef = ref()
-const isMenuOpen = ref(false)
 const userStore = useUserStore()
 
-const accountTypeInfo = computed(() => getAccountTypeInfo(props.account.type as AccountType))
 const currencyFlag = computed(() => getCurrencyFlag(props.account.currencyCode))
 const currencyDisplay = computed(() => {
   const flag = currencyFlag.value
   const symbol = props.account.currency?.symbol || ''
   const code = props.account.currency?.code || props.account.currencyCode
-
   return flag ? `${flag} ${symbol} ${code}` : `${symbol} ${code}`
 })
 
 const baseCurrencyCode = computed(() => userStore.baseCurrencyCode ?? props.account.currencyCode)
-
-const liquidityModel = computed({
-  get: () => props.account.isLiquid,
-  set: (value: boolean) => emit('updateLiquidity', value),
-})
-
-const liquidityLabel = computed(() => (props.account.isLiquid ? 'Ликвидный' : 'Неликвидный'))
-
 const balanceInBase = computed(() => props.account.balanceInBaseCurrency ?? 0)
 const balanceInAccount = computed(() => props.account.balance ?? 0)
 
-const showSecondaryBalance = computed(() => {
-  if (!baseCurrencyCode.value) return false
-  return baseCurrencyCode.value.toUpperCase() !== props.account.currencyCode.toUpperCase()
-})
+const showSecondaryBalance = computed(() =>
+  baseCurrencyCode.value.toUpperCase() !== props.account.currencyCode.toUpperCase()
+)
 
 const formattedBaseBalance = computed(() =>
   formatCurrency(balanceInBase.value, baseCurrencyCode.value)
@@ -61,140 +57,124 @@ const formattedAccountBalance = computed(() =>
   formatCurrency(balanceInAccount.value, props.account.currencyCode)
 )
 
-const menuItems = computed<MenuItem[]>(() => {
-  const items: MenuItem[] = []
+const liquidityModel = computed({
+  get: () => props.account.isLiquid,
+  set: (value: boolean) => emit('updateLiquidity', value),
+})
 
-  items.push(
+const liquidityLabel = computed(() => (props.account.isLiquid ? 'Ликвидный' : 'Неликвидный'))
+
+const menuItems = computed<MenuItem[]>(() => {
+  if (props.readonly) return []
+
+  return [
     {
       label: 'Редактировать',
       icon: 'pi pi-pencil',
       command: () => emit('edit')
     },
     {
-      label: 'Удалить',
-      icon: 'pi pi-trash',
-      command: () => emit('delete'),
-      class: 'menu-item-danger'
+      label: 'Архивировать',
+      icon: 'pi pi-inbox',
+      command: () => emit('archive')
     }
-  )
-
-  return items
+  ]
 })
 
 const toggleMenu = (event: Event) => {
   menuRef.value.toggle(event)
-  isMenuOpen.value = !isMenuOpen.value
 }
 </script>
 
 <template>
   <article
     class="account-card ft-card"
-    :class="{ 'account-card--primary': account.isMain }"
-    @click="emit('open')"
+    :class="{
+      'account-card--primary': account.isMain && !readonly,
+      'account-card--readonly': readonly
+    }"
   >
-    <!-- Header with icon, name, and menu -->
     <header class="account-card__header">
-      <div
-        class="account-card__icon"
-        :style="{ color: accountTypeInfo.color }"
-      >
-        <i
-          :class="`pi ${accountTypeInfo.icon}`"
-          aria-hidden="true"
+      <div class="account-card__title">
+        <h3>{{ account.name }}</h3>
+        <p>Банковский счет</p>
+      </div>
+
+      <div class="account-card__header-actions">
+        <UiButton
+          v-if="!readonly && !account.isMain"
+          class="account-card__icon-button"
+          variant="ghost"
+          size="sm"
+          icon="pi pi-star"
+          :loading="isPrimaryLoading"
+          aria-label="Сделать основным"
+          @click.stop="emit('setPrimary')"
+        />
+        <UiButton
+          v-if="menuItems.length > 0"
+          class="account-card__icon-button"
+          variant="ghost"
+          size="sm"
+          icon="pi pi-ellipsis-v"
+          :aria-label="`Действия для счета ${account.name}`"
+          @click.stop="toggleMenu"
+        />
+        <Menu
+          ref="menuRef"
+          :model="menuItems"
+          :popup="true"
+          :pt="{
+            root: { class: 'account-menu' },
+          }"
         />
       </div>
-
-      <div class="account-card__title-section">
-        <h3 class="account-card__name">
-          {{ account.name }}
-        </h3>
-        <p class="account-card__type">
-          {{ accountTypeInfo.label }}
-        </p>
-      </div>
-
-      <UiButton
-        class="account-card__menu-button"
-        icon="pi pi-ellipsis-v"
-        variant="ghost"
-        size="sm"
-        :aria-label="`Действия для счета ${account.name}`"
-        @click.stop="toggleMenu"
-      />
-      <Menu
-        ref="menuRef"
-        :model="menuItems"
-        :popup="true"
-        :pt="{
-          root: { class: 'account-menu' },
-        }"
-      />
     </header>
 
-    <!-- Status badges -->
-    <div
-      v-if="account.isMain"
-      class="account-card__badges"
-    >
+    <div class="account-card__badges">
       <StatusBadge
+        v-if="account.isMain && !readonly"
         label="Основной счет"
         severity="success"
         icon="pi-star-fill"
         size="sm"
       />
+      <StatusBadge
+        v-if="readonly"
+        label="В архиве"
+        severity="warning"
+        icon="pi-inbox"
+        size="sm"
+      />
     </div>
 
-    <!-- Account details -->
+    <div class="account-card__balance">
+      <p class="account-card__balance-label">
+        Баланс
+      </p>
+      <p class="account-card__balance-main">
+        {{ formattedBaseBalance }}
+      </p>
+      <p
+        v-if="showSecondaryBalance"
+        class="account-card__balance-secondary"
+      >
+        {{ formattedAccountBalance }}
+      </p>
+    </div>
+
     <dl class="account-card__meta">
       <div class="meta-row">
-        <dt>
-          <i
-            class="pi pi-globe"
-            aria-hidden="true"
-          />
-          Валюта
-        </dt>
-        <dd>
-          <span class="currency-chip">
-            {{ currencyDisplay }}
-          </span>
+        <dt>Валюта</dt>
+        <dd class="currency-chip">
+          {{ currencyDisplay }}
         </dd>
       </div>
-
       <div class="meta-row">
-        <dt>
-          <i
-            class="pi pi-wallet"
-            aria-hidden="true"
-          />
-          Баланс
-        </dt>
-        <dd>
-          <div class="balance-summary">
-            <span class="balance-summary__main">
-              {{ formattedBaseBalance }}
-            </span>
-            <span
-              v-if="showSecondaryBalance"
-              class="balance-summary__secondary"
-            >
-              {{ formattedAccountBalance }}
-            </span>
-          </div>
-        </dd>
-      </div>
-
-      <div class="meta-row">
-        <dt>
-          <i
-            class="pi pi-bolt"
-            aria-hidden="true"
-          />
-          Ликвидность
-        </dt>
+        <dt>Ликвидность</dt>
         <dd>
           <div
+            v-if="!readonly"
             class="liquidity-control"
             @click.stop
           >
@@ -204,134 +184,164 @@ const toggleMenu = (event: Event) => {
             />
             <span>{{ liquidityLabel }}</span>
           </div>
+          <span
+            v-else
+            class="account-card__readonly-value"
+          >
+            {{ liquidityLabel }}
+          </span>
         </dd>
       </div>
     </dl>
 
-    <!-- Quick actions footer -->
-    <footer
-      v-if="!account.isMain"
-      class="account-card__footer"
-    >
+    <footer class="account-card__footer">
       <UiButton
-        label="Сделать основным"
-        icon="pi pi-star"
+        v-if="readonly"
         variant="ghost"
         size="sm"
-        block
-        :loading="isPrimaryLoading"
-        @click.stop="emit('setPrimary')"
+        icon="pi pi-box"
+        label="Разархивировать"
+        :loading="isArchiveLoading"
+        @click.stop="emit('unarchive')"
+      />
+      <UiButton
+        v-else
+        variant="ghost"
+        size="sm"
+        icon="pi pi-sliders-h"
+        label="Корректировать баланс"
+        @click.stop="emit('open')"
       />
     </footer>
-
-    <!-- Primary account indicator -->
-    <div
-      v-if="account.isMain"
-      class="account-card__primary-indicator"
-      aria-hidden="true"
-    />
   </article>
 </template>
 
 <style scoped>
 .account-card {
-  position: relative;
-  gap: var(--ft-space-4);
-  border: 2px solid var(--ft-border-soft);
+  gap: var(--ft-space-3);
+  border: 1px solid var(--ft-border-soft);
+  background: var(--ft-surface-soft);
   transition:
-    box-shadow var(--ft-transition-base),
-    border-color var(--ft-transition-base);
-  overflow: hidden;
-  cursor: pointer;
+    border-color var(--ft-transition-base),
+    box-shadow var(--ft-transition-base);
+  min-height: 250px;
+  display: flex;
+  flex-direction: column;
 }
 
 .account-card:hover {
-  box-shadow: var(--ft-shadow-md);
   border-color: var(--ft-primary-200);
+  box-shadow: var(--ft-shadow-md);
 }
 
 .account-card--primary {
   border-color: var(--ft-primary-300);
   background: linear-gradient(
     135deg,
-    color-mix(in srgb, var(--ft-primary-500) 6%, transparent) 0%,
-    color-mix(in srgb, var(--ft-primary-500) 12%, transparent) 100%
+    color-mix(in srgb, var(--ft-primary-500) 5%, transparent) 0%,
+    color-mix(in srgb, var(--ft-primary-500) 10%, transparent) 100%
   );
 }
 
-.account-card--primary:hover {
-  border-color: var(--ft-primary-400);
+.account-card--readonly {
+  cursor: default;
+}
+
+.account-card--readonly:hover {
+  border-color: var(--ft-border-soft);
+  box-shadow: none;
 }
 
 .account-card__header {
   display: flex;
-  align-items: flex-start;
+  align-items: center;
   gap: var(--ft-space-3);
 }
 
-.account-card__icon {
-  flex-shrink: 0;
-  width: 48px;
-  height: 48px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: currentColor;
-  background: linear-gradient(135deg, currentColor 0%, currentColor 100%);
-  border-radius: var(--ft-radius-lg);
-  opacity: 0.1;
-  position: relative;
-}
-
-.account-card__icon i {
-  position: absolute;
-  font-size: 24px;
-  opacity: 10;
-  color: inherit;
-}
-
-.account-card__title-section {
+.account-card__title {
   flex: 1;
   min-width: 0;
 }
 
-.account-card__name {
+.account-card__title h3 {
   margin: 0;
   font-size: var(--ft-text-lg);
-  color: var(--ft-heading);
   font-weight: var(--ft-font-semibold);
+  color: var(--ft-heading);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
 }
 
-.account-card__type {
+.account-card__title p {
   margin: var(--ft-space-1) 0 0;
   font-size: var(--ft-text-sm);
   color: var(--ft-text-muted);
 }
 
-.account-card__menu-button {
-  flex-shrink: 0;
-  opacity: 0;
-  transition: opacity var(--ft-transition-fast);
+.account-card__header-actions {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--ft-space-2);
 }
 
-.account-card:hover .account-card__menu-button,
-.account-card:focus-within .account-card__menu-button {
-  opacity: 1;
+.account-card__icon-button {
+  width: 40px;
+  min-width: 40px;
+  height: 40px;
+  padding: 0;
+  border-radius: 12px;
+}
+
+.account-card__icon-button :deep(.p-button-icon) {
+  margin: 0;
+}
+
+.account-card__icon-button :deep(.p-button-label) {
+  display: none;
 }
 
 .account-card__badges {
   display: flex;
+  align-items: center;
   gap: var(--ft-space-2);
   flex-wrap: wrap;
+  min-height: 24px;
+}
+
+.account-card__balance {
+  padding: var(--ft-space-2) var(--ft-space-3);
+  border-radius: var(--ft-radius-lg);
+  border: 1px solid var(--ft-border-soft);
+  background: color-mix(in srgb, var(--ft-primary-500) 6%, transparent);
+  min-height: 104px;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start;
+}
+
+.account-card__balance-label {
+  margin: 0;
+  font-size: var(--ft-text-xs);
+  color: var(--ft-text-muted);
+}
+
+.account-card__balance-main {
+  margin: var(--ft-space-1) 0 0;
+  font-size: clamp(1.1rem, 1.5vw, 1.4rem);
+  font-weight: var(--ft-font-semibold);
+  color: var(--ft-heading);
+}
+
+.account-card__balance-secondary {
+  margin: var(--ft-space-1) 0 0;
+  font-size: var(--ft-text-sm);
+  color: var(--ft-text-muted);
 }
 
 .account-card__meta {
-  display: flex;
-  flex-direction: column;
-  gap: var(--ft-space-3);
+  display: grid;
+  gap: var(--ft-space-2);
   margin: 0;
 }
 
@@ -343,22 +353,15 @@ const toggleMenu = (event: Event) => {
 }
 
 .meta-row dt {
-  display: flex;
-  align-items: center;
-  gap: var(--ft-space-2);
   margin: 0;
-  font-size: var(--ft-text-sm);
   color: var(--ft-text-muted);
-}
-
-.meta-row dt i {
-  font-size: var(--ft-text-xs);
+  font-size: var(--ft-text-sm);
 }
 
 .meta-row dd {
   margin: 0;
-  font-weight: var(--ft-font-medium);
   color: var(--ft-heading);
+  font-weight: var(--ft-font-medium);
 }
 
 .currency-chip {
@@ -373,33 +376,6 @@ const toggleMenu = (event: Event) => {
   padding: var(--ft-space-1) var(--ft-space-3);
 }
 
-.dark-mode .currency-chip {
-  background: color-mix(in srgb, var(--ft-primary-500) 24%, transparent);
-  color: var(--ft-primary-300);
-}
-
-.light-mode .currency-chip {
-  color: var(--ft-primary-700);
-}
-
-.balance-summary {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-end;
-  gap: 2px;
-}
-
-.balance-summary__main {
-  font-size: var(--ft-text-base);
-  font-weight: var(--ft-font-semibold);
-  color: var(--ft-heading);
-}
-
-.balance-summary__secondary {
-  font-size: var(--ft-text-xs);
-  color: var(--ft-text-muted);
-}
-
 .liquidity-control {
   display: inline-flex;
   align-items: center;
@@ -408,78 +384,25 @@ const toggleMenu = (event: Event) => {
   color: var(--ft-text-muted);
 }
 
-.liquidity-control :deep(.p-toggleswitch) {
-  transform: scale(0.9);
+.account-card__readonly-value {
+  font-size: var(--ft-text-sm);
+  color: var(--ft-text-secondary);
 }
 
 .account-card__footer {
   display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: var(--ft-space-2);
+  justify-content: flex-end;
+  margin-top: auto;
   padding-top: var(--ft-space-2);
   border-top: 1px solid var(--ft-border-soft);
 }
 
-.account-card__primary-indicator {
-  position: absolute;
-  top: 0;
-  right: 0;
-  width: 0;
-  height: 0;
-  border-style: solid;
-  border-width: 0 40px 40px 0;
-  border-color: transparent var(--ft-primary-500) transparent transparent;
+.account-card__footer :deep(.ui-button) {
+  width: 100%;
+  justify-content: center;
 }
 
-.account-card__primary-indicator::after {
-  content: '★';
-  position: absolute;
-  top: 4px;
-  right: -36px;
-  color: var(--ft-text-inverse);
-  font-size: 12px;
-}
-
-/* Menu styling */
-:deep(.account-menu .menu-item-danger) {
-  color: var(--ft-danger-600);
-}
-
-:deep(.account-menu .menu-item-danger:hover) {
-  background: rgba(239, 68, 68, 0.1);
-}
-
-.dark-mode :deep(.account-menu .menu-item-danger) {
-  color: var(--ft-danger-400);
-}
-
-/* Animation */
-@media (prefers-reduced-motion: no-preference) {
-  .account-card {
-    transition:
-      transform var(--ft-transition-base),
-      box-shadow var(--ft-transition-base),
-      border-color var(--ft-transition-base);
-  }
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .account-card {
-    transition: none;
-  }
-
-  .account-card:hover {
-    transform: none;
-  }
-}
-
-/* Responsive */
 @media (max-width: 640px) {
-  .account-card__footer {
-    flex-direction: column;
-  }
-
   .account-card__footer :deep(.ui-button) {
     width: 100%;
   }

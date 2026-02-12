@@ -294,8 +294,10 @@ const buildTransactionsQuery = (overrides: Partial<TransactionsQuery> = {}): Tra
     dateRange.value[0] instanceof Date &&
     dateRange.value[1] instanceof Date
 
-  const from = hasValidRange ? normalizeDateOnly(dateRange.value![0]) : null
-  const to = hasValidRange ? normalizeDateOnly(dateRange.value![1]) : null
+  const fromDate = hasValidRange ? dateRange.value?.[0] : null
+  const toDate = hasValidRange ? dateRange.value?.[1] : null
+  const from = fromDate instanceof Date ? normalizeDateOnly(fromDate) : null
+  const to = toDate instanceof Date ? normalizeDateOnly(toDate) : null
 
   return {
     accountId: selectedAccount.value?.id ?? null,

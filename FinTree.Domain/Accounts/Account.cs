@@ -19,6 +19,7 @@ public sealed class Account : Entity
     [NotMapped] public Currency Currency => Currency.FromCode(CurrencyCode);
     public AccountType Type { get; private set; }
     public bool IsLiquid { get; private set; }
+    public bool IsArchived { get; private set; }
     public bool IsMain => User.MainAccountId == Id;
     public IReadOnlyCollection<Transaction> Transactions => _transactions.AsReadOnly();
 
@@ -39,6 +40,8 @@ public sealed class Account : Entity
         string? description = null, bool isMandatory = false, bool isTransfer = false, Guid? transferId = null)
     {
         ValidateTransaction(categoryId);
+        if (IsArchived)
+            throw new InvalidOperationException("Нельзя добавлять операции в архивный счет.");
 
         var money = new Money(CurrencyCode, amount);
         var transaction = new Transaction(type, Id, categoryId, money, occuredAt, description, isMandatory, isTransfer,
@@ -57,6 +60,16 @@ public sealed class Account : Entity
     public void SetLiquidity(bool isLiquid)
     {
         IsLiquid = isLiquid;
+    }
+
+    public void Archive()
+    {
+        IsArchived = true;
+    }
+
+    public void Unarchive()
+    {
+        IsArchived = false;
     }
 
     private static void ValidateTransaction(Guid categoryId)

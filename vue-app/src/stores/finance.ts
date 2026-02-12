@@ -26,10 +26,13 @@ import {
 
 export const useFinanceStore = defineStore('finance', () => {
     const accounts = ref<Account[]>([]);
+    const archivedAccounts = ref<Account[]>([]);
     const categories = ref<Category[]>([]);
     const transactions = ref<Transaction[]>([]);
     const currencies = ref<Currency[]>([]);
     const areAccountsLoading = ref(false);
+    const areArchivedAccountsLoading = ref(false);
+    const hasArchivedAccountsLoaded = ref(false);
     const areCategoriesLoading = ref(false);
     const areCurrenciesLoading = ref(false);
     const isTransactionsLoading = ref(false);
@@ -43,7 +46,7 @@ export const useFinanceStore = defineStore('finance', () => {
         size: PAGINATION_OPTIONS.defaultRows,
     });
     const transactionsPage = ref(1);
-    const transactionsPageSize = ref(PAGINATION_OPTIONS.defaultRows);
+    const transactionsPageSize = ref<number>(PAGINATION_OPTIONS.defaultRows);
     const transactionsTotal = ref(0);
 
     /**
@@ -68,6 +71,22 @@ export const useFinanceStore = defineStore('finance', () => {
                 name: acc.name,
                 type: acc.type,
                 isLiquid: acc.isLiquid ?? false,
+                isArchived: acc.isArchived ?? false,
+                isMain: acc.isMain,
+                balance: acc.balance ?? 0,
+                balanceInBaseCurrency: acc.balanceInBaseCurrency ?? acc.balance ?? 0
+            })),
+            map
+        );
+
+        archivedAccounts.value = mapAccounts(
+            archivedAccounts.value.map(acc => ({
+                id: acc.id,
+                currencyCode: acc.currencyCode,
+                name: acc.name,
+                type: acc.type,
+                isLiquid: acc.isLiquid ?? false,
+                isArchived: acc.isArchived ?? true,
                 isMain: acc.isMain,
                 balance: acc.balance ?? 0,
                 balanceInBaseCurrency: acc.balanceInBaseCurrency ?? acc.balance ?? 0
@@ -106,13 +125,30 @@ export const useFinanceStore = defineStore('finance', () => {
 
         areAccountsLoading.value = true;
         try {
-            const data = await apiService.getAccounts();
+            const data = await apiService.getAccounts({ archived: false });
             accounts.value = mapAccounts(data, currencyByCode.value);
         } catch (error) {
             console.error('Ошибка загрузки счетов:', error);
             accounts.value = [];
         } finally {
             areAccountsLoading.value = false;
+        }
+    }
+
+    async function fetchArchivedAccounts(force = false) {
+        if (areArchivedAccountsLoading.value) return;
+        if (hasArchivedAccountsLoaded.value && !force) return;
+
+        areArchivedAccountsLoading.value = true;
+        try {
+            const data = await apiService.getAccounts({ archived: true });
+            archivedAccounts.value = mapAccounts(data, currencyByCode.value);
+            hasArchivedAccountsLoaded.value = true;
+        } catch (error) {
+            console.error('Ошибка загрузки архивных счетов:', error);
+            archivedAccounts.value = [];
+        } finally {
+            areArchivedAccountsLoading.value = false;
         }
     }
 
@@ -164,7 +200,12 @@ export const useFinanceStore = defineStore('finance', () => {
 
         try {
             const data = await apiService.getTransactions(normalizedQuery);
-            transactions.value = mapTransactions(data.items, accounts.value, categories.value);
+            if (!hasArchivedAccountsLoaded.value) {
+                await fetchArchivedAccounts();
+            }
+
+            const accountCatalog = [...accounts.value, ...archivedAccounts.value];
+            transactions.value = mapTransactions(data.items, accountCatalog, categories.value);
             transactionsPage.value = data.page;
             transactionsPageSize.value = data.size;
             transactionsTotal.value = data.total;
@@ -304,6 +345,7 @@ export const useFinanceStore = defineStore('finance', () => {
         try {
             await apiService.updateAccount(payload);
             await fetchAccounts(true);
+            await fetchArchivedAccounts(true);
             return true;
         } catch (error) {
             console.error('Не удалось обновить счет', error);
@@ -342,6 +384,11 @@ export const useFinanceStore = defineStore('finance', () => {
                 isMain: acc.id === accountId,
                 currency: currencyByCode.value.get(acc.currencyCode) ?? null,
             }));
+            archivedAccounts.value = archivedAccounts.value.map(acc => ({
+                ...acc,
+                isMain: false,
+                currency: currencyByCode.value.get(acc.currencyCode) ?? null,
+            }));
             return true;
         } catch (error) {
             console.error('Не удалось установить основной счет', error);
@@ -349,10 +396,41 @@ export const useFinanceStore = defineStore('finance', () => {
         }
     }
 
+    async function archiveAccount(accountId: string) {
+        try {
+            await apiService.archiveAccount(accountId);
+            await Promise.all([fetchAccounts(true), fetchArchivedAccounts(true)]);
+
+            if (currentTransactionsQuery.value.accountId === accountId) {
+                await fetchTransactions({
+                    ...currentTransactionsQuery.value,
+                    accountId: null,
+                    page: 1,
+                });
+            }
+
+            return true;
+        } catch (error) {
+            console.error('Не удалось архивировать счет', error);
+            return false;
+        }
+    }
+
+    async function unarchiveAccount(accountId: string) {
+        try {
+            await apiService.unarchiveAccount(accountId);
+            await Promise.all([fetchAccounts(true), fetchArchivedAccounts(true)]);
+            return true;
+        } catch (error) {
+            console.error('Не удалось разархивировать счет', error);
+            return false;
+        }
+    }
+
     async function deleteAccount(accountId: string) {
         try {
             await apiService.deleteAccount(accountId);
-            await fetchAccounts(true);
+            await Promise.all([fetchAccounts(true), fetchArchivedAccounts(true)]);
             if (currentTransactionsQuery.value.accountId === accountId) {
                 await fetchTransactions({
                     ...currentTransactionsQuery.value,
@@ -431,10 +509,12 @@ export const useFinanceStore = defineStore('finance', () => {
 
     return {
         accounts,
+        archivedAccounts,
         categories,
         transactions,
         currencies,
         areAccountsLoading,
+        areArchivedAccountsLoading,
         areCategoriesLoading,
         areCurrenciesLoading,
         isTransactionsLoading,
@@ -446,6 +526,7 @@ export const useFinanceStore = defineStore('finance', () => {
         currencyByCode,
         fetchTransactions,
         fetchAccounts,
+        fetchArchivedAccounts,
         fetchCategories,
         fetchCurrencies,
         addTransaction,
@@ -457,6 +538,8 @@ export const useFinanceStore = defineStore('finance', () => {
         createAccount,
         updateAccount,
         setPrimaryAccount,
+        archiveAccount,
+        unarchiveAccount,
         deleteAccount,
         updateAccountLiquidity,
         createCategory,

@@ -27,6 +27,7 @@ public sealed class TransactionsService(IAppDbContext context, ICurrentUser curr
         
         if (account.UserId != currentUser.Id)
             throw new ForbiddenException("Доступ запрещен");
+        EnsureAccountIsActive(account);
 
         var categoryAccess = await EnsureCategoryAccessAsync(command.CategoryId, ct);
         EnsureCategoryTypeMatchesTransactionType(categoryAccess.Type, command.Type);
@@ -180,10 +181,12 @@ public sealed class TransactionsService(IAppDbContext context, ICurrentUser curr
         var fromAccount = accounts.FirstOrDefault(a => a.Id == command.FromAccountId);
         if (fromAccount is null)
             throw new NotFoundException(nameof(Account), command.FromAccountId);
+        EnsureAccountIsActive(fromAccount);
 
         var toAccount = accounts.FirstOrDefault(a => a.Id == command.ToAccountId);
         if (toAccount is null)
             throw new NotFoundException(nameof(Account), command.ToAccountId);
+        EnsureAccountIsActive(toAccount);
 
         var categories = await context.TransactionCategories
             .AsNoTracking()
@@ -265,10 +268,12 @@ public sealed class TransactionsService(IAppDbContext context, ICurrentUser curr
         var fromAccount = accounts.FirstOrDefault(a => a.Id == command.FromAccountId);
         if (fromAccount is null)
             throw new NotFoundException(nameof(Account), command.FromAccountId);
+        EnsureAccountIsActive(fromAccount);
 
         var toAccount = accounts.FirstOrDefault(a => a.Id == command.ToAccountId);
         if (toAccount is null)
             throw new NotFoundException(nameof(Account), command.ToAccountId);
+        EnsureAccountIsActive(toAccount);
 
         var categories = await context.TransactionCategories
             .AsNoTracking()
@@ -505,6 +510,7 @@ public sealed class TransactionsService(IAppDbContext context, ICurrentUser curr
 
         if (newAccount.UserId != currentUser.Id)
             throw new ForbiddenException("Доступ запрещен");
+        EnsureAccountIsActive(newAccount);
 
         var categoryAccess = await EnsureCategoryAccessAsync(command.CategoryId, ct);
         EnsureCategoryTypeMatchesTransactionType(categoryAccess.Type, transaction.Type);
@@ -609,5 +615,11 @@ public sealed class TransactionsService(IAppDbContext context, ICurrentUser curr
     private static string NormalizeCurrencyCode(string currencyCode)
     {
         return string.IsNullOrWhiteSpace(currencyCode) ? throw new DomainValidationException("Код валюты не задан.", "currency_code_missing") : currencyCode.Trim().ToUpperInvariant();
+    }
+
+    private static void EnsureAccountIsActive(Account account)
+    {
+        if (account.IsArchived)
+            throw new ConflictException("Архивный счет недоступен для новых операций. Разархивируйте счет, чтобы продолжить.");
     }
 }

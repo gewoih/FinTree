@@ -18,9 +18,9 @@ public class UsersController(AccountsService accountsService, UserService userSe
     }
     
     [HttpGet("accounts")]
-    public async Task<IActionResult> Get(CancellationToken ct)
+    public async Task<IActionResult> Get([FromQuery] bool archived = false, CancellationToken ct = default)
     {
-        var accounts = await accountsService.GetAccounts(ct);
+        var accounts = await accountsService.GetAccounts(archived, ct);
         return Ok(accounts);
     }
 

@@ -36,6 +36,12 @@ public sealed class UserService(IAppDbContext context, ICurrentUser currentUser)
         if (user is null)
             throw new NotFoundException(nameof(User), accountId);
 
+        var account = user.Accounts.FirstOrDefault(a => a.Id == accountId);
+        if (account is null)
+            throw new NotFoundException("Счет не найден", accountId);
+        if (account.IsArchived)
+            throw new ConflictException("Нельзя назначить архивный счет основным.");
+
         user.SetMainAccount(accountId);
         await context.SaveChangesAsync(ct);
     }

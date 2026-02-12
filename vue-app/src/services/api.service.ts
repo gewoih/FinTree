@@ -139,8 +139,12 @@ export const apiService = {
     },
 
     // Получение счетов пользователя
-    async getAccounts(): Promise<AccountDto[]> {
-        const response = await apiClient.get<AccountDto[]>('/users/accounts');
+    async getAccounts(options: { archived?: boolean } = {}): Promise<AccountDto[]> {
+        const response = await apiClient.get<AccountDto[]>('/users/accounts', {
+            params: {
+                archived: options.archived ?? false,
+            },
+        });
         return response.data;
     },
 
@@ -282,6 +286,14 @@ export const apiService = {
 
     async updateAccountLiquidity(accountId: string, isLiquid: boolean): Promise<void> {
         await apiClient.patch(`/accounts/${accountId}/liquidity`, { isLiquid });
+    },
+
+    async archiveAccount(accountId: string): Promise<void> {
+        await apiClient.patch(`/accounts/${accountId}/archive`);
+    },
+
+    async unarchiveAccount(accountId: string): Promise<void> {
+        await apiClient.patch(`/accounts/${accountId}/unarchive`);
     },
 
     async deleteAccount(accountId: string): Promise<void> {
