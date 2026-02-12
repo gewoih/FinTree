@@ -154,7 +154,11 @@ const completedOnboardingCount = computed(
 
 const healthGroups = computed<HealthGroup[]>(() => {
   const health = dashboard.value?.health;
-  const savingsStatus = resolveSavingsStatus(health?.savingsRate ?? null);
+  const savingsStatus = resolveSavingsStatus(
+    health?.savingsRate ?? null,
+    health?.monthIncome ?? null,
+    health?.monthTotal ?? null
+  );
   const cashflowStatus = resolveCashflowStatus(
     health?.netCashflow ?? null,
     health?.monthIncome ?? null
@@ -218,7 +222,7 @@ const healthGroups = computed<HealthGroup[]>(() => {
           key: 'liquid-months',
           label: 'Ликвидные месяцы',
           value: health?.liquidMonths == null ? '—' : `${health.liquidMonths.toFixed(1)} мес.`,
-          tooltip: 'Ликвидные активы / медианный расход в день с расходами × среднее число таких дней в месяц (за 6 мес.).',
+          tooltip: 'Ликвидные активы на конец выбранного месяца / оценка месячного расхода по последним 180 дням (или по фактически доступной истории, если данных меньше).',
           icon: 'pi pi-shield',
           accent: liquidityStatus,
         },
@@ -226,7 +230,7 @@ const healthGroups = computed<HealthGroup[]>(() => {
           key: 'liquid-assets',
           label: 'Ликвидные активы',
           value: formatMoney(health?.liquidAssets ?? null),
-          tooltip: 'Сумма средств на счетах, отмеченных как ликвидные.',
+          tooltip: 'Сумма средств на ликвидных счетах на конец выбранного месяца.',
           icon: 'pi pi-bolt',
           accent: liquidityStatus,
         },
@@ -241,14 +245,14 @@ const healthGroups = computed<HealthGroup[]>(() => {
           key: 'mean-daily',
           label: 'Средний расход/день',
           value: formatMoney(health?.meanDaily ?? null),
-          tooltip: 'Среднее значение дневных расходов за месяц.',
+          tooltip: 'Среднее значение дневных расходов, включая дни без трат. Для текущего месяца учитываются только прошедшие дни.',
           icon: 'pi pi-chart-line',
         },
         {
           key: 'median-daily',
           label: 'Медианный расход/день',
           value: formatMoney(health?.medianDaily ?? null),
-          tooltip: 'Медиана дневных расходов за месяц — «обычный» день.',
+          tooltip: 'Медиана дневных расходов, включая дни без трат. Для текущего месяца учитываются только прошедшие дни.',
           icon: 'pi pi-chart-bar',
         },
         {
@@ -336,8 +340,17 @@ function formatRatio(value: number | null, fractionDigits = 2): string {
   return `${value.toFixed(fractionDigits)}×`;
 }
 
-function resolveSavingsStatus(value: number | null): MetricAccent {
-  if (value == null || Number.isNaN(value)) return 'neutral';
+function resolveSavingsStatus(
+  value: number | null,
+  monthIncome: number | null,
+  monthTotal: number | null
+): MetricAccent {
+  if (value == null || Number.isNaN(value)) {
+    if ((monthIncome ?? 0) <= 0 && (monthTotal ?? 0) > 0) {
+      return 'poor';
+    }
+    return 'neutral';
+  }
   if (value >= 0.2) return 'good';
   if (value >= 0.1) return 'average';
   return 'poor';
@@ -482,6 +495,8 @@ const categoryLegend = computed<CategoryLegendItem[]>(() => {
     id: item.id,
     name: item.name,
     amount: Number(item.amount ?? 0),
+    mandatoryAmount: Number(item.mandatoryAmount ?? 0),
+    discretionaryAmount: Number(item.discretionaryAmount ?? 0),
     percent: Number(item.percent ?? 0),
     color: item.color?.trim() ?? chartPalette.categories[index % chartPalette.categories.length],
     isMandatory: item.isMandatory ?? false,
@@ -489,14 +504,21 @@ const categoryLegend = computed<CategoryLegendItem[]>(() => {
 });
 
 const filteredCategoryLegend = computed<CategoryLegendItem[]>(() => {
-  let scopedItems: CategoryLegendItem[];
-  if (selectedCategoryScope.value === 'mandatory') {
-    scopedItems = categoryLegend.value.filter((item) => item.isMandatory);
-  } else if (selectedCategoryScope.value === 'discretionary') {
-    scopedItems = categoryLegend.value.filter((item) => !item.isMandatory);
-  } else {
-    scopedItems = categoryLegend.value;
-  }
+  const scopedItems = categoryLegend.value
+    .map((item) => {
+      const scopedAmount = selectedCategoryScope.value === 'mandatory'
+        ? item.mandatoryAmount
+        : selectedCategoryScope.value === 'discretionary'
+          ? item.discretionaryAmount
+          : item.amount;
+
+      return {
+        ...item,
+        amount: scopedAmount,
+      };
+    })
+    .filter((item) => item.amount > 0)
+    .sort((a, b) => b.amount - a.amount);
 
   const total = scopedItems.reduce((sum, item) => sum + item.amount, 0);
   if (total <= 0) return scopedItems;

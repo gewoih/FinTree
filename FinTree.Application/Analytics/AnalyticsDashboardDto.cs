@@ -49,6 +49,8 @@ public readonly record struct CategoryBreakdownItemDto(
     string Name,
     string Color,
     decimal Amount,
+    decimal MandatoryAmount,
+    decimal DiscretionaryAmount,
     decimal? Percent,
     bool IsMandatory);
 

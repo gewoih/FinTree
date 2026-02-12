@@ -227,6 +227,8 @@ export interface CategoryBreakdownItemDto {
     name: string;
     color: string;
     amount: number;
+    mandatoryAmount: number;
+    discretionaryAmount: number;
     percent: number | null;
     isMandatory: boolean;
 }

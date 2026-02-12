@@ -5,6 +5,8 @@ export interface CategoryLegendItem {
   name: string;
   color: string;
   amount: number;
+  mandatoryAmount: number;
+  discretionaryAmount: number;
   percent: number;
   isMandatory?: boolean;
 }

@@ -30,3 +30,6 @@ Detailed standards are stored in `docs/agent/`.
 
 ## Maintenance rule
 - If architecture, auth, deployment, or core product invariants change, update the relevant `docs/agent/*` document in the same task.
+
+## Execution constraints
+- Never run backend or frontend build/test commands unless the user explicitly asks for it in the current thread.
