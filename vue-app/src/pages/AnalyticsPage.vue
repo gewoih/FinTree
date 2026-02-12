@@ -17,6 +17,7 @@ import type {
 } from '../types';
 import type {
   CategoryLegendItem,
+  CategoryScope,
   ExpenseGranularity,
   ForecastSummary,
 } from '../types/analytics';
@@ -76,6 +77,13 @@ const granularityOptions: Array<{ label: string; value: ExpenseGranularity }> = 
   { label: 'Месяц', value: 'months' },
 ] ;
 const selectedGranularity = ref<ExpenseGranularity>('days');
+
+const categoryScopeOptions: Array<{ label: string; value: CategoryScope }> = [
+  { label: 'Все', value: 'all' },
+  { label: 'Обязательные', value: 'mandatory' },
+  { label: 'Необязательные', value: 'discretionary' },
+];
+const selectedCategoryScope = ref<CategoryScope>('all');
 
 const dashboard = ref<AnalyticsDashboardDto | null>(null);
 const dashboardLoading = ref(false);
@@ -480,14 +488,33 @@ const categoryLegend = computed<CategoryLegendItem[]>(() => {
   }));
 });
 
+const filteredCategoryLegend = computed<CategoryLegendItem[]>(() => {
+  let scopedItems: CategoryLegendItem[];
+  if (selectedCategoryScope.value === 'mandatory') {
+    scopedItems = categoryLegend.value.filter((item) => item.isMandatory);
+  } else if (selectedCategoryScope.value === 'discretionary') {
+    scopedItems = categoryLegend.value.filter((item) => !item.isMandatory);
+  } else {
+    scopedItems = categoryLegend.value;
+  }
+
+  const total = scopedItems.reduce((sum, item) => sum + item.amount, 0);
+  if (total <= 0) return scopedItems;
+
+  return scopedItems.map((item) => ({
+    ...item,
+    percent: (item.amount / total) * 100,
+  }));
+});
+
 const categoryChartData = computed(() => {
-  if (!categoryLegend.value.length) return null;
+  if (!filteredCategoryLegend.value.length) return null;
   return {
-    labels: categoryLegend.value.map((item) => item.name),
+    labels: filteredCategoryLegend.value.map((item) => item.name),
     datasets: [
       {
-        data: categoryLegend.value.map((item) => item.amount),
-        backgroundColor: categoryLegend.value.map((item) => item.color),
+        data: filteredCategoryLegend.value.map((item) => item.amount),
+        backgroundColor: filteredCategoryLegend.value.map((item) => item.color),
         borderWidth: 1,
         borderColor: 'rgba(255,255,255,0.8)',
       },
@@ -606,10 +633,14 @@ const expensesChartData = computed(() => {
 function getSortedExpenses(granularity: ExpenseGranularity): MonthlyExpenseDto[] {
   const items = dashboard.value?.spending?.[granularity] ?? [];
   const sorted = [...items].sort((a, b) => {
+    if (granularity === 'weeks') {
+      if (a.year !== b.year) return a.year - b.year;
+      return (a.week ?? 0) - (b.week ?? 0);
+    }
+
     if (a.year !== b.year) return a.year - b.year;
     if (a.month !== b.month) return a.month - b.month;
     if (granularity === 'days') return (a.day ?? 0) - (b.day ?? 0);
-    if (granularity === 'weeks') return (a.week ?? 0) - (b.week ?? 0);
     return 0;
   });
 
@@ -679,7 +710,17 @@ const forecastChartData = computed(() => {
         spanGaps: false,
       },
       {
-        label: 'Прогноз',
+        label: 'Оптимистичный',
+        data: series.optimistic,
+        borderColor: chartPalette.accent,
+        borderDash: [3, 5],
+        borderWidth: 1.5,
+        pointRadius: 0,
+        fill: false,
+        tension: 0.2,
+      },
+      {
+        label: 'Базовый',
         data: series.forecast,
         borderColor: chartPalette.primary,
         borderDash: [8, 6],
@@ -687,6 +728,16 @@ const forecastChartData = computed(() => {
         pointRadius: 0,
         fill: false,
         tension: 0.25,
+      },
+      {
+        label: 'Риск',
+        data: series.risk,
+        borderColor: '#f97316',
+        borderDash: [10, 6],
+        borderWidth: 1.5,
+        pointRadius: 0,
+        fill: false,
+        tension: 0.2,
       },
       ...(hasBaseline
         ? [
@@ -849,9 +900,12 @@ onMounted(async () => {
         :loading="categoryLoading"
         :error="categoryError"
         :chart-data="categoryChartData"
-        :legend="categoryLegend"
+        :legend="filteredCategoryLegend"
         :currency="baseCurrency"
+        :scope="selectedCategoryScope"
+        :scope-options="categoryScopeOptions"
         @retry="retryDashboard"
+        @update:scope="selectedCategoryScope = $event"
         @select-category="handleCategorySelect"
       />
 

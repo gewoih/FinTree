@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed } from 'vue';
 import type { ChartData } from 'chart.js';
-import type { CategoryLegendItem } from '../../types/analytics';
+import type { CategoryLegendItem, CategoryScope } from '../../types/analytics';
 
 const props = defineProps<{
   loading: boolean;
@@ -9,11 +9,14 @@ const props = defineProps<{
   chartData: ChartData<'pie', number[], string> | null;
   legend: CategoryLegendItem[];
   currency: string;
+  scope: CategoryScope;
+  scopeOptions: Array<{ label: string; value: CategoryScope }>;
 }>();
 
 const emit = defineEmits<{
   (event: 'retry'): void;
   (event: 'select-category', value: CategoryLegendItem): void;
+  (event: 'update:scope', value: CategoryScope): void;
 }>();
 
 const handleCategoryClick = (item: CategoryLegendItem) => {
@@ -44,6 +47,14 @@ const chartOptions = computed(() => ({
           <h3>Расходы по категориям</h3>
           <p>Распределение расходов за выбранный месяц</p>
         </div>
+        <SelectButton
+          :model-value="scope"
+          :options="scopeOptions"
+          option-label="label"
+          option-value="value"
+          class="pie-card__scope-toggle"
+          @update:model-value="emit('update:scope', $event)"
+        />
       </div>
     </template>
 
@@ -323,11 +334,24 @@ const chartOptions = computed(() => ({
 @media (max-width: 640px) {
   .card-head {
     flex-direction: column;
-    align-items: flex-start;
+    align-items: stretch;
   }
 
   .card-head p {
     font-size: var(--ft-text-sm);
+  }
+
+  .pie-card__scope-toggle {
+    width: 100%;
+  }
+
+  .pie-card__scope-toggle :deep(.p-button) {
+    flex: 1 1 0;
+    min-width: 0;
+  }
+
+  .pie-card__scope-toggle :deep(.p-button-label) {
+    font-size: var(--ft-text-xs);
   }
 
   .pie-card__chart {

@@ -51,6 +51,26 @@ const formattedForecast = computed(() => {
   });
 });
 
+const formattedOptimistic = computed(() => {
+  const value = props.forecast?.optimisticTotal;
+  if (value == null) return '—';
+  return value.toLocaleString('ru-RU', {
+    style: 'currency',
+    currency: props.currency,
+    minimumFractionDigits: 0,
+  });
+});
+
+const formattedRisk = computed(() => {
+  const value = props.forecast?.riskTotal;
+  if (value == null) return '—';
+  return value.toLocaleString('ru-RU', {
+    style: 'currency',
+    currency: props.currency,
+    minimumFractionDigits: 0,
+  });
+});
+
 const formattedCurrent = computed(() => {
   const value = props.forecast?.currentSpent;
   if (value == null) return '—';
@@ -274,13 +294,16 @@ const chartOptions = computed(() => ({
         <div class="forecast-card__summary">
           <p class="forecast-card__lead">
             <template v-if="isOverForecast">
-              Ориентир по медианному расходу ≈ <strong>{{ formattedForecast }}</strong>,
+              Базовый ориентир до конца месяца ≈ <strong>{{ formattedForecast }}</strong>,
               но фактически уже потрачено <strong>{{ formattedCurrent }}</strong>.
             </template>
             <template v-else>
-              Ориентир по медианному расходу ≈
+              Базовый ориентир до конца месяца ≈
               <strong>{{ formattedForecast }}</strong> к концу месяца.
             </template>
+          </p>
+          <p class="forecast-card__support">
+            Диапазон сценариев: <strong>{{ formattedOptimistic }}</strong> — <strong>{{ formattedRisk }}</strong>.
           </p>
           <p
             v-if="remainingText"

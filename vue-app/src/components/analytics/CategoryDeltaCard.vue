@@ -144,7 +144,7 @@ const formatPercent = (value: number | null) =>
                   <span class="delta-item__name">{{ item.name }}</span>
                   <span class="delta-item__meta">
                     Этот месяц: {{ formatMoney(item.currentAmount) }} ·
-                    Среднее 6м: {{ formatMoney(item.previousAmount) }}
+                    Прошлый месяц: {{ formatMoney(item.previousAmount) }}
                   </span>
                 </div>
                 <Tag severity="danger">
@@ -179,7 +179,7 @@ const formatPercent = (value: number | null) =>
                   <span class="delta-item__name">{{ item.name }}</span>
                   <span class="delta-item__meta">
                     Этот месяц: {{ formatMoney(item.currentAmount) }} ·
-                    Среднее 6м: {{ formatMoney(item.previousAmount) }}
+                    Прошлый месяц: {{ formatMoney(item.previousAmount) }}
                   </span>
                 </div>
                 <Tag severity="success">

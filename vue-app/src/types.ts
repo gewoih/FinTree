@@ -259,6 +259,8 @@ export interface SpendingBreakdownDto {
 
 export interface ForecastSummaryDto {
     forecastTotal: number | null;
+    optimisticTotal: number | null;
+    riskTotal: number | null;
     currentSpent: number | null;
     baselineLimit: number | null;
     status: 'good' | 'average' | 'poor' | null;
@@ -267,7 +269,9 @@ export interface ForecastSummaryDto {
 export interface ForecastSeriesDto {
     days: number[];
     actual: Array<number | null>;
+    optimistic: Array<number | null>;
     forecast: Array<number | null>;
+    risk: Array<number | null>;
     baseline: number | null;
 }
 
