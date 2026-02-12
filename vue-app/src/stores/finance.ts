@@ -12,8 +12,10 @@ import type {
     UpdateTransactionPayload,
     Transaction,
     CreateTransferPayload,
-    UpdateTransferPayload
+    UpdateTransferPayload,
+    TransactionsQuery
 } from '../types.ts';
+import { PAGINATION_OPTIONS } from '../constants';
 
 import {
     mapAccounts,
@@ -31,7 +33,18 @@ export const useFinanceStore = defineStore('finance', () => {
     const areCategoriesLoading = ref(false);
     const areCurrenciesLoading = ref(false);
     const isTransactionsLoading = ref(false);
-    const currentTransactionsAccountId = ref<string | null>(null);
+    const currentTransactionsQuery = ref<TransactionsQuery>({
+        accountId: null,
+        categoryId: null,
+        from: null,
+        to: null,
+        search: null,
+        page: 1,
+        size: PAGINATION_OPTIONS.defaultRows,
+    });
+    const transactionsPage = ref(1);
+    const transactionsPageSize = ref(PAGINATION_OPTIONS.defaultRows);
+    const transactionsTotal = ref(0);
 
     /**
      * Computed map of currencies indexed by code for quick lookups
@@ -123,22 +136,54 @@ export const useFinanceStore = defineStore('finance', () => {
         }
     }
 
-    /**
-     * Fetches transactions, optionally filtered by account
-     * @param accountId - Optional account ID to filter transactions
-     */
-    async function fetchTransactions(accountId?: string) {
+    function normalizeTransactionsQuery(query: TransactionsQuery = {}): TransactionsQuery {
+        const merged: TransactionsQuery = {
+            ...currentTransactionsQuery.value,
+            ...query,
+        };
+
+        const page = Math.max(1, merged.page ?? 1);
+        const size = Math.max(1, merged.size ?? PAGINATION_OPTIONS.defaultRows);
+        const normalizedSearch = merged.search?.trim();
+
+        return {
+            accountId: merged.accountId ?? null,
+            categoryId: merged.categoryId ?? null,
+            from: merged.from ?? null,
+            to: merged.to ?? null,
+            search: normalizedSearch ? normalizedSearch : null,
+            page,
+            size,
+        };
+    }
+
+    async function fetchTransactions(query: TransactionsQuery = {}) {
         isTransactionsLoading.value = true;
-        currentTransactionsAccountId.value = accountId ?? null;
+        const normalizedQuery = normalizeTransactionsQuery(query);
+        currentTransactionsQuery.value = normalizedQuery;
+
         try {
-            const data = await apiService.getTransactions(accountId);
-            transactions.value = mapTransactions(data, accounts.value, categories.value);
+            const data = await apiService.getTransactions(normalizedQuery);
+            transactions.value = mapTransactions(data.items, accounts.value, categories.value);
+            transactionsPage.value = data.page;
+            transactionsPageSize.value = data.size;
+            transactionsTotal.value = data.total;
+            currentTransactionsQuery.value = {
+                ...normalizedQuery,
+                page: data.page,
+                size: data.size,
+            };
         } catch (error) {
             console.error('Ошибка загрузки транзакций:', error);
             transactions.value = [];
+            transactionsTotal.value = 0;
         } finally {
             isTransactionsLoading.value = false;
         }
+    }
+
+    async function refetchCurrentTransactions() {
+        await fetchTransactions(currentTransactionsQuery.value);
     }
 
     /**
@@ -149,7 +194,7 @@ export const useFinanceStore = defineStore('finance', () => {
     async function addTransaction(payload: NewTransactionPayload) {
         try {
             await apiService.createTransaction(payload);
-            await fetchTransactions(currentTransactionsAccountId.value ?? undefined);
+            await refetchCurrentTransactions();
             return true;
         } catch (error) {
             console.error('Ошибка при добавлении транзакции:', error);
@@ -165,7 +210,7 @@ export const useFinanceStore = defineStore('finance', () => {
     async function createTransfer(payload: CreateTransferPayload) {
         try {
             await apiService.createTransfer(payload);
-            await fetchTransactions(currentTransactionsAccountId.value ?? undefined);
+            await refetchCurrentTransactions();
             return true;
         } catch (error) {
             console.error('Ошибка при создании перевода:', error);
@@ -176,7 +221,7 @@ export const useFinanceStore = defineStore('finance', () => {
     async function updateTransfer(payload: UpdateTransferPayload) {
         try {
             await apiService.updateTransfer(payload);
-            await fetchTransactions(currentTransactionsAccountId.value ?? undefined);
+            await refetchCurrentTransactions();
             return true;
         } catch (error) {
             console.error('Ошибка при обновлении перевода:', error);
@@ -192,7 +237,7 @@ export const useFinanceStore = defineStore('finance', () => {
     async function updateTransaction(payload: UpdateTransactionPayload) {
         try {
             await apiService.updateTransaction(payload);
-            await fetchTransactions(currentTransactionsAccountId.value ?? undefined);
+            await refetchCurrentTransactions();
             return true;
         } catch (error) {
             console.error('Ошибка при обновлении транзакции:', error);
@@ -208,7 +253,7 @@ export const useFinanceStore = defineStore('finance', () => {
     async function deleteTransaction(id: string) {
         try {
             await apiService.deleteTransaction(id);
-            await fetchTransactions(currentTransactionsAccountId.value ?? undefined);
+            await refetchCurrentTransactions();
             return true;
         } catch (error) {
             console.error('Ошибка при удалении транзакции:', error);
@@ -219,7 +264,7 @@ export const useFinanceStore = defineStore('finance', () => {
     async function deleteTransfer(transferId: string) {
         try {
             await apiService.deleteTransfer(transferId);
-            await fetchTransactions(currentTransactionsAccountId.value ?? undefined);
+            await refetchCurrentTransactions();
             return true;
         } catch (error) {
             console.error('Ошибка при удалении перевода:', error);
@@ -308,8 +353,12 @@ export const useFinanceStore = defineStore('finance', () => {
         try {
             await apiService.deleteAccount(accountId);
             await fetchAccounts(true);
-            if (currentTransactionsAccountId.value === accountId) {
-                await fetchTransactions(undefined);
+            if (currentTransactionsQuery.value.accountId === accountId) {
+                await fetchTransactions({
+                    ...currentTransactionsQuery.value,
+                    accountId: null,
+                    page: 1,
+                });
             }
             return true;
         } catch (error) {
@@ -389,9 +438,12 @@ export const useFinanceStore = defineStore('finance', () => {
         areCategoriesLoading,
         areCurrenciesLoading,
         isTransactionsLoading,
+        currentTransactionsQuery,
+        transactionsPage,
+        transactionsPageSize,
+        transactionsTotal,
         primaryAccount,
         currencyByCode,
-        currentTransactionsAccountId,
         fetchTransactions,
         fetchAccounts,
         fetchCategories,

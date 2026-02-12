@@ -11,9 +11,18 @@ namespace FinTree.Api.Controllers;
 public class TransactionController(TransactionsService transactionsService) : ControllerBase
 {
     [HttpGet]
-    public async Task<IActionResult> GetTransactions(Guid? accountId, CancellationToken ct)
+    public async Task<IActionResult> GetTransactions(
+        [FromQuery] Guid? accountId,
+        [FromQuery] Guid? categoryId,
+        [FromQuery] DateOnly? from,
+        [FromQuery] DateOnly? to,
+        [FromQuery] string? search,
+        [FromQuery] int page = 1,
+        [FromQuery] int size = 50,
+        CancellationToken ct = default)
     {
-        var transactions = await transactionsService.GetTransactionsAsync(accountId, ct);
+        var filter = new TxFilter(accountId, categoryId, from, to, search, page, size);
+        var transactions = await transactionsService.GetTransactionsAsync(filter, ct);
         return Ok(transactions);
     }
 

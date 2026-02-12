@@ -1,3 +1,5 @@
+using System.ComponentModel.DataAnnotations;
+
 namespace FinTree.Application.Transactions.Dto;
 
 public record struct UpdateTransaction(
@@ -6,5 +8,6 @@ public record struct UpdateTransaction(
     Guid CategoryId,
     decimal Amount,
     DateTime OccurredAt,
+    [property: StringLength(100)]
     string? Description = null,
     bool IsMandatory = false);

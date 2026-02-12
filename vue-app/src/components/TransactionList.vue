@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, watch } from 'vue'
+import { computed, onBeforeUnmount, ref, watch } from 'vue'
 import Column from 'primevue/column'
 import Skeleton from 'primevue/skeleton'
 import { useRoute } from 'vue-router'
@@ -10,8 +10,8 @@ import { useTransactionFilters } from '../composables/useTransactionFilters'
 import { useViewport } from '../composables/useViewport'
 import TransactionFilters from './TransactionFilters.vue'
 import { formatCurrency } from '../utils/formatters'
-import { formatUtcDateOnly, getUtcDateOnlyKey } from '../utils/dateOnly'
-import type { Transaction, UpdateTransferPayload } from '../types'
+import { formatUtcDateOnly, getUtcDateOnlyKey, toUtcDateOnlyIso } from '../utils/dateOnly'
+import type { Transaction, TransactionsQuery, UpdateTransferPayload } from '../types'
 import { TRANSACTION_TYPE } from '../types'
 
 interface EnrichedTransaction extends Transaction {
@@ -56,6 +56,8 @@ const { isMobile } = useViewport()
 const baseCurrency = computed(() => userStore.baseCurrencyCode ?? store.primaryAccount?.currencyCode ?? 'RUB')
 
 const transactionsLoading = computed(() => store.isTransactionsLoading)
+const debouncedSearchText = ref('')
+let searchDebounceTimer: ReturnType<typeof setTimeout> | null = null
 
 const formatRate = (value: number): string =>
   new Intl.NumberFormat('ru-RU', {
@@ -118,6 +120,7 @@ const enrichedTransactions = computed<EnrichedTransaction[]>(() => {
     const expense = group.find(item => item.type === TRANSACTION_TYPE.Expense)
     const income = group.find(item => item.type === TRANSACTION_TYPE.Income)
     if (!expense || !income) {
+      regularTransactions.push(...group)
       return
     }
 
@@ -220,12 +223,11 @@ const {
   selectedCategory,
   selectedAccount,
   dateRange,
-  filteredTransactions,
   clearFilters: clearFiltersComposable
 } = useTransactionFilters<EnrichedTransaction>(() => enrichedTransactions.value)
 
 const sortedTransactions = computed(() => {
-  const sorted = [...filteredTransactions.value].sort((a, b) => {
+  const sorted = [...enrichedTransactions.value].sort((a, b) => {
     const timeA = new Date(a.occurredAt).getTime()
     const timeB = new Date(b.occurredAt).getTime()
     return timeB - timeA
@@ -247,7 +249,7 @@ const rowClass = (data: EnrichedTransaction) => ({
 })
 
 const totalAmount = computed(() =>
-  filteredTransactions.value.reduce(
+  sortedTransactions.value.reduce(
     (sum, txn) =>
       txn.isTransferSummary
         ? sum
@@ -278,7 +280,38 @@ const currentPageReportTemplate = computed(() =>
 
 const clearFilters = () => {
   clearFiltersComposable()
-  store.fetchTransactions()
+}
+
+const normalizeDateOnly = (value: Date): string | null => {
+  const key = getUtcDateOnlyKey(toUtcDateOnlyIso(value))
+  return /^\d{4}-\d{2}-\d{2}$/.test(key) ? key : null
+}
+
+const buildTransactionsQuery = (overrides: Partial<TransactionsQuery> = {}): TransactionsQuery => {
+  const hasValidRange =
+    dateRange.value != null &&
+    dateRange.value.length === 2 &&
+    dateRange.value[0] instanceof Date &&
+    dateRange.value[1] instanceof Date
+
+  const from = hasValidRange ? normalizeDateOnly(dateRange.value![0]) : null
+  const to = hasValidRange ? normalizeDateOnly(dateRange.value![1]) : null
+
+  return {
+    accountId: selectedAccount.value?.id ?? null,
+    categoryId: selectedCategory.value?.id ?? null,
+    from,
+    to,
+    search: debouncedSearchText.value.trim() ? debouncedSearchText.value.trim() : null,
+    page: 1,
+    size: store.transactionsPageSize || PAGINATION_OPTIONS.defaultRows,
+    ...overrides
+  }
+}
+
+const fetchFilteredTransactions = (overrides: Partial<TransactionsQuery> = {}) => {
+  const query = buildTransactionsQuery(overrides)
+  store.fetchTransactions(query)
 }
 
 const parseDateQuery = (value: string): Date | null => {
@@ -311,11 +344,6 @@ const applyDateRangeFromQuery = () => {
   }
 }
 
-// При смене счета сразу подтягиваем свежие транзакции, чтобы таблица не показывала устаревшие данные.
-watch(selectedAccount, () => {
-  store.fetchTransactions()
-})
-
 watch([() => route.query.categoryId, () => store.categories.length], applyCategoryFromQuery, {
   immediate: true
 })
@@ -324,9 +352,54 @@ watch([() => route.query.from, () => route.query.to], applyDateRangeFromQuery, {
   immediate: true
 })
 
-const isEmptyState = computed(
-  () => !transactionsLoading.value && filteredTransactions.value.length === 0
+watch(
+  () => searchText.value,
+  value => {
+    if (searchDebounceTimer) {
+      clearTimeout(searchDebounceTimer)
+    }
+
+    searchDebounceTimer = setTimeout(() => {
+      debouncedSearchText.value = value.trim()
+    }, 300)
+  },
+  { immediate: true }
 )
+
+onBeforeUnmount(() => {
+  if (searchDebounceTimer) {
+    clearTimeout(searchDebounceTimer)
+  }
+})
+
+watch(
+  [
+    () => selectedAccount.value?.id ?? null,
+    () => selectedCategory.value?.id ?? null,
+    () => dateRange.value?.[0]?.getTime?.() ?? null,
+    () => dateRange.value?.[1]?.getTime?.() ?? null,
+    () => debouncedSearchText.value
+  ],
+  () => {
+    fetchFilteredTransactions({ page: 1 })
+  },
+  { immediate: true }
+)
+
+const isEmptyState = computed(
+  () => !transactionsLoading.value && sortedTransactions.value.length === 0
+)
+
+const paginationRows = computed(() => store.transactionsPageSize || PAGINATION_OPTIONS.defaultRows)
+const paginationFirst = computed(() => Math.max(0, (store.transactionsPage - 1) * paginationRows.value))
+const totalRecords = computed(() => store.transactionsTotal)
+
+const handlePage = (event: { page: number; rows: number }) => {
+  fetchFilteredTransactions({
+    page: event.page + 1,
+    size: event.rows
+  })
+}
 
 const handleRowClick = (event: { data: EnrichedTransaction }) => {
   if (event.data.isTransferSummary) {
@@ -404,19 +477,22 @@ const handleRowClick = (event: { data: EnrichedTransaction }) => {
         :responsive-layout="isMobile ? 'stack' : 'scroll'"
         breakpoint="768px"
         :paginator="true"
-        :rows="PAGINATION_OPTIONS.defaultRows"
+        lazy
+        :rows="paginationRows"
+        :first="paginationFirst"
+        :total-records="totalRecords"
         :rows-per-page-options="[...PAGINATION_OPTIONS.options]"
         :paginator-template="paginatorTemplate"
         :current-page-report-template="currentPageReportTemplate"
-        :global-filter-fields="['categoryName', 'accountName', 'description']"
         :row-class="rowClass"
         selection-mode="single"
         data-key="id"
+        @page="handlePage"
         @row-click="handleRowClick"
       >
         <template #footer>
           <div class="transaction-history__summary">
-            <span>Итого</span>
+            <span>Итого (страница)</span>
             <span class="transaction-history__summary-amount">
               {{ formattedTotalAmount }}
             </span>

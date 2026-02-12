@@ -104,7 +104,6 @@ onMounted(async () => {
     financeStore.fetchAccounts(),
     financeStore.fetchCategories()
   ])
-  await financeStore.fetchTransactions()
 })
 </script>
 

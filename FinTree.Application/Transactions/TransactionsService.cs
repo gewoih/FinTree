@@ -1,19 +1,25 @@
 using FinTree.Application.Abstractions;
+using FinTree.Application.Common;
 using FinTree.Application.Exceptions;
 using FinTree.Application.Currencies;
 using FinTree.Application.Transactions.Dto;
 using FinTree.Application.Users;
+using FinTree.Domain.Accounts;
+using FinTree.Domain.Categories;
 using FinTree.Domain.Transactions;
 using FinTree.Domain.ValueObjects;
 using Microsoft.EntityFrameworkCore;
 using System.Globalization;
 using System.Text;
-using FinTree.Domain.Accounts;
 
 namespace FinTree.Application.Transactions;
 
 public sealed class TransactionsService(IAppDbContext context, ICurrentUser currentUser, CurrencyConverter currencyConverter)
 {
+    private const int DefaultPageSize = 50;
+    private const int MaxPageSize = 200;
+    private readonly record struct CategoryAccessMeta(bool IsMandatory, CategoryType Type);
+
     public async Task<Guid> CreateAsync(CreateTransaction command, CancellationToken ct)
     {
         var account = await context.Accounts.FirstOrDefaultAsync(a => a.Id == command.AccountId, ct) ??
@@ -22,18 +28,22 @@ public sealed class TransactionsService(IAppDbContext context, ICurrentUser curr
         if (account.UserId != currentUser.Id)
             throw new ForbiddenException("Доступ запрещен");
 
-        var isMandatory = await EnsureCategoryAccessAsync(command.CategoryId, ct);
+        var categoryAccess = await EnsureCategoryAccessAsync(command.CategoryId, ct);
+        EnsureCategoryTypeMatchesTransactionType(categoryAccess.Type, command.Type);
 
         var newTransaction = account.AddTransaction(command.Type, command.CategoryId, command.Amount,
-            command.OccurredAt, command.Description, isMandatory);
+            command.OccurredAt, command.Description, categoryAccess.IsMandatory);
 
         await context.SaveChangesAsync(ct);
         return newTransaction.Id;
     }
 
-    public async Task<List<TransactionDto>> GetTransactionsAsync(Guid? accountId, CancellationToken ct = default)
+    public async Task<PagedResult<TransactionDto>> GetTransactionsAsync(TxFilter filter, CancellationToken ct = default)
     {
         var currentUserId = currentUser.Id;
+        var page = filter.Page < 1 ? 1 : filter.Page;
+        var size = filter.Size is < 1 or > MaxPageSize ? DefaultPageSize : filter.Size;
+
         var baseCurrencyCode = await context.Users
             .Where(u => u.Id == currentUserId)
             .Select(u => u.BaseCurrencyCode)
@@ -41,13 +51,47 @@ public sealed class TransactionsService(IAppDbContext context, ICurrentUser curr
 
         var userTransactionsQuery = context.Transactions
             .AsNoTracking()
-            .Include(t => t.Account)
             .Where(t => t.Account.UserId == currentUserId);
 
-        if (accountId.HasValue)
-            userTransactionsQuery = userTransactionsQuery.Where(t => t.AccountId == accountId);
+        if (filter.AccountId.HasValue)
+            userTransactionsQuery = userTransactionsQuery.Where(t => t.AccountId == filter.AccountId.Value);
+
+        if (filter.CategoryId.HasValue)
+            userTransactionsQuery = userTransactionsQuery.Where(t => t.CategoryId == filter.CategoryId.Value);
+
+        if (filter.From.HasValue)
+        {
+            var fromUtc = DateTime.SpecifyKind(filter.From.Value.ToDateTime(TimeOnly.MinValue), DateTimeKind.Utc);
+            userTransactionsQuery = userTransactionsQuery.Where(t => t.OccurredAt >= fromUtc);
+        }
+
+        if (filter.To.HasValue)
+        {
+            var toExclusiveUtc = DateTime.SpecifyKind(filter.To.Value.ToDateTime(TimeOnly.MinValue), DateTimeKind.Utc)
+                .AddDays(1);
+            userTransactionsQuery = userTransactionsQuery.Where(t => t.OccurredAt < toExclusiveUtc);
+        }
+
+        if (!string.IsNullOrWhiteSpace(filter.Search))
+        {
+            var search = filter.Search.Trim().ToLowerInvariant();
+            var likePattern = $"%{search}%";
+            userTransactionsQuery = userTransactionsQuery.Where(t =>
+                EF.Functions.Like((t.Description ?? string.Empty).ToLower(), likePattern) ||
+                EF.Functions.Like(t.Account.Name.ToLower(), likePattern) ||
+                context.TransactionCategories.Any(c =>
+                    c.UserId == currentUserId &&
+                    c.Id == t.CategoryId &&
+                    EF.Functions.Like(c.Name.ToLower(), likePattern)));
+        }
+
+        var total = await userTransactionsQuery.CountAsync(ct);
 
         var rawTransactions = await userTransactionsQuery
+            .OrderByDescending(t => t.OccurredAt)
+            .ThenByDescending(t => t.Id)
+            .Skip((page - 1) * size)
+            .Take(size)
             .Select(t => new
             {
                 t.Id,
@@ -63,21 +107,39 @@ public sealed class TransactionsService(IAppDbContext context, ICurrentUser curr
             })
             .ToListAsync(ct);
 
-        var userTransactions = new List<TransactionDto>(rawTransactions.Count);
+        var normalizedTransactions = rawTransactions.Select(transaction =>
+        {
+            var occurredAtUtc = NormalizeUtc(transaction.OccurredAt);
+            return new
+            {
+                transaction.Id,
+                transaction.AccountId,
+                transaction.Money,
+                transaction.CategoryId,
+                transaction.Description,
+                transaction.OccurredAt,
+                transaction.IsMandatory,
+                transaction.Type,
+                transaction.IsTransfer,
+                transaction.TransferId,
+                OccurredAtUtc = occurredAtUtc
+            };
+        }).ToList();
 
-        foreach (var transaction in rawTransactions)
+        var rateByCurrencyAndDay = await currencyConverter.GetCrossRatesAsync(
+            normalizedTransactions.Select(t => (t.Money.CurrencyCode, t.OccurredAtUtc)),
+            baseCurrencyCode,
+            ct);
+
+        var userTransactions = new List<TransactionDto>(normalizedTransactions.Count);
+
+        foreach (var transaction in normalizedTransactions)
         {
             ct.ThrowIfCancellationRequested();
 
-            var occurredAt = transaction.OccurredAt.Kind == DateTimeKind.Unspecified
-                ? DateTime.SpecifyKind(transaction.OccurredAt, DateTimeKind.Utc)
-                : transaction.OccurredAt.ToUniversalTime();
-
-            var baseMoney = await currencyConverter.ConvertAsync(
-                transaction.Money,
-                baseCurrencyCode,
-                occurredAt,
-                ct);
+            var rateKey = (NormalizeCurrencyCode(transaction.Money.CurrencyCode), transaction.OccurredAtUtc.Date);
+            var rate = rateByCurrencyAndDay[rateKey];
+            var amountInBaseCurrency = transaction.Money.Amount * rate;
 
             userTransactions.Add(new TransactionDto(
                 transaction.Id,
@@ -90,12 +152,12 @@ public sealed class TransactionsService(IAppDbContext context, ICurrentUser curr
                 transaction.Type,
                 transaction.IsTransfer,
                 transaction.TransferId,
-                baseMoney.Amount,
+                amountInBaseCurrency,
                 transaction.Money.Amount,
                 transaction.Money.CurrencyCode));
         }
 
-        return userTransactions;
+        return new PagedResult<TransactionDto>(userTransactions, page, size, total);
     }
 
     public async Task<Guid> CreateTransferAsync(CreateTransfer command, CancellationToken ct)
@@ -419,7 +481,8 @@ public sealed class TransactionsService(IAppDbContext context, ICurrentUser curr
         if (transaction.TransferId is not null)
             throw new ConflictException("Переводы нельзя редактировать как обычные транзакции.");
 
-        await EnsureCategoryAccessAsync(command.CategoryId, ct);
+        var categoryAccess = await EnsureCategoryAccessAsync(command.CategoryId, ct);
+        EnsureCategoryTypeMatchesTransactionType(categoryAccess.Type, transaction.Type);
 
         transaction.AssignCategory(command.CategoryId);
         await context.SaveChangesAsync(ct);
@@ -443,7 +506,8 @@ public sealed class TransactionsService(IAppDbContext context, ICurrentUser curr
         if (newAccount.UserId != currentUser.Id)
             throw new ForbiddenException("Доступ запрещен");
 
-        await EnsureCategoryAccessAsync(command.CategoryId, ct);
+        var categoryAccess = await EnsureCategoryAccessAsync(command.CategoryId, ct);
+        EnsureCategoryTypeMatchesTransactionType(categoryAccess.Type, transaction.Type);
 
         var money = new Money(newAccount.CurrencyCode, command.Amount);
         transaction.Update(command.AccountId, command.CategoryId, money, command.OccurredAt,
@@ -503,7 +567,7 @@ public sealed class TransactionsService(IAppDbContext context, ICurrentUser curr
         await context.SaveChangesAsync(ct);
     }
 
-    private async Task<bool> EnsureCategoryAccessAsync(Guid categoryId, CancellationToken ct)
+    private async Task<CategoryAccessMeta> EnsureCategoryAccessAsync(Guid categoryId, CancellationToken ct)
     {
         if (categoryId == Guid.Empty)
             throw new DomainValidationException("Категория не найдена");
@@ -511,7 +575,7 @@ public sealed class TransactionsService(IAppDbContext context, ICurrentUser curr
         var categoryMeta = await context.TransactionCategories
             .AsNoTracking()
             .Where(c => c.Id == categoryId)
-            .Select(c => new { c.Id, c.UserId, c.IsMandatory })
+            .Select(c => new { c.Id, c.UserId, c.IsMandatory, c.Type })
             .SingleOrDefaultAsync(ct);
 
         if (categoryMeta is null)
@@ -520,6 +584,30 @@ public sealed class TransactionsService(IAppDbContext context, ICurrentUser curr
         if (categoryMeta.UserId != currentUser.Id)
             throw new ForbiddenException();
 
-        return categoryMeta.IsMandatory;
+        return new CategoryAccessMeta(categoryMeta.IsMandatory, categoryMeta.Type);
+    }
+
+    private static void EnsureCategoryTypeMatchesTransactionType(CategoryType categoryType, TransactionType transactionType)
+    {
+        var expectedCategoryType = transactionType == TransactionType.Income ? CategoryType.Income : CategoryType.Expense;
+        if (categoryType == expectedCategoryType)
+            return;
+
+        throw new DomainValidationException(
+            "Категория не соответствует типу транзакции.",
+            "category_type_mismatch",
+            new { transactionType, categoryType });
+    }
+
+    private static DateTime NormalizeUtc(DateTime value)
+    {
+        return value.Kind == DateTimeKind.Unspecified
+            ? DateTime.SpecifyKind(value, DateTimeKind.Utc)
+            : value.ToUniversalTime();
+    }
+
+    private static string NormalizeCurrencyCode(string currencyCode)
+    {
+        return string.IsNullOrWhiteSpace(currencyCode) ? throw new DomainValidationException("Код валюты не задан.", "currency_code_missing") : currencyCode.Trim().ToUpperInvariant();
     }
 }

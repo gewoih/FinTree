@@ -69,6 +69,23 @@ export interface TransactionDto {
     transferId?: string | null;
 }
 
+export interface PagedResult<T> {
+    items: T[];
+    page: number;
+    size: number;
+    total: number;
+}
+
+export interface TransactionsQuery {
+    accountId?: string | null;
+    categoryId?: string | null;
+    from?: string | null;
+    to?: string | null;
+    search?: string | null;
+    page?: number;
+    size?: number;
+}
+
 export interface Transaction extends Omit<TransactionDto, 'type'> {
     type: TransactionType;
     account?: Account;

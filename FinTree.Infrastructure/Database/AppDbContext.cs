@@ -34,6 +34,7 @@ public sealed class AppDbContext(DbContextOptions<AppDbContext> options) : Ident
 
         ConfigureFxUsdRates(modelBuilder);
         ConfigureRefreshTokens(modelBuilder);
+        ConfigureUsers(modelBuilder);
         ApplySoftDeleteQueryFilters(modelBuilder);
     }
 
@@ -53,6 +54,17 @@ public sealed class AppDbContext(DbContextOptions<AppDbContext> options) : Ident
             entity.Property(x => x.TokenHash).HasMaxLength(64);
             entity.HasIndex(x => x.TokenHash).IsUnique();
             entity.HasIndex(x => new { x.UserId, x.ExpiresAt });
+        });
+    }
+
+    private static void ConfigureUsers(ModelBuilder modelBuilder)
+    {
+        modelBuilder.Entity<User>(entity =>
+        {
+            entity.HasIndex(x => x.TelegramUserId)
+                .HasDatabaseName("IX_AspNetUsers_TelegramUserId")
+                .IsUnique()
+                .HasFilter("\"TelegramUserId\" IS NOT NULL");
         });
     }
 

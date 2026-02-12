@@ -13,6 +13,8 @@ import type {
     Currency,
     AnalyticsDashboardDto,
     CurrentUserDto,
+    PagedResult,
+    TransactionsQuery,
     UpdateUserProfilePayload,
     NetWorthSnapshotDto,
     InvestmentsOverviewDto,
@@ -148,10 +150,19 @@ export const apiService = {
         return response.data;
     },
 
-    // Получение всех транзакций по счету
-    async getTransactions(accountId?: string): Promise<TransactionDto[]> {
-        const response = await apiClient.get<TransactionDto[]>('/transaction', {
-            params: accountId ? { accountId } : {},
+    // Получение транзакций пользователя с фильтрацией и пагинацией
+    async getTransactions(query: TransactionsQuery = {}): Promise<PagedResult<TransactionDto>> {
+        const params: Record<string, string | number> = {};
+        if (query.accountId) params.accountId = query.accountId;
+        if (query.categoryId) params.categoryId = query.categoryId;
+        if (query.from) params.from = query.from;
+        if (query.to) params.to = query.to;
+        if (query.search) params.search = query.search;
+        if (query.page) params.page = query.page;
+        if (query.size) params.size = query.size;
+
+        const response = await apiClient.get<PagedResult<TransactionDto>>('/transaction', {
+            params,
         });
         return response.data;
     },

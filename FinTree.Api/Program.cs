@@ -51,6 +51,10 @@ var allowedCorsOrigins = builder.Configuration.GetSection("Cors:AllowedOrigins")
             !string.Equals(parsedOrigin.Scheme, Uri.UriSchemeHttps, StringComparison.OrdinalIgnoreCase))
             throw new InvalidOperationException($"Cors:AllowedOrigins supports only HTTP/HTTPS schemes: {origin}");
 
+        if (!builder.Environment.IsDevelopment() &&
+            !string.Equals(parsedOrigin.Scheme, Uri.UriSchemeHttps, StringComparison.OrdinalIgnoreCase))
+            throw new InvalidOperationException($"Cors:AllowedOrigins must use HTTPS outside development: {origin}");
+
         return $"{parsedOrigin.Scheme}://{parsedOrigin.Authority}";
     })
     .Distinct(StringComparer.OrdinalIgnoreCase)

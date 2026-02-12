@@ -1,4 +1,4 @@
-using FinTree.Domain.Categories;
+using System.ComponentModel.DataAnnotations;
 using FinTree.Domain.Transactions;
 
 namespace FinTree.Application.Transactions.Dto;
@@ -9,5 +9,6 @@ public record struct CreateTransaction(
     decimal Amount,
     DateTime OccurredAt,
     Guid CategoryId,
+    [property: StringLength(100)]
     string? Description = null,
     bool IsMandatory = false);

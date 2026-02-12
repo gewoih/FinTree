@@ -16,6 +16,27 @@ public sealed class CurrencyConverter(IAppDbContext context, IMemoryCache cache)
         return new Money(toCurrencyCode, money.Amount * rate);
     }
 
+    public async Task<Dictionary<(string CurrencyCode, DateTime DayStartUtc), decimal>> GetCrossRatesAsync(
+        IEnumerable<(string CurrencyCode, DateTime AtUtc)> requests,
+        string toCurrencyCode,
+        CancellationToken ct = default)
+    {
+        var normalizedRequests = requests
+            .Select(request => (Normalize(request.CurrencyCode), NormalizeDayStartUtc(request.AtUtc)))
+            .Distinct()
+            .ToList();
+
+        var rates = new Dictionary<(string CurrencyCode, DateTime DayStartUtc), decimal>(normalizedRequests.Count);
+        foreach (var request in normalizedRequests)
+        {
+            ct.ThrowIfCancellationRequested();
+            var rate = await GetCrossRateAsync(request.Item1, toCurrencyCode, request.Item2, ct);
+            rates[request] = rate;
+        }
+
+        return rates;
+    }
+
     private async Task<decimal> GetCrossRateAsync(string fromCurrency, string toCurrency, DateTime atUtc,
         CancellationToken ct = default)
     {
@@ -80,4 +101,16 @@ public sealed class CurrencyConverter(IAppDbContext context, IMemoryCache cache)
         => string.IsNullOrWhiteSpace(code)
             ? throw new ArgumentException("Код валюты пустой", nameof(code))
             : code.Trim().ToUpperInvariant();
+
+    private static DateTime NormalizeDayStartUtc(DateTime value)
+    {
+        var utcValue = value.Kind switch
+        {
+            DateTimeKind.Utc => value,
+            DateTimeKind.Unspecified => DateTime.SpecifyKind(value, DateTimeKind.Utc),
+            _ => value.ToUniversalTime()
+        };
+
+        return utcValue.Date;
+    }
 }

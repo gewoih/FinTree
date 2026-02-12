@@ -45,6 +45,19 @@ public sealed class AnalyticsService(
             .Select(t => new { t.CategoryId, t.Money, t.OccurredAt, t.Type })
             .ToListAsync(ct);
 
+        var normalizedTransactions = transactions.Select(txn => new
+        {
+            txn.CategoryId,
+            txn.Money,
+            txn.Type,
+            OccurredUtc = NormalizeUtc(txn.OccurredAt)
+        }).ToList();
+
+        var rateByCurrencyAndDay = await currencyConverter.GetCrossRatesAsync(
+            normalizedTransactions.Select(txn => (txn.Money.CurrencyCode, txn.OccurredUtc)),
+            baseCurrencyCode,
+            ct);
+
         var dailyTotals = new Dictionary<DateOnly, decimal>();
         var currentCategoryTotals = new Dictionary<Guid, decimal>();
         var previousCategoryTotals = new Dictionary<Guid, decimal>();
@@ -54,21 +67,13 @@ public sealed class AnalyticsService(
         decimal previousMonthExpenses = 0m;
         decimal discretionaryTotal = 0m;
 
-        foreach (var txn in transactions)
+        foreach (var txn in normalizedTransactions)
         {
             ct.ThrowIfCancellationRequested();
 
-            var occurredUtc = txn.OccurredAt.Kind == DateTimeKind.Unspecified
-                ? DateTime.SpecifyKind(txn.OccurredAt, DateTimeKind.Utc)
-                : txn.OccurredAt.ToUniversalTime();
-
-            var baseMoney = await currencyConverter.ConvertAsync(
-                money: txn.Money,
-                toCurrencyCode: baseCurrencyCode,
-                atUtc: occurredUtc,
-                ct: ct);
-
-            var amount = baseMoney.Amount;
+            var rateKey = (NormalizeCurrencyCode(txn.Money.CurrencyCode), txn.OccurredUtc.Date);
+            var amount = txn.Money.Amount * rateByCurrencyAndDay[rateKey];
+            var occurredUtc = txn.OccurredUtc;
             var isCurrentMonth = occurredUtc >= monthStartUtc && occurredUtc < monthEndUtc;
             var isPreviousMonth = occurredUtc >= previousMonthStartUtc && occurredUtc < monthStartUtc;
 
@@ -349,6 +354,9 @@ public sealed class AnalyticsService(
         return value.ToUniversalTime();
     }
 
+    private static string NormalizeCurrencyCode(string value)
+        => string.IsNullOrWhiteSpace(value) ? string.Empty : value.Trim().ToUpperInvariant();
+
     private static bool IsOpeningBalanceAnchor(DateTime accountCreatedAtUtc, DateTime adjustmentOccurredAtUtc)
         => (adjustmentOccurredAtUtc - accountCreatedAtUtc).Duration() <= OpeningBalanceDetectionWindow;
 
@@ -451,26 +459,30 @@ public sealed class AnalyticsService(
             .Select(t => new { t.Money, t.OccurredAt })
             .ToListAsync(ct);
 
+        var normalizedExpenses = rawExpenses.Select(expense => new
+        {
+            expense.Money,
+            OccurredUtc = NormalizeUtc(expense.OccurredAt)
+        }).ToList();
+
+        var rateByCurrencyAndDay = await currencyConverter.GetCrossRatesAsync(
+            normalizedExpenses.Select(expense => (expense.Money.CurrencyCode, expense.OccurredUtc)),
+            baseCurrencyCode,
+            ct);
+
         var dailyTotals = new Dictionary<DateOnly, decimal>();
-        foreach (var expense in rawExpenses)
+        foreach (var expense in normalizedExpenses)
         {
             ct.ThrowIfCancellationRequested();
 
-            var occurredUtc = expense.OccurredAt.Kind == DateTimeKind.Unspecified
-                ? DateTime.SpecifyKind(expense.OccurredAt, DateTimeKind.Utc)
-                : expense.OccurredAt.ToUniversalTime();
+            var rateKey = (NormalizeCurrencyCode(expense.Money.CurrencyCode), expense.OccurredUtc.Date);
+            var amountInBaseCurrency = expense.Money.Amount * rateByCurrencyAndDay[rateKey];
 
-            var baseMoney = await currencyConverter.ConvertAsync(
-                money: expense.Money,
-                toCurrencyCode: baseCurrencyCode,
-                atUtc: occurredUtc,
-                ct: ct);
-
-            var dayKey = DateOnly.FromDateTime(occurredUtc);
+            var dayKey = DateOnly.FromDateTime(expense.OccurredUtc);
             if (dailyTotals.TryGetValue(dayKey, out var current))
-                dailyTotals[dayKey] = current + baseMoney.Amount;
+                dailyTotals[dayKey] = current + amountInBaseCurrency;
             else
-                dailyTotals[dayKey] = baseMoney.Amount;
+                dailyTotals[dayKey] = amountInBaseCurrency;
         }
 
         if (dailyTotals.Count == 0)
@@ -601,26 +613,30 @@ public sealed class AnalyticsService(
             .Select(t => new { t.Money, t.OccurredAt })
             .ToListAsync(ct);
 
+        var normalizedForecastTransactions = forecastTransactions.Select(txn => new
+        {
+            txn.Money,
+            OccurredUtc = NormalizeUtc(txn.OccurredAt)
+        }).ToList();
+
+        var rateByCurrencyAndDay = await currencyConverter.GetCrossRatesAsync(
+            normalizedForecastTransactions.Select(txn => (txn.Money.CurrencyCode, txn.OccurredUtc)),
+            baseCurrencyCode,
+            ct);
+
         var forecastDailyTotals = new Dictionary<DateOnly, decimal>();
-        foreach (var txn in forecastTransactions)
+        foreach (var txn in normalizedForecastTransactions)
         {
             ct.ThrowIfCancellationRequested();
 
-            var occurredUtc = txn.OccurredAt.Kind == DateTimeKind.Unspecified
-                ? DateTime.SpecifyKind(txn.OccurredAt, DateTimeKind.Utc)
-                : txn.OccurredAt.ToUniversalTime();
+            var rateKey = (NormalizeCurrencyCode(txn.Money.CurrencyCode), txn.OccurredUtc.Date);
+            var amountInBaseCurrency = txn.Money.Amount * rateByCurrencyAndDay[rateKey];
 
-            var baseMoney = await currencyConverter.ConvertAsync(
-                money: txn.Money,
-                toCurrencyCode: baseCurrencyCode,
-                atUtc: occurredUtc,
-                ct: ct);
-
-            var dateKey = DateOnly.FromDateTime(occurredUtc);
+            var dateKey = DateOnly.FromDateTime(txn.OccurredUtc);
             if (forecastDailyTotals.TryGetValue(dateKey, out var current))
-                forecastDailyTotals[dateKey] = current + baseMoney.Amount;
+                forecastDailyTotals[dateKey] = current + amountInBaseCurrency;
             else
-                forecastDailyTotals[dateKey] = baseMoney.Amount;
+                forecastDailyTotals[dateKey] = amountInBaseCurrency;
         }
 
         var medianDaily = ComputeMedian(forecastDailyTotals.Values.Where(v => v > 0).ToList());

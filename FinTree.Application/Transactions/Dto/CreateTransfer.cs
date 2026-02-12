@@ -1,3 +1,5 @@
+using System.ComponentModel.DataAnnotations;
+
 namespace FinTree.Application.Transactions.Dto;
 
 public readonly record struct CreateTransfer(
@@ -7,4 +9,5 @@ public readonly record struct CreateTransfer(
     decimal ToAmount,
     DateTime OccurredAt,
     decimal? FeeAmount = null,
+    [property: StringLength(100)]
     string? Description = null);

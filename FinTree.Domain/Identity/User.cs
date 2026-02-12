@@ -38,7 +38,11 @@ public sealed class User : IdentityUser<Guid>
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(currencyCode);
 
-        BaseCurrencyCode = currencyCode;
+        var normalizedCurrencyCode = currencyCode.Trim().ToUpperInvariant();
+        if (!Currency.TryFromCode(normalizedCurrencyCode, out _))
+            throw new ArgumentException("Неизвестный код валюты.", nameof(currencyCode));
+
+        BaseCurrencyCode = normalizedCurrencyCode;
     }
 
     public Account AddAccount(string currencyCode, AccountType type, string name, bool? isLiquid = null)
