@@ -1,4 +1,5 @@
 using FinTree.Application.Abstractions;
+using FinTree.Application.Exceptions;
 using FinTree.Application.Currencies;
 using FinTree.Application.Accounts;
 using FinTree.Application.Users;
@@ -19,6 +20,8 @@ public sealed class AnalyticsService(
 
     public async Task<AnalyticsDashboardDto> GetDashboardAsync(int year, int month, CancellationToken ct = default)
     {
+        ValidateYearMonth(year, month);
+
         var currentUserId = currentUserService.Id;
         var baseCurrencyCode = await context.Users
             .Where(u => u.Id == currentUserId)
@@ -168,6 +171,8 @@ public sealed class AnalyticsService(
     {
         if (months <= 0)
             return [];
+        if (months > 120)
+            months = 120;
 
         var currentUserId = currentUserService.Id;
         var userMeta = await context.Users
@@ -595,7 +600,6 @@ public sealed class AnalyticsService(
         var days = new List<int>(daysInMonth);
         var actual = new List<decimal?>(daysInMonth);
         var forecast = new List<decimal?>(daysInMonth);
-        var baseline = new List<decimal?>(daysInMonth);
 
         decimal cumulative = 0m;
         for (var day = 1; day <= daysInMonth; day++)
@@ -611,7 +615,6 @@ public sealed class AnalyticsService(
                 actual.Add(Round2(cumulative));
 
             forecast.Add(medianDaily.HasValue ? Round2(medianDaily.Value * day) : null);
-            baseline.Add(previousMonthTotal > 0m ? Round2(previousMonthTotal) : null);
         }
 
         var currentSpent = actual.LastOrDefault(v => v.HasValue) ?? Round2(cumulative);
@@ -629,7 +632,22 @@ public sealed class AnalyticsService(
         }
 
         var summary = new ForecastSummaryDto(forecastTotal, currentSpent, baselineLimit, status);
-        var series = new ForecastSeriesDto(days, actual, forecast, baseline);
+        var series = new ForecastSeriesDto(days, actual, forecast, baselineLimit);
         return new ForecastDto(summary, series);
+    }
+
+    private static void ValidateYearMonth(int year, int month)
+    {
+        if (year is < 2000 or > 2100)
+            throw new DomainValidationException(
+                "Некорректный год.",
+                "invalid_year",
+                new { year });
+
+        if (month is < 1 or > 12)
+            throw new DomainValidationException(
+                "Некорректный месяц.",
+                "invalid_month",
+                new { month });
     }
 }

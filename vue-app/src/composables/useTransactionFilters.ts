@@ -1,5 +1,6 @@
 import { ref, computed } from 'vue';
 import type { Account, Category, Transaction } from '../types';
+import { getUtcDayRangeFromLocalDates } from '../utils/dateOnly';
 
 type ExtendedTransaction = Transaction & {
   categoryName?: string;
@@ -79,17 +80,12 @@ export function useTransactionFilters<T extends Transaction>(
     // Filter by date range
     if (dateRange.value && dateRange.value.length === 2) {
       const [startDate, endDate] = dateRange.value as [Date, Date];
-
-      // Set time to start and end of day for accurate comparison
-      const startOfDay = new Date(startDate);
-      startOfDay.setHours(0, 0, 0, 0);
-
-      const endOfDay = new Date(endDate);
-      endOfDay.setHours(23, 59, 59, 999);
+      const { startMs, endMs } = getUtcDayRangeFromLocalDates(startDate, endDate);
 
       filtered = filtered.filter(txn => {
-        const txnDate = new Date(txn.occurredAt);
-        return txnDate >= startOfDay && txnDate <= endOfDay;
+        const txnTime = new Date(txn.occurredAt).getTime();
+        if (Number.isNaN(txnTime)) return false;
+        return txnTime >= startMs && txnTime <= endMs;
       });
     }
 

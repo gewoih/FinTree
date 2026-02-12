@@ -7,7 +7,6 @@ import SpendingPieCard from '../components/analytics/SpendingPieCard.vue';
 import SpendingBarsCard from '../components/analytics/SpendingBarsCard.vue';
 import ForecastCard from '../components/analytics/ForecastCard.vue';
 import CategoryDeltaCard from '../components/analytics/CategoryDeltaCard.vue';
-import NetWorthLineCard from '../components/analytics/NetWorthLineCard.vue';
 import { useUserStore } from '../stores/user';
 import { useFinanceStore } from '../stores/finance';
 import { apiService } from '../services/api.service';
@@ -15,7 +14,6 @@ import DatePicker from 'primevue/datepicker';
 import type {
   AnalyticsDashboardDto,
   MonthlyExpenseDto,
-  NetWorthSnapshotDto,
 } from '../types';
 import type {
   CategoryLegendItem,
@@ -83,10 +81,6 @@ const dashboard = ref<AnalyticsDashboardDto | null>(null);
 const dashboardLoading = ref(false);
 const dashboardError = ref<string | null>(null);
 const dashboardRequestId = ref(0);
-
-const netWorthSnapshots = ref<NetWorthSnapshotDto[]>([]);
-const netWorthLoading = ref(false);
-const netWorthError = ref<string | null>(null);
 
 const healthLoading = computed(() => dashboardLoading.value);
 const healthError = computed(() => dashboardError.value);
@@ -429,20 +423,6 @@ async function loadDashboard(month: Date) {
   }
 }
 
-async function loadNetWorth(months = 12) {
-  netWorthLoading.value = true;
-  netWorthError.value = null;
-  try {
-    const data = await apiService.getNetWorthTrend(months);
-    netWorthSnapshots.value = data ?? [];
-  } catch (error) {
-    netWorthError.value = resolveErrorMessage(error, 'Не удалось загрузить Net Worth.');
-    netWorthSnapshots.value = [];
-  } finally {
-    netWorthLoading.value = false;
-  }
-}
-
 function formatDateQuery(date: Date): string {
   const year = date.getFullYear();
   const month = `${date.getMonth() + 1}`.padStart(2, '0');
@@ -678,8 +658,9 @@ const forecastChartData = computed(() => {
   if (!series || !series.days.length) return null;
 
   const labels = series.days.map((day) => day.toString());
-  const baselineData = series.baseline ?? [];
-  const hasBaseline = baselineData.some((value) => value != null);
+  const baselineValue = series.baseline ?? dashboard.value?.forecast.summary.baselineLimit ?? null;
+  const hasBaseline = baselineValue != null;
+  const baselineData = hasBaseline ? series.days.map(() => baselineValue) : [];
 
   return {
     labels,
@@ -725,40 +706,8 @@ const forecastChartData = computed(() => {
   };
 });
 
-const sortedNetWorth = computed(() => {
-  if (!netWorthSnapshots.value.length) return [];
-  return [...netWorthSnapshots.value].sort((a, b) => {
-    if (a.year !== b.year) return a.year - b.year;
-    return a.month - b.month;
-  });
-});
-
-const netWorthChartData = computed(() => {
-  if (!sortedNetWorth.value.length) return null;
-  return {
-    labels: sortedNetWorth.value.map(item => formatMonthLabel(item.year, item.month)),
-    datasets: [
-      {
-        data: sortedNetWorth.value.map(item => Number(item.netWorth ?? 0)),
-        borderColor: chartPalette.primary,
-        backgroundColor: `rgba(${extractRgb(chartPalette.primary)}, 0.15)`,
-        fill: true,
-        borderWidth: 2,
-        tension: 0.35,
-        pointRadius: 3,
-        pointBackgroundColor: chartPalette.primary,
-        pointBorderColor: chartPalette.pointBorder,
-      },
-    ],
-  };
-});
-
 function retryDashboard() {
   void loadDashboard(normalizedSelectedMonth.value);
-}
-
-function retryNetWorth() {
-  void loadNetWorth();
 }
 
 const updateSelectedMonth = (value: Date | Date[] | (Date | null)[] | null | undefined) => {
@@ -790,7 +739,6 @@ onMounted(async () => {
   await userStore.fetchCurrentUser();
   await Promise.all([
     loadDashboard(normalizedSelectedMonth.value),
-    loadNetWorth(12),
     financeStore.fetchAccounts(),
   ]);
 });
@@ -939,15 +887,6 @@ onMounted(async () => {
         :chart-data="forecastChartData"
         :currency="baseCurrency"
         @retry="retryDashboard"
-      />
-
-      <NetWorthLineCard
-        class="analytics-grid__item analytics-grid__item--span-12"
-        :loading="netWorthLoading"
-        :error="netWorthError"
-        :chart-data="netWorthChartData"
-        :currency="baseCurrency"
-        @retry="retryNetWorth"
       />
     </div>
   </PageContainer>

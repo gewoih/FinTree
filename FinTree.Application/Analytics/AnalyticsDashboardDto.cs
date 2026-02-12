@@ -84,4 +84,4 @@ public readonly record struct ForecastSeriesDto(
     IReadOnlyList<int> Days,
     IReadOnlyList<decimal?> Actual,
     IReadOnlyList<decimal?> Forecast,
-    IReadOnlyList<decimal?> Baseline);
+    decimal? Baseline);

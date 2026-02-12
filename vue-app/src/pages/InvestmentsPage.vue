@@ -1,7 +1,14 @@
 <script setup lang="ts">
 import { computed, onMounted, ref, watch } from 'vue';
 import { useToast } from 'primevue/usetoast';
-import type { AccountType, InvestmentAccountOverviewDto, InvestmentsOverviewDto, Account, AccountDto } from '../types';
+import type {
+  AccountType,
+  InvestmentAccountOverviewDto,
+  InvestmentsOverviewDto,
+  Account,
+  AccountDto,
+  NetWorthSnapshotDto
+} from '../types';
 import { apiService } from '../services/api.service';
 import { useFinanceStore } from '../stores/finance';
 import { useUserStore } from '../stores/user';
@@ -10,6 +17,7 @@ import AccountFilters from '../components/AccountFilters.vue';
 import AccountBalanceAdjustmentsModal from '../components/AccountBalanceAdjustmentsModal.vue';
 import InvestmentAccountCard from '../components/Investments/InvestmentAccountCard.vue';
 import InvestmentsAllocationPie from '../components/Investments/InvestmentsAllocationPie.vue';
+import NetWorthLineCard from '../components/analytics/NetWorthLineCard.vue';
 import { mapAccount } from '../utils/mappers';
 import { formatCurrency, formatDate } from '../utils/formatters';
 
@@ -28,6 +36,9 @@ const userStore = useUserStore();
 const overview = ref<InvestmentsOverviewDto | null>(null);
 const overviewLoading = ref(false);
 const overviewError = ref<string | null>(null);
+const netWorthSnapshots = ref<NetWorthSnapshotDto[]>([]);
+const netWorthLoading = ref(false);
+const netWorthError = ref<string | null>(null);
 
 const modalVisible = ref(false);
 const adjustmentsVisible = ref(false);
@@ -89,6 +100,39 @@ const totalReturnVariant = computed(() => {
   if (value > 0) return 'success';
   if (value < 0) return 'danger';
   return 'default';
+});
+
+const sortedNetWorth = computed(() => {
+  if (!netWorthSnapshots.value.length) return [];
+  return [...netWorthSnapshots.value].sort((a, b) => {
+    if (a.year !== b.year) return a.year - b.year;
+    return a.month - b.month;
+  });
+});
+
+const formatMonthLabel = (year: number, month: number): string => {
+  const formatter = new Intl.DateTimeFormat('ru-RU', { month: 'short', year: 'numeric' });
+  return formatter.format(new Date(year, month - 1, 1));
+};
+
+const netWorthChartData = computed(() => {
+  if (!sortedNetWorth.value.length) return null;
+  return {
+    labels: sortedNetWorth.value.map(item => formatMonthLabel(item.year, item.month)),
+    datasets: [
+      {
+        data: sortedNetWorth.value.map(item => Number(item.netWorth ?? 0)),
+        borderColor: '#2e5bff',
+        backgroundColor: 'rgba(46, 91, 255, 0.15)',
+        fill: true,
+        borderWidth: 2,
+        tension: 0.35,
+        pointRadius: 3,
+        pointBackgroundColor: '#2e5bff',
+        pointBorderColor: '#0b111a',
+      },
+    ],
+  };
 });
 
 const filteredAccounts = computed(() => {
@@ -169,11 +213,32 @@ const loadOverview = async () => {
   }
 };
 
+const loadNetWorth = async (months = 12) => {
+  netWorthLoading.value = true;
+  netWorthError.value = null;
+  try {
+    netWorthSnapshots.value = await apiService.getNetWorthTrend(months);
+  } catch (error) {
+    console.error('Не удалось загрузить Net Worth:', error);
+    netWorthError.value = 'Не удалось загрузить динамику капитала.';
+    netWorthSnapshots.value = [];
+  } finally {
+    netWorthLoading.value = false;
+  }
+};
+
+const refreshInvestmentsData = async () => {
+  await Promise.all([
+    loadOverview(),
+    loadNetWorth(12),
+  ]);
+};
+
 watch(
   () => adjustmentsVisible.value,
   (visible, prev) => {
     if (prev && !visible) {
-      void loadOverview();
+      void refreshInvestmentsData();
     }
   }
 );
@@ -182,7 +247,7 @@ watch(
   () => modalVisible.value,
   (visible, prev) => {
     if (prev && !visible) {
-      void loadOverview();
+      void refreshInvestmentsData();
     }
   }
 );
@@ -190,7 +255,7 @@ watch(
 onMounted(async () => {
   await userStore.fetchCurrentUser();
   await financeStore.fetchCurrencies();
-  await loadOverview();
+  await refreshInvestmentsData();
 });
 </script>
 
@@ -247,13 +312,6 @@ onMounted(async () => {
           />
         </div>
       </UiCard>
-
-      <InvestmentsAllocationPie
-        v-if="accounts.length > 0"
-        :accounts="accounts"
-        :base-currency-code="baseCurrency"
-        :loading="overviewLoading"
-      />
 
       <UiCard
         v-if="accounts.length > 0"
@@ -328,6 +386,23 @@ onMounted(async () => {
           @update-liquidity="handleLiquidityToggle(account, $event)"
         />
       </div>
+
+      <InvestmentsAllocationPie
+        v-if="accounts.length > 0"
+        :accounts="accounts"
+        :base-currency-code="baseCurrency"
+        :loading="overviewLoading"
+      />
+
+      <NetWorthLineCard
+        v-if="accounts.length > 0"
+        class="investments-page__networth"
+        :loading="netWorthLoading"
+        :error="netWorthError"
+        :chart-data="netWorthChartData"
+        :currency="baseCurrency"
+        @retry="loadNetWorth(12)"
+      />
     </UiSection>
 
     <AccountFormModal v-model:visible="modalVisible" />

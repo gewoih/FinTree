@@ -250,7 +250,7 @@ export interface ForecastSeriesDto {
     days: number[];
     actual: Array<number | null>;
     forecast: Array<number | null>;
-    baseline: Array<number | null>;
+    baseline: number | null;
 }
 
 export interface ForecastDto {

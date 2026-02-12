@@ -43,9 +43,10 @@ let refreshRequest: Promise<void> | null = null;
 
 async function refreshSession(): Promise<void> {
     if (!refreshRequest) {
-        refreshRequest = axios.post('/api/auth/refresh', null, {
-            withCredentials: true,
-        }).then(() => undefined)
+        refreshRequest = apiClient.post('/auth/refresh', null, {
+            skipAuthRefresh: true,
+            skipAuthRedirect: true,
+        } as AuthRedirectConfig).then(() => undefined)
             .finally(() => {
                 refreshRequest = null;
             });

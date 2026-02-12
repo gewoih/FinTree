@@ -8,6 +8,7 @@ import { useFormModal } from '../composables/useFormModal';
 import { validators } from '../services/validation.service';
 import { useConfirm } from 'primevue/useconfirm';
 import { useToast } from 'primevue/usetoast';
+import { parseUtcDateOnlyToLocalDate, toUtcDateOnlyIso } from '../utils/dateOnly';
 
 // PrimeVue Components
 import Dialog from 'primevue/dialog';
@@ -116,7 +117,7 @@ watch(() => props.visible, (newVal) => {
       transactionType.value = selectedCategory.value?.type ?? txn.type ?? TRANSACTION_TYPE.Expense;
       amount.value = Math.abs(Number(txn.amount));
       description.value = txn.description || '';
-      date.value = new Date(txn.occurredAt);
+      date.value = parseUtcDateOnlyToLocalDate(txn.occurredAt) ?? new Date(txn.occurredAt);
       isMandatory.value = txn.isMandatory;
       ensureTransactionType();
       ensureCategorySelection();
@@ -153,11 +154,6 @@ const currencySymbol = computed(() => selectedAccount.value?.currency?.symbol ??
 const isAmountValid = computed(() => validators.isAmountValid(amount.value));
 const submitDisabled = computed(() => !transactionType.value || !isAmountValid.value || !selectedCategory.value || !selectedAccount.value);
 
-const toUtcIsoDate = (value: Date) => {
-  const date = new Date(value.getFullYear(), value.getMonth(), value.getDate());
-  return new Date(Date.UTC(date.getFullYear(), date.getMonth(), date.getDate())).toISOString();
-};
-
 // --- Submit handler ---
 const { isSubmitting, handleSubmit: handleFormSubmit, showWarning } = useFormModal(
   async () => {
@@ -169,7 +165,7 @@ const { isSubmitting, handleSubmit: handleFormSubmit, showWarning } = useFormMod
         accountId: selectedAccount.value!.id,
         categoryId: selectedCategory.value!.id,
         amount: amount.value!,
-        occurredAt: toUtcIsoDate(date.value),
+        occurredAt: toUtcDateOnlyIso(date.value),
         description: description.value ? description.value.trim() : null,
         isMandatory: isMandatory.value,
       };
@@ -182,7 +178,7 @@ const { isSubmitting, handleSubmit: handleFormSubmit, showWarning } = useFormMod
         accountId: selectedAccount.value!.id,
         categoryId: selectedCategory.value!.id,
         amount: amount.value!,
-        occurredAt: toUtcIsoDate(date.value),
+        occurredAt: toUtcDateOnlyIso(date.value),
         description: description.value ? description.value.trim() : null,
         isMandatory: isMandatory.value,
       };

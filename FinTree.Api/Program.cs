@@ -193,6 +193,8 @@ app.UseExceptionHandler(b =>
         {
             ValidationException => (StatusCodes.Status400BadRequest, "validation_error", null),
             DomainValidationException ex => (StatusCodes.Status400BadRequest, ex.Code, ex.Details),
+            ArgumentOutOfRangeException => (StatusCodes.Status400BadRequest, "invalid_argument", null),
+            ArgumentException => (StatusCodes.Status400BadRequest, "invalid_argument", null),
             InvalidOperationException => (StatusCodes.Status400BadRequest, "invalid_operation", null),
             UnauthorizedAccessException => (StatusCodes.Status401Unauthorized, "unauthorized", null),
             ForbiddenException ex => (StatusCodes.Status403Forbidden, ex.Code, ex.Details),

@@ -13,6 +13,7 @@ import type { Account, CreateTransferPayload, UpdateTransferPayload } from '../t
 import { VALIDATION_RULES } from '../constants';
 import { useFormModal } from '../composables/useFormModal';
 import { validators } from '../services/validation.service';
+import { parseUtcDateOnlyToLocalDate, toUtcDateOnlyIso } from '../utils/dateOnly';
 
 const store = useFinanceStore();
 const confirm = useConfirm();
@@ -55,7 +56,7 @@ const applyTransfer = (transfer: UpdateTransferPayload) => {
   toAmount.value = transfer.toAmount;
   feeAmount.value = transfer.feeAmount ?? null;
   description.value = transfer.description ?? '';
-  date.value = new Date(transfer.occurredAt);
+  date.value = parseUtcDateOnlyToLocalDate(transfer.occurredAt) ?? new Date(transfer.occurredAt);
 };
 
 watch(
@@ -180,11 +181,6 @@ const submitDisabled = computed(
   () => !isAccountsValid.value || !isFromAmountValid.value || !isToAmountValid.value || !isFeeValid.value
 );
 
-const toUtcIsoDate = (value: Date) => {
-  const dateValue = new Date(value.getFullYear(), value.getMonth(), value.getDate());
-  return new Date(Date.UTC(dateValue.getFullYear(), dateValue.getMonth(), dateValue.getDate())).toISOString();
-};
-
 const { isSubmitting, handleSubmit: submitTransfer, showWarning } = useFormModal(
   async () => {
     if (isEditMode.value && props.transfer) {
@@ -195,7 +191,7 @@ const { isSubmitting, handleSubmit: submitTransfer, showWarning } = useFormModal
         fromAmount: fromAmount.value!,
         toAmount: resolvedToAmount.value!,
         feeAmount: feeAmount.value ?? null,
-        occurredAt: toUtcIsoDate(date.value),
+        occurredAt: toUtcDateOnlyIso(date.value),
         description: description.value ? description.value.trim() : null,
       };
 
@@ -208,7 +204,7 @@ const { isSubmitting, handleSubmit: submitTransfer, showWarning } = useFormModal
       fromAmount: fromAmount.value!,
       toAmount: resolvedToAmount.value!,
       feeAmount: feeAmount.value ?? null,
-      occurredAt: toUtcIsoDate(date.value),
+      occurredAt: toUtcDateOnlyIso(date.value),
       description: description.value ? description.value.trim() : null,
     };
 

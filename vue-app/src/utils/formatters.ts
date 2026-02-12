@@ -34,9 +34,14 @@ export const formatDate = (dateString?: string): string => {
     if (Number.isNaN(date.getTime())) {
         return '—';
     }
+
+    const isUtcMidnight =
+        /^\d{4}-\d{2}-\d{2}T00:00:00(?:\.\d+)?(?:Z|\+00:00)$/i.test(dateString);
+
     return date.toLocaleDateString('ru-RU', {
         year: 'numeric',
         month: '2-digit',
         day: '2-digit',
+        ...(isUtcMidnight ? { timeZone: 'UTC' } : {}),
     });
 };

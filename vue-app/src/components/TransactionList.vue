@@ -9,7 +9,8 @@ import { PAGINATION_OPTIONS } from '../constants'
 import { useTransactionFilters } from '../composables/useTransactionFilters'
 import { useViewport } from '../composables/useViewport'
 import TransactionFilters from './TransactionFilters.vue'
-import { formatCurrency, formatDate } from '../utils/formatters'
+import { formatCurrency } from '../utils/formatters'
+import { formatUtcDateOnly, getUtcDateOnlyKey } from '../utils/dateOnly'
 import type { Transaction, UpdateTransferPayload } from '../types'
 import { TRANSACTION_TYPE } from '../types'
 
@@ -77,20 +78,11 @@ const buildRateLabel = (
 }
 
 const formatDateKey = (value?: string): string => {
-  if (!value) return 'unknown'
-  const date = new Date(value)
-  if (Number.isNaN(date.getTime())) return 'unknown'
-  const year = date.getFullYear()
-  const month = `${date.getMonth() + 1}`.padStart(2, '0')
-  const day = `${date.getDate()}`.padStart(2, '0')
-  return `${year}-${month}-${day}`
+  return getUtcDateOnlyKey(value)
 }
 
 const formatDateLabel = (value?: string): string => {
-  if (!value) return '—'
-  const date = new Date(value)
-  if (Number.isNaN(date.getTime())) return '—'
-  return date.toLocaleDateString('ru-RU', {
+  return formatUtcDateOnly(value, 'ru-RU', {
     day: '2-digit',
     month: 'long',
     year: 'numeric'
@@ -439,7 +431,7 @@ const handleRowClick = (event: { data: EnrichedTransaction }) => {
         >
           <template #body="slotProps">
             <div class="date-cell">
-              <span class="date-cell__main">{{ formatDate(slotProps.data.occurredAt) }}</span>
+              <span class="date-cell__main">{{ formatUtcDateOnly(slotProps.data.occurredAt) }}</span>
             </div>
           </template>
         </Column>
