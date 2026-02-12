@@ -32,7 +32,6 @@
 - Local development stack is standalone in `compose.dev.yaml` (no nginx/certbot).
 - Local run command: `docker compose -f compose.dev.yaml up -d`.
 - Production run command: `docker compose -f compose.yaml up -d`.
-- Required variables are documented in `.env.example`; real values must stay outside git.
 - Auth environment variables must include:
   - `AUTH_JWT_SECRET_KEY`
   - `AUTH_ISSUER`
