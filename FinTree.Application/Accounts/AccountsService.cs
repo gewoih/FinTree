@@ -14,6 +14,8 @@ public sealed class AccountsService(
     ICurrentUser currentUser,
     CurrencyConverter currencyConverter)
 {
+    private static readonly TimeSpan OpeningBalanceDetectionWindow = TimeSpan.FromSeconds(5);
+    private static readonly DateTime OpeningBalanceAnchorUtc = DateTime.UnixEpoch;
     private readonly record struct CashFlowEvent(DateTime OccurredAt, decimal Amount);
     private readonly record struct BalanceAdjustmentEvent(DateTime OccurredAt, decimal Amount);
 
@@ -29,8 +31,11 @@ public sealed class AccountsService(
         var accounts = await context.Accounts
             .AsNoTracking()
             .Where(a => a.UserId == currentUserId)
-            .Select(a => new { a.Id, a.CurrencyCode, a.Name, a.Type, a.IsLiquid })
+            .Select(a => new { a.Id, a.CurrencyCode, a.Name, a.Type, a.IsLiquid, a.CreatedAt })
             .ToListAsync(ct);
+
+        var accountCreatedAtById = accounts
+            .ToDictionary(a => a.Id, a => NormalizeUtc(a.CreatedAt.UtcDateTime));
 
         var latestAdjustments = await context.AccountBalanceAdjustments
             .AsNoTracking()
@@ -42,7 +47,13 @@ public sealed class AccountsService(
             .GroupBy(a => a.AccountId)
             .ToDictionary(
                 g => g.Key,
-                g => g.OrderByDescending(x => x.OccurredAt).First());
+                g =>
+                {
+                    var timeline = BuildAdjustmentTimeline(
+                        g.Select(a => (a.OccurredAt, a.Amount)),
+                        accountCreatedAtById[g.Key]);
+                    return timeline[^1];
+                });
 
         var transactions = await context.Transactions
             .AsNoTracking()
@@ -63,7 +74,7 @@ public sealed class AccountsService(
                 g => g.Select(t => new
                 {
                     Delta = t.Type == TransactionType.Income ? t.Money.Amount : -t.Money.Amount,
-                    t.OccurredAt
+                    OccurredAt = NormalizeUtc(t.OccurredAt)
                 }).ToList());
 
         var rateByCurrency = new Dictionary<string, decimal>(StringComparer.OrdinalIgnoreCase);
@@ -142,7 +153,7 @@ public sealed class AccountsService(
             .AsNoTracking()
             .Where(a => a.UserId == currentUserId &&
                         (a.Type == AccountType.Brokerage || a.Type == AccountType.Crypto || a.Type == AccountType.Deposit))
-            .Select(a => new { a.Id, a.Name, a.CurrencyCode, a.Type, a.IsLiquid })
+            .Select(a => new { a.Id, a.Name, a.CurrencyCode, a.Type, a.IsLiquid, a.CreatedAt })
             .ToListAsync(ct);
 
         if (accounts.Count == 0)
@@ -157,12 +168,20 @@ public sealed class AccountsService(
         }
 
         var accountIds = accounts.Select(a => a.Id).ToList();
+        var accountCreatedAtById = accounts
+            .ToDictionary(a => a.Id, a => NormalizeUtc(a.CreatedAt.UtcDateTime));
 
         var adjustments = await context.AccountBalanceAdjustments
             .AsNoTracking()
             .Where(a => accountIds.Contains(a.AccountId))
             .Select(a => new { a.AccountId, a.Amount, a.OccurredAt })
             .ToListAsync(ct);
+
+        var latestAdjustmentAtByAccount = adjustments
+            .GroupBy(a => a.AccountId)
+            .ToDictionary(
+                g => g.Key,
+                g => g.Select(a => NormalizeUtc(a.OccurredAt)).Max());
 
         var transactions = await context.Transactions
             .AsNoTracking()
@@ -174,9 +193,9 @@ public sealed class AccountsService(
             .GroupBy(a => a.AccountId)
             .ToDictionary(
                 g => g.Key,
-                g => g.Select(a => new BalanceAdjustmentEvent(NormalizeUtc(a.OccurredAt), a.Amount))
-                    .OrderBy(x => x.OccurredAt)
-                    .ToList());
+                g => BuildAdjustmentTimeline(
+                    g.Select(a => (a.OccurredAt, a.Amount)),
+                    accountCreatedAtById[g.Key]));
 
         var cashFlowsByAccount = transactions
             .GroupBy(t => t.AccountId)
@@ -223,7 +242,7 @@ public sealed class AccountsService(
             accountAdjustments ??= [];
             accountCashFlows ??= [];
 
-            var lastAdjustmentAt = accountAdjustments.LastOrDefault().OccurredAt;
+            var hasLatestAdjustment = latestAdjustmentAtByAccount.TryGetValue(account.Id, out var latestAdjustmentAt);
 
             var startBalance = ComputeBalanceAt(periodFrom, accountAdjustments, accountCashFlows);
             var endBalance = ComputeBalanceAt(periodToExclusive, accountAdjustments, accountCashFlows);
@@ -278,7 +297,7 @@ public sealed class AccountsService(
                 account.IsLiquid,
                 roundedBalance,
                 balanceInBase,
-                lastAdjustmentAt == default ? null : lastAdjustmentAt,
+                hasLatestAdjustment ? latestAdjustmentAt : null,
                 returnPercent));
 
             totalValueInBase += balanceInBase;
@@ -315,7 +334,8 @@ public sealed class AccountsService(
         var account = user.AddAccount(command.CurrencyCode, command.Type, command.Name, command.IsLiquid);
         if (command.InitialBalance != 0m)
         {
-            var adjustment = new AccountBalanceAdjustment(account, command.InitialBalance, DateTime.UtcNow);
+            var adjustmentOccurredAt = NormalizeUtc(account.CreatedAt.UtcDateTime);
+            var adjustment = new AccountBalanceAdjustment(account, command.InitialBalance, adjustmentOccurredAt);
             await context.AccountBalanceAdjustments.AddAsync(adjustment, ct);
         }
         await context.SaveChangesAsync(ct);
@@ -447,6 +467,27 @@ public sealed class AccountsService(
             return DateTime.SpecifyKind(value, DateTimeKind.Utc);
         return value.ToUniversalTime();
     }
+
+    private static List<BalanceAdjustmentEvent> BuildAdjustmentTimeline(
+        IEnumerable<(DateTime OccurredAt, decimal Amount)> rawAdjustments,
+        DateTime accountCreatedAtUtc)
+    {
+        var timeline = rawAdjustments
+            .Select(a => new BalanceAdjustmentEvent(NormalizeUtc(a.OccurredAt), a.Amount))
+            .OrderBy(a => a.OccurredAt)
+            .ToList();
+
+        if (timeline.Count == 1 && IsOpeningBalanceAnchor(accountCreatedAtUtc, timeline[0].OccurredAt))
+        {
+            var opening = timeline[0];
+            timeline[0] = new BalanceAdjustmentEvent(OpeningBalanceAnchorUtc, opening.Amount);
+        }
+
+        return timeline;
+    }
+
+    private static bool IsOpeningBalanceAnchor(DateTime accountCreatedAtUtc, DateTime adjustmentOccurredAtUtc)
+        => (adjustmentOccurredAtUtc - accountCreatedAtUtc).Duration() <= OpeningBalanceDetectionWindow;
 
     private static (DateTime From, DateTime To, DateTime ToExclusive) NormalizePeriod(DateTime? from, DateTime? to)
     {

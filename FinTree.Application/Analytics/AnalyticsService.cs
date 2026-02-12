@@ -16,6 +16,8 @@ public sealed class AnalyticsService(
     UserService userService,
     AccountsService accountsService)
 {
+    private static readonly TimeSpan OpeningBalanceDetectionWindow = TimeSpan.FromSeconds(5);
+    private static readonly DateTime OpeningBalanceAnchorUtc = DateTime.UnixEpoch;
     private readonly record struct CategoryMeta(string Name, string Color, bool IsMandatory);
 
     public async Task<AnalyticsDashboardDto> GetDashboardAsync(int year, int month, CancellationToken ct = default)
@@ -184,13 +186,16 @@ public sealed class AnalyticsService(
         var accounts = await context.Accounts
             .AsNoTracking()
             .Where(a => a.UserId == currentUserId)
-            .Select(a => new { a.Id, a.CurrencyCode })
+            .Select(a => new { a.Id, a.CurrencyCode, a.CreatedAt })
             .ToListAsync(ct);
 
         if (accounts.Count == 0)
         {
             return BuildEmptyNetWorth(months);
         }
+
+        var accountCreatedAtById = accounts
+            .ToDictionary(a => a.Id, a => NormalizeUtc(a.CreatedAt.UtcDateTime));
 
         var nowUtc = DateTime.UtcNow;
         var startMonthUtc = new DateTime(nowUtc.Year, nowUtc.Month, 1, 0, 0, 0, DateTimeKind.Utc)
@@ -218,23 +223,37 @@ public sealed class AnalyticsService(
         {
             ct.ThrowIfCancellationRequested();
 
-            var occurredUtc = txn.OccurredAt.Kind == DateTimeKind.Unspecified
-                ? DateTime.SpecifyKind(txn.OccurredAt, DateTimeKind.Utc)
-                : txn.OccurredAt.ToUniversalTime();
+            var occurredUtc = NormalizeUtc(txn.OccurredAt);
 
             var delta = txn.Type == TransactionType.Income ? txn.Money.Amount : -txn.Money.Amount;
             eventsByAccount[txn.AccountId].Add(new BalanceEvent(occurredUtc, delta, false));
         }
 
-        foreach (var adjustment in rawAdjustments)
+        var adjustmentsByAccount = rawAdjustments
+            .GroupBy(a => a.AccountId)
+            .ToDictionary(
+                g => g.Key,
+                g =>
+                {
+                    var events = g
+                        .Select(a => new BalanceEvent(NormalizeUtc(a.OccurredAt), a.Amount, true))
+                        .OrderBy(a => a.OccurredAt)
+                        .ToList();
+
+                    if (events.Count == 1 &&
+                        IsOpeningBalanceAnchor(accountCreatedAtById[g.Key], events[0].OccurredAt))
+                    {
+                        var opening = events[0];
+                        events[0] = new BalanceEvent(OpeningBalanceAnchorUtc, opening.Amount, true);
+                    }
+
+                    return events;
+                });
+
+        foreach (var adjustmentGroup in adjustmentsByAccount)
         {
             ct.ThrowIfCancellationRequested();
-
-            var occurredUtc = adjustment.OccurredAt.Kind == DateTimeKind.Unspecified
-                ? DateTime.SpecifyKind(adjustment.OccurredAt, DateTimeKind.Utc)
-                : adjustment.OccurredAt.ToUniversalTime();
-
-            eventsByAccount[adjustment.AccountId].Add(new BalanceEvent(occurredUtc, adjustment.Amount, true));
+            eventsByAccount[adjustmentGroup.Key].AddRange(adjustmentGroup.Value);
         }
 
         foreach (var list in eventsByAccount.Values)
@@ -322,6 +341,16 @@ public sealed class AnalyticsService(
 
     private static decimal ApplyBalanceEvent(decimal currentBalance, BalanceEvent balanceEvent)
         => balanceEvent.IsAdjustment ? balanceEvent.Amount : currentBalance + balanceEvent.Amount;
+
+    private static DateTime NormalizeUtc(DateTime value)
+    {
+        if (value.Kind == DateTimeKind.Unspecified)
+            return DateTime.SpecifyKind(value, DateTimeKind.Utc);
+        return value.ToUniversalTime();
+    }
+
+    private static bool IsOpeningBalanceAnchor(DateTime accountCreatedAtUtc, DateTime adjustmentOccurredAtUtc)
+        => (adjustmentOccurredAtUtc - accountCreatedAtUtc).Duration() <= OpeningBalanceDetectionWindow;
 
     private static List<NetWorthSnapshotDto> BuildEmptyNetWorth(int months)
     {
