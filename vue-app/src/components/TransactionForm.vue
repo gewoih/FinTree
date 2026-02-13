@@ -96,15 +96,32 @@ const ensureCategorySelection = () => {
   }
 };
 
+const syncMandatoryWithCategory = () => {
+  if (isEditMode.value) return;
+
+  if (transactionType.value === TRANSACTION_TYPE.Income) {
+    isMandatory.value = false;
+    return;
+  }
+
+  isMandatory.value = selectedCategory.value?.isMandatory ?? false;
+};
+
 // When transaction type changes, reset category to first available in new type
 watch(transactionType, (newType) => {
   if (!isEditMode.value) {
     ensureCategorySelection();
+    syncMandatoryWithCategory();
+    return;
   }
 
   if (newType === TRANSACTION_TYPE.Income) {
     isMandatory.value = false;
   }
+});
+
+watch(selectedCategory, () => {
+  syncMandatoryWithCategory();
 });
 
 // Initialise defaults when the modal opens
@@ -134,6 +151,7 @@ watch(() => props.visible, (newVal) => {
       isMandatory.value = false;
       ensureTransactionType();
       ensureCategorySelection();
+      syncMandatoryWithCategory();
     }
   }
 });
@@ -226,6 +244,7 @@ const submitTransaction = async (addAnother = false) => {
       selectedAccount.value = keepAccount;
       selectedCategory.value = keepCategory;
       transactionType.value = keepType;
+      syncMandatoryWithCategory();
     } else {
       emit('update:visible', false);
     }
@@ -272,6 +291,7 @@ const handleFormSubmitEvent = async (event?: SubmitEvent) => {
 onMounted(() => {
   ensureTransactionType();
   ensureCategorySelection();
+  syncMandatoryWithCategory();
 });
 
 watch(
@@ -279,12 +299,14 @@ watch(
   () => {
     ensureTransactionType();
     ensureCategorySelection();
+    syncMandatoryWithCategory();
   },
   { immediate: true }
 );
 
 watch(filteredCategories, () => {
   ensureCategorySelection();
+  syncMandatoryWithCategory();
 });
 </script>
 

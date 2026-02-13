@@ -32,15 +32,24 @@ const showEmpty = computed(
     props.decreased.length === 0
 );
 
-const maxDelta = computed(() => {
-  const all = [...props.increased, ...props.decreased];
-  if (!all.length) return 1;
-  return Math.max(...all.map(i => Math.abs(i.deltaAmount)), 1);
-});
+const getMaxDelta = (items: CategoryDeltaItem[]) => {
+  if (!items.length) return 1;
+  return Math.max(...items.map(item => Math.abs(item.deltaAmount)), 1);
+};
 
-const barWidth = (item: CategoryDeltaItem) => {
-  const pct = (Math.abs(item.deltaAmount) / maxDelta.value) * 100;
-  return `${Math.max(pct, 4)}%`;
+const maxIncreaseDelta = computed(() => getMaxDelta(props.increased));
+const maxDecreaseDelta = computed(() => getMaxDelta(props.decreased));
+
+const clampBarPercent = (value: number) => Math.max(4, Math.min(value, 100));
+
+const barWidth = (item: CategoryDeltaItem, direction: 'up' | 'down') => {
+  if (item.deltaPercent != null && Number.isFinite(item.deltaPercent)) {
+    return `${clampBarPercent(Math.abs(item.deltaPercent))}%`;
+  }
+
+  const maxDelta = direction === 'up' ? maxIncreaseDelta.value : maxDecreaseDelta.value;
+  const amountPercent = (Math.abs(item.deltaAmount) / maxDelta) * 100;
+  return `${clampBarPercent(amountPercent)}%`;
 };
 
 const formatMoney = (value: number) =>
@@ -164,7 +173,7 @@ const formatPercent = (value: number | null) =>
             <div class="delta-item__bar-track">
               <div
                 class="delta-item__bar delta-item__bar--up"
-                :style="{ width: barWidth(item) }"
+                :style="{ width: barWidth(item, 'up') }"
               />
             </div>
           </div>
@@ -202,7 +211,7 @@ const formatPercent = (value: number | null) =>
             <div class="delta-item__bar-track">
               <div
                 class="delta-item__bar delta-item__bar--down"
-                :style="{ width: barWidth(item) }"
+                :style="{ width: barWidth(item, 'down') }"
               />
             </div>
           </div>
