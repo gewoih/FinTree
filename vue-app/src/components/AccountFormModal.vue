@@ -24,13 +24,16 @@ const emit = defineEmits<{
 }>()
 
 const store = useFinanceStore()
+const DEFAULT_ACCOUNT_TYPE: AccountType = 0
+
+const resolveSelectedType = (): AccountType => props.allowedTypes[0] ?? DEFAULT_ACCOUNT_TYPE
 
 const name = ref('')
 const selectedCurrencyCode = ref<string | null>(null)
 const attemptedSubmit = ref(false)
 const initialBalance = ref<number | null>(null)
 const isLiquid = ref(true)
-const selectedType = ref<AccountType>(props.allowedTypes[0])
+const selectedType = ref<AccountType>(resolveSelectedType())
 
 const hasMultipleTypes = computed(() => props.allowedTypes.length > 1)
 
@@ -113,7 +116,7 @@ function resetForm() {
 
   name.value = ''
   isLiquid.value = true
-  selectedType.value = props.allowedTypes[0]
+  selectedType.value = resolveSelectedType()
   setDefaultCurrency()
 }
 
