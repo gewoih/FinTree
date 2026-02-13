@@ -27,6 +27,7 @@ const toast = useToast();
 const props = defineProps<{
   visible: boolean;
   transaction?: Transaction | null;
+  readonly?: boolean;
 }>();
 
 const emit = defineEmits<{
@@ -193,6 +194,11 @@ const { isSubmitting, handleSubmit: handleFormSubmit, showWarning } = useFormMod
 );
 
 const submitTransaction = async (addAnother = false) => {
+  if (props.readonly) {
+    showWarning('Редактирование недоступно в режиме просмотра.');
+    return;
+  }
+
   if (!transactionType.value || !isAmountValid.value || !selectedAccount.value || !selectedCategory.value) {
     showWarning('Выберите тип, счет, категорию и сумму перед сохранением.');
     return;
@@ -227,6 +233,7 @@ const submitTransaction = async (addAnother = false) => {
 };
 
 const handleDelete = () => {
+  if (props.readonly) return;
   if (!props.transaction) return;
 
   confirm.require({
@@ -324,6 +331,7 @@ watch(filteredCategories, () => {
             option-label="label"
             option-value="value"
             :allow-empty="false"
+            :disabled="props.readonly"
             class="w-full"
           />
         </div>
@@ -342,6 +350,7 @@ watch(filteredCategories, () => {
               autofocus
               placeholder="0.00"
               required
+              :disabled="props.readonly"
               :class="{ 'p-invalid': !isAmountValid }"
             />
             <span class="currency-chip">{{ currencySymbol || currencyCode }}</span>
@@ -364,6 +373,7 @@ watch(filteredCategories, () => {
             option-label="name"
             placeholder="Выберите категорию"
             required
+            :disabled="props.readonly"
             class="w-full"
           >
             <template #option="slotProps">
@@ -387,6 +397,7 @@ watch(filteredCategories, () => {
             option-label="name"
             placeholder="Выберите счет"
             required
+            :disabled="props.readonly"
             class="w-full"
           >
             <template #option="slotProps">
@@ -412,6 +423,7 @@ watch(filteredCategories, () => {
             date-format="dd.mm.yy"
             :show-icon="true"
             required
+            :disabled="props.readonly"
             class="w-full"
           />
         </div>
@@ -428,6 +440,7 @@ watch(filteredCategories, () => {
               id="isMandatory"
               v-model="isMandatory"
               binary
+              :disabled="props.readonly"
             />
             <span>Обязательный расход</span>
           </label>
@@ -440,6 +453,7 @@ watch(filteredCategories, () => {
             id="description"
             v-model="description"
             :placeholder="isIncome ? 'Например: зарплата' : 'Например: утренний кофе'"
+            :disabled="props.readonly"
             class="w-full"
           />
         </div>
@@ -455,7 +469,7 @@ watch(filteredCategories, () => {
             severity="danger"
             outlined
             :loading="isDeleting"
-            :disabled="isSubmitting"
+            :disabled="props.readonly || isSubmitting"
             @click="handleDelete"
           />
           <Button
@@ -475,7 +489,7 @@ watch(filteredCategories, () => {
             label="Сохранить и добавить еще"
             icon="pi pi-plus"
             severity="secondary"
-            :disabled="submitDisabled"
+            :disabled="props.readonly || submitDisabled"
             :loading="isSubmitting"
             @click="submitTransaction(true)"
           />
@@ -483,7 +497,7 @@ watch(filteredCategories, () => {
             type="submit"
             :label="isEditMode ? 'Обновить' : 'Сохранить'"
             icon="pi pi-check"
-            :disabled="submitDisabled || isDeleting"
+            :disabled="props.readonly || submitDisabled || isDeleting"
             :loading="isSubmitting"
           />
         </div>

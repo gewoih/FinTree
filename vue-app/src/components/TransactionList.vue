@@ -42,6 +42,12 @@ interface EnrichedTransaction extends Transaction {
   transferRateLabel?: string
 }
 
+const props = withDefaults(defineProps<{
+  readonly?: boolean
+}>(), {
+  readonly: false
+})
+
 const emit = defineEmits<{
   (e: 'add-transaction'): void
   (e: 'edit-transaction', transaction: Transaction): void
@@ -404,6 +410,7 @@ const handlePage = (event: { page: number; rows: number }) => {
 }
 
 const handleRowClick = (event: { data: EnrichedTransaction }) => {
+  if (props.readonly) return
   if (event.data.isTransferSummary) {
     if (!event.data.transferFromAccountId || !event.data.transferToAccountId) {
       return
@@ -426,7 +433,10 @@ const handleRowClick = (event: { data: EnrichedTransaction }) => {
 </script>
 
 <template>
-  <div class="transaction-history">
+  <div
+    class="transaction-history"
+    :class="{ 'transaction-history--readonly': props.readonly }"
+  >
     <UiCard
       class="transaction-history__filters"
       variant="muted"
@@ -459,7 +469,7 @@ const handleRowClick = (event: { data: EnrichedTransaction }) => {
       icon="pi-database"
       title="Транзакции не найдены"
       description="Измените фильтры или добавьте первую транзакцию, чтобы увидеть активность."
-      action-label="Добавить транзакцию"
+      :action-label="props.readonly ? '' : 'Добавить транзакцию'"
       action-icon="pi pi-plus"
       @action="emit('add-transaction')"
     />
@@ -813,6 +823,10 @@ const handleRowClick = (event: { data: EnrichedTransaction }) => {
 
 :deep(.transaction-history__datatable .p-datatable-tbody > tr) {
   cursor: pointer;
+}
+
+.transaction-history--readonly :deep(.transaction-history__datatable .p-datatable-tbody > tr) {
+  cursor: default;
 }
 
 

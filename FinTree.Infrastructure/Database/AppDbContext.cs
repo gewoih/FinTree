@@ -4,6 +4,7 @@ using FinTree.Domain.Base;
 using FinTree.Domain.Categories;
 using FinTree.Domain.Currencies;
 using FinTree.Domain.Identity;
+using FinTree.Domain.Subscriptions;
 using FinTree.Domain.Transactions;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
@@ -16,6 +17,7 @@ public sealed class AppDbContext(DbContextOptions<AppDbContext> options) : Ident
 {
     public DbSet<User> Users => Set<User>();
     public DbSet<RefreshToken> RefreshTokens => Set<RefreshToken>();
+    public DbSet<SubscriptionPayment> SubscriptionPayments => Set<SubscriptionPayment>();
     public DbSet<TransactionCategory> TransactionCategories => Set<TransactionCategory>();
     public DbSet<Account> Accounts => Set<Account>();
     public DbSet<AccountBalanceAdjustment> AccountBalanceAdjustments => Set<AccountBalanceAdjustment>();
@@ -34,6 +36,7 @@ public sealed class AppDbContext(DbContextOptions<AppDbContext> options) : Ident
 
         ConfigureFxUsdRates(modelBuilder);
         ConfigureRefreshTokens(modelBuilder);
+        ConfigureSubscriptionPayments(modelBuilder);
         ConfigureUsers(modelBuilder);
         ApplySoftDeleteQueryFilters(modelBuilder);
     }
@@ -54,6 +57,29 @@ public sealed class AppDbContext(DbContextOptions<AppDbContext> options) : Ident
             entity.Property(x => x.TokenHash).HasMaxLength(64);
             entity.HasIndex(x => x.TokenHash).IsUnique();
             entity.HasIndex(x => new { x.UserId, x.ExpiresAt });
+        });
+    }
+
+    private static void ConfigureSubscriptionPayments(ModelBuilder modelBuilder)
+    {
+        modelBuilder.Entity<SubscriptionPayment>(entity =>
+        {
+            entity.Property(x => x.Provider).HasMaxLength(50);
+            entity.Property(x => x.ExternalPaymentId).HasMaxLength(120);
+            entity.Property(x => x.MetadataJson).HasMaxLength(4000);
+            entity.Property(x => x.ListedPriceRub).HasPrecision(18, 2);
+            entity.Property(x => x.ChargedPriceRub).HasPrecision(18, 2);
+
+            entity.HasIndex(x => new { x.UserId, x.PaidAtUtc });
+            entity.HasIndex(x => new { x.UserId, x.Status });
+            entity.HasIndex(x => x.ExternalPaymentId)
+                .IsUnique()
+                .HasFilter("\"ExternalPaymentId\" IS NOT NULL");
+
+            entity.HasOne(x => x.User)
+                .WithMany(u => u.SubscriptionPayments)
+                .HasForeignKey(x => x.UserId)
+                .OnDelete(DeleteBehavior.Restrict);
         });
     }
 

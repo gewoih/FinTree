@@ -299,6 +299,35 @@ export interface CurrentUserDto {
     email: string | null;
     telegramUserId: number | null;
     baseCurrencyCode: string;
+    subscription: SubscriptionInfoDto;
+}
+
+export interface SubscriptionInfoDto {
+    isActive: boolean;
+    isReadOnlyMode: boolean;
+    expiresAtUtc: string | null;
+    monthPriceRub: number;
+    yearPriceRub: number;
+}
+
+export type SubscriptionPlan = 'Month' | 'Year';
+
+export type SubscriptionPaymentStatus = 'Succeeded' | 'Failed' | 'Refunded' | 'Canceled';
+
+export interface SubscriptionPaymentDto {
+    id: string;
+    plan: SubscriptionPlan;
+    status: SubscriptionPaymentStatus;
+    listedPriceRub: number;
+    chargedPriceRub: number;
+    billingPeriodMonths: number;
+    grantedMonths: number;
+    isSimulation: boolean;
+    paidAtUtc: string;
+    subscriptionStartsAtUtc: string;
+    subscriptionEndsAtUtc: string;
+    provider: string | null;
+    externalPaymentId: string | null;
 }
 
 export interface UpdateUserProfilePayload {

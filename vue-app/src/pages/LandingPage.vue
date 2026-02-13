@@ -47,17 +47,30 @@ const steps = [
 
 const pricing = [
   {
-    name: 'Единый тариф',
-    price: '1 месяц бесплатно',
-    subprice: 'Далее 390 ₽/мес или 3 900 ₽/год (2 месяца в подарок)',
-    accent: true,
-    description: 'Полный доступ к FinTree без ограничений.',
+    name: 'Подписка на месяц',
+    price: '390 ₽',
+    subprice: 'Новые пользователи получают 1 месяц бесплатно',
+    accent: false,
+    description: 'Полный доступ к FinTree на 30 дней.',
     features: [
       'Telegram-бот для учёта расходов',
       'Полная аналитика бюджета и капитала',
       'Счета, категории и инвестиции'
     ],
-    ctaLabel: 'Начать бесплатный месяц'
+    ctaLabel: 'Попробовать'
+  },
+  {
+    name: 'Подписка на год',
+    price: '3 900 ₽',
+    subprice: 'Эквивалент 10 месяцев',
+    accent: true,
+    description: 'Полный доступ к FinTree на 12 месяцев.',
+    features: [
+      'Telegram-бот для учёта расходов',
+      'Полная аналитика бюджета и капитала',
+      'Счета, категории и инвестиции'
+    ],
+    ctaLabel: 'Начать сейчас'
   }
 ] as const
 
@@ -304,7 +317,7 @@ const scrollToSection = (sectionId: string) => {
         <div class="landing__container">
           <header class="landing__section-header">
             <h2>Прозрачная подписка</h2>
-            <p>Один тариф, один месяц бесплатно и полный доступ ко всем возможностям.</p>
+            <p>Два тарифа, полный доступ без ограничений и бесплатный месяц для новых пользователей.</p>
           </header>
 
           <div class="card-grid landing__pricing">

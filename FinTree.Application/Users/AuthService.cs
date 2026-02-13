@@ -27,6 +27,7 @@ public sealed class AuthService(
     public async Task<AuthResponse> RegisterAsync(RegisterRequest request, CancellationToken ct)
     {
         var user = new User(request.Email, request.Email, "RUB");
+        user.GrantTrialSubscription(DateTime.UtcNow);
         await using var transaction = await context.BeginTransactionAsync(ct);
 
         var result = await userManager.CreateAsync(user, request.Password);
@@ -75,6 +76,7 @@ public sealed class AuthService(
 
         var newUser = new User(username, email, "RUB");
         newUser.LinkTelegramAccount(request.Id);
+        newUser.GrantTrialSubscription(DateTime.UtcNow);
 
         await using var transaction = await context.BeginTransactionAsync(ct);
         var result = await userManager.CreateAsync(newUser);

@@ -30,6 +30,11 @@ FinTree helps people control personal finances without complex tooling: fast tra
 - Deleted entities must not participate in user-facing behavior.
 - Accounts support archive/unarchive: archived accounts are hidden from active operational flows, unavailable for new operations, and can be restored.
 - Account archiving must preserve historical transactions and analytics continuity.
+- New users receive a 1-month free subscription trial.
+- If subscription is inactive, product behavior is read-only: viewing is allowed, any write operation must be blocked (web and Telegram).
+- Active subscription provides full product access without feature restrictions.
+- Subscription catalog baseline: month `390 RUB`, year `3900 RUB`.
+- Subscription payment history is append-only and stored for all users for future analytics.
 
 ## Confirmed IA/navigation decisions
 - Default authenticated page is `/analytics`.

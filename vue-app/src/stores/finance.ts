@@ -1,6 +1,7 @@
 import { defineStore } from 'pinia';
 import { computed, ref, watch } from 'vue';
 import { apiService } from '../services/api.service.ts';
+import { useUserStore } from './user';
 import type {
     Account,
     AccountFormPayload,
@@ -25,6 +26,7 @@ import {
 } from '../utils/mappers';
 
 export const useFinanceStore = defineStore('finance', () => {
+    const userStore = useUserStore();
     const accounts = ref<Account[]>([]);
     const archivedAccounts = ref<Account[]>([]);
     const categories = ref<Category[]>([]);
@@ -58,6 +60,13 @@ export const useFinanceStore = defineStore('finance', () => {
      * Computed primary/main account for the user
      */
     const primaryAccount = computed(() => accounts.value.find(a => a.isMain) ?? null);
+    const isReadOnlyMode = computed(() => userStore.currentUser?.subscription?.isReadOnlyMode ?? false);
+
+    function ensureWritableMode(): boolean {
+        if (!isReadOnlyMode.value) return true;
+        console.warn('Операция записи заблокирована: подписка неактивна.');
+        return false;
+    }
 
     /**
      * Watch for currency updates and re-enrich accounts with currency data
@@ -233,6 +242,7 @@ export const useFinanceStore = defineStore('finance', () => {
      * @returns Success status
      */
     async function addTransaction(payload: NewTransactionPayload) {
+        if (!ensureWritableMode()) return false;
         try {
             await apiService.createTransaction(payload);
             await refetchCurrentTransactions();
@@ -249,6 +259,7 @@ export const useFinanceStore = defineStore('finance', () => {
      * @returns Success status
      */
     async function createTransfer(payload: CreateTransferPayload) {
+        if (!ensureWritableMode()) return false;
         try {
             await apiService.createTransfer(payload);
             await refetchCurrentTransactions();
@@ -260,6 +271,7 @@ export const useFinanceStore = defineStore('finance', () => {
     }
 
     async function updateTransfer(payload: UpdateTransferPayload) {
+        if (!ensureWritableMode()) return false;
         try {
             await apiService.updateTransfer(payload);
             await refetchCurrentTransactions();
@@ -276,6 +288,7 @@ export const useFinanceStore = defineStore('finance', () => {
      * @returns Success status
      */
     async function updateTransaction(payload: UpdateTransactionPayload) {
+        if (!ensureWritableMode()) return false;
         try {
             await apiService.updateTransaction(payload);
             await refetchCurrentTransactions();
@@ -292,6 +305,7 @@ export const useFinanceStore = defineStore('finance', () => {
      * @returns Success status
      */
     async function deleteTransaction(id: string) {
+        if (!ensureWritableMode()) return false;
         try {
             await apiService.deleteTransaction(id);
             await refetchCurrentTransactions();
@@ -303,6 +317,7 @@ export const useFinanceStore = defineStore('finance', () => {
     }
 
     async function deleteTransfer(transferId: string) {
+        if (!ensureWritableMode()) return false;
         try {
             await apiService.deleteTransfer(transferId);
             await refetchCurrentTransactions();
@@ -319,6 +334,7 @@ export const useFinanceStore = defineStore('finance', () => {
      * @returns Success status
      */
     async function createAccount(payload: AccountFormPayload) {
+        if (!ensureWritableMode()) return false;
         try {
             await apiService.createAccount({
                 currencyCode: payload.currencyCode,
@@ -342,6 +358,7 @@ export const useFinanceStore = defineStore('finance', () => {
      * @returns Success status
      */
     async function updateAccount(payload: UpdateAccountPayload) {
+        if (!ensureWritableMode()) return false;
         try {
             await apiService.updateAccount(payload);
             await fetchAccounts(true);
@@ -354,6 +371,7 @@ export const useFinanceStore = defineStore('finance', () => {
     }
 
     async function updateAccountLiquidity(accountId: string, isLiquid: boolean) {
+        if (!ensureWritableMode()) return false;
         const previous = accounts.value.find(acc => acc.id === accountId)?.isLiquid;
         accounts.value = accounts.value.map(acc => (
             acc.id === accountId ? { ...acc, isLiquid } : acc
@@ -377,6 +395,7 @@ export const useFinanceStore = defineStore('finance', () => {
      * @returns Success status
      */
     async function setPrimaryAccount(accountId: string) {
+        if (!ensureWritableMode()) return false;
         try {
             await apiService.setPrimaryAccount(accountId);
             accounts.value = accounts.value.map(acc => ({
@@ -397,6 +416,7 @@ export const useFinanceStore = defineStore('finance', () => {
     }
 
     async function archiveAccount(accountId: string) {
+        if (!ensureWritableMode()) return false;
         try {
             await apiService.archiveAccount(accountId);
             await Promise.all([fetchAccounts(true), fetchArchivedAccounts(true)]);
@@ -417,6 +437,7 @@ export const useFinanceStore = defineStore('finance', () => {
     }
 
     async function unarchiveAccount(accountId: string) {
+        if (!ensureWritableMode()) return false;
         try {
             await apiService.unarchiveAccount(accountId);
             await Promise.all([fetchAccounts(true), fetchArchivedAccounts(true)]);
@@ -428,6 +449,7 @@ export const useFinanceStore = defineStore('finance', () => {
     }
 
     async function deleteAccount(accountId: string) {
+        if (!ensureWritableMode()) return false;
         try {
             await apiService.deleteAccount(accountId);
             await Promise.all([fetchAccounts(true), fetchArchivedAccounts(true)]);
@@ -451,6 +473,7 @@ export const useFinanceStore = defineStore('finance', () => {
      * @returns Success status
      */
     async function createCategory(payload: CategoryFormPayload) {
+        if (!ensureWritableMode()) return false;
         try {
             await apiService.createCategory({
                 name: payload.name,
@@ -474,6 +497,7 @@ export const useFinanceStore = defineStore('finance', () => {
      * @returns Success status
      */
     async function updateCategory(payload: CategoryFormPayload & { id: string }) {
+        if (!ensureWritableMode()) return false;
         try {
             await apiService.updateCategory({
                 id: payload.id,
@@ -497,6 +521,7 @@ export const useFinanceStore = defineStore('finance', () => {
      * @returns Success status
      */
     async function deleteCategory(categoryId: string) {
+        if (!ensureWritableMode()) return false;
         try {
             await apiService.deleteCategory(categoryId);
             await fetchCategories(true);

@@ -22,6 +22,7 @@ const toast = useToast();
 const props = defineProps<{
   visible: boolean;
   transfer?: UpdateTransferPayload | null;
+  readonly?: boolean;
 }>();
 
 const emit = defineEmits<{
@@ -217,6 +218,11 @@ const { isSubmitting, handleSubmit: submitTransfer, showWarning } = useFormModal
 );
 
 const handleSubmit = async () => {
+  if (props.readonly) {
+    showWarning('Редактирование недоступно в режиме просмотра.');
+    return;
+  }
+
   if (!isAccountsValid.value) {
     showWarning('Выберите разные счета для перевода.');
     return;
@@ -237,6 +243,7 @@ const handleSubmit = async () => {
 };
 
 const handleDelete = () => {
+  if (props.readonly) return;
   if (!props.transfer) return;
 
   confirm.require({
@@ -289,6 +296,7 @@ const handleDelete = () => {
           :options="store.accounts"
           option-label="name"
           placeholder="Выберите счет"
+          :disabled="props.readonly"
           class="w-full"
         >
           <template #option="slotProps">
@@ -313,6 +321,7 @@ const handleDelete = () => {
           :options="store.accounts.filter(acc => acc.id !== fromAccount?.id)"
           option-label="name"
           placeholder="Выберите счет"
+          :disabled="props.readonly"
           class="w-full"
         >
           <template #option="slotProps">
@@ -340,6 +349,7 @@ const handleDelete = () => {
             :max-fraction-digits="2"
             :min="VALIDATION_RULES.minAmount"
             placeholder="0.00"
+            :disabled="props.readonly"
             :class="{ 'p-invalid': !isFromAmountValid && fromAmount !== null }"
           />
           <span class="currency-chip">{{ fromCurrencySymbol || fromCurrency }}</span>
@@ -360,6 +370,7 @@ const handleDelete = () => {
             :max-fraction-digits="2"
             :min="VALIDATION_RULES.minAmount"
             placeholder="0.00"
+            :disabled="props.readonly"
             :class="{ 'p-invalid': !isToAmountValid && toAmount !== null }"
           />
           <span class="currency-chip">{{ toCurrencySymbol || toCurrency }}</span>
@@ -377,6 +388,7 @@ const handleDelete = () => {
             :max-fraction-digits="2"
             :min="0"
             placeholder="0.00"
+            :disabled="props.readonly"
           />
           <span class="currency-chip">{{ fromCurrencySymbol || fromCurrency }}</span>
         </div>
@@ -402,6 +414,7 @@ const handleDelete = () => {
           v-model="date"
           date-format="dd.mm.yy"
           :show-icon="true"
+          :disabled="props.readonly"
           class="w-full"
         />
       </div>
@@ -412,6 +425,7 @@ const handleDelete = () => {
           id="transfer-description"
           v-model="description"
           placeholder="Например: перевод между счетами"
+          :disabled="props.readonly"
           class="w-full"
         />
       </div>
@@ -426,7 +440,7 @@ const handleDelete = () => {
             severity="danger"
             outlined
             :loading="isDeleting"
-            :disabled="isSubmitting"
+            :disabled="props.readonly || isSubmitting"
             @click="handleDelete"
           />
         </div>
@@ -444,7 +458,7 @@ const handleDelete = () => {
             type="submit"
             :label="isEditMode ? 'Обновить' : 'Сохранить'"
             icon="pi pi-check"
-            :disabled="submitDisabled || isDeleting"
+            :disabled="props.readonly || submitDisabled || isDeleting"
             :loading="isSubmitting"
           />
         </div>

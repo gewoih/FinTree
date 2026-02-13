@@ -288,6 +288,7 @@ app.UseExceptionHandler(b =>
 app.UseCors("VueFrontend");
 app.UseRateLimiter();
 app.UseAuthentication();
+app.UseMiddleware<SubscriptionWriteAccessMiddleware>();
 app.UseAuthorization();
 
 app.MapControllers();

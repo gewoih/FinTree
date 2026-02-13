@@ -17,6 +17,7 @@ type BalanceAdjustableAccount = {
 const props = defineProps<{
   visible: boolean
   account: BalanceAdjustableAccount | null
+  readonly?: boolean
 }>()
 
 const emit = defineEmits<{
@@ -66,6 +67,16 @@ const loadAdjustments = async () => {
 }
 
 const submitAdjustment = async () => {
+  if (props.readonly) {
+    toast.add({
+      severity: 'warn',
+      summary: 'Режим просмотра',
+      detail: 'Корректировка баланса недоступна без активной подписки.',
+      life: 2500,
+    })
+    return
+  }
+
   if (!props.account) return
   if (newBalance.value == null) {
     toast.add({
@@ -168,7 +179,7 @@ watch(
           type="button"
           icon="pi pi-check"
           :loading="saving"
-          :disabled="saving"
+          :disabled="saving || props.readonly"
           @click="submitAdjustment"
         >
           Сохранить

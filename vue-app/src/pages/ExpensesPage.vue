@@ -5,6 +5,7 @@ import { useToast } from 'primevue/usetoast'
 import Menu from 'primevue/menu'
 import type { MenuItem } from 'primevue/menuitem'
 import { useFinanceStore } from '../stores/finance'
+import { useUserStore } from '../stores/user'
 import type { Transaction, UpdateTransferPayload } from '../types'
 import TransactionList from '../components/TransactionList.vue'
 import TransactionForm from '../components/TransactionForm.vue'
@@ -13,6 +14,7 @@ import { apiService } from '../services/api.service'
 import { useViewport } from '../composables/useViewport'
 
 const financeStore = useFinanceStore()
+const userStore = useUserStore()
 const toast = useToast()
 const router = useRouter()
 const transactionDialogVisible = ref(false)
@@ -22,11 +24,13 @@ const editingTransfer = ref<UpdateTransferPayload | null>(null)
 const isExporting = ref(false)
 const actionMenuRef = ref<{ toggle: (event: Event) => void } | null>(null)
 const { isMobile } = useViewport()
+const isReadOnlyMode = computed(() => userStore.isReadOnlyMode)
 
 const actionMenuItems = computed<MenuItem[]>(() => [
   {
     label: 'Перевод',
     icon: 'pi pi-arrow-right-arrow-left',
+    disabled: isReadOnlyMode.value,
     command: () => openTransferDialog()
   },
   {
@@ -46,21 +50,25 @@ const toggleActionMenu = (event: Event) => {
 }
 
 const openTransactionDialog = () => {
+  if (isReadOnlyMode.value) return
   editingTransaction.value = null
   transactionDialogVisible.value = true
 }
 
 const openTransferDialog = () => {
+  if (isReadOnlyMode.value) return
   editingTransfer.value = null
   transferDialogVisible.value = true
 }
 
 const handleEditTransaction = (transaction: Transaction) => {
+  if (isReadOnlyMode.value) return
   editingTransaction.value = transaction
   transactionDialogVisible.value = true
 }
 
 const handleEditTransfer = (transfer: UpdateTransferPayload) => {
+  if (isReadOnlyMode.value) return
   editingTransfer.value = transfer
   transferDialogVisible.value = true
 }
@@ -138,11 +146,13 @@ onMounted(async () => {
           label="Перевод"
           icon="pi pi-arrow-right-arrow-left"
           variant="secondary"
+          :disabled="isReadOnlyMode"
           @click="openTransferDialog"
         />
         <UiButton
           label="Добавить транзакцию"
           icon="pi pi-plus"
+          :disabled="isReadOnlyMode"
           @click="openTransactionDialog"
         />
         <UiButton
@@ -163,6 +173,7 @@ onMounted(async () => {
 
     <UiSection class="transactions__content">
       <TransactionList
+        :readonly="isReadOnlyMode"
         @add-transaction="openTransactionDialog"
         @edit-transaction="handleEditTransaction"
         @edit-transfer="handleEditTransfer"
@@ -172,11 +183,13 @@ onMounted(async () => {
     <TransactionForm
       v-model:visible="transactionDialogVisible"
       :transaction="editingTransaction"
+      :readonly="isReadOnlyMode"
     />
 
     <TransferFormModal
       v-model:visible="transferDialogVisible"
       :transfer="editingTransfer"
+      :readonly="isReadOnlyMode"
     />
   </PageContainer>
 </template>

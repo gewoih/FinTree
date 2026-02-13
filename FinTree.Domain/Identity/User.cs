@@ -1,6 +1,7 @@
 using System.ComponentModel.DataAnnotations.Schema;
 using FinTree.Domain.Accounts;
 using FinTree.Domain.Categories;
+using FinTree.Domain.Subscriptions;
 using FinTree.Domain.ValueObjects;
 using Microsoft.AspNetCore.Identity;
 
@@ -8,17 +9,22 @@ namespace FinTree.Domain.Identity;
 
 public sealed class User : IdentityUser<Guid>
 {
+    private const int TrialMonths = 1;
     private readonly List<Account> _accounts = [];
     private readonly List<TransactionCategory> _transactionCategories = [];
     private readonly List<RefreshToken> _refreshTokens = [];
+    private readonly List<SubscriptionPayment> _subscriptionPayments = [];
 
     public string BaseCurrencyCode { get; private set; }
     public long? TelegramUserId { get; private set; }
     public Guid? MainAccountId { get; private set; }
+    public DateTime? SubscriptionActivatedAtUtc { get; private set; }
+    public DateTime? SubscriptionExpiresAtUtc { get; private set; }
     [NotMapped] public Currency BaseCurrency => Currency.FromCode(BaseCurrencyCode);
     public IReadOnlyCollection<Account> Accounts => _accounts;
     public IReadOnlyCollection<TransactionCategory> TransactionCategories => _transactionCategories;
     public IReadOnlyCollection<RefreshToken> RefreshTokens => _refreshTokens;
+    public IReadOnlyCollection<SubscriptionPayment> SubscriptionPayments => _subscriptionPayments;
 
     private User()
     {
@@ -32,6 +38,31 @@ public sealed class User : IdentityUser<Guid>
         UserName = username;
         Email = email;
         SetBaseCurrency(baseCurrencyCode);
+    }
+
+    public bool HasActiveSubscription(DateTime utcNow)
+    {
+        var now = EnsureUtc(utcNow, nameof(utcNow));
+        return SubscriptionExpiresAtUtc is { } expiresAtUtc && expiresAtUtc > now;
+    }
+
+    public void GrantTrialSubscription(DateTime grantedAtUtc)
+    {
+        ActivateSubscription(grantedAtUtc, TrialMonths);
+    }
+
+    public (DateTime StartsAtUtc, DateTime ExpiresAtUtc) ActivateSubscription(DateTime activatedAtUtc, int months)
+    {
+        if (months <= 0)
+            throw new ArgumentOutOfRangeException(nameof(months), "Subscription duration must be positive.");
+
+        var activatedAt = EnsureUtc(activatedAtUtc, nameof(activatedAtUtc));
+        var startAt = SubscriptionExpiresAtUtc is { } expiresAtUtc && expiresAtUtc > activatedAt
+            ? expiresAtUtc
+            : activatedAt;
+        var expiresAt = startAt.AddMonths(months);
+        SetSubscriptionPeriod(startAt, expiresAt);
+        return (startAt, expiresAt);
     }
 
     public void SetBaseCurrency(string currencyCode)
@@ -94,5 +125,21 @@ public sealed class User : IdentityUser<Guid>
         var transactionCategory = TransactionCategory.CreateUser(Id, name, color, icon, categoryType, isMandatory);
         _transactionCategories.Add(transactionCategory);
         return transactionCategory;
+    }
+
+    private void SetSubscriptionPeriod(DateTime activatedAtUtc, DateTime expiresAtUtc)
+    {
+        SubscriptionActivatedAtUtc = EnsureUtc(activatedAtUtc, nameof(activatedAtUtc));
+        SubscriptionExpiresAtUtc = EnsureUtc(expiresAtUtc, nameof(expiresAtUtc));
+    }
+
+    private static DateTime EnsureUtc(DateTime value, string paramName)
+    {
+        return value.Kind switch
+        {
+            DateTimeKind.Utc => value,
+            DateTimeKind.Local => value.ToUniversalTime(),
+            _ => throw new ArgumentException("DateTime must contain timezone information.", paramName)
+        };
     }
 }

@@ -13,6 +13,8 @@ import type {
     Currency,
     AnalyticsDashboardDto,
     CurrentUserDto,
+    SubscriptionPaymentDto,
+    SubscriptionPlan,
     PagedResult,
     TransactionsQuery,
     UpdateUserProfilePayload,
@@ -113,15 +115,22 @@ function getUserFriendlyErrorMessage(error: AxiosError): string {
         return 'Не удалось подключиться к серверу. Проверьте интернет-соединение.';
     }
 
+    const code = (error.response.data as { code?: string } | undefined)?.code;
+
     switch (error.response.status) {
         case 400:
             return 'Некорректные данные. Проверьте введенную информацию.';
         case 401:
             return 'Требуется авторизация.';
         case 403:
+            if (code === 'subscription_required') {
+                return 'Подписка неактивна. Для изменения данных нажмите «Оплатить».';
+            }
             return 'Доступ запрещен.';
         case 404:
             return 'Ресурс не найден.';
+        case 409:
+            return 'Операция не может быть выполнена в текущем состоянии.';
         case 500:
             return 'Ошибка сервера. Попробуйте позже.';
         case 503:
@@ -348,6 +357,16 @@ export const apiService = {
 
     async updateUserProfile(payload: UpdateUserProfilePayload): Promise<CurrentUserDto> {
         const response = await apiClient.patch<CurrentUserDto>('/users/me', payload);
+        return response.data;
+    },
+
+    async simulateSubscriptionPayment(plan: SubscriptionPlan): Promise<CurrentUserDto> {
+        const response = await apiClient.post<CurrentUserDto>('/users/subscription/pay', { plan });
+        return response.data;
+    },
+
+    async getSubscriptionPayments(): Promise<SubscriptionPaymentDto[]> {
+        const response = await apiClient.get<SubscriptionPaymentDto[]>('/users/subscription/payments');
         return response.data;
     },
 };

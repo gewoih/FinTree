@@ -12,11 +12,14 @@ import { useFinanceStore } from '../stores/finance';
 import { useFormModal } from '../composables/useFormModal';
 import { CATEGORY_ICON_OPTIONS } from '../constants';
 
-const props = defineProps<{
+const props = withDefaults(defineProps<{
   visible: boolean;
   category?: Category | null;
   defaultType?: CategoryType;
-}>();
+  readonly?: boolean;
+}>(), {
+  readonly: false,
+});
 
 const emit = defineEmits<{
   (e: 'update:visible', value: boolean): void;
@@ -154,6 +157,11 @@ const { isSubmitting, handleSubmit: submitCategory, showWarning } = useFormModal
 );
 
 const handleSubmit = async () => {
+  if (props.readonly) {
+    showWarning('Редактирование недоступно в режиме просмотра.');
+    return;
+  }
+
   attemptedSubmit.value = true;
 
   if (!isFormValid.value) {
@@ -177,7 +185,7 @@ const handleSubmit = async () => {
 };
 
 const handleDelete = () => {
-  if (!props.category || isDeleting.value) return;
+  if (props.readonly || !props.category || isDeleting.value) return;
 
   confirm.require({
     message: `Удалить категорию "${props.category.name}"? Все транзакции будут перенесены в «Без категории».`,
@@ -244,6 +252,7 @@ const handleDelete = () => {
               placeholder="Например, «Транспорт»"
               class="w-full"
               autocomplete="off"
+              :disabled="props.readonly"
             />
           </template>
         </FormField>
@@ -262,6 +271,7 @@ const handleDelete = () => {
               option-value="value"
               :allow-empty="false"
               class="w-full"
+              :disabled="props.readonly"
               :aria-describedby="fieldAttrs['aria-describedby']"
               :aria-invalid="fieldAttrs['aria-invalid']"
               :pt="{
@@ -286,6 +296,7 @@ const handleDelete = () => {
                 type="button"
                 class="icon-picker__trigger"
                 :aria-expanded="iconPickerOpen"
+                :disabled="props.readonly"
                 @click="toggleIconPicker"
               >
                 <i :class="['pi', icon]" />
@@ -307,6 +318,7 @@ const handleDelete = () => {
                   class="icon-grid__item"
                   :class="{ 'is-selected': option.value === icon }"
                   :aria-pressed="option.value === icon"
+                  :disabled="props.readonly"
                   @click="
                     () => {
                       icon = option.value;
@@ -333,6 +345,7 @@ const handleDelete = () => {
                 v-model="color"
                 type="color"
                 class="color-picker__swatch"
+                :disabled="props.readonly"
                 :aria-describedby="fieldAttrs['aria-describedby']"
                 :aria-invalid="fieldAttrs['aria-invalid']"
               >
@@ -341,6 +354,7 @@ const handleDelete = () => {
                 maxlength="7"
                 class="w-full"
                 placeholder="#10B981"
+                :disabled="props.readonly"
               />
             </div>
           </template>
@@ -357,6 +371,7 @@ const handleDelete = () => {
             <Checkbox
               v-model="isMandatory"
               binary
+              :disabled="props.readonly"
             />
             <span>Обязательная категория</span>
           </label>
@@ -381,7 +396,7 @@ const handleDelete = () => {
           icon="pi pi-trash"
           class="category-form__danger-button"
           :loading="isDeleting"
-          :disabled="isSubmitting || isDeleting"
+          :disabled="props.readonly || isSubmitting || isDeleting"
           aria-label="Удалить категорию"
           @click="handleDelete"
         />
@@ -393,7 +408,7 @@ const handleDelete = () => {
             type="submit"
             icon="pi pi-check"
             :loading="isSubmitting"
-            :disabled="isSubmitting || isDeleting"
+            :disabled="props.readonly || isSubmitting || isDeleting"
           >
             {{ props.category ? 'Сохранить' : 'Создать' }}
           </AppButton>

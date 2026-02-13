@@ -11,11 +11,13 @@ import { useUserStore } from '../stores/user'
 const props = withDefaults(defineProps<{
   account: Account
   readonly?: boolean
+  interactionLocked?: boolean
   isPrimaryLoading?: boolean
   isLiquidityLoading?: boolean
   isArchiveLoading?: boolean
 }>(), {
   readonly: false,
+  interactionLocked: false,
   isPrimaryLoading: false,
   isLiquidityLoading: false,
   isArchiveLoading: false,
@@ -65,7 +67,7 @@ const liquidityModel = computed({
 const liquidityLabel = computed(() => (props.account.isLiquid ? 'Ликвидный' : 'Неликвидный'))
 
 const menuItems = computed<MenuItem[]>(() => {
-  if (props.readonly) return []
+  if (props.readonly || props.interactionLocked) return []
 
   return [
     {
@@ -102,7 +104,7 @@ const toggleMenu = (event: Event) => {
 
       <div class="account-card__header-actions">
         <UiButton
-          v-if="!readonly && !account.isMain"
+          v-if="!readonly && !interactionLocked && !account.isMain"
           class="account-card__icon-button"
           variant="ghost"
           size="sm"
@@ -146,6 +148,13 @@ const toggleMenu = (event: Event) => {
         icon="pi-inbox"
         size="sm"
       />
+      <StatusBadge
+        v-if="interactionLocked && !readonly"
+        label="Только просмотр"
+        severity="warning"
+        icon="pi-lock"
+        size="sm"
+      />
     </div>
 
     <div class="account-card__balance">
@@ -174,7 +183,7 @@ const toggleMenu = (event: Event) => {
         <dt>Ликвидность</dt>
         <dd>
           <div
-            v-if="!readonly"
+            v-if="!readonly && !interactionLocked"
             class="liquidity-control"
             @click.stop
           >
@@ -202,6 +211,7 @@ const toggleMenu = (event: Event) => {
         icon="pi pi-box"
         label="Разархивировать"
         :loading="isArchiveLoading"
+        :disabled="interactionLocked"
         @click.stop="emit('unarchive')"
       />
       <UiButton
@@ -210,6 +220,7 @@ const toggleMenu = (event: Event) => {
         size="sm"
         icon="pi pi-sliders-h"
         label="Корректировать баланс"
+        :disabled="interactionLocked"
         @click.stop="emit('open')"
       />
     </footer>

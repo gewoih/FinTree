@@ -5,4 +5,5 @@ public record struct MeDto(
     string Name,
     string? Email,
     long? TelegramUserId,
-    string BaseCurrencyCode);
+    string BaseCurrencyCode,
+    SubscriptionInfoDto Subscription);

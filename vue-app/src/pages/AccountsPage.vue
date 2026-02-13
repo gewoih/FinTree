@@ -29,6 +29,7 @@ const selectedAccount = ref<Account | null>(null)
 const view = ref<AccountsView>('active')
 const searchText = ref('')
 const sortBy = ref<AccountsSort>('balance-desc')
+const isReadOnlyMode = computed(() => userStore.isReadOnlyMode)
 
 const sortOptions: Array<{ label: string; value: AccountsSort }> = [
   { label: 'По балансу (убыв.)', value: 'balance-desc' },
@@ -83,17 +84,19 @@ const filteredAccounts = computed(() => {
 const hasActiveFilters = computed(() => searchText.value.trim().length > 0)
 
 const openModal = () => {
+  if (isReadOnlyMode.value) return
   editingAccount.value = null
   modalVisible.value = true
 }
 
 const openAdjustments = (account: Account) => {
-  if (view.value === 'archived') return
+  if (view.value === 'archived' || isReadOnlyMode.value) return
   selectedAccount.value = account
   adjustmentsVisible.value = true
 }
 
 const handleSetPrimary = async (accountId: string) => {
+  if (isReadOnlyMode.value) return
   pendingPrimaryId.value = accountId
   try {
     const success = await financeStore.setPrimaryAccount(accountId)
@@ -111,11 +114,13 @@ const handleSetPrimary = async (accountId: string) => {
 }
 
 const handleEditAccount = (account: Account) => {
+  if (isReadOnlyMode.value) return
   editingAccount.value = account
   modalVisible.value = true
 }
 
 const handleLiquidityToggle = async (account: Account, value: boolean) => {
+  if (isReadOnlyMode.value) return
   if (pendingLiquidityId.value) return
   pendingLiquidityId.value = account.id
   try {
@@ -134,6 +139,7 @@ const handleLiquidityToggle = async (account: Account, value: boolean) => {
 }
 
 const handleArchiveAccount = (account: Account) => {
+  if (isReadOnlyMode.value) return
   if (pendingArchiveId.value) return
 
   confirm.require({
@@ -162,6 +168,7 @@ const handleArchiveAccount = (account: Account) => {
 }
 
 const handleUnarchiveAccount = async (account: Account) => {
+  if (isReadOnlyMode.value) return
   if (pendingUnarchiveId.value) return
   pendingUnarchiveId.value = account.id
   try {
@@ -207,6 +214,7 @@ onMounted(async () => {
         <UiButton
           label="Добавить счет"
           icon="pi pi-plus"
+          :disabled="isReadOnlyMode"
           @click="openModal"
         />
       </template>
@@ -284,7 +292,7 @@ onMounted(async () => {
           v-if="view === 'active'"
           class="accounts-toolbar__hint"
         >
-          Корректировка баланса доступна по кнопке внутри карточки счета.
+          {{ isReadOnlyMode ? 'В режиме просмотра изменение счетов недоступно.' : 'Корректировка баланса доступна по кнопке внутри карточки счета.' }}
         </p>
       </UiCard>
 
@@ -305,7 +313,7 @@ onMounted(async () => {
         icon="pi-wallet"
         title="Нет активных счетов"
         description="Добавьте банковский счет, чтобы начать отслеживать баланс и операции."
-        action-label="Добавить счет"
+        :action-label="isReadOnlyMode ? '' : 'Добавить счет'"
         action-icon="pi pi-plus"
         @action="openModal"
       />
@@ -340,6 +348,7 @@ onMounted(async () => {
           :key="account.id"
           :account="account"
           :readonly="view === 'archived'"
+          :interaction-locked="isReadOnlyMode"
           :is-primary-loading="pendingPrimaryId === account.id"
           :is-liquidity-loading="pendingLiquidityId === account.id"
           :is-archive-loading="pendingArchiveId === account.id || pendingUnarchiveId === account.id"
@@ -373,6 +382,7 @@ onMounted(async () => {
     <AccountBalanceAdjustmentsModal
       v-model:visible="adjustmentsVisible"
       :account="selectedAccount"
+      :readonly="isReadOnlyMode"
     />
   </PageContainer>
 </template>

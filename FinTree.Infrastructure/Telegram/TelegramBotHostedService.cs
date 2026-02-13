@@ -46,6 +46,9 @@ public partial class TelegramBotHostedService(
     private const string DefaultCategoryMissingMessage =
         "Не получилось подобрать категорию. Проверьте, что есть категории расходов и одна из них — по умолчанию.";
 
+    private const string SubscriptionRequiredMessage =
+        "Подписка неактивна. Сейчас доступен только просмотр. Нажмите «Оплатить» в профиле FinTree, чтобы снова добавлять операции.";
+
     private static readonly string[] LineSeparators = ["\r\n", "\n"];
 
     private sealed record ParsedExpense(decimal Amount, string CategoryName, string? Note, DateTime OccurredAt);
@@ -123,6 +126,12 @@ public partial class TelegramBotHostedService(
         if (user is null)
         {
             await botClient.SendMessage(chatId, UserNotFoundMessage, cancellationToken: ct);
+            return;
+        }
+
+        if (!user.HasActiveSubscription(DateTime.UtcNow))
+        {
+            await botClient.SendMessage(chatId, SubscriptionRequiredMessage, cancellationToken: ct);
             return;
         }
 

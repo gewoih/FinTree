@@ -6,6 +6,7 @@ import { useRoute, useRouter } from 'vue-router';
 import { useFinanceStore } from '../stores/finance';
 import { useUserStore } from '../stores/user';
 import CategoryManager from '../components/CategoryManager.vue';
+import type { SubscriptionPlan } from '../types';
 
 const financeStore = useFinanceStore();
 const userStore = useUserStore();
@@ -14,7 +15,16 @@ const router = useRouter();
 const route = useRoute();
 
 const { currencies, areCurrenciesLoading } = storeToRefs(financeStore);
-const { currentUser, isLoading: isUserLoading, isSaving: isUserSaving } = storeToRefs(userStore);
+const {
+  currentUser,
+  isLoading: isUserLoading,
+  isSaving: isUserSaving,
+  isReadOnlyMode,
+  hasActiveSubscription,
+  isSubscriptionProcessing,
+  subscriptionPayments,
+  areSubscriptionPaymentsLoading,
+} = storeToRefs(userStore);
 
 const form = reactive({
   baseCurrencyCode: '',
@@ -23,6 +33,61 @@ const form = reactive({
 
 const isLoading = computed(() => isUserLoading.value || areCurrenciesLoading.value);
 const isSaving = computed(() => isUserSaving.value);
+const isSubscriptionActive = computed(() => hasActiveSubscription.value);
+const subscriptionExpiresAtLabel = computed(() => {
+  const raw = currentUser.value?.subscription?.expiresAtUtc;
+  if (!raw) return null;
+  const date = new Date(raw);
+  if (Number.isNaN(date.getTime())) return null;
+  return date.toLocaleDateString('ru-RU');
+});
+
+const subscriptionPlans = computed(() => {
+  const monthPrice = currentUser.value?.subscription?.monthPriceRub ?? 390;
+  const yearPrice = currentUser.value?.subscription?.yearPriceRub ?? 3900;
+
+  return [
+    {
+      plan: 'Month' as SubscriptionPlan,
+      title: '1 месяц',
+      price: monthPrice,
+      hint: 'Стандартная цена 390 ₽',
+    },
+    {
+      plan: 'Year' as SubscriptionPlan,
+      title: '1 год',
+      price: yearPrice,
+      hint: 'Стандартная цена 3 900 ₽',
+    },
+  ];
+});
+
+const formattedSubscriptionPayments = computed(() =>
+  subscriptionPayments.value.map(payment => {
+    const paidAt = new Date(payment.paidAtUtc);
+    const periodStart = new Date(payment.subscriptionStartsAtUtc);
+    const periodEnd = new Date(payment.subscriptionEndsAtUtc);
+
+    return {
+      ...payment,
+      paidAtLabel: Number.isNaN(paidAt.getTime()) ? '—' : paidAt.toLocaleString('ru-RU'),
+      periodLabel:
+        Number.isNaN(periodStart.getTime()) || Number.isNaN(periodEnd.getTime())
+          ? '—'
+          : `${periodStart.toLocaleDateString('ru-RU')} - ${periodEnd.toLocaleDateString('ru-RU')}`,
+      planLabel: payment.plan === 'Year' ? '1 год' : '1 месяц',
+      chargedLabel: `${Math.round(payment.chargedPriceRub)} ₽`,
+      listedLabel: `${Math.round(payment.listedPriceRub)} ₽`,
+      statusLabel: payment.status === 'Succeeded'
+        ? 'Успешно'
+        : payment.status === 'Failed'
+          ? 'Ошибка'
+          : payment.status === 'Refunded'
+            ? 'Возврат'
+            : 'Отменено',
+    };
+  })
+);
 
 const activeTab = ref<'profile' | 'categories'>('profile');
 
@@ -77,7 +142,9 @@ const hasChanges = computed(() => {
   );
 });
 
-const canSubmit = computed(() => Boolean(form.baseCurrencyCode) && hasChanges.value && !isSaving.value);
+const canSubmit = computed(() =>
+  Boolean(form.baseCurrencyCode) && hasChanges.value && !isSaving.value && !isReadOnlyMode.value
+);
 
 function resetForm() {
   if (!currentUser.value) return;
@@ -105,6 +172,7 @@ onMounted(async () => {
     financeStore.fetchCategories(),
     userStore.fetchCurrentUser(),
   ]);
+  await userStore.fetchSubscriptionPayments();
 
   if (currentUser.value) {
     resetForm();
@@ -112,6 +180,16 @@ onMounted(async () => {
 });
 
 async function handleSubmit() {
+  if (isReadOnlyMode.value) {
+    toast.add({
+      severity: 'warn',
+      summary: 'Режим просмотра',
+      detail: 'Изменение профиля доступно только при активной подписке.',
+      life: 3000,
+    });
+    return;
+  }
+
   if (!form.baseCurrencyCode) {
     toast.add({
       severity: 'warn',
@@ -161,6 +239,26 @@ async function handleSubmit() {
 
 function handleClearTelegram() {
   form.telegramUserId = '';
+}
+
+async function handlePay(plan: SubscriptionPlan) {
+  const success = await userStore.simulateSubscriptionPayment(plan);
+  if (success) {
+    toast.add({
+      severity: 'success',
+      summary: 'Подписка активирована',
+      detail: 'Оплата имитирована успешно. Выдан бесплатный доступ на 1 месяц.',
+      life: 3500,
+    });
+    return;
+  }
+
+  toast.add({
+    severity: 'error',
+    summary: 'Не удалось активировать подписку',
+    detail: 'Пожалуйста, попробуйте еще раз.',
+    life: 3000,
+  });
 }
 </script>
 
@@ -225,6 +323,112 @@ function handleClearTelegram() {
         aria-labelledby="profile-tab"
       >
         <UiCard
+          id="subscription"
+          class="profile-card profile-card--subscription"
+          variant="outlined"
+          padding="lg"
+        >
+          <template #header>
+            <div class="card-header">
+              <div>
+                <h3 class="card-title">
+                  Подписка
+                </h3>
+                <p class="card-subtitle">
+                  Полный доступ к функциям доступен только при активной подписке.
+                </p>
+              </div>
+              <StatusBadge
+                :label="isSubscriptionActive ? 'Активна' : 'Только просмотр'"
+                :severity="isSubscriptionActive ? 'success' : 'warning'"
+                :icon="isSubscriptionActive ? 'pi-check-circle' : 'pi-lock'"
+              />
+            </div>
+          </template>
+
+          <div class="subscription-status">
+            <p v-if="isSubscriptionActive">
+              Подписка активна до <strong>{{ subscriptionExpiresAtLabel ?? '—' }}</strong>.
+            </p>
+            <p v-else>
+              Подписка неактивна. Доступ только на просмотр, пока не нажмете «Оплатить».
+            </p>
+            <p class="subscription-status__note">
+              Сейчас оплата имитируется: при нажатии «Оплатить» выдается бесплатный доступ на 1 месяц.
+            </p>
+          </div>
+
+          <div class="subscription-plans">
+            <article
+              v-for="plan in subscriptionPlans"
+              :key="plan.plan"
+              class="subscription-plan"
+            >
+              <h4>{{ plan.title }}</h4>
+              <p class="subscription-plan__price">
+                {{ plan.price }} ₽
+              </p>
+              <p class="subscription-plan__hint">
+                {{ plan.hint }}
+              </p>
+              <UiButton
+                label="Оплатить"
+                icon="pi pi-credit-card"
+                :loading="isSubscriptionProcessing"
+                :disabled="isSubscriptionProcessing || isSubscriptionActive"
+                @click="handlePay(plan.plan)"
+              />
+            </article>
+          </div>
+
+          <div class="subscription-history">
+            <h4>История оплат</h4>
+
+            <div
+              v-if="areSubscriptionPaymentsLoading"
+              class="subscription-history__skeleton"
+            >
+              <UiSkeleton
+                v-for="i in 3"
+                :key="i"
+                height="52px"
+              />
+            </div>
+
+            <div
+              v-else-if="formattedSubscriptionPayments.length === 0"
+              class="subscription-history__empty"
+            >
+              Оплат пока нет. Когда вы нажмете «Оплатить», запись появится здесь.
+            </div>
+
+            <ul
+              v-else
+              class="subscription-history__list"
+            >
+              <li
+                v-for="payment in formattedSubscriptionPayments"
+                :key="payment.id"
+                class="subscription-history__item"
+              >
+                <div>
+                  <p class="subscription-history__title">
+                    {{ payment.planLabel }} · {{ payment.statusLabel }}
+                  </p>
+                  <p class="subscription-history__meta">
+                    {{ payment.paidAtLabel }} · Период: {{ payment.periodLabel }}
+                  </p>
+                </div>
+                <div class="subscription-history__amounts">
+                  <span>Списано: {{ payment.chargedLabel }}</span>
+                  <small>Тариф: {{ payment.listedLabel }}</small>
+                </div>
+              </li>
+            </ul>
+          </div>
+        </UiCard>
+
+        <UiCard
           class="profile-card"
           variant="muted"
           padding="lg"
@@ -286,7 +490,7 @@ function handleClearTelegram() {
                   option-label="label"
                   option-value="value"
                   placeholder="Выберите валюту"
-                  :disabled="isLoading"
+                  :disabled="isLoading || isReadOnlyMode"
                 />
                 <small
                   v-if="isLoading"
@@ -319,14 +523,14 @@ function handleClearTelegram() {
                     v-model="form.telegramUserId"
                     placeholder="123456789"
                     autocomplete="off"
-                    :disabled="isSaving"
+                    :disabled="isSaving || isReadOnlyMode"
                   />
                   <UiButton
                     type="button"
                     label="Очистить"
                     variant="ghost"
                     size="sm"
-                    :disabled="!form.telegramUserId || isSaving"
+                    :disabled="!form.telegramUserId || isSaving || isReadOnlyMode"
                     @click="handleClearTelegram"
                   />
                 </div>
@@ -347,7 +551,7 @@ function handleClearTelegram() {
                 type="button"
                 label="Сбросить изменения"
                 variant="ghost"
-                :disabled="!hasChanges || isSaving"
+                :disabled="!hasChanges || isSaving || isReadOnlyMode"
                 @click="resetForm"
               />
               <UiButton
@@ -369,7 +573,7 @@ function handleClearTelegram() {
         role="tabpanel"
         aria-labelledby="categories-tab"
       >
-        <CategoryManager />
+        <CategoryManager :readonly="isReadOnlyMode" />
       </section>
     </div>
   </PageContainer>
@@ -442,6 +646,10 @@ function handleClearTelegram() {
 
 .profile-card {
   gap: var(--space-5);
+}
+
+.profile-card--subscription {
+  scroll-margin-top: 120px;
 }
 
 :deep(.profile-card .ui-card__body) {
@@ -539,6 +747,110 @@ function handleClearTelegram() {
   min-width: 180px;
 }
 
+.subscription-status p {
+  margin: 0;
+  color: var(--text);
+}
+
+.subscription-status__note {
+  margin-top: var(--space-2) !important;
+  color: var(--text-muted) !important;
+  font-size: var(--ft-text-sm);
+}
+
+.subscription-plans {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: var(--space-3);
+}
+
+.subscription-plan {
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  padding: var(--space-3);
+  background: var(--surface-1);
+  display: grid;
+  gap: var(--space-2);
+}
+
+.subscription-plan h4 {
+  margin: 0;
+}
+
+.subscription-plan__price {
+  margin: 0;
+  font-size: var(--ft-text-xl);
+  font-weight: 700;
+}
+
+.subscription-plan__hint {
+  margin: 0;
+  color: var(--text-muted);
+  font-size: var(--ft-text-sm);
+}
+
+.subscription-history {
+  display: grid;
+  gap: var(--space-3);
+}
+
+.subscription-history h4 {
+  margin: 0;
+}
+
+.subscription-history__skeleton {
+  display: grid;
+  gap: var(--space-2);
+}
+
+.subscription-history__empty {
+  padding: var(--space-3);
+  border: 1px dashed var(--border);
+  border-radius: var(--radius-md);
+  color: var(--text-muted);
+  background: var(--surface-1);
+}
+
+.subscription-history__list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: var(--space-2);
+}
+
+.subscription-history__item {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--space-3);
+  padding: var(--space-3);
+  border-radius: var(--radius-md);
+  border: 1px solid var(--border);
+  background: var(--surface-1);
+}
+
+.subscription-history__title {
+  margin: 0;
+  font-weight: 600;
+}
+
+.subscription-history__meta {
+  margin: var(--space-1) 0 0;
+  color: var(--text-muted);
+  font-size: var(--ft-text-sm);
+}
+
+.subscription-history__amounts {
+  text-align: right;
+  display: grid;
+  gap: 2px;
+}
+
+.subscription-history__amounts small {
+  color: var(--text-muted);
+}
+
 @media (max-width: 768px) {
   .profile-tabs__bar {
     width: 100%;
@@ -558,6 +870,14 @@ function handleClearTelegram() {
   .actions {
     flex-direction: column-reverse;
     align-items: stretch;
+  }
+
+  .subscription-history__item {
+    flex-direction: column;
+  }
+
+  .subscription-history__amounts {
+    text-align: left;
   }
 }
 </style>

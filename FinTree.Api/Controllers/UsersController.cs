@@ -44,4 +44,19 @@ public class UsersController(AccountsService accountsService, UserService userSe
         var updatedUser = await userService.UpdateProfileAsync(request, ct);
         return Ok(updatedUser);
     }
+
+    [HttpPost("subscription/pay")]
+    public async Task<IActionResult> SimulateSubscriptionPayment([FromBody] SimulateSubscriptionPaymentRequest request,
+        CancellationToken ct)
+    {
+        var updatedUser = await userService.SimulateSubscriptionPaymentAsync(request, ct);
+        return Ok(updatedUser);
+    }
+
+    [HttpGet("subscription/payments")]
+    public async Task<IActionResult> GetSubscriptionPayments(CancellationToken ct)
+    {
+        var payments = await userService.GetSubscriptionPaymentsAsync(ct);
+        return Ok(payments);
+    }
 }

@@ -2,10 +2,12 @@
 import { ref, computed, onMounted, watch } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { useAuthStore } from '../../stores/auth'
+import { useUserStore } from '../../stores/user'
 import { useTheme } from '../../composables/useTheme'
 import { useViewport } from '../../composables/useViewport'
 
 const authStore = useAuthStore()
+const userStore = useUserStore()
 const router = useRouter()
 const route = useRoute()
 
@@ -22,6 +24,15 @@ const { isMobile, isTablet } = useViewport()
 const isDrawerVisible = computed(() => isTablet.value)
 
 const userButtonLabel = computed(() => (isMobile.value ? undefined : userEmail.value))
+const isReadOnlyMode = computed(() => userStore.isReadOnlyMode)
+const subscriptionExpiresAtLabel = computed(() => {
+  const rawExpiresAt = userStore.subscription?.expiresAtUtc
+  if (!rawExpiresAt) return null
+
+  const expiresAt = new Date(rawExpiresAt)
+  if (Number.isNaN(expiresAt.getTime())) return null
+  return expiresAt.toLocaleDateString('ru-RU')
+})
 
 const navigationItems = [
   { label: 'Аналитика', icon: 'pi-chart-line', to: '/analytics' },
@@ -48,6 +59,10 @@ const handleLogout = async () => {
   router.push('/login')
 }
 
+const openSubscription = () => {
+  router.push('/profile#subscription')
+}
+
 watch(
   () => route.fullPath,
   () => {
@@ -57,6 +72,7 @@ watch(
 
 onMounted(() => {
   initTheme()
+  void userStore.fetchCurrentUser(true)
 })
 </script>
 
@@ -104,6 +120,27 @@ onMounted(() => {
           />
         </div>
       </div>
+    </div>
+
+    <div
+      v-if="isReadOnlyMode"
+      class="app-shell__readonly-banner"
+      role="status"
+      aria-live="polite"
+    >
+      <div class="app-shell__readonly-copy">
+        <i
+          class="pi pi-lock"
+          aria-hidden="true"
+        />
+        <span>Режим просмотра: подписка неактивна{{ subscriptionExpiresAtLabel ? ` (истекла ${subscriptionExpiresAtLabel})` : '' }}.</span>
+      </div>
+      <UiButton
+        label="Оплатить"
+        icon="pi pi-credit-card"
+        size="sm"
+        @click="openSubscription"
+      />
     </div>
 
     <!-- Mobile Drawer (hidden on desktop) -->
@@ -212,6 +249,28 @@ onMounted(() => {
   top: 0;
   z-index: var(--ft-z-sticky);
   box-shadow: var(--shadow-soft);
+}
+
+.app-shell__readonly-banner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+  padding: var(--space-2) var(--space-6);
+  border-bottom: 1px solid color-mix(in srgb, var(--ft-warning) 35%, transparent);
+  background: color-mix(in srgb, var(--ft-warning) 18%, var(--surface-1));
+}
+
+.app-shell__readonly-copy {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  color: var(--text);
+  font-size: var(--ft-text-sm);
+}
+
+.app-shell__readonly-copy i {
+  color: color-mix(in srgb, var(--ft-warning) 80%, var(--text));
 }
 
 .app-shell__topnav-left {
@@ -357,6 +416,12 @@ onMounted(() => {
 }
 
 @media (max-width: 640px) {
+  .app-shell__readonly-banner {
+    padding: var(--space-2) var(--space-4);
+    flex-direction: column;
+    align-items: stretch;
+  }
+
   .app-shell__topnav {
     padding: var(--space-3) var(--space-4);
   }

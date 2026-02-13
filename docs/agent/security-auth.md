@@ -30,6 +30,7 @@
 - Reverse-proxy deployments must pass and validate forwarded headers so limits are applied to client IPs, not proxy container IPs.
 - `AllowedHosts` must use explicit hostnames in production; wildcard host allowance is forbidden.
 - Kestrel server version header must be disabled in production.
+- Subscription access guard must be enforced server-side for all mutation endpoints; inactive subscription allows read-only access only.
 
 ## External identity providers (Telegram and others)
 - Signature verification and payload expiry checks are mandatory.

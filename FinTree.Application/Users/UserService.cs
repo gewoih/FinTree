@@ -2,6 +2,7 @@ using FinTree.Application.Abstractions;
 using FinTree.Application.Exceptions;
 using FinTree.Application.Transactions.Dto;
 using FinTree.Domain.Identity;
+using FinTree.Domain.Subscriptions;
 using Microsoft.EntityFrameworkCore;
 
 namespace FinTree.Application.Users;
@@ -13,18 +14,52 @@ public sealed class UserService(IAppDbContext context, ICurrentUser currentUser)
         var currentUserId = currentUser.Id;
         var userData = await context.Users
             .Where(u => u.Id == currentUserId)
-            .Select(u => new MeDto(
-                u.Id,
-                u.UserName ?? u.Email ?? string.Empty,
-                u.Email,
-                u.TelegramUserId,
-                u.BaseCurrencyCode))
             .SingleOrDefaultAsync(cancellationToken: ct);
 
-        if (userData.Id == Guid.Empty)
+        if (userData is null)
             throw new NotFoundException(nameof(User), currentUserId);
 
-        return userData;
+        return MapMe(userData, DateTime.UtcNow);
+    }
+
+    public async Task<MeDto> SimulateSubscriptionPaymentAsync(SimulateSubscriptionPaymentRequest request, CancellationToken ct)
+    {
+        var user = await context.Users
+            .SingleOrDefaultAsync(u => u.Id == currentUser.Id, ct);
+
+        if (user is null)
+            throw new NotFoundException(nameof(User), currentUser.Id);
+
+        var now = DateTime.UtcNow;
+        if (user.HasActiveSubscription(now))
+        {
+            throw new ConflictException(
+                "У вас уже есть активная подписка. Повторная оплата сейчас не требуется.",
+                "subscription_already_active");
+        }
+
+        var listedPriceRub = SubscriptionCatalog.ResolvePriceRub(request.Plan);
+        var billingPeriodMonths = SubscriptionCatalog.ResolveBillingPeriodMonths(request.Plan);
+        var (subscriptionStartsAtUtc, subscriptionExpiresAtUtc) =
+            user.ActivateSubscription(now, SubscriptionCatalog.SimulatedGrantedMonths);
+
+        var payment = SubscriptionPayment.CreateSucceeded(
+            userId: user.Id,
+            plan: request.Plan,
+            listedPriceRub: listedPriceRub,
+            chargedPriceRub: 0m,
+            billingPeriodMonths: billingPeriodMonths,
+            grantedMonths: SubscriptionCatalog.SimulatedGrantedMonths,
+            paidAtUtc: now,
+            subscriptionStartsAtUtc: subscriptionStartsAtUtc,
+            subscriptionEndsAtUtc: subscriptionExpiresAtUtc,
+            isSimulation: true,
+            provider: "simulation-ui");
+
+        await context.SubscriptionPayments.AddAsync(payment, ct);
+        await context.SaveChangesAsync(ct);
+
+        return MapMe(user, now);
     }
 
     public async Task MarkAsMainAsync(Guid accountId, CancellationToken ct = default)
@@ -34,7 +69,7 @@ public sealed class UserService(IAppDbContext context, ICurrentUser currentUser)
             .SingleOrDefaultAsync(x => x.Id == currentUser.Id, ct);
 
         if (user is null)
-            throw new NotFoundException(nameof(User), accountId);
+            throw new NotFoundException(nameof(User), currentUser.Id);
 
         var account = user.Accounts.FirstOrDefault(a => a.Id == accountId);
         if (account is null)
@@ -69,12 +104,7 @@ public sealed class UserService(IAppDbContext context, ICurrentUser currentUser)
 
         await context.SaveChangesAsync(ct);
 
-        return new MeDto(
-            user.Id,
-            user.UserName ?? user.Email ?? string.Empty,
-            user.Email,
-            user.TelegramUserId,
-            user.BaseCurrencyCode);
+        return MapMe(user, DateTime.UtcNow);
     }
 
     public async Task<List<TransactionCategoryDto>> GetUserCategoriesAsync(CancellationToken ct)
@@ -106,5 +136,50 @@ public sealed class UserService(IAppDbContext context, ICurrentUser currentUser)
             .ToListAsync(ct);
 
         return categoriesByUsage;
+    }
+
+    public async Task<List<SubscriptionPaymentDto>> GetSubscriptionPaymentsAsync(CancellationToken ct)
+    {
+        var userId = currentUser.Id;
+        ArgumentOutOfRangeException.ThrowIfEqual(userId, Guid.Empty, nameof(userId));
+
+        return await context.SubscriptionPayments
+            .Where(x => x.UserId == userId)
+            .OrderByDescending(x => x.PaidAtUtc)
+            .ThenByDescending(x => x.CreatedAtUtc)
+            .Select(x => new SubscriptionPaymentDto(
+                x.Id,
+                x.Plan,
+                x.Status,
+                x.ListedPriceRub,
+                x.ChargedPriceRub,
+                x.BillingPeriodMonths,
+                x.GrantedMonths,
+                x.IsSimulation,
+                x.PaidAtUtc,
+                x.SubscriptionStartsAtUtc,
+                x.SubscriptionEndsAtUtc,
+                x.Provider,
+                x.ExternalPaymentId))
+            .ToListAsync(ct);
+    }
+
+    private static MeDto MapMe(User user, DateTime nowUtc)
+    {
+        var isSubscriptionActive = user.HasActiveSubscription(nowUtc);
+        var subscription = new SubscriptionInfoDto(
+            IsActive: isSubscriptionActive,
+            IsReadOnlyMode: !isSubscriptionActive,
+            ExpiresAtUtc: user.SubscriptionExpiresAtUtc,
+            MonthPriceRub: SubscriptionCatalog.MonthPriceRub,
+            YearPriceRub: SubscriptionCatalog.YearPriceRub);
+
+        return new MeDto(
+            user.Id,
+            user.UserName ?? user.Email ?? string.Empty,
+            user.Email,
+            user.TelegramUserId,
+            user.BaseCurrencyCode,
+            subscription);
     }
 }

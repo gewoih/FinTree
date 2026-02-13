@@ -8,6 +8,12 @@ import CategoryFormModal from './CategoryFormModal.vue'
 import type { Category, CategoryType } from '../types'
 import { CATEGORY_TYPE } from '../types'
 
+const props = withDefaults(defineProps<{
+  readonly?: boolean
+}>(), {
+  readonly: false
+})
+
 const financeStore = useFinanceStore()
 const modalVisible = ref(false)
 const editingCategory = ref<Category | null>(null)
@@ -46,6 +52,7 @@ watch(
 )
 
 const openModal = (category?: Category) => {
+  if (props.readonly) return
   editingCategory.value = category ?? null
   modalVisible.value = true
 }
@@ -73,6 +80,7 @@ defineExpose({
             icon="pi pi-plus"
             variant="secondary"
             size="sm"
+            :disabled="props.readonly"
             @click="openModal()"
           />
         </div>
@@ -106,7 +114,7 @@ defineExpose({
         icon="pi-tags"
         title="Нет категорий"
         :description="`Добавьте категорию для ${selectedCategoryType === CATEGORY_TYPE.Income ? 'доходов' : 'расходов'}.`"
-        action-label="Создать категорию"
+        :action-label="props.readonly ? '' : 'Создать категорию'"
         action-icon="pi pi-plus"
         @action="openModal()"
       />
@@ -125,6 +133,7 @@ defineExpose({
               type="button"
               class="category-card"
               :aria-label="`Редактировать категорию ${category.name}`"
+              :disabled="props.readonly"
               @click="openModal(category)"
             >
               <div class="category-card__top">
@@ -163,6 +172,7 @@ defineExpose({
       v-model:visible="modalVisible"
       :category="editingCategory"
       :default-type="selectedCategoryType"
+      :readonly="props.readonly"
     />
   </AppCard>
 </template>
@@ -274,6 +284,13 @@ defineExpose({
   background: color-mix(in srgb, var(--ft-surface-base) 90%, var(--ft-primary-500, #3b82f6) 10%);
   transform: translateY(-1px);
   box-shadow: var(--ft-shadow-sm);
+}
+
+.category-card:disabled {
+  cursor: not-allowed;
+  opacity: 0.7;
+  transform: none;
+  box-shadow: none;
 }
 
 .category-card:focus-visible {
