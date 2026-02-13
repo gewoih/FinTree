@@ -1,6 +1,6 @@
 <script setup lang="ts">
-import { computed } from 'vue';
-import ToggleSwitch from 'primevue/toggleswitch';
+import { computed, ref } from 'vue';
+import Menu from 'primevue/menu';
 import type { AccountType, Currency, InvestmentAccountOverviewDto } from '../../types';
 import { getAccountTypeInfo, getCurrencyFlag } from '../../utils/accountHelpers';
 import { formatCurrency, formatDate } from '../../utils/formatters';
@@ -22,36 +22,21 @@ const emit = defineEmits<{
   (e: 'updateLiquidity', value: boolean): void;
 }>();
 
+const menuRef = ref<InstanceType<typeof Menu> | null>(null);
+
 const accountTypeInfo = computed(() => getAccountTypeInfo(props.account.type as AccountType));
 const currencyFlag = computed(() => getCurrencyFlag(props.account.currencyCode));
-const currencyDisplay = computed(() => {
-  const flag = currencyFlag.value;
-  const symbol = props.account.currency?.symbol || '';
-  const code = props.account.currency?.code || props.account.currencyCode;
-  return flag ? `${flag} ${symbol} ${code}` : `${symbol} ${code}`;
-});
+const currencyCode = computed(() => props.account.currency?.code || props.account.currencyCode);
 
 const balanceInBase = computed(() => Number(props.account.balanceInBaseCurrency ?? 0));
-const balanceInAccount = computed(() => Number(props.account.balance ?? 0));
-const showSecondaryBalance = computed(() =>
-  props.baseCurrencyCode.toUpperCase() !== props.account.currencyCode.toUpperCase()
-);
-
 const formattedBaseBalance = computed(() =>
   formatCurrency(balanceInBase.value, props.baseCurrencyCode)
 );
-const formattedAccountBalance = computed(() =>
-  formatCurrency(balanceInAccount.value, props.account.currencyCode)
-);
-
-const lastUpdatedLabel = computed(() => {
-  if (!props.account.lastAdjustedAt) return 'Нет корректировок';
-  return `Обновлено ${formatDate(props.account.lastAdjustedAt)}`;
-});
 
 const returnLabel = computed(() => {
-  if (props.account.returnPercent == null) return '—';
-  return `${(props.account.returnPercent * 100).toFixed(1)}%`;
+  if (props.account.returnPercent == null) return '\u2014';
+  const sign = props.account.returnPercent > 0 ? '+' : '';
+  return `${sign}${(props.account.returnPercent * 100).toFixed(1)}%`;
 });
 
 const returnClass = computed(() => {
@@ -61,21 +46,36 @@ const returnClass = computed(() => {
   return 'investment-card__return--neutral';
 });
 
-const liquidityModel = computed({
-  get: () => props.account.isLiquid,
-  set: (value: boolean) => emit('updateLiquidity', value),
+const lastUpdatedLabel = computed(() => {
+  if (!props.account.lastAdjustedAt) return 'Нет корректировок';
+  return `Обновлено ${formatDate(props.account.lastAdjustedAt)}`;
 });
+
+const menuItems = computed(() => [
+  {
+    label: 'Корректировать баланс',
+    icon: 'pi pi-sliders-h',
+    command: () => emit('open'),
+  },
+  {
+    label: props.account.isLiquid ? 'Сделать неликвидным' : 'Сделать ликвидным',
+    icon: props.account.isLiquid ? 'pi pi-lock' : 'pi pi-bolt',
+    disabled: props.isLiquidityLoading,
+    command: () => emit('updateLiquidity', !props.account.isLiquid),
+  },
+]);
+
+const toggleMenu = (event: Event) => {
+  menuRef.value?.toggle(event);
+};
 </script>
 
 <template>
-  <article
-    class="investment-card ft-card"
-    @click="emit('open')"
-  >
+  <article class="investment-card">
     <header class="investment-card__header">
       <div
         class="investment-card__icon"
-        :style="{ color: accountTypeInfo.color }"
+        :style="{ '--icon-color': accountTypeInfo.color }"
       >
         <i
           :class="`pi ${accountTypeInfo.icon}`"
@@ -88,80 +88,65 @@ const liquidityModel = computed({
         <p>{{ accountTypeInfo.label }}</p>
       </div>
 
-      <div
-        class="investment-card__liquidity"
-        @click.stop
+      <button
+        class="investment-card__menu-trigger"
+        aria-label="Действия"
+        @click.stop="toggleMenu"
       >
-        <span>{{ account.isLiquid ? 'Ликвидный' : 'Неликвидный' }}</span>
-        <ToggleSwitch
-          v-model="liquidityModel"
-          :disabled="isLiquidityLoading"
-        />
-      </div>
+        <i class="pi pi-ellipsis-v" />
+      </button>
+      <Menu
+        ref="menuRef"
+        :model="menuItems"
+        :popup="true"
+      />
     </header>
 
-    <div class="investment-card__meta">
-      <div class="investment-card__meta-row">
-        <span class="investment-card__label">Валюта</span>
-        <span class="investment-card__value">{{ currencyDisplay }}</span>
-      </div>
-
-      <div class="investment-card__meta-row">
-        <span class="investment-card__label">Баланс</span>
-        <div class="investment-card__value-block">
-          <span class="investment-card__value investment-card__value--main">{{ formattedBaseBalance }}</span>
-          <span
-            v-if="showSecondaryBalance"
-            class="investment-card__value investment-card__value--secondary"
-          >
-            {{ formattedAccountBalance }}
-          </span>
-        </div>
-      </div>
-
-      <div class="investment-card__meta-row">
-        <span class="investment-card__label">Доходность</span>
-        <div class="investment-card__value-block">
-          <span
-            class="investment-card__value investment-card__value--main"
-            :class="returnClass"
-          >
-            {{ returnLabel }}
-          </span>
-          <span class="investment-card__value investment-card__value--secondary">
-            {{ periodLabel }}
-          </span>
-        </div>
-      </div>
+    <div class="investment-card__body">
+      <span class="investment-card__balance">{{ formattedBaseBalance }}</span>
+      <span
+        class="investment-card__return"
+        :class="returnClass"
+      >
+        {{ returnLabel }}
+      </span>
     </div>
 
     <footer class="investment-card__footer">
+      <span class="investment-card__meta-line">
+        <template v-if="currencyFlag">{{ currencyFlag }}&nbsp;</template>{{ currencyCode }}
+        <span class="investment-card__separator">&middot;</span>
+        <span
+          v-tooltip.bottom="'Ликвидный = можно быстро вывести деньги'"
+          class="investment-card__liquidity-badge"
+          :class="{ 'investment-card__liquidity-badge--liquid': account.isLiquid }"
+        >
+          {{ account.isLiquid ? 'Ликвидный' : 'Неликвидный' }}
+        </span>
+      </span>
       <span class="investment-card__updated">
-        <i class="pi pi-history" />
         {{ lastUpdatedLabel }}
       </span>
-      <UiButton
-        variant="ghost"
-        size="sm"
-        icon="pi pi-sliders-h"
-        label="Корректировать баланс"
-        @click.stop="emit('open')"
-      />
     </footer>
   </article>
 </template>
 
 <style scoped>
 .investment-card {
-  gap: var(--ft-space-4);
-  border: 1px solid var(--ft-border-soft);
-  background: var(--ft-surface-soft);
-  transition: border-color var(--ft-transition-base), box-shadow var(--ft-transition-base);
-  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  gap: var(--ft-space-3);
+  padding: var(--ft-space-4);
+  border: 1px solid var(--ft-border-subtle);
+  border-radius: var(--ft-radius-2xl);
+  background: var(--ft-surface-base);
+  box-shadow: var(--ft-shadow-sm);
+  transition: transform var(--ft-transition-fast), box-shadow var(--ft-transition-fast), border-color var(--ft-transition-fast);
 }
 
 .investment-card:hover {
-  border-color: var(--ft-primary-200);
+  transform: translateY(-2px);
+  border-color: var(--ft-border-default);
   box-shadow: var(--ft-shadow-md);
 }
 
@@ -173,21 +158,17 @@ const liquidityModel = computed({
 
 .investment-card__icon {
   flex-shrink: 0;
-  width: 48px;
-  height: 48px;
+  width: 40px;
+  height: 40px;
   border-radius: var(--ft-radius-lg);
-  background: linear-gradient(135deg, currentColor 0%, currentColor 100%);
-  opacity: 0.12;
+  background: color-mix(in srgb, var(--icon-color) 15%, transparent);
   display: grid;
   place-items: center;
-  position: relative;
 }
 
 .investment-card__icon i {
-  position: absolute;
-  color: inherit;
-  font-size: 22px;
-  opacity: 1;
+  color: var(--icon-color);
+  font-size: 18px;
 }
 
 .investment-card__title {
@@ -197,67 +178,58 @@ const liquidityModel = computed({
 
 .investment-card__title h3 {
   margin: 0;
-  font-size: var(--ft-text-lg);
+  font-size: var(--ft-text-base);
   font-weight: var(--ft-font-semibold);
-  color: var(--ft-heading);
+  color: var(--ft-text-primary);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
 }
 
 .investment-card__title p {
-  margin: var(--ft-space-1) 0 0;
+  margin: 2px 0 0;
   font-size: var(--ft-text-sm);
-  color: var(--ft-text-muted);
+  color: var(--ft-text-secondary);
 }
 
-.investment-card__liquidity {
-  display: inline-flex;
-  align-items: center;
-  gap: var(--ft-space-2);
-  font-size: var(--ft-text-sm);
-  color: var(--ft-text-muted);
-}
-
-.investment-card__meta {
+.investment-card__menu-trigger {
+  flex-shrink: 0;
+  width: 32px;
+  height: 32px;
+  border: none;
+  border-radius: var(--ft-radius-lg);
+  background: transparent;
+  color: var(--ft-text-secondary);
+  cursor: pointer;
   display: grid;
-  gap: var(--ft-space-3);
+  place-items: center;
+  transition: background var(--ft-transition-fast), color var(--ft-transition-fast);
 }
 
-.investment-card__meta-row {
+.investment-card__menu-trigger:hover {
+  background: color-mix(in srgb, var(--ft-surface-raised) 80%, transparent);
+  color: var(--ft-text-primary);
+}
+
+.investment-card__body {
   display: flex;
+  align-items: baseline;
   justify-content: space-between;
-  gap: var(--ft-space-4);
+  gap: var(--ft-space-3);
+  padding: var(--ft-space-1) 0;
 }
 
-.investment-card__label {
-  font-size: var(--ft-text-sm);
-  color: var(--ft-text-muted);
-  display: inline-flex;
-  align-items: center;
-  gap: var(--ft-space-2);
+.investment-card__balance {
+  font-size: var(--ft-text-xl);
+  font-weight: var(--ft-font-bold);
+  color: var(--ft-text-primary);
+  line-height: 1.2;
 }
 
-.investment-card__value-block {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-end;
-  gap: 2px;
-}
-
-.investment-card__value {
-  color: var(--ft-heading);
-  font-weight: var(--ft-font-semibold);
-}
-
-.investment-card__value--main {
+.investment-card__return {
   font-size: var(--ft-text-base);
-}
-
-.investment-card__value--secondary {
-  font-size: var(--ft-text-xs);
-  color: var(--ft-text-muted);
-  font-weight: var(--ft-font-medium);
+  font-weight: var(--ft-font-semibold);
+  white-space: nowrap;
 }
 
 .investment-card__return--positive {
@@ -274,44 +246,43 @@ const liquidityModel = computed({
 
 .investment-card__footer {
   display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: var(--ft-space-3);
-  border-top: 1px solid var(--ft-border-soft);
+  flex-direction: column;
+  gap: var(--ft-space-1);
+  border-top: 1px solid var(--ft-border-subtle);
   padding-top: var(--ft-space-3);
 }
 
-.investment-card__updated {
+.investment-card__meta-line {
+  font-size: var(--ft-text-sm);
+  color: var(--ft-text-secondary);
   display: inline-flex;
   align-items: center;
-  gap: var(--ft-space-2);
-  font-size: var(--ft-text-sm);
-  color: var(--ft-text-muted);
+  gap: var(--ft-space-1);
+  flex-wrap: wrap;
 }
 
-@media (max-width: 720px) {
-  .investment-card__header {
-    flex-direction: column;
-    align-items: flex-start;
-  }
+.investment-card__separator {
+  color: var(--ft-text-muted);
+  margin: 0 2px;
+}
 
-  .investment-card__liquidity {
-    width: 100%;
-    justify-content: space-between;
-  }
+.investment-card__liquidity-badge {
+  font-size: var(--ft-text-xs);
+  font-weight: var(--ft-font-medium);
+  padding: 1px 6px;
+  border-radius: var(--ft-radius-full);
+  background: color-mix(in srgb, var(--ft-text-muted) 12%, transparent);
+  color: var(--ft-text-muted);
+  cursor: help;
+}
 
-  .investment-card__meta-row {
-    flex-direction: column;
-    align-items: flex-start;
-  }
+.investment-card__liquidity-badge--liquid {
+  background: color-mix(in srgb, var(--ft-success-400) 15%, transparent);
+  color: var(--ft-success-500);
+}
 
-  .investment-card__value-block {
-    align-items: flex-start;
-  }
-
-  .investment-card__footer {
-    flex-direction: column;
-    align-items: flex-start;
-  }
+.investment-card__updated {
+  font-size: var(--ft-text-xs);
+  color: var(--ft-text-muted);
 }
 </style>

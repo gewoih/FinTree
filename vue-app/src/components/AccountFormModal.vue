@@ -8,13 +8,16 @@ import ToggleSwitch from 'primevue/toggleswitch'
 import { useFinanceStore } from '../stores/finance'
 import { useFormModal } from '../composables/useFormModal'
 import type { Account, AccountType } from '../types'
+import { getAccountTypeInfo } from '../utils/accountHelpers'
 
-const BANK_ACCOUNT_TYPE: AccountType = 0
-
-const props = defineProps<{
-  visible: boolean
-  account?: Account | null
-}>()
+const props = withDefaults(
+  defineProps<{
+    visible: boolean
+    account?: Account | null
+    allowedTypes?: AccountType[]
+  }>(),
+  { allowedTypes: () => [0] },
+)
 
 const emit = defineEmits<{
   (e: 'update:visible', value: boolean): void
@@ -27,6 +30,18 @@ const selectedCurrencyCode = ref<string | null>(null)
 const attemptedSubmit = ref(false)
 const initialBalance = ref<number | null>(null)
 const isLiquid = ref(true)
+const selectedType = ref<AccountType>(props.allowedTypes[0])
+
+const hasMultipleTypes = computed(() => props.allowedTypes.length > 1)
+
+const typeOptions = computed(() =>
+  props.allowedTypes.map(type => {
+    const info = getAccountTypeInfo(type)
+    return { label: info.label, value: type, icon: info.icon }
+  })
+)
+
+const currentTypeInfo = computed(() => getAccountTypeInfo(selectedType.value))
 
 const availableCurrencies = computed(() => store.currencies)
 
@@ -98,6 +113,7 @@ function resetForm() {
 
   name.value = ''
   isLiquid.value = true
+  selectedType.value = props.allowedTypes[0]
   setDefaultCurrency()
 }
 
@@ -133,7 +149,7 @@ const { isSubmitting, handleSubmit: handleFormSubmit, showWarning } = useFormMod
 
     return await store.createAccount({
       name: name.value.trim(),
-      type: BANK_ACCOUNT_TYPE,
+      type: selectedType.value,
       currencyCode: currencyCodeForSubmit.value,
       initialBalance: initialBalance.value,
       isLiquid: isLiquid.value,
@@ -194,17 +210,53 @@ const handleSubmit = async () => {
       </FormField>
 
       <FormField label="Тип счёта">
-        <template #default>
-          <div class="static-field">
+        <template #default="{ fieldAttrs }">
+          <Select
+            v-if="hasMultipleTypes"
+            v-model="selectedType"
+            :options="typeOptions"
+            option-label="label"
+            option-value="value"
+            class="w-full"
+            :disabled="isEditing"
+            :input-id="fieldAttrs.id"
+            :aria-describedby="fieldAttrs['aria-describedby']"
+          >
+            <template #value="slotProps">
+              <div
+                v-if="slotProps.value != null"
+                class="type-option"
+              >
+                <i
+                  :class="'pi ' + getAccountTypeInfo(slotProps.value).icon"
+                  aria-hidden="true"
+                />
+                <span>{{ getAccountTypeInfo(slotProps.value).label }}</span>
+              </div>
+            </template>
+            <template #option="slotProps">
+              <div class="type-option">
+                <i
+                  :class="'pi ' + slotProps.option.icon"
+                  aria-hidden="true"
+                />
+                <span>{{ slotProps.option.label }}</span>
+              </div>
+            </template>
+          </Select>
+          <div
+            v-else
+            class="static-field"
+          >
             <i
-              class="pi pi-wallet"
+              :class="'pi ' + currentTypeInfo.icon"
               aria-hidden="true"
             />
-            <span>Банковский счёт</span>
+            <span>{{ currentTypeInfo.label }}</span>
           </div>
         </template>
         <template #hint>
-          На этой странице доступны только банковские счета.
+          {{ hasMultipleTypes ? 'Выберите тип инвестиционного счёта.' : 'На этой странице доступны только банковские счета.' }}
         </template>
       </FormField>
 
@@ -337,6 +389,16 @@ const handleSubmit = async () => {
 
 .actions :deep(.p-button-label) {
   white-space: nowrap;
+}
+
+.type-option {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--ft-space-2);
+}
+
+.type-option i {
+  color: var(--ft-text-muted);
 }
 
 .liquidity-toggle {

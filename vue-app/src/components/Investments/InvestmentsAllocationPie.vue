@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { computed } from 'vue';
+import type { Plugin } from 'chart.js';
 
 interface AllocationAccount {
   id: string;
@@ -40,7 +41,36 @@ const totalValue = computed(() =>
   segments.value.reduce((sum, segment) => sum + segment.value, 0)
 );
 
-const chartData = computed(() => {
+const formattedTotal = computed(() => {
+  if (totalValue.value <= 0) return '\u2014';
+  return totalValue.value.toLocaleString('ru-RU', {
+    style: 'currency',
+    currency: props.baseCurrencyCode,
+    maximumFractionDigits: 0,
+  });
+});
+
+const centerTextPlugin = computed<Plugin<'doughnut'>>(() => ({
+  id: 'centerText',
+  afterDraw(chart) {
+    const { ctx, width, height } = chart;
+    if (!ctx) return;
+    ctx.save();
+
+    const text = formattedTotal.value;
+    const fontSize = Math.min(width, height) * 0.08;
+    ctx.font = `bold ${fontSize}px sans-serif`;
+    ctx.fillStyle = getComputedStyle(document.documentElement)
+      .getPropertyValue('--ft-text-primary').trim() || '#1e293b';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText(text, width / 2, height / 2);
+
+    ctx.restore();
+  },
+}));
+
+const donutChartData = computed(() => {
   if (segments.value.length === 0) return null;
 
   return {
@@ -49,9 +79,11 @@ const chartData = computed(() => {
       {
         data: segments.value.map(item => item.value),
         backgroundColor: segments.value.map((_, index) => palette[index % palette.length]),
-        borderColor: '#ffffff',
         borderWidth: 2,
-        hoverOffset: 10,
+        borderColor: getComputedStyle(document.documentElement)
+          .getPropertyValue('--ft-surface-base').trim() || '#0b111a',
+        hoverBorderWidth: 3,
+        hoverOffset: 8,
       },
     ],
   };
@@ -61,21 +93,34 @@ const chartOptions = computed(() => ({
   responsive: true,
   maintainAspectRatio: true,
   aspectRatio: 1,
+  cutout: '65%',
   plugins: {
     legend: {
       display: false,
     },
     tooltip: {
+      backgroundColor: getComputedStyle(document.documentElement)
+        .getPropertyValue('--ft-surface-raised').trim() || '#1e293b',
+      titleColor: getComputedStyle(document.documentElement)
+        .getPropertyValue('--ft-text-primary').trim() || '#f1f5f9',
+      bodyColor: getComputedStyle(document.documentElement)
+        .getPropertyValue('--ft-text-secondary').trim() || '#94a3b8',
+      borderColor: getComputedStyle(document.documentElement)
+        .getPropertyValue('--ft-border-subtle').trim() || '#334155',
+      borderWidth: 1,
+      cornerRadius: 10,
+      padding: 12,
       callbacks: {
-        label: (context: { parsed?: number; label?: string }) => {
+        label(context: { parsed: number; label: string }) {
           const value = Number(context.parsed ?? 0);
           const share = totalValue.value > 0 ? (value / totalValue.value) * 100 : 0;
           const amount = new Intl.NumberFormat('ru-RU', {
             style: 'currency',
             currency: props.baseCurrencyCode,
-            minimumFractionDigits: 2,
+            minimumFractionDigits: 0,
+            maximumFractionDigits: 0,
           }).format(value);
-          return `${context.label ?? 'Счет'}: ${amount} (${share.toFixed(1)}%)`;
+          return `${context.label ?? '\u0421\u0447\u0435\u0442'}: ${amount} (${share.toFixed(1)}%)`;
         },
       },
     },
@@ -96,20 +141,24 @@ const formatMoney = (value: number) =>
   new Intl.NumberFormat('ru-RU', {
     style: 'currency',
     currency: props.baseCurrencyCode,
-    minimumFractionDigits: 2,
+    minimumFractionDigits: 0,
+    maximumFractionDigits: 0,
   }).format(value);
 </script>
 
 <template>
-  <UiCard
-    class="allocation-card"
-    variant="muted"
-    padding="lg"
-  >
+  <div class="allocation-card">
     <div class="allocation-card__head">
       <div>
-        <h3>Распределение по счетам</h3>
-        <p>Пропорции инвестиционного портфеля в базовой валюте</p>
+        <h3
+          v-tooltip.top="'Показывает распределение портфеля по счетам в базовой валюте'"
+          class="allocation-card__title"
+        >
+          Распределение по счетам
+        </h3>
+        <p class="allocation-card__subtitle">
+          Пропорции инвестиционного портфеля
+        </p>
       </div>
     </div>
 
@@ -117,16 +166,17 @@ const formatMoney = (value: number) =>
       v-if="loading"
       class="allocation-card__loading"
     >
-      <UiSkeleton
+      <Skeleton
         width="220px"
         height="220px"
         border-radius="999px"
       />
-      <div class="allocation-card__loading-list">
-        <UiSkeleton
-          v-for="index in 4"
-          :key="index"
-          height="20px"
+      <div class="allocation-card__loading-legend">
+        <Skeleton
+          v-for="i in 4"
+          :key="i"
+          height="18px"
+          width="70%"
         />
       </div>
     </div>
@@ -146,10 +196,11 @@ const formatMoney = (value: number) =>
     >
       <div class="allocation-card__chart">
         <Chart
-          v-if="chartData"
-          type="pie"
-          :data="chartData"
+          v-if="donutChartData"
+          type="doughnut"
+          :data="donutChartData"
           :options="chartOptions"
+          :plugins="[centerTextPlugin]"
         />
       </div>
 
@@ -167,60 +218,77 @@ const formatMoney = (value: number) =>
             <span class="allocation-card__name">{{ item.name }}</span>
             <span class="allocation-card__value">{{ formatMoney(item.value) }}</span>
           </div>
-          <Tag severity="secondary">
-            {{ item.share.toFixed(1) }}%
-          </Tag>
+          <span class="allocation-card__percent">{{ item.share.toFixed(1) }}%</span>
         </li>
       </ul>
     </div>
-  </UiCard>
+  </div>
 </template>
 
 <style scoped>
 .allocation-card {
-  display: grid;
-  gap: var(--space-4);
+  display: flex;
+  flex-direction: column;
+  gap: var(--ft-space-4);
+  padding: clamp(1rem, 2vw, 1.5rem);
+  background: var(--ft-surface-base);
+  border-radius: var(--ft-radius-2xl);
+  border: 1px solid var(--ft-border-subtle);
+  box-shadow: var(--ft-shadow-sm);
 }
 
-.allocation-card__head h3 {
+.allocation-card__head {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: var(--ft-space-4);
+}
+
+.allocation-card__title {
   margin: 0;
   font-size: var(--ft-text-lg);
   font-weight: var(--ft-font-semibold);
-  color: var(--text);
+  color: var(--ft-text-primary);
+  cursor: help;
 }
 
-.allocation-card__head p {
-  margin: var(--space-1) 0 0;
-  color: var(--text-muted);
+.allocation-card__subtitle {
+  margin: var(--ft-space-1) 0 0;
+  color: var(--ft-text-secondary);
   font-size: var(--ft-text-sm);
 }
 
 .allocation-card__loading {
   display: grid;
-  justify-items: center;
-  gap: var(--space-4);
+  place-items: center;
+  gap: var(--ft-space-4);
+  min-height: 280px;
 }
 
-.allocation-card__loading-list {
-  width: min(100%, 340px);
+.allocation-card__loading-legend {
+  width: 100%;
+  max-width: 240px;
   display: grid;
-  gap: var(--space-2);
+  gap: var(--ft-space-2);
 }
 
 .allocation-card__content {
   display: grid;
-  gap: var(--space-4);
+  gap: var(--ft-space-4);
+  align-items: start;
 }
 
 .allocation-card__chart {
+  width: 100%;
   display: flex;
-  justify-content: center;
   align-items: center;
-  padding: var(--space-2);
+  justify-content: center;
+  padding: var(--ft-space-2);
 }
 
 .allocation-card__chart :deep(.p-chart) {
-  width: min(100%, 360px);
+  width: 100%;
+  max-width: 280px;
 }
 
 .allocation-card__chart :deep(canvas) {
@@ -233,17 +301,22 @@ const formatMoney = (value: number) =>
   padding: 0;
   list-style: none;
   display: grid;
-  gap: var(--space-2);
+  gap: var(--ft-space-2);
 }
 
 .allocation-card__legend-item {
   display: flex;
   align-items: center;
-  gap: var(--space-3);
-  padding: var(--space-3);
-  border-radius: var(--ft-radius-xl);
-  border: 1px solid var(--ft-border-subtle);
-  background: color-mix(in srgb, var(--ft-surface-raised) 84%, transparent);
+  gap: var(--ft-space-3);
+  padding: var(--ft-space-3);
+  border-radius: var(--ft-radius-lg);
+  border: 1px solid transparent;
+  transition: background var(--ft-transition-fast), border-color var(--ft-transition-fast);
+}
+
+.allocation-card__legend-item:hover {
+  background: color-mix(in srgb, var(--ft-surface-raised) 70%, transparent);
+  border-color: var(--ft-border-subtle);
 }
 
 .allocation-card__dot {
@@ -255,24 +328,45 @@ const formatMoney = (value: number) =>
 
 .allocation-card__meta {
   display: grid;
-  gap: 2px;
+  gap: 1px;
   flex: 1;
+  min-width: 0;
 }
 
 .allocation-card__name {
-  font-weight: var(--ft-font-semibold);
+  font-weight: var(--ft-font-medium);
   color: var(--ft-text-primary);
+  font-size: var(--ft-text-base);
 }
 
 .allocation-card__value {
-  color: var(--ft-text-secondary);
   font-size: var(--ft-text-sm);
+  color: var(--ft-text-secondary);
+  font-weight: var(--ft-font-semibold);
 }
 
-@media (min-width: 992px) {
+.allocation-card__percent {
+  font-size: var(--ft-text-base);
+  font-weight: var(--ft-font-bold);
+  color: var(--ft-text-primary);
+  white-space: nowrap;
+}
+
+@media (min-width: 768px) {
   .allocation-card__content {
-    grid-template-columns: minmax(280px, 360px) minmax(0, 1fr);
-    align-items: center;
+    grid-template-columns: minmax(200px, 280px) minmax(0, 1fr);
+  }
+
+  .allocation-card__legend {
+    max-height: 320px;
+    overflow: auto;
+    padding-right: var(--ft-space-1);
+  }
+}
+
+@media (max-width: 640px) {
+  .allocation-card__chart :deep(.p-chart) {
+    max-width: 220px;
   }
 }
 </style>

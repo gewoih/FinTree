@@ -18,8 +18,9 @@ import AccountBalanceAdjustmentsModal from '../components/AccountBalanceAdjustme
 import InvestmentAccountCard from '../components/Investments/InvestmentAccountCard.vue';
 import InvestmentsAllocationPie from '../components/Investments/InvestmentsAllocationPie.vue';
 import NetWorthLineCard from '../components/analytics/NetWorthLineCard.vue';
+import SummaryStrip from '../components/analytics/SummaryStrip.vue';
 import { mapAccount } from '../utils/mappers';
-import { formatCurrency, formatDate } from '../utils/formatters';
+import { formatCurrency } from '../utils/formatters';
 
 interface InvestmentAccount extends Omit<InvestmentAccountOverviewDto, 'type'> {
   type: AccountType;
@@ -66,11 +67,6 @@ const accounts = computed<InvestmentAccount[]>(() => {
   });
 });
 
-const periodRangeLabel = computed(() => {
-  if (!overview.value) return 'за последние 6 месяцев';
-  return `${formatDate(overview.value.periodFrom)} — ${formatDate(overview.value.periodTo)}`;
-});
-
 const periodShortLabel = computed(() => {
   if (!overview.value) return 'за 6 мес.';
   const from = new Date(overview.value.periodFrom);
@@ -87,19 +83,41 @@ const liquidValue = computed(() =>
   accounts.value.filter(item => item.isLiquid).reduce((sum, item) => sum + (item.balanceInBaseCurrency ?? 0), 0)
 );
 
-const totalValueLabel = computed(() => formatCurrency(totalValue.value, baseCurrency.value));
-const liquidValueLabel = computed(() => formatCurrency(liquidValue.value, baseCurrency.value));
-const totalReturnLabel = computed(() => {
-  if (!overview.value || overview.value.totalReturnPercent == null) return '—';
-  return `${(overview.value.totalReturnPercent * 100).toFixed(1)}%`;
-});
+const totalReturnPercent = computed(() => overview.value?.totalReturnPercent ?? null);
 
-const totalReturnVariant = computed(() => {
-  const value = overview.value?.totalReturnPercent;
-  if (value == null) return 'default';
-  if (value > 0) return 'success';
-  if (value < 0) return 'danger';
-  return 'default';
+const summaryMetrics = computed(() => {
+  const returnValue = totalReturnPercent.value;
+  const returnAccent: 'good' | 'poor' | 'neutral' =
+    returnValue == null ? 'neutral' : returnValue > 0 ? 'good' : returnValue < 0 ? 'poor' : 'neutral';
+
+  const returnLabel = returnValue == null ? '\u2014' : `${(returnValue * 100).toFixed(1)}%`;
+
+  return [
+    {
+      key: 'capital',
+      label: 'Капитал',
+      value: formatCurrency(totalValue.value, baseCurrency.value),
+      icon: 'pi pi-wallet',
+      accent: 'neutral' as const,
+      tooltip: 'Общая стоимость всех инвестиционных счетов в базовой валюте',
+    },
+    {
+      key: 'liquid',
+      label: 'Ликвидные',
+      value: formatCurrency(liquidValue.value, baseCurrency.value),
+      icon: 'pi pi-bolt',
+      accent: (liquidValue.value > 0 ? 'good' : 'neutral') as 'good' | 'neutral',
+      tooltip: 'Сумма средств на счетах, отмеченных как ликвидные \u2014 те, что можно быстро вывести',
+    },
+    {
+      key: 'return',
+      label: 'Доходность',
+      value: returnLabel,
+      icon: 'pi pi-chart-line',
+      accent: returnAccent,
+      tooltip: 'Общая доходность портфеля за период',
+    },
+  ];
 });
 
 const sortedNetWorth = computed(() => {
@@ -122,14 +140,9 @@ const netWorthChartData = computed(() => {
     datasets: [
       {
         data: sortedNetWorth.value.map(item => Number(item.netWorth ?? 0)),
-        borderColor: '#2e5bff',
-        backgroundColor: 'rgba(46, 91, 255, 0.15)',
-        fill: true,
-        borderWidth: 2,
-        tension: 0.35,
-        pointRadius: 3,
-        pointBackgroundColor: '#2e5bff',
-        pointBorderColor: '#0b111a',
+        backgroundColor: '#6B82DB',
+        borderRadius: 8,
+        maxBarThickness: 48,
       },
     ],
   };
@@ -157,6 +170,8 @@ const filteredAccounts = computed(() => {
 const hasActiveFilters = computed(() =>
   searchText.value.length > 0 || selectedType.value !== null
 );
+
+const showFilters = computed(() => accounts.value.length > 5);
 
 const openModal = () => {
   modalVisible.value = true;
@@ -268,127 +283,22 @@ onMounted(async () => {
         { label: 'Главная', to: '/analytics' },
         { label: 'Инвестиции' }
       ]"
-    >
-      <template #actions>
-        <UiButton
-          label="Добавить счет"
-          icon="pi pi-plus"
-          @click="openModal"
-        />
-      </template>
-    </PageHeader>
+    />
 
-    <UiSection class="investments-page__content">
-      <UiCard
-        class="investments-page__summary"
-        variant="muted"
-        padding="lg"
-      >
-        <div class="summary-header">
-          <div>
-            <h3>Общая картина</h3>
-            <p>{{ periodRangeLabel }}</p>
-          </div>
-        </div>
-        <div class="summary-grid">
-          <KPICard
-            title="Общий объем"
-            :value="totalValueLabel"
-            icon="pi pi-briefcase"
-            :loading="overviewLoading"
-          />
-          <KPICard
-            title="Ликвидные активы"
-            :value="liquidValueLabel"
-            icon="pi pi-bolt"
-            :loading="overviewLoading"
-          />
-          <KPICard
-            title="Доходность портфеля"
-            :value="totalReturnLabel"
-            icon="pi pi-chart-line"
-            :loading="overviewLoading"
-            :variant="totalReturnVariant"
-          />
-        </div>
-      </UiCard>
-
-      <UiCard
-        v-if="accounts.length > 0"
-        class="investments-page__filters"
-        variant="muted"
-        padding="lg"
-      >
-        <AccountFilters
-          v-model:search-text="searchText"
-          v-model:selected-type="selectedType"
-          :available-types="[3, 2, 4]"
-          @clear-filters="clearFilters"
-        />
-      </UiCard>
-
-      <div
-        v-if="overviewLoading && accounts.length === 0"
-        class="investments-page__skeleton"
-      >
-        <UiSkeleton
-          v-for="i in 4"
-          :key="i"
-          height="220px"
-        />
-      </div>
-
-      <div
-        v-else-if="overviewError"
-        class="investments-page__message"
-      >
-        <Message
-          severity="error"
-          icon="pi pi-exclamation-triangle"
-          :closable="false"
-        >
-          {{ overviewError }}
-        </Message>
-      </div>
-
-      <EmptyState
-        v-else-if="accounts.length === 0"
-        icon="pi pi-briefcase"
-        title="Нет инвестиционных счетов"
-        description="Добавьте брокерский счет, вклад или криптовалютный аккаунт, чтобы следить за доходностью."
-        action-label="Добавить счет"
-        action-icon="pi pi-plus"
-        @action="openModal"
+    <div class="investments-grid">
+      <!-- Section 1: Summary Strip -->
+      <SummaryStrip
+        class="investments-grid__item investments-grid__item--span-12"
+        :loading="overviewLoading"
+        :error="overviewError"
+        :metrics="summaryMetrics"
+        @retry="refreshInvestmentsData"
       />
 
-      <EmptyState
-        v-else-if="filteredAccounts.length === 0 && hasActiveFilters"
-        icon="pi pi-filter-slash"
-        title="Ничего не найдено"
-        description="По выбранным фильтрам нет счетов. Попробуйте изменить параметры."
-        action-label="Сбросить фильтры"
-        action-icon="pi pi-refresh"
-        @action="clearFilters"
-      />
-
-      <div
-        v-else
-        class="investments-grid card-grid card-grid--balanced"
-      >
-        <InvestmentAccountCard
-          v-for="account in filteredAccounts"
-          :key="account.id"
-          :account="account"
-          :base-currency-code="baseCurrency"
-          :period-label="periodShortLabel"
-          :is-liquidity-loading="pendingLiquidityId === account.id"
-          @open="openAdjustments(account)"
-          @update-liquidity="handleLiquidityToggle(account, $event)"
-        />
-      </div>
-
+      <!-- Section 2: Charts row -->
       <InvestmentsAllocationPie
         v-if="accounts.length > 0"
+        class="investments-grid__item investments-grid__item--span-6"
         :accounts="accounts"
         :base-currency-code="baseCurrency"
         :loading="overviewLoading"
@@ -396,16 +306,101 @@ onMounted(async () => {
 
       <NetWorthLineCard
         v-if="accounts.length > 0"
-        class="investments-page__networth"
+        class="investments-grid__item investments-grid__item--span-6"
         :loading="netWorthLoading"
         :error="netWorthError"
         :chart-data="netWorthChartData"
         :currency="baseCurrency"
+        chart-type="bar"
         @retry="loadNetWorth(12)"
       />
-    </UiSection>
 
-    <AccountFormModal v-model:visible="modalVisible" />
+      <!-- Section 3: Account Cards -->
+      <div class="investments-grid__item investments-grid__item--span-12 investments-accounts">
+        <div class="investments-accounts__header">
+          <h2 class="investments-accounts__title">Счета</h2>
+          <UiButton
+            label="Добавить счет"
+            icon="pi pi-plus"
+            size="sm"
+            @click="openModal"
+          />
+        </div>
+
+        <AccountFilters
+          v-if="showFilters"
+          v-model:search-text="searchText"
+          v-model:selected-type="selectedType"
+          :available-types="[3, 2, 4]"
+          @clear-filters="clearFilters"
+        />
+
+        <div
+          v-if="overviewLoading && accounts.length === 0"
+          class="investments-accounts__skeleton"
+        >
+          <UiSkeleton
+            v-for="i in 4"
+            :key="i"
+            height="180px"
+          />
+        </div>
+
+        <div
+          v-else-if="overviewError && accounts.length === 0"
+          class="investments-accounts__message"
+        >
+          <Message
+            severity="error"
+            icon="pi pi-exclamation-triangle"
+            :closable="false"
+          >
+            {{ overviewError }}
+          </Message>
+        </div>
+
+        <EmptyState
+          v-else-if="accounts.length === 0"
+          icon="pi pi-briefcase"
+          title="Нет инвестиционных счетов"
+          description="Добавьте брокерский счет, вклад или криптовалютный аккаунт, чтобы следить за доходностью."
+          action-label="Добавить счет"
+          action-icon="pi pi-plus"
+          @action="openModal"
+        />
+
+        <EmptyState
+          v-else-if="filteredAccounts.length === 0 && hasActiveFilters"
+          icon="pi pi-filter-slash"
+          title="Ничего не найдено"
+          description="По выбранным фильтрам нет счетов. Попробуйте изменить параметры."
+          action-label="Сбросить фильтры"
+          action-icon="pi pi-refresh"
+          @action="clearFilters"
+        />
+
+        <div
+          v-else
+          class="investments-accounts__grid"
+        >
+          <InvestmentAccountCard
+            v-for="account in filteredAccounts"
+            :key="account.id"
+            :account="account"
+            :base-currency-code="baseCurrency"
+            :period-label="periodShortLabel"
+            :is-liquidity-loading="pendingLiquidityId === account.id"
+            @open="openAdjustments(account)"
+            @update-liquidity="handleLiquidityToggle(account, $event)"
+          />
+        </div>
+      </div>
+    </div>
+
+    <AccountFormModal
+      v-model:visible="modalVisible"
+      :allowed-types="[3, 2, 4]"
+    />
     <AccountBalanceAdjustmentsModal
       v-model:visible="adjustmentsVisible"
       :account="selectedAccount"
@@ -415,60 +410,95 @@ onMounted(async () => {
 
 <style scoped>
 .investments-page {
-  gap: var(--space-6);
-}
-
-.investments-page__content {
-  gap: var(--space-5);
-}
-
-.summary-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: flex-start;
-  gap: var(--space-4);
-}
-
-.summary-header h3 {
-  margin: 0;
-  font-size: var(--ft-text-lg);
-  font-weight: var(--ft-font-semibold);
-  color: var(--text);
-}
-
-.summary-header p {
-  margin: var(--space-1) 0 0;
-  color: var(--text-muted);
-  font-size: var(--ft-text-sm);
-}
-
-.summary-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-  gap: var(--space-4);
-}
-
-.investments-page__filters {
-  margin-top: var(--space-2);
-}
-
-.investments-page__skeleton {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-  gap: var(--space-4);
+  gap: var(--ft-space-6);
 }
 
 .investments-grid {
-  gap: var(--space-5);
+  display: grid;
+  gap: var(--ft-space-4);
 }
 
-.investments-page__message {
-  padding: var(--space-4);
+.investments-grid__item {
+  grid-column: span 12;
+}
+
+.investments-accounts {
+  display: flex;
+  flex-direction: column;
+  gap: var(--ft-space-4);
+}
+
+.investments-accounts__header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: var(--ft-space-4);
+}
+
+.investments-accounts__title {
+  margin: 0;
+  font-size: var(--ft-text-xl);
+  font-weight: var(--ft-font-semibold);
+  color: var(--ft-text-primary);
+}
+
+.investments-accounts__skeleton {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  gap: var(--ft-space-4);
+}
+
+.investments-accounts__grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  gap: var(--ft-space-4);
+}
+
+.investments-accounts__message {
+  padding: var(--ft-space-2);
+}
+
+@media (min-width: 1024px) {
+  .investments-grid {
+    grid-template-columns: repeat(12, minmax(0, 1fr));
+  }
+
+  .investments-grid__item--span-12 {
+    grid-column: 1 / -1;
+  }
+
+  .investments-grid__item--span-6 {
+    grid-column: span 6;
+  }
+}
+
+@media (min-width: 641px) and (max-width: 1023px) {
+  .investments-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .investments-grid__item--span-12 {
+    grid-column: 1 / -1;
+  }
+
+  .investments-grid__item--span-6 {
+    grid-column: span 1;
+  }
 }
 
 @media (max-width: 640px) {
-  .summary-header {
+  .investments-page {
+    gap: var(--ft-space-4);
+  }
+
+  .investments-grid {
+    gap: var(--ft-space-3);
+  }
+
+  .investments-accounts__header {
     flex-direction: column;
+    align-items: stretch;
   }
 }
 </style>
