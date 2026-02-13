@@ -22,7 +22,7 @@ services:
     environment:
       ASPNETCORE_URLS: "http://+:8080"
       ASPNETCORE_ENVIRONMENT: "Development"
-      AllowedHosts: "*"
+      AllowedHosts: "localhost;127.0.0.1;[::1]"
       Auth__JwtSecretKey: ${AUTH_JWT_SECRET_KEY}
       Auth__Issuer: ${AUTH_ISSUER}
       Auth__Audience: ${AUTH_AUDIENCE}
@@ -32,6 +32,7 @@ services:
       ConnectionStrings__DefaultConnection: ${CONNECTION_STRINGS_DEFAULT}
       FxRates__ApiKey: ${FXRATES_API_KEY}
       Cors__AllowedOrigins__0: "http://localhost:8080"
+      Cors__AllowedOrigins__1: "http://localhost:8082"
     ports:
       - "8081:8080"
     depends_on:
@@ -39,7 +40,24 @@ services:
     networks:
       - fintree-net
 
+  fintree.nginx:
+    restart: unless-stopped
+    build:
+      context: .
+      dockerfile: deploy/nginx/Dockerfile.dev
+      args:
+        VITE_API_BASE_URL: "/api"
+    image: fintree.nginx.dev:local
+    ports:
+      - "8080:80"
+    depends_on:
+      - fintree.api
+    networks:
+      - fintree-net
+
   fintree-frontend:
+    profiles:
+      - hotreload
     restart: unless-stopped
     build:
       context: ./vue-app
@@ -49,7 +67,7 @@ services:
       VITE_API_BASE_URL: "/api"
       VITE_API_PROXY_TARGET: "http://fintree.api:8080"
     ports:
-      - "8080:8080"
+      - "8082:8080"
     depends_on:
       - fintree.api
     networks:

@@ -12,6 +12,7 @@
 - HTTPS is mandatory for production.
 - Public traffic must enter through nginx; API containers must stay internal-only on the docker network.
 - nginx runtime config is static (`deploy/nginx/nginx.conf`) and copied into image as-is (no runtime templating).
+- Local development also runs through nginx (`deploy/nginx/nginx.dev.conf`) to keep routing behavior close to production.
 
 ## CI/CD principles
 - Pipeline must be deterministic and idempotent.
@@ -35,8 +36,10 @@
 
 ## Compose runbook
 - Base production stack is `compose.yaml` (no public Postgres port, secrets from environment only).
-- Local development stack is standalone in `compose.dev.yaml` (no nginx/certbot).
+- Local development stack is standalone in `compose.dev.yaml` with nginx + API + Postgres (no certbot).
+- Optional frontend hot-reload service is available in local stack via profile `hotreload`.
 - Local run command: `docker compose -f compose.dev.yaml up -d`.
+- Local run with hot-reload frontend: `docker compose -f compose.dev.yaml --profile hotreload up -d`.
 - Production run command: `docker compose -f compose.yaml up -d`.
 - Auth environment variables must include:
   - `AUTH_JWT_SECRET_KEY`
