@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { computed } from 'vue';
-import type { ChartData } from 'chart.js';
+import type { ChartData, Plugin } from 'chart.js';
 import type { CategoryLegendItem, CategoryScope } from '../../types/analytics';
 
 const props = defineProps<{
@@ -27,245 +27,320 @@ const showEmpty = computed(
   () => !props.loading && !props.error && (!props.chartData || props.legend.length === 0)
 );
 
+const totalAmount = computed(() => {
+  return props.legend.reduce((sum, item) => sum + item.amount, 0);
+});
+
+const formattedTotal = computed(() => {
+  if (totalAmount.value <= 0) return '—';
+  return totalAmount.value.toLocaleString('ru-RU', {
+    style: 'currency',
+    currency: props.currency,
+    maximumFractionDigits: 0,
+  });
+});
+
+const centerTextPlugin = computed<Plugin<'doughnut'>>(() => ({
+  id: 'centerText',
+  afterDraw(chart) {
+    const { ctx, width, height } = chart;
+    if (!ctx) return;
+    ctx.save();
+
+    const text = formattedTotal.value;
+    const fontSize = Math.min(width, height) * 0.08;
+    ctx.font = `bold ${fontSize}px sans-serif`;
+    ctx.fillStyle = getComputedStyle(document.documentElement)
+      .getPropertyValue('--ft-text-primary').trim() || '#1e293b';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText(text, width / 2, height / 2);
+
+    ctx.restore();
+  },
+}));
+
+const donutChartData = computed(() => {
+  if (!props.chartData) return null;
+  return {
+    ...props.chartData,
+    datasets: props.chartData.datasets.map(ds => ({
+      ...ds,
+      borderWidth: 2,
+      borderColor: getComputedStyle(document.documentElement)
+        .getPropertyValue('--ft-surface-base').trim() || '#0b111a',
+      hoverBorderWidth: 3,
+      hoverOffset: 8,
+    })),
+  };
+});
+
 const chartOptions = computed(() => ({
   responsive: true,
   maintainAspectRatio: true,
   aspectRatio: 1,
+  cutout: '65%',
   plugins: {
     legend: {
       display: false,
+    },
+    tooltip: {
+      backgroundColor: getComputedStyle(document.documentElement)
+        .getPropertyValue('--ft-surface-raised').trim() || '#1e293b',
+      titleColor: getComputedStyle(document.documentElement)
+        .getPropertyValue('--ft-text-primary').trim() || '#f1f5f9',
+      bodyColor: getComputedStyle(document.documentElement)
+        .getPropertyValue('--ft-text-secondary').trim() || '#94a3b8',
+      borderColor: getComputedStyle(document.documentElement)
+        .getPropertyValue('--ft-border-subtle').trim() || '#334155',
+      borderWidth: 1,
+      cornerRadius: 10,
+      padding: 12,
+      callbacks: {
+        label(context: { parsed: number; label: string }) {
+          const formatted = context.parsed.toLocaleString('ru-RU', {
+            style: 'currency',
+            currency: props.currency,
+            maximumFractionDigits: 0,
+          });
+          return `${context.label}: ${formatted}`;
+        },
+      },
     },
   },
 }));
 </script>
 
 <template>
-  <Card class="analytics-card">
-    <template #title>
-      <div class="card-head">
-        <div>
-          <h3>Расходы по категориям</h3>
-          <p>Распределение расходов за выбранный месяц</p>
-        </div>
-        <SelectButton
-          :model-value="scope"
-          :options="scopeOptions"
-          option-label="label"
-          option-value="value"
-          class="pie-card__scope-toggle"
-          @update:model-value="emit('update:scope', $event)"
-        />
+  <div class="donut-card">
+    <div class="donut-card__head">
+      <div>
+        <h3
+          v-tooltip.top="'Показывает, на что уходят деньги. Кликните на категорию, чтобы увидеть транзакции.'"
+          class="donut-card__title"
+        >
+          Расходы по категориям
+        </h3>
+        <p class="donut-card__subtitle">
+          Распределение за выбранный месяц
+        </p>
       </div>
-    </template>
+      <SelectButton
+        :model-value="scope"
+        :options="scopeOptions"
+        option-label="label"
+        option-value="value"
+        class="donut-card__scope-toggle"
+        @update:model-value="emit('update:scope', $event)"
+      />
+    </div>
 
-    <template #content>
-      <div
-        v-if="loading"
-        class="card-loading"
-      >
+    <div
+      v-if="loading"
+      class="donut-card__loading"
+    >
+      <Skeleton
+        width="220px"
+        height="220px"
+        border-radius="999px"
+      />
+      <div class="donut-card__loading-legend">
         <Skeleton
-          width="240px"
-          height="240px"
-          border-radius="999px"
+          v-for="i in 4"
+          :key="i"
+          height="18px"
+          width="70%"
         />
-        <div class="card-loading__legend">
-          <Skeleton
-            v-for="index in 4"
-            :key="index"
-            height="18px"
-            width="70%"
+      </div>
+    </div>
+
+    <div
+      v-else-if="error"
+      class="donut-card__message"
+    >
+      <Message
+        severity="error"
+        icon="pi pi-exclamation-triangle"
+        :closable="false"
+      >
+        <div class="donut-card__message-body">
+          <p class="donut-card__message-title">
+            Не удалось загрузить структуру расходов
+          </p>
+          <p class="donut-card__message-text">
+            {{ error }}
+          </p>
+          <Button
+            label="Попробовать снова"
+            icon="pi pi-refresh"
+            size="small"
+            @click="emit('retry')"
           />
         </div>
-      </div>
+      </Message>
+    </div>
 
-      <div
-        v-else-if="error"
-        class="card-message"
+    <div
+      v-else-if="showEmpty"
+      class="donut-card__message"
+    >
+      <Message
+        severity="info"
+        icon="pi pi-inbox"
+        :closable="false"
       >
-        <Message
-          severity="error"
-          icon="pi pi-exclamation-triangle"
-          :closable="false"
-        >
-          <div class="card-message__body">
-            <p class="card-message__title">
-              Не удалось загрузить структуру расходов
-            </p>
-            <p class="card-message__text">
-              {{ error }}
-            </p>
-            <Button
-              label="Попробовать снова"
-              icon="pi pi-refresh"
-              size="small"
-              @click="emit('retry')"
-            />
-          </div>
-        </Message>
-      </div>
-
-      <div
-        v-else-if="showEmpty"
-        class="card-message"
-      >
-        <Message
-          severity="info"
-          icon="pi pi-inbox"
-          :closable="false"
-        >
-          <div class="card-message__body card-message__body--compact">
-            <p class="card-message__title">
-              Нет данных за период
-            </p>
-            <p class="card-message__text">
-              Добавьте расходы, чтобы увидеть распределение.
-            </p>
-          </div>
-        </Message>
-      </div>
-
-      <div
-        v-else
-        class="pie-card__content"
-      >
-        <div class="pie-card__chart">
-          <Chart
-            v-if="chartData"
-            type="pie"
-            :data="chartData"
-            :options="chartOptions"
-          />
+        <div class="donut-card__message-body donut-card__message-body--compact">
+          <p class="donut-card__message-title">
+            Нет данных за период
+          </p>
+          <p class="donut-card__message-text">
+            Добавьте расходы, чтобы увидеть распределение.
+          </p>
         </div>
-        <ul class="pie-card__legend">
-          <li
-            v-for="item in legend"
-            :key="item.id"
-            class="pie-card__legend-item"
-            role="button"
-            tabindex="0"
-            @click="handleCategoryClick(item)"
-            @keydown.enter.prevent="handleCategoryClick(item)"
-            @keydown.space.prevent="handleCategoryClick(item)"
-          >
-            <span
-              class="pie-card__legend-color"
-              :style="{ backgroundColor: item.color }"
-            />
-            <div class="pie-card__legend-body">
-              <span class="pie-card__legend-name">{{ item.name }}</span>
-              <span class="pie-card__legend-amount">
-                {{
-                  item.amount.toLocaleString('ru-RU', {
-                    style: 'currency',
-                    currency,
-                    minimumFractionDigits: 2,
-                  })
-                }}
-              </span>
-            </div>
-            <Tag severity="secondary">
-              {{ item.percent.toFixed(1) }}%
-            </Tag>
-          </li>
-        </ul>
+      </Message>
+    </div>
+
+    <div
+      v-else
+      class="donut-card__content"
+    >
+      <div class="donut-card__chart">
+        <Chart
+          v-if="donutChartData"
+          type="doughnut"
+          :data="donutChartData"
+          :options="chartOptions"
+          :plugins="[centerTextPlugin]"
+        />
       </div>
-    </template>
-  </Card>
+      <ul class="donut-card__legend">
+        <li
+          v-for="item in legend"
+          :key="item.id"
+          class="donut-card__legend-item"
+          role="button"
+          tabindex="0"
+          @click="handleCategoryClick(item)"
+          @keydown.enter.prevent="handleCategoryClick(item)"
+          @keydown.space.prevent="handleCategoryClick(item)"
+        >
+          <span
+            class="donut-card__legend-color"
+            :style="{ backgroundColor: item.color }"
+          />
+          <div class="donut-card__legend-body">
+            <span class="donut-card__legend-name">{{ item.name }}</span>
+            <span class="donut-card__legend-amount">
+              {{
+                item.amount.toLocaleString('ru-RU', {
+                  style: 'currency',
+                  currency,
+                  maximumFractionDigits: 0,
+                })
+              }}
+            </span>
+          </div>
+          <span class="donut-card__legend-percent">{{ item.percent.toFixed(1) }}%</span>
+        </li>
+      </ul>
+    </div>
+  </div>
 </template>
 
 <style scoped>
-.analytics-card {
-  background: var(--ft-surface-base);
-  border-radius: var(--ft-radius-2xl);
-  border: 1px solid var(--ft-border-subtle);
+.donut-card {
   display: flex;
   flex-direction: column;
   gap: var(--ft-space-4);
-  padding-bottom: var(--ft-space-3);
+  padding: clamp(1rem, 2vw, 1.5rem);
+  background: var(--ft-surface-base);
+  border-radius: var(--ft-radius-2xl);
+  border: 1px solid var(--ft-border-subtle);
   box-shadow: var(--ft-shadow-sm);
 }
 
-.card-head {
+.donut-card__head {
   display: flex;
   justify-content: space-between;
   align-items: flex-start;
   gap: var(--ft-space-4);
 }
 
-.card-head h3 {
+.donut-card__title {
   margin: 0;
-  font-size: var(--ft-text-xl);
+  font-size: var(--ft-text-lg);
   font-weight: var(--ft-font-semibold);
   color: var(--ft-text-primary);
+  cursor: help;
 }
 
-.card-head p {
-  margin: var(--ft-space-2) 0 0;
+.donut-card__subtitle {
+  margin: var(--ft-space-1) 0 0;
   color: var(--ft-text-secondary);
+  font-size: var(--ft-text-sm);
 }
 
-
-.card-loading {
+.donut-card__loading {
   display: grid;
   place-items: center;
   gap: var(--ft-space-4);
-  min-height: 320px;
+  min-height: 280px;
 }
 
-.card-loading__legend {
+.donut-card__loading-legend {
   width: 100%;
-  max-width: 260px;
+  max-width: 240px;
   display: grid;
   gap: var(--ft-space-2);
 }
 
-.card-message {
+.donut-card__message {
   display: grid;
 }
 
-.card-message__body {
+.donut-card__message-body {
   display: grid;
   gap: var(--ft-space-3);
 }
 
-.card-message__body--compact {
+.donut-card__message-body--compact {
   gap: var(--ft-space-2);
 }
 
-.card-message__title {
+.donut-card__message-title {
   margin: 0;
   font-weight: var(--ft-font-semibold);
 }
 
-.card-message__text {
+.donut-card__message-text {
   margin: 0;
 }
 
-.pie-card__content {
+.donut-card__content {
   display: grid;
-  gap: clamp(1.25rem, 2vw, 2rem);
-  align-items: center;
+  gap: var(--ft-space-4);
+  align-items: start;
 }
 
-.pie-card__chart {
+.donut-card__chart {
   width: 100%;
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: var(--ft-space-4);
+  padding: var(--ft-space-2);
 }
 
-.pie-card__chart :deep(.p-chart) {
+.donut-card__chart :deep(.p-chart) {
   width: 100%;
-  max-width: 420px;
+  max-width: 280px;
 }
 
-.pie-card__chart :deep(canvas) {
+.donut-card__chart :deep(canvas) {
   width: 100% !important;
   height: auto !important;
 }
 
-.pie-card__legend {
+.donut-card__legend {
   margin: 0;
   padding: 0;
   list-style: none;
@@ -273,107 +348,93 @@ const chartOptions = computed(() => ({
   gap: var(--ft-space-2);
 }
 
-.pie-card__legend-item {
+.donut-card__legend-item {
   display: flex;
   align-items: center;
   gap: var(--ft-space-3);
   padding: var(--ft-space-3);
-  border-radius: var(--ft-radius-xl);
-  background: color-mix(in srgb, var(--ft-surface-raised) 80%, transparent);
-  border: 1px solid color-mix(in srgb, var(--ft-border-subtle) 60%, transparent);
-  box-shadow: var(--ft-shadow-xs);
+  border-radius: var(--ft-radius-lg);
+  border: 1px solid transparent;
   cursor: pointer;
-  transition: transform var(--ft-transition-fast), border-color var(--ft-transition-fast);
+  transition: background var(--ft-transition-fast), border-color var(--ft-transition-fast);
 }
 
-.pie-card__legend-item:hover {
-  border-color: color-mix(in srgb, var(--ft-border-strong, #94a3b8) 45%, transparent);
-  transform: translateY(-1px);
+.donut-card__legend-item:hover {
+  background: color-mix(in srgb, var(--ft-surface-raised) 70%, transparent);
+  border-color: var(--ft-border-subtle);
 }
 
-.pie-card__legend-item:focus-visible {
-  outline: 2px solid color-mix(in srgb, var(--ft-primary-500, #3b82f6) 65%, transparent);
+.donut-card__legend-item:focus-visible {
+  outline: 2px solid color-mix(in srgb, var(--ft-primary-500) 65%, transparent);
   outline-offset: 2px;
 }
 
-.pie-card__legend-color {
-  width: 14px;
-  height: 14px;
+.donut-card__legend-color {
+  width: 12px;
+  height: 12px;
   border-radius: 50%;
   flex-shrink: 0;
 }
 
-.pie-card__legend-body {
+.donut-card__legend-body {
   display: grid;
-  gap: var(--ft-space-1);
+  gap: 1px;
   flex: 1;
+  min-width: 0;
 }
 
-.pie-card__legend-name {
-  font-weight: var(--ft-font-semibold);
+.donut-card__legend-name {
+  font-weight: var(--ft-font-medium);
   color: var(--ft-text-primary);
+  font-size: var(--ft-text-base);
 }
 
-.pie-card__legend-amount {
+.donut-card__legend-amount {
   font-size: var(--ft-text-sm);
   color: var(--ft-text-secondary);
+  font-weight: var(--ft-font-semibold);
 }
 
-@media (min-width: 992px) {
-  .pie-card__content {
-    grid-template-columns: minmax(320px, 360px) minmax(0, 1fr);
+.donut-card__legend-percent {
+  font-size: var(--ft-text-base);
+  font-weight: var(--ft-font-bold);
+  color: var(--ft-text-primary);
+  white-space: nowrap;
+}
+
+@media (min-width: 768px) {
+  .donut-card__content {
+    grid-template-columns: minmax(200px, 280px) minmax(0, 1fr);
   }
 
-  .pie-card__legend {
-    max-height: 360px;
+  .donut-card__legend {
+    max-height: 320px;
     overflow: auto;
     padding-right: var(--ft-space-1);
   }
 }
 
 @media (max-width: 640px) {
-  .card-head {
+  .donut-card__head {
     flex-direction: column;
     align-items: stretch;
   }
 
-  .card-head p {
-    font-size: var(--ft-text-sm);
-  }
-
-  .pie-card__scope-toggle {
+  .donut-card__scope-toggle {
     width: 100%;
   }
 
-  .pie-card__scope-toggle :deep(.p-button) {
+  .donut-card__scope-toggle :deep(.p-button) {
     flex: 1 1 0;
     min-width: 0;
   }
 
-  .pie-card__scope-toggle :deep(.p-button-label) {
+  .donut-card__scope-toggle :deep(.p-button-label) {
     font-size: var(--ft-text-xs);
   }
 
-  .pie-card__chart {
-    padding: var(--ft-space-2);
-  }
-
-  .pie-card__chart :deep(.p-chart) {
-    max-width: 280px;
-  }
-
-  .pie-card__legend-item {
-    flex-wrap: wrap;
-    align-items: flex-start;
-  }
-
-  .pie-card__legend-item :deep(.p-tag) {
-    width: 100%;
-    justify-content: flex-start;
-  }
-
-  .pie-card__legend-amount {
-    word-break: break-word;
+  .donut-card__chart :deep(.p-chart) {
+    max-width: 220px;
   }
 }
 </style>

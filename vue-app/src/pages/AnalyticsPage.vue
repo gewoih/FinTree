@@ -2,7 +2,9 @@
 import { computed, onMounted, reactive, ref, watch } from 'vue';
 import { useRouter } from 'vue-router';
 import PageHeader from '../components/common/PageHeader.vue';
-import HeroHealthCard from '../components/analytics/HeroHealthCard.vue';
+import SummaryStrip from '../components/analytics/SummaryStrip.vue';
+import HealthScoreCard from '../components/analytics/HealthScoreCard.vue';
+import PeakDaysCard from '../components/analytics/PeakDaysCard.vue';
 import SpendingPieCard from '../components/analytics/SpendingPieCard.vue';
 import SpendingBarsCard from '../components/analytics/SpendingBarsCard.vue';
 import ForecastCard from '../components/analytics/ForecastCard.vue';
@@ -23,22 +25,10 @@ import type {
 } from '../types/analytics';
 import PageContainer from '../components/layout/PageContainer.vue';
 
-interface HealthTile {
-  key: string;
-  label: string;
-  value: string;
-  meta?: string | null;
-  tooltip?: string;
-  icon: string;
-  accent?: MetricAccent;
-}
-
-interface HealthGroup {
-  key: string;
-  title: string;
-  metrics: HealthTile[];
-  accent?: MetricAccent;
-}
+type MonthPickerInstance = {
+  show?: () => void;
+  hide?: () => void;
+};
 
 interface PeakDayItem {
   label: string;
@@ -56,12 +46,6 @@ interface OnboardingStep {
   actionLabel?: string;
   actionTo?: string;
 }
-
-type MetricAccent = 'good' | 'average' | 'poor' | 'neutral' | 'income' | 'expense';
-type MonthPickerInstance = {
-  show?: () => void;
-  hide?: () => void;
-};
 
 const userStore = useUserStore();
 const financeStore = useFinanceStore();
@@ -89,14 +73,6 @@ const dashboard = ref<AnalyticsDashboardDto | null>(null);
 const dashboardLoading = ref(false);
 const dashboardError = ref<string | null>(null);
 const dashboardRequestId = ref(0);
-
-const healthLoading = computed(() => dashboardLoading.value);
-const healthError = computed(() => dashboardError.value);
-const categoryLoading = computed(() => dashboardLoading.value);
-const categoryError = computed(() => dashboardError.value);
-const categoryDeltaError = computed(() => dashboardError.value);
-const forecastLoading = computed(() => dashboardLoading.value);
-const forecastError = computed(() => dashboardError.value);
 
 const chartPalette = reactive({
   primary: '#2e5bff',
@@ -152,164 +128,110 @@ const completedOnboardingCount = computed(
   () => onboardingSteps.value.filter(step => step.completed).length
 );
 
-const healthGroups = computed<HealthGroup[]>(() => {
+// --- Summary strip metrics ---
+const summaryMetrics = computed(() => {
   const health = dashboard.value?.health;
-  const savingsStatus = resolveSavingsStatus(
-    health?.savingsRate ?? null,
-    health?.monthIncome ?? null,
-    health?.monthTotal ?? null
-  );
-  const cashflowStatus = resolveCashflowStatus(
-    health?.netCashflow ?? null,
-    health?.monthIncome ?? null
-  );
-  const typicalStatus = resolveMeanMedianStatus(health?.meanMedianRatio ?? null);
-  const discretionaryStatus = resolveDiscretionaryStatus(health?.discretionarySharePercent ?? null);
-  const liquidityStatus = resolveLiquidityStatus(health?.liquidMonthsStatus ?? null);
+  const netCashflow = health?.netCashflow ?? null;
+  const savingsRate = health?.savingsRate;
+
+  const balanceAccent: 'good' | 'poor' | 'neutral' =
+    netCashflow == null ? 'neutral' : netCashflow >= 0 ? 'good' : 'poor';
+
+  const savingsLabel = savingsRate != null
+    ? `Доля сбережений: ${(savingsRate * 100).toFixed(1)}%`
+    : undefined;
 
   return [
     {
-      key: 'month-total',
-      title: 'Итог месяца',
-      metrics: [
-        {
-          key: 'income',
-          label: 'Доход за месяц',
-          value: formatMoney(health?.monthIncome ?? null),
-          tooltip: 'Все поступления за выбранный месяц.',
-          icon: 'pi pi-plus-circle',
-          accent: 'income',
-        },
-        {
-          key: 'expense',
-          label: 'Расходы за месяц',
-          value: formatMoney(health?.monthTotal ?? null),
-          tooltip: 'Все расходы за выбранный месяц.',
-          icon: 'pi pi-minus-circle',
-          accent: 'expense',
-        },
-      ],
+      key: 'income',
+      label: 'Доход',
+      value: formatMoney(health?.monthIncome ?? null),
+      icon: 'pi pi-plus-circle',
+      accent: 'income' as const,
+      tooltip: 'Все поступления за выбранный месяц.',
     },
     {
-      key: 'savings',
-      title: 'Сбережения',
-      accent: savingsStatus,
-      metrics: [
-        {
-          key: 'savings-rate',
-          label: 'Доля сбережений',
-          value: health?.savingsRate == null ? '—' : formatPercent(health.savingsRate, 1),
-          tooltip: 'Часть дохода, которая осталась после расходов.',
-          icon: 'pi pi-percentage',
-          accent: savingsStatus,
-        },
-        {
-          key: 'net-cashflow',
-          label: 'Чистый поток',
-          value: formatSignedMoney(health?.netCashflow ?? null),
-          tooltip: 'Доходы минус расходы за месяц.',
-          icon: 'pi pi-wallet',
-          accent: cashflowStatus,
-        },
-      ],
+      key: 'expense',
+      label: 'Расходы',
+      value: formatMoney(health?.monthTotal ?? null),
+      icon: 'pi pi-minus-circle',
+      accent: 'expense' as const,
+      tooltip: 'Все расходы за выбранный месяц.',
     },
     {
-      key: 'liquidity',
-      title: 'Ликвидность',
-      accent: liquidityStatus,
-      metrics: [
-        {
-          key: 'liquid-months',
-          label: 'Ликвидные месяцы',
-          value: health?.liquidMonths == null ? '—' : `${health.liquidMonths.toFixed(1)} мес.`,
-          tooltip: 'Ликвидные активы на конец выбранного месяца / оценка месячного расхода по последним 180 дням (или по фактически доступной истории, если данных меньше).',
-          icon: 'pi pi-shield',
-          accent: liquidityStatus,
-        },
-        {
-          key: 'liquid-assets',
-          label: 'Ликвидные активы',
-          value: formatMoney(health?.liquidAssets ?? null),
-          tooltip: 'Сумма средств на ликвидных счетах на конец выбранного месяца.',
-          icon: 'pi pi-bolt',
-          accent: liquidityStatus,
-        },
-      ],
-    },
-    {
-      key: 'typical',
-      title: 'Типичный день',
-      accent: typicalStatus,
-      metrics: [
-        {
-          key: 'mean-daily',
-          label: 'Средний расход/день',
-          value: formatMoney(health?.meanDaily ?? null),
-          tooltip: 'Среднее значение дневных расходов, включая дни без трат. Для текущего месяца учитываются только прошедшие дни.',
-          icon: 'pi pi-chart-line',
-        },
-        {
-          key: 'median-daily',
-          label: 'Медианный расход/день',
-          value: formatMoney(health?.medianDaily ?? null),
-          tooltip: 'Медиана дневных расходов, включая дни без трат. Для текущего месяца учитываются только прошедшие дни.',
-          icon: 'pi pi-chart-bar',
-        },
-        {
-          key: 'std-median',
-          label: 'Средний / медианный',
-          value: formatRatio(health?.meanMedianRatio ?? null),
-          tooltip: 'Показывает, насколько пики трат поднимают среднее. Чем больше, тем «событийнее» расходы.',
-          icon: 'pi pi-sliders-h',
-          accent: typicalStatus,
-        },
-      ],
-    },
-    {
-      key: 'discretionary',
-      title: 'Необязательные',
-      accent: discretionaryStatus,
-      metrics: [
-        {
-          key: 'discretionary-total',
-          label: 'Сумма необязательных',
-          value: formatMoney(health?.discretionaryTotal ?? null),
-          tooltip: 'Расходы по необязательным категориям за месяц.',
-          icon: 'pi pi-shopping-bag',
-          accent: discretionaryStatus,
-        },
-        {
-          key: 'discretionary-share',
-          label: 'Доля необязательных',
-          value: formatPercentValue(health?.discretionarySharePercent ?? null),
-          tooltip: 'Часть всех расходов, которая пришлась на необязательные категории.',
-          icon: 'pi pi-percentage',
-          accent: discretionaryStatus,
-        },
-      ],
+      key: 'balance',
+      label: 'Баланс',
+      value: formatSignedMoney(netCashflow),
+      icon: 'pi pi-wallet',
+      accent: balanceAccent,
+      tooltip: 'Доходы минус расходы. Положительный баланс — вы в плюсе.',
+      secondary: savingsLabel,
     },
   ];
 });
 
-function resolveCssVariables() {
-  if (typeof window === 'undefined') return;
-  const styles = getComputedStyle(document.documentElement);
-  chartPalette.primary = styles.getPropertyValue('--ft-primary-400').trim() || chartPalette.primary;
-  chartPalette.surface = styles.getPropertyValue('--ft-border-default').trim() || chartPalette.surface;
-  chartPalette.accent = styles.getPropertyValue('--ft-info-400').trim() || chartPalette.accent;
-  chartPalette.pointBorder = styles.getPropertyValue('--ft-surface-base').trim() || chartPalette.pointBorder;
-  const fallback = [
-    styles.getPropertyValue('--ft-primary-400').trim(),
-    styles.getPropertyValue('--ft-info-400').trim(),
-    styles.getPropertyValue('--ft-success-400').trim(),
-    styles.getPropertyValue('--ft-warning-400').trim(),
-    styles.getPropertyValue('--ft-danger-400').trim(),
-  ].filter(Boolean);
-  if (fallback.length) {
-    chartPalette.categories = fallback;
-  }
-}
+// --- Health score cards ---
+const healthCards = computed(() => {
+  const health = dashboard.value?.health;
 
+  const savingsAccent = resolveSavingsStatus(
+    health?.savingsRate ?? null,
+    health?.monthIncome ?? null,
+    health?.monthTotal ?? null
+  );
+  const liquidityAccent = resolveLiquidityStatus(health?.liquidMonthsStatus ?? null);
+  const typicalAccent = resolveMeanMedianStatus(health?.meanMedianRatio ?? null);
+  const discretionaryAccent = resolveDiscretionaryStatus(health?.discretionarySharePercent ?? null);
+
+  return [
+    {
+      key: 'savings',
+      title: 'Сбережения',
+      icon: 'pi pi-percentage',
+      mainValue: health?.savingsRate == null ? '—' : formatPercent(health.savingsRate, 1),
+      mainLabel: 'Доля сбережений',
+      secondaryValue: formatSignedMoney(health?.netCashflow ?? null),
+      secondaryLabel: 'чистый поток',
+      accent: savingsAccent,
+      tooltip: 'Часть дохода, которая осталась после расходов. Хорошо, если выше 20%.',
+    },
+    {
+      key: 'liquidity',
+      title: 'Ликвидность',
+      icon: 'pi pi-shield',
+      mainValue: health?.liquidMonths == null ? '—' : `${health.liquidMonths.toFixed(1)} мес.`,
+      mainLabel: 'Ликвидные месяцы',
+      secondaryValue: formatMoney(health?.liquidAssets ?? null),
+      secondaryLabel: 'ликвидные активы',
+      accent: liquidityAccent,
+      tooltip: 'На сколько месяцев хватит ликвидных средств при текущих расходах. Хорошо — 3+ месяца.',
+    },
+    {
+      key: 'regularity',
+      title: 'Регулярность',
+      icon: 'pi pi-chart-line',
+      mainValue: formatRatio(health?.meanMedianRatio ?? null),
+      mainLabel: 'Средний / медианный',
+      secondaryValue: `${formatMoney(health?.meanDaily ?? null)} / ${formatMoney(health?.medianDaily ?? null)}`,
+      secondaryLabel: 'ср. / мед. в день',
+      accent: typicalAccent,
+      tooltip: 'Насколько пики трат поднимают среднее. Чем ближе к 1× — тем стабильнее расходы.',
+    },
+    {
+      key: 'discretionary',
+      title: 'Необязательные',
+      icon: 'pi pi-shopping-bag',
+      mainValue: formatPercentValue(health?.discretionarySharePercent ?? null),
+      mainLabel: 'Доля необязательных',
+      secondaryValue: formatMoney(health?.discretionaryTotal ?? null),
+      secondaryLabel: 'сумма',
+      accent: discretionaryAccent,
+      tooltip: 'Часть расходов на необязательные категории. Хорошо, если ниже 25%.',
+    },
+  ];
+});
+
+// --- Format helpers ---
 function formatPercent(value: number | null, fractionDigits = 0): string {
   if (value == null || Number.isNaN(value)) return '—';
   return `${(value * 100).toFixed(fractionDigits)}%`;
@@ -340,15 +262,14 @@ function formatRatio(value: number | null, fractionDigits = 2): string {
   return `${value.toFixed(fractionDigits)}×`;
 }
 
+// --- Status resolvers ---
 function resolveSavingsStatus(
   value: number | null,
   monthIncome: number | null,
   monthTotal: number | null
-): MetricAccent {
+): 'good' | 'average' | 'poor' | 'neutral' {
   if (value == null || Number.isNaN(value)) {
-    if ((monthIncome ?? 0) <= 0 && (monthTotal ?? 0) > 0) {
-      return 'poor';
-    }
+    if ((monthIncome ?? 0) <= 0 && (monthTotal ?? 0) > 0) return 'poor';
     return 'neutral';
   }
   if (value >= 0.2) return 'good';
@@ -356,33 +277,21 @@ function resolveSavingsStatus(
   return 'poor';
 }
 
-function resolveCashflowStatus(netCashflow: number | null, monthIncome: number | null): MetricAccent {
-  if (netCashflow == null || Number.isNaN(netCashflow)) return 'neutral';
-  if (monthIncome == null || Number.isNaN(monthIncome) || monthIncome <= 0) {
-    return netCashflow >= 0 ? 'good' : 'poor';
-  }
-
-  const ratio = netCashflow / monthIncome;
-  if (ratio >= 0.1) return 'good';
-  if (ratio >= 0) return 'average';
-  return 'poor';
-}
-
-function resolveDiscretionaryStatus(value: number | null): MetricAccent {
+function resolveDiscretionaryStatus(value: number | null): 'good' | 'average' | 'poor' | 'neutral' {
   if (value == null || Number.isNaN(value)) return 'neutral';
   if (value <= 25) return 'good';
   if (value <= 45) return 'average';
   return 'poor';
 }
 
-function resolveMeanMedianStatus(value: number | null): MetricAccent {
+function resolveMeanMedianStatus(value: number | null): 'good' | 'average' | 'poor' | 'neutral' {
   if (value == null || Number.isNaN(value)) return 'neutral';
   if (value <= 1.3) return 'good';
   if (value <= 1.8) return 'average';
   return 'poor';
 }
 
-function resolveLiquidityStatus(status: string | null): MetricAccent {
+function resolveLiquidityStatus(status: string | null): 'good' | 'average' | 'poor' | 'neutral' {
   if (!status) return 'neutral';
   if (status === 'good') return 'good';
   if (status === 'average') return 'average';
@@ -393,16 +302,31 @@ function resolveLiquidityStatus(status: string | null): MetricAccent {
 function resolveErrorMessage(error: unknown, fallback: string): string {
   if (typeof error === 'object' && error && 'userMessage' in error) {
     const message = (error as { userMessage?: string }).userMessage;
-    if (typeof message === 'string' && message.trim().length) {
-      return message;
-    }
+    if (typeof message === 'string' && message.trim().length) return message;
   }
-  if (error instanceof Error && error.message) {
-    return error.message;
-  }
+  if (error instanceof Error && error.message) return error.message;
   return fallback;
 }
 
+// --- CSS palette ---
+function resolveCssVariables() {
+  if (typeof window === 'undefined') return;
+  const styles = getComputedStyle(document.documentElement);
+  chartPalette.primary = styles.getPropertyValue('--ft-primary-400').trim() || chartPalette.primary;
+  chartPalette.surface = styles.getPropertyValue('--ft-border-default').trim() || chartPalette.surface;
+  chartPalette.accent = styles.getPropertyValue('--ft-info-400').trim() || chartPalette.accent;
+  chartPalette.pointBorder = styles.getPropertyValue('--ft-surface-base').trim() || chartPalette.pointBorder;
+  const fallback = [
+    styles.getPropertyValue('--ft-primary-400').trim(),
+    styles.getPropertyValue('--ft-info-400').trim(),
+    styles.getPropertyValue('--ft-success-400').trim(),
+    styles.getPropertyValue('--ft-warning-400').trim(),
+    styles.getPropertyValue('--ft-danger-400').trim(),
+  ].filter(Boolean);
+  if (fallback.length) chartPalette.categories = fallback;
+}
+
+// --- Date helpers ---
 function normalizeMonth(date: Date): Date {
   return new Date(date.getFullYear(), date.getMonth(), 1);
 }
@@ -423,6 +347,47 @@ function formatMonthTitle(date: Date): string {
   return cleaned.charAt(0).toUpperCase() + cleaned.slice(1);
 }
 
+function formatDateQuery(date: Date): string {
+  const year = date.getFullYear();
+  const month = `${date.getMonth() + 1}`.padStart(2, '0');
+  const day = `${date.getDate()}`.padStart(2, '0');
+  return `${year}-${month}-${day}`;
+}
+
+function formatMonthLabel(year: number, month: number): string {
+  const formatter = new Intl.DateTimeFormat('ru-RU', { month: 'short', year: 'numeric' });
+  return formatter.format(new Date(year, month - 1, 1));
+}
+
+function extractRgb(color: string): string {
+  if (typeof document === 'undefined') return '46,91,255';
+  const canvas = document.createElement('canvas');
+  const ctx = canvas.getContext('2d');
+  if (!ctx) return '46,91,255';
+  ctx.fillStyle = color;
+  const computed = ctx.fillStyle as string;
+  const rgbMatch = computed.match(/rgba?\((\d+),\s*(\d+),\s*(\d+)/i);
+  if (rgbMatch) return `${rgbMatch[1]},${rgbMatch[2]},${rgbMatch[3]}`;
+  const match = computed.match(/^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i);
+  if (!match || !match[1] || !match[2] || !match[3]) return '46,91,255';
+  return `${parseInt(match[1], 16)},${parseInt(match[2], 16)},${parseInt(match[3], 16)}`;
+}
+
+function getIsoWeekRange(year: number, week: number) {
+  const simple = new Date(Date.UTC(year, 0, 1 + (week - 1) * 7));
+  const dayOfWeek = simple.getUTCDay();
+  const isoWeekStart = new Date(simple);
+  const diff = dayOfWeek <= 4 ? 1 - dayOfWeek : 8 - dayOfWeek;
+  isoWeekStart.setUTCDate(simple.getUTCDate() + diff);
+  const isoWeekEnd = new Date(isoWeekStart);
+  isoWeekEnd.setUTCDate(isoWeekStart.getUTCDate() + 6);
+  return {
+    start: new Date(isoWeekStart.getUTCFullYear(), isoWeekStart.getUTCMonth(), isoWeekStart.getUTCDate()),
+    end: new Date(isoWeekEnd.getUTCFullYear(), isoWeekEnd.getUTCMonth(), isoWeekEnd.getUTCDate()),
+  };
+}
+
+// --- API ---
 async function loadDashboard(month: Date) {
   const requestId = ++dashboardRequestId.value;
   dashboardLoading.value = true;
@@ -438,19 +403,15 @@ async function loadDashboard(month: Date) {
     dashboardError.value = resolveErrorMessage(error, 'Не удалось загрузить аналитику.');
     dashboard.value = null;
   } finally {
-    if (requestId === dashboardRequestId.value) {
-      dashboardLoading.value = false;
-    }
+    if (requestId === dashboardRequestId.value) dashboardLoading.value = false;
   }
 }
 
-function formatDateQuery(date: Date): string {
-  const year = date.getFullYear();
-  const month = `${date.getMonth() + 1}`.padStart(2, '0');
-  const day = `${date.getDate()}`.padStart(2, '0');
-  return `${year}-${month}-${day}`;
+function retryDashboard() {
+  void loadDashboard(normalizedSelectedMonth.value);
 }
 
+// --- Navigation handlers ---
 function handleCategorySelect(category: CategoryLegendItem) {
   const range = getMonthRangeLocal(selectedMonth.value);
   void router.push({
@@ -487,7 +448,7 @@ function handlePeakSummarySelect() {
   });
 }
 
-
+// --- Category data ---
 const categoryLegend = computed<CategoryLegendItem[]>(() => {
   const items = dashboard.value?.categories.items ?? [];
   if (!items.length) return [];
@@ -511,18 +472,13 @@ const filteredCategoryLegend = computed<CategoryLegendItem[]>(() => {
         : selectedCategoryScope.value === 'discretionary'
           ? item.discretionaryAmount
           : item.amount;
-
-      return {
-        ...item,
-        amount: scopedAmount,
-      };
+      return { ...item, amount: scopedAmount };
     })
     .filter((item) => item.amount > 0)
     .sort((a, b) => b.amount - a.amount);
 
   const total = scopedItems.reduce((sum, item) => sum + item.amount, 0);
   if (total <= 0) return scopedItems;
-
   return scopedItems.map((item) => ({
     ...item,
     percent: (item.amount / total) * 100,
@@ -544,20 +500,19 @@ const categoryChartData = computed(() => {
   };
 });
 
+// --- Month nav ---
 const normalizedSelectedMonth = computed(() => normalizeMonth(selectedMonth.value));
-
 const selectedMonthLabel = computed(() => formatMonthTitle(normalizedSelectedMonth.value));
-
 const canNavigateNext = computed(() => {
   const now = normalizeMonth(new Date());
   return normalizedSelectedMonth.value < now;
 });
-
 const maxMonthDate = computed(() => {
   const now = new Date();
   return new Date(now.getFullYear(), now.getMonth() + 1, 0);
 });
 
+// --- Category delta ---
 const categoryDelta = computed(() => {
   const delta = dashboard.value?.categories.delta;
   return {
@@ -566,6 +521,7 @@ const categoryDelta = computed(() => {
   };
 });
 
+// --- Peak days ---
 const peakDays = computed<PeakDayItem[]>(() => {
   const items = dashboard.value?.peakDays ?? [];
   if (!items.length) return [];
@@ -585,53 +541,19 @@ const peakDays = computed<PeakDayItem[]>(() => {
 const peakSummary = computed(() => {
   const peaks = dashboard.value?.peaks;
   if (!peaks) {
-    return {
-      count: 0,
-      totalLabel: '—',
-      shareLabel: '—',
-      shareValue: null,
-      monthLabel: '—',
-    };
+    return { count: 0, totalLabel: '—', shareLabel: '—', shareValue: null, monthLabel: '—' };
   }
-
   const hasMonthTotal = peaks.monthTotal != null && peaks.monthTotal > 0;
-  const shareValue = peaks.sharePercent ?? null;
-
   return {
     count: peaks.count,
     totalLabel: hasMonthTotal ? formatMoney(Number(peaks.total ?? 0)) : '—',
-    shareLabel: formatPercentValue(shareValue),
-    shareValue,
+    shareLabel: formatPercentValue(peaks.sharePercent ?? null),
+    shareValue: peaks.sharePercent ?? null,
     monthLabel: hasMonthTotal ? formatMoney(Number(peaks.monthTotal ?? 0)) : '—',
   };
 });
 
-function formatMonthLabel(year: number, month: number): string {
-  const formatter = new Intl.DateTimeFormat('ru-RU', { month: 'short', year: 'numeric' });
-  return formatter.format(new Date(year, month - 1, 1));
-}
-
-function extractRgb(color: string): string {
-  if (typeof document === 'undefined') {
-    return '46,91,255';
-  }
-  const canvas = document.createElement('canvas');
-  const ctx = canvas.getContext('2d');
-  if (!ctx) return '46,91,255';
-  ctx.fillStyle = color;
-  const computed = ctx.fillStyle as string;
-  const rgbMatch = computed.match(/rgba?\((\d+),\s*(\d+),\s*(\d+)/i);
-  if (rgbMatch) {
-    return `${rgbMatch[1]},${rgbMatch[2]},${rgbMatch[3]}`;
-  }
-  const match = computed.match(/^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i);
-  if (!match || !match[1] || !match[2] || !match[3]) return '46,91,255';
-  const r = parseInt(match[1], 16);
-  const g = parseInt(match[2], 16);
-  const b = parseInt(match[3], 16);
-  return `${r},${g},${b}`;
-}
-
+// --- Expenses chart ---
 const expensesChartData = computed(() => {
   const data = getSortedExpenses(selectedGranularity.value);
   if (!data.length) return null;
@@ -659,51 +581,31 @@ function getSortedExpenses(granularity: ExpenseGranularity): MonthlyExpenseDto[]
       if (a.year !== b.year) return a.year - b.year;
       return (a.week ?? 0) - (b.week ?? 0);
     }
-
     if (a.year !== b.year) return a.year - b.year;
     if (a.month !== b.month) return a.month - b.month;
     if (granularity === 'days') return (a.day ?? 0) - (b.day ?? 0);
     return 0;
   });
-
   return sorted;
 }
 
 function formatExpenseLabel(entry: MonthlyExpenseDto, granularity: ExpenseGranularity): string {
   if (granularity === 'days' && entry.day != null) {
-    return new Intl.DateTimeFormat('ru-RU', {
-      day: 'numeric',
-      month: 'short',
-    }).format(new Date(entry.year, entry.month - 1, entry.day));
+    return new Intl.DateTimeFormat('ru-RU', { day: 'numeric', month: 'short' })
+      .format(new Date(entry.year, entry.month - 1, entry.day));
   }
-
   if (granularity === 'weeks' && entry.week != null) {
     const range = getIsoWeekRange(entry.year, entry.week);
     const startLabel = new Intl.DateTimeFormat('ru-RU', { day: '2-digit', month: 'short' }).format(range.start);
     const endLabel = new Intl.DateTimeFormat('ru-RU', { day: '2-digit', month: 'short' }).format(range.end);
     return `${startLabel} — ${endLabel}`;
   }
-
   return formatMonthLabel(entry.year, entry.month);
 }
 
-function getIsoWeekRange(year: number, week: number) {
-  const simple = new Date(Date.UTC(year, 0, 1 + (week - 1) * 7));
-  const dayOfWeek = simple.getUTCDay();
-  const isoWeekStart = new Date(simple);
-  const diff = dayOfWeek <= 4 ? 1 - dayOfWeek : 8 - dayOfWeek;
-  isoWeekStart.setUTCDate(simple.getUTCDate() + diff);
-  const isoWeekEnd = new Date(isoWeekStart);
-  isoWeekEnd.setUTCDate(isoWeekStart.getUTCDate() + 6);
-  return {
-    start: new Date(isoWeekStart.getUTCFullYear(), isoWeekStart.getUTCMonth(), isoWeekStart.getUTCDate()),
-    end: new Date(isoWeekEnd.getUTCFullYear(), isoWeekEnd.getUTCMonth(), isoWeekEnd.getUTCDate()),
-  };
-}
-
+// --- Forecast ---
 const forecastSummary = computed<ForecastSummary | null>(() => {
-  const summary = dashboard.value?.forecast.summary;
-  return summary ?? null;
+  return dashboard.value?.forecast.summary ?? null;
 });
 
 const forecastChartData = computed(() => {
@@ -762,40 +664,29 @@ const forecastChartData = computed(() => {
         tension: 0.2,
       },
       ...(hasBaseline
-        ? [
-            {
-              label: 'Лимит прошлого месяца',
-              data: baselineData,
-              borderColor: chartPalette.surface,
-              borderDash: [4, 4],
-              borderWidth: 1.5,
-              pointRadius: 0,
-              fill: false,
-              tension: 0,
-            },
-          ]
+        ? [{
+            label: 'Лимит прошлого месяца',
+            data: baselineData,
+            borderColor: chartPalette.surface,
+            borderDash: [4, 4],
+            borderWidth: 1.5,
+            pointRadius: 0,
+            fill: false,
+            tension: 0,
+          }]
         : []),
     ],
   };
 });
 
-function retryDashboard() {
-  void loadDashboard(normalizedSelectedMonth.value);
-}
-
+// --- Month picker ---
 const updateSelectedMonth = (value: Date | Date[] | (Date | null)[] | null | undefined) => {
   if (!value || Array.isArray(value)) return;
   selectedMonth.value = normalizeMonth(value);
 };
 
-const openMonthPicker = () => {
-  monthPickerRef.value?.show?.();
-};
-
-const goToPreviousMonth = () => {
-  selectedMonth.value = addLocalMonths(normalizedSelectedMonth.value, -1);
-};
-
+const openMonthPicker = () => { monthPickerRef.value?.show?.(); };
+const goToPreviousMonth = () => { selectedMonth.value = addLocalMonths(normalizedSelectedMonth.value, -1); };
 const goToNextMonth = () => {
   if (!canNavigateNext.value) return;
   selectedMonth.value = addLocalMonths(normalizedSelectedMonth.value, 1);
@@ -803,8 +694,7 @@ const goToNextMonth = () => {
 
 watch(selectedMonth, (value) => {
   if (!value) return;
-  const normalized = normalizeMonth(value);
-  void loadDashboard(normalized);
+  void loadDashboard(normalizeMonth(value));
 });
 
 onMounted(async () => {
@@ -819,9 +709,7 @@ onMounted(async () => {
 
 <template>
   <PageContainer class="analytics-page">
-    <PageHeader
-      title="Аналитика"
-    >
+    <PageHeader title="Аналитика">
       <template #actions>
         <div class="analytics-month-selector">
           <button
@@ -905,22 +793,20 @@ onMounted(async () => {
     </AppCard>
 
     <div class="analytics-grid">
-      <HeroHealthCard
+      <!-- Section 1: Summary Strip -->
+      <SummaryStrip
         class="analytics-grid__item analytics-grid__item--span-12"
-        :loading="healthLoading"
-        :error="healthError"
-        :groups="healthGroups"
-        :peaks="peakDays"
-        :peaks-summary="peakSummary"
+        :loading="dashboardLoading"
+        :error="dashboardError"
+        :metrics="summaryMetrics"
         @retry="retryDashboard"
-        @select-peak="handlePeakSelect"
-        @select-peak-summary="handlePeakSummarySelect"
       />
 
+      <!-- Section 2: Two main charts -->
       <SpendingPieCard
-        class="analytics-grid__item analytics-grid__item--span-12"
-        :loading="categoryLoading"
-        :error="categoryError"
+        class="analytics-grid__item analytics-grid__item--span-6"
+        :loading="dashboardLoading"
+        :error="dashboardError"
         :chart-data="categoryChartData"
         :legend="filteredCategoryLegend"
         :currency="baseCurrency"
@@ -929,17 +815,6 @@ onMounted(async () => {
         @retry="retryDashboard"
         @update:scope="selectedCategoryScope = $event"
         @select-category="handleCategorySelect"
-      />
-
-      <CategoryDeltaCard
-        class="analytics-grid__item analytics-grid__item--span-6"
-        :loading="categoryLoading"
-        :error="categoryDeltaError"
-        :period-label="selectedMonthLabel"
-        :increased="categoryDelta.increased"
-        :decreased="categoryDelta.decreased"
-        :currency="baseCurrency"
-        @retry="retryDashboard"
       />
 
       <SpendingBarsCard
@@ -955,10 +830,49 @@ onMounted(async () => {
         @retry="retryDashboard"
       />
 
+      <!-- Section 3: Health score cards -->
+      <HealthScoreCard
+        v-for="card in healthCards"
+        :key="card.key"
+        class="analytics-grid__item analytics-grid__item--span-6"
+        :title="card.title"
+        :icon="card.icon"
+        :main-value="card.mainValue"
+        :main-label="card.mainLabel"
+        :secondary-value="card.secondaryValue"
+        :secondary-label="card.secondaryLabel"
+        :accent="card.accent"
+        :tooltip="card.tooltip"
+      />
+
+      <!-- Section 4 & 5: Peak days + Category delta -->
+      <PeakDaysCard
+        class="analytics-grid__item analytics-grid__item--span-6"
+        :loading="dashboardLoading"
+        :error="dashboardError"
+        :peaks="peakDays"
+        :summary="peakSummary"
+        @retry="retryDashboard"
+        @select-peak="handlePeakSelect"
+        @select-peak-summary="handlePeakSummarySelect"
+      />
+
+      <CategoryDeltaCard
+        class="analytics-grid__item analytics-grid__item--span-6"
+        :loading="dashboardLoading"
+        :error="dashboardError"
+        :period-label="selectedMonthLabel"
+        :increased="categoryDelta.increased"
+        :decreased="categoryDelta.decreased"
+        :currency="baseCurrency"
+        @retry="retryDashboard"
+      />
+
+      <!-- Section 6: Forecast -->
       <ForecastCard
         class="analytics-grid__item analytics-grid__item--span-12"
-        :loading="forecastLoading"
-        :error="forecastError"
+        :loading="dashboardLoading"
+        :error="dashboardError"
         :forecast="forecastSummary"
         :chart-data="forecastChartData"
         :currency="baseCurrency"
@@ -1054,8 +968,36 @@ onMounted(async () => {
     grid-template-columns: repeat(12, minmax(0, 1fr));
   }
 
-.analytics-grid__item--span-12 {
-  grid-column: 1 / -1;
+  .analytics-grid__item--span-12 {
+    grid-column: 1 / -1;
+  }
+
+  .analytics-grid__item--span-8 {
+    grid-column: span 8;
+  }
+
+  .analytics-grid__item--span-6 {
+    grid-column: span 6;
+  }
+
+  .analytics-grid__item--span-4 {
+    grid-column: span 4;
+  }
+
+}
+
+@media (min-width: 641px) and (max-width: 1023px) {
+  .analytics-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .analytics-grid__item--span-12 {
+    grid-column: 1 / -1;
+  }
+
+  .analytics-grid__item--span-6 {
+    grid-column: span 1;
+  }
 }
 
 .onboarding-card {
@@ -1144,6 +1086,14 @@ onMounted(async () => {
 }
 
 @media (max-width: 640px) {
+  .analytics-page {
+    gap: var(--ft-space-4);
+  }
+
+  .analytics-grid {
+    gap: var(--ft-space-3);
+  }
+
   .onboarding-card__header {
     flex-direction: column;
     align-items: flex-start;
@@ -1156,29 +1106,6 @@ onMounted(async () => {
 
   .onboarding-card__step :deep(.ui-button) {
     grid-column: 1 / -1;
-  }
-}
-
-  .analytics-grid__item--span-8 {
-    grid-column: span 8;
-  }
-
-  .analytics-grid__item--span-6 {
-    grid-column: span 6;
-  }
-
-  .analytics-grid__item--span-4 {
-    grid-column: span 4;
-  }
-}
-
-@media (max-width: 640px) {
-  .analytics-page {
-    gap: var(--ft-space-4);
-  }
-
-  .analytics-grid {
-    gap: var(--ft-space-3);
   }
 }
 </style>

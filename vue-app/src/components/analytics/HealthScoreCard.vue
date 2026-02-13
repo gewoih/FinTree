@@ -1,0 +1,219 @@
+<script setup lang="ts">
+type HealthAccent = 'good' | 'average' | 'poor' | 'neutral';
+
+defineProps<{
+  title: string;
+  icon: string;
+  mainValue: string;
+  mainLabel: string;
+  secondaryValue?: string;
+  secondaryLabel?: string;
+  accent: HealthAccent;
+  tooltip: string;
+}>();
+
+const barClass = (accent: HealthAccent) => `health-score__bar--${accent}`;
+const valueClass = (accent: HealthAccent) => `health-score__main-value--${accent}`;
+</script>
+
+<template>
+  <div
+    v-tooltip.bottom="tooltip"
+    class="health-score"
+  >
+    <div class="health-score__header">
+      <span
+        class="health-score__icon"
+        :class="`health-score__icon--${accent}`"
+      >
+        <i :class="icon" />
+      </span>
+      <p class="health-score__title">
+        {{ title }}
+      </p>
+    </div>
+
+    <div class="health-score__body">
+      <p
+        class="health-score__main-value"
+        :class="valueClass(accent)"
+      >
+        {{ mainValue }}
+      </p>
+      <p class="health-score__main-label">
+        {{ mainLabel }}
+      </p>
+    </div>
+
+    <div
+      v-if="secondaryValue"
+      class="health-score__secondary"
+    >
+      <span class="health-score__secondary-value">{{ secondaryValue }}</span>
+      <span
+        v-if="secondaryLabel"
+        class="health-score__secondary-label"
+      >{{ secondaryLabel }}</span>
+    </div>
+
+    <div
+      class="health-score__bar"
+      :class="barClass(accent)"
+    />
+  </div>
+</template>
+
+<style scoped>
+.health-score {
+  display: flex;
+  flex-direction: column;
+  gap: var(--ft-space-4);
+  padding: clamp(1.25rem, 2vw, 1.75rem);
+  background: var(--ft-surface-base);
+  border-radius: var(--ft-radius-2xl);
+  border: 1px solid var(--ft-border-subtle);
+  box-shadow: var(--ft-shadow-sm);
+  position: relative;
+  overflow: hidden;
+  cursor: help;
+  transition: transform var(--ft-transition-fast), box-shadow var(--ft-transition-fast);
+}
+
+.health-score:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--ft-shadow-md);
+}
+
+.health-score__header {
+  display: flex;
+  align-items: center;
+  gap: var(--ft-space-2);
+}
+
+.health-score__icon {
+  width: 40px;
+  height: 40px;
+  border-radius: var(--ft-radius-lg);
+  display: grid;
+  place-items: center;
+  font-size: 1.05rem;
+  flex-shrink: 0;
+  background: color-mix(in srgb, var(--ft-surface-raised) 80%, transparent);
+  border: 1px solid var(--ft-border-subtle);
+  color: var(--ft-text-secondary);
+}
+
+.health-score__icon--good {
+  background: color-mix(in srgb, var(--ft-success-400) 10%, transparent);
+  border-color: color-mix(in srgb, var(--ft-success-400) 20%, transparent);
+  color: var(--ft-success-400);
+}
+
+.health-score__icon--average {
+  background: color-mix(in srgb, var(--ft-warning-400) 10%, transparent);
+  border-color: color-mix(in srgb, var(--ft-warning-400) 20%, transparent);
+  color: var(--ft-warning-400);
+}
+
+.health-score__icon--poor {
+  background: color-mix(in srgb, var(--ft-danger-400) 10%, transparent);
+  border-color: color-mix(in srgb, var(--ft-danger-400) 20%, transparent);
+  color: var(--ft-danger-400);
+}
+
+.health-score__title {
+  margin: 0;
+  font-size: var(--ft-text-base);
+  font-weight: var(--ft-font-semibold);
+  color: var(--ft-text-secondary);
+}
+
+.health-score__body {
+  display: grid;
+  gap: 2px;
+}
+
+.health-score__main-value {
+  margin: 0;
+  font-size: clamp(1.75rem, 2.5vw, 2.25rem);
+  font-weight: var(--ft-font-bold);
+  color: var(--ft-text-primary);
+  line-height: 1.15;
+}
+
+.health-score__main-value--good {
+  color: var(--ft-success-400);
+}
+
+.health-score__main-value--average {
+  color: var(--ft-warning-400);
+}
+
+.health-score__main-value--poor {
+  color: var(--ft-danger-400);
+}
+
+.health-score__main-label {
+  margin: 0;
+  font-size: var(--ft-text-sm);
+  color: var(--ft-text-secondary);
+}
+
+.health-score__secondary {
+  display: flex;
+  align-items: baseline;
+  gap: var(--ft-space-2);
+  font-size: var(--ft-text-base);
+  padding-top: var(--ft-space-1);
+  border-top: 1px solid var(--ft-border-subtle);
+}
+
+.health-score__secondary-value {
+  font-weight: var(--ft-font-semibold);
+  color: var(--ft-text-primary);
+}
+
+.health-score__secondary-label {
+  color: var(--ft-text-secondary);
+  font-size: var(--ft-text-sm);
+}
+
+.health-score__bar {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 3px;
+  border-radius: 0 0 var(--ft-radius-xl) var(--ft-radius-xl);
+  background: var(--ft-border-subtle);
+}
+
+.health-score__bar--good {
+  background: var(--ft-success-400);
+}
+
+.health-score__bar--average {
+  background: var(--ft-warning-400);
+}
+
+.health-score__bar--poor {
+  background: var(--ft-danger-400);
+}
+
+@media (max-width: 640px) {
+  .health-score {
+    padding: var(--ft-space-4);
+    gap: var(--ft-space-3);
+  }
+
+  .health-score__main-value {
+    font-size: 1.5rem;
+  }
+
+  .health-score__icon {
+    width: 36px;
+    height: 36px;
+    font-size: 0.95rem;
+  }
+}
+</style>

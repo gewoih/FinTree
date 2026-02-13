@@ -12,6 +12,9 @@ const router = useRouter()
 const route = useRoute()
 
 const sidebarVisible = ref(false)
+const sidebarCollapsed = ref(
+  typeof localStorage !== 'undefined' && localStorage.getItem('ft-sidebar-collapsed') === '1'
+)
 const userMenuRef = ref<{ toggle: (event: Event) => void } | null>(null)
 
 const { initTheme } = useTheme()
@@ -22,6 +25,7 @@ const { isMobile, isTablet } = useViewport()
 
 // Only show drawer on mobile (width < 1024px)
 const isDrawerVisible = computed(() => isTablet.value)
+const isDesktop = computed(() => !isTablet.value)
 
 const userButtonLabel = computed(() => (isMobile.value ? undefined : userEmail.value))
 const isReadOnlyMode = computed(() => userStore.isReadOnlyMode)
@@ -51,7 +55,12 @@ const handleUserMenuToggle = (event: Event) => {
 }
 
 const toggleSidebar = () => {
-  sidebarVisible.value = !sidebarVisible.value
+  if (isDesktop.value) {
+    sidebarCollapsed.value = !sidebarCollapsed.value
+    localStorage.setItem('ft-sidebar-collapsed', sidebarCollapsed.value ? '1' : '0')
+  } else {
+    sidebarVisible.value = !sidebarVisible.value
+  }
 }
 
 const handleLogout = async () => {
@@ -77,7 +86,10 @@ onMounted(() => {
 </script>
 
 <template>
-  <div class="app-shell">
+  <div
+    class="app-shell"
+    :class="{ 'app-shell--collapsed': isDesktop && sidebarCollapsed }"
+  >
     <a
       class="app-shell__skip-link"
       href="#main-content"
@@ -87,10 +99,11 @@ onMounted(() => {
     <div class="app-shell__topnav">
       <div class="app-shell__topnav-left">
         <Button
-          icon="pi pi-bars"
+          :icon="isDesktop && sidebarCollapsed ? 'pi pi-angle-right' : isDesktop ? 'pi pi-angle-left' : 'pi pi-bars'"
           text
           rounded
-          class="app-shell__menu-toggle lg:hidden"
+          class="app-shell__menu-toggle"
+          :aria-label="isDesktop ? (sidebarCollapsed ? 'Развернуть меню' : 'Свернуть меню') : 'Открыть меню'"
           @click="toggleSidebar"
         />
         <router-link
@@ -171,17 +184,25 @@ onMounted(() => {
     </Drawer>
 
     <!-- Desktop Sidebar -->
-    <aside class="app-shell__sidebar-desktop">
+    <aside
+      class="app-shell__sidebar-desktop"
+      :class="{ 'app-shell__sidebar-desktop--collapsed': sidebarCollapsed }"
+    >
       <nav class="app-shell__nav">
         <router-link
           v-for="item in navigationItems"
           :key="item.to"
           :to="item.to"
           class="app-shell__nav-link"
+          :class="{ 'app-shell__nav-link--collapsed': sidebarCollapsed }"
           :aria-current="route.path === item.to ? 'page' : undefined"
+          :title="sidebarCollapsed ? item.label : undefined"
         >
           <i :class="['pi', item.icon]" />
-          <span>{{ item.label }}</span>
+          <span
+            v-if="!sidebarCollapsed"
+            class="app-shell__nav-label"
+          >{{ item.label }}</span>
         </router-link>
       </nav>
     </aside>
@@ -233,6 +254,11 @@ onMounted(() => {
     grid-template-areas:
       "topnav topnav"
       "sidebar main";
+    transition: grid-template-columns 0.2s ease;
+  }
+
+  .app-shell--collapsed {
+    grid-template-columns: 64px 1fr;
   }
 }
 
@@ -325,6 +351,12 @@ onMounted(() => {
     top: var(--app-shell-nav-height);
     height: calc(100vh - var(--app-shell-nav-height));
     overflow-y: auto;
+    transition: padding 0.2s ease;
+  }
+
+  .app-shell__sidebar-desktop--collapsed {
+    padding: var(--space-6) var(--ft-space-2);
+    overflow: visible;
   }
 }
 
@@ -388,6 +420,15 @@ onMounted(() => {
 
 .app-shell__nav-link i {
   font-size: 1.25rem;
+}
+
+.app-shell__nav-link--collapsed {
+  justify-content: center;
+  padding: var(--space-3);
+}
+
+.app-shell__nav-link--collapsed i {
+  font-size: 1.3rem;
 }
 
 /* Main Content */

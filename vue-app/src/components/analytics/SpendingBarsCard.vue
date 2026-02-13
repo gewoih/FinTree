@@ -20,18 +20,54 @@ const emit = defineEmits<{
 
 const textColor = ref('#1e293b');
 const gridColor = ref('rgba(148,163,184,0.2)');
+const accentColor = ref('#0ea5e9');
+const surfaceBase = ref('#0b111a');
 
 const updateColors = () => {
   if (typeof window === 'undefined') return;
   const styles = getComputedStyle(document.documentElement);
   textColor.value = styles.getPropertyValue('--ft-text-primary').trim() || '#1e293b';
   gridColor.value = styles.getPropertyValue('--ft-border-subtle').trim() || 'rgba(148,163,184,0.2)';
+  accentColor.value = styles.getPropertyValue('--ft-info-400').trim() || '#0ea5e9';
+  surfaceBase.value = styles.getPropertyValue('--ft-surface-raised').trim() || '#1e293b';
 };
 
 onMounted(() => {
   updateColors();
   const observer = new MutationObserver(updateColors);
   observer.observe(document.documentElement, { attributes: true, attributeFilter: ['class'] });
+});
+
+const averageValue = computed(() => {
+  if (!props.chartData?.datasets?.[0]?.data) return null;
+  const data = props.chartData.datasets[0].data as number[];
+  const nonZero = data.filter(v => v > 0);
+  if (!nonZero.length) return null;
+  return nonZero.reduce((a, b) => a + b, 0) / nonZero.length;
+});
+
+const styledChartData = computed(() => {
+  if (!props.chartData) return null;
+  const datasets = [...props.chartData.datasets];
+
+  if (averageValue.value != null) {
+    const len = props.chartData.labels?.length ?? 0;
+    datasets.push({
+      label: 'Среднее',
+      data: Array(len).fill(averageValue.value),
+      type: 'line' as const,
+      borderColor: gridColor.value,
+      borderDash: [6, 4],
+      borderWidth: 1.5,
+      pointRadius: 0,
+      fill: false,
+    } as any);
+  }
+
+  return {
+    ...props.chartData,
+    datasets,
+  };
 });
 
 const chartOptions = computed(() => ({
@@ -43,6 +79,7 @@ const chartOptions = computed(() => ({
       },
       ticks: {
         color: textColor.value,
+        font: { size: 12 },
       },
     },
     y: {
@@ -51,6 +88,7 @@ const chartOptions = computed(() => ({
       },
       ticks: {
         color: textColor.value,
+        font: { size: 12 },
         callback(value: number | string) {
           const numeric = typeof value === 'string' ? Number(value) : value;
           return numeric.toLocaleString('ru-RU', {
@@ -67,6 +105,15 @@ const chartOptions = computed(() => ({
       display: false,
     },
     tooltip: {
+      backgroundColor: surfaceBase.value,
+      titleColor: textColor.value,
+      bodyColor: textColor.value,
+      borderColor: gridColor.value,
+      borderWidth: 1,
+      cornerRadius: 10,
+      padding: 14,
+      titleFont: { size: 13 },
+      bodyFont: { size: 13 },
       callbacks: {
         label(context: TooltipItem<'bar'>) {
           const value = context.parsed.y ?? 0;
@@ -75,6 +122,9 @@ const chartOptions = computed(() => ({
             currency: props.currency,
             minimumFractionDigits: 0,
           });
+          if (context.dataset.label === 'Среднее') {
+            return `Среднее: ${formatted}`;
+          }
           return `Расходы: ${formatted}`;
         },
       },
@@ -84,162 +134,167 @@ const chartOptions = computed(() => ({
 </script>
 
 <template>
-  <Card class="analytics-card">
-    <template #title>
-      <div class="card-head">
-        <div>
-          <h3>Динамика расходов</h3>
-          <p>Как менялись расходы по выбранной детализации</p>
-        </div>
-        <SelectButton
-          :model-value="granularity"
-          :options="granularityOptions"
-          option-label="label"
-          option-value="value"
-          class="bars-card__toggle"
-          @update:model-value="emit('update:granularity', $event)"
-        />
-      </div>
-    </template>
-
-    <template #content>
-      <div
-        v-if="loading"
-        class="card-loading"
-      >
-        <Skeleton
-          width="100%"
-          height="280px"
-          border-radius="16px"
-        />
-      </div>
-
-      <div
-        v-else-if="error"
-        class="card-message"
-      >
-        <Message
-          severity="error"
-          icon="pi pi-exclamation-triangle"
-          :closable="false"
+  <div class="bars-card">
+    <div class="bars-card__head">
+      <div>
+        <h3
+          v-tooltip.top="'Как менялись расходы день за днём, по неделям или месяцам. Пунктирная линия — среднее значение.'"
+          class="bars-card__title"
         >
-          <div class="card-message__body">
-            <p class="card-message__title">
-              Не удалось загрузить динамику расходов
-            </p>
-            <p class="card-message__text">
-              {{ error }}
-            </p>
-            <Button
-              label="Повторить"
-              icon="pi pi-refresh"
-              size="small"
-              @click="emit('retry')"
-            />
-          </div>
-        </Message>
+          Динамика расходов
+        </h3>
+        <p class="bars-card__subtitle">
+          Как менялись расходы по выбранной детализации
+        </p>
       </div>
+      <SelectButton
+        :model-value="granularity"
+        :options="granularityOptions"
+        option-label="label"
+        option-value="value"
+        class="bars-card__toggle"
+        @update:model-value="emit('update:granularity', $event)"
+      />
+    </div>
 
-      <div
-        v-else-if="empty"
-        class="card-message"
-      >
-        <Message
-          severity="info"
-          icon="pi pi-inbox"
-          :closable="false"
-        >
-          <div class="card-message__body card-message__body--compact">
-            <p class="card-message__title">
-              Нет данных
-            </p>
-            <p class="card-message__text">
-              Добавьте операции, чтобы увидеть динамику расходов.
-            </p>
-          </div>
-        </Message>
-      </div>
+    <div
+      v-if="loading"
+      class="bars-card__loading"
+    >
+      <Skeleton
+        width="100%"
+        height="280px"
+        border-radius="16px"
+      />
+    </div>
 
-      <div
-        v-else
-        class="bars-card__chart"
+    <div
+      v-else-if="error"
+      class="bars-card__message"
+    >
+      <Message
+        severity="error"
+        icon="pi pi-exclamation-triangle"
+        :closable="false"
       >
-        <div class="bars-card__chart-container">
-          <Chart
-            v-if="chartData"
-            type="bar"
-            :data="chartData"
-            :options="chartOptions"
+        <div class="bars-card__message-body">
+          <p class="bars-card__message-title">
+            Не удалось загрузить динамику расходов
+          </p>
+          <p class="bars-card__message-text">
+            {{ error }}
+          </p>
+          <Button
+            label="Повторить"
+            icon="pi pi-refresh"
+            size="small"
+            @click="emit('retry')"
           />
         </div>
+      </Message>
+    </div>
+
+    <div
+      v-else-if="empty"
+      class="bars-card__message"
+    >
+      <Message
+        severity="info"
+        icon="pi pi-inbox"
+        :closable="false"
+      >
+        <div class="bars-card__message-body bars-card__message-body--compact">
+          <p class="bars-card__message-title">
+            Нет данных
+          </p>
+          <p class="bars-card__message-text">
+            Добавьте операции, чтобы увидеть динамику расходов.
+          </p>
+        </div>
+      </Message>
+    </div>
+
+    <div
+      v-else
+      class="bars-card__chart"
+    >
+      <div class="bars-card__chart-container">
+        <Chart
+          v-if="styledChartData"
+          type="bar"
+          :data="styledChartData"
+          :options="chartOptions"
+        />
       </div>
-    </template>
-  </Card>
+    </div>
+  </div>
 </template>
 
 <style scoped>
-.analytics-card {
-  background: var(--ft-surface-base);
-  border-radius: var(--ft-radius-2xl);
-  border: 1px solid var(--ft-border-subtle);
+.bars-card {
   display: flex;
   flex-direction: column;
   gap: var(--ft-space-4);
-  padding-bottom: var(--ft-space-3);
+  padding: clamp(1rem, 2vw, 1.5rem);
+  background: var(--ft-surface-base);
+  border-radius: var(--ft-radius-2xl);
+  border: 1px solid var(--ft-border-subtle);
   box-shadow: var(--ft-shadow-sm);
 }
 
-.card-head {
+.bars-card__head {
   display: flex;
   justify-content: space-between;
   align-items: flex-start;
   gap: var(--ft-space-4);
 }
 
-.card-head h3 {
+.bars-card__title {
   margin: 0;
-  font-size: var(--ft-text-xl);
+  font-size: var(--ft-text-lg);
   font-weight: var(--ft-font-semibold);
   color: var(--ft-text-primary);
+  cursor: help;
 }
 
-.card-head p {
-  margin: var(--ft-space-2) 0 0;
+.bars-card__subtitle {
+  margin: var(--ft-space-1) 0 0;
   color: var(--ft-text-secondary);
+  font-size: var(--ft-text-sm);
 }
 
-.card-loading {
+.bars-card__loading {
   min-height: 340px;
   display: grid;
   place-items: center;
 }
 
-.card-message {
+.bars-card__message {
   display: grid;
 }
 
-.card-message__body {
+.bars-card__message-body {
   display: grid;
   gap: var(--ft-space-3);
 }
 
-.card-message__body--compact {
+.bars-card__message-body--compact {
   gap: var(--ft-space-2);
 }
 
-.card-message__title {
+.bars-card__message-title {
   margin: 0;
   font-weight: var(--ft-font-semibold);
 }
 
-.card-message__text {
+.bars-card__message-text {
   margin: 0;
 }
 
 .bars-card__chart {
-  height: 450px;
+  height: 400px;
   width: 100%;
-  padding: var(--ft-space-4) var(--ft-space-3);
+  padding: var(--ft-space-2) 0;
 }
 
 .bars-card__chart-container {
@@ -259,13 +314,13 @@ const chartOptions = computed(() => ({
 }
 
 @media (max-width: 640px) {
-  .card-head {
+  .bars-card__head {
     flex-direction: column;
     align-items: stretch;
   }
 
-  .card-head p {
-    font-size: var(--ft-text-sm);
+  .bars-card__subtitle {
+    font-size: var(--ft-text-xs);
   }
 
   .bars-card__toggle {
@@ -283,7 +338,6 @@ const chartOptions = computed(() => ({
 
   .bars-card__chart {
     height: 280px;
-    padding: var(--ft-space-3) var(--ft-space-2);
   }
 }
 </style>
