@@ -1,43 +1,36 @@
-# Security and Auth Target Standards
+# Security & Auth Standards
 
-## Security principles
-- Secure by default: any reduction in safeguards requires explicit approval.
-- Least privilege: access only to current-user data.
-- Defense in depth: transport, auth, validation, and domain guards.
+## Principles
+- Secure by default; reductions require approval.
+- Least privilege: current-user data only.
+- Defense in depth: transport, auth, validation, domain guards.
 
-## Authentication model
-- Auth behavior must be consistent across clients and endpoint flows.
-- Session handling must not break public pages or marketing routes.
-- Auth failures must be deterministic: clear UI signal, no redirect loops.
-- JWT access token must be short-lived and rotated via refresh-token flow.
-- Refresh tokens must be one-time (rotation on refresh) and server-revocable.
+## Authentication
+- JWT access token: short-lived, rotated via refresh flow.
+- Refresh tokens: one-time rotation, server-revocable, stored as hashes only.
+- Auth failures: deterministic, clear UI signal, no redirect loops.
+- Session handling must not break public/marketing routes.
 
-## Cookie and session rules
-- For production (HTTPS): `Secure=true`, `HttpOnly=true`, and a correct `SameSite` policy for the chosen model.
-- Local/dev may use a separate cookie profile.
-- Cookie behavior must not rely on implicit environment magic without explicit logic and validation.
-- Access-token cookie and refresh-token cookie must be split (different names, scoped paths).
-- Refresh tokens must not be stored in plain form in DB; only token hashes are allowed.
+## Cookies
+- Production: `Secure`, `HttpOnly`, correct `SameSite`.
+- Access and refresh tokens: separate cookies, scoped paths.
+- Dev may use different cookie profile with explicit logic.
 
-## CORS rules
-- Wildcard origins are forbidden for credentialed requests.
-- Only explicit allowed origins are permitted per environment.
-- CORS configuration must be reproducible across environments.
+## CORS
+- No wildcard origins for credentialed requests.
+- Explicit allowed origins per environment.
 
-## Request hardening rules
-- API must enforce per-IP rate limiting with stricter limits for `/api/auth/*` than for general `/api/*` routes.
-- Rate limit rejections must return deterministic `429` JSON payloads safe for frontend handling.
-- Reverse-proxy deployments must pass and validate forwarded headers so limits are applied to client IPs, not proxy container IPs.
-- `AllowedHosts` must use explicit hostnames in production; wildcard host allowance is forbidden.
-- Kestrel server version header must be disabled in production.
-- Subscription access guard must be enforced server-side for all mutation endpoints; inactive subscription allows read-only access only.
+## Hardening
+- Per-IP rate limiting; stricter for `/api/auth/*`.
+- 429 responses: deterministic JSON, frontend-safe.
+- Reverse proxy must forward real client IPs.
+- Production: explicit `AllowedHosts`, no wildcard. Kestrel version header disabled.
+- Subscription guard: server-side, all mutation endpoints.
 
-## External identity providers (Telegram and others)
-- Signature verification and payload expiry checks are mandatory.
-- External login must map safely to the internal user model without breaking invariants.
-- Provider payload is untrusted until server-side validation passes.
+## External providers (Telegram)
+- Signature verification + payload expiry mandatory.
+- Provider payload untrusted until server-validated.
 
-## Data protection and logging
-- Never store or log secrets/tokens in plain form.
-- Security logs must be diagnostic but must not leak sensitive data.
-- External error messages must stay safe and not expose internal architecture.
+## Logging
+- Never log secrets/tokens in plain form.
+- Error messages must not expose internal architecture.

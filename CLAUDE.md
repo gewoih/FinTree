@@ -1,34 +1,41 @@
-# FinTree Claude Entry Point
+# FinTree
 
-## Context imports
-@AGENTS.md
-@docs/agent/README.md
-@docs/agent/product.md
-@docs/agent/backend.md
-@docs/agent/frontend.md
-@docs/agent/security-auth.md
-@docs/agent/deploy.md
-@docs/agent/workflow.md
+Personal finance app: Telegram bot for transaction capture + Vue web app for analytics.
+Russian-language UI. Tech: .NET 8 API, Vue 3 + TypeScript frontend, PostgreSQL, Docker Compose.
 
-## Operating rules
-- Follow instruction precedence from `AGENTS.md` exactly.
-- Before coding, structure work as: Goal, Constraints, Acceptance criteria, Scope surface, Risks, Unknowns.
-- If estimated uncertainty is greater than `0.05`, ask clarifying questions before implementation.
-- Do not invent requirements for data integrity, auth/security, migrations, destructive behavior, or core UX flows.
-- Keep diffs minimal and scoped to the requested task.
-- Never revert or rewrite unrelated user changes.
+## Hard invariants
+- Personal finance only; no cross-user analytics.
+- Categories are user-owned; no global/system categories.
+- Deleting a category reassigns its transactions to "Uncategorized".
+- Soft-delete only; deleted entities hidden from UI but preserved in DB.
+- Accounts support archive/unarchive with full history preservation.
+- New users get 1-month free trial. Inactive subscription = read-only.
+- Subscription catalog: month 390₽, year 3900₽.
 
-## Product invariants (hard)
-- FinTree is personal finance only; no cross-user analytics behavior.
-- Categories are user-owned only; no global/system categories.
-- Deleting a category must not delete transactions; reassign them to `Uncategorized`.
-- Domain delete workflows are soft-delete, not hard-delete.
-- Deleted entities must be hidden from UI and app behavior but preserved in DB for audit.
+## Instruction precedence
+1. Explicit user instruction in current thread.
+2. This file and docs/agent/*.
+3. Existing code behavior.
+4. Agent assumptions (last resort).
+
+## Before coding
+- If uncertainty > 0.05: ask before implementing.
+- No inventing requirements for data integrity, auth, migrations, or core UX.
+- Structure: Goal → Constraints → Acceptance criteria → Scope → Risks.
+- Keep diffs minimal. Never revert unrelated user changes.
 
 ## Execution constraints
-- Do not run backend or frontend build/test commands unless the user explicitly requests it in the current thread.
-- For deployment/config changes, validate compose configuration before completion using `docker compose config`.
-- If architecture, auth, deployment, or core product invariants change, update relevant files in `docs/agent/` in the same task.
+- Do NOT run build/test commands unless user explicitly asks.
+- For deploy/config changes: validate with `docker compose config`.
+- If architecture or invariants change: update relevant docs/agent/ file.
 
-## Delivery standard
-- Report: summary of changes, exact files changed, checks executed with pass/fail status, and known risks/follow-ups.
+## Domain standards
+Read the relevant file in `docs/agent/` before domain-specific work:
+- product.md — scope boundaries, navigation, subscription rules
+- backend.md — DDD layers, API contracts, data integrity
+- frontend.md — architecture, tokens, UI/UX standards
+- security-auth.md — auth model, cookies, CORS, hardening
+- deploy.md — Docker, nginx, compose commands, cert setup
+
+## Delivery
+Report: summary, files changed, checks run (pass/fail), risks/follow-ups.
