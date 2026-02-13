@@ -834,7 +834,7 @@ onMounted(async () => {
       <HealthScoreCard
         v-for="card in healthCards"
         :key="card.key"
-        class="analytics-grid__item analytics-grid__item--span-6"
+        class="analytics-grid__item analytics-grid__item--span-3"
         :title="card.title"
         :icon="card.icon"
         :main-value="card.mainValue"
@@ -984,6 +984,10 @@ onMounted(async () => {
     grid-column: span 4;
   }
 
+  .analytics-grid__item--span-3 {
+    grid-column: span 3;
+  }
+
 }
 
 @media (min-width: 641px) and (max-width: 1023px) {
@@ -996,6 +1000,10 @@ onMounted(async () => {
   }
 
   .analytics-grid__item--span-6 {
+    grid-column: span 1;
+  }
+
+  .analytics-grid__item--span-3 {
     grid-column: span 1;
   }
 }

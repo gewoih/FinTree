@@ -701,9 +701,10 @@ public sealed class AnalyticsService(
             var current = currentTotals.TryGetValue(id, out var currentValue) ? currentValue : 0m;
             var previous = previousTotals.TryGetValue(id, out var previousValue) ? previousValue : 0m;
             if (current == 0m && previous == 0m) continue;
+            if (previous <= 0m) continue;
 
             var delta = current - previous;
-            var deltaPercent = previous > 0m ? (delta / previous) * 100m : (decimal?)null;
+            var deltaPercent = (delta / previous) * 100m;
             if (!categories.TryGetValue(id, out var info))
                 info = new CategoryMeta("Без категории", "#9e9e9e", false);
 
