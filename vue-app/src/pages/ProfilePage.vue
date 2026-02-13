@@ -592,27 +592,34 @@ async function handlePay(plan: SubscriptionPlan) {
 
 .profile-tabs__bar {
   display: inline-flex;
-  align-items: center;
   gap: var(--space-2);
+  align-items: center;
+
   padding: var(--space-2);
-  border-radius: var(--radius-lg);
-  border: 1px solid var(--border);
+
   background: linear-gradient(135deg, color-mix(in srgb, var(--surface-2) 70%, transparent), var(--surface-1));
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
   box-shadow: var(--shadow-soft);
 }
 
 .profile-tab {
+  cursor: pointer;
+
   display: inline-flex;
-  align-items: center;
   gap: var(--space-2);
-  border: none;
-  background: transparent;
-  color: var(--text);
+  align-items: center;
+
+  padding: 0.6rem 1.4rem;
+
   font-size: var(--ft-text-base);
   font-weight: 600;
-  padding: 0.6rem 1.4rem;
+  color: var(--text);
+
+  background: transparent;
+  border: none;
   border-radius: var(--radius-lg);
-  cursor: pointer;
+
   transition:
     background-color var(--ft-transition-fast),
     color var(--ft-transition-fast),
@@ -620,8 +627,8 @@ async function handlePay(plan: SubscriptionPlan) {
 }
 
 .profile-tab.is-active {
-  background: color-mix(in srgb, var(--accent) 75%, transparent);
   color: var(--ft-text-inverse);
+  background: color-mix(in srgb, var(--accent) 75%, transparent);
   box-shadow: var(--ft-shadow-md);
 }
 
@@ -658,9 +665,9 @@ async function handlePay(plan: SubscriptionPlan) {
 
 .card-header {
   display: flex;
-  justify-content: space-between;
-  align-items: flex-start;
   gap: 1rem;
+  align-items: flex-start;
+  justify-content: space-between;
 }
 
 .card-title {
@@ -700,29 +707,31 @@ async function handlePay(plan: SubscriptionPlan) {
 
 .profile-label {
   font-size: var(--ft-text-xs);
+  color: var(--text-muted);
   text-transform: uppercase;
   letter-spacing: 0.16em;
-  color: var(--text-muted);
 }
 
 .profile-row p {
   margin: 0;
+
   font-size: var(--ft-text-base);
   color: var(--text);
-  word-break: break-word;
+  word-break: normal;
+  overflow-wrap: anywhere;
 }
 
 .profile-row .muted {
-  color: var(--text-muted);
   font-family: var(--ft-font-mono, 'Fira Code', monospace);
   font-size: var(--ft-text-sm);
+  color: var(--text-muted);
 }
 
 .profile-divider {
   width: 100%;
   height: 1px;
-  background: var(--border);
   opacity: 0.6;
+  background: var(--border);
 }
 
 .helper-text {
@@ -738,9 +747,9 @@ async function handlePay(plan: SubscriptionPlan) {
 
 .actions {
   display: flex;
-  justify-content: flex-end;
-  gap: var(--space-3);
   flex-wrap: wrap;
+  gap: var(--space-3);
+  justify-content: flex-end;
 }
 
 .actions :deep(.ui-button) {
@@ -754,8 +763,8 @@ async function handlePay(plan: SubscriptionPlan) {
 
 .subscription-status__note {
   margin-top: var(--space-2) !important;
-  color: var(--text-muted) !important;
   font-size: var(--ft-text-sm);
+  color: var(--text-muted) !important;
 }
 
 .subscription-plans {
@@ -765,12 +774,14 @@ async function handlePay(plan: SubscriptionPlan) {
 }
 
 .subscription-plan {
-  border: 1px solid var(--border);
-  border-radius: var(--radius-md);
-  padding: var(--space-3);
-  background: var(--surface-1);
   display: grid;
   gap: var(--space-2);
+
+  padding: var(--space-3);
+
+  background: var(--surface-1);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
 }
 
 .subscription-plan h4 {
@@ -785,8 +796,8 @@ async function handlePay(plan: SubscriptionPlan) {
 
 .subscription-plan__hint {
   margin: 0;
-  color: var(--text-muted);
   font-size: var(--ft-text-sm);
+  color: var(--text-muted);
 }
 
 .subscription-history {
@@ -805,29 +816,35 @@ async function handlePay(plan: SubscriptionPlan) {
 
 .subscription-history__empty {
   padding: var(--space-3);
+
+  color: var(--text-muted);
+
+  background: var(--surface-1);
   border: 1px dashed var(--border);
   border-radius: var(--radius-md);
-  color: var(--text-muted);
-  background: var(--surface-1);
 }
 
 .subscription-history__list {
-  list-style: none;
-  margin: 0;
-  padding: 0;
   display: grid;
   gap: var(--space-2);
+
+  margin: 0;
+  padding: 0;
+
+  list-style: none;
 }
 
 .subscription-history__item {
   display: flex;
+  gap: var(--space-3);
   align-items: flex-start;
   justify-content: space-between;
-  gap: var(--space-3);
+
   padding: var(--space-3);
-  border-radius: var(--radius-md);
-  border: 1px solid var(--border);
+
   background: var(--surface-1);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
 }
 
 .subscription-history__title {
@@ -837,24 +854,24 @@ async function handlePay(plan: SubscriptionPlan) {
 
 .subscription-history__meta {
   margin: var(--space-1) 0 0;
-  color: var(--text-muted);
   font-size: var(--ft-text-sm);
+  color: var(--text-muted);
 }
 
 .subscription-history__amounts {
-  text-align: right;
   display: grid;
   gap: 2px;
+  text-align: right;
 }
 
 .subscription-history__amounts small {
   color: var(--text-muted);
 }
 
-@media (max-width: 768px) {
+@media (width <= 768px) {
   .profile-tabs__bar {
-    width: 100%;
     justify-content: space-between;
+    width: 100%;
   }
 
   .profile-tab {

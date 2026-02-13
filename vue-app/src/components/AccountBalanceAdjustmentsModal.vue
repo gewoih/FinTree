@@ -252,9 +252,9 @@ watch(
 
 .adjustments-account {
   padding: var(--ft-space-3);
-  border-radius: var(--ft-radius-lg);
-  border: 1px solid var(--ft-border-soft);
   background: var(--ft-surface-soft);
+  border: 1px solid var(--ft-border-soft);
+  border-radius: var(--ft-radius-lg);
 }
 
 .adjustments-account h4 {
@@ -277,14 +277,14 @@ watch(
 .adjustments-modal__actions {
   display: flex;
   flex-wrap: wrap;
-  justify-content: flex-end;
   gap: var(--ft-space-3);
+  justify-content: flex-end;
 }
 
 .adjustments-modal__actions :deep(.app-button) {
-  min-height: 44px;
-  min-width: 156px;
   flex: 0 0 auto;
+  min-width: 156px;
+  min-height: 44px;
 }
 
 .adjustments-modal__actions :deep(.p-button-label) {
@@ -303,23 +303,27 @@ watch(
 }
 
 .adjustments-list {
-  list-style: none;
-  margin: 0;
-  padding: 0;
+  overflow-y: auto;
   display: grid;
   gap: var(--ft-space-2);
+
   max-height: 220px;
-  overflow-y: auto;
+  margin: 0;
+  padding: 0;
+
+  list-style: none;
 }
 
 .adjustments-list__item {
   display: flex;
-  justify-content: space-between;
   align-items: center;
+  justify-content: space-between;
+
   padding: var(--ft-space-2) var(--ft-space-3);
-  border-radius: var(--ft-radius-lg);
-  border: 1px solid var(--ft-border-subtle);
+
   background: var(--ft-surface-base);
+  border: 1px solid var(--ft-border-subtle);
+  border-radius: var(--ft-radius-lg);
 }
 
 .adjustments-list__amount {
@@ -342,7 +346,7 @@ watch(
   margin: 0;
 }
 
-@media (max-width: 576px) {
+@media (width <= 576px) {
   .adjustments-modal__actions :deep(.app-button) {
     width: 100%;
     min-width: 0;

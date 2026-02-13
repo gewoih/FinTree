@@ -169,10 +169,16 @@ const handleLogin = async () => {
 
 <style scoped>
 .auth {
-  min-height: 100vh;
+  position: relative;
+
   display: grid;
   place-items: center;
+
+  min-height: 100vh;
   padding: clamp(var(--ft-space-6), 6vw, var(--ft-space-10)) clamp(var(--ft-space-4), 6vw, var(--ft-space-8));
+
+  color: var(--ft-text-primary);
+
   background:
     radial-gradient(
       760px 560px at 12% -10%,
@@ -185,15 +191,13 @@ const handleLogin = async () => {
       transparent
     ),
     linear-gradient(180deg, var(--ft-bg-base) 0%, var(--ft-bg-muted) 100%);
-  color: var(--ft-text-primary);
-  position: relative;
 }
 
 .auth__theme-toggle {
   position: absolute;
+  z-index: 1;
   top: clamp(var(--ft-space-4), 4vw, var(--ft-space-6));
   right: clamp(var(--ft-space-4), 4vw, var(--ft-space-6));
-  z-index: 1;
 }
 
 .auth__container {
@@ -201,8 +205,9 @@ const handleLogin = async () => {
   grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
   gap: clamp(var(--ft-space-6), 6vw, var(--ft-space-8));
   align-items: center;
-  max-width: var(--ft-container-xl);
+
   width: 100%;
+  max-width: var(--ft-container-xl);
 }
 
 .auth__intro {
@@ -214,13 +219,14 @@ const handleLogin = async () => {
 
 .auth__brand {
   display: inline-flex;
-  align-items: center;
   gap: var(--ft-space-2);
+  align-items: center;
+
+  font-family: var(--ft-font-display);
   font-weight: var(--ft-font-semibold);
   color: var(--ft-primary-200);
-  letter-spacing: 0.08em;
   text-transform: uppercase;
-  font-family: var(--ft-font-display);
+  letter-spacing: 0.08em;
 }
 
 .auth__brand i {
@@ -229,24 +235,26 @@ const handleLogin = async () => {
 
 .auth__intro h1 {
   margin: 0;
-  font-size: clamp(2rem, 4vw, 2.75rem);
   font-family: var(--ft-font-display);
+  font-size: clamp(2rem, 4vw, 2.75rem);
 }
 
 .auth__intro p {
-  margin: 0;
-  color: var(--ft-text-secondary);
   max-width: 44ch;
+  margin: 0;
   line-height: 1.6;
+  color: var(--ft-text-secondary);
 }
 
 .auth__card {
-  width: min(420px, 100%);
   justify-self: end;
-  border: 1px solid var(--ft-border-subtle);
+
+  width: min(420px, 100%);
+
   background: var(--ft-surface-base);
-  box-shadow: var(--ft-shadow-xl);
   backdrop-filter: blur(18px);
+  border: 1px solid var(--ft-border-subtle);
+  box-shadow: var(--ft-shadow-xl);
 }
 
 .auth__form {
@@ -263,47 +271,57 @@ const handleLogin = async () => {
 
 .auth__field label {
   font-size: var(--ft-text-xs);
+  color: var(--ft-text-tertiary);
   text-transform: uppercase;
   letter-spacing: 0.14em;
-  color: var(--ft-text-tertiary);
 }
 
 .auth__error {
   display: flex;
-  align-items: center;
   gap: var(--ft-space-2);
+  align-items: center;
+
   margin: 0;
+
   font-size: var(--ft-text-sm);
   color: var(--ft-danger-400);
 }
 
 .auth__footer {
   display: flex;
-  justify-content: center;
   gap: var(--ft-space-2);
+  justify-content: center;
+
+  margin-top: var(--ft-space-4);
+
   font-size: var(--ft-text-sm);
   color: var(--ft-text-secondary);
-  margin-top: var(--ft-space-4);
 }
 
 .auth__divider {
   position: relative;
+
   display: grid;
   place-items: center;
+
   margin: var(--ft-space-2) 0;
-  color: var(--ft-text-tertiary);
+
   font-size: var(--ft-text-xs);
+  color: var(--ft-text-tertiary);
   text-transform: uppercase;
   letter-spacing: 0.16em;
 }
 
 .auth__divider::before {
   content: '';
+
   position: absolute;
   inset: 50% 0 auto;
+
   height: 1px;
-  background: var(--ft-border-subtle);
+
   opacity: 0.6;
+  background: var(--ft-border-subtle);
 }
 
 .auth__divider span {
@@ -316,9 +334,10 @@ const handleLogin = async () => {
   display: grid;
   gap: var(--ft-space-2);
   justify-items: center;
-  text-align: center;
-  color: var(--ft-text-secondary);
+
   font-size: var(--ft-text-sm);
+  color: var(--ft-text-secondary);
+  text-align: center;
 }
 
 .auth__telegram p {
@@ -330,8 +349,8 @@ const handleLogin = async () => {
 }
 
 .auth__footer a {
-  color: var(--ft-text-primary);
   font-weight: var(--ft-font-medium);
+  color: var(--ft-text-primary);
   text-decoration: none;
 }
 
@@ -343,7 +362,7 @@ const handleLogin = async () => {
   color: var(--ft-primary-700);
 }
 
-@media (max-width: 768px) {
+@media (width <= 768px) {
   .auth {
     padding-block: clamp(var(--ft-space-6), 8vw, var(--ft-space-8));
   }
@@ -357,7 +376,7 @@ const handleLogin = async () => {
   }
 }
 
-@media (min-width: 1024px) {
+@media (width >= 1024px) {
   .auth__container {
     grid-template-columns: minmax(0, 1fr) minmax(320px, 420px);
     justify-content: space-between;

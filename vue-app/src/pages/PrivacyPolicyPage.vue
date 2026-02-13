@@ -58,10 +58,12 @@ import PublicPageLayout from '../components/layout/PublicPageLayout.vue';
 
 <style scoped>
 ul {
-  margin: 0;
-  padding-left: 1.2rem;
   display: grid;
   gap: var(--ft-space-2);
+
+  margin: 0;
+  padding-left: 1.2rem;
+
   color: var(--ft-text-secondary);
 }
 
@@ -73,8 +75,8 @@ h2 {
 
 p {
   margin: 0;
-  color: var(--ft-text-secondary);
   line-height: 1.6;
+  color: var(--ft-text-secondary);
 }
 
 a {

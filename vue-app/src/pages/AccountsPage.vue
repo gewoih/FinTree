@@ -402,31 +402,37 @@ onMounted(async () => {
 
 .accounts-toolbar__hint {
   margin: 0;
-  color: var(--text-muted);
   font-size: var(--ft-text-sm);
+  color: var(--text-muted);
 }
 
 .accounts-tabs {
   display: inline-flex;
   gap: var(--space-2);
+
   padding: var(--space-1);
-  border-radius: var(--radius-md);
+
   background: var(--surface-0);
   border: 1px solid var(--border);
+  border-radius: var(--radius-md);
 }
 
 .accounts-tab {
-  min-height: 44px;
-  border: none;
-  background: transparent;
-  color: var(--text-muted);
-  border-radius: var(--radius-sm);
-  padding: var(--space-2) var(--space-3);
-  display: inline-flex;
-  align-items: center;
-  gap: var(--space-2);
   cursor: pointer;
+
+  display: inline-flex;
+  gap: var(--space-2);
+  align-items: center;
+
+  min-height: 44px;
+  padding: var(--space-2) var(--space-3);
+
   font-weight: var(--ft-font-medium);
+  color: var(--text-muted);
+
+  background: transparent;
+  border: none;
+  border-radius: var(--radius-sm);
 }
 
 .accounts-tab strong {
@@ -434,8 +440,8 @@ onMounted(async () => {
 }
 
 .accounts-tab.is-active {
-  background: color-mix(in srgb, var(--primary) 18%, transparent);
   color: var(--text);
+  background: color-mix(in srgb, var(--primary) 18%, transparent);
 }
 
 .accounts-tab:focus-visible {
@@ -452,13 +458,15 @@ onMounted(async () => {
 
 .accounts-search {
   display: flex;
-  align-items: center;
   gap: var(--space-2);
+  align-items: center;
+
   min-height: 44px;
+  padding: 0 var(--space-3);
+
+  background: var(--surface-0);
   border: 1px solid var(--border);
   border-radius: var(--radius-md);
-  background: var(--surface-0);
-  padding: 0 var(--space-3);
 }
 
 .accounts-search i {
@@ -466,11 +474,12 @@ onMounted(async () => {
 }
 
 .accounts-search :deep(.p-inputtext) {
-  border: none;
-  background: transparent;
-  box-shadow: none;
   width: 100%;
   padding: 0;
+
+  background: transparent;
+  border: none;
+  box-shadow: none;
 }
 
 .accounts-sort {
@@ -495,36 +504,38 @@ onMounted(async () => {
 }
 
 .accounts__results {
-  padding: var(--space-3);
   display: flex;
   align-items: center;
   justify-content: center;
+  padding: var(--space-3);
 }
 
 .results-text {
   display: flex;
-  align-items: center;
   gap: var(--space-2);
+  align-items: center;
+
   margin: 0;
+
   font-size: var(--ft-text-sm);
   color: var(--text-muted);
 }
 
 .results-text strong {
-  color: var(--text);
   font-weight: var(--ft-font-semibold);
+  color: var(--text);
 }
 
-@media (max-width: 960px) {
+@media (width <= 960px) {
   .accounts-controls {
     grid-template-columns: 1fr;
   }
 }
 
-@media (max-width: 640px) {
+@media (width <= 640px) {
   .accounts-tabs {
-    width: 100%;
     justify-content: space-between;
+    width: 100%;
   }
 
   .accounts-tab {

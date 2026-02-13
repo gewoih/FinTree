@@ -16,7 +16,10 @@ const props = withDefaults(
     account?: Account | null
     allowedTypes?: AccountType[]
   }>(),
-  { allowedTypes: () => [0] },
+  {
+    account: null,
+    allowedTypes: () => [0],
+  },
 )
 
 const emit = defineEmits<{
@@ -359,17 +362,20 @@ const handleSubmit = async () => {
 }
 
 .static-field {
-  min-height: 44px;
   display: inline-flex;
-  align-items: center;
   gap: var(--ft-space-2);
+  align-items: center;
+
   width: 100%;
-  border-radius: var(--ft-radius-lg);
-  border: 1px solid var(--ft-border-soft);
-  background: var(--ft-surface-soft);
-  color: var(--ft-text-primary);
-  font-weight: var(--ft-font-medium);
+  min-height: 44px;
   padding: 0 var(--ft-space-3);
+
+  font-weight: var(--ft-font-medium);
+  color: var(--ft-text-primary);
+
+  background: var(--ft-surface-soft);
+  border: 1px solid var(--ft-border-soft);
+  border-radius: var(--ft-radius-lg);
 }
 
 .static-field i {
@@ -379,15 +385,16 @@ const handleSubmit = async () => {
 .actions {
   display: flex;
   flex-wrap: wrap;
-  justify-content: flex-end;
   gap: var(--ft-space-3);
+  justify-content: flex-end;
+
   margin-top: var(--ft-space-4);
 }
 
 .actions :deep(.app-button) {
-  min-height: 44px;
-  min-width: 148px;
   flex: 0 0 auto;
+  min-width: 148px;
+  min-height: 44px;
 }
 
 .actions :deep(.p-button-label) {
@@ -396,8 +403,8 @@ const handleSubmit = async () => {
 
 .type-option {
   display: inline-flex;
-  align-items: center;
   gap: var(--ft-space-2);
+  align-items: center;
 }
 
 .type-option i {
@@ -406,8 +413,9 @@ const handleSubmit = async () => {
 
 .liquidity-toggle {
   display: flex;
-  align-items: center;
   gap: var(--ft-space-3);
+  align-items: center;
+
   font-size: var(--ft-text-sm);
   color: var(--ft-text-secondary);
 }
@@ -422,7 +430,7 @@ const handleSubmit = async () => {
   margin: 0;
 }
 
-@media (max-width: 576px) {
+@media (width <= 576px) {
   .actions :deep(.app-button) {
     width: 100%;
     min-width: 0;

@@ -35,13 +35,16 @@ withDefaults(defineProps<Props>(), {
 <style scoped>
 .status-badge {
   display: inline-flex;
-  align-items: center;
   gap: var(--ft-space-2);
+  align-items: center;
+
   padding: var(--ft-space-2) var(--ft-space-3);
-  border-radius: var(--ft-radius-full);
+
   font-weight: var(--ft-font-semibold);
   white-space: nowrap;
+
   border: 1px solid transparent;
+  border-radius: var(--ft-radius-full);
 }
 
 /* Sizes */
@@ -61,64 +64,64 @@ withDefaults(defineProps<Props>(), {
 
 /* Severities - Light theme */
 .status-badge--success {
-  background: rgba(34, 197, 94, 0.1);
   color: var(--ft-success-700);
-  border-color: rgba(34, 197, 94, 0.2);
+  background: rgb(34 197 94 / 10%);
+  border-color: rgb(34 197 94 / 20%);
 }
 
 .status-badge--warning {
-  background: rgba(245, 158, 11, 0.1);
   color: var(--ft-warning-700);
-  border-color: rgba(245, 158, 11, 0.2);
+  background: rgb(245 158 11 / 10%);
+  border-color: rgb(245 158 11 / 20%);
 }
 
 .status-badge--danger {
-  background: rgba(239, 68, 68, 0.1);
   color: var(--ft-danger-700);
-  border-color: rgba(239, 68, 68, 0.2);
+  background: rgb(239 68 68 / 10%);
+  border-color: rgb(239 68 68 / 20%);
 }
 
 .status-badge--info {
-  background: color-mix(in srgb, var(--ft-info-500) 12%, transparent);
   color: var(--ft-info-700);
+  background: color-mix(in srgb, var(--ft-info-500) 12%, transparent);
   border-color: color-mix(in srgb, var(--ft-info-500) 22%, transparent);
 }
 
 .status-badge--secondary {
-  background: rgba(107, 114, 128, 0.1);
   color: var(--ft-gray-700);
-  border-color: rgba(107, 114, 128, 0.2);
+  background: rgb(107 114 128 / 10%);
+  border-color: rgb(107 114 128 / 20%);
 }
 
 /* Dark mode */
 .dark-mode .status-badge--success {
-  background: rgba(34, 197, 94, 0.15);
   color: var(--ft-success-400);
-  border-color: rgba(34, 197, 94, 0.3);
+  background: rgb(34 197 94 / 15%);
+  border-color: rgb(34 197 94 / 30%);
 }
 
 .dark-mode .status-badge--warning {
-  background: rgba(245, 158, 11, 0.15);
   color: var(--ft-warning-400);
-  border-color: rgba(245, 158, 11, 0.3);
+  background: rgb(245 158 11 / 15%);
+  border-color: rgb(245 158 11 / 30%);
 }
 
 .dark-mode .status-badge--danger {
-  background: rgba(239, 68, 68, 0.15);
   color: var(--ft-danger-400);
-  border-color: rgba(239, 68, 68, 0.3);
+  background: rgb(239 68 68 / 15%);
+  border-color: rgb(239 68 68 / 30%);
 }
 
 .dark-mode .status-badge--info {
-  background: color-mix(in srgb, var(--ft-info-500) 18%, transparent);
   color: var(--ft-info-400);
+  background: color-mix(in srgb, var(--ft-info-500) 18%, transparent);
   border-color: color-mix(in srgb, var(--ft-info-500) 32%, transparent);
 }
 
 .dark-mode .status-badge--secondary {
-  background: rgba(107, 114, 128, 0.15);
   color: var(--ft-gray-400);
-  border-color: rgba(107, 114, 128, 0.3);
+  background: rgb(107 114 128 / 15%);
+  border-color: rgb(107 114 128 / 30%);
 }
 
 /* Icon */
@@ -130,8 +133,8 @@ withDefaults(defineProps<Props>(), {
 .status-badge__dot {
   width: 6px;
   height: 6px;
+  background: currentcolor;
   border-radius: 50%;
-  background: currentColor;
 }
 
 .status-badge__label {

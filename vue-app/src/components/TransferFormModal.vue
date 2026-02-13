@@ -494,31 +494,34 @@ const handleDelete = () => {
 
 .amount-input {
   display: flex;
-  align-items: center;
   gap: var(--ft-space-2);
+  align-items: center;
 }
 
 .currency-chip {
   padding: 0.35rem 0.6rem;
-  border-radius: var(--ft-radius-md);
-  background: var(--ft-surface-muted);
+
   font-size: var(--ft-text-sm);
   color: var(--ft-text-secondary);
   white-space: nowrap;
+
+  background: var(--ft-surface-muted);
+  border-radius: var(--ft-radius-md);
 }
 
 .option-line {
   display: flex;
-  justify-content: space-between;
-  align-items: center;
-  width: 100%;
   gap: var(--ft-space-2);
+  align-items: center;
+  justify-content: space-between;
+
+  width: 100%;
 }
 
 .option-name {
   display: flex;
-  align-items: center;
   gap: var(--ft-space-2);
+  align-items: center;
 }
 
 .option-currency {
@@ -527,37 +530,41 @@ const handleDelete = () => {
 }
 
 .form-actions {
-  grid-column: 1 / -1;
   display: flex;
-  justify-content: space-between;
-  align-items: center;
+  grid-column: 1 / -1;
   gap: var(--ft-space-3);
+  align-items: center;
+  justify-content: space-between;
+
   margin-top: var(--ft-space-2);
 }
 
 .form-actions__left,
 .form-actions__right {
   display: flex;
-  align-items: center;
   gap: var(--ft-space-3);
+  align-items: center;
 }
 
 .rate-hint {
   display: inline-flex;
-  align-items: center;
   gap: var(--ft-space-2);
+  align-items: center;
+
   padding: 0.5rem 0.75rem;
-  border-radius: var(--ft-radius-md);
-  background: var(--ft-surface-muted);
-  color: var(--ft-text-secondary);
+
   font-size: var(--ft-text-sm);
+  color: var(--ft-text-secondary);
+
+  background: var(--ft-surface-muted);
+  border-radius: var(--ft-radius-md);
 }
 
 .rate-hint i {
   color: var(--ft-primary-400);
 }
 
-@media (max-width: 640px) {
+@media (width <= 640px) {
   .transfer-form {
     grid-template-columns: 1fr;
   }

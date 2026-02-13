@@ -229,15 +229,18 @@ const toggleMenu = (event: Event) => {
 
 <style scoped>
 .account-card {
+  display: flex;
+  flex-direction: column;
   gap: var(--ft-space-3);
-  border: 1px solid var(--ft-border-soft);
+
+  min-height: 250px;
+
   background: var(--ft-surface-soft);
+  border: 1px solid var(--ft-border-soft);
+
   transition:
     border-color var(--ft-transition-base),
     box-shadow var(--ft-transition-base);
-  min-height: 250px;
-  display: flex;
-  flex-direction: column;
 }
 
 .account-card:hover {
@@ -246,12 +249,12 @@ const toggleMenu = (event: Event) => {
 }
 
 .account-card--primary {
-  border-color: var(--ft-primary-300);
   background: linear-gradient(
     135deg,
     color-mix(in srgb, var(--ft-primary-500) 5%, transparent) 0%,
     color-mix(in srgb, var(--ft-primary-500) 10%, transparent) 100%
   );
+  border-color: var(--ft-primary-300);
 }
 
 .account-card--readonly {
@@ -265,8 +268,8 @@ const toggleMenu = (event: Event) => {
 
 .account-card__header {
   display: flex;
-  align-items: center;
   gap: var(--ft-space-3);
+  align-items: center;
 }
 
 .account-card__title {
@@ -275,13 +278,15 @@ const toggleMenu = (event: Event) => {
 }
 
 .account-card__title h3 {
+  overflow: hidden;
+
   margin: 0;
+
   font-size: var(--ft-text-lg);
   font-weight: var(--ft-font-semibold);
   color: var(--ft-heading);
-  white-space: nowrap;
-  overflow: hidden;
   text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .account-card__title p {
@@ -292,8 +297,8 @@ const toggleMenu = (event: Event) => {
 
 .account-card__header-actions {
   display: inline-flex;
-  align-items: center;
   gap: var(--ft-space-2);
+  align-items: center;
 }
 
 .account-card__icon-button {
@@ -301,6 +306,7 @@ const toggleMenu = (event: Event) => {
   min-width: 40px;
   height: 40px;
   padding: 0;
+
   border-radius: 12px;
 }
 
@@ -314,21 +320,24 @@ const toggleMenu = (event: Event) => {
 
 .account-card__badges {
   display: flex;
-  align-items: center;
-  gap: var(--ft-space-2);
   flex-wrap: wrap;
+  gap: var(--ft-space-2);
+  align-items: center;
+
   min-height: 24px;
 }
 
 .account-card__balance {
-  padding: var(--ft-space-2) var(--ft-space-3);
-  border-radius: var(--ft-radius-lg);
-  border: 1px solid var(--ft-border-soft);
-  background: color-mix(in srgb, var(--ft-primary-500) 6%, transparent);
-  min-height: 104px;
   display: flex;
   flex-direction: column;
   justify-content: flex-start;
+
+  min-height: 104px;
+  padding: var(--ft-space-2) var(--ft-space-3);
+
+  background: color-mix(in srgb, var(--ft-primary-500) 6%, transparent);
+  border: 1px solid var(--ft-border-soft);
+  border-radius: var(--ft-radius-lg);
 }
 
 .account-card__balance-label {
@@ -358,39 +367,43 @@ const toggleMenu = (event: Event) => {
 
 .meta-row {
   display: flex;
+  gap: var(--ft-space-3);
   align-items: center;
   justify-content: space-between;
-  gap: var(--ft-space-3);
 }
 
 .meta-row dt {
   margin: 0;
-  color: var(--ft-text-muted);
   font-size: var(--ft-text-sm);
+  color: var(--ft-text-muted);
 }
 
 .meta-row dd {
   margin: 0;
-  color: var(--ft-heading);
   font-weight: var(--ft-font-medium);
+  color: var(--ft-heading);
 }
 
 .currency-chip {
   display: inline-flex;
-  align-items: center;
   gap: var(--ft-space-2);
-  border-radius: var(--ft-radius-full);
-  background: color-mix(in srgb, var(--ft-primary-500) 16%, transparent);
-  color: var(--ft-primary-500);
+  align-items: center;
+
+  padding: var(--ft-space-1) var(--ft-space-3);
+
   font-size: var(--ft-text-sm);
   font-weight: var(--ft-font-semibold);
-  padding: var(--ft-space-1) var(--ft-space-3);
+  color: var(--ft-primary-500);
+
+  background: color-mix(in srgb, var(--ft-primary-500) 16%, transparent);
+  border-radius: var(--ft-radius-full);
 }
 
 .liquidity-control {
   display: inline-flex;
-  align-items: center;
   gap: var(--ft-space-2);
+  align-items: center;
+
   font-size: var(--ft-text-sm);
   color: var(--ft-text-muted);
 }
@@ -403,17 +416,19 @@ const toggleMenu = (event: Event) => {
 .account-card__footer {
   display: flex;
   justify-content: flex-end;
+
   margin-top: auto;
   padding-top: var(--ft-space-2);
+
   border-top: 1px solid var(--ft-border-soft);
 }
 
 .account-card__footer :deep(.ui-button) {
-  width: 100%;
   justify-content: center;
+  width: 100%;
 }
 
-@media (max-width: 640px) {
+@media (width <= 640px) {
   .account-card__footer :deep(.ui-button) {
     width: 100%;
   }

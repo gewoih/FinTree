@@ -110,14 +110,18 @@ const computedAttrs = computed(() => ({
   --app-button-padding-x: var(--ft-space-4);
   --app-button-height: var(--ft-button-height-md);
   --app-button-font-size: var(--ft-text-sm);
+
   display: inline-flex;
+  gap: var(--ft-space-2);
   align-items: center;
   justify-content: center;
-  gap: var(--ft-space-2);
+
   min-height: var(--app-button-height);
   padding: var(--app-button-padding-y) var(--app-button-padding-x);
+
   font-weight: var(--ft-font-semibold);
   letter-spacing: 0.01em;
+
   transition:
     transform var(--ft-transition-fast),
     box-shadow var(--ft-transition-fast),
@@ -152,7 +156,7 @@ const computedAttrs = computed(() => ({
 }
 
 .app-button--danger {
-  box-shadow: 0 6px 16px rgba(220, 38, 38, 0.25);
+  box-shadow: 0 6px 16px rgb(220 38 38 / 25%);
 }
 
 .app-button--block {
@@ -166,8 +170,8 @@ const computedAttrs = computed(() => ({
 
 .app-button:disabled {
   cursor: not-allowed;
-  opacity: 0.7;
   transform: none;
+  opacity: 0.7;
   box-shadow: none;
 }
 

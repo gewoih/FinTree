@@ -318,7 +318,9 @@ onMounted(async () => {
       <!-- Section 3: Account Cards -->
       <div class="investments-grid__item investments-grid__item--span-12 investments-accounts">
         <div class="investments-accounts__header">
-          <h2 class="investments-accounts__title">Счета</h2>
+          <h2 class="investments-accounts__title">
+            Счета
+          </h2>
           <UiButton
             label="Добавить счет"
             icon="pi pi-plus"
@@ -431,9 +433,9 @@ onMounted(async () => {
 
 .investments-accounts__header {
   display: flex;
-  justify-content: space-between;
-  align-items: center;
   gap: var(--ft-space-4);
+  align-items: center;
+  justify-content: space-between;
 }
 
 .investments-accounts__title {
@@ -459,7 +461,7 @@ onMounted(async () => {
   padding: var(--ft-space-2);
 }
 
-@media (min-width: 1024px) {
+@media (width >= 1024px) {
   .investments-grid {
     grid-template-columns: repeat(12, minmax(0, 1fr));
   }
@@ -473,7 +475,7 @@ onMounted(async () => {
   }
 }
 
-@media (min-width: 641px) and (max-width: 1023px) {
+@media (width >= 641px) and (width <= 1023px) {
   .investments-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
@@ -487,7 +489,7 @@ onMounted(async () => {
   }
 }
 
-@media (max-width: 640px) {
+@media (width <= 640px) {
   .investments-page {
     gap: var(--ft-space-4);
   }

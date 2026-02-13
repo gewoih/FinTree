@@ -66,10 +66,10 @@ const tableClasses = computed(() => [
 
 <style scoped>
 .ui-datatable__shell {
-  border-radius: var(--radius-lg);
-  border: 1px solid var(--border);
-  background: var(--surface-2);
   overflow: hidden;
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
 }
 
 .ui-datatable :deep(.p-datatable-table) {
@@ -77,9 +77,9 @@ const tableClasses = computed(() => [
 }
 
 .ui-datatable :deep(.p-datatable-thead > tr > th) {
+  font-size: var(--ft-text-xs);
   text-transform: uppercase;
   letter-spacing: 0.04em;
-  font-size: var(--ft-text-xs);
 }
 
 .ui-datatable :deep(.p-datatable-tbody > tr > td) {
@@ -87,11 +87,11 @@ const tableClasses = computed(() => [
 }
 
 .ui-datatable :deep(.p-paginator-bottom) {
-  border-top: 1px solid var(--border);
   padding: var(--space-3);
+  border-top: 1px solid var(--border);
 }
 
-@media (max-width: 768px) {
+@media (width <= 768px) {
   .ui-datatable :deep(.p-datatable-table) {
     min-width: 100%;
   }

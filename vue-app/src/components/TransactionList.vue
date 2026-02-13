@@ -669,8 +669,8 @@ const handleRowClick = (event: { data: EnrichedTransaction }) => {
 }
 
 .transaction-history__datatable :deep(.ui-datatable__shell) {
-  border: none;
   background: transparent;
+  border: none;
   box-shadow: none;
 }
 
@@ -688,11 +688,12 @@ const handleRowClick = (event: { data: EnrichedTransaction }) => {
 .amount-cell {
   display: flex;
   flex-direction: column;
-  align-items: flex-start;
   gap: var(--ft-space-1);
+  align-items: flex-start;
+
   font-weight: var(--ft-font-semibold);
-  color: var(--ft-success-400);
   line-height: 1.2;
+  color: var(--ft-success-400);
 }
 
 .amount-cell.negative {
@@ -706,14 +707,14 @@ const handleRowClick = (event: { data: EnrichedTransaction }) => {
 
 .amount-currency {
   font-size: var(--ft-text-xs);
-  color: var(--ft-text-tertiary);
   line-height: 1;
+  color: var(--ft-text-tertiary);
 }
 
 .amount-original {
   font-size: var(--ft-text-xs);
-  color: var(--ft-text-tertiary);
   line-height: 1.1;
+  color: var(--ft-text-tertiary);
 }
 
 .transfer-amount {
@@ -725,8 +726,8 @@ const handleRowClick = (event: { data: EnrichedTransaction }) => {
 
 .transfer-amount__row {
   display: flex;
-  align-items: center;
   gap: var(--ft-space-1);
+  align-items: center;
   font-size: var(--ft-text-sm);
 }
 
@@ -745,16 +746,17 @@ const handleRowClick = (event: { data: EnrichedTransaction }) => {
 
 .category-cell {
   display: flex;
-  align-items: center;
   gap: var(--ft-space-2);
+  align-items: center;
 }
 
 .account-cell {
   display: flex;
-  align-items: center;
   gap: var(--ft-space-2);
-  color: var(--ft-text-primary);
+  align-items: center;
+
   font-weight: var(--ft-font-medium);
+  color: var(--ft-text-primary);
 }
 
 .account-cell i {
@@ -762,11 +764,12 @@ const handleRowClick = (event: { data: EnrichedTransaction }) => {
 }
 
 .description-text {
-  color: var(--ft-text-secondary);
-  display: block;
-  white-space: nowrap;
   overflow: hidden;
+  display: block;
+
+  color: var(--ft-text-secondary);
   text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .description-transfer {
@@ -779,13 +782,13 @@ const handleRowClick = (event: { data: EnrichedTransaction }) => {
 }
 
 .mandatory-icon {
-  color: var(--ft-warning-400);
   font-size: var(--ft-text-sm);
+  color: var(--ft-warning-400);
 }
 
 .transfer-icon {
-  color: var(--ft-primary-400);
   font-size: var(--ft-text-sm);
+  color: var(--ft-primary-400);
 }
 
 :deep(.transaction-history__datatable .p-datatable) {
@@ -800,8 +803,8 @@ const handleRowClick = (event: { data: EnrichedTransaction }) => {
 
 :deep(.transaction-history__datatable .p-datatable .p-column-header-content) {
   display: inline-flex;
-  align-items: center;
   gap: var(--space-2);
+  align-items: center;
 }
 
 :deep(.transaction-history__datatable .p-datatable-tbody > tr.transaction-row--day-start > td) {
@@ -815,9 +818,10 @@ const handleRowClick = (event: { data: EnrichedTransaction }) => {
 
 :deep(.p-datatable .p-datatable-thead > tr > th) {
   font-size: var(--ft-text-sm);
+  color: var(--ft-text-tertiary);
   text-transform: uppercase;
   letter-spacing: 0.04em;
-  color: var(--ft-text-tertiary);
+
   background: color-mix(in srgb, var(--ft-surface-raised) 90%, transparent);
 }
 
@@ -831,22 +835,25 @@ const handleRowClick = (event: { data: EnrichedTransaction }) => {
 
 
 :deep(.p-datatable .p-paginator-bottom) {
-  border-top: 1px solid var(--ft-border-soft);
   padding: var(--ft-space-3);
+  border-top: 1px solid var(--ft-border-soft);
 }
 
 :deep(.transaction-history__datatable .p-datatable-footer) {
   display: flex;
   justify-content: flex-end;
+
   padding: var(--ft-space-3);
-  border-top: 1px solid var(--ft-border-soft);
+
   background: transparent;
+  border-top: 1px solid var(--ft-border-soft);
 }
 
 .transaction-history__summary {
   display: flex;
-  align-items: center;
   gap: var(--ft-space-3);
+  align-items: center;
+
   font-weight: var(--ft-font-semibold);
   color: var(--ft-text-primary);
 }
@@ -859,10 +866,10 @@ const handleRowClick = (event: { data: EnrichedTransaction }) => {
   min-width: 6.5rem;
 }
 
-@media (max-width: 768px) {
+@media (width <= 768px) {
   :deep(.transaction-history__datatable .p-datatable) {
-    border: none;
     background: transparent;
+    border: none;
   }
 
   :deep(.transaction-history__datatable .p-datatable-thead) {
@@ -870,18 +877,22 @@ const handleRowClick = (event: { data: EnrichedTransaction }) => {
   }
 
   :deep(.transaction-history__datatable .p-datatable-tbody > tr) {
+    overflow: hidden;
     display: block;
+
+    margin-bottom: var(--space-3);
+
     border: 1px solid var(--border);
     border-radius: var(--radius-lg);
-    margin-bottom: var(--space-3);
-    overflow: hidden;
   }
 
   :deep(.transaction-history__datatable .p-datatable-tbody > tr > td) {
     display: flex;
-    justify-content: space-between;
     gap: var(--space-3);
+    justify-content: space-between;
+
     padding: var(--space-3) var(--space-4);
+
     border-bottom: 1px solid var(--border);
   }
 
@@ -891,10 +902,10 @@ const handleRowClick = (event: { data: EnrichedTransaction }) => {
 
   :deep(.transaction-history__datatable .p-datatable-tbody > tr > td .p-column-title) {
     font-size: var(--ft-text-xs);
+    font-weight: var(--ft-font-semibold);
+    color: var(--ft-text-tertiary);
     text-transform: uppercase;
     letter-spacing: 0.04em;
-    color: var(--ft-text-tertiary);
-    font-weight: var(--ft-font-semibold);
   }
 
   .description-text {

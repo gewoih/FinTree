@@ -224,10 +224,12 @@ const formatPercent = (value: number | null) =>
   display: flex;
   flex-direction: column;
   gap: var(--ft-space-4);
+
   padding: clamp(1rem, 2vw, 1.5rem);
+
   background: var(--ft-surface-base);
-  border-radius: var(--ft-radius-2xl);
   border: 1px solid var(--ft-border-subtle);
+  border-radius: var(--ft-radius-2xl);
   box-shadow: var(--ft-shadow-sm);
 }
 
@@ -237,17 +239,19 @@ const formatPercent = (value: number | null) =>
 }
 
 .delta-card__title {
+  cursor: help;
+
   margin: 0;
+
   font-size: var(--ft-text-lg);
   font-weight: var(--ft-font-semibold);
   color: var(--ft-text-primary);
-  cursor: help;
 }
 
 .delta-card__subtitle {
   margin: 0;
-  color: var(--ft-text-secondary);
   font-size: var(--ft-text-sm);
+  color: var(--ft-text-secondary);
 }
 
 .delta-card__loading {
@@ -288,25 +292,27 @@ const formatPercent = (value: number | null) =>
 }
 
 .delta-card__section-title {
+  display: inline-flex;
+  gap: var(--ft-space-1);
+  align-items: center;
+
   margin: 0;
+
   font-size: var(--ft-text-xs);
   font-weight: var(--ft-font-semibold);
+  color: var(--ft-text-tertiary);
   text-transform: uppercase;
   letter-spacing: 0.04em;
-  color: var(--ft-text-tertiary);
-  display: inline-flex;
-  align-items: center;
-  gap: var(--ft-space-1);
 }
 
 .delta-card__section-title .pi-arrow-up {
-  color: var(--ft-danger-400);
   font-size: 0.7rem;
+  color: var(--ft-danger-400);
 }
 
 .delta-card__section-title .pi-arrow-down {
-  color: var(--ft-success-400);
   font-size: 0.7rem;
+  color: var(--ft-success-400);
 }
 
 .delta-card__list {
@@ -321,24 +327,26 @@ const formatPercent = (value: number | null) =>
 
 .delta-item__info {
   display: flex;
-  align-items: center;
   gap: var(--ft-space-2);
+  align-items: center;
 }
 
 .delta-item__color {
+  flex-shrink: 0;
   width: 8px;
   height: 8px;
   border-radius: 999px;
-  flex-shrink: 0;
 }
 
 .delta-item__name {
+  overflow: hidden;
   flex: 1;
+
+  min-width: 0;
+
   font-size: var(--ft-text-base);
   font-weight: var(--ft-font-medium);
   color: var(--ft-text-primary);
-  min-width: 0;
-  overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
@@ -358,17 +366,17 @@ const formatPercent = (value: number | null) =>
 }
 
 .delta-item__pct {
+  margin-left: 2px;
   font-size: var(--ft-text-sm);
   font-weight: var(--ft-font-medium);
   opacity: 0.7;
-  margin-left: 2px;
 }
 
 .delta-item__bar-track {
-  height: 4px;
-  border-radius: 999px;
-  background: color-mix(in srgb, var(--ft-surface-raised) 70%, transparent);
   overflow: hidden;
+  height: 4px;
+  background: color-mix(in srgb, var(--ft-surface-raised) 70%, transparent);
+  border-radius: 999px;
 }
 
 .delta-item__bar {
@@ -387,9 +395,10 @@ const formatPercent = (value: number | null) =>
 
 .delta-card__none {
   margin: 0;
-  text-align: center;
-  color: var(--ft-text-tertiary);
-  font-size: var(--ft-text-sm);
   padding: var(--ft-space-4);
+
+  font-size: var(--ft-text-sm);
+  color: var(--ft-text-tertiary);
+  text-align: center;
 }
 </style>

@@ -186,18 +186,20 @@ const chartOptions = computed(() => ({
   display: flex;
   flex-direction: column;
   gap: var(--ft-space-4);
+
   padding: clamp(1rem, 2vw, 1.5rem);
+
   background: var(--ft-surface-base);
-  border-radius: var(--ft-radius-2xl);
   border: 1px solid var(--ft-border-subtle);
+  border-radius: var(--ft-radius-2xl);
   box-shadow: var(--ft-shadow-sm);
 }
 
 .networth-card__head {
   display: flex;
-  justify-content: space-between;
-  align-items: flex-start;
   gap: var(--ft-space-4);
+  align-items: flex-start;
+  justify-content: space-between;
 }
 
 .networth-card__head h3 {
@@ -250,7 +252,7 @@ const chartOptions = computed(() => ({
   height: 350px;
 }
 
-@media (max-width: 640px) {
+@media (width <= 640px) {
   .networth-card__head {
     flex-direction: column;
     align-items: flex-start;

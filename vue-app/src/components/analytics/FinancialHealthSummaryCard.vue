@@ -106,6 +106,7 @@ const showEmptyState = computed(() => !props.loading && (!props.hasData || !prop
 <style scoped>
 .analytics-card {
   padding: clamp(var(--ft-space-5), 3vw, var(--ft-space-6));
+
   background: linear-gradient(
     135deg,
     color-mix(in srgb, var(--ft-success-500) 22%, transparent),
@@ -118,26 +119,29 @@ const showEmptyState = computed(() => !props.loading && (!props.hasData || !prop
 
 .analytics-card__head {
   display: flex;
-  justify-content: space-between;
-  align-items: center;
   gap: var(--ft-space-4);
+  align-items: center;
+  justify-content: space-between;
 }
 
 .analytics-card__title {
   display: flex;
-  align-items: center;
   gap: var(--ft-space-3);
+  align-items: center;
 }
 
 .analytics-card__title .analytics-card__icon {
   display: inline-flex;
   align-items: center;
   justify-content: center;
+
   width: 40px;
   height: 40px;
-  border-radius: var(--ft-radius-lg);
-  background: color-mix(in srgb, var(--ft-success-500) 24%, transparent);
+
   color: var(--ft-success-500);
+
+  background: color-mix(in srgb, var(--ft-success-500) 24%, transparent);
+  border-radius: var(--ft-radius-lg);
 }
 
 .analytics-card__title h3 {
@@ -149,8 +153,8 @@ const showEmptyState = computed(() => !props.loading && (!props.hasData || !prop
 
 .analytics-card__title p {
   margin: var(--ft-space-1) 0 0;
-  color: var(--ft-text-muted);
   font-size: var(--ft-text-sm);
+  color: var(--ft-text-muted);
 }
 
 .analytics-card__actions {
@@ -169,23 +173,26 @@ const showEmptyState = computed(() => !props.loading && (!props.hasData || !prop
 .health-metric {
   display: grid;
   gap: var(--ft-space-2);
+
   padding: var(--ft-space-4);
-  border-radius: var(--ft-radius-xl);
+
   background: color-mix(in srgb, var(--ft-surface-base) 88%, transparent);
   border: 1px solid var(--ft-border-default);
+  border-radius: var(--ft-radius-xl);
 }
 
 .health-metric:hover {
-  border-color: var(--ft-border-strong);
   transform: translateY(-2px);
+  border-color: var(--ft-border-strong);
 }
 
 .health-metric__label {
   margin: 0;
+
   font-size: var(--ft-text-xs);
+  color: var(--ft-text-tertiary);
   text-transform: uppercase;
   letter-spacing: 0.08em;
-  color: var(--ft-text-tertiary);
 }
 
 .health-metric__value {
@@ -197,18 +204,20 @@ const showEmptyState = computed(() => !props.loading && (!props.hasData || !prop
 
 .health-metric__description {
   margin: 0;
-  color: var(--ft-text-secondary);
   font-size: var(--ft-text-sm);
   line-height: var(--ft-leading-relaxed);
+  color: var(--ft-text-secondary);
 }
 
 .health-state {
   display: grid;
   gap: var(--ft-space-3);
   place-items: center;
-  text-align: center;
+
   padding: var(--ft-space-6) var(--ft-space-4);
+
   color: var(--ft-text-secondary);
+  text-align: center;
 }
 
 .health-state__icon {
@@ -222,17 +231,17 @@ const showEmptyState = computed(() => !props.loading && (!props.hasData || !prop
 }
 
 .health-state__subtitle {
+  max-width: 32ch;
   margin: 0;
   font-size: var(--ft-text-sm);
-  max-width: 32ch;
   color: var(--ft-text-tertiary);
 }
 
-@media (max-width: 768px) {
+@media (width <= 768px) {
   .analytics-card__head {
     flex-direction: column;
-    align-items: flex-start;
     gap: var(--ft-space-3);
+    align-items: flex-start;
   }
 }
 </style>

@@ -191,7 +191,7 @@ const handleDateRangeUpdate = (
   min-height: var(--control-height);
 }
 
-@media (max-width: 768px) {
+@media (width <= 768px) {
   .filters-grid {
     grid-template-columns: 1fr;
   }

@@ -66,28 +66,30 @@ defineProps<{
 }
 
 .skeleton__line {
+  width: 100%;
+  height: 16px;
+
   background: linear-gradient(
     90deg,
-    rgba(148, 163, 184, 0.08) 0%,
-    rgba(148, 163, 184, 0.15) 50%,
-    rgba(148, 163, 184, 0.08) 100%
+    rgb(148 163 184 / 8%) 0%,
+    rgb(148 163 184 / 15%) 50%,
+    rgb(148 163 184 / 8%) 100%
   );
   background-size: 200% 100%;
-  animation: shimmer 1.5s ease-in-out infinite;
   border-radius: 8px;
-  height: 16px;
-  width: 100%;
+
+  animation: shimmer 1.5s ease-in-out infinite;
 }
 
 .skeleton__line--title {
-  height: 28px;
   width: 60%;
+  height: 28px;
   margin-bottom: 0.5rem;
 }
 
 .skeleton__line--subtitle {
-  height: 18px;
   width: 40%;
+  height: 18px;
 }
 
 .skeleton__line--short {
@@ -95,38 +97,40 @@ defineProps<{
 }
 
 .skeleton__line--label {
-  height: 12px;
   width: 50%;
+  height: 12px;
 }
 
 .skeleton__line--value {
-  height: 32px;
   width: 70%;
+  height: 32px;
 }
 
 .skeleton__line--meta {
-  height: 14px;
   width: 60%;
+  height: 14px;
 }
 
 .skeleton__row {
   display: flex;
   gap: 1rem;
   padding: 1rem 0;
-  border-bottom: 1px solid rgba(148, 163, 184, 0.1);
+  border-bottom: 1px solid rgb(148 163 184 / 10%);
 }
 
 .skeleton__cell {
+  height: 16px;
+
   background: linear-gradient(
     90deg,
-    rgba(148, 163, 184, 0.08) 0%,
-    rgba(148, 163, 184, 0.15) 50%,
-    rgba(148, 163, 184, 0.08) 100%
+    rgb(148 163 184 / 8%) 0%,
+    rgb(148 163 184 / 15%) 50%,
+    rgb(148 163 184 / 8%) 100%
   );
   background-size: 200% 100%;
-  animation: shimmer 1.5s ease-in-out infinite;
   border-radius: 6px;
-  height: 16px;
+
+  animation: shimmer 1.5s ease-in-out infinite;
 }
 
 .skeleton__cell--small {
@@ -145,6 +149,7 @@ defineProps<{
   0% {
     background-position: 200% 0;
   }
+
   100% {
     background-position: -200% 0;
   }

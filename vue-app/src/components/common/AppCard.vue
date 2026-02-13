@@ -65,12 +65,15 @@ const computedAttrs = computed(() => ({
 .app-card {
   --app-card-padding-x: clamp(var(--ft-space-5), 2vw, var(--ft-space-6));
   --app-card-padding-y: clamp(var(--ft-space-4), 2vw, var(--ft-space-5));
+
   display: flex;
   flex-direction: column;
   gap: var(--ft-space-4);
-  border-radius: var(--ft-radius-xl);
-  border: 1px solid var(--ft-border-soft);
+
   background: var(--ft-surface-soft);
+  border: 1px solid var(--ft-border-soft);
+  border-radius: var(--ft-radius-xl);
+
   transition:
     box-shadow var(--ft-transition-fast),
     transform var(--ft-transition-fast),
@@ -118,25 +121,26 @@ const computedAttrs = computed(() => ({
 }
 
 .app-card__header {
-  padding: var(--app-card-padding-y) var(--app-card-padding-x) 0;
   display: flex;
   flex-direction: column;
   gap: var(--ft-space-3);
+  padding: var(--app-card-padding-y) var(--app-card-padding-x) 0;
 }
 
 .app-card__body {
-  padding: var(--app-card-padding-y) var(--app-card-padding-x);
   display: flex;
   flex-direction: column;
   gap: var(--ft-space-4);
+  padding: var(--app-card-padding-y) var(--app-card-padding-x);
 }
 
 .app-card__footer {
-  padding: 0 var(--app-card-padding-x) var(--app-card-padding-y);
-  margin-top: auto;
   display: flex;
   gap: var(--ft-space-3);
   justify-content: flex-end;
+
+  margin-top: auto;
+  padding: 0 var(--app-card-padding-x) var(--app-card-padding-y);
 }
 
 .app-card:focus-within {
@@ -145,6 +149,6 @@ const computedAttrs = computed(() => ({
 }
 
 .dark-mode .app-card--ghost {
-  border-color: rgba(148, 163, 184, 0.15);
+  border-color: rgb(148 163 184 / 15%);
 }
 </style>

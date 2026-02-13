@@ -107,21 +107,27 @@ const iconAccentClass = (accent: MetricAccent) => `summary-strip__icon--${accent
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: var(--ft-space-4);
+
   padding: var(--ft-space-5);
+
   background: var(--ft-surface-base);
-  border-radius: var(--ft-radius-2xl);
   border: 1px solid var(--ft-border-subtle);
+  border-radius: var(--ft-radius-2xl);
   box-shadow: var(--ft-shadow-sm);
 }
 
 .summary-strip__item {
-  display: flex;
-  align-items: flex-start;
-  gap: var(--ft-space-3);
-  padding: var(--ft-space-3);
-  border-radius: var(--ft-radius-xl);
-  transition: background var(--ft-transition-fast);
   cursor: help;
+
+  display: flex;
+  gap: var(--ft-space-3);
+  align-items: flex-start;
+
+  padding: var(--ft-space-3);
+
+  border-radius: var(--ft-radius-xl);
+
+  transition: background var(--ft-transition-fast);
 }
 
 .summary-strip__item:hover {
@@ -142,40 +148,43 @@ const iconAccentClass = (accent: MetricAccent) => `summary-strip__icon--${accent
 }
 
 .summary-strip__icon {
+  display: grid;
+  flex-shrink: 0;
+  place-items: center;
+
   width: 44px;
   height: 44px;
-  border-radius: var(--ft-radius-lg);
-  display: grid;
-  place-items: center;
+
   font-size: 1.1rem;
-  flex-shrink: 0;
+  color: var(--ft-text-secondary);
+
   background: color-mix(in srgb, var(--ft-surface-raised) 80%, transparent);
   border: 1px solid var(--ft-border-subtle);
-  color: var(--ft-text-secondary);
+  border-radius: var(--ft-radius-lg);
 }
 
 .summary-strip__icon--income {
+  color: var(--ft-success-400);
   background: color-mix(in srgb, var(--ft-success-400) 12%, transparent);
   border-color: color-mix(in srgb, var(--ft-success-400) 25%, transparent);
-  color: var(--ft-success-400);
 }
 
 .summary-strip__icon--expense {
+  color: var(--ft-danger-400);
   background: color-mix(in srgb, var(--ft-danger-400) 12%, transparent);
   border-color: color-mix(in srgb, var(--ft-danger-400) 25%, transparent);
-  color: var(--ft-danger-400);
 }
 
 .summary-strip__icon--good {
+  color: var(--ft-success-400);
   background: color-mix(in srgb, var(--ft-success-400) 12%, transparent);
   border-color: color-mix(in srgb, var(--ft-success-400) 25%, transparent);
-  color: var(--ft-success-400);
 }
 
 .summary-strip__icon--poor {
+  color: var(--ft-danger-400);
   background: color-mix(in srgb, var(--ft-danger-400) 12%, transparent);
   border-color: color-mix(in srgb, var(--ft-danger-400) 25%, transparent);
-  color: var(--ft-danger-400);
 }
 
 .summary-strip__text {
@@ -186,6 +195,7 @@ const iconAccentClass = (accent: MetricAccent) => `summary-strip__icon--${accent
 
 .summary-strip__label {
   margin: 0;
+
   font-size: var(--ft-text-sm);
   font-weight: var(--ft-font-medium);
   color: var(--ft-text-secondary);
@@ -195,10 +205,11 @@ const iconAccentClass = (accent: MetricAccent) => `summary-strip__icon--${accent
 
 .summary-strip__value {
   margin: 0;
+
   font-size: clamp(1.5rem, 2.5vw, 2rem);
   font-weight: var(--ft-font-bold);
-  color: var(--ft-text-primary);
   line-height: 1.15;
+  color: var(--ft-text-primary);
 }
 
 .summary-strip__value--income {
@@ -229,8 +240,8 @@ const iconAccentClass = (accent: MetricAccent) => `summary-strip__icon--${accent
 
 .summary-strip__error-body {
   display: flex;
-  align-items: center;
   gap: var(--ft-space-3);
+  align-items: center;
 }
 
 .summary-strip__error-title {
@@ -238,7 +249,7 @@ const iconAccentClass = (accent: MetricAccent) => `summary-strip__icon--${accent
   font-weight: var(--ft-font-semibold);
 }
 
-@media (max-width: 640px) {
+@media (width <= 640px) {
   .summary-strip {
     grid-template-columns: 1fr;
     gap: var(--ft-space-2);

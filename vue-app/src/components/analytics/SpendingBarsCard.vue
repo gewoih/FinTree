@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { computed, ref, onMounted } from 'vue';
-import type { ChartData, TooltipItem } from 'chart.js';
+import type { ChartData, ChartDataset, TooltipItem } from 'chart.js';
 import type { ExpenseGranularity } from '../../types/analytics';
 
 const props = defineProps<{
@@ -48,11 +48,11 @@ const averageValue = computed(() => {
 
 const styledChartData = computed(() => {
   if (!props.chartData) return null;
-  const datasets = [...props.chartData.datasets];
+  const datasets = [...props.chartData.datasets] as ChartDataset<'bar' | 'line', number[]>[];
 
   if (averageValue.value != null) {
     const len = props.chartData.labels?.length ?? 0;
-    datasets.push({
+    const averageDataset: ChartDataset<'line', number[]> = {
       label: 'Среднее',
       data: Array(len).fill(averageValue.value),
       type: 'line' as const,
@@ -61,7 +61,8 @@ const styledChartData = computed(() => {
       borderWidth: 1.5,
       pointRadius: 0,
       fill: false,
-    } as any);
+    };
+    datasets.push(averageDataset);
   }
 
   return {
@@ -235,38 +236,42 @@ const chartOptions = computed(() => ({
   display: flex;
   flex-direction: column;
   gap: var(--ft-space-4);
+
   padding: clamp(1rem, 2vw, 1.5rem);
+
   background: var(--ft-surface-base);
-  border-radius: var(--ft-radius-2xl);
   border: 1px solid var(--ft-border-subtle);
+  border-radius: var(--ft-radius-2xl);
   box-shadow: var(--ft-shadow-sm);
 }
 
 .bars-card__head {
   display: flex;
-  justify-content: space-between;
-  align-items: flex-start;
   gap: var(--ft-space-4);
+  align-items: flex-start;
+  justify-content: space-between;
 }
 
 .bars-card__title {
+  cursor: help;
+
   margin: 0;
+
   font-size: var(--ft-text-lg);
   font-weight: var(--ft-font-semibold);
   color: var(--ft-text-primary);
-  cursor: help;
 }
 
 .bars-card__subtitle {
   margin: var(--ft-space-1) 0 0;
-  color: var(--ft-text-secondary);
   font-size: var(--ft-text-sm);
+  color: var(--ft-text-secondary);
 }
 
 .bars-card__loading {
-  min-height: 340px;
   display: grid;
   place-items: center;
+  min-height: 340px;
 }
 
 .bars-card__message {
@@ -292,28 +297,28 @@ const chartOptions = computed(() => ({
 }
 
 .bars-card__chart {
-  height: 400px;
   width: 100%;
+  height: 400px;
   padding: var(--ft-space-2) 0;
 }
 
 .bars-card__chart-container {
   position: relative;
-  height: 100%;
   width: 100%;
+  height: 100%;
 }
 
 .bars-card__chart-container :deep(.p-chart) {
-  height: 100%;
   width: 100%;
+  height: 100%;
 }
 
 .bars-card__chart-container :deep(canvas) {
-  max-height: 100%;
   height: 100%;
+  max-height: 100%;
 }
 
-@media (max-width: 640px) {
+@media (width <= 640px) {
   .bars-card__head {
     flex-direction: column;
     align-items: stretch;

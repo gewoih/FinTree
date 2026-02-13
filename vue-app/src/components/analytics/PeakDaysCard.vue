@@ -160,28 +160,33 @@ const shareAccent = computed(() => {
   display: flex;
   flex-direction: column;
   gap: var(--ft-space-4);
+
   padding: clamp(1rem, 2vw, 1.5rem);
+
   background: var(--ft-surface-base);
-  border-radius: var(--ft-radius-2xl);
   border: 1px solid var(--ft-border-subtle);
+  border-radius: var(--ft-radius-2xl);
   box-shadow: var(--ft-shadow-sm);
 }
 
 .peak-days__header {
   display: flex;
-  justify-content: space-between;
   align-items: center;
+  justify-content: space-between;
 }
 
 .peak-days__title {
+  cursor: help;
+
+  display: inline-flex;
+  gap: var(--ft-space-2);
+  align-items: center;
+
   margin: 0;
+
   font-size: var(--ft-text-lg);
   font-weight: var(--ft-font-semibold);
   color: var(--ft-text-primary);
-  display: inline-flex;
-  align-items: center;
-  gap: var(--ft-space-2);
-  cursor: help;
 }
 
 .peak-days__title i {
@@ -200,8 +205,8 @@ const shareAccent = computed(() => {
 
 .peak-days__message-body {
   display: flex;
-  align-items: center;
   gap: var(--ft-space-3);
+  align-items: center;
 }
 
 .peak-days__message-body p {
@@ -210,15 +215,20 @@ const shareAccent = computed(() => {
 }
 
 .peak-days__summary {
+  cursor: pointer;
+
   display: grid;
   gap: var(--ft-space-1);
-  padding: var(--ft-space-3);
-  border-radius: var(--ft-radius-lg);
-  border: 1px solid var(--ft-border-subtle);
-  background: color-mix(in srgb, var(--ft-surface-raised) 60%, transparent);
-  text-align: left;
-  cursor: pointer;
+
   width: 100%;
+  padding: var(--ft-space-3);
+
+  text-align: left;
+
+  background: color-mix(in srgb, var(--ft-surface-raised) 60%, transparent);
+  border: 1px solid var(--ft-border-subtle);
+  border-radius: var(--ft-radius-lg);
+
   transition: border-color var(--ft-transition-fast);
 }
 
@@ -278,17 +288,22 @@ const shareAccent = computed(() => {
 }
 
 .peak-days__item {
+  cursor: pointer;
+
   display: grid;
   grid-template-columns: auto 1fr auto;
-  align-items: center;
   gap: var(--ft-space-3);
+  align-items: center;
+
+  width: 100%;
   padding: var(--ft-space-3);
-  border-radius: var(--ft-radius-lg);
+
+  text-align: left;
+
   background: color-mix(in srgb, var(--ft-surface-soft) 70%, transparent);
   border: 1px solid transparent;
-  cursor: pointer;
-  width: 100%;
-  text-align: left;
+  border-radius: var(--ft-radius-lg);
+
   transition: background var(--ft-transition-fast), border-color var(--ft-transition-fast);
 }
 
@@ -323,14 +338,17 @@ const shareAccent = computed(() => {
 }
 
 .peak-days__toggle {
-  border: none;
-  background: transparent;
-  color: var(--ft-primary-400);
+  cursor: pointer;
+
+  padding: var(--ft-space-1) 0;
+
   font-size: var(--ft-text-sm);
   font-weight: var(--ft-font-medium);
-  cursor: pointer;
-  padding: var(--ft-space-1) 0;
+  color: var(--ft-primary-400);
   text-align: left;
+
+  background: transparent;
+  border: none;
 }
 
 .peak-days__toggle:hover {

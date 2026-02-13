@@ -141,21 +141,23 @@ const spikeLabel = computed(() => (props.spikeCount == null ? '—' : props.spik
 
 <style scoped>
 .analytics-card {
-  background: var(--ft-surface-base);
-  border-radius: var(--ft-radius-2xl);
-  border: 1px solid var(--ft-border-subtle);
   display: flex;
   flex-direction: column;
   gap: var(--ft-space-4);
+
   padding-bottom: var(--ft-space-3);
+
+  background: var(--ft-surface-base);
+  border: 1px solid var(--ft-border-subtle);
+  border-radius: var(--ft-radius-2xl);
   box-shadow: var(--ft-shadow-sm);
 }
 
 .card-head {
   display: flex;
-  justify-content: space-between;
-  align-items: flex-start;
   gap: var(--ft-space-4);
+  align-items: flex-start;
+  justify-content: space-between;
 }
 
 .card-head h3 {
@@ -211,34 +213,40 @@ const spikeLabel = computed(() => (props.spikeCount == null ? '—' : props.spik
 .patterns-card__stat {
   display: grid;
   gap: var(--ft-space-1);
+
   padding: var(--ft-space-2);
-  border-radius: var(--ft-radius-lg);
+
   background: var(--ft-surface-soft);
+  border-radius: var(--ft-radius-lg);
 }
 
 .patterns-card__label {
   font-size: var(--ft-text-xs);
+  color: var(--ft-text-tertiary);
   text-transform: uppercase;
   letter-spacing: 0.05em;
-  color: var(--ft-text-tertiary);
 }
 
 .patterns-card__list {
-  list-style: none;
-  margin: 0;
-  padding: 0;
   display: grid;
   gap: var(--ft-space-2);
+
+  margin: 0;
+  padding: 0;
+
+  list-style: none;
 }
 
 .patterns-card__item {
   display: flex;
-  justify-content: space-between;
   align-items: center;
+  justify-content: space-between;
+
   padding: var(--ft-space-2);
-  border-radius: var(--ft-radius-lg);
-  border: 1px solid var(--ft-border-subtle);
+
   background: var(--ft-surface-base);
+  border: 1px solid var(--ft-border-subtle);
+  border-radius: var(--ft-radius-lg);
 }
 
 .patterns-card__date {

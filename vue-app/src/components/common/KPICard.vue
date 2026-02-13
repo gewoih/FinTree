@@ -110,9 +110,9 @@ const trendClass = computed(() => {
 
 .kpi-card__header {
   display: flex;
+  gap: var(--space-3);
   align-items: center;
   justify-content: space-between;
-  gap: var(--space-3);
 }
 
 .kpi-card__title {
@@ -131,49 +131,52 @@ const trendClass = computed(() => {
 .kpi-card__value {
   font-size: var(--ft-text-3xl);
   font-weight: var(--ft-font-bold);
-  color: var(--text);
   line-height: 1.2;
+  color: var(--text);
 }
 
 .kpi-card__footer {
   display: flex;
-  align-items: center;
   gap: var(--space-2);
+  align-items: center;
   font-size: var(--ft-text-sm);
 }
 
 .kpi-card__trend {
   display: inline-flex;
-  align-items: center;
   gap: var(--space-1);
+  align-items: center;
+
   padding: var(--space-1) var(--space-2);
-  border-radius: var(--radius-md);
+
   font-weight: var(--ft-font-semibold);
+
+  border-radius: var(--radius-md);
 }
 
 .kpi-card__trend--up {
-  background: rgba(34, 197, 94, 0.1);
   color: var(--success);
+  background: rgb(34 197 94 / 10%);
 }
 
 .dark-mode .kpi-card__trend--up {
-  background: rgba(34, 197, 94, 0.15);
   color: var(--success);
+  background: rgb(34 197 94 / 15%);
 }
 
 .kpi-card__trend--down {
-  background: rgba(239, 68, 68, 0.1);
   color: var(--danger);
+  background: rgb(239 68 68 / 10%);
 }
 
 .dark-mode .kpi-card__trend--down {
-  background: rgba(239, 68, 68, 0.15);
   color: var(--danger);
+  background: rgb(239 68 68 / 15%);
 }
 
 .kpi-card__trend--neutral {
-  background: rgba(107, 114, 128, 0.1);
   color: var(--text-muted);
+  background: rgb(107 114 128 / 10%);
 }
 
 .kpi-card__trend-label {

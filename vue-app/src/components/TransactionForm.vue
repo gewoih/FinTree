@@ -508,9 +508,9 @@ watch(filteredCategories, () => {
 
 <style scoped>
 .transaction-dialog :deep(.p-dialog-content) {
+  overflow: hidden;
   padding: 0;
   border-radius: var(--ft-radius-xl);
-  overflow: hidden;
 }
 
 .transaction-dialog :deep(.p-dialog-header) {
@@ -521,7 +521,9 @@ watch(filteredCategories, () => {
   display: flex;
   flex-direction: column;
   gap: clamp(1.5rem, 2vw, 2.1rem);
+
   padding: clamp(1.8rem, 2.2vw, 2.3rem);
+
   background: var(--ft-surface-elevated);
 }
 
@@ -557,35 +559,41 @@ watch(filteredCategories, () => {
 }
 
 .field label {
-  font-weight: 600;
   font-size: 0.9rem;
+  font-weight: 600;
   color: var(--ft-heading);
 }
 
 .field small {
-  color: var(--ft-text-muted);
-  font-size: 0.8rem;
   margin-top: var(--ft-space-1);
+  font-size: 0.8rem;
+  color: var(--ft-text-muted);
 }
 
 .checkbox-label {
-  display: flex;
-  align-items: center;
-  gap: var(--ft-space-2);
   cursor: pointer;
-  font-weight: 500 !important;
+
+  display: flex;
+  gap: var(--ft-space-2);
+  align-items: center;
+
   font-size: 0.9rem !important;
+  font-weight: 500 !important;
 }
 
 .sr-only {
   position: absolute;
+
+  overflow: hidden;
+
   width: 1px;
   height: 1px;
-  padding: 0;
   margin: -1px;
-  overflow: hidden;
-  clip: rect(0, 0, 0, 0);
+  padding: 0;
+
   white-space: nowrap;
+
+  clip-path: inset(50%);
   border-width: 0;
 }
 
@@ -600,20 +608,20 @@ watch(filteredCategories, () => {
 }
 
 .currency-chip {
-  box-shadow: inset 0 0 0 1px rgba(56, 189, 248, 0.24);
+  box-shadow: inset 0 0 0 1px rgb(56 189 248 / 24%);
 }
 
 .option-line {
   display: flex;
-  justify-content: space-between;
-  align-items: center;
   gap: 0.75rem;
+  align-items: center;
+  justify-content: space-between;
 }
 
 .option-name {
   display: flex;
-  align-items: center;
   gap: 0.55rem;
+  align-items: center;
 }
 
 .option-name i {
@@ -626,10 +634,10 @@ watch(filteredCategories, () => {
 }
 
 .category-dot {
+  display: inline-block;
   width: 12px;
   height: 12px;
   border-radius: 50%;
-  display: inline-block;
 }
 
 .error-text {
@@ -638,9 +646,9 @@ watch(filteredCategories, () => {
 
 .form-actions {
   display: flex;
-  justify-content: space-between;
-  align-items: center;
   gap: 0.9rem;
+  align-items: center;
+  justify-content: space-between;
 }
 
 .action-secondary {
@@ -655,7 +663,7 @@ watch(filteredCategories, () => {
   align-items: center;
 }
 
-@media (max-width: 640px) {
+@media (width <= 640px) {
   .transaction-form {
     padding: 1.5rem;
   }
@@ -669,13 +677,13 @@ watch(filteredCategories, () => {
   }
 
   .action-secondary {
-    width: 100%;
     flex-direction: column;
+    width: 100%;
   }
 
   .action-buttons {
-    width: 100%;
     flex-direction: column-reverse;
+    width: 100%;
   }
 
   .form-actions :deep(.p-button) {

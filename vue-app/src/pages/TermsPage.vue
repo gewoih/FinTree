@@ -62,8 +62,8 @@ h2 {
 
 p {
   margin: 0;
-  color: var(--ft-text-secondary);
   line-height: 1.6;
+  color: var(--ft-text-secondary);
 }
 
 a {

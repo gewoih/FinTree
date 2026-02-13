@@ -221,78 +221,72 @@ onMounted(() => {
 <style scoped>
 .app-shell {
   --app-shell-nav-height: 72px;
+
   display: grid;
-  grid-template-columns: 1fr;
-  grid-template-rows: auto 1fr;
-  grid-template-areas:
-    "topnav"
-    "main";
+  grid-template:
+    "topnav" auto "main" 1fr / 1fr;
   min-height: 100vh;
   background: var(--bg);
 }
 
 .app-shell__skip-link {
   position: absolute;
-  left: var(--ft-space-4);
+  z-index: calc(var(--ft-z-sticky) + 1);
   top: -100%;
+  left: var(--ft-space-4);
+
   padding: var(--ft-space-2) var(--ft-space-3);
-  background: var(--ft-primary-600);
+
   color: var(--ft-text-inverse);
+
+  background: var(--ft-primary-600);
   border-radius: var(--ft-radius-md);
   box-shadow: var(--ft-shadow-soft);
+
   transition: top var(--ft-transition-fast);
-  z-index: calc(var(--ft-z-sticky) + 1);
 }
 
 .app-shell__skip-link:focus {
   top: var(--ft-space-4);
 }
 
-@media (min-width: 1024px) {
-  .app-shell {
-    grid-template-columns: 240px 1fr;
-    grid-template-areas:
-      "topnav topnav"
-      "sidebar main";
-    transition: grid-template-columns 0.2s ease;
-  }
-
-  .app-shell--collapsed {
-    grid-template-columns: 64px 1fr;
-  }
-}
-
 /* Top Navigation */
 .app-shell__topnav {
-  grid-area: topnav;
+  position: sticky;
+  z-index: var(--ft-z-sticky);
+  top: 0;
+
   display: flex;
+  grid-area: topnav;
   align-items: center;
   justify-content: space-between;
+
   padding: var(--space-4) var(--space-6);
+
   background: var(--surface-1);
   border-bottom: 1px solid var(--border);
-  position: sticky;
-  top: 0;
-  z-index: var(--ft-z-sticky);
   box-shadow: var(--shadow-soft);
 }
 
 .app-shell__readonly-banner {
   display: flex;
+  gap: var(--space-3);
   align-items: center;
   justify-content: space-between;
-  gap: var(--space-3);
+
   padding: var(--space-2) var(--space-6);
-  border-bottom: 1px solid color-mix(in srgb, var(--ft-warning) 35%, transparent);
+
   background: color-mix(in srgb, var(--ft-warning) 18%, var(--surface-1));
+  border-bottom: 1px solid color-mix(in srgb, var(--ft-warning) 35%, transparent);
 }
 
 .app-shell__readonly-copy {
   display: inline-flex;
-  align-items: center;
   gap: var(--space-2);
-  color: var(--text);
+  align-items: center;
+
   font-size: var(--ft-text-sm);
+  color: var(--text);
 }
 
 .app-shell__readonly-copy i {
@@ -301,14 +295,14 @@ onMounted(() => {
 
 .app-shell__topnav-left {
   display: flex;
-  align-items: center;
   gap: var(--space-4);
+  align-items: center;
 }
 
 .app-shell__topnav-right {
   display: flex;
-  align-items: center;
   gap: var(--space-2);
+  align-items: center;
 }
 
 .app-shell__menu-toggle {
@@ -317,12 +311,14 @@ onMounted(() => {
 
 .app-shell__logo {
   display: flex;
-  align-items: center;
   gap: var(--space-3);
+  align-items: center;
+
   font-size: var(--ft-text-xl);
   font-weight: var(--ft-font-bold);
   color: var(--text);
   text-decoration: none;
+
   transition: color var(--ft-transition-fast);
 }
 
@@ -340,26 +336,6 @@ onMounted(() => {
   display: none;
 }
 
-@media (min-width: 1024px) {
-  .app-shell__sidebar-desktop {
-    display: block;
-    grid-area: sidebar;
-    background: var(--surface-1);
-    border-right: 1px solid var(--border);
-    padding: var(--space-6) var(--space-4);
-    position: sticky;
-    top: var(--app-shell-nav-height);
-    height: calc(100vh - var(--app-shell-nav-height));
-    overflow-y: auto;
-    transition: padding 0.2s ease;
-  }
-
-  .app-shell__sidebar-desktop--collapsed {
-    padding: var(--space-6) var(--ft-space-2);
-    overflow: visible;
-  }
-}
-
 .app-shell__drawer-mobile :deep(.p-drawer) {
   width: 280px;
   background: var(--surface-2);
@@ -372,8 +348,9 @@ onMounted(() => {
 
 .app-shell__drawer-header {
   display: flex;
-  align-items: center;
   gap: var(--space-3);
+  align-items: center;
+
   font-size: var(--ft-text-xl);
   font-weight: var(--ft-font-bold);
   color: var(--text);
@@ -393,28 +370,33 @@ onMounted(() => {
 }
 
 .app-shell__nav-link {
+  position: relative;
+
   display: flex;
-  align-items: center;
   gap: var(--space-3);
+  align-items: center;
+
   padding: var(--space-3) var(--space-4);
-  border-radius: var(--ft-radius-lg);
+
   font-size: var(--ft-text-base);
   font-weight: var(--ft-font-medium);
   color: var(--text-muted);
   text-decoration: none;
+
+  border-radius: var(--ft-radius-lg);
+
   transition: all var(--ft-transition-fast);
-  position: relative;
 }
 
 .app-shell__nav-link:hover {
-  background: color-mix(in srgb, var(--accent) 18%, var(--surface-1));
   color: var(--text);
+  background: color-mix(in srgb, var(--accent) 18%, var(--surface-1));
 }
 
 .app-shell__nav-link.router-link-active {
-  background: color-mix(in srgb, var(--accent) 24%, var(--surface-1));
-  color: var(--text);
   font-weight: var(--ft-font-semibold);
+  color: var(--text);
+  background: color-mix(in srgb, var(--accent) 24%, var(--surface-1));
   box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--accent) 45%, transparent);
 }
 
@@ -434,15 +416,9 @@ onMounted(() => {
 /* Main Content */
 .app-shell__main {
   grid-area: main;
-  padding: 0;
   width: 100%;
+  padding: 0;
   outline: none;
-}
-
-@media (max-width: 768px) {
-  .app-shell__main {
-    padding: 0;
-  }
 }
 
 /* User Menu */
@@ -451,66 +427,46 @@ onMounted(() => {
 }
 
 .app-shell__user-button :deep(.p-button-label) {
-  max-width: 220px;
   overflow: hidden;
+  max-width: 220px;
   text-overflow: ellipsis;
-}
-
-@media (max-width: 640px) {
-  .app-shell__readonly-banner {
-    padding: var(--space-2) var(--space-4);
-    flex-direction: column;
-    align-items: stretch;
-  }
-
-  .app-shell__topnav {
-    padding: var(--space-3) var(--space-4);
-  }
-
-  .app-shell__logo span {
-    font-size: 1rem;
-  }
-
-  .app-shell__user-button :deep(.p-button-label) {
-    display: none;
-  }
-
-  .app-shell__user-button {
-    min-width: 44px;
-    padding-inline: 0.6rem;
-  }
 }
 
 .app-shell__user-menu :deep(.p-menu) {
   min-width: 190px;
   margin-top: var(--space-2);
   padding: var(--space-2);
-  border-radius: var(--ft-radius-xl);
-  border: 1px solid color-mix(in srgb, var(--border) 65%, transparent);
+
   background: linear-gradient(
     160deg,
     color-mix(in srgb, var(--surface-1) 92%, transparent),
     color-mix(in srgb, var(--surface-2) 92%, transparent)
   );
-  box-shadow:
-    0 16px 32px rgba(15, 23, 42, 0.22),
-    inset 0 1px 0 rgba(255, 255, 255, 0.04);
   backdrop-filter: blur(10px);
+  border: 1px solid color-mix(in srgb, var(--border) 65%, transparent);
+  border-radius: var(--ft-radius-xl);
+  box-shadow:
+    0 16px 32px rgb(15 23 42 / 22%),
+    inset 0 1px 0 rgb(255 255 255 / 4%);
 }
 
 .app-shell__user-menu :deep(.p-menu .p-menuitem-link) {
-  padding: 0.7rem 0.85rem;
   gap: var(--space-3);
-  border-radius: var(--ft-radius-lg);
+
   min-height: 44px;
+  padding: 0.7rem 0.85rem;
+
   color: var(--text);
+
+  border-radius: var(--ft-radius-lg);
+
   transition: background var(--ft-transition-fast), color var(--ft-transition-fast), transform var(--ft-transition-fast);
 }
 
 .app-shell__user-menu :deep(.p-menu .p-menuitem-link:hover) {
-  background: color-mix(in srgb, var(--accent) 18%, transparent);
-  color: var(--text);
   transform: translateY(-1px);
+  color: var(--text);
+  background: color-mix(in srgb, var(--accent) 18%, transparent);
 }
 
 .app-shell__user-menu :deep(.p-menu .p-menuitem-link:focus-visible) {
@@ -529,5 +485,74 @@ onMounted(() => {
 .app-shell__user-menu :deep(.p-menu .p-menuitem-text) {
   font-size: var(--ft-text-sm);
   font-weight: var(--ft-font-medium);
+}
+
+@media (width >= 1024px) {
+  .app-shell {
+    grid-template-areas:
+      "topnav topnav"
+      "sidebar main";
+    grid-template-columns: 240px 1fr;
+    transition: grid-template-columns 0.2s ease;
+  }
+
+  .app-shell--collapsed {
+    grid-template-columns: 64px 1fr;
+  }
+}
+
+@media (width >= 1024px) {
+  .app-shell__sidebar-desktop {
+    position: sticky;
+    top: var(--app-shell-nav-height);
+
+    overflow-y: auto;
+    display: block;
+    grid-area: sidebar;
+
+    height: calc(100vh - var(--app-shell-nav-height));
+    padding: var(--space-6) var(--space-4);
+
+    background: var(--surface-1);
+    border-right: 1px solid var(--border);
+
+    transition: padding 0.2s ease;
+  }
+
+  .app-shell__sidebar-desktop--collapsed {
+    overflow: visible;
+    padding: var(--space-6) var(--ft-space-2);
+  }
+}
+
+@media (width <= 768px) {
+  .app-shell__main {
+    padding: 0;
+  }
+}
+
+@media (width <= 640px) {
+  .app-shell__readonly-banner {
+    flex-direction: column;
+    align-items: stretch;
+    padding: var(--space-2) var(--space-4);
+  }
+
+  .app-shell__topnav {
+    padding: var(--space-3) var(--space-4);
+  }
+
+  .app-shell__logo span {
+    font-size: 1rem;
+  }
+
+  .app-shell__user-button :deep(.p-button-label) {
+    display: none;
+  }
+
+  .app-shell__user-button {
+    min-width: 44px;
+    padding-inline: 0.6rem;
+  }
 }
 </style>

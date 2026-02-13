@@ -30,21 +30,26 @@ const label = computed(() =>
 
 <style scoped>
 .theme-toggle {
+  cursor: pointer;
+
   display: inline-flex;
   align-items: center;
   justify-content: center;
+
   width: 42px;
   height: 42px;
-  border-radius: var(--ft-radius-full);
-  border: 1px solid var(--ft-border-subtle);
-  background: color-mix(in srgb, var(--ft-primary-500) 12%, transparent);
+
   color: var(--ft-text-primary);
+
+  background: color-mix(in srgb, var(--ft-primary-500) 12%, transparent);
+  border: 1px solid var(--ft-border-subtle);
+  border-radius: var(--ft-radius-full);
+
   transition:
     transform var(--ft-transition-fast),
     background-color var(--ft-transition-fast),
     border-color var(--ft-transition-fast),
     box-shadow var(--ft-transition-fast);
-  cursor: pointer;
 }
 
 .theme-toggle:hover {

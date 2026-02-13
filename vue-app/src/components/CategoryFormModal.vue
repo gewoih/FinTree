@@ -15,9 +15,11 @@ import { CATEGORY_ICON_OPTIONS } from '../constants';
 const props = withDefaults(defineProps<{
   visible: boolean;
   category?: Category | null;
-  defaultType?: CategoryType;
+  defaultType?: CategoryType | null;
   readonly?: boolean;
 }>(), {
+  category: null,
+  defaultType: null,
   readonly: false,
 });
 
@@ -436,9 +438,9 @@ const handleDelete = () => {
 
 .category-dialog__header {
   display: flex;
+  gap: var(--ft-space-4);
   align-items: flex-start;
   justify-content: space-between;
-  gap: var(--ft-space-4);
 }
 
 .category-dialog__title {
@@ -449,10 +451,10 @@ const handleDelete = () => {
 }
 
 .category-dialog__subtitle {
+  max-width: 360px;
   margin: 0;
   font-size: var(--ft-text-sm);
   color: var(--ft-text-tertiary);
-  max-width: 360px;
 }
 
 .category-form__type-button {
@@ -483,22 +485,26 @@ const handleDelete = () => {
 }
 
 .icon-picker {
+  position: relative;
   display: grid;
   gap: var(--ft-space-2);
-  position: relative;
 }
 
 .icon-picker__trigger {
-  display: inline-flex;
-  align-items: center;
-  gap: var(--ft-space-2);
-  padding: var(--ft-space-2) var(--ft-space-3);
-  border-radius: var(--ft-radius-lg);
-  border: 1px solid var(--ft-border-subtle);
-  background: transparent;
-  color: var(--ft-text-primary);
   cursor: pointer;
+
+  display: inline-flex;
+  gap: var(--ft-space-2);
+  align-items: center;
+
   min-height: var(--control-height);
+  padding: var(--ft-space-2) var(--ft-space-3);
+
+  color: var(--ft-text-primary);
+
+  background: transparent;
+  border: 1px solid var(--ft-border-subtle);
+  border-radius: var(--ft-radius-lg);
 }
 
 .icon-picker__trigger i {
@@ -506,28 +512,34 @@ const handleDelete = () => {
 }
 
 .icon-grid {
+  overflow: auto;
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(38px, 1fr));
   gap: var(--ft-space-2);
+
   max-height: 220px;
   padding: var(--ft-space-2);
+
+  background: var(--ft-surface-base);
   border: 1px solid var(--ft-border-subtle);
   border-radius: var(--ft-radius-lg);
-  background: var(--ft-surface-base);
-  overflow: auto;
   box-shadow: var(--ft-shadow-md);
 }
 
 .icon-grid__item {
+  cursor: pointer;
+
   display: grid;
   place-items: center;
+
   inline-size: 38px;
   block-size: 38px;
-  border-radius: var(--ft-radius-md);
-  border: 1px solid transparent;
-  background: transparent;
-  cursor: pointer;
+
   color: var(--ft-text-secondary);
+
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: var(--ft-radius-md);
 }
 
 .icon-grid__item i {
@@ -535,24 +547,26 @@ const handleDelete = () => {
 }
 
 .icon-grid__item:hover {
-  border-color: var(--ft-border-strong);
   color: var(--ft-text-primary);
+  border-color: var(--ft-border-strong);
 }
 
 .icon-grid__item.is-selected {
-  border-color: var(--ft-primary-500);
   color: var(--ft-primary-600);
   background: color-mix(in srgb, var(--ft-primary-500) 12%, transparent);
+  border-color: var(--ft-primary-500);
 }
 
 .color-picker__swatch {
+  cursor: pointer;
+
   inline-size: 42px;
   block-size: 42px;
+  padding: 0;
+
+  background: transparent;
   border: 1px solid var(--ft-border-subtle);
   border-radius: var(--ft-radius-md);
-  padding: 0;
-  background: transparent;
-  cursor: pointer;
 }
 
 .color-picker__swatch::-webkit-color-swatch-wrapper {
@@ -567,34 +581,37 @@ const handleDelete = () => {
 
 .mandatory-toggle {
   display: inline-flex;
-  align-items: center;
   gap: var(--ft-space-2);
-  color: var(--ft-text-primary);
+  align-items: center;
+
   font-weight: var(--ft-font-medium);
+  color: var(--ft-text-primary);
 }
 
 .category-form__footer {
   display: flex;
   flex-direction: column;
   gap: var(--ft-space-3);
-  margin-top: var(--ft-space-3);
+
   width: 100%;
+  margin-top: var(--ft-space-3);
 }
 
 
 .actions {
-  width: 100%;
   display: flex;
-  justify-content: flex-end;
-  gap: var(--ft-space-3);
   flex-wrap: wrap;
+  gap: var(--ft-space-3);
   align-items: center;
+  justify-content: flex-end;
+
+  width: 100%;
 }
 
 .actions :deep(.app-button) {
+  justify-content: center;
   width: auto;
   min-width: max-content;
-  justify-content: center;
 }
 
 .actions :deep(.p-button-label) {
@@ -604,27 +621,32 @@ const handleDelete = () => {
 .category-form__danger {
   display: grid;
   grid-template-columns: minmax(0, 1fr) auto;
-  align-items: center;
   gap: var(--ft-space-3);
+  align-items: center;
+
   padding-top: var(--ft-space-3);
+
   border-top: 1px solid var(--ft-border-soft);
 }
 
 .category-form__danger-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+
   width: 40px;
   min-width: 40px;
   height: 40px;
   min-height: 40px;
   padding: 0;
+
+  line-height: 1;
+  color: var(--ft-danger-500);
+
+  background: transparent;
+  border: 1px solid color-mix(in srgb, var(--ft-danger-500) 40%, transparent);
   border-radius: 999px;
   box-shadow: none;
-  border: 1px solid color-mix(in srgb, var(--ft-danger-500) 40%, transparent);
-  background: transparent;
-  color: var(--ft-danger-500);
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  line-height: 1;
 }
 
 .category-form__danger-button.app-button--danger {
@@ -641,11 +663,13 @@ const handleDelete = () => {
 }
 
 .category-form__danger-button :deep(.p-button-icon) {
-  margin: 0;
-  font-size: 1rem;
   display: flex;
   align-items: center;
   justify-content: center;
+
+  margin: 0;
+
+  font-size: 1rem;
 }
 
 .category-form__danger-title {
@@ -661,7 +685,7 @@ const handleDelete = () => {
   color: var(--ft-text-tertiary);
 }
 
-@media (max-width: 576px) {
+@media (width <= 576px) {
   .category-form {
     gap: var(--ft-space-3);
   }

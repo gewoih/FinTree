@@ -252,46 +252,50 @@ const chartOptions = computed(() => ({
   display: flex;
   flex-direction: column;
   gap: var(--ft-space-4);
+
   padding: clamp(1rem, 2vw, 1.5rem);
+
   background: var(--ft-surface-base);
-  border-radius: var(--ft-radius-2xl);
   border: 1px solid var(--ft-border-subtle);
+  border-radius: var(--ft-radius-2xl);
   box-shadow: var(--ft-shadow-sm);
 }
 
 .donut-card__head {
   display: flex;
-  justify-content: space-between;
-  align-items: flex-start;
   gap: var(--ft-space-4);
+  align-items: flex-start;
+  justify-content: space-between;
 }
 
 .donut-card__title {
+  cursor: help;
+
   margin: 0;
+
   font-size: var(--ft-text-lg);
   font-weight: var(--ft-font-semibold);
   color: var(--ft-text-primary);
-  cursor: help;
 }
 
 .donut-card__subtitle {
   margin: var(--ft-space-1) 0 0;
-  color: var(--ft-text-secondary);
   font-size: var(--ft-text-sm);
+  color: var(--ft-text-secondary);
 }
 
 .donut-card__loading {
   display: grid;
-  place-items: center;
   gap: var(--ft-space-4);
+  place-items: center;
   min-height: 280px;
 }
 
 .donut-card__loading-legend {
-  width: 100%;
-  max-width: 240px;
   display: grid;
   gap: var(--ft-space-2);
+  width: 100%;
+  max-width: 240px;
 }
 
 .donut-card__message {
@@ -323,10 +327,11 @@ const chartOptions = computed(() => ({
 }
 
 .donut-card__chart {
-  width: 100%;
   display: flex;
   align-items: center;
   justify-content: center;
+
+  width: 100%;
   padding: var(--ft-space-2);
 }
 
@@ -341,21 +346,27 @@ const chartOptions = computed(() => ({
 }
 
 .donut-card__legend {
-  margin: 0;
-  padding: 0;
-  list-style: none;
   display: grid;
   gap: var(--ft-space-2);
+
+  margin: 0;
+  padding: 0;
+
+  list-style: none;
 }
 
 .donut-card__legend-item {
-  display: flex;
-  align-items: center;
-  gap: var(--ft-space-3);
-  padding: var(--ft-space-3);
-  border-radius: var(--ft-radius-lg);
-  border: 1px solid transparent;
   cursor: pointer;
+
+  display: flex;
+  gap: var(--ft-space-3);
+  align-items: center;
+
+  padding: var(--ft-space-3);
+
+  border: 1px solid transparent;
+  border-radius: var(--ft-radius-lg);
+
   transition: background var(--ft-transition-fast), border-color var(--ft-transition-fast);
 }
 
@@ -370,29 +381,29 @@ const chartOptions = computed(() => ({
 }
 
 .donut-card__legend-color {
+  flex-shrink: 0;
   width: 12px;
   height: 12px;
   border-radius: 50%;
-  flex-shrink: 0;
 }
 
 .donut-card__legend-body {
   display: grid;
-  gap: 1px;
   flex: 1;
+  gap: 1px;
   min-width: 0;
 }
 
 .donut-card__legend-name {
+  font-size: var(--ft-text-base);
   font-weight: var(--ft-font-medium);
   color: var(--ft-text-primary);
-  font-size: var(--ft-text-base);
 }
 
 .donut-card__legend-amount {
   font-size: var(--ft-text-sm);
-  color: var(--ft-text-secondary);
   font-weight: var(--ft-font-semibold);
+  color: var(--ft-text-secondary);
 }
 
 .donut-card__legend-percent {
@@ -402,19 +413,19 @@ const chartOptions = computed(() => ({
   white-space: nowrap;
 }
 
-@media (min-width: 768px) {
+@media (width >= 768px) {
   .donut-card__content {
     grid-template-columns: minmax(200px, 280px) minmax(0, 1fr);
   }
 
   .donut-card__legend {
-    max-height: 320px;
     overflow: auto;
+    max-height: 320px;
     padding-right: var(--ft-space-1);
   }
 }
 
-@media (max-width: 640px) {
+@media (width <= 640px) {
   .donut-card__head {
     flex-direction: column;
     align-items: stretch;

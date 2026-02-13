@@ -287,32 +287,36 @@ const chartOptions = computed(() => ({
   display: flex;
   flex-direction: column;
   gap: var(--ft-space-4);
+
   padding: clamp(1rem, 2vw, 1.5rem);
+
   background: var(--ft-surface-base);
-  border-radius: var(--ft-radius-2xl);
   border: 1px solid var(--ft-border-subtle);
+  border-radius: var(--ft-radius-2xl);
   box-shadow: var(--ft-shadow-sm);
 }
 
 .forecast-card__head {
   display: flex;
-  justify-content: space-between;
-  align-items: flex-start;
   gap: var(--ft-space-4);
+  align-items: flex-start;
+  justify-content: space-between;
 }
 
 .forecast-card__title {
+  cursor: help;
+
   margin: 0;
+
   font-size: var(--ft-text-lg);
   font-weight: var(--ft-font-semibold);
   color: var(--ft-text-primary);
-  cursor: help;
 }
 
 .forecast-card__subtitle {
   margin: var(--ft-space-1) 0 0;
-  color: var(--ft-text-secondary);
   font-size: var(--ft-text-sm);
+  color: var(--ft-text-secondary);
 }
 
 .forecast-card__loading {
@@ -358,22 +362,25 @@ const chartOptions = computed(() => ({
   display: inline-flex;
   flex-direction: column;
   gap: 2px;
+
   padding: var(--ft-space-3) var(--ft-space-4);
-  border-radius: var(--ft-radius-lg);
+
   font-size: var(--ft-text-sm);
-  border: 1px solid var(--ft-border-subtle);
+
   background: color-mix(in srgb, var(--ft-surface-raised) 60%, transparent);
+  border: 1px solid var(--ft-border-subtle);
+  border-radius: var(--ft-radius-lg);
 }
 
 .forecast-chip__label {
-  color: var(--ft-text-secondary);
   font-size: var(--ft-text-lg);
+  color: var(--ft-text-secondary);
 }
 
 .forecast-chip__value {
+  font-size: var(--ft-text-base);
   font-weight: var(--ft-font-bold);
   color: var(--ft-text-primary);
-  font-size: var(--ft-text-base);
 }
 
 .forecast-chip--accent {
@@ -406,55 +413,64 @@ const chartOptions = computed(() => ({
 }
 
 .forecast-chip--good {
-  background: color-mix(in srgb, var(--ft-success-200) 55%, transparent) !important;
-  color: var(--ft-success-700) !important;
-  border: none;
-  font-weight: var(--ft-font-semibold);
-  border-radius: var(--ft-radius-full);
-  padding: 0.35rem 0.85rem;
   flex-direction: row;
+
+  padding: 0.35rem 0.85rem;
+
+  font-weight: var(--ft-font-semibold);
+  color: var(--ft-success-700) !important;
+
+  background: color-mix(in srgb, var(--ft-success-200) 55%, transparent) !important;
+  border: none;
+  border-radius: var(--ft-radius-full);
 }
 
 .forecast-chip--average {
-  background: color-mix(in srgb, var(--ft-warning-200) 55%, transparent) !important;
-  color: var(--ft-warning-700) !important;
-  border: none;
-  font-weight: var(--ft-font-semibold);
-  border-radius: var(--ft-radius-full);
-  padding: 0.35rem 0.85rem;
   flex-direction: row;
+
+  padding: 0.35rem 0.85rem;
+
+  font-weight: var(--ft-font-semibold);
+  color: var(--ft-warning-700) !important;
+
+  background: color-mix(in srgb, var(--ft-warning-200) 55%, transparent) !important;
+  border: none;
+  border-radius: var(--ft-radius-full);
 }
 
 .forecast-chip--poor {
-  background: color-mix(in srgb, var(--ft-danger-200) 55%, transparent) !important;
-  color: var(--ft-danger-700) !important;
-  border: none;
-  font-weight: var(--ft-font-semibold);
-  border-radius: var(--ft-radius-full);
-  padding: 0.35rem 0.85rem;
   flex-direction: row;
+
+  padding: 0.35rem 0.85rem;
+
+  font-weight: var(--ft-font-semibold);
+  color: var(--ft-danger-700) !important;
+
+  background: color-mix(in srgb, var(--ft-danger-200) 55%, transparent) !important;
+  border: none;
+  border-radius: var(--ft-radius-full);
 }
 
 /* Chart */
 .forecast-card__chart {
-  height: 400px;
   width: 100%;
+  height: 400px;
 }
 
 .forecast-card__chart-container {
   position: relative;
-  height: 100%;
   width: 100%;
+  height: 100%;
 }
 
 .forecast-card__chart-container :deep(.p-chart) {
-  height: 100%;
   width: 100%;
+  height: 100%;
 }
 
 .forecast-card__chart-container :deep(canvas) {
-  max-height: 100%;
   height: 100%;
+  max-height: 100%;
 }
 
 /* Integrated legend */
@@ -467,8 +483,9 @@ const chartOptions = computed(() => ({
 
 .forecast-legend__item {
   display: inline-flex;
-  align-items: center;
   gap: var(--ft-space-2);
+  align-items: center;
+
   font-size: var(--ft-text-lg);
   color: var(--ft-text-secondary);
 }
@@ -485,30 +502,30 @@ const chartOptions = computed(() => ({
 }
 
 .forecast-legend__line--forecast {
+  height: 0;
   background: var(--ft-primary-400);
   border-top: 2px dashed var(--ft-primary-400);
-  height: 0;
 }
 
 .forecast-legend__line--optimistic {
+  height: 0;
   background: var(--ft-info-400);
   border-top: 2px dashed var(--ft-info-400);
-  height: 0;
 }
 
 .forecast-legend__line--risk {
+  height: 0;
   background: #f97316;
   border-top: 2px dashed #f97316;
-  height: 0;
 }
 
 .forecast-legend__line--baseline {
+  height: 0;
   background: var(--ft-border-subtle);
   border-top: 2px dashed var(--ft-border-subtle);
-  height: 0;
 }
 
-@media (max-width: 640px) {
+@media (width <= 640px) {
   .forecast-card__head {
     flex-direction: column;
     align-items: flex-start;

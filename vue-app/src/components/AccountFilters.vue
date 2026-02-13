@@ -195,12 +195,14 @@ const handleTypeUpdate = (value: AccountType | null | undefined) => {
 
 .filter-input {
   display: flex;
-  align-items: center;
   gap: var(--space-2);
+  align-items: center;
+
   padding: var(--space-2) var(--space-3);
-  border-radius: var(--radius-md);
-  border: 1px solid var(--border);
+
   background: var(--surface-1);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
 }
 
 .filter-input i {
@@ -209,16 +211,18 @@ const handleTypeUpdate = (value: AccountType | null | undefined) => {
 
 .filter-input :deep(.p-inputtext) {
   flex: 1;
-  border: none;
-  background: transparent;
+
   padding: 0;
+
+  background: transparent;
+  border: none;
   box-shadow: none;
 }
 
 .filter-option {
   display: flex;
-  align-items: center;
   gap: var(--ft-space-2);
+  align-items: center;
 }
 
 .filter-option i {
@@ -228,16 +232,19 @@ const handleTypeUpdate = (value: AccountType | null | undefined) => {
 
 .active-filters {
   display: flex;
-  align-items: center;
   gap: var(--ft-space-3);
+  align-items: center;
+
   padding-top: var(--ft-space-3);
+
   border-top: 1px solid var(--ft-border-soft);
 }
 
 .active-filters__label {
   display: flex;
-  align-items: center;
   gap: var(--ft-space-2);
+  align-items: center;
+
   font-size: var(--ft-text-sm);
   font-weight: var(--ft-font-medium);
   color: var(--ft-text-secondary);
@@ -262,7 +269,7 @@ const handleTypeUpdate = (value: AccountType | null | undefined) => {
   margin-left: var(--space-2);
 }
 
-@media (max-width: 768px) {
+@media (width <= 768px) {
   .filters-grid {
     grid-template-columns: 1fr;
   }

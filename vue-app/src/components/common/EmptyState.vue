@@ -60,25 +60,29 @@ const emit = defineEmits<{
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  padding: var(--space-7) var(--space-6);
-  text-align: center;
+
   min-height: 400px;
+  padding: var(--space-7) var(--space-6);
+
+  text-align: center;
 }
 
 .empty-state__icon-wrapper {
   display: flex;
   align-items: center;
   justify-content: center;
+
   width: 80px;
   height: 80px;
   margin-bottom: var(--space-6);
+
   background: linear-gradient(
     135deg,
     color-mix(in srgb, var(--ft-primary-500) 14%, transparent) 0%,
     color-mix(in srgb, var(--ft-success-400) 14%, transparent) 100%
   );
-  border-radius: var(--radius-lg);
   border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
 }
 
 .empty-state__icon {
@@ -94,11 +98,12 @@ const emit = defineEmits<{
 }
 
 .empty-state__description {
-  margin: 0 0 var(--space-6);
   max-width: 420px;
+  margin: 0 0 var(--space-6);
+
   font-size: var(--ft-text-base);
-  color: var(--ft-text-secondary);
   line-height: var(--ft-leading-relaxed);
+  color: var(--ft-text-secondary);
 }
 
 .empty-state__action {

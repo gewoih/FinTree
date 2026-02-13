@@ -92,34 +92,41 @@ const fieldAttrs = computed(() => ({
 }
 
 .form-field__label-row {
-  display: inline-flex;
-  align-items: center;
-  gap: var(--ft-space-2);
   position: relative;
+
+  display: inline-flex;
+  gap: var(--ft-space-2);
+  align-items: center;
+
   width: fit-content;
 }
 
 .form-field__label {
-  font-weight: var(--ft-font-semibold);
-  font-size: var(--ft-text-sm);
-  color: var(--ft-text-secondary);
   display: flex;
-  align-items: center;
   gap: var(--ft-space-1);
+  align-items: center;
+
+  font-size: var(--ft-text-sm);
+  font-weight: var(--ft-font-semibold);
+  color: var(--ft-text-secondary);
 }
 
 .form-field__info {
-  inline-size: 18px;
-  block-size: 18px;
+  cursor: help;
+
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  border-radius: 50%;
-  background: transparent;
-  color: var(--ft-text-tertiary);
-  line-height: 1;
+
+  inline-size: 18px;
+  block-size: 18px;
   padding: 0;
-  cursor: help;
+
+  line-height: 1;
+  color: var(--ft-text-tertiary);
+
+  background: transparent;
+  border-radius: 50%;
 }
 
 .form-field__info i {
@@ -133,8 +140,8 @@ const fieldAttrs = computed(() => ({
 }
 
 .form-field__required {
-  color: var(--ft-danger-500);
   font-weight: var(--ft-font-bold);
+  color: var(--ft-danger-500);
 }
 
 .form-field__control {
@@ -142,16 +149,21 @@ const fieldAttrs = computed(() => ({
 }
 
 .form-field__hint {
+  pointer-events: none;
+
   position: absolute;
   top: 50%;
   left: 100%;
+  transform: translateY(-50%);
+
   margin-left: var(--ft-space-2);
+
   font-size: 0.7rem;
   color: var(--ft-text-tertiary);
   white-space: nowrap;
+
   opacity: 0;
-  pointer-events: none;
-  transform: translateY(-50%);
+
   transition:
     opacity var(--ft-transition-fast),
     transform var(--ft-transition-fast);
@@ -159,27 +171,30 @@ const fieldAttrs = computed(() => ({
 
 .form-field__info:hover + .form-field__hint,
 .form-field__info:focus-visible + .form-field__hint {
-  opacity: 1;
   transform: translateY(-50%);
+  opacity: 1;
 }
 
 .form-field__error {
   display: flex;
-  align-items: center;
   gap: var(--ft-space-2);
-  color: var(--ft-danger-600);
+  align-items: center;
+
+  padding: var(--ft-space-2) var(--ft-space-3);
+
   font-size: var(--ft-text-sm);
   font-weight: var(--ft-font-medium);
-  padding: var(--ft-space-2) var(--ft-space-3);
-  background: rgba(239, 68, 68, 0.1);
+  color: var(--ft-danger-600);
+
+  background: rgb(239 68 68 / 10%);
+  border: 1px solid rgb(239 68 68 / 20%);
   border-radius: var(--ft-radius-md);
-  border: 1px solid rgba(239, 68, 68, 0.2);
 }
 
 .dark-mode .form-field__error {
   color: var(--ft-danger-400);
-  background: rgba(239, 68, 68, 0.15);
-  border-color: rgba(239, 68, 68, 0.3);
+  background: rgb(239 68 68 / 15%);
+  border-color: rgb(239 68 68 / 30%);
 }
 
 .form-field__error i {
@@ -200,23 +215,27 @@ const fieldAttrs = computed(() => ({
   color: var(--ft-danger-400);
 }
 
+/* Screen reader only class */
+.sr-only {
+  position: absolute;
+
+  overflow: hidden;
+
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+
+  white-space: nowrap;
+
+  clip-path: inset(50%);
+  border-width: 0;
+}
+
 /* Accessibility: increase label size on focus */
 @media (prefers-reduced-motion: no-preference) {
   .form-field:focus-within .form-field__label {
     transition: color var(--ft-transition-fast);
   }
-}
-
-/* Screen reader only class */
-.sr-only {
-  position: absolute;
-  width: 1px;
-  height: 1px;
-  padding: 0;
-  margin: -1px;
-  overflow: hidden;
-  clip: rect(0, 0, 0, 0);
-  white-space: nowrap;
-  border-width: 0;
 }
 </style>

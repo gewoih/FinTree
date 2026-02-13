@@ -39,13 +39,14 @@ const props = withDefaults(
 
 <style scoped>
 .ui-card {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+
   background: var(--surface-2);
   border: 1px solid var(--border);
   border-radius: var(--radius-lg);
   box-shadow: var(--shadow-soft);
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-4);
 }
 
 .ui-card--muted {
@@ -71,9 +72,9 @@ const props = withDefaults(
 
 .ui-card__header {
   display: flex;
+  gap: var(--space-3);
   align-items: center;
   justify-content: space-between;
-  gap: var(--space-3);
 }
 
 .ui-card__body {
@@ -84,8 +85,8 @@ const props = withDefaults(
 
 .ui-card__footer {
   display: flex;
+  gap: var(--space-3);
   align-items: center;
   justify-content: flex-end;
-  gap: var(--space-3);
 }
 </style>

@@ -15,6 +15,7 @@
   .light-mode {
     color-scheme: light;
   }
+
   /* ━━━ Input Fields Base Styles ━━━ */
   .p-component,
   .p-inputtext,
@@ -30,9 +31,11 @@
   .p-autocomplete-input,
   .p-password-input {
     font-family: var(--ft-font-base);
-    background-color: var(--surface-1);
     color: var(--text);
+
+    background-color: var(--surface-1);
     border-color: var(--border);
+
     transition:
       border-color var(--ft-transition-fast),
       box-shadow var(--ft-transition-fast),
@@ -91,15 +94,15 @@
   .p-calendar,
   .p-inputnumber,
   .p-multiselect {
-    border-radius: var(--radius-md);
     min-height: var(--control-height);
+    border-radius: var(--radius-md);
   }
 
   /* ━━━ Buttons ━━━ */
   .p-button:not(.p-button-link) {
-    border-radius: var(--radius-md);
     min-width: 44px;
     min-height: var(--control-height);
+    border-radius: var(--radius-md);
     transition: transform var(--ft-transition-fast), box-shadow var(--ft-transition-fast);
   }
 
@@ -122,42 +125,26 @@
     background: var(--surface-2);
   }
 
-  @media (max-width: 640px) {
-    .p-dialog {
-      width: calc(100vw - 32px) !important;
-      max-height: 90vh;
-      margin: 0 auto;
-      border-radius: var(--radius-xl);
-    }
-
-    .p-dialog .p-dialog-header,
-    .p-dialog .p-dialog-content {
-      padding: var(--ft-space-4);
-    }
-
-    .p-dialog .p-dialog-footer {
-      padding: var(--ft-space-3) var(--ft-space-4) var(--ft-space-4);
-    }
-  }
-
   /* ━━━ Dropdowns and Panels ━━━ */
   .p-datepicker,
   .p-select-panel,
   .p-dropdown-panel,
   .p-multiselect-panel {
     background: var(--surface-2);
-    border-radius: var(--radius-lg);
     border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
     box-shadow: var(--shadow-soft);
   }
 
   /* ━━━ DataTable ━━━ */
   .p-datatable {
-    background: var(--surface-2);
-    color: var(--text);
-    border-radius: var(--radius-lg);
-    border: 1px solid var(--border);
     overflow: hidden;
+
+    color: var(--text);
+
+    background: var(--surface-2);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
   }
 
   .p-datatable table {
@@ -165,18 +152,21 @@
   }
 
   .p-datatable .p-datatable-thead > tr > th {
-    background: var(--surface-1);
-    color: var(--text-muted);
-    border-bottom: 1px solid var(--border);
-    padding-block: var(--ft-space-3);
     position: sticky;
-    top: 0;
     z-index: 1;
+    top: 0;
+
+    padding-block: var(--ft-space-3);
+
+    color: var(--text-muted);
+
+    background: var(--surface-1);
+    border-bottom: 1px solid var(--border);
   }
 
   .p-datatable .p-datatable-tbody > tr {
-    background: var(--surface-2);
     color: var(--text);
+    background: var(--surface-2);
     transition: background-color var(--ft-transition-fast), transform var(--ft-transition-fast);
   }
 
@@ -202,9 +192,9 @@
 
   /* ━━━ Tags/Badges ━━━ */
   .p-tag {
-    border-radius: var(--radius-lg);
     padding: var(--ft-space-1) var(--ft-space-3);
     font-weight: var(--ft-font-medium);
+    border-radius: var(--radius-lg);
   }
 
   /* ━━━ DatePicker Calendar Cells ━━━ */
@@ -214,9 +204,9 @@
 
   /* ━━━ Global Focus States ━━━ */
   *:focus-visible {
+    border-radius: var(--radius-sm);
     outline: 2px solid var(--accent);
     outline-offset: 3px;
-    border-radius: var(--radius-sm);
   }
 
   /* ━━━ Cards Hover Effect ━━━ */
@@ -229,5 +219,23 @@
   .p-card:hover {
     transform: translateY(-2px);
     box-shadow: var(--ft-shadow-soft);
+  }
+
+  @media (width <= 640px) {
+    .p-dialog {
+      width: calc(100vw - 32px) !important;
+      max-height: 90vh;
+      margin: 0 auto;
+      border-radius: var(--radius-xl);
+    }
+
+    .p-dialog .p-dialog-header,
+    .p-dialog .p-dialog-content {
+      padding: var(--ft-space-4);
+    }
+
+    .p-dialog .p-dialog-footer {
+      padding: var(--ft-space-3) var(--ft-space-4) var(--ft-space-4);
+    }
   }
 }

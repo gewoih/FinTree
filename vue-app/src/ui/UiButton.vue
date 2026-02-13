@@ -78,14 +78,18 @@ const buttonClasses = computed(() => [
 <style scoped>
 .ui-button {
   display: inline-flex;
+  gap: var(--space-2);
   align-items: center;
   justify-content: center;
-  gap: var(--space-2);
+
   min-height: var(--control-height);
   padding: 0 var(--space-4);
+
   font-weight: 600;
   letter-spacing: 0.01em;
+
   border-radius: var(--radius-md);
+
   transition:
     transform var(--ft-transition-fast),
     box-shadow var(--ft-transition-fast),

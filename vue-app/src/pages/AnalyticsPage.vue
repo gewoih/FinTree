@@ -899,12 +899,14 @@ onMounted(async () => {
 
 .analytics-month-selector {
   display: inline-flex;
-  align-items: center;
   gap: 0.4rem;
+  align-items: center;
+
   padding: 0.25rem 0.5rem;
-  border-radius: 999px;
-  border: 1px solid color-mix(in srgb, var(--ft-border-subtle) 70%, transparent);
+
   background: color-mix(in srgb, var(--ft-surface-raised) 85%, transparent);
+  border: 1px solid color-mix(in srgb, var(--ft-border-subtle) 70%, transparent);
+  border-radius: 999px;
 }
 
 .analytics-month-selector button {
@@ -912,13 +914,17 @@ onMounted(async () => {
 }
 
 .analytics-month-selector__button {
-  border: none;
-  background: transparent;
-  color: var(--ft-text-secondary);
-  font-size: 0.9rem;
-  padding: 0.2rem;
-  border-radius: 999px;
   cursor: pointer;
+
+  padding: 0.2rem;
+
+  font-size: 0.9rem;
+  color: var(--ft-text-secondary);
+
+  background: transparent;
+  border: none;
+  border-radius: 999px;
+
   transition: color var(--ft-transition-fast), background-color var(--ft-transition-fast);
 }
 
@@ -928,33 +934,39 @@ onMounted(async () => {
 }
 
 .analytics-month-selector__button:disabled {
-  opacity: 0.4;
   cursor: default;
+  opacity: 0.4;
 }
 
 .analytics-month-selector__label {
-  border: none;
-  background: transparent;
-  color: var(--ft-text-primary);
-  font-weight: var(--ft-font-semibold);
-  font-size: var(--ft-text-sm);
-  padding: 0.2rem 0.35rem;
   cursor: pointer;
+
+  padding: 0.2rem 0.35rem;
+
+  font-size: var(--ft-text-sm);
+  font-weight: var(--ft-font-semibold);
+  color: var(--ft-text-primary);
   white-space: nowrap;
+
+  background: transparent;
+  border: none;
 }
 
 .analytics-month-selector__picker {
-  position: absolute;
-  opacity: 0;
   pointer-events: none;
+
+  position: absolute;
+
   width: 0;
   height: 0;
+
+  opacity: 0;
 }
 
-@media (max-width: 640px) {
+@media (width <= 640px) {
   .analytics-month-selector {
-    width: 100%;
     justify-content: space-between;
+    width: 100%;
   }
 
   .analytics-month-selector__label {
@@ -963,7 +975,7 @@ onMounted(async () => {
   }
 }
 
-@media (min-width: 1024px) {
+@media (width >= 1024px) {
   .analytics-grid {
     grid-template-columns: repeat(12, minmax(0, 1fr));
   }
@@ -990,7 +1002,7 @@ onMounted(async () => {
 
 }
 
-@media (min-width: 641px) and (max-width: 1023px) {
+@media (width >= 641px) and (width <= 1023px) {
   .analytics-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
@@ -1011,19 +1023,19 @@ onMounted(async () => {
 .onboarding-card {
   display: grid;
   gap: var(--ft-space-4);
-  border: 1px solid var(--ft-border-subtle);
   background: linear-gradient(
     135deg,
     color-mix(in srgb, var(--ft-primary-500) 20%, transparent),
     color-mix(in srgb, var(--ft-info-500) 10%, transparent)
   );
+  border: 1px solid var(--ft-border-subtle);
 }
 
 .onboarding-card__header {
   display: flex;
-  justify-content: space-between;
-  align-items: center;
   gap: var(--ft-space-4);
+  align-items: center;
+  justify-content: space-between;
 }
 
 .onboarding-card__header h2 {
@@ -1039,10 +1051,12 @@ onMounted(async () => {
 
 .onboarding-card__progress {
   padding: var(--ft-space-2) var(--ft-space-3);
-  border-radius: var(--ft-radius-full);
-  background: color-mix(in srgb, var(--ft-primary-500) 55%, transparent);
-  color: var(--ft-text-inverse);
+
   font-weight: var(--ft-font-semibold);
+  color: var(--ft-text-inverse);
+
+  background: color-mix(in srgb, var(--ft-primary-500) 55%, transparent);
+  border-radius: var(--ft-radius-full);
 }
 
 .onboarding-card__steps {
@@ -1053,12 +1067,14 @@ onMounted(async () => {
 .onboarding-card__step {
   display: grid;
   grid-template-columns: auto 1fr auto;
-  align-items: center;
   gap: var(--ft-space-3);
+  align-items: center;
+
   padding: var(--ft-space-3);
-  border-radius: var(--ft-radius-lg);
+
   background: var(--ft-surface-base);
   border: 1px solid var(--ft-border-subtle);
+  border-radius: var(--ft-radius-lg);
 }
 
 .onboarding-card__step--done {
@@ -1066,19 +1082,22 @@ onMounted(async () => {
 }
 
 .onboarding-card__status {
-  width: 36px;
-  height: 36px;
-  border-radius: 999px;
   display: grid;
   place-items: center;
-  background: color-mix(in srgb, var(--ft-primary-500) 55%, transparent);
-  color: var(--ft-text-inverse);
+
+  width: 36px;
+  height: 36px;
+
   font-size: 1rem;
+  color: var(--ft-text-inverse);
+
+  background: color-mix(in srgb, var(--ft-primary-500) 55%, transparent);
+  border-radius: 999px;
 }
 
 .onboarding-card__step--done .onboarding-card__status {
-  background: rgba(16, 185, 129, 0.2);
   color: var(--ft-success-400);
+  background: rgb(16 185 129 / 20%);
 }
 
 .onboarding-card__info h3 {
@@ -1089,11 +1108,11 @@ onMounted(async () => {
 
 .onboarding-card__info p {
   margin: var(--ft-space-1) 0 0;
-  color: var(--ft-text-secondary);
   font-size: var(--ft-text-sm);
+  color: var(--ft-text-secondary);
 }
 
-@media (max-width: 640px) {
+@media (width <= 640px) {
   .analytics-page {
     gap: var(--ft-space-4);
   }

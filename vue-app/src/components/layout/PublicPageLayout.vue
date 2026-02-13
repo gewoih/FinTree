@@ -66,9 +66,13 @@ const currentYear = new Date().getFullYear();
 
 <style scoped>
 .public-page {
-  min-height: 100vh;
   display: grid;
   grid-template-rows: auto 1fr auto;
+
+  min-height: 100vh;
+
+  color: var(--ft-text-primary);
+
   background:
     radial-gradient(
       820px 620px at 12% -12%,
@@ -81,28 +85,30 @@ const currentYear = new Date().getFullYear();
       transparent
     ),
     linear-gradient(180deg, var(--ft-bg-base) 0%, var(--ft-bg-muted) 100%);
-  color: var(--ft-text-primary);
 }
 
 .public-page__header {
   display: flex;
+  gap: var(--ft-space-4);
   align-items: center;
   justify-content: space-between;
-  gap: var(--ft-space-4);
+
   padding: clamp(var(--ft-space-4), 4vw, var(--ft-space-6)) clamp(var(--ft-space-4), 5vw, var(--ft-space-8));
-  border-bottom: 1px solid var(--ft-border-subtle);
-  backdrop-filter: blur(12px);
+
   background: color-mix(in srgb, var(--ft-bg-base) 85%, transparent);
+  backdrop-filter: blur(12px);
+  border-bottom: 1px solid var(--ft-border-subtle);
 }
 
 .public-page__brand {
   display: inline-flex;
-  align-items: center;
   gap: var(--ft-space-2);
+  align-items: center;
+
+  font-family: var(--ft-font-display);
   font-weight: var(--ft-font-bold);
   color: var(--ft-text-primary);
   text-decoration: none;
-  font-family: var(--ft-font-display);
 }
 
 .public-page__brand i {
@@ -111,9 +117,9 @@ const currentYear = new Date().getFullYear();
 
 .public-page__actions {
   display: flex;
-  align-items: center;
   flex-wrap: wrap;
   gap: var(--ft-space-3);
+  align-items: center;
 }
 
 .public-page__main {
@@ -121,24 +127,25 @@ const currentYear = new Date().getFullYear();
 }
 
 .public-page__container {
+  display: grid;
+  gap: var(--ft-space-6);
+
   width: 100%;
   max-width: var(--ft-container-lg);
   margin: 0 auto;
   padding: 0 clamp(var(--ft-space-4), 5vw, var(--ft-space-8));
-  display: grid;
-  gap: var(--ft-space-6);
 }
 
 .public-page__title h1 {
   margin: 0;
-  font-size: clamp(2rem, 4vw, 2.75rem);
   font-family: var(--ft-font-display);
+  font-size: clamp(2rem, 4vw, 2.75rem);
 }
 
 .public-page__title p {
+  max-width: 60ch;
   margin: var(--ft-space-2) 0 0;
   color: var(--ft-text-secondary);
-  max-width: 60ch;
 }
 
 .public-page__content {
@@ -148,13 +155,16 @@ const currentYear = new Date().getFullYear();
 
 .public-page__footer {
   display: flex;
-  justify-content: space-between;
-  align-items: center;
   gap: var(--ft-space-3);
+  align-items: center;
+  justify-content: space-between;
+
   padding: var(--ft-space-4) clamp(var(--ft-space-4), 5vw, var(--ft-space-8));
-  border-top: 1px solid color-mix(in srgb, var(--ft-border-default) 50%, transparent);
-  color: var(--ft-text-tertiary);
+
   font-size: var(--ft-text-sm);
+  color: var(--ft-text-tertiary);
+
+  border-top: 1px solid color-mix(in srgb, var(--ft-border-default) 50%, transparent);
 }
 
 .public-page__footer-links {
@@ -171,15 +181,15 @@ const currentYear = new Date().getFullYear();
   color: var(--ft-text-primary);
 }
 
-@media (max-width: 640px) {
+@media (width <= 640px) {
   .public-page__header {
     flex-direction: column;
     align-items: flex-start;
   }
 
   .public-page__actions {
-    width: 100%;
     justify-content: flex-start;
+    width: 100%;
   }
 
   .public-page__footer {

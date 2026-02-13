@@ -298,28 +298,31 @@ const hasMorePeaks = computed(() => props.peaks.length > 3);
 
 <style scoped>
 .hero-card {
-  background: var(--ft-surface-base);
-  border-radius: var(--ft-radius-2xl);
-  border: 1px solid var(--ft-border-subtle);
-  padding: clamp(1.25rem, 2vw, 1.75rem);
   display: grid;
   gap: clamp(1.25rem, 2vw, 1.75rem);
+
+  padding: clamp(1.25rem, 2vw, 1.75rem);
+
+  background: var(--ft-surface-base);
+  border: 1px solid var(--ft-border-subtle);
+  border-radius: var(--ft-radius-2xl);
   box-shadow: var(--ft-shadow-sm);
 }
 
 .hero-card__header {
   display: flex;
-  justify-content: space-between;
-  align-items: flex-start;
   gap: var(--ft-space-4);
+  align-items: flex-start;
+  justify-content: space-between;
 }
 
 .hero-card__eyebrow {
   margin: 0 0 var(--ft-space-1);
+
   font-size: var(--ft-text-xs);
+  color: var(--ft-text-secondary);
   text-transform: uppercase;
   letter-spacing: 0.08em;
-  color: var(--ft-text-secondary);
 }
 
 .hero-card__title {
@@ -368,8 +371,8 @@ const hasMorePeaks = computed(() => props.peaks.length > 3);
 
 .hero-card__insights {
   display: grid;
-  gap: var(--ft-space-5);
   grid-template-columns: minmax(0, 1fr) minmax(300px, 380px);
+  gap: var(--ft-space-5);
   align-items: start;
 }
 
@@ -381,13 +384,18 @@ const hasMorePeaks = computed(() => props.peaks.length > 3);
 
 .hero-card__metric {
   position: relative;
-  padding: clamp(1rem, 1.7vw, 1.25rem);
-  border-radius: var(--ft-radius-xl);
-  border: 1px solid var(--ft-border-subtle);
+
   display: grid;
   gap: var(--ft-space-3);
-  background: color-mix(in srgb, var(--ft-surface-raised) 85%, transparent);
+
+  padding: clamp(1rem, 1.7vw, 1.25rem);
+
   color: var(--ft-text-primary);
+
+  background: color-mix(in srgb, var(--ft-surface-raised) 85%, transparent);
+  border: 1px solid var(--ft-border-subtle);
+  border-radius: var(--ft-radius-xl);
+
   transition: transform var(--ft-transition-base), box-shadow var(--ft-transition-base);
 }
 
@@ -398,10 +406,13 @@ const hasMorePeaks = computed(() => props.peaks.length > 3);
 
 .hero-card__metric--clickable {
   cursor: pointer;
-  text-align: left;
+
   width: 100%;
-  border: 1px solid var(--ft-border-subtle);
+
   font: inherit;
+  text-align: left;
+
+  border: 1px solid var(--ft-border-subtle);
 }
 
 .hero-card__metric--clickable:hover {
@@ -434,23 +445,27 @@ const hasMorePeaks = computed(() => props.peaks.length > 3);
 }
 
 .hero-card__group-title {
+  display: inline-flex;
+  gap: 0.45rem;
+  align-items: center;
+
   margin: 0;
+
   font-size: var(--ft-text-sm);
   font-weight: var(--ft-font-semibold);
+  color: var(--ft-text-secondary);
   text-transform: uppercase;
   letter-spacing: 0.04em;
-  color: var(--ft-text-secondary);
-  display: inline-flex;
-  align-items: center;
-  gap: 0.45rem;
 }
 
 .hero-card__group-title::before {
   content: '';
+
   width: 12px;
   height: 12px;
-  border-radius: 999px;
+
   background: var(--group-accent);
+  border-radius: 999px;
   box-shadow: 0 0 0 6px color-mix(in srgb, var(--group-accent) 14%, transparent);
 }
 
@@ -461,9 +476,10 @@ const hasMorePeaks = computed(() => props.peaks.length > 3);
 
 .hero-card__metric-row {
   display: flex;
+  gap: var(--ft-space-3);
   align-items: center;
   justify-content: space-between;
-  gap: var(--ft-space-3);
+
   padding: 0.35rem 0;
 }
 
@@ -482,10 +498,10 @@ const hasMorePeaks = computed(() => props.peaks.length > 3);
 }
 
 .hero-card__metric-label {
+  flex: 1;
   margin: 0;
   font-size: var(--ft-text-xs);
   font-weight: var(--ft-font-medium);
-  flex: 1;
 }
 
 .hero-card__metric-value {
@@ -505,17 +521,21 @@ const hasMorePeaks = computed(() => props.peaks.length > 3);
 }
 
 .hero-card__metric-icon {
+  cursor: help;
+
+  display: grid;
+  flex-shrink: 0;
+  place-items: center;
+
   width: 34px;
   height: 34px;
-  border-radius: 999px;
-  display: grid;
-  place-items: center;
+
   font-size: 0.95rem;
   color: var(--ft-text-secondary);
+
   background: color-mix(in srgb, var(--ft-surface-base) 75%, transparent);
   border: 1px solid var(--ft-border-subtle);
-  flex-shrink: 0;
-  cursor: help;
+  border-radius: 999px;
 }
 
 .hero-card__metric-value--good,
@@ -572,12 +592,15 @@ const hasMorePeaks = computed(() => props.peaks.length > 3);
   background: color-mix(in srgb, var(--ft-danger-400, #f87171) 12%, transparent);
   border-color: color-mix(in srgb, var(--ft-danger-400, #f87171) 25%, var(--ft-border-subtle));
 }
+
 .hero-card__peaks {
   display: grid;
   gap: var(--ft-space-4);
+
   padding: var(--ft-space-4);
-  border-radius: var(--ft-radius-xl);
+
   background: color-mix(in srgb, var(--ft-surface-soft) 70%, transparent);
+  border-radius: var(--ft-radius-xl);
 }
 
 .hero-card__peaks-header {
@@ -587,23 +610,28 @@ const hasMorePeaks = computed(() => props.peaks.length > 3);
 
 .hero-card__peaks-title {
   margin: 0;
+
   font-size: var(--ft-text-lg);
   font-weight: var(--ft-font-semibold);
+  color: var(--ft-text-secondary);
   text-transform: uppercase;
   letter-spacing: 0.05em;
-  color: var(--ft-text-secondary);
 }
 
 .hero-card__peak-share {
-  border: 1px solid var(--ft-border-subtle);
-  border-radius: var(--ft-radius-lg);
-  padding: var(--ft-space-4);
+  cursor: pointer;
+
   display: grid;
   gap: var(--ft-space-2);
-  background: transparent;
-  text-align: left;
+
   width: 100%;
-  cursor: pointer;
+  padding: var(--ft-space-4);
+
+  text-align: left;
+
+  background: transparent;
+  border: 1px solid var(--ft-border-subtle);
+  border-radius: var(--ft-radius-lg);
 }
 
 .hero-card__peak-share:hover {
@@ -617,10 +645,11 @@ const hasMorePeaks = computed(() => props.peaks.length > 3);
 
 .hero-card__peak-share-value {
   margin: 0;
+
   font-size: clamp(2.4rem, 3.4vw, 3rem);
   font-weight: var(--ft-font-bold);
-  color: var(--ft-text-primary);
   line-height: 1;
+  color: var(--ft-text-primary);
 }
 
 .hero-card__peak-share-line {
@@ -689,17 +718,20 @@ const hasMorePeaks = computed(() => props.peaks.length > 3);
 }
 
 .hero-card__peaks-toggle {
-  border: none;
-  background: transparent;
-  color: var(--ft-text-secondary);
+  cursor: pointer;
+
+  padding: 0;
+
   font-size: var(--ft-text-xs);
   font-weight: var(--ft-font-semibold);
-  cursor: pointer;
-  padding: 0;
+  color: var(--ft-text-secondary);
   text-align: left;
+
+  background: transparent;
+  border: none;
 }
 
-@media (max-width: 992px) {
+@media (width <= 992px) {
   .hero-card__insights {
     grid-template-columns: 1fr;
   }
@@ -709,10 +741,10 @@ const hasMorePeaks = computed(() => props.peaks.length > 3);
   }
 }
 
-@media (max-width: 640px) {
+@media (width <= 640px) {
   .hero-card {
-    padding: var(--ft-space-4);
     gap: var(--ft-space-4);
+    padding: var(--ft-space-4);
   }
 
   .hero-card__header {
@@ -725,8 +757,8 @@ const hasMorePeaks = computed(() => props.peaks.length > 3);
   }
 
   .hero-card__metric-row {
-    align-items: flex-start;
     gap: var(--ft-space-2);
+    align-items: flex-start;
   }
 
   .hero-card__metric-icon {
@@ -744,8 +776,8 @@ const hasMorePeaks = computed(() => props.peaks.length > 3);
   }
 
   .hero-card__peaks {
-    padding: var(--ft-space-3);
     gap: var(--ft-space-3);
+    padding: var(--ft-space-3);
   }
 
   .hero-card__peak-share {
