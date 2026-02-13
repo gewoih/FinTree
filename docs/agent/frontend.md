@@ -32,6 +32,13 @@
 - Use pagination/virtualization for large lists as data grows.
 - Avoid unnecessary re-renders and expensive deep-watch usage.
 
+## Design tokens and typography
+- Primary font: Inter (loaded via Google Fonts). Fallback chain: `'Inter', 'Helvetica Neue', 'Arial', sans-serif`.
+- Mono font: JetBrains Mono.
+- Token naming: canonical tokens use `--ft-*` prefix (defined in `design-tokens.css`). Shorthand aliases `--space-*`, `--radius-*` (in `tokens.css`) map to `--ft-space-*` and `--ft-radius-*`. Always prefer `--ft-*` tokens in new code.
+- Primary palette: muted slate-blue (#4F63B8 at 500). Not neon/oversaturated.
+- Dark mode surfaces use widened lightness gaps for visible card/bg separation.
+
 ## Delivery quality bar
 - Any UI change must be:
   - visually consistent;

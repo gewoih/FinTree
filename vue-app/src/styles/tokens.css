@@ -15,20 +15,20 @@
   --danger: var(--ft-danger-400);
   --success: var(--ft-success-400);
 
-  /* Spacing scale (4/8/12/16/24/32/48/64) */
-  --space-1: 4px;
-  --space-2: 8px;
-  --space-3: 12px;
-  --space-4: 16px;
-  --space-5: 24px;
-  --space-6: 32px;
-  --space-7: 48px;
-  --space-8: 64px;
+  /* Spacing scale — aliases to --ft-space-* (4/8/12/16/24/32/48/64) */
+  --space-1: var(--ft-space-1);
+  --space-2: var(--ft-space-2);
+  --space-3: var(--ft-space-3);
+  --space-4: var(--ft-space-4);
+  --space-5: var(--ft-space-6);
+  --space-6: var(--ft-space-8);
+  --space-7: var(--ft-space-12);
+  --space-8: var(--ft-space-16);
 
-  /* Radii */
-  --radius-sm: 10px;
-  --radius-md: 12px;
-  --radius-lg: 16px;
+  /* Radii — aliases to --ft-radius-* */
+  --radius-sm: var(--ft-radius-md);
+  --radius-md: var(--ft-radius-lg);
+  --radius-lg: var(--ft-radius-xl);
 
   /* Component sizes */
   --control-height: 44px;

@@ -226,7 +226,7 @@
 }
 
 .ft-grid__card:hover {
-  transform: translateY(-3px);
+  transform: translateY(-2px);
   box-shadow: var(--ft-shadow-soft);
 }
 
