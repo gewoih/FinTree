@@ -44,5 +44,6 @@
   - `AUTH_AUDIENCE`
   - `AUTH_ACCESS_TOKEN_LIFETIME_MINUTES`
   - `AUTH_REFRESH_TOKEN_LIFETIME_DAYS`
+- Production CORS origins must be explicit HTTPS origins for public domains (`https://fin-tree.ru`, `https://www.fin-tree.ru`).
 - API host filtering must be configured through explicit `AllowedHosts` values in compose environment.
 - Production deployments should set `ASPNETCORE_ALLOWED_HOSTS` explicitly to the project domains.
