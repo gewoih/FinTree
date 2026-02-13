@@ -24,6 +24,13 @@
 - Only explicit allowed origins are permitted per environment.
 - CORS configuration must be reproducible across environments.
 
+## Request hardening rules
+- API must enforce per-IP rate limiting with stricter limits for `/api/auth/*` than for general `/api/*` routes.
+- Rate limit rejections must return deterministic `429` JSON payloads safe for frontend handling.
+- Reverse-proxy deployments must pass and validate forwarded headers so limits are applied to client IPs, not proxy container IPs.
+- `AllowedHosts` must use explicit hostnames in production; wildcard host allowance is forbidden.
+- Kestrel server version header must be disabled in production.
+
 ## External identity providers (Telegram and others)
 - Signature verification and payload expiry checks are mandatory.
 - External login must map safely to the internal user model without breaking invariants.

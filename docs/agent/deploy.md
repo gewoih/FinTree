@@ -10,6 +10,8 @@
 - Production runtime is fully containerized and reproducible via `docker compose`.
 - Secrets and environment-specific values are stored outside git.
 - HTTPS is mandatory for production.
+- Public traffic must enter through nginx; API containers must stay internal-only on the docker network.
+- nginx runtime config is static (`deploy/nginx/nginx.conf`) and copied into image as-is (no runtime templating).
 
 ## CI/CD principles
 - Pipeline must be deterministic and idempotent.
@@ -26,6 +28,10 @@
 - Commands and runbooks must use a single up-to-date stack standard.
 - Manual workaround flows must not become the default operating path.
 - Infrastructure changes must include corresponding runbook updates.
+- nginx production startup requires existing cert files at `/etc/letsencrypt/live/fin-tree.ru/fullchain.pem` and `/etc/letsencrypt/live/fin-tree.ru/privkey.pem`.
+- nginx must include default virtual hosts (`default_server`) that drop unknown hosts and direct-IP traffic.
+- nginx must block known scanner signatures (for example dotfiles and legacy exploit paths) before proxying to API.
+- nginx must enforce request throttling for both `/api/*` and stricter `/api/auth/*`.
 
 ## Compose runbook
 - Base production stack is `compose.yaml` (no public Postgres port, secrets from environment only).
@@ -38,3 +44,5 @@
   - `AUTH_AUDIENCE`
   - `AUTH_ACCESS_TOKEN_LIFETIME_MINUTES`
   - `AUTH_REFRESH_TOKEN_LIFETIME_DAYS`
+- API host filtering must be configured through explicit `AllowedHosts` values in compose environment.
+- Production deployments should set `ASPNETCORE_ALLOWED_HOSTS` explicitly to the project domains.

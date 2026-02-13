@@ -1,7 +1,9 @@
 using System.ComponentModel.DataAnnotations;
+using System.Globalization;
 using System.Text;
 using System.Text.Json;
 using System.Text.Json.Serialization;
+using System.Threading.RateLimiting;
 using FinTree.Api;
 using FinTree.Application.Abstractions;
 using FinTree.Application.Accounts;
@@ -16,6 +18,7 @@ using FinTree.Infrastructure.Database;
 using FinTree.Infrastructure.Telegram;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Diagnostics;
+using Microsoft.AspNetCore.HttpOverrides;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
@@ -23,6 +26,7 @@ using Serilog;
 using Telegram.Bot;
 
 var builder = WebApplication.CreateBuilder(args);
+builder.WebHost.ConfigureKestrel(options => options.AddServerHeader = false);
 
 builder.Services.AddControllers().AddJsonOptions(options =>
 {
@@ -31,6 +35,11 @@ builder.Services.AddControllers().AddJsonOptions(options =>
 
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
+builder.Services.AddHsts(options =>
+{
+    options.MaxAge = TimeSpan.FromDays(365);
+    options.IncludeSubDomains = true;
+});
 
 Log.Logger = new LoggerConfiguration()
     .WriteTo.Console()
@@ -71,6 +80,61 @@ builder.Services.AddCors(options =>
             .AllowAnyHeader()
             .AllowAnyMethod()
             .AllowCredentials();
+    });
+});
+
+builder.Services.Configure<ForwardedHeadersOptions>(options =>
+{
+    options.ForwardedHeaders = ForwardedHeaders.XForwardedFor | ForwardedHeaders.XForwardedProto;
+    options.KnownIPNetworks.Clear();
+    options.KnownProxies.Clear();
+    options.ForwardLimit = 1;
+});
+
+const int authRequestsPerMinute = 20;
+const int apiRequestsPerMinute = 180;
+builder.Services.AddRateLimiter(options =>
+{
+    options.RejectionStatusCode = StatusCodes.Status429TooManyRequests;
+    options.OnRejected = async (context, cancellationToken) =>
+    {
+        context.HttpContext.Response.ContentType = "application/json";
+        if (context.Lease.TryGetMetadata(MetadataName.RetryAfter, out var retryAfter))
+            context.HttpContext.Response.Headers.RetryAfter =
+                Math.Ceiling(retryAfter.TotalSeconds).ToString(CultureInfo.InvariantCulture);
+
+        await context.HttpContext.Response.WriteAsync(
+            JsonSerializer.Serialize(new
+            {
+                error = "Слишком много запросов. Попробуйте позже.",
+                code = "rate_limit_exceeded"
+            }),
+            cancellationToken);
+    };
+
+    options.GlobalLimiter = PartitionedRateLimiter.Create<HttpContext, string>(httpContext =>
+    {
+        var path = httpContext.Request.Path.Value ?? string.Empty;
+        if (!path.StartsWith("/api", StringComparison.OrdinalIgnoreCase))
+            return RateLimitPartition.GetNoLimiter("non-api");
+        if (HttpMethods.IsOptions(httpContext.Request.Method))
+            return RateLimitPartition.GetNoLimiter("api-options");
+
+        var ip = httpContext.Connection.RemoteIpAddress?.ToString() ?? "unknown";
+        var isAuthPath = path.StartsWith("/api/auth", StringComparison.OrdinalIgnoreCase);
+        var bucket = isAuthPath ? "auth" : "api";
+        var permitLimit = isAuthPath ? authRequestsPerMinute : apiRequestsPerMinute;
+
+        return RateLimitPartition.GetFixedWindowLimiter(
+            partitionKey: $"{bucket}:{ip}",
+            factory: _ => new FixedWindowRateLimiterOptions
+            {
+                PermitLimit = permitLimit,
+                Window = TimeSpan.FromMinutes(1),
+                QueueProcessingOrder = QueueProcessingOrder.OldestFirst,
+                QueueLimit = 0,
+                AutoReplenishment = true
+            });
     });
 });
 
@@ -222,6 +286,7 @@ app.UseExceptionHandler(b =>
 });
 
 app.UseCors("VueFrontend");
+app.UseRateLimiter();
 app.UseAuthentication();
 app.UseAuthorization();
 
