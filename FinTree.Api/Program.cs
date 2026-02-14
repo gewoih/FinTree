@@ -12,6 +12,7 @@ using FinTree.Application.Currencies;
 using FinTree.Application.Exceptions;
 using FinTree.Application.Transactions;
 using FinTree.Application.Users;
+using FinTree.Application.Telegram;
 using FinTree.Domain.Identity;
 using FinTree.Infrastructure;
 using FinTree.Infrastructure.Database;
@@ -230,6 +231,7 @@ builder.Services.AddScoped<AuthService>();
 builder.Services.AddScoped<ICurrentUser, HttpCurrentUser>();
 builder.Services.AddScoped<AnalyticsService>();
 builder.Services.AddScoped<CurrencyConverter>();
+builder.Services.AddScoped<TelegramOperationsService>();
 builder.Services.AddScoped<DatabaseInitializer>();
 
 if (!string.IsNullOrWhiteSpace(telegramToken))
