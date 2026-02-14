@@ -73,28 +73,25 @@ const problems = [
   }
 ] as const
 
-const sharedPricingFeatures = [
-  'Telegram-бот для учёта расходов',
-  'Полная аналитика бюджета и капитала',
-  'Счета, категории и инвестиции',
-  'Без ограничений функций'
-] as const
-
 const pricing = [
   {
     name: 'Месяц',
     price: '390 ₽',
     period: 'в месяц',
-    subprice: 'Подходит, если хотите платить помесячно',
+    note: 'Гибкая помесячная оплата',
+    description: 'Оптимально, если хотите начать без долгого обязательства.',
     accent: false
   },
   {
     name: 'Год',
+    oldPrice: '4 680 ₽',
     price: '3 900 ₽',
     period: 'в год',
-    subprice: '2 месяца бесплатно (по сравнению с ежемесячной оплатой)',
+    note: '325 ₽ в месяц при оплате за год',
+    description: 'Экономия 780 ₽ в год по сравнению с помесячной оплатой.',
     accent: true,
-    badge: 'Выгодно'
+    badge: 'Лучший выбор',
+    discount: '-17%'
   }
 ] as const
 
@@ -290,7 +287,7 @@ const scrollToSection = (sectionId: string) => {
       </section>
 
       <!-- Product Screens -->
-      <section class="landing__section">
+      <section class="landing__section landing__section--showcase">
         <div class="landing__container">
           <header class="landing__section-header">
             <h2>Сильная аналитика в реальном кабинете</h2>
@@ -302,7 +299,7 @@ const scrollToSection = (sectionId: string) => {
               v-for="screen in dashboardScreens"
               :key="screen.title"
               variant="muted"
-              padding="lg"
+              padding="sm"
               class="landing__screen-card"
             >
               <div class="landing__screen-media">
@@ -416,24 +413,8 @@ const scrollToSection = (sectionId: string) => {
         <div class="landing__container">
           <header class="landing__section-header">
             <h2>Тарифы без сюрпризов</h2>
-            <p>Один бесплатный месяц, затем выбираете удобный формат оплаты.</p>
+            <p>Полный функционал в обоих тарифах. Выберите удобный формат оплаты.</p>
           </header>
-
-          <div class="landing__pricing-shared">
-            <h4>Что входит в оба тарифа:</h4>
-            <ul>
-              <li
-                v-for="feat in sharedPricingFeatures"
-                :key="feat"
-              >
-                <i
-                  class="pi pi-check"
-                  aria-hidden="true"
-                />
-                <span>{{ feat }}</span>
-              </li>
-            </ul>
-          </div>
 
           <div class="card-grid card-grid--auto landing__pricing">
             <AppCard
@@ -446,21 +427,36 @@ const scrollToSection = (sectionId: string) => {
               :elevated="plan.accent"
             >
               <header class="landing__pricing-header">
-                <div>
-                  <div class="landing__pricing-title-row">
-                    <h3>{{ plan.name }}</h3>
-                    <span
-                      v-if="'badge' in plan && plan.badge"
-                      class="landing__pricing-badge"
-                    >{{ plan.badge }}</span>
-                  </div>
+                <div class="landing__pricing-title-row">
+                  <h3>{{ plan.name }}</h3>
+                  <span
+                    v-if="'badge' in plan && plan.badge"
+                    class="landing__pricing-badge"
+                  >{{ plan.badge }}</span>
                 </div>
-                <div class="landing__pricing-price">
-                  <strong>{{ plan.price }}</strong>
-                  <span>{{ plan.period }}</span>
-                  <span v-if="plan.subprice">{{ plan.subprice }}</span>
-                </div>
+                <span
+                  v-if="'discount' in plan && plan.discount"
+                  class="landing__pricing-discount"
+                >{{ plan.discount }}</span>
               </header>
+
+              <div class="landing__pricing-price">
+                <span
+                  v-if="'oldPrice' in plan && plan.oldPrice"
+                  class="landing__pricing-old-price"
+                >{{ plan.oldPrice }}</span>
+                <strong>{{ plan.price }}</strong>
+                <span class="landing__pricing-period">{{ plan.period }}</span>
+              </div>
+
+              <div class="landing__pricing-copy">
+                <p class="landing__pricing-note">
+                  {{ plan.note }}
+                </p>
+                <p class="landing__pricing-description">
+                  {{ plan.description }}
+                </p>
+              </div>
             </AppCard>
           </div>
 
@@ -516,22 +512,6 @@ const scrollToSection = (sectionId: string) => {
               </transition>
             </AppCard>
           </div>
-        </div>
-      </section>
-
-      <!-- Final CTA -->
-      <section class="landing__cta">
-        <div class="landing__container landing__cta-inner">
-          <div class="landing__cta-content">
-            <h2>Попробуйте FinTree бесплатно в первый месяц</h2>
-            <p>Настройка занимает пару минут. Дальше вы просто пишете траты в Telegram и видите честную картину бюджета.</p>
-          </div>
-          <AppButton
-            label="Создать аккаунт"
-            size="lg"
-            variant="cta"
-            @click="openRegister('final_cta_click')"
-          />
         </div>
       </section>
     </main>
@@ -915,6 +895,12 @@ const scrollToSection = (sectionId: string) => {
   border-bottom: 1px solid var(--ft-border-subtle);
 }
 
+.landing__section--showcase .landing__container {
+  max-width: min(1880px, 100%);
+  padding-right: clamp(var(--ft-space-2), 1.4vw, var(--ft-space-5));
+  padding-left: clamp(var(--ft-space-2), 1.4vw, var(--ft-space-5));
+}
+
 .landing__section-header {
   display: flex;
   flex-direction: column;
@@ -1023,7 +1009,9 @@ const scrollToSection = (sectionId: string) => {
 /* ── Screenshots ── */
 
 .landing__screens {
-  gap: var(--ft-space-4);
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: var(--ft-space-2);
+  align-items: stretch;
 }
 
 .landing__screen-card {
@@ -1058,56 +1046,25 @@ const scrollToSection = (sectionId: string) => {
 
 /* ── Pricing ── */
 
-.landing__pricing-shared {
-  max-width: 620px;
-  margin: 0 auto clamp(var(--ft-space-6), 4vw, var(--ft-space-8));
-  text-align: center;
-}
-
-.landing__pricing-shared h4 {
-  margin: 0 0 var(--ft-space-3);
-  font-size: var(--ft-text-base);
-  font-weight: var(--ft-font-medium);
-  color: var(--ft-text-secondary);
-}
-
-.landing__pricing-shared ul {
-  display: flex;
-  flex-direction: column;
-  gap: var(--ft-space-2);
-
-  max-width: 420px;
-  margin: 0 auto;
-  padding: 0;
-
-  list-style: none;
-}
-
-.landing__pricing-shared li {
-  display: flex;
-  gap: var(--ft-space-2);
-  align-items: center;
-  justify-content: flex-start;
-
-  color: var(--ft-text-secondary);
-  text-align: left;
-}
-
-.landing__pricing-shared li i {
-  color: var(--ft-success-400);
-}
-
 .landing__pricing {
-  gap: var(--ft-space-4);
-  align-items: stretch;
-  max-width: 980px;
+  grid-template-columns: repeat(2, minmax(280px, 430px));
+  gap: var(--ft-space-3);
+  justify-content: center;
+
+  max-width: 930px;
   margin: 0 auto;
 }
 
 .landing__pricing-card {
-  gap: var(--ft-space-5);
+  gap: var(--ft-space-4);
+  align-items: center;
+  justify-content: space-between;
+
+  text-align: center;
+
   background: var(--ft-surface-base);
   border: 1px solid var(--ft-border-subtle);
+  border-radius: var(--ft-radius-2xl);
 }
 
 .landing__pricing-card--accent {
@@ -1118,13 +1075,18 @@ const scrollToSection = (sectionId: string) => {
 
 .landing__pricing-header {
   display: flex;
-  gap: var(--ft-space-4);
-  align-items: flex-start;
-  justify-content: space-between;
+  flex-direction: column;
+  gap: var(--ft-space-2);
+  align-items: center;
+  justify-content: center;
+
+  width: 100%;
+
+  text-align: center;
 }
 
 .landing__pricing-title-row {
-  display: flex;
+  display: inline-flex;
   gap: var(--ft-space-2);
   align-items: center;
 }
@@ -1148,21 +1110,68 @@ const scrollToSection = (sectionId: string) => {
   border-radius: var(--ft-radius-full);
 }
 
-.landing__pricing-header strong {
-  font-size: var(--ft-text-2xl);
-  color: var(--ft-text-primary);
+.landing__pricing-discount {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+
+  padding: var(--ft-space-1) var(--ft-space-2);
+
+  font-size: var(--ft-text-xs);
+  font-weight: var(--ft-font-semibold);
+  color: var(--ft-success-300);
+
+  background: color-mix(in srgb, var(--ft-success-500) 24%, transparent);
+  border: 1px solid color-mix(in srgb, var(--ft-success-500) 40%, transparent);
+  border-radius: var(--ft-radius-full);
 }
 
 .landing__pricing-price {
   display: flex;
   flex-direction: column;
-  gap: var(--ft-space-1);
-  align-items: flex-end;
+  gap: calc(var(--ft-space-1) / 2);
+  align-items: center;
 
-  text-align: right;
+  text-align: center;
 }
 
-.landing__pricing-price span {
+.landing__pricing-old-price {
+  font-size: var(--ft-text-sm);
+  color: var(--ft-text-tertiary);
+  text-decoration: line-through;
+}
+
+.landing__pricing-price strong {
+  font-size: clamp(2rem, 3vw, 2.4rem);
+  font-weight: var(--ft-font-bold);
+  line-height: 1.1;
+}
+
+.landing__pricing-period {
+  font-size: var(--ft-text-sm);
+  color: var(--ft-text-secondary);
+}
+
+.landing__pricing-copy {
+  display: flex;
+  flex-direction: column;
+  gap: var(--ft-space-2);
+  align-items: center;
+}
+
+.landing__pricing-note,
+.landing__pricing-description {
+  max-width: 32ch;
+  margin: 0;
+}
+
+.landing__pricing-note {
+  font-size: var(--ft-text-base);
+  font-weight: var(--ft-font-medium);
+  color: var(--ft-text-primary);
+}
+
+.landing__pricing-description {
   font-size: var(--ft-text-sm);
   color: var(--ft-text-secondary);
 }
@@ -1237,49 +1246,6 @@ const scrollToSection = (sectionId: string) => {
 .faq-leave-to {
   transform: translateY(-4px);
   opacity: 0;
-}
-
-/* ── Final CTA ── */
-
-.landing__section-urgency {
-  display: flex;
-  justify-content: center;
-  margin-bottom: var(--ft-space-4);
-}
-
-.landing__cta {
-  padding-block: clamp(var(--ft-space-8), 6vw, var(--ft-space-12));
-  background: linear-gradient(
-    135deg,
-    color-mix(in srgb, var(--ft-success-500) 22%, transparent),
-    color-mix(in srgb, var(--ft-primary-500) 18%, transparent)
-  );
-  border-top: 1px solid var(--ft-border-subtle);
-  border-bottom: 1px solid var(--ft-border-subtle);
-}
-
-.landing__cta-inner {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-  gap: var(--ft-space-6);
-  align-items: center;
-}
-
-.landing__cta-content {
-  display: flex;
-  flex-direction: column;
-  gap: var(--ft-space-3);
-}
-
-.landing__cta-inner h2 {
-  margin: 0;
-  font-family: var(--ft-font-display);
-  font-size: clamp(1.85rem, 3vw, 2.4rem);
-}
-
-.landing__cta-inner p {
-  margin: var(--ft-space-2) 0 0;
-  color: var(--ft-text-secondary);
 }
 
 /* ── Footer ── */
@@ -1397,6 +1363,14 @@ const scrollToSection = (sectionId: string) => {
   .landing__social-proof-divider {
     display: none;
   }
+
+  .landing__screens {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .landing__pricing {
+    grid-template-columns: minmax(280px, 420px);
+  }
 }
 
 @media (width <= 640px) {
@@ -1406,6 +1380,10 @@ const scrollToSection = (sectionId: string) => {
   }
 
   .landing__trust {
+    grid-template-columns: 1fr;
+  }
+
+  .landing__screens {
     grid-template-columns: 1fr;
   }
 }
