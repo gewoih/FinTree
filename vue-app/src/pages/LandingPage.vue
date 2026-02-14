@@ -1359,7 +1359,7 @@ const scrollToSection = (sectionId: string) => {
 
 /* ── Responsive ── */
 
-@media (width <= 960px) {
+@media (width <= 1024px) {
   .landing__social-proof-divider {
     display: none;
   }

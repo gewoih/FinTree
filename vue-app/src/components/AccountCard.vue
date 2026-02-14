@@ -307,7 +307,7 @@ const toggleMenu = (event: Event) => {
   height: 40px;
   padding: 0;
 
-  border-radius: 12px;
+  border-radius: var(--ft-radius-lg);
 }
 
 .account-card__icon-button :deep(.p-button-icon) {

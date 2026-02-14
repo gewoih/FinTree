@@ -162,14 +162,14 @@ const computedAttrs = computed(() => ({
 }
 
 .app-button--cta {
-  color: white;
+  color: var(--ft-text-inverse);
   background: linear-gradient(
     135deg,
     var(--ft-success-500),
     var(--ft-success-600)
   );
   border: 1px solid var(--ft-success-600);
-  box-shadow: 0 8px 20px rgb(34 197 94 / 25%);
+  box-shadow: 0 8px 20px rgb(34 197 94 / 30%);
 }
 
 .app-button--cta:hover:not(:disabled) {
@@ -178,7 +178,7 @@ const computedAttrs = computed(() => ({
     var(--ft-success-600),
     var(--ft-success-700)
   );
-  box-shadow: 0 12px 28px rgb(34 197 94 / 35%);
+  box-shadow: 0 12px 28px rgb(34 197 94 / 40%);
   transform: translateY(-2px);
 }
 
@@ -187,12 +187,12 @@ const computedAttrs = computed(() => ({
   box-shadow: 0 6px 16px rgb(34 197 94 / 30%);
 }
 
-.dark-mode .app-button--cta {
-  box-shadow: 0 8px 20px rgb(34 197 94 / 30%);
+.light-mode .app-button--cta {
+  box-shadow: 0 8px 20px rgb(34 197 94 / 25%);
 }
 
-.dark-mode .app-button--cta:hover:not(:disabled) {
-  box-shadow: 0 12px 28px rgb(34 197 94 / 40%);
+.light-mode .app-button--cta:hover:not(:disabled) {
+  box-shadow: 0 12px 28px rgb(34 197 94 / 35%);
 }
 
 .app-button--block {

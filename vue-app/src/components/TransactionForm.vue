@@ -314,7 +314,6 @@ watch(filteredCategories, () => {
   <Dialog
     :visible="props.visible"
     :modal="true"
-    :style="{ width: '540px' }"
     class="txn-dialog"
     :closable="false"
     :dismissable-mask="true"
@@ -534,6 +533,11 @@ watch(filteredCategories, () => {
 </template>
 
 <style scoped>
+.txn-dialog {
+  width: 540px;
+  max-width: 95vw;
+}
+
 .txn-dialog :deep(.p-dialog-header) {
   display: none;
 }
@@ -549,7 +553,7 @@ watch(filteredCategories, () => {
   flex-direction: column;
   gap: var(--ft-space-5);
   padding: var(--ft-space-6, 1.5rem);
-  background: var(--surface-2);
+  background: var(--ft-surface-raised);
 }
 
 /* --- Header --- */
@@ -644,11 +648,11 @@ watch(filteredCategories, () => {
   padding: 0.35rem 0.65rem;
 
   font-size: var(--ft-text-sm);
-  font-weight: 600;
+  font-weight: var(--ft-font-semibold);
   color: var(--ft-text-secondary);
 
-  background: var(--surface-1);
-  border: 1px solid var(--border);
+  background: var(--ft-surface-base);
+  border: 1px solid var(--ft-border-default);
   border-radius: var(--ft-radius-md);
 }
 
@@ -680,7 +684,7 @@ watch(filteredCategories, () => {
 
 .txn-form__field label {
   font-size: var(--ft-text-sm);
-  font-weight: 600;
+  font-weight: var(--ft-font-semibold);
   color: var(--ft-text-secondary);
 }
 
@@ -698,8 +702,8 @@ watch(filteredCategories, () => {
   font-weight: 500;
   color: var(--ft-text-primary);
 
-  background: var(--surface-1);
-  border: 1px solid var(--border);
+  background: var(--ft-surface-base);
+  border: 1px solid var(--ft-border-default);
   border-radius: var(--ft-radius-md);
 
   transition: border-color 0.15s;

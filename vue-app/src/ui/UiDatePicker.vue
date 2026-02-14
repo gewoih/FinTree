@@ -37,7 +37,7 @@ const attrs = useAttrs();
 <style scoped>
 .ui-date-picker {
   width: 100%;
-  min-height: var(--control-height);
-  border-radius: var(--radius-md);
+  min-height: var(--ft-control-height);
+  border-radius: var(--ft-radius-lg);
 }
 </style>

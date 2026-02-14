@@ -41,16 +41,16 @@ const props = withDefaults(
 .ui-card {
   display: flex;
   flex-direction: column;
-  gap: var(--space-4);
+  gap: var(--ft-space-4);
 
-  background: var(--surface-2);
-  border: 1px solid var(--border);
-  border-radius: var(--radius-lg);
-  box-shadow: var(--shadow-soft);
+  background: var(--ft-surface-raised);
+  border: 1px solid var(--ft-border-default);
+  border-radius: var(--ft-radius-xl);
+  box-shadow: var(--ft-shadow-md);
 }
 
 .ui-card--muted {
-  background: var(--surface-1);
+  background: var(--ft-surface-base);
 }
 
 .ui-card--outlined {
@@ -59,20 +59,20 @@ const props = withDefaults(
 }
 
 .ui-card--sm {
-  padding: var(--space-3);
+  padding: var(--ft-space-3);
 }
 
 .ui-card--md {
-  padding: var(--space-4);
+  padding: var(--ft-space-4);
 }
 
 .ui-card--lg {
-  padding: var(--space-5);
+  padding: var(--ft-space-6);
 }
 
 .ui-card__header {
   display: flex;
-  gap: var(--space-3);
+  gap: var(--ft-space-3);
   align-items: center;
   justify-content: space-between;
 }
@@ -80,12 +80,12 @@ const props = withDefaults(
 .ui-card__body {
   display: flex;
   flex-direction: column;
-  gap: var(--space-4);
+  gap: var(--ft-space-4);
 }
 
 .ui-card__footer {
   display: flex;
-  gap: var(--space-3);
+  gap: var(--ft-space-3);
   align-items: center;
   justify-content: flex-end;
 }

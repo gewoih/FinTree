@@ -194,7 +194,7 @@ const hasActiveFilters = computed(() =>
   }
 }
 
-@media (width <= 480px) {
+@media (width <= 640px) {
   .transaction-filters {
     grid-template-columns: 1fr;
   }

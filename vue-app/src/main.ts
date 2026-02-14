@@ -1,5 +1,4 @@
 import './assets/design-tokens.css';
-import './styles/tokens.css';
 import './style.css';
 import './styles/theme.css';
 import './styles/prime-overrides.css';

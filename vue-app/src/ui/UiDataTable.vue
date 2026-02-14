@@ -63,9 +63,9 @@ const attrs = useAttrs();
 <style scoped>
 .ui-datatable__shell {
   overflow: hidden;
-  background: var(--surface-2);
-  border: 1px solid var(--border);
-  border-radius: var(--radius-lg);
+  background: var(--ft-surface-raised);
+  border: 1px solid var(--ft-border-default);
+  border-radius: var(--ft-radius-xl);
 }
 
 .ui-datatable :deep(.p-datatable-table) {
@@ -79,12 +79,12 @@ const attrs = useAttrs();
 }
 
 .ui-datatable :deep(.p-datatable-tbody > tr > td) {
-  padding: var(--space-3);
+  padding: var(--ft-space-3);
 }
 
 .ui-datatable :deep(.p-paginator-bottom) {
-  padding: var(--space-3);
-  border-top: 1px solid var(--border);
+  padding: var(--ft-space-3);
+  border-top: 1px solid var(--ft-border-default);
 }
 
 @media (width <= 768px) {

@@ -51,35 +51,6 @@ withDefaults(defineProps<Props>(), {
 
 /* Variants */
 .urgency-badge--urgent {
-  color: var(--ft-danger-700);
-  background: linear-gradient(
-    135deg,
-    rgb(239 68 68 / 12%),
-    rgb(220 38 38 / 16%)
-  );
-  border-color: rgb(239 68 68 / 30%);
-  box-shadow: 0 2px 8px rgb(239 68 68 / 12%);
-}
-
-.urgency-badge--hot {
-  color: var(--ft-warning-700);
-  background: linear-gradient(
-    135deg,
-    rgb(249 115 22 / 12%),
-    rgb(245 158 11 / 16%)
-  );
-  border-color: rgb(249 115 22 / 30%);
-  box-shadow: 0 2px 8px rgb(249 115 22 / 12%);
-}
-
-.urgency-badge--warning {
-  color: var(--ft-warning-700);
-  background: rgb(245 158 11 / 12%);
-  border-color: rgb(245 158 11 / 25%);
-}
-
-/* Dark mode */
-.dark-mode .urgency-badge--urgent {
   color: var(--ft-danger-400);
   background: linear-gradient(
     135deg,
@@ -90,7 +61,7 @@ withDefaults(defineProps<Props>(), {
   box-shadow: 0 2px 12px rgb(239 68 68 / 20%);
 }
 
-.dark-mode .urgency-badge--hot {
+.urgency-badge--hot {
   color: var(--ft-warning-400);
   background: linear-gradient(
     135deg,
@@ -101,10 +72,39 @@ withDefaults(defineProps<Props>(), {
   box-shadow: 0 2px 12px rgb(249 115 22 / 20%);
 }
 
-.dark-mode .urgency-badge--warning {
+.urgency-badge--warning {
   color: var(--ft-warning-400);
   background: rgb(245 158 11 / 18%);
   border-color: rgb(245 158 11 / 35%);
+}
+
+/* Light mode */
+.light-mode .urgency-badge--urgent {
+  color: var(--ft-danger-700);
+  background: linear-gradient(
+    135deg,
+    rgb(239 68 68 / 12%),
+    rgb(220 38 38 / 16%)
+  );
+  border-color: rgb(239 68 68 / 30%);
+  box-shadow: 0 2px 8px rgb(239 68 68 / 12%);
+}
+
+.light-mode .urgency-badge--hot {
+  color: var(--ft-warning-700);
+  background: linear-gradient(
+    135deg,
+    rgb(249 115 22 / 12%),
+    rgb(245 158 11 / 16%)
+  );
+  border-color: rgb(249 115 22 / 30%);
+  box-shadow: 0 2px 8px rgb(249 115 22 / 12%);
+}
+
+.light-mode .urgency-badge--warning {
+  color: var(--ft-warning-700);
+  background: rgb(245 158 11 / 12%);
+  border-color: rgb(245 158 11 / 25%);
 }
 
 /* Pulse animation */

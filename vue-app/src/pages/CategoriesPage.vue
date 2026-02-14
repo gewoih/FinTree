@@ -41,10 +41,10 @@ onMounted(() => {
 
 <style scoped>
 .categories {
-  gap: var(--space-6);
+  gap: var(--ft-space-8);
 }
 
 .categories__content {
-  gap: var(--space-5);
+  gap: var(--ft-space-6);
 }
 </style>

@@ -430,7 +430,7 @@ const handleSubmit = async () => {
   margin: 0;
 }
 
-@media (width <= 576px) {
+@media (width <= 640px) {
   .actions :deep(.app-button) {
     width: 100%;
     min-width: 0;

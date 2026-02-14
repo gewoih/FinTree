@@ -8,6 +8,6 @@
 .ui-section {
   display: flex;
   flex-direction: column;
-  gap: var(--space-5);
+  gap: var(--ft-space-6);
 }
 </style>

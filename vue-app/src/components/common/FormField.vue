@@ -196,17 +196,17 @@ const fieldAttrs = computed(() => ({
 
   font-size: var(--ft-text-sm);
   font-weight: var(--ft-font-medium);
-  color: var(--ft-danger-600);
+  color: var(--ft-danger-400);
 
-  background: rgb(239 68 68 / 10%);
-  border: 1px solid rgb(239 68 68 / 20%);
+  background: rgb(239 68 68 / 15%);
+  border: 1px solid rgb(239 68 68 / 30%);
   border-radius: var(--ft-radius-md);
 }
 
-.dark-mode .form-field__error {
-  color: var(--ft-danger-400);
-  background: rgb(239 68 68 / 15%);
-  border-color: rgb(239 68 68 / 30%);
+.light-mode .form-field__error {
+  color: var(--ft-danger-600);
+  background: rgb(239 68 68 / 10%);
+  border-color: rgb(239 68 68 / 20%);
 }
 
 .form-field__error i {
@@ -220,11 +220,11 @@ const fieldAttrs = computed(() => ({
 
 /* Error state adjustments */
 .form-field--error .form-field__label {
-  color: var(--ft-danger-600);
+  color: var(--ft-danger-400);
 }
 
-.dark-mode .form-field--error .form-field__label {
-  color: var(--ft-danger-400);
+.light-mode .form-field--error .form-field__label {
+  color: var(--ft-danger-600);
 }
 
 /* Screen reader only class */

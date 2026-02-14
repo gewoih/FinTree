@@ -85,7 +85,7 @@ const getInitials = (name: string): string => {
 
   font-size: var(--ft-text-base);
   font-weight: var(--ft-font-semibold);
-  color: var(--ft-primary-100);
+  color: var(--ft-primary-50);
 
   background: linear-gradient(
     135deg,
@@ -95,8 +95,8 @@ const getInitials = (name: string): string => {
   border-radius: var(--ft-radius-full);
 }
 
-.dark-mode .testimonial-card__avatar {
-  color: var(--ft-primary-50);
+.light-mode .testimonial-card__avatar {
+  color: var(--ft-primary-100);
 }
 
 .testimonial-card__author {
@@ -129,17 +129,17 @@ const getInitials = (name: string): string => {
 
   font-size: var(--ft-text-lg);
   font-weight: var(--ft-font-bold);
-  color: var(--ft-success-700);
+  color: var(--ft-success-400);
   text-align: center;
 
-  background: color-mix(in srgb, var(--ft-success-500) 12%, transparent);
-  border: 1px solid color-mix(in srgb, var(--ft-success-500) 25%, transparent);
+  background: color-mix(in srgb, var(--ft-success-500) 18%, transparent);
+  border: 1px solid color-mix(in srgb, var(--ft-success-500) 35%, transparent);
   border-radius: var(--ft-radius-lg);
 }
 
-.dark-mode .testimonial-card__highlight {
-  color: var(--ft-success-400);
-  background: color-mix(in srgb, var(--ft-success-500) 18%, transparent);
-  border-color: color-mix(in srgb, var(--ft-success-500) 35%, transparent);
+.light-mode .testimonial-card__highlight {
+  color: var(--ft-success-700);
+  background: color-mix(in srgb, var(--ft-success-500) 12%, transparent);
+  border-color: color-mix(in srgb, var(--ft-success-500) 25%, transparent);
 }
 </style>

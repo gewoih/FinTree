@@ -1,3 +1,4 @@
+@layer primevue {
 :root {
   --p-card-background: var(--ft-surface-soft);
   --p-card-border-color: var(--ft-border-soft);
@@ -93,26 +94,26 @@
 
 .p-tag-success {
   color: var(--ft-success-600);
-  background: rgb(34 197 94 / 16%);
-  border: 1px solid rgb(34 197 94 / 32%);
+  background: color-mix(in srgb, var(--ft-success-500) 16%, transparent);
+  border: 1px solid color-mix(in srgb, var(--ft-success-500) 32%, transparent);
 }
 
 .p-tag-danger {
   color: var(--ft-danger-600);
-  background: rgb(239 68 68 / 16%);
-  border: 1px solid rgb(239 68 68 / 32%);
+  background: color-mix(in srgb, var(--ft-danger-500) 16%, transparent);
+  border: 1px solid color-mix(in srgb, var(--ft-danger-500) 32%, transparent);
 }
 
 .p-tag-info {
   color: var(--ft-info-600);
-  background: rgb(14 165 233 / 14%);
-  border: 1px solid rgb(14 165 233 / 28%);
+  background: color-mix(in srgb, var(--ft-info-500) 16%, transparent);
+  border: 1px solid color-mix(in srgb, var(--ft-info-500) 32%, transparent);
 }
 
 .p-tag-warning {
   color: var(--ft-warning-600);
-  background: rgb(245 158 11 / 16%);
-  border: 1px solid rgb(245 158 11 / 32%);
+  background: color-mix(in srgb, var(--ft-warning-500) 16%, transparent);
+  border: 1px solid color-mix(in srgb, var(--ft-warning-500) 32%, transparent);
 }
 
 .p-skeleton {
@@ -221,3 +222,4 @@
   background: var(--ft-primary-400);
   border-color: var(--ft-primary-400);
 }
+} /* @layer primevue */

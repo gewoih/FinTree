@@ -280,7 +280,6 @@ const handleDelete = () => {
     :visible="props.visible"
     modal
     class="transfer-dialog"
-    :style="{ width: '540px', maxWidth: '95vw' }"
     :closable="false"
     :dismissable-mask="true"
     @update:visible="val => emit('update:visible', val)"
@@ -494,6 +493,11 @@ const handleDelete = () => {
 </template>
 
 <style scoped>
+.transfer-dialog {
+  width: 540px;
+  max-width: 95vw;
+}
+
 .transfer-dialog :deep(.p-dialog-header) {
   display: none;
 }
@@ -509,7 +513,7 @@ const handleDelete = () => {
   flex-direction: column;
   gap: var(--ft-space-5);
   padding: var(--ft-space-6, 1.5rem);
-  background: var(--surface-2);
+  background: var(--ft-surface-raised);
   overflow: hidden;
 }
 
@@ -564,14 +568,14 @@ const handleDelete = () => {
   flex-direction: column;
   gap: var(--ft-space-3);
   padding: var(--ft-space-4);
-  background: var(--surface-1);
-  border: 1px solid var(--border);
+  background: var(--ft-surface-base);
+  border: 1px solid var(--ft-border-default);
   border-radius: var(--ft-radius-lg);
 }
 
 .xfer-flow__label {
   font-size: var(--ft-text-xs);
-  font-weight: 600;
+  font-weight: var(--ft-font-semibold);
   color: var(--ft-text-tertiary);
   text-transform: uppercase;
   letter-spacing: 0.04em;
@@ -598,12 +602,12 @@ const handleDelete = () => {
   padding: 0.35rem 0.6rem;
 
   font-size: var(--ft-text-sm);
-  font-weight: 600;
+  font-weight: var(--ft-font-semibold);
   color: var(--ft-text-secondary);
   white-space: nowrap;
 
-  background: var(--surface-2);
-  border: 1px solid var(--border);
+  background: var(--ft-surface-raised);
+  border: 1px solid var(--ft-border-default);
   border-radius: var(--ft-radius-md);
 }
 
@@ -633,7 +637,7 @@ const handleDelete = () => {
 
 .xfer-flow__arrow {
   position: relative;
-  z-index: 1;
+  z-index: var(--ft-z-above);
 
   display: flex;
   align-items: center;
@@ -645,8 +649,8 @@ const handleDelete = () => {
   font-size: var(--ft-text-sm);
   color: var(--ft-primary-400);
 
-  background: var(--surface-2);
-  border: 2px solid var(--border);
+  background: var(--ft-surface-raised);
+  border: 2px solid var(--ft-border-default);
   border-radius: 50%;
 }
 
@@ -662,8 +666,8 @@ const handleDelete = () => {
   font-size: var(--ft-text-sm);
   color: var(--ft-text-secondary);
 
-  background: var(--surface-1);
-  border: 1px solid var(--border);
+  background: var(--ft-surface-base);
+  border: 1px solid var(--ft-border-default);
   border-radius: var(--ft-radius-md);
 }
 
@@ -691,7 +695,7 @@ const handleDelete = () => {
 
 .xfer-form__field label {
   font-size: var(--ft-text-sm);
-  font-weight: 600;
+  font-weight: var(--ft-font-semibold);
   color: var(--ft-text-secondary);
 }
 
