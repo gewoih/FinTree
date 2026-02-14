@@ -31,6 +31,8 @@ const form = reactive({
   telegramUserId: '',
 });
 
+const isPaymentHistoryOpen = ref(false);
+
 const isLoading = computed(() => isUserLoading.value || areCurrenciesLoading.value);
 const isSaving = computed(() => isUserSaving.value);
 const isSubscriptionActive = computed(() => hasActiveSubscription.value);
@@ -40,6 +42,16 @@ const subscriptionExpiresAtLabel = computed(() => {
   const date = new Date(raw);
   if (Number.isNaN(date.getTime())) return null;
   return date.toLocaleDateString('ru-RU');
+});
+
+const userInitials = computed(() => {
+  const name = currentUser.value?.name;
+  if (!name) return '?';
+  const parts = name.trim().split(/\s+/);
+  if (parts.length >= 2) {
+    return (parts[0][0] + parts[1][0]).toUpperCase();
+  }
+  return parts[0].slice(0, 2).toUpperCase();
 });
 
 const subscriptionPlans = computed(() => {
@@ -109,17 +121,7 @@ const currencyOptions = computed(() =>
   }))
 );
 
-const selectedCurrency = computed(() =>
-  currencies.value.find(currency => currency.code === form.baseCurrencyCode) ?? null
-);
-
-const selectedCurrencySummary = computed(() => {
-  if (!selectedCurrency.value) return '';
-  return `${selectedCurrency.value.symbol} ${selectedCurrency.value.code} · ${selectedCurrency.value.name}`;
-});
-
 function normalizeTelegramId(value: string | null | undefined): string {
-  // Приводим ID к единому виду и убираем пробелы.
   if (!value) return '';
   const trimmed = value.trim();
   if (!trimmed.length) return '';
@@ -265,11 +267,11 @@ async function handlePay(plan: SubscriptionPlan) {
 <template>
   <PageContainer class="profile-page">
     <PageHeader
-      title="Профиль"
-      subtitle="Обновите базовую валюту и Telegram для более умной аналитики"
+      title="Настройки"
+      subtitle="Управляйте профилем и подпиской"
       :breadcrumbs="[
         { label: 'Главная', to: '/analytics' },
-        { label: 'Профиль' }
+        { label: 'Настройки' }
       ]"
     />
 
@@ -277,7 +279,7 @@ async function handlePay(plan: SubscriptionPlan) {
       <div
         class="profile-tabs__bar"
         role="tablist"
-        aria-label="Разделы профиля"
+        aria-label="Разделы настроек"
       >
         <button
           id="profile-tab"
@@ -291,10 +293,10 @@ async function handlePay(plan: SubscriptionPlan) {
           @click="setActiveTab('profile')"
         >
           <i
-            class="pi pi-user"
+            class="pi pi-cog"
             aria-hidden="true"
           />
-          <span>Профиль</span>
+          <span>Настройки</span>
         </button>
         <button
           id="categories-tab"
@@ -322,22 +324,136 @@ async function handlePay(plan: SubscriptionPlan) {
         role="tabpanel"
         aria-labelledby="profile-tab"
       >
+        <!-- Card 1: Profile (read-only, muted) -->
         <UiCard
-          id="subscription"
-          class="profile-card profile-card--subscription"
-          variant="outlined"
+          class="profile-card"
+          variant="muted"
+          padding="lg"
+        >
+          <div class="profile-identity">
+            <div
+              class="profile-avatar"
+              aria-hidden="true"
+            >
+              {{ userInitials }}
+            </div>
+            <div class="profile-identity__info">
+              <p class="profile-identity__name">
+                {{ currentUser?.name ?? '—' }}
+              </p>
+              <p class="profile-identity__email">
+                {{ currentUser?.email ?? '—' }}
+              </p>
+            </div>
+          </div>
+        </UiCard>
+
+        <!-- Card 2: App settings (editable) -->
+        <UiCard
+          id="telegram"
+          class="profile-card"
           padding="lg"
         >
           <template #header>
             <div class="card-header">
               <div>
                 <h3 class="card-title">
-                  Подписка
+                  Основные настройки
                 </h3>
-                <p class="card-subtitle">
-                  Полный доступ к функциям доступен только при активной подписке.
-                </p>
               </div>
+            </div>
+          </template>
+
+          <form
+            class="settings-form"
+            @submit.prevent="handleSubmit"
+          >
+            <div class="settings-grid">
+              <div class="settings-field">
+                <label
+                  class="settings-label"
+                  for="profileCurrency"
+                >Базовая валюта</label>
+                <UiSelect
+                  id="profileCurrency"
+                  v-model="form.baseCurrencyCode"
+                  :options="currencyOptions"
+                  option-label="label"
+                  option-value="value"
+                  placeholder="Выберите валюту"
+                  :disabled="isLoading || isReadOnlyMode"
+                />
+                <small class="helper-text">
+                  <template v-if="isLoading">Загрузка доступных валют…</template>
+                  <template v-else>В этой валюте считается вся аналитика и отчёты</template>
+                </small>
+              </div>
+
+              <div class="settings-field">
+                <label
+                  class="settings-label"
+                  for="profileTelegram"
+                >Telegram-бот</label>
+                <div class="telegram-input">
+                  <UiInputText
+                    id="profileTelegram"
+                    v-model="form.telegramUserId"
+                    placeholder="123456789"
+                    autocomplete="off"
+                    :disabled="isSaving || isReadOnlyMode"
+                  />
+                  <UiButton
+                    type="button"
+                    label="Очистить"
+                    variant="ghost"
+                    size="sm"
+                    :disabled="!form.telegramUserId || isSaving || isReadOnlyMode"
+                    @click="handleClearTelegram"
+                  />
+                </div>
+                <small class="helper-text">
+                  Отправьте <code>/id</code> боту
+                  <a
+                    href="https://t.me/financetree_bot"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                  >@financetree_bot</a>
+                  и вставьте цифры сюда. Оставьте пустым, чтобы отвязать.
+                </small>
+              </div>
+            </div>
+
+            <div class="settings-actions">
+              <UiButton
+                type="button"
+                label="Сбросить"
+                variant="ghost"
+                :disabled="!hasChanges || isSaving || isReadOnlyMode"
+                @click="resetForm"
+              />
+              <UiButton
+                type="submit"
+                label="Сохранить"
+                icon="pi pi-check"
+                :loading="isSaving"
+                :disabled="!canSubmit"
+              />
+            </div>
+          </form>
+        </UiCard>
+
+        <!-- Card 3: Subscription (outlined) -->
+        <UiCard
+          id="subscription"
+          class="profile-card"
+          variant="outlined"
+          padding="lg"
+        >
+          <template #header>
+            <div class="card-header">
+              <h3 class="card-title">
+                Подписка
+              </h3>
               <StatusBadge
                 :label="isSubscriptionActive ? 'Активна' : 'Только просмотр'"
                 :severity="isSubscriptionActive ? 'success' : 'warning'"
@@ -346,17 +462,18 @@ async function handlePay(plan: SubscriptionPlan) {
             </div>
           </template>
 
-          <div class="subscription-status">
-            <p v-if="isSubscriptionActive">
-              Подписка активна до <strong>{{ subscriptionExpiresAtLabel ?? '—' }}</strong>.
-            </p>
-            <p v-else>
-              Подписка неактивна. Доступ только на просмотр, пока не нажмете «Оплатить».
-            </p>
-            <p class="subscription-status__note">
-              Сейчас оплата имитируется: при нажатии «Оплатить» выдается бесплатный доступ на 1 месяц.
-            </p>
-          </div>
+          <p
+            v-if="isSubscriptionActive"
+            class="subscription-status-line"
+          >
+            Активна до <strong>{{ subscriptionExpiresAtLabel ?? '—' }}</strong>
+          </p>
+          <p
+            v-else
+            class="subscription-status-line"
+          >
+            Доступен только просмотр
+          </p>
 
           <div class="subscription-plans">
             <article
@@ -381,12 +498,48 @@ async function handlePay(plan: SubscriptionPlan) {
             </article>
           </div>
 
-          <div class="subscription-history">
-            <h4>История оплат</h4>
+          <p class="subscription-sim-note">
+            Сейчас оплата имитируется: при нажатии «Оплатить» выдается бесплатный доступ на 1 месяц.
+          </p>
+        </UiCard>
 
+        <!-- Card 4: Payment history (muted, collapsible) -->
+        <UiCard
+          class="profile-card"
+          variant="muted"
+          padding="lg"
+        >
+          <button
+            type="button"
+            class="collapsible-header"
+            :aria-expanded="isPaymentHistoryOpen"
+            aria-controls="payment-history-content"
+            @click="isPaymentHistoryOpen = !isPaymentHistoryOpen"
+          >
+            <h3 class="card-title">
+              История оплат
+            </h3>
+            <span
+              v-if="formattedSubscriptionPayments.length > 0"
+              class="payment-count-badge"
+            >
+              {{ formattedSubscriptionPayments.length }}
+            </span>
+            <i
+              class="pi collapsible-chevron"
+              :class="isPaymentHistoryOpen ? 'pi-chevron-up' : 'pi-chevron-down'"
+              aria-hidden="true"
+            />
+          </button>
+
+          <div
+            id="payment-history-content"
+            v-show="isPaymentHistoryOpen"
+            class="payment-history-body"
+          >
             <div
               v-if="areSubscriptionPaymentsLoading"
-              class="subscription-history__skeleton"
+              class="payment-history__skeleton"
             >
               <UiSkeleton
                 v-for="i in 3"
@@ -397,172 +550,35 @@ async function handlePay(plan: SubscriptionPlan) {
 
             <div
               v-else-if="formattedSubscriptionPayments.length === 0"
-              class="subscription-history__empty"
+              class="payment-history__empty"
             >
               Оплат пока нет. Когда вы нажмете «Оплатить», запись появится здесь.
             </div>
 
             <ul
               v-else
-              class="subscription-history__list"
+              class="payment-history__list"
             >
               <li
                 v-for="payment in formattedSubscriptionPayments"
                 :key="payment.id"
-                class="subscription-history__item"
+                class="payment-history__item"
               >
                 <div>
-                  <p class="subscription-history__title">
+                  <p class="payment-history__title">
                     {{ payment.planLabel }} · {{ payment.statusLabel }}
                   </p>
-                  <p class="subscription-history__meta">
+                  <p class="payment-history__meta">
                     {{ payment.paidAtLabel }} · Период: {{ payment.periodLabel }}
                   </p>
                 </div>
-                <div class="subscription-history__amounts">
+                <div class="payment-history__amounts">
                   <span>Списано: {{ payment.chargedLabel }}</span>
                   <small>Тариф: {{ payment.listedLabel }}</small>
                 </div>
               </li>
             </ul>
           </div>
-        </UiCard>
-
-        <UiCard
-          class="profile-card"
-          variant="muted"
-          padding="lg"
-        >
-          <template #header>
-            <div class="card-header">
-              <div>
-                <h3 class="card-title">
-                  Детали аккаунта
-                </h3>
-                <p class="card-subtitle">
-                  Управляйте настройками профиля, не покидая страницу.
-                </p>
-              </div>
-            </div>
-          </template>
-
-          <form
-            class="profile-form"
-            @submit.prevent="handleSubmit"
-          >
-            <div class="profile-grid">
-              <div
-                id="telegram"
-                class="profile-row"
-              >
-                <span class="profile-label">Имя</span>
-                <p>{{ currentUser?.name ?? '—' }}</p>
-              </div>
-
-              <div class="profile-row">
-                <span class="profile-label">Email</span>
-                <p>{{ currentUser?.email ?? '—' }}</p>
-              </div>
-
-              <div class="profile-row">
-                <span class="profile-label">ID пользователя</span>
-                <p class="muted">
-                  {{ currentUser?.id ?? '—' }}
-                </p>
-              </div>
-            </div>
-
-            <div
-              class="profile-divider"
-              aria-hidden="true"
-            />
-
-            <div class="profile-grid editable">
-              <div class="profile-row">
-                <label
-                  class="profile-label"
-                  for="profileCurrency"
-                >Базовая валюта</label>
-                <UiSelect
-                  id="profileCurrency"
-                  v-model="form.baseCurrencyCode"
-                  :options="currencyOptions"
-                  option-label="label"
-                  option-value="value"
-                  placeholder="Выберите валюту"
-                  :disabled="isLoading || isReadOnlyMode"
-                />
-                <small
-                  v-if="isLoading"
-                  class="helper-text"
-                >
-                  Загрузка доступных валют…
-                </small>
-                <small
-                  v-else-if="selectedCurrencySummary"
-                  class="helper-text"
-                >
-                  {{ selectedCurrencySummary }}
-                </small>
-                <small
-                  v-else
-                  class="helper-text"
-                >
-                  Эта валюта используется для аналитики и отчетов.
-                </small>
-              </div>
-
-              <div class="profile-row">
-                <label
-                  class="profile-label"
-                  for="profileTelegram"
-                >Telegram ID</label>
-                <div class="telegram-input">
-                  <UiInputText
-                    id="profileTelegram"
-                    v-model="form.telegramUserId"
-                    placeholder="123456789"
-                    autocomplete="off"
-                    :disabled="isSaving || isReadOnlyMode"
-                  />
-                  <UiButton
-                    type="button"
-                    label="Очистить"
-                    variant="ghost"
-                    size="sm"
-                    :disabled="!form.telegramUserId || isSaving || isReadOnlyMode"
-                    @click="handleClearTelegram"
-                  />
-                </div>
-                <small class="helper-text">
-                  Отправьте `/id` боту
-                  <a
-                    href="https://t.me/financetree_bot"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                  >@financetree_bot</a>
-                  и вставьте цифры. Оставьте пустым, чтобы отвязать Telegram.
-                </small>
-              </div>
-            </div>
-
-            <div class="actions">
-              <UiButton
-                type="button"
-                label="Сбросить изменения"
-                variant="ghost"
-                :disabled="!hasChanges || isSaving || isReadOnlyMode"
-                @click="resetForm"
-              />
-              <UiButton
-                type="submit"
-                label="Обновить профиль"
-                icon="pi pi-check"
-                :loading="isSaving"
-                :disabled="!canSubmit"
-              />
-            </div>
-          </form>
         </UiCard>
       </section>
 
@@ -581,25 +597,25 @@ async function handlePay(plan: SubscriptionPlan) {
 
 <style scoped>
 .profile-page {
-  gap: var(--space-6);
+  gap: var(--ft-space-6, var(--space-6));
 }
 
 .profile-tabs {
   display: flex;
   flex-direction: column;
-  gap: var(--space-5);
+  gap: var(--ft-space-5, var(--space-5));
 }
 
 .profile-tabs__bar {
   display: inline-flex;
-  gap: var(--space-2);
+  gap: var(--ft-space-2, var(--space-2));
   align-items: center;
 
-  padding: var(--space-2);
+  padding: var(--ft-space-2, var(--space-2));
 
   background: linear-gradient(135deg, color-mix(in srgb, var(--surface-2) 70%, transparent), var(--surface-1));
   border: 1px solid var(--border);
-  border-radius: var(--radius-lg);
+  border-radius: var(--ft-radius-lg, var(--radius-lg));
   box-shadow: var(--shadow-soft);
 }
 
@@ -607,7 +623,7 @@ async function handlePay(plan: SubscriptionPlan) {
   cursor: pointer;
 
   display: inline-flex;
-  gap: var(--space-2);
+  gap: var(--ft-space-2, var(--space-2));
   align-items: center;
 
   padding: 0.6rem 1.4rem;
@@ -618,7 +634,7 @@ async function handlePay(plan: SubscriptionPlan) {
 
   background: transparent;
   border: none;
-  border-radius: var(--radius-lg);
+  border-radius: var(--ft-radius-lg, var(--radius-lg));
 
   transition:
     background-color var(--ft-transition-fast),
@@ -644,7 +660,7 @@ async function handlePay(plan: SubscriptionPlan) {
 .profile-tab-panel {
   display: flex;
   flex-direction: column;
-  gap: var(--space-5);
+  gap: var(--ft-space-5, var(--space-5));
 }
 
 .profile-tab-panel--categories {
@@ -652,21 +668,62 @@ async function handlePay(plan: SubscriptionPlan) {
 }
 
 .profile-card {
-  gap: var(--space-5);
-}
-
-.profile-card--subscription {
-  scroll-margin-top: 120px;
+  gap: var(--ft-space-5, var(--space-5));
 }
 
 :deep(.profile-card .ui-card__body) {
-  gap: var(--space-5);
+  gap: var(--ft-space-5, var(--space-5));
 }
 
+/* Card 1: Profile identity */
+.profile-identity {
+  display: flex;
+  gap: var(--ft-space-4, var(--space-4));
+  align-items: center;
+}
+
+.profile-avatar {
+  display: flex;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: center;
+
+  width: 48px;
+  height: 48px;
+
+  font-size: var(--ft-text-base);
+  font-weight: 700;
+  color: var(--ft-text-inverse);
+  letter-spacing: 0.04em;
+
+  background: linear-gradient(135deg, var(--accent), color-mix(in srgb, var(--accent) 70%, #000));
+  border-radius: 50%;
+}
+
+.profile-identity__info {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.profile-identity__name {
+  margin: 0;
+  font-size: var(--ft-text-base);
+  font-weight: 600;
+  color: var(--text);
+}
+
+.profile-identity__email {
+  margin: 0;
+  font-size: var(--ft-text-sm);
+  color: var(--text-muted);
+}
+
+/* Card 2: Settings form */
 .card-header {
   display: flex;
   gap: 1rem;
-  align-items: flex-start;
+  align-items: center;
   justify-content: space-between;
 }
 
@@ -677,61 +734,29 @@ async function handlePay(plan: SubscriptionPlan) {
   color: var(--text);
 }
 
-.card-subtitle {
-  margin: 0.25rem 0 0;
-  font-size: var(--ft-text-sm);
-  color: var(--text-muted);
-}
-
-.profile-form {
+.settings-form {
   display: flex;
   flex-direction: column;
-  gap: var(--space-5);
+  gap: var(--ft-space-5, var(--space-5));
 }
 
-.profile-grid {
+.settings-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-  gap: var(--space-4);
+  gap: var(--ft-space-4, var(--space-4));
 }
 
-.profile-grid.editable .profile-row {
-  align-items: stretch;
-}
-
-.profile-row {
+.settings-field {
   display: flex;
   flex-direction: column;
-  gap: var(--space-2);
+  gap: var(--ft-space-2, var(--space-2));
 }
 
-.profile-label {
+.settings-label {
   font-size: var(--ft-text-xs);
   color: var(--text-muted);
   text-transform: uppercase;
   letter-spacing: 0.16em;
-}
-
-.profile-row p {
-  margin: 0;
-
-  font-size: var(--ft-text-base);
-  color: var(--text);
-  word-break: normal;
-  overflow-wrap: anywhere;
-}
-
-.profile-row .muted {
-  font-family: var(--ft-font-mono, 'Fira Code', monospace);
-  font-size: var(--ft-text-sm);
-  color: var(--text-muted);
-}
-
-.profile-divider {
-  width: 100%;
-  height: 1px;
-  opacity: 0.6;
-  background: var(--border);
 }
 
 .helper-text {
@@ -739,49 +764,55 @@ async function handlePay(plan: SubscriptionPlan) {
   color: var(--text-muted);
 }
 
+.helper-text code {
+  padding: 0.1em 0.35em;
+
+  font-family: var(--ft-font-mono, 'JetBrains Mono', monospace);
+  font-size: 0.9em;
+
+  background: var(--surface-2);
+  border-radius: var(--ft-radius-sm, var(--radius-sm));
+}
+
 .telegram-input {
   display: flex;
-  gap: var(--space-3);
+  gap: var(--ft-space-3, var(--space-3));
   align-items: center;
 }
 
-.actions {
+.settings-actions {
   display: flex;
   flex-wrap: wrap;
-  gap: var(--space-3);
+  gap: var(--ft-space-3, var(--space-3));
   justify-content: flex-end;
 }
 
-.actions :deep(.ui-button) {
-  min-width: 180px;
+.settings-actions :deep(.ui-button) {
+  min-width: 140px;
 }
 
-.subscription-status p {
+/* Card 3: Subscription */
+.subscription-status-line {
   margin: 0;
-  color: var(--text);
-}
-
-.subscription-status__note {
-  margin-top: var(--space-2) !important;
   font-size: var(--ft-text-sm);
-  color: var(--text-muted) !important;
+  color: var(--text-muted);
 }
 
 .subscription-plans {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-  gap: var(--space-3);
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: var(--ft-space-3, var(--space-3));
 }
 
 .subscription-plan {
   display: grid;
-  gap: var(--space-2);
+  gap: var(--ft-space-2, var(--space-2));
 
-  padding: var(--space-3);
+  padding: var(--ft-space-3, var(--space-3));
 
   background: var(--surface-1);
   border: 1px solid var(--border);
-  border-radius: var(--radius-md);
+  border-radius: var(--ft-radius-md, var(--radius-md));
 }
 
 .subscription-plan h4 {
@@ -800,33 +831,81 @@ async function handlePay(plan: SubscriptionPlan) {
   color: var(--text-muted);
 }
 
-.subscription-history {
-  display: grid;
-  gap: var(--space-3);
-}
-
-.subscription-history h4 {
+.subscription-sim-note {
   margin: 0;
+  font-size: var(--ft-text-xs);
+  color: var(--text-muted);
 }
 
-.subscription-history__skeleton {
+/* Card 4: Collapsible payment history */
+.collapsible-header {
+  cursor: pointer;
+
+  display: flex;
+  gap: var(--ft-space-3, var(--space-3));
+  align-items: center;
+
+  width: 100%;
+  padding: 0;
+
+  color: inherit;
+
+  background: none;
+  border: none;
+}
+
+.collapsible-header:focus-visible {
+  outline: 2px solid color-mix(in srgb, var(--accent) 60%, transparent);
+  outline-offset: 2px;
+  border-radius: var(--ft-radius-sm, var(--radius-sm));
+}
+
+.payment-count-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+
+  min-width: 22px;
+  height: 22px;
+  padding: 0 6px;
+
+  font-size: var(--ft-text-xs);
+  font-weight: 600;
+  color: var(--ft-text-inverse);
+
+  background: color-mix(in srgb, var(--accent) 80%, transparent);
+  border-radius: 11px;
+}
+
+.collapsible-chevron {
+  margin-left: auto;
+  font-size: 0.875rem;
+  color: var(--text-muted);
+  transition: transform var(--ft-transition-fast);
+}
+
+.payment-history-body {
+  margin-top: var(--ft-space-4, var(--space-4));
+}
+
+.payment-history__skeleton {
   display: grid;
-  gap: var(--space-2);
+  gap: var(--ft-space-2, var(--space-2));
 }
 
-.subscription-history__empty {
-  padding: var(--space-3);
+.payment-history__empty {
+  padding: var(--ft-space-3, var(--space-3));
 
   color: var(--text-muted);
 
   background: var(--surface-1);
   border: 1px dashed var(--border);
-  border-radius: var(--radius-md);
+  border-radius: var(--ft-radius-md, var(--radius-md));
 }
 
-.subscription-history__list {
+.payment-history__list {
   display: grid;
-  gap: var(--space-2);
+  gap: var(--ft-space-2, var(--space-2));
 
   margin: 0;
   padding: 0;
@@ -834,37 +913,37 @@ async function handlePay(plan: SubscriptionPlan) {
   list-style: none;
 }
 
-.subscription-history__item {
+.payment-history__item {
   display: flex;
-  gap: var(--space-3);
+  gap: var(--ft-space-3, var(--space-3));
   align-items: flex-start;
   justify-content: space-between;
 
-  padding: var(--space-3);
+  padding: var(--ft-space-3, var(--space-3));
 
   background: var(--surface-1);
   border: 1px solid var(--border);
-  border-radius: var(--radius-md);
+  border-radius: var(--ft-radius-md, var(--radius-md));
 }
 
-.subscription-history__title {
+.payment-history__title {
   margin: 0;
   font-weight: 600;
 }
 
-.subscription-history__meta {
-  margin: var(--space-1) 0 0;
+.payment-history__meta {
+  margin: var(--ft-space-1, var(--space-1)) 0 0;
   font-size: var(--ft-text-sm);
   color: var(--text-muted);
 }
 
-.subscription-history__amounts {
+.payment-history__amounts {
   display: grid;
   gap: 2px;
   text-align: right;
 }
 
-.subscription-history__amounts small {
+.payment-history__amounts small {
   color: var(--text-muted);
 }
 
@@ -884,16 +963,16 @@ async function handlePay(plan: SubscriptionPlan) {
     align-items: stretch;
   }
 
-  .actions {
+  .settings-actions {
     flex-direction: column-reverse;
     align-items: stretch;
   }
 
-  .subscription-history__item {
+  .payment-history__item {
     flex-direction: column;
   }
 
-  .subscription-history__amounts {
+  .payment-history__amounts {
     text-align: left;
   }
 }
