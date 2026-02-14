@@ -18,6 +18,7 @@ public sealed class User : IdentityUser<Guid>
     public string BaseCurrencyCode { get; private set; }
     public long? TelegramUserId { get; private set; }
     public Guid? MainAccountId { get; private set; }
+    public DateTime? OnboardingSkippedAtUtc { get; private set; }
     public DateTime? SubscriptionActivatedAtUtc { get; private set; }
     public DateTime? SubscriptionExpiresAtUtc { get; private set; }
     [NotMapped] public Currency BaseCurrency => Currency.FromCode(BaseCurrencyCode);
@@ -81,6 +82,8 @@ public sealed class User : IdentityUser<Guid>
         var resolvedIsLiquid = isLiquid ?? type == AccountType.Bank;
         var account = new Account(Id, name, currencyCode, type, resolvedIsLiquid);
         _accounts.Add(account);
+        if (MainAccountId is null)
+            MainAccountId = account.Id;
 
         return account;
     }
@@ -125,6 +128,41 @@ public sealed class User : IdentityUser<Guid>
         var transactionCategory = TransactionCategory.CreateUser(Id, name, color, icon, categoryType, isMandatory);
         _transactionCategories.Add(transactionCategory);
         return transactionCategory;
+    }
+
+    public void SkipOnboarding()
+    {
+        OnboardingSkippedAtUtc = DateTime.UtcNow;
+    }
+
+    public void ResetOnboarding()
+    {
+        OnboardingSkippedAtUtc = null;
+    }
+
+    public bool EnsureMainAccountAssigned(bool assumeAccountsCollectionIsComplete = false)
+    {
+        if (MainAccountId.HasValue)
+        {
+            if (!assumeAccountsCollectionIsComplete)
+                return false;
+
+            var hasValidMainAccount = _accounts.Any(a => a.Id == MainAccountId && !a.IsArchived);
+            if (hasValidMainAccount)
+                return false;
+        }
+
+        var fallbackMainAccountId = _accounts
+            .Where(a => !a.IsArchived)
+            .OrderBy(a => a.CreatedAt)
+            .Select(a => (Guid?)a.Id)
+            .FirstOrDefault();
+
+        if (fallbackMainAccountId == MainAccountId)
+            return false;
+
+        MainAccountId = fallbackMainAccountId;
+        return true;
     }
 
     private void SetSubscriptionPeriod(DateTime activatedAtUtc, DateTime expiresAtUtc)

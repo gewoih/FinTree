@@ -300,6 +300,8 @@ export interface CurrentUserDto {
     telegramUserId: number | null;
     baseCurrencyCode: string;
     subscription: SubscriptionInfoDto;
+    onboardingCompleted: boolean;
+    onboardingSkipped: boolean;
 }
 
 export interface SubscriptionInfoDto {

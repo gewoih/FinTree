@@ -21,6 +21,10 @@ export const useUserStore = defineStore('user', () => {
     const subscription = computed(() => currentUser.value?.subscription ?? null);
     const isReadOnlyMode = computed(() => subscription.value?.isReadOnlyMode ?? false);
     const hasActiveSubscription = computed(() => subscription.value?.isActive ?? false);
+    const isFirstRun = computed(() => {
+        if (!currentUser.value) return false;
+        return !currentUser.value.onboardingCompleted && !currentUser.value.onboardingSkipped;
+    });
 
     async function fetchCurrentUser(force = false) {
         if (isLoading.value) return;
@@ -73,6 +77,17 @@ export const useUserStore = defineStore('user', () => {
         }
     }
 
+    async function skipOnboarding() {
+        try {
+            const updatedUser = await apiService.skipOnboarding();
+            currentUser.value = updatedUser;
+            return true;
+        } catch (error) {
+            console.error('Не удалось пропустить онбординг:', error);
+            return false;
+        }
+    }
+
     async function fetchSubscriptionPayments(force = false) {
         if (areSubscriptionPaymentsLoading.value) return;
         if (hasSubscriptionPaymentsLoaded.value && !force) return;
@@ -99,6 +114,7 @@ export const useUserStore = defineStore('user', () => {
         subscription,
         isReadOnlyMode,
         hasActiveSubscription,
+        isFirstRun,
         isLoading,
         isSaving,
         isSubscriptionProcessing,
@@ -107,5 +123,6 @@ export const useUserStore = defineStore('user', () => {
         fetchSubscriptionPayments,
         saveProfileSettings,
         simulateSubscriptionPayment,
+        skipOnboarding,
     };
 });

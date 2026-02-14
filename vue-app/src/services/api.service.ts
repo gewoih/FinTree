@@ -355,6 +355,11 @@ export const apiService = {
         return response.data;
     },
 
+    async skipOnboarding(): Promise<CurrentUserDto> {
+        const response = await apiClient.post<CurrentUserDto>('/users/me/skip-onboarding');
+        return response.data;
+    },
+
     async updateUserProfile(payload: UpdateUserProfilePayload): Promise<CurrentUserDto> {
         const response = await apiClient.patch<CurrentUserDto>('/users/me', payload);
         return response.data;

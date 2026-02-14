@@ -13,13 +13,19 @@ public sealed class UserService(IAppDbContext context, ICurrentUser currentUser)
     {
         var currentUserId = currentUser.Id;
         var userData = await context.Users
+            .Include(u => u.Accounts)
             .Where(u => u.Id == currentUserId)
             .SingleOrDefaultAsync(cancellationToken: ct);
 
         if (userData is null)
             throw new NotFoundException(nameof(User), currentUserId);
 
-        return MapMe(userData, DateTime.UtcNow);
+        if (userData.EnsureMainAccountAssigned(assumeAccountsCollectionIsComplete: true))
+            await context.SaveChangesAsync(ct);
+
+        var nowUtc = DateTime.UtcNow;
+        var (onboardingCompleted, onboardingSkipped) = await ResolveOnboardingStateAsync(userData, ct);
+        return MapMe(userData, nowUtc, onboardingCompleted, onboardingSkipped);
     }
 
     public async Task<MeDto> SimulateSubscriptionPaymentAsync(SimulateSubscriptionPaymentRequest request, CancellationToken ct)
@@ -59,7 +65,24 @@ public sealed class UserService(IAppDbContext context, ICurrentUser currentUser)
         await context.SubscriptionPayments.AddAsync(payment, ct);
         await context.SaveChangesAsync(ct);
 
-        return MapMe(user, now);
+        var (onboardingCompleted, onboardingSkipped) = await ResolveOnboardingStateAsync(user, ct);
+        return MapMe(user, now, onboardingCompleted, onboardingSkipped);
+    }
+
+    public async Task<MeDto> SkipOnboardingAsync(CancellationToken ct)
+    {
+        var user = await context.Users
+            .SingleOrDefaultAsync(u => u.Id == currentUser.Id, ct);
+
+        if (user is null)
+            throw new NotFoundException(nameof(User), currentUser.Id);
+
+        user.SkipOnboarding();
+        await context.SaveChangesAsync(ct);
+
+        var nowUtc = DateTime.UtcNow;
+        var (onboardingCompleted, onboardingSkipped) = await ResolveOnboardingStateAsync(user, ct);
+        return MapMe(user, nowUtc, onboardingCompleted, onboardingSkipped);
     }
 
     public async Task MarkAsMainAsync(Guid accountId, CancellationToken ct = default)
@@ -104,7 +127,9 @@ public sealed class UserService(IAppDbContext context, ICurrentUser currentUser)
 
         await context.SaveChangesAsync(ct);
 
-        return MapMe(user, DateTime.UtcNow);
+        var nowUtc = DateTime.UtcNow;
+        var (onboardingCompleted, onboardingSkipped) = await ResolveOnboardingStateAsync(user, ct);
+        return MapMe(user, nowUtc, onboardingCompleted, onboardingSkipped);
     }
 
     public async Task<List<TransactionCategoryDto>> GetUserCategoriesAsync(CancellationToken ct)
@@ -164,7 +189,23 @@ public sealed class UserService(IAppDbContext context, ICurrentUser currentUser)
             .ToListAsync(ct);
     }
 
-    private static MeDto MapMe(User user, DateTime nowUtc)
+    private async Task<(bool Completed, bool Skipped)> ResolveOnboardingStateAsync(User user, CancellationToken ct)
+    {
+        var hasMainAccount = user.MainAccountId is not null;
+        var hasTelegramLinked = user.TelegramUserId is not null;
+        var hasFirstTransaction = false;
+
+        if (hasMainAccount && hasTelegramLinked)
+        {
+            hasFirstTransaction = await context.Transactions
+                .AsNoTracking()
+                .AnyAsync(t => t.Account.UserId == user.Id && !t.IsTransfer, ct);
+        }
+
+        return (hasMainAccount && hasTelegramLinked && hasFirstTransaction, user.OnboardingSkippedAtUtc != null);
+    }
+
+    private static MeDto MapMe(User user, DateTime nowUtc, bool onboardingCompleted, bool onboardingSkipped)
     {
         var isSubscriptionActive = user.HasActiveSubscription(nowUtc);
         var subscription = new SubscriptionInfoDto(
@@ -180,6 +221,8 @@ public sealed class UserService(IAppDbContext context, ICurrentUser currentUser)
             user.Email,
             user.TelegramUserId,
             user.BaseCurrencyCode,
-            subscription);
+            subscription,
+            onboardingCompleted,
+            onboardingSkipped);
     }
 }

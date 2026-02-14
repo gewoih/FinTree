@@ -80,7 +80,7 @@ export const router = createRouter({
       path: '/analytics',
       name: 'analytics',
       component: () => import('../pages/AnalyticsPage.vue'),
-      meta: { title: 'Analytics', requiresAuth: true },
+      meta: { title: 'Главная', requiresAuth: true },
     },
     {
       path: '/profile',

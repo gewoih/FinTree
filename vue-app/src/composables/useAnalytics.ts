@@ -12,6 +12,12 @@ export type AnalyticsEvent =
   | 'steps_cta_click'
   | 'final_cta_click'
   | 'nav_cta_click'
+  | 'onboarding_start'
+  | 'onboarding_step_view'
+  | 'onboarding_step_click'
+  | 'onboarding_step_complete'
+  | 'onboarding_skip'
+  | 'onboarding_complete'
 
 interface AnalyticsEventData {
   event: AnalyticsEvent

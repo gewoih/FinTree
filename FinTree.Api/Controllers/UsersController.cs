@@ -38,6 +38,13 @@ public class UsersController(AccountsService accountsService, UserService userSe
         return Ok();
     }
 
+    [HttpPost("me/skip-onboarding")]
+    public async Task<IActionResult> SkipOnboarding(CancellationToken ct)
+    {
+        var updatedUser = await userService.SkipOnboardingAsync(ct);
+        return Ok(updatedUser);
+    }
+
     [HttpPatch("me")]
     public async Task<IActionResult> UpdateProfile([FromBody] UpdateUserProfileRequest request, CancellationToken ct)
     {

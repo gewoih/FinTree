@@ -6,4 +6,6 @@ public record struct MeDto(
     string? Email,
     long? TelegramUserId,
     string BaseCurrencyCode,
-    SubscriptionInfoDto Subscription);
+    SubscriptionInfoDto Subscription,
+    bool OnboardingCompleted,
+    bool OnboardingSkipped);

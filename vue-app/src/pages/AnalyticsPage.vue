@@ -9,8 +9,11 @@ import SpendingPieCard from '../components/analytics/SpendingPieCard.vue';
 import SpendingBarsCard from '../components/analytics/SpendingBarsCard.vue';
 import ForecastCard from '../components/analytics/ForecastCard.vue';
 import CategoryDeltaCard from '../components/analytics/CategoryDeltaCard.vue';
+import OnboardingStepper from '../components/analytics/OnboardingStepper.vue';
+import type { OnboardingStep } from '../components/analytics/OnboardingStepper.vue';
 import { useUserStore } from '../stores/user';
 import { useFinanceStore } from '../stores/finance';
+import { useAnalytics } from '../composables/useAnalytics';
 import { apiService } from '../services/api.service';
 import DatePicker from 'primevue/datepicker';
 import type {
@@ -38,18 +41,10 @@ interface PeakDayItem {
   shareLabel: string;
 }
 
-interface OnboardingStep {
-  key: string;
-  title: string;
-  description: string;
-  completed: boolean;
-  actionLabel?: string;
-  actionTo?: string;
-}
-
 const userStore = useUserStore();
 const financeStore = useFinanceStore();
 const router = useRouter();
+const { trackEvent } = useAnalytics();
 
 const now = new Date();
 const selectedMonth = ref<Date>(new Date(now.getFullYear(), now.getMonth(), 1));
@@ -84,7 +79,6 @@ const chartPalette = reactive({
 
 const baseCurrency = computed(() => userStore.baseCurrencyCode ?? 'RUB');
 
-const hasAccounts = computed(() => financeStore.accounts.length > 0);
 const hasMainAccount = computed(() => financeStore.accounts.some(account => account.isMain));
 const isTelegramLinked = computed(() => Boolean(userStore.currentUser?.telegramUserId));
 const hasTransactions = computed(() => {
@@ -94,39 +88,44 @@ const hasTransactions = computed(() => {
   return hasCategories || hasSpending;
 });
 
+const isFirstRun = computed(() => userStore.isFirstRun);
+
 const onboardingSteps = computed<OnboardingStep[]>(() => [
   {
     key: 'account',
-    title: hasAccounts.value ? 'Выберите основной счёт' : 'Создайте первый счёт',
-    description: hasAccounts.value
-      ? 'Основной счёт нужен боту для записи расходов.'
-      : 'Добавьте счёт, чтобы фиксировать траты и доходы.',
+    title: 'Создайте счёт',
+    description: 'Добавьте Ваш первый счёт, чтобы начать отслеживать расходы.',
     completed: hasMainAccount.value,
-    actionLabel: 'Открыть счета',
+    actionLabel: 'Создать счёт',
     actionTo: '/accounts',
   },
   {
     key: 'telegram',
-    title: 'Привяжите Telegram',
-    description: 'Отправьте `/id` боту @financetree_bot и вставьте цифры в профиль.',
+    title: 'Подключите Telegram',
+    description: 'Привяжите Ваш Telegram в настройках, чтобы записывать траты прямо через нашего бота.',
     completed: isTelegramLinked.value,
-    actionLabel: 'Открыть профиль',
+    actionLabel: 'Подключить',
     actionTo: '/profile#telegram',
   },
   {
     key: 'transactions',
-    title: 'Добавьте первые операции',
-    description: 'Пишите траты в бота @financetree_bot или добавьте вручную.',
+    title: 'Создайте Вашу первую транзакцию',
+    description: 'Добавьте первую транзакцию чтобы завершить обучение.',
     completed: hasTransactions.value,
-    actionLabel: 'Открыть транзакции',
+    actionLabel: 'Добавить транзакцию',
     actionTo: '/expenses',
   },
 ]);
 
-const showOnboarding = computed(() => onboardingSteps.value.some(step => !step.completed));
-const completedOnboardingCount = computed(
-  () => onboardingSteps.value.filter(step => step.completed).length
-);
+function handleStepClick(step: OnboardingStep) {
+  trackEvent('onboarding_step_click', { step: step.key });
+  void router.push(step.actionTo);
+}
+
+async function handleSkipOnboarding() {
+  trackEvent('onboarding_skip');
+  await userStore.skipOnboarding();
+}
 
 // --- Summary strip metrics ---
 const summaryMetrics = computed(() => {
@@ -699,18 +698,25 @@ watch(selectedMonth, (value) => {
 
 onMounted(async () => {
   resolveCssVariables();
-  await userStore.fetchCurrentUser();
+  await userStore.fetchCurrentUser(true);
   await Promise.all([
     loadDashboard(normalizedSelectedMonth.value),
-    financeStore.fetchAccounts(),
+    financeStore.fetchAccounts(true),
   ]);
+
+  if (isFirstRun.value) {
+    trackEvent('onboarding_start');
+  }
 });
 </script>
 
 <template>
   <PageContainer class="analytics-page">
-    <PageHeader title="Аналитика">
-      <template #actions>
+    <PageHeader title="Главная">
+      <template
+        v-if="!isFirstRun"
+        #actions
+      >
         <div class="analytics-month-selector">
           <button
             type="button"
@@ -750,49 +756,18 @@ onMounted(async () => {
       </template>
     </PageHeader>
 
-    <AppCard
-      v-if="showOnboarding"
-      class="onboarding-card"
-      variant="muted"
-      padding="lg"
-      elevated
+    <OnboardingStepper
+      v-if="isFirstRun"
+      :steps="onboardingSteps"
+      :loading="dashboardLoading"
+      @step-click="handleStepClick"
+      @skip="handleSkipOnboarding"
+    />
+
+    <div
+      v-if="!isFirstRun"
+      class="analytics-grid"
     >
-      <div class="onboarding-card__header">
-        <div>
-          <h2>Быстрый старт</h2>
-          <p>Выполните несколько шагов и получите первые инсайты.</p>
-        </div>
-        <div class="onboarding-card__progress">
-          {{ completedOnboardingCount }} / {{ onboardingSteps.length }}
-        </div>
-      </div>
-
-      <div class="onboarding-card__steps">
-        <div
-          v-for="step in onboardingSteps"
-          :key="step.key"
-          class="onboarding-card__step"
-          :class="{ 'onboarding-card__step--done': step.completed }"
-        >
-          <div class="onboarding-card__status">
-            <i :class="['pi', step.completed ? 'pi-check' : 'pi-circle-on']" />
-          </div>
-          <div class="onboarding-card__info">
-            <h3>{{ step.title }}</h3>
-            <p>{{ step.description }}</p>
-          </div>
-          <UiButton
-            v-if="!step.completed && step.actionTo"
-            :label="step.actionLabel"
-            size="sm"
-            variant="secondary"
-            @click="router.push(step.actionTo)"
-          />
-        </div>
-      </div>
-    </AppCard>
-
-    <div class="analytics-grid">
       <!-- Section 1: Summary Strip -->
       <SummaryStrip
         class="analytics-grid__item analytics-grid__item--span-12"
@@ -1020,98 +995,6 @@ onMounted(async () => {
   }
 }
 
-.onboarding-card {
-  display: grid;
-  gap: var(--ft-space-4);
-  background: linear-gradient(
-    135deg,
-    color-mix(in srgb, var(--ft-primary-500) 20%, transparent),
-    color-mix(in srgb, var(--ft-info-500) 10%, transparent)
-  );
-  border: 1px solid var(--ft-border-subtle);
-}
-
-.onboarding-card__header {
-  display: flex;
-  gap: var(--ft-space-4);
-  align-items: center;
-  justify-content: space-between;
-}
-
-.onboarding-card__header h2 {
-  margin: 0;
-  font-size: var(--ft-text-lg);
-  color: var(--ft-text-primary);
-}
-
-.onboarding-card__header p {
-  margin: var(--ft-space-1) 0 0;
-  color: var(--ft-text-secondary);
-}
-
-.onboarding-card__progress {
-  padding: var(--ft-space-2) var(--ft-space-3);
-
-  font-weight: var(--ft-font-semibold);
-  color: var(--ft-text-inverse);
-
-  background: color-mix(in srgb, var(--ft-primary-500) 55%, transparent);
-  border-radius: var(--ft-radius-full);
-}
-
-.onboarding-card__steps {
-  display: grid;
-  gap: var(--ft-space-3);
-}
-
-.onboarding-card__step {
-  display: grid;
-  grid-template-columns: auto 1fr auto;
-  gap: var(--ft-space-3);
-  align-items: center;
-
-  padding: var(--ft-space-3);
-
-  background: var(--ft-surface-base);
-  border: 1px solid var(--ft-border-subtle);
-  border-radius: var(--ft-radius-lg);
-}
-
-.onboarding-card__step--done {
-  opacity: 0.7;
-}
-
-.onboarding-card__status {
-  display: grid;
-  place-items: center;
-
-  width: 36px;
-  height: 36px;
-
-  font-size: 1rem;
-  color: var(--ft-text-inverse);
-
-  background: color-mix(in srgb, var(--ft-primary-500) 55%, transparent);
-  border-radius: 999px;
-}
-
-.onboarding-card__step--done .onboarding-card__status {
-  color: var(--ft-success-400);
-  background: rgb(16 185 129 / 20%);
-}
-
-.onboarding-card__info h3 {
-  margin: 0;
-  font-size: var(--ft-text-base);
-  color: var(--ft-text-primary);
-}
-
-.onboarding-card__info p {
-  margin: var(--ft-space-1) 0 0;
-  font-size: var(--ft-text-sm);
-  color: var(--ft-text-secondary);
-}
-
 @media (width <= 640px) {
   .analytics-page {
     gap: var(--ft-space-4);
@@ -1119,20 +1002,6 @@ onMounted(async () => {
 
   .analytics-grid {
     gap: var(--ft-space-3);
-  }
-
-  .onboarding-card__header {
-    flex-direction: column;
-    align-items: flex-start;
-  }
-
-  .onboarding-card__step {
-    grid-template-columns: auto 1fr;
-    grid-template-rows: auto auto;
-  }
-
-  .onboarding-card__step :deep(.ui-button) {
-    grid-column: 1 / -1;
   }
 }
 </style>

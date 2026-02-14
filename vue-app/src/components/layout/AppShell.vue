@@ -39,7 +39,7 @@ const subscriptionExpiresAtLabel = computed(() => {
 })
 
 const navigationItems = [
-  { label: 'Аналитика', icon: 'pi-chart-line', to: '/analytics' },
+  { label: 'Главная', icon: 'pi-home', to: '/analytics' },
   { label: 'Транзакции', icon: 'pi-list', to: '/expenses' },
   { label: 'Счета', icon: 'pi-wallet', to: '/accounts' },
   { label: 'Инвестиции', icon: 'pi-briefcase', to: '/investments' }
