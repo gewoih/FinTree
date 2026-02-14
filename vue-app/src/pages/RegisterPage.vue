@@ -6,14 +6,13 @@ import { useAuthStore } from '../stores/auth'
 const router = useRouter()
 const authStore = useAuthStore()
 
-type RegisterMethod = 'telegram' | 'email'
-
-const registerMethod = ref<RegisterMethod>('telegram')
+const showEmailForm = ref(false)
 const email = ref('')
 const password = ref('')
 const showPassword = ref(false)
 const telegramMount = ref<HTMLElement | null>(null)
 const telegramScript = ref<HTMLScriptElement | null>(null)
+const telegramLoaded = ref(false)
 
 const hasPasswordInput = computed(() => password.value.length > 0)
 
@@ -22,7 +21,10 @@ const passwordRules = computed(() => {
 
   return [
     { key: 'length', label: 'Минимум 8 символов', met: value.length >= 8 },
-    { key: 'alphanumeric', label: 'Хотя бы 1 буква и 1 цифра', met: /[a-zA-Z]/.test(value) && /\d/.test(value) }
+    { key: 'lowercase', label: 'Строчная буква (a-z)', met: /[a-z]/.test(value) },
+    { key: 'uppercase', label: 'Заглавная буква (A-Z)', met: /[A-Z]/.test(value) },
+    { key: 'digit', label: 'Цифра (0-9)', met: /\d/.test(value) },
+    { key: 'special', label: 'Спецсимвол (!@#$...)', met: /[^a-zA-Z0-9]/.test(value) }
   ]
 })
 
@@ -38,7 +40,6 @@ onMounted(() => {
     void router.push('/analytics')
   }
 
-  // Setup Telegram widget
   const botName = (import.meta.env.VITE_TELEGRAM_BOT_NAME as string | undefined) ?? 'financetree_bot'
   const mount = telegramMount.value
   if (!mount) return
@@ -70,8 +71,22 @@ onMounted(() => {
   script.setAttribute('data-onauth', 'onTelegramAuth(user)')
   script.setAttribute('data-request-access', 'write')
 
+  script.onload = () => {
+    telegramLoaded.value = true
+  }
+
+  script.onerror = () => {
+    telegramLoaded.value = false
+  }
+
   mount.appendChild(script)
   telegramScript.value = script
+
+  setTimeout(() => {
+    if (!telegramLoaded.value) {
+      telegramLoaded.value = false
+    }
+  }, 5000)
 })
 
 onBeforeUnmount(() => {
@@ -99,80 +114,64 @@ const handleRegister = async () => {
 </script>
 
 <template>
-  <div class="auth auth--register">
+  <div class="auth">
     <div class="auth__theme-toggle">
       <ThemeToggle />
     </div>
-    <div
-      class="auth__gradient"
-      aria-hidden="true"
-    />
 
-    <div class="auth__container">
-      <div class="auth__intro">
-        <router-link
-          to="/"
-          class="auth__brand"
-        >
-          <i class="pi pi-chart-bar" />
-          <span>FinTree</span>
-        </router-link>
-        <h1>Создайте аккаунт за 30 секунд</h1>
-        <p>Учёт расходов через Telegram и аналитика бюджета — всё в одном простом интерфейсе.</p>
-        <ul class="auth__benefits">
-          <li><i class="pi pi-check" />Записывайте траты за 10 секунд в Telegram</li>
-          <li><i class="pi pi-check" />Находите скрытые утечки денег</li>
-          <li><i class="pi pi-check" />Экономьте в среднем ₽15 000/месяц</li>
-        </ul>
-        <p class="auth__social-proof">
-          500+ человек уже используют FinTree <span class="auth__rating">⭐⭐⭐⭐⭐ 4.9/5</span>
-        </p>
-      </div>
+    <div class="auth__center">
+      <router-link
+        to="/"
+        class="auth__brand"
+      >
+        <i class="pi pi-chart-bar" />
+        <span>FinTree</span>
+      </router-link>
 
-      <AppCard
+      <h1 class="auth__title">
+        Начните учет финансов
+      </h1>
+
+      <UiCard
         class="auth__card"
         variant="muted"
         padding="lg"
-        elevated
       >
-        <div class="auth__tabs">
-          <button
-            type="button"
-            class="auth__tab"
-            :class="{ 'auth__tab--active': registerMethod === 'telegram' }"
-            @click="registerMethod = 'telegram'"
-          >
-            <i class="pi pi-telegram" />
-            <span>Telegram</span>
-          </button>
-          <button
-            type="button"
-            class="auth__tab"
-            :class="{ 'auth__tab--active': registerMethod === 'email' }"
-            @click="registerMethod = 'email'"
-          >
-            <i class="pi pi-envelope" />
-            <span>Email</span>
-          </button>
-        </div>
-
-        <div
-          v-if="registerMethod === 'telegram'"
-          class="auth__telegram-register"
-        >
-          <p class="auth__telegram-title">
-            🚀 Быстрая регистрация через Telegram
-          </p>
-          <p class="auth__telegram-description">
-            Нажмите кнопку ниже для регистрации через ваш Telegram аккаунт. Это займет всего 5 секунд.
+        <div class="auth__telegram">
+          <p class="auth__telegram-label">
+            Регистрация через Telegram
           </p>
           <div
             ref="telegramMount"
             class="auth__telegram-widget"
           />
-          <p class="auth__telegram-hint">
-            После регистрации вы сможете записывать траты прямо в Telegram боте @financetree_bot
+          <p
+            v-if="telegramLoaded === false && !telegramScript"
+            class="auth__telegram-fallback"
+          >
+            Виджет Telegram не загрузился.
+            <button
+              type="button"
+              class="auth__link-btn"
+              @click="showEmailForm = true"
+            >
+              Зарегистрируйтесь через email
+            </button>
           </p>
+        </div>
+
+        <div class="auth__divider">
+          <span>или</span>
+        </div>
+
+        <div v-if="!showEmailForm">
+          <button
+            type="button"
+            class="auth__email-toggle"
+            @click="showEmailForm = true"
+          >
+            Зарегистрироваться через email
+          </button>
         </div>
 
         <form
@@ -181,9 +180,9 @@ const handleRegister = async () => {
           @submit.prevent="handleRegister"
         >
           <div class="auth__field">
-            <label for="email">Email</label>
-            <InputText
-              id="email"
+            <label for="reg-email">Email</label>
+            <UiInputText
+              id="reg-email"
               v-model="email"
               type="email"
               placeholder="name@domain.com"
@@ -192,35 +191,35 @@ const handleRegister = async () => {
           </div>
 
           <div class="auth__field">
-            <label for="password">Пароль</label>
-            <InputText
-              id="password"
-              v-model="password"
-              :type="showPassword ? 'text' : 'password'"
-              placeholder="Минимум 8 символов с буквой и цифрой"
-              autocomplete="new-password"
-            />
-            <div class="auth__password-toggle">
-              <input
-                id="showPassword"
-                v-model="showPassword"
-                type="checkbox"
+            <label for="reg-password">Пароль</label>
+            <div class="auth__password-wrap">
+              <UiInputText
+                id="reg-password"
+                v-model="password"
+                :type="showPassword ? 'text' : 'password'"
+                placeholder="Минимум 8 символов"
+                autocomplete="new-password"
+              />
+              <button
+                type="button"
+                class="auth__eye"
+                :aria-label="showPassword ? 'Скрыть пароль' : 'Показать пароль'"
+                tabindex="-1"
+                @click="showPassword = !showPassword"
               >
-              <label for="showPassword">Показать пароль</label>
+                <i :class="showPassword ? 'pi pi-eye-slash' : 'pi pi-eye'" />
+              </button>
             </div>
             <ul
               v-if="hasPasswordInput"
-              class="auth__password-hints"
+              class="auth__rules"
             >
               <li
                 v-for="rule in passwordRules"
                 :key="rule.key"
-                :class="[
-                  'auth__password-rule',
-                  { 'auth__password-rule--ok': rule.met, 'auth__password-rule--warn': hasPasswordInput && !rule.met }
-                ]"
+                :class="{ 'auth__rule--ok': rule.met, 'auth__rule--fail': hasPasswordInput && !rule.met }"
               >
-                <i :class="rule.met ? 'pi pi-check' : hasPasswordInput ? 'pi pi-times' : 'pi pi-circle'" />
+                <i :class="rule.met ? 'pi pi-check' : 'pi pi-times'" />
                 <span>{{ rule.label }}</span>
               </li>
             </ul>
@@ -234,19 +233,13 @@ const handleRegister = async () => {
             <span>{{ authStore.error }}</span>
           </p>
 
-          <div class="auth__submit">
-            <AppButton
-              type="submit"
-              label="Получить бесплатный месяц →"
-              variant="cta"
-              :loading="authStore.isLoading"
-              :disabled="isDisabled"
-              block
-            />
-            <p class="auth__disclaimer">
-              Без карты. Отменить можно в любой момент.
-            </p>
-          </div>
+          <UiButton
+            type="submit"
+            label="Создать аккаунт"
+            :loading="authStore.isLoading"
+            :disabled="isDisabled"
+            block
+          />
         </form>
 
         <footer class="auth__footer">
@@ -255,7 +248,7 @@ const handleRegister = async () => {
             Войти
           </router-link>
         </footer>
-      </AppCard>
+      </UiCard>
     </div>
   </div>
 </template>
@@ -264,24 +257,18 @@ const handleRegister = async () => {
 .auth {
   position: relative;
 
-  overflow: hidden;
   display: grid;
   place-items: center;
 
   min-height: 100vh;
-  padding: clamp(var(--ft-space-6), 6vw, var(--ft-space-12)) clamp(var(--ft-space-4), 6vw, var(--ft-space-10));
+  padding: clamp(var(--ft-space-6), 6vw, var(--ft-space-10)) clamp(var(--ft-space-4), 6vw, var(--ft-space-8));
 
   color: var(--ft-text-primary);
 
   background:
     radial-gradient(
-      820px 620px at 12% -12%,
-      color-mix(in srgb, var(--ft-primary-500) 30%, transparent),
-      transparent
-    ),
-    radial-gradient(
-      720px 540px at 88% 8%,
-      color-mix(in srgb, var(--ft-info-500) 12%, transparent),
+      760px 560px at 50% -10%,
+      color-mix(in srgb, var(--ft-primary-500) 24%, transparent),
       transparent
     ),
     linear-gradient(180deg, var(--ft-bg-base) 0%, var(--ft-bg-muted) 100%);
@@ -289,48 +276,20 @@ const handleRegister = async () => {
 
 .auth__theme-toggle {
   position: absolute;
-  z-index: 2;
+  z-index: 1;
   top: clamp(var(--ft-space-4), 4vw, var(--ft-space-6));
   right: clamp(var(--ft-space-4), 4vw, var(--ft-space-6));
 }
 
-.auth__gradient {
-  pointer-events: none;
-
-  position: absolute;
-  inset: 0;
-
-  opacity: 0.7;
-  background:
-    radial-gradient(
-      60% 60% at 80% 90%,
-      color-mix(in srgb, var(--ft-primary-500) 18%, transparent),
-      transparent
-    ),
-    radial-gradient(
-      40% 40% at 20% 70%,
-      color-mix(in srgb, var(--ft-info-500) 8%, transparent),
-      transparent
-    );
-}
-
-.auth__container {
-  position: relative;
-  z-index: 1;
-
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
-  gap: clamp(var(--ft-space-6), 6vw, var(--ft-space-10));
-  align-items: center;
-
-  width: 100%;
-  max-width: var(--ft-container-xl);
-}
-
-.auth__intro {
+.auth__center {
   display: flex;
   flex-direction: column;
+  align-items: center;
   gap: var(--ft-space-4);
+
+  width: 100%;
+  max-width: 420px;
+  text-align: center;
 }
 
 .auth__brand {
@@ -343,59 +302,22 @@ const handleRegister = async () => {
   color: var(--ft-primary-200);
   text-transform: uppercase;
   letter-spacing: 0.08em;
+  text-decoration: none;
 }
 
-.auth__intro h1 {
+.light-mode .auth__brand {
+  color: var(--ft-primary-700);
+}
+
+.auth__title {
   margin: 0;
   font-family: var(--ft-font-display);
-  font-size: clamp(2rem, 4vw, 2.75rem);
-}
-
-.auth__intro p {
-  max-width: 48ch;
-  margin: 0;
-  line-height: 1.6;
-  color: var(--ft-text-secondary);
-}
-
-.auth__benefits {
-  display: flex;
-  flex-direction: column;
-  gap: var(--ft-space-2);
-
-  margin: 0;
-  padding: 0;
-
-  color: var(--ft-text-secondary);
-  list-style: none;
-}
-
-.auth__benefits li {
-  display: flex;
-  gap: var(--ft-space-2);
-  align-items: center;
-}
-
-.auth__benefits i {
-  color: var(--ft-success-400);
-}
-
-.auth__social-proof {
-  margin: var(--ft-space-2) 0 0;
-  font-size: var(--ft-text-sm);
-  color: var(--ft-text-secondary);
-}
-
-.auth__rating {
-  display: inline-block;
-  margin-left: var(--ft-space-2);
-  font-size: var(--ft-text-xs);
-  color: var(--ft-text-primary);
-  letter-spacing: -0.05em;
+  font-size: clamp(1.5rem, 4vw, 2rem);
+  line-height: 1.2;
 }
 
 .auth__card {
-  width: min(460px, 100%);
+  width: 100%;
 
   background: var(--ft-surface-base);
   backdrop-filter: blur(18px);
@@ -403,78 +325,19 @@ const handleRegister = async () => {
   box-shadow: var(--ft-shadow-xl);
 }
 
-.light-mode .auth__brand {
-  color: var(--ft-primary-700);
-}
-
-.auth__tabs {
-  display: flex;
-  gap: var(--ft-space-2);
-  padding: var(--ft-space-1);
-  background: var(--ft-surface-muted);
-  border-radius: var(--ft-radius-lg);
-  margin-bottom: var(--ft-space-5);
-}
-
-.auth__tab {
-  flex: 1;
-  display: flex;
-  gap: var(--ft-space-2);
-  align-items: center;
-  justify-content: center;
-
-  padding: var(--ft-space-3) var(--ft-space-4);
-
-  font-size: var(--ft-text-sm);
-  font-weight: var(--ft-font-medium);
-  color: var(--ft-text-secondary);
-
-  background: transparent;
-  border: none;
-  border-radius: var(--ft-radius-md);
-  cursor: pointer;
-
-  transition:
-    background-color var(--ft-transition-fast),
-    color var(--ft-transition-fast),
-    box-shadow var(--ft-transition-fast);
-}
-
-.auth__tab:hover {
-  color: var(--ft-text-primary);
-  background: var(--ft-surface-base);
-}
-
-.auth__tab--active {
-  color: var(--ft-text-primary);
-  background: var(--ft-surface-base);
-  box-shadow: var(--ft-shadow-sm);
-}
-
-.auth__tab i {
-  font-size: 1.1em;
-}
-
-.auth__telegram-register {
+.auth__telegram {
   display: flex;
   flex-direction: column;
-  gap: var(--ft-space-4);
+  gap: var(--ft-space-3);
   align-items: center;
   text-align: center;
 }
 
-.auth__telegram-title {
-  margin: 0;
-  font-size: var(--ft-text-lg);
-  font-weight: var(--ft-font-semibold);
-  color: var(--ft-text-primary);
-}
-
-.auth__telegram-description {
+.auth__telegram-label {
   margin: 0;
   font-size: var(--ft-text-sm);
-  color: var(--ft-text-secondary);
-  max-width: 38ch;
+  font-weight: var(--ft-font-medium);
+  color: var(--ft-text-primary);
 }
 
 .auth__telegram-widget {
@@ -483,11 +346,83 @@ const handleRegister = async () => {
   min-height: 44px;
 }
 
-.auth__telegram-hint {
+.auth__telegram-fallback {
   margin: 0;
   font-size: var(--ft-text-xs);
   color: var(--ft-text-tertiary);
-  max-width: 42ch;
+}
+
+.auth__link-btn {
+  padding: 0;
+
+  font-size: inherit;
+  color: var(--ft-primary-400);
+
+  background: none;
+  border: none;
+  cursor: pointer;
+  text-decoration: underline;
+}
+
+.auth__link-btn:hover {
+  color: var(--ft-primary-300);
+}
+
+.auth__divider {
+  position: relative;
+
+  display: grid;
+  place-items: center;
+
+  margin: var(--ft-space-1) 0;
+
+  font-size: var(--ft-text-xs);
+  color: var(--ft-text-tertiary);
+  text-transform: uppercase;
+  letter-spacing: 0.16em;
+}
+
+.auth__divider::before {
+  content: '';
+
+  position: absolute;
+  inset: 50% 0 auto;
+
+  height: 1px;
+
+  opacity: 0.6;
+  background: var(--ft-border-subtle);
+}
+
+.auth__divider span {
+  position: relative;
+  padding: 0 var(--ft-space-3);
+  background: var(--ft-surface-base);
+}
+
+.auth__email-toggle {
+  display: block;
+  width: 100%;
+  padding: var(--ft-space-3);
+
+  font-size: var(--ft-text-sm);
+  font-weight: var(--ft-font-medium);
+  color: var(--ft-text-secondary);
+  text-align: center;
+
+  background: none;
+  border: 1px solid var(--ft-border-subtle);
+  border-radius: var(--ft-radius-md);
+  cursor: pointer;
+
+  transition:
+    color var(--ft-transition-fast),
+    border-color var(--ft-transition-fast);
+}
+
+.auth__email-toggle:hover {
+  color: var(--ft-text-primary);
+  border-color: var(--ft-border-default);
 }
 
 .auth__form {
@@ -500,43 +435,50 @@ const handleRegister = async () => {
   display: flex;
   flex-direction: column;
   gap: var(--ft-space-2);
+  text-align: left;
 }
 
-.auth__field label {
+.auth__field > label {
   font-size: var(--ft-text-xs);
   color: var(--ft-text-tertiary);
   text-transform: uppercase;
   letter-spacing: 0.14em;
 }
 
-.auth__field small {
-  font-size: var(--ft-text-xs);
+.auth__password-wrap {
+  position: relative;
+}
+
+.auth__password-wrap :deep(input) {
+  padding-right: var(--ft-space-10);
+}
+
+.auth__eye {
+  position: absolute;
+  top: 50%;
+  right: var(--ft-space-3);
+  transform: translateY(-50%);
+
+  display: grid;
+  place-items: center;
+
+  padding: 0;
+
+  font-size: 1rem;
   color: var(--ft-text-tertiary);
-}
 
-.auth__password-toggle {
-  display: flex;
-  gap: var(--ft-space-2);
-  align-items: center;
-  margin-top: var(--ft-space-1);
-}
-
-.auth__password-toggle input[type="checkbox"] {
+  background: none;
+  border: none;
   cursor: pointer;
-  width: 16px;
-  height: 16px;
-  accent-color: var(--ft-primary-500);
+
+  transition: color var(--ft-transition-fast);
 }
 
-.auth__password-toggle label {
-  cursor: pointer;
-  font-size: var(--ft-text-sm);
-  color: var(--ft-text-secondary);
-  text-transform: none;
-  letter-spacing: normal;
+.auth__eye:hover {
+  color: var(--ft-text-primary);
 }
 
-.auth__password-hints {
+.auth__rules {
   display: grid;
   gap: var(--ft-space-1);
 
@@ -546,7 +488,7 @@ const handleRegister = async () => {
   list-style: none;
 }
 
-.auth__password-rule {
+.auth__rules li {
   display: flex;
   gap: var(--ft-space-2);
   align-items: center;
@@ -555,15 +497,15 @@ const handleRegister = async () => {
   color: var(--ft-text-tertiary);
 }
 
-.auth__password-rule i {
+.auth__rules li i {
   font-size: 0.75rem;
 }
 
-.auth__password-rule--ok {
+.auth__rule--ok {
   color: var(--ft-success-400);
 }
 
-.auth__password-rule--warn {
+.auth__rule--fail {
   color: var(--ft-danger-400);
 }
 
@@ -578,25 +520,12 @@ const handleRegister = async () => {
   color: var(--ft-danger-400);
 }
 
-.auth__submit {
-  display: flex;
-  flex-direction: column;
-  gap: var(--ft-space-2);
-}
-
-.auth__disclaimer {
-  margin: 0;
-  font-size: var(--ft-text-xs);
-  color: var(--ft-text-tertiary);
-  text-align: center;
-}
-
 .auth__footer {
   display: flex;
   gap: var(--ft-space-2);
   justify-content: center;
 
-  margin-top: var(--ft-space-4);
+  margin-top: var(--ft-space-2);
 
   font-size: var(--ft-text-sm);
   color: var(--ft-text-secondary);
@@ -610,15 +539,5 @@ const handleRegister = async () => {
 
 .auth__footer a:hover {
   text-decoration: underline;
-}
-
-@media (width <= 768px) {
-  .auth {
-    padding-block: clamp(var(--ft-space-6), 8vw, var(--ft-space-8));
-  }
-
-  .auth__container {
-    grid-template-columns: 1fr;
-  }
 }
 </style>

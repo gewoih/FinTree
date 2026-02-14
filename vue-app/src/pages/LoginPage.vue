@@ -8,8 +8,10 @@ const authStore = useAuthStore()
 
 const email = ref('')
 const password = ref('')
+const showPassword = ref(false)
 const telegramMount = ref<HTMLElement | null>(null)
 const telegramScript = ref<HTMLScriptElement | null>(null)
+const telegramLoaded = ref(false)
 
 const isDisabled = computed(() => !email.value || !password.value || authStore.isLoading)
 
@@ -50,8 +52,22 @@ onMounted(() => {
   script.setAttribute('data-onauth', 'onTelegramAuth(user)')
   script.setAttribute('data-request-access', 'write')
 
+  script.onload = () => {
+    telegramLoaded.value = true
+  }
+
+  script.onerror = () => {
+    telegramLoaded.value = false
+  }
+
   mount.appendChild(script)
   telegramScript.value = script
+
+  setTimeout(() => {
+    if (!telegramLoaded.value) {
+      telegramLoaded.value = false
+    }
+  }, 5000)
 })
 
 onBeforeUnmount(() => {
@@ -78,35 +94,43 @@ const handleLogin = async () => {
 </script>
 
 <template>
-  <div class="auth auth--login">
+  <div class="auth">
     <div class="auth__theme-toggle">
       <ThemeToggle />
     </div>
-    <div class="auth__container">
-      <div class="auth__intro">
-        <router-link
-          to="/"
-          class="auth__brand"
-        >
-          <i class="pi pi-chart-bar" />
-          <span>FinTree</span>
-        </router-link>
-        <h1>С возвращением!</h1>
-        <p>Продолжайте отслеживать свои финансы. Войдите через Telegram или используйте email и пароль.</p>
-      </div>
+
+    <div class="auth__center">
+      <router-link
+        to="/"
+        class="auth__brand"
+      >
+        <i class="pi pi-chart-bar" />
+        <span>FinTree</span>
+      </router-link>
+
+      <h1 class="auth__title">
+        С возвращением!
+      </h1>
 
       <UiCard
         class="auth__card"
         variant="muted"
         padding="lg"
       >
-        <div class="auth__telegram auth__telegram--primary">
-          <h3 class="auth__telegram-title">🚀 Быстрый вход через Telegram</h3>
-          <p class="auth__telegram-description">Нажмите кнопку ниже для входа через ваш Telegram аккаунт</p>
+        <div class="auth__telegram">
+          <p class="auth__telegram-label">
+            Войти через Telegram
+          </p>
           <div
             ref="telegramMount"
             class="auth__telegram-widget"
           />
+          <p
+            v-if="telegramLoaded === false && !telegramScript"
+            class="auth__telegram-fallback"
+          >
+            Виджет Telegram не загрузился. Используйте email-вход ниже.
+          </p>
         </div>
 
         <div class="auth__divider">
@@ -118,9 +142,9 @@ const handleLogin = async () => {
           @submit.prevent="handleLogin"
         >
           <div class="auth__field">
-            <label for="email">Email</label>
+            <label for="login-email">Email</label>
             <UiInputText
-              id="email"
+              id="login-email"
               v-model="email"
               type="email"
               placeholder="name@domain.com"
@@ -129,14 +153,25 @@ const handleLogin = async () => {
           </div>
 
           <div class="auth__field">
-            <label for="password">Пароль</label>
-            <UiInputText
-              id="password"
-              v-model="password"
-              type="password"
-              placeholder="Введите пароль"
-              autocomplete="current-password"
-            />
+            <label for="login-password">Пароль</label>
+            <div class="auth__password-wrap">
+              <UiInputText
+                id="login-password"
+                v-model="password"
+                :type="showPassword ? 'text' : 'password'"
+                placeholder="Введите пароль"
+                autocomplete="current-password"
+              />
+              <button
+                type="button"
+                class="auth__eye"
+                :aria-label="showPassword ? 'Скрыть пароль' : 'Показать пароль'"
+                tabindex="-1"
+                @click="showPassword = !showPassword"
+              >
+                <i :class="showPassword ? 'pi pi-eye-slash' : 'pi pi-eye'" />
+              </button>
+            </div>
             <router-link
               to="/forgot-password"
               class="auth__forgot-link"
@@ -156,7 +191,6 @@ const handleLogin = async () => {
           <UiButton
             type="submit"
             label="Войти"
-            icon="pi pi-log-in"
             :loading="authStore.isLoading"
             :disabled="isDisabled"
             block
@@ -166,7 +200,7 @@ const handleLogin = async () => {
         <footer class="auth__footer">
           <span>Нет аккаунта?</span>
           <router-link to="/register">
-            Создать бесплатно
+            Зарегистрироваться
           </router-link>
         </footer>
       </UiCard>
@@ -188,13 +222,8 @@ const handleLogin = async () => {
 
   background:
     radial-gradient(
-      760px 560px at 12% -10%,
-      color-mix(in srgb, var(--ft-primary-500) 28%, transparent),
-      transparent
-    ),
-    radial-gradient(
-      700px 520px at 88% 8%,
-      color-mix(in srgb, var(--ft-info-500) 12%, transparent),
+      760px 560px at 50% -10%,
+      color-mix(in srgb, var(--ft-primary-500) 24%, transparent),
       transparent
     ),
     linear-gradient(180deg, var(--ft-bg-base) 0%, var(--ft-bg-muted) 100%);
@@ -207,21 +236,15 @@ const handleLogin = async () => {
   right: clamp(var(--ft-space-4), 4vw, var(--ft-space-6));
 }
 
-.auth__container {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
-  gap: clamp(var(--ft-space-6), 6vw, var(--ft-space-8));
-  align-items: center;
-
-  width: 100%;
-  max-width: var(--ft-container-xl);
-}
-
-.auth__intro {
+.auth__center {
   display: flex;
   flex-direction: column;
+  align-items: center;
   gap: var(--ft-space-4);
-  max-width: 52ch;
+
+  width: 100%;
+  max-width: 420px;
+  text-align: center;
 }
 
 .auth__brand {
@@ -234,29 +257,22 @@ const handleLogin = async () => {
   color: var(--ft-primary-200);
   text-transform: uppercase;
   letter-spacing: 0.08em;
+  text-decoration: none;
 }
 
-.auth__brand i {
-  font-size: 1.25rem;
+.light-mode .auth__brand {
+  color: var(--ft-primary-700);
 }
 
-.auth__intro h1 {
+.auth__title {
   margin: 0;
   font-family: var(--ft-font-display);
-  font-size: clamp(2rem, 4vw, 2.75rem);
-}
-
-.auth__intro p {
-  max-width: 44ch;
-  margin: 0;
-  line-height: 1.6;
-  color: var(--ft-text-secondary);
+  font-size: clamp(1.5rem, 4vw, 2rem);
+  line-height: 1.2;
 }
 
 .auth__card {
-  justify-self: end;
-
-  width: min(420px, 100%);
+  width: 100%;
 
   background: var(--ft-surface-base);
   backdrop-filter: blur(18px);
@@ -264,45 +280,31 @@ const handleLogin = async () => {
   box-shadow: var(--ft-shadow-xl);
 }
 
-.auth__form {
+.auth__telegram {
   display: flex;
   flex-direction: column;
-  gap: var(--ft-space-4);
+  gap: var(--ft-space-3);
+  align-items: center;
+  text-align: center;
 }
 
-.auth__field {
+.auth__telegram-label {
+  margin: 0;
+  font-size: var(--ft-text-sm);
+  font-weight: var(--ft-font-medium);
+  color: var(--ft-text-primary);
+}
+
+.auth__telegram-widget {
   display: flex;
-  flex-direction: column;
-  gap: var(--ft-space-2);
+  justify-content: center;
+  min-height: 44px;
 }
 
-.auth__field label {
+.auth__telegram-fallback {
+  margin: 0;
   font-size: var(--ft-text-xs);
   color: var(--ft-text-tertiary);
-  text-transform: uppercase;
-  letter-spacing: 0.14em;
-}
-
-.auth__error {
-  display: flex;
-  gap: var(--ft-space-2);
-  align-items: center;
-
-  margin: 0;
-
-  font-size: var(--ft-text-sm);
-  color: var(--ft-danger-400);
-}
-
-.auth__footer {
-  display: flex;
-  gap: var(--ft-space-2);
-  justify-content: center;
-
-  margin-top: var(--ft-space-4);
-
-  font-size: var(--ft-text-sm);
-  color: var(--ft-text-secondary);
 }
 
 .auth__divider {
@@ -311,7 +313,7 @@ const handleLogin = async () => {
   display: grid;
   place-items: center;
 
-  margin: var(--ft-space-2) 0;
+  margin: var(--ft-space-1) 0;
 
   font-size: var(--ft-text-xs);
   color: var(--ft-text-tertiary);
@@ -337,49 +339,57 @@ const handleLogin = async () => {
   background: var(--ft-surface-base);
 }
 
-.auth__telegram {
+.auth__form {
   display: flex;
   flex-direction: column;
-  gap: var(--ft-space-3);
-  align-items: center;
-
-  font-size: var(--ft-text-sm);
-  color: var(--ft-text-secondary);
-  text-align: center;
+  gap: var(--ft-space-4);
 }
 
-.auth__telegram--primary {
-  padding: var(--ft-space-4);
-  background: var(--ft-surface-muted);
-  border-radius: var(--ft-radius-lg);
-}
-
-.auth__telegram-title {
-  margin: 0;
-  font-size: var(--ft-text-lg);
-  font-weight: var(--ft-font-semibold);
-  color: var(--ft-text-primary);
-}
-
-.auth__telegram-description {
-  margin: 0;
-  font-size: var(--ft-text-sm);
-  color: var(--ft-text-secondary);
-  max-width: 36ch;
-}
-
-.auth__telegram p {
-  margin: 0;
-}
-
-.auth__telegram-widget {
+.auth__field {
   display: flex;
-  justify-content: center;
-  min-height: 44px;
+  flex-direction: column;
+  gap: var(--ft-space-2);
+  text-align: left;
 }
 
-.auth__telegram-widget :deep(script) {
-  display: block;
+.auth__field > label {
+  font-size: var(--ft-text-xs);
+  color: var(--ft-text-tertiary);
+  text-transform: uppercase;
+  letter-spacing: 0.14em;
+}
+
+.auth__password-wrap {
+  position: relative;
+}
+
+.auth__password-wrap :deep(input) {
+  padding-right: var(--ft-space-10);
+}
+
+.auth__eye {
+  position: absolute;
+  top: 50%;
+  right: var(--ft-space-3);
+  transform: translateY(-50%);
+
+  display: grid;
+  place-items: center;
+
+  padding: 0;
+
+  font-size: 1rem;
+  color: var(--ft-text-tertiary);
+
+  background: none;
+  border: none;
+  cursor: pointer;
+
+  transition: color var(--ft-transition-fast);
+}
+
+.auth__eye:hover {
+  color: var(--ft-text-primary);
 }
 
 .auth__forgot-link {
@@ -395,6 +405,28 @@ const handleLogin = async () => {
   text-decoration: underline;
 }
 
+.auth__error {
+  display: flex;
+  gap: var(--ft-space-2);
+  align-items: center;
+
+  margin: 0;
+
+  font-size: var(--ft-text-sm);
+  color: var(--ft-danger-400);
+}
+
+.auth__footer {
+  display: flex;
+  gap: var(--ft-space-2);
+  justify-content: center;
+
+  margin-top: var(--ft-space-2);
+
+  font-size: var(--ft-text-sm);
+  color: var(--ft-text-secondary);
+}
+
 .auth__footer a {
   font-weight: var(--ft-font-medium);
   color: var(--ft-text-primary);
@@ -403,30 +435,5 @@ const handleLogin = async () => {
 
 .auth__footer a:hover {
   text-decoration: underline;
-}
-
-.light-mode .auth__brand {
-  color: var(--ft-primary-700);
-}
-
-@media (width <= 768px) {
-  .auth {
-    padding-block: clamp(var(--ft-space-6), 8vw, var(--ft-space-8));
-  }
-
-  .auth__container {
-    grid-template-columns: 1fr;
-  }
-
-  .auth__card {
-    justify-self: center;
-  }
-}
-
-@media (width >= 1024px) {
-  .auth__container {
-    grid-template-columns: minmax(0, 1fr) minmax(320px, 420px);
-    justify-content: space-between;
-  }
 }
 </style>
