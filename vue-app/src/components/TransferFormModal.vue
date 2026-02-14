@@ -278,148 +278,174 @@ const handleDelete = () => {
 <template>
   <Dialog
     :visible="props.visible"
-    :header="isEditMode ? 'Редактирование перевода' : 'Новый перевод'"
     modal
     class="transfer-dialog"
-    :style="{ width: '560px' }"
+    :style="{ width: '540px', maxWidth: '95vw' }"
+    :closable="false"
+    :dismissable-mask="true"
     @update:visible="val => emit('update:visible', val)"
   >
+    <template #header>
+      <span />
+    </template>
+
     <form
-      class="transfer-form"
+      class="xfer-form"
       @submit.prevent="handleSubmit"
     >
-      <div class="field">
-        <label for="from-account">Счет списания *</label>
-        <Select
-          id="from-account"
-          v-model="fromAccount"
-          :options="store.accounts"
-          option-label="name"
-          placeholder="Выберите счет"
-          :disabled="props.readonly"
-          class="w-full"
+      <header class="xfer-form__header">
+        <h2 class="xfer-form__title">
+          {{ isEditMode ? 'Редактирование перевода' : 'Новый перевод' }}
+        </h2>
+        <button
+          type="button"
+          class="xfer-form__close"
+          aria-label="Закрыть"
+          @click="emit('update:visible', false)"
         >
-          <template #option="slotProps">
-            <div class="option-line">
-              <div class="option-name">
-                <i class="pi pi-credit-card" />
-                <span>{{ slotProps.option.name }}</span>
+          <i class="pi pi-times" />
+        </button>
+      </header>
+
+      <!-- Transfer flow -->
+      <div class="xfer-flow">
+        <!-- From block -->
+        <div class="xfer-flow__block">
+          <span class="xfer-flow__label">Откуда</span>
+          <Select
+            id="from-account"
+            v-model="fromAccount"
+            :options="store.accounts"
+            option-label="name"
+            placeholder="Выберите счёт"
+            :disabled="props.readonly"
+            class="w-full"
+          >
+            <template #option="slotProps">
+              <div class="xfer-form__option-line">
+                <div class="xfer-form__option-name">
+                  <i class="pi pi-credit-card" />
+                  <span>{{ slotProps.option.name }}</span>
+                </div>
+                <span class="xfer-form__option-currency">
+                  {{ slotProps.option.currency?.symbol ?? '' }} {{ slotProps.option.currency?.code ?? slotProps.option.currencyCode ?? '—' }}
+                </span>
               </div>
-              <span class="option-currency">
-                {{ slotProps.option.currency?.symbol ?? '' }} {{ slotProps.option.currency?.code ?? slotProps.option.currencyCode ?? '—' }}
-              </span>
-            </div>
-          </template>
-        </Select>
-      </div>
+            </template>
+          </Select>
+          <div class="xfer-flow__amount-row">
+            <InputNumber
+              id="from-amount"
+              v-model="fromAmount"
+              mode="decimal"
+              :min-fraction-digits="2"
+              :max-fraction-digits="2"
+              :min="VALIDATION_RULES.minAmount"
+              placeholder="0.00"
+              :disabled="props.readonly"
+              :class="{ 'p-invalid': !isFromAmountValid && fromAmount !== null }"
+            />
+            <span class="xfer-flow__currency">{{ fromCurrencySymbol || fromCurrency }}</span>
+          </div>
+        </div>
 
-      <div class="field">
-        <label for="to-account">Счет зачисления *</label>
-        <Select
-          id="to-account"
-          v-model="toAccount"
-          :options="store.accounts.filter(acc => acc.id !== fromAccount?.id)"
-          option-label="name"
-          placeholder="Выберите счет"
-          :disabled="props.readonly"
-          class="w-full"
-        >
-          <template #option="slotProps">
-            <div class="option-line">
-              <div class="option-name">
-                <i class="pi pi-credit-card" />
-                <span>{{ slotProps.option.name }}</span>
+        <!-- Arrow divider -->
+        <div class="xfer-flow__divider">
+          <span class="xfer-flow__arrow">
+            <i class="pi pi-arrow-down" />
+          </span>
+        </div>
+
+        <!-- To block -->
+        <div class="xfer-flow__block">
+          <span class="xfer-flow__label">Куда</span>
+          <Select
+            id="to-account"
+            v-model="toAccount"
+            :options="store.accounts.filter(acc => acc.id !== fromAccount?.id)"
+            option-label="name"
+            placeholder="Выберите счёт"
+            :disabled="props.readonly"
+            class="w-full"
+          >
+            <template #option="slotProps">
+              <div class="xfer-form__option-line">
+                <div class="xfer-form__option-name">
+                  <i class="pi pi-credit-card" />
+                  <span>{{ slotProps.option.name }}</span>
+                </div>
+                <span class="xfer-form__option-currency">
+                  {{ slotProps.option.currency?.symbol ?? '' }} {{ slotProps.option.currency?.code ?? slotProps.option.currencyCode ?? '—' }}
+                </span>
               </div>
-              <span class="option-currency">
-                {{ slotProps.option.currency?.symbol ?? '' }} {{ slotProps.option.currency?.code ?? slotProps.option.currencyCode ?? '—' }}
-              </span>
-            </div>
-          </template>
-        </Select>
-      </div>
-
-      <div class="field field--amount">
-        <label for="from-amount">Сумма списания *</label>
-        <div class="amount-input">
-          <InputNumber
-            id="from-amount"
-            v-model="fromAmount"
-            mode="decimal"
-            :min-fraction-digits="2"
-            :max-fraction-digits="2"
-            :min="VALIDATION_RULES.minAmount"
-            placeholder="0.00"
-            :disabled="props.readonly"
-            :class="{ 'p-invalid': !isFromAmountValid && fromAmount !== null }"
-          />
-          <span class="currency-chip">{{ fromCurrencySymbol || fromCurrency }}</span>
+            </template>
+          </Select>
+          <div
+            v-if="!isSameCurrency"
+            class="xfer-flow__amount-row"
+          >
+            <InputNumber
+              id="to-amount"
+              v-model="toAmount"
+              mode="decimal"
+              :min-fraction-digits="2"
+              :max-fraction-digits="2"
+              :min="VALIDATION_RULES.minAmount"
+              placeholder="0.00"
+              :disabled="props.readonly"
+              :class="{ 'p-invalid': !isToAmountValid && toAmount !== null }"
+            />
+            <span class="xfer-flow__currency">{{ toCurrencySymbol || toCurrency }}</span>
+          </div>
         </div>
       </div>
 
-      <div
-        v-if="!isSameCurrency"
-        class="field field--amount"
-      >
-        <label for="to-amount">Сумма зачисления *</label>
-        <div class="amount-input">
-          <InputNumber
-            id="to-amount"
-            v-model="toAmount"
-            mode="decimal"
-            :min-fraction-digits="2"
-            :max-fraction-digits="2"
-            :min="VALIDATION_RULES.minAmount"
-            placeholder="0.00"
-            :disabled="props.readonly"
-            :class="{ 'p-invalid': !isToAmountValid && toAmount !== null }"
-          />
-          <span class="currency-chip">{{ toCurrencySymbol || toCurrency }}</span>
-        </div>
-      </div>
-
-      <div class="field field--amount">
-        <label for="fee-amount">Комиссия</label>
-        <div class="amount-input">
-          <InputNumber
-            id="fee-amount"
-            v-model="feeAmount"
-            mode="decimal"
-            :min-fraction-digits="2"
-            :max-fraction-digits="2"
-            :min="0"
-            placeholder="0.00"
-            :disabled="props.readonly"
-          />
-          <span class="currency-chip">{{ fromCurrencySymbol || fromCurrency }}</span>
-        </div>
-      </div>
-
+      <!-- Rate badge -->
       <div
         v-if="exchangeRateLabel"
-        class="field field--full"
+        class="xfer-form__rate"
       >
-        <div class="rate-hint">
-          <i
-            class="pi pi-chart-line"
-            aria-hidden="true"
+        <i
+          class="pi pi-chart-line"
+          aria-hidden="true"
+        />
+        <span>{{ exchangeRateLabel }}</span>
+      </div>
+
+      <!-- Fee + Date row -->
+      <div class="xfer-form__fields">
+        <div class="xfer-form__field">
+          <label for="fee-amount">Комиссия</label>
+          <div class="xfer-flow__amount-row">
+            <InputNumber
+              id="fee-amount"
+              v-model="feeAmount"
+              mode="decimal"
+              :min-fraction-digits="2"
+              :max-fraction-digits="2"
+              :min="0"
+              placeholder="0.00"
+              :disabled="props.readonly"
+            />
+            <span class="xfer-flow__currency">{{ fromCurrencySymbol || fromCurrency }}</span>
+          </div>
+        </div>
+
+        <div class="xfer-form__field">
+          <label for="transfer-date">Дата</label>
+          <DatePicker
+            id="transfer-date"
+            v-model="date"
+            date-format="dd.mm.yy"
+            :show-icon="true"
+            :disabled="props.readonly"
+            class="w-full"
           />
-          <span>{{ exchangeRateLabel }}</span>
         </div>
       </div>
 
-      <div class="field">
-        <label for="transfer-date">Дата</label>
-        <DatePicker
-          id="transfer-date"
-          v-model="date"
-          date-format="dd.mm.yy"
-          :show-icon="true"
-          :disabled="props.readonly"
-          class="w-full"
-        />
-      </div>
-
-      <div class="field field--full">
+      <!-- Description -->
+      <div class="xfer-form__field xfer-form__field--full">
         <label for="transfer-description">Заметка</label>
         <InputText
           id="transfer-description"
@@ -430,8 +456,9 @@ const handleDelete = () => {
         />
       </div>
 
-      <footer class="form-actions">
-        <div class="form-actions__left">
+      <!-- Footer -->
+      <footer class="xfer-form__footer">
+        <div class="xfer-form__footer-left">
           <Button
             v-if="isEditMode"
             type="button"
@@ -444,11 +471,10 @@ const handleDelete = () => {
             @click="handleDelete"
           />
         </div>
-        <div class="form-actions__right">
+        <div class="xfer-form__footer-right">
           <Button
             type="button"
             label="Отмена"
-            icon="pi pi-times"
             severity="secondary"
             outlined
             :disabled="isSubmitting || isDeleting"
@@ -468,105 +494,267 @@ const handleDelete = () => {
 </template>
 
 <style scoped>
+.transfer-dialog :deep(.p-dialog-header) {
+  display: none;
+}
+
 .transfer-dialog :deep(.p-dialog-content) {
-  padding: clamp(1.8rem, 2.2vw, 2.3rem);
-  background: var(--ft-surface-elevated);
+  overflow-x: hidden;
+  overflow-y: auto;
+  padding: 0;
 }
 
-.transfer-form {
-  display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: var(--ft-space-4);
+.xfer-form {
+  display: flex;
+  flex-direction: column;
+  gap: var(--ft-space-5);
+  padding: var(--ft-space-6, 1.5rem);
+  background: var(--surface-2);
+  overflow: hidden;
 }
 
-.field {
-  display: grid;
-  gap: var(--ft-space-2);
+/* --- Header --- */
+.xfer-form__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
 }
 
-.field--full {
-  grid-column: 1 / -1;
+.xfer-form__title {
+  margin: 0;
+  font-size: var(--ft-text-lg);
+  font-weight: 700;
+  color: var(--ft-text-primary);
 }
 
-.field--amount {
-  grid-column: span 1;
+.xfer-form__close {
+  cursor: pointer;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  width: 36px;
+  height: 36px;
+  padding: 0;
+
+  color: var(--ft-text-tertiary);
+
+  background: none;
+  border: none;
+  border-radius: var(--ft-radius-md);
+
+  transition: color 0.15s, background-color 0.15s;
 }
 
-.amount-input {
+.xfer-form__close:hover {
+  color: var(--ft-text-primary);
+  background: var(--ft-surface-muted);
+}
+
+/* --- Transfer flow --- */
+.xfer-flow {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+}
+
+.xfer-flow__block {
+  display: flex;
+  flex-direction: column;
+  gap: var(--ft-space-3);
+  padding: var(--ft-space-4);
+  background: var(--surface-1);
+  border: 1px solid var(--border);
+  border-radius: var(--ft-radius-lg);
+}
+
+.xfer-flow__label {
+  font-size: var(--ft-text-xs);
+  font-weight: 600;
+  color: var(--ft-text-tertiary);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.xfer-flow__amount-row {
   display: flex;
   gap: var(--ft-space-2);
   align-items: center;
+  min-width: 0;
 }
 
-.currency-chip {
+.xfer-flow__amount-row :deep(.p-inputnumber) {
+  flex: 1;
+  min-width: 0;
+}
+
+.xfer-flow__amount-row :deep(.p-inputnumber-input) {
+  width: 100%;
+  min-width: 0;
+}
+
+.xfer-flow__currency {
   padding: 0.35rem 0.6rem;
 
   font-size: var(--ft-text-sm);
+  font-weight: 600;
   color: var(--ft-text-secondary);
   white-space: nowrap;
 
-  background: var(--ft-surface-muted);
+  background: var(--surface-2);
+  border: 1px solid var(--border);
   border-radius: var(--ft-radius-md);
 }
 
-.option-line {
+/* --- Arrow divider --- */
+.xfer-flow__divider {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 36px;
+}
+
+.xfer-flow__divider::before {
+  content: '';
+
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 50%;
+
+  width: 2px;
+
+  background: var(--ft-border-soft);
+
+  transform: translateX(-50%);
+}
+
+.xfer-flow__arrow {
+  position: relative;
+  z-index: 1;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  width: 28px;
+  height: 28px;
+
+  font-size: var(--ft-text-sm);
+  color: var(--ft-primary-400);
+
+  background: var(--surface-2);
+  border: 2px solid var(--border);
+  border-radius: 50%;
+}
+
+/* --- Rate badge --- */
+.xfer-form__rate {
+  display: inline-flex;
+  gap: var(--ft-space-2);
+  align-items: center;
+  align-self: flex-start;
+
+  padding: 0.4rem 0.75rem;
+
+  font-size: var(--ft-text-sm);
+  color: var(--ft-text-secondary);
+
+  background: var(--surface-1);
+  border: 1px solid var(--border);
+  border-radius: var(--ft-radius-md);
+}
+
+.xfer-form__rate i {
+  color: var(--ft-primary-400);
+}
+
+/* --- Fields grid --- */
+.xfer-form__fields {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--ft-space-4);
+}
+
+.xfer-form__field {
+  display: flex;
+  flex-direction: column;
+  gap: var(--ft-space-2);
+  min-width: 0;
+}
+
+.xfer-form__field--full {
+  grid-column: 1 / -1;
+}
+
+.xfer-form__field label {
+  font-size: var(--ft-text-sm);
+  font-weight: 600;
+  color: var(--ft-text-secondary);
+}
+
+.xfer-form__option-line {
   display: flex;
   gap: var(--ft-space-2);
   align-items: center;
   justify-content: space-between;
-
   width: 100%;
 }
 
-.option-name {
+.xfer-form__option-name {
   display: flex;
   gap: var(--ft-space-2);
   align-items: center;
 }
 
-.option-currency {
+.xfer-form__option-currency {
   font-size: var(--ft-text-xs);
   color: var(--ft-text-tertiary);
 }
 
-.form-actions {
+/* --- Footer --- */
+.xfer-form__footer {
   display: flex;
-  grid-column: 1 / -1;
   gap: var(--ft-space-3);
   align-items: center;
   justify-content: space-between;
-
-  margin-top: var(--ft-space-2);
 }
 
-.form-actions__left,
-.form-actions__right {
+.xfer-form__footer-left,
+.xfer-form__footer-right {
   display: flex;
   gap: var(--ft-space-3);
   align-items: center;
 }
 
-.rate-hint {
-  display: inline-flex;
-  gap: var(--ft-space-2);
-  align-items: center;
-
-  padding: 0.5rem 0.75rem;
-
-  font-size: var(--ft-text-sm);
-  color: var(--ft-text-secondary);
-
-  background: var(--ft-surface-muted);
-  border-radius: var(--ft-radius-md);
-}
-
-.rate-hint i {
-  color: var(--ft-primary-400);
-}
-
 @media (width <= 640px) {
-  .transfer-form {
+  .xfer-form {
+    padding: var(--ft-space-5, 1.25rem);
+  }
+
+  .xfer-form__fields {
     grid-template-columns: 1fr;
+  }
+
+  .xfer-form__footer {
+    flex-direction: column;
+    gap: var(--ft-space-3);
+  }
+
+  .xfer-form__footer-left,
+  .xfer-form__footer-right {
+    flex-direction: column;
+    width: 100%;
+  }
+
+  .xfer-form__footer-right {
+    flex-direction: column-reverse;
+  }
+
+  .xfer-form__footer :deep(.p-button) {
+    width: 100%;
   }
 }
 </style>

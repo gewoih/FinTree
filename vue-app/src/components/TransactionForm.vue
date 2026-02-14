@@ -314,80 +314,87 @@ watch(filteredCategories, () => {
   <Dialog
     :visible="props.visible"
     :modal="true"
-    :style="{ width: '620px' }"
-    class="transaction-dialog"
-    :closable="true"
+    :style="{ width: '540px' }"
+    class="txn-dialog"
+    :closable="false"
     :dismissable-mask="true"
     role="dialog"
     aria-modal="true"
-    :aria-labelledby="isEditMode ? 'transaction-dialog-title-edit' : 'transaction-dialog-title-new'"
+    :aria-labelledby="isEditMode ? 'txn-dialog-title-edit' : 'txn-dialog-title-new'"
     @update:visible="val => emit('update:visible', val)"
   >
     <template #header>
-      <h2
-        :id="isEditMode ? 'transaction-dialog-title-edit' : 'transaction-dialog-title-new'"
-        class="dialog-title"
-      >
-        {{ isEditMode ? 'Редактирование' : 'Новая транзакция' }}
-      </h2>
+      <span />
     </template>
 
     <form
-      class="transaction-form"
+      class="txn-form"
       @submit.prevent="handleFormSubmitEvent"
     >
-      <section class="form-fields">
-        <!-- Type selector - only in create mode -->
-        <div
-          v-if="!isEditMode"
-          class="field field--type"
+      <header class="txn-form__header">
+        <h2
+          :id="isEditMode ? 'txn-dialog-title-edit' : 'txn-dialog-title-new'"
+          class="txn-form__title"
         >
-          <label
-            for="transaction-type"
-            class="sr-only"
-          >Тип</label>
-          <SelectButton
-            id="transaction-type"
-            v-model="transactionType"
-            :options="transactionTypeOptions"
-            option-label="label"
-            option-value="value"
-            :allow-empty="false"
+          {{ isEditMode ? 'Редактирование' : 'Новая транзакция' }}
+        </h2>
+        <button
+          type="button"
+          class="txn-form__close"
+          aria-label="Закрыть"
+          @click="emit('update:visible', false)"
+        >
+          <i class="pi pi-times" />
+        </button>
+      </header>
+
+      <!-- Type toggle (create mode only) -->
+      <div
+        v-if="!isEditMode"
+        class="txn-form__type"
+      >
+        <SelectButton
+          v-model="transactionType"
+          :options="transactionTypeOptions"
+          option-label="label"
+          option-value="value"
+          :allow-empty="false"
+          :disabled="props.readonly"
+          class="w-full"
+        />
+      </div>
+
+      <!-- Hero amount -->
+      <div class="txn-form__amount">
+        <div class="txn-form__amount-row">
+          <InputNumber
+            id="amount"
+            v-model="amount"
+            mode="decimal"
+            :min-fraction-digits="2"
+            :max-fraction-digits="2"
+            :min="VALIDATION_RULES.minAmount"
+            autofocus
+            placeholder="0.00"
+            required
             :disabled="props.readonly"
-            class="w-full"
+            class="txn-form__amount-input"
+            :class="{ 'p-invalid': !isAmountValid && amount !== null }"
           />
+          <span class="txn-form__currency">{{ currencySymbol || currencyCode }}</span>
         </div>
+        <small
+          v-if="!isAmountValid && amount !== null"
+          class="txn-form__error"
+        >
+          Сумма от {{ VALIDATION_RULES.minAmount }} до {{ VALIDATION_RULES.maxAmount }}
+        </small>
+      </div>
 
-        <!-- Row 1: Amount + Currency -->
-        <div class="field field--amount">
-          <label for="amount">Сумма *</label>
-          <div class="amount-input">
-            <InputNumber
-              id="amount"
-              v-model="amount"
-              mode="decimal"
-              :min-fraction-digits="2"
-              :max-fraction-digits="2"
-              :min="VALIDATION_RULES.minAmount"
-              autofocus
-              placeholder="0.00"
-              required
-              :disabled="props.readonly"
-              :class="{ 'p-invalid': !isAmountValid }"
-            />
-            <span class="currency-chip">{{ currencySymbol || currencyCode }}</span>
-          </div>
-          <small
-            v-if="!isAmountValid && amount !== null"
-            class="error-text"
-          >
-            Сумма от {{ VALIDATION_RULES.minAmount }} до {{ VALIDATION_RULES.maxAmount }}
-          </small>
-        </div>
-
-        <!-- Row 2: Category + Account -->
-        <div class="field">
-          <label for="category">Категория *</label>
+      <!-- Fields grid -->
+      <div class="txn-form__fields">
+        <div class="txn-form__field">
+          <label for="category">Категория</label>
           <Select
             id="category"
             v-model="selectedCategory"
@@ -399,9 +406,9 @@ watch(filteredCategories, () => {
             class="w-full"
           >
             <template #option="slotProps">
-              <div class="option-name">
+              <div class="txn-form__option-name">
                 <span
-                  class="category-dot"
+                  class="txn-form__cat-dot"
                   :style="{ backgroundColor: slotProps.option.color }"
                 />
                 <span>{{ slotProps.option.name }}</span>
@@ -410,25 +417,25 @@ watch(filteredCategories, () => {
           </Select>
         </div>
 
-        <div class="field">
-          <label for="account">Счет *</label>
+        <div class="txn-form__field">
+          <label for="account">Счёт</label>
           <Select
             id="account"
             v-model="selectedAccount"
             :options="store.accounts"
             option-label="name"
-            placeholder="Выберите счет"
+            placeholder="Выберите счёт"
             required
             :disabled="props.readonly"
             class="w-full"
           >
             <template #option="slotProps">
-              <div class="option-line">
-                <div class="option-name">
+              <div class="txn-form__option-line">
+                <div class="txn-form__option-name">
                   <i class="pi pi-credit-card" />
                   <span>{{ slotProps.option.name }}</span>
                 </div>
-                <span class="option-currency">
+                <span class="txn-form__option-currency">
                   {{ slotProps.option.currency?.symbol ?? '' }} {{ slotProps.option.currency?.code ?? slotProps.option.currencyCode ?? '—' }}
                 </span>
               </div>
@@ -436,8 +443,7 @@ watch(filteredCategories, () => {
           </Select>
         </div>
 
-        <!-- Row 3: Date + Mandatory checkbox (optional) -->
-        <div class="field">
+        <div class="txn-form__field">
           <label for="date">Дата</label>
           <DatePicker
             id="date"
@@ -452,11 +458,12 @@ watch(filteredCategories, () => {
 
         <div
           v-if="!isIncome"
-          class="field field--checkbox"
+          class="txn-form__field txn-form__field--checkbox"
         >
+          <label class="txn-form__field-label-spacer">Тип расхода</label>
           <label
             for="isMandatory"
-            class="checkbox-label"
+            class="txn-form__checkbox-label"
           >
             <Checkbox
               id="isMandatory"
@@ -468,8 +475,7 @@ watch(filteredCategories, () => {
           </label>
         </div>
 
-        <!-- Row 4: Description (full width) -->
-        <div class="field field--full">
+        <div class="txn-form__field txn-form__field--full">
           <label for="description">Заметка</label>
           <InputText
             id="description"
@@ -479,10 +485,11 @@ watch(filteredCategories, () => {
             class="w-full"
           />
         </div>
-      </section>
+      </div>
 
-      <footer class="form-actions">
-        <div class="action-secondary">
+      <!-- Footer actions -->
+      <footer class="txn-form__footer">
+        <div class="txn-form__footer-left">
           <Button
             v-if="isEditMode"
             type="button"
@@ -494,26 +501,24 @@ watch(filteredCategories, () => {
             :disabled="props.readonly || isSubmitting"
             @click="handleDelete"
           />
+        </div>
+        <div class="txn-form__footer-right">
+          <button
+            v-if="!isEditMode"
+            type="button"
+            class="txn-form__add-another"
+            :disabled="props.readonly || submitDisabled || isSubmitting"
+            @click="submitTransaction(true)"
+          >
+            Сохранить и добавить ещё
+          </button>
           <Button
             type="button"
             label="Отмена"
-            icon="pi pi-times"
             severity="secondary"
             outlined
             :disabled="isDeleting"
             @click="emit('update:visible', false)"
-          />
-        </div>
-        <div class="action-buttons">
-          <Button
-            v-if="!isEditMode"
-            type="button"
-            label="Сохранить и добавить еще"
-            icon="pi pi-plus"
-            severity="secondary"
-            :disabled="props.readonly || submitDisabled"
-            :loading="isSubmitting"
-            @click="submitTransaction(true)"
           />
           <Button
             type="submit"
@@ -529,187 +534,286 @@ watch(filteredCategories, () => {
 </template>
 
 <style scoped>
-.transaction-dialog :deep(.p-dialog-content) {
-  overflow: hidden;
-  padding: 0;
-  border-radius: var(--ft-radius-xl);
-}
-
-.transaction-dialog :deep(.p-dialog-header) {
+.txn-dialog :deep(.p-dialog-header) {
   display: none;
 }
 
-.transaction-form {
-  display: flex;
-  flex-direction: column;
-  gap: clamp(1.5rem, 2vw, 2.1rem);
-
-  padding: clamp(1.8rem, 2.2vw, 2.3rem);
-
-  background: var(--ft-surface-elevated);
-}
-
-.form-fields {
-  display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: var(--ft-space-5) var(--ft-space-4);
-}
-
-.field {
-  display: flex;
-  flex-direction: column;
-  gap: var(--ft-space-2);
-}
-
-.field--type {
-  grid-column: 1 / -1;
-  margin-bottom: var(--ft-space-2);
-}
-
-.field--amount {
-  grid-column: 1 / -1;
-}
-
-.field--full {
-  grid-column: 1 / -1;
-}
-
-.field--checkbox {
-  display: flex;
-  align-items: flex-end;
-  padding-bottom: var(--ft-space-1);
-}
-
-.field label {
-  font-size: 0.9rem;
-  font-weight: 600;
-  color: var(--ft-heading);
-}
-
-.field small {
-  margin-top: var(--ft-space-1);
-  font-size: 0.8rem;
-  color: var(--ft-text-muted);
-}
-
-.checkbox-label {
-  cursor: pointer;
-
-  display: flex;
-  gap: var(--ft-space-2);
-  align-items: center;
-
-  font-size: 0.9rem !important;
-  font-weight: 500 !important;
-}
-
-.sr-only {
-  position: absolute;
-
-  overflow: hidden;
-
-  width: 1px;
-  height: 1px;
-  margin: -1px;
+.txn-dialog :deep(.p-dialog-content) {
+  overflow-x: hidden;
+  overflow-y: auto;
   padding: 0;
-
-  white-space: nowrap;
-
-  clip-path: inset(50%);
-  border-width: 0;
 }
 
-.amount-input {
+.txn-form {
   display: flex;
-  gap: 0.6rem;
-  align-items: center;
+  flex-direction: column;
+  gap: var(--ft-space-5);
+  padding: var(--ft-space-6, 1.5rem);
+  background: var(--surface-2);
 }
 
-.amount-input :deep(.p-inputnumber) {
-  flex: 1;
-}
-
-.currency-chip {
-  box-shadow: inset 0 0 0 1px rgb(56 189 248 / 24%);
-}
-
-.option-line {
+/* --- Header --- */
+.txn-form__header {
   display: flex;
-  gap: 0.75rem;
   align-items: center;
   justify-content: space-between;
 }
 
-.option-name {
+.txn-form__title {
+  margin: 0;
+  font-size: var(--ft-text-lg);
+  font-weight: 700;
+  color: var(--ft-text-primary);
+}
+
+.txn-form__close {
+  cursor: pointer;
+
   display: flex;
-  gap: 0.55rem;
+  align-items: center;
+  justify-content: center;
+
+  width: 36px;
+  height: 36px;
+  padding: 0;
+
+  color: var(--ft-text-tertiary);
+
+  background: none;
+  border: none;
+  border-radius: var(--ft-radius-md);
+
+  transition: color 0.15s, background-color 0.15s;
+}
+
+.txn-form__close:hover {
+  color: var(--ft-text-primary);
+  background: var(--ft-surface-muted);
+}
+
+/* --- Type toggle --- */
+.txn-form__type {
+  display: flex;
+  justify-content: center;
+}
+
+/* --- Hero amount --- */
+.txn-form__amount {
+  display: flex;
+  flex-direction: column;
+  gap: var(--ft-space-2);
   align-items: center;
 }
 
-.option-name i {
-  color: var(--ft-accent);
+.txn-form__amount-row {
+  display: flex;
+  gap: var(--ft-space-3);
+  align-items: center;
+  justify-content: center;
 }
 
-.option-currency {
-  font-size: 0.85rem;
-  color: var(--ft-text-muted);
+.txn-form__amount-input :deep(.p-inputnumber-input.p-inputtext) {
+  font-size: var(--ft-text-3xl);
+  font-weight: 700;
+  text-align: center;
+  background-color: transparent;
+  border: none;
+  border-bottom: 2px solid var(--ft-border-default, var(--ft-border-soft));
+  border-radius: 0;
+  box-shadow: none;
 }
 
-.category-dot {
+.txn-form__amount-input :deep(.p-inputnumber-input.p-inputtext:focus) {
+  border-color: transparent;
+  border-bottom-color: var(--ft-primary-400);
+  box-shadow: none;
+}
+
+.txn-form__amount-input :deep(.p-inputnumber) {
+  border: none;
+  background: transparent;
+  box-shadow: none;
+}
+
+.txn-form__amount-input :deep(.p-inputnumber:focus-within) {
+  border-color: transparent;
+  box-shadow: none;
+}
+
+.txn-form__currency {
+  padding: 0.35rem 0.65rem;
+
+  font-size: var(--ft-text-sm);
+  font-weight: 600;
+  color: var(--ft-text-secondary);
+
+  background: var(--surface-1);
+  border: 1px solid var(--border);
+  border-radius: var(--ft-radius-md);
+}
+
+.txn-form__error {
+  font-size: var(--ft-text-xs);
+  color: var(--ft-danger-400);
+}
+
+/* --- Fields grid --- */
+.txn-form__fields {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--ft-space-4);
+}
+
+.txn-form__field {
+  display: flex;
+  flex-direction: column;
+  gap: var(--ft-space-2);
+}
+
+.txn-form__field--full {
+  grid-column: 1 / -1;
+}
+
+.txn-form__field--checkbox {
+  justify-content: flex-end;
+}
+
+.txn-form__field label {
+  font-size: var(--ft-text-sm);
+  font-weight: 600;
+  color: var(--ft-text-secondary);
+}
+
+.txn-form__checkbox-label {
+  cursor: pointer;
+
+  display: flex;
+  gap: var(--ft-space-3);
+  align-items: center;
+
+  min-height: 44px;
+  padding: 0 var(--ft-space-3);
+
+  font-size: var(--ft-text-sm);
+  font-weight: 500;
+  color: var(--ft-text-primary);
+
+  background: var(--surface-1);
+  border: 1px solid var(--border);
+  border-radius: var(--ft-radius-md);
+
+  transition: border-color 0.15s;
+}
+
+.txn-form__checkbox-label:hover {
+  border-color: var(--ft-primary-400);
+}
+
+.txn-form__cat-dot {
   display: inline-block;
   width: 12px;
   height: 12px;
   border-radius: 50%;
 }
 
-.error-text {
-  color: #dc2626;
-}
-
-.form-actions {
+.txn-form__option-line {
   display: flex;
-  gap: 0.9rem;
+  gap: var(--ft-space-3);
   align-items: center;
   justify-content: space-between;
 }
 
-.action-secondary {
+.txn-form__option-name {
   display: flex;
-  gap: 0.6rem;
+  gap: var(--ft-space-2);
   align-items: center;
 }
 
-.action-buttons {
+.txn-form__option-name i {
+  color: var(--ft-accent);
+}
+
+.txn-form__option-currency {
+  font-size: var(--ft-text-xs);
+  color: var(--ft-text-tertiary);
+}
+
+/* --- Footer --- */
+.txn-form__footer {
   display: flex;
-  gap: 0.6rem;
+  gap: var(--ft-space-3);
   align-items: center;
+  justify-content: space-between;
+}
+
+.txn-form__footer-left {
+  display: flex;
+  gap: var(--ft-space-2);
+}
+
+.txn-form__footer-right {
+  display: flex;
+  gap: var(--ft-space-3);
+  align-items: center;
+}
+
+.txn-form__add-another {
+  cursor: pointer;
+
+  padding: 0;
+
+  font-size: var(--ft-text-sm);
+  font-weight: 500;
+  color: var(--ft-primary-400);
+  text-decoration: none;
+
+  background: none;
+  border: none;
+
+  transition: color 0.15s;
+}
+
+.txn-form__add-another:hover:not(:disabled) {
+  text-decoration: underline;
+}
+
+.txn-form__add-another:disabled {
+  cursor: not-allowed;
+  opacity: 0.5;
 }
 
 @media (width <= 640px) {
-  .transaction-form {
-    padding: 1.5rem;
+  .txn-form {
+    padding: var(--ft-space-5, 1.25rem);
   }
 
-  .form-fields {
+  .txn-form__fields {
     grid-template-columns: 1fr;
   }
 
-  .form-actions {
+  .txn-form__footer {
     flex-direction: column;
+    gap: var(--ft-space-3);
   }
 
-  .action-secondary {
+  .txn-form__footer-left,
+  .txn-form__footer-right {
     flex-direction: column;
     width: 100%;
   }
 
-  .action-buttons {
+  .txn-form__footer-right {
     flex-direction: column-reverse;
+  }
+
+  .txn-form__footer :deep(.p-button) {
     width: 100%;
   }
 
-  .form-actions :deep(.p-button) {
-    width: 100%;
+  .txn-form__add-another {
+    order: -1;
+    padding: var(--ft-space-2);
+    text-align: center;
   }
 }
 </style>

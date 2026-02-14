@@ -2,9 +2,6 @@
 import { computed } from 'vue';
 import type { Account, Category } from '../types';
 
-// Common components
-import FormField from './common/FormField.vue';
-
 const props = defineProps<{
   searchText: string;
   selectedCategory: Category | null;
@@ -22,15 +19,13 @@ const emit = defineEmits([
   'clearFilters'
 ]);
 
-// Category options with "All" option
 const categoryOptions = computed(() => [
-  { label: 'All categories', value: null },
+  { label: 'Все категории', value: null },
   ...props.categories.map(cat => ({ label: cat.name, value: cat }))
 ]);
 
-// Account options with "All" option
 const accountOptions = computed(() => [
-  { label: 'All accounts', value: null },
+  { label: 'Все счета', value: null },
   ...props.accounts.map(acc => ({ label: acc.name, value: acc }))
 ]);
 
@@ -60,143 +55,147 @@ const handleDateRangeUpdate = (
   }
   emit('update:dateRange', [value]);
 };
+
+const hasActiveFilters = computed(() =>
+  props.searchText.trim() !== '' ||
+  props.selectedCategory !== null ||
+  props.selectedAccount !== null ||
+  (props.dateRange !== null && props.dateRange.length > 0)
+);
 </script>
 
 <template>
-  <div class="filters-panel transaction-filters">
-    <div class="filters-grid">
-      <FormField
-        class="filter-field filter-field--search"
-        label="Поиск"
-      >
-        <template #default="{ fieldAttrs }">
-          <UiInputText
-            :id="fieldAttrs.id"
-            :model-value="props.searchText"
-            placeholder="Категория, счёт или заметка…"
-            autocomplete="off"
-            @update:model-value="handleSearchUpdate"
-          />
-        </template>
-      </FormField>
-
-      <div class="filters-grid__controls">
-        <FormField
-          class="filter-field"
-          label="Категория"
-        >
-          <template #default="{ fieldAttrs }">
-            <UiSelect
-              :model-value="props.selectedCategory"
-              :options="categoryOptions"
-              option-label="label"
-              option-value="value"
-              placeholder="Все категории"
-              :input-id="fieldAttrs.id"
-              @update:model-value="handleCategoryUpdate"
-            />
-          </template>
-        </FormField>
-
-        <FormField
-          class="filter-field"
-          label="Счёт"
-        >
-          <template #default="{ fieldAttrs }">
-            <UiSelect
-              :model-value="props.selectedAccount"
-              :options="accountOptions"
-              option-label="label"
-              option-value="value"
-              placeholder="Все счета"
-              :input-id="fieldAttrs.id"
-              @update:model-value="handleAccountUpdate"
-            />
-          </template>
-        </FormField>
-
-        <FormField
-          class="filter-field"
-          label="Диапазон дат"
-        >
-          <template #default="{ fieldAttrs }">
-            <UiDatePicker
-              :model-value="props.dateRange"
-              selection-mode="range"
-              :manual-input="false"
-              date-format="dd.mm.yy"
-              placeholder="Выберите период"
-              show-button-bar
-              :input-id="fieldAttrs.id"
-              @update:model-value="handleDateRangeUpdate"
-            />
-          </template>
-        </FormField>
-
-        <FormField
-          class="filter-field filter-field--compact"
-          label="Сбросить фильтры"
-          label-sr-only
-        >
-          <template #default>
-            <UiButton
-              icon="pi pi-refresh"
-              variant="ghost"
-              block
-              @click="emit('clearFilters')"
-            >
-              Сбросить
-            </UiButton>
-          </template>
-        </FormField>
-      </div>
+  <div class="transaction-filters">
+    <div class="transaction-filters__search">
+      <i class="pi pi-search" />
+      <UiInputText
+        :model-value="props.searchText"
+        placeholder="Поиск…"
+        autocomplete="off"
+        @update:model-value="handleSearchUpdate"
+      />
     </div>
+
+    <UiSelect
+      :model-value="props.selectedCategory"
+      :options="categoryOptions"
+      option-label="label"
+      option-value="value"
+      placeholder="Категория"
+      class="transaction-filters__control"
+      @update:model-value="handleCategoryUpdate"
+    />
+
+    <UiSelect
+      :model-value="props.selectedAccount"
+      :options="accountOptions"
+      option-label="label"
+      option-value="value"
+      placeholder="Счёт"
+      class="transaction-filters__control"
+      @update:model-value="handleAccountUpdate"
+    />
+
+    <UiDatePicker
+      :model-value="props.dateRange"
+      selection-mode="range"
+      :manual-input="false"
+      date-format="dd.mm.yy"
+      placeholder="Период"
+      show-button-bar
+      class="transaction-filters__control"
+      @update:model-value="handleDateRangeUpdate"
+    />
+
+    <button
+      v-if="hasActiveFilters"
+      type="button"
+      class="transaction-filters__clear"
+      aria-label="Сбросить фильтры"
+      @click="emit('clearFilters')"
+    >
+      <i class="pi pi-times" />
+    </button>
   </div>
 </template>
 
 <style scoped>
-.filters-panel {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-4);
-}
-
-.filters-grid {
+.transaction-filters {
   display: grid;
-  grid-template-columns: minmax(240px, 1fr) auto;
-  gap: var(--space-5);
-  align-items: end;
+  grid-template-columns: minmax(200px, 1fr) minmax(150px, 200px) minmax(150px, 200px) minmax(150px, 200px) auto;
+  gap: var(--ft-space-3);
+  align-items: center;
 }
 
-.filters-grid__controls {
-  display: grid;
-  grid-template-columns: repeat(4, minmax(160px, 1fr));
-  gap: var(--space-4);
-  align-items: end;
-}
-
-.filter-field {
+.transaction-filters__search {
   display: flex;
-  flex-direction: column;
-  gap: 0.5rem;
+  gap: var(--ft-space-2);
+  align-items: center;
+
+  min-height: 44px;
+  padding: 0 var(--ft-space-3);
+
+  background: var(--ft-surface-0, var(--ft-surface-base));
+  border: 1px solid var(--ft-border-default, var(--ft-border-soft));
+  border-radius: var(--ft-radius-md);
 }
 
-.filter-field label {
-  font-size: 0.85rem;
-  font-weight: 600;
-  color: var(--ft-text-muted);
+.transaction-filters__search i {
+  color: var(--ft-text-tertiary);
+  font-size: var(--ft-text-sm);
+  flex-shrink: 0;
 }
 
-.filter-field--compact :deep(.ui-button) {
-  min-height: var(--control-height);
+.transaction-filters__search :deep(.p-inputtext) {
+  flex: 1;
+  background: transparent;
+  border: none;
+  box-shadow: none;
+  padding-left: 0;
+}
+
+.transaction-filters__control {
+  min-width: 0;
+}
+
+.transaction-filters__clear {
+  cursor: pointer;
+
+  display: flex;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: center;
+
+  width: 36px;
+  height: 36px;
+  padding: 0;
+
+  color: var(--ft-text-tertiary);
+
+  background: none;
+  border: none;
+  border-radius: var(--ft-radius-md);
+
+  transition: color 0.15s, background-color 0.15s;
+}
+
+.transaction-filters__clear:hover {
+  color: var(--ft-text-primary);
+  background: var(--ft-surface-muted);
 }
 
 @media (width <= 768px) {
-  .filters-grid {
-    grid-template-columns: 1fr;
+  .transaction-filters {
+    grid-template-columns: 1fr 1fr;
   }
 
-  .filters-grid__controls {
+  .transaction-filters__search {
+    grid-column: 1 / -1;
+  }
+}
+
+@media (width <= 480px) {
+  .transaction-filters {
     grid-template-columns: 1fr;
   }
 }

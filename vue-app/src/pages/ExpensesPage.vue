@@ -119,7 +119,7 @@ onMounted(async () => {
   <PageContainer class="transactions">
     <PageHeader
       title="Транзакции"
-      subtitle="Фильтруйте, изучайте и управляйте всеми расходами и доходами"
+      subtitle="Все расходы и доходы в одном месте"
       :breadcrumbs="[
         { label: 'Главная', to: '/analytics' },
         { label: 'Транзакции' }

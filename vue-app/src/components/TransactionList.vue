@@ -1,13 +1,12 @@
 <script setup lang="ts">
 import { computed, onBeforeUnmount, ref, watch } from 'vue'
-import Column from 'primevue/column'
 import Skeleton from 'primevue/skeleton'
+import Paginator from 'primevue/paginator'
 import { useRoute } from 'vue-router'
 import { useFinanceStore } from '../stores/finance'
 import { useUserStore } from '../stores/user'
 import { PAGINATION_OPTIONS } from '../constants'
 import { useTransactionFilters } from '../composables/useTransactionFilters'
-import { useViewport } from '../composables/useViewport'
 import TransactionFilters from './TransactionFilters.vue'
 import { formatCurrency } from '../utils/formatters'
 import { formatUtcDateOnly, getUtcDateOnlyKey, toUtcDateOnlyIso } from '../utils/dateOnly'
@@ -42,6 +41,13 @@ interface EnrichedTransaction extends Transaction {
   transferRateLabel?: string
 }
 
+interface TransactionGroup {
+  dateKey: string
+  dateLabel: string
+  dayTotal: string
+  transactions: EnrichedTransaction[]
+}
+
 const props = withDefaults(defineProps<{
   readonly?: boolean
 }>(), {
@@ -57,7 +63,6 @@ const emit = defineEmits<{
 const store = useFinanceStore()
 const userStore = useUserStore()
 const route = useRoute()
-const { isMobile } = useViewport()
 
 const baseCurrency = computed(() => userStore.baseCurrencyCode ?? store.primaryAccount?.currencyCode ?? 'RUB')
 
@@ -249,9 +254,34 @@ const sortedTransactions = computed(() => {
   })
 })
 
-const rowClass = (data: EnrichedTransaction) => ({
-  'transaction-row--day-start': data.isDayStart,
-  'transaction-row--transfer': data.isTransferSummary
+const groupedTransactions = computed<TransactionGroup[]>(() => {
+  const groups: TransactionGroup[] = []
+  let currentGroup: TransactionGroup | null = null
+
+  for (const txn of sortedTransactions.value) {
+    if (!currentGroup || currentGroup.dateKey !== txn.dateKey) {
+      const dayTransactions = sortedTransactions.value.filter(t => t.dateKey === txn.dateKey)
+      const daySum = dayTransactions.reduce(
+        (sum, t) => t.isTransferSummary ? sum : sum + Number(t.signedBaseAmount ?? t.signedAmount ?? 0),
+        0
+      )
+      const sign = daySum < 0 ? '−' : '+'
+      const dayTotal = daySum === 0
+        ? formatCurrency(0, baseCurrency.value)
+        : `${sign}${formatCurrency(Math.abs(daySum), baseCurrency.value)}`
+
+      currentGroup = {
+        dateKey: txn.dateKey,
+        dateLabel: txn.dateLabel,
+        dayTotal,
+        transactions: []
+      }
+      groups.push(currentGroup)
+    }
+    currentGroup.transactions.push(txn)
+  }
+
+  return groups
 })
 
 const totalAmount = computed(() =>
@@ -273,16 +303,6 @@ const formattedTotalAmount = computed(() => {
   const formatted = formatCurrency(Math.abs(total), baseCurrency.value)
   return `${sign} ${formatted}`
 })
-
-const paginatorTemplate = computed(() =>
-  isMobile.value
-    ? 'PrevPageLink PageLinks NextPageLink'
-    : 'FirstPageLink PrevPageLink PageLinks NextPageLink LastPageLink CurrentPageReport RowsPerPageDropdown'
-)
-
-const currentPageReportTemplate = computed(() =>
-  isMobile.value ? '' : 'Показано {first} - {last} из {totalRecords}'
-)
 
 const clearFilters = () => {
   clearFiltersComposable()
@@ -409,36 +429,36 @@ const handlePage = (event: { page: number; rows: number }) => {
   })
 }
 
-const handleRowClick = (event: { data: EnrichedTransaction }) => {
+const handleRowClick = (txn: EnrichedTransaction) => {
   if (props.readonly) return
-  if (event.data.isTransferSummary) {
-    if (!event.data.transferFromAccountId || !event.data.transferToAccountId) {
+  if (txn.isTransferSummary) {
+    if (!txn.transferFromAccountId || !txn.transferToAccountId) {
       return
     }
 
     emit('edit-transfer', {
-      transferId: event.data.id,
-      fromAccountId: event.data.transferFromAccountId,
-      toAccountId: event.data.transferToAccountId,
-      fromAmount: event.data.transferFromAmount ?? 0,
-      toAmount: event.data.transferToAmount ?? 0,
-      feeAmount: event.data.transferFeeAmount ?? null,
-      occurredAt: event.data.occurredAt,
-      description: event.data.description ?? null
+      transferId: txn.id,
+      fromAccountId: txn.transferFromAccountId,
+      toAccountId: txn.transferToAccountId,
+      fromAmount: txn.transferFromAmount ?? 0,
+      toAmount: txn.transferToAmount ?? 0,
+      feeAmount: txn.transferFeeAmount ?? null,
+      occurredAt: txn.occurredAt,
+      description: txn.description ?? null
     })
     return
   }
-  emit('edit-transaction', event.data)
+  emit('edit-transaction', txn)
 }
 </script>
 
 <template>
   <div
-    class="transaction-history"
-    :class="{ 'transaction-history--readonly': props.readonly }"
+    class="txn-list"
+    :class="{ 'txn-list--readonly': props.readonly }"
   >
     <UiCard
-      class="transaction-history__filters"
+      class="txn-list__filters"
       variant="muted"
       padding="lg"
     >
@@ -455,12 +475,12 @@ const handleRowClick = (event: { data: EnrichedTransaction }) => {
 
     <div
       v-if="transactionsLoading"
-      class="table-skeleton"
+      class="txn-list__skeleton"
     >
       <Skeleton
         v-for="i in 6"
         :key="i"
-        height="54px"
+        height="64px"
       />
     </div>
 
@@ -474,442 +494,344 @@ const handleRowClick = (event: { data: EnrichedTransaction }) => {
       @action="emit('add-transaction')"
     />
 
-    <UiCard
-      v-else
-      class="transaction-history__table"
-      padding="lg"
-    >
-      <UiDataTable
-        class="transaction-history__datatable"
-        :value="sortedTransactions"
-        sort-field="occurredAt"
-        :sort-order="-1"
-        striped-rows
-        row-hover
-        :responsive-layout="isMobile ? 'stack' : 'scroll'"
-        breakpoint="768px"
-        :paginator="true"
-        lazy
-        :rows="paginationRows"
-        :first="paginationFirst"
-        :total-records="totalRecords"
-        :rows-per-page-options="[...PAGINATION_OPTIONS.options]"
-        :paginator-template="paginatorTemplate"
-        :current-page-report-template="currentPageReportTemplate"
-        :row-class="rowClass"
-        selection-mode="single"
-        data-key="id"
-        @page="handlePage"
-        @row-click="handleRowClick"
-      >
-        <template #footer>
-          <div class="transaction-history__summary">
-            <span>Итого (страница)</span>
-            <span class="transaction-history__summary-amount">
-              {{ formattedTotalAmount }}
-            </span>
+    <template v-else>
+      <div class="txn-groups">
+        <section
+          v-for="group in groupedTransactions"
+          :key="group.dateKey"
+          class="txn-group"
+        >
+          <header class="txn-group__header">
+            <span class="txn-group__date">{{ group.dateLabel }}</span>
+            <span class="txn-group__total">{{ group.dayTotal }}</span>
+          </header>
+
+          <div class="txn-group__rows">
+            <button
+              v-for="txn in group.transactions"
+              :key="txn.id"
+              type="button"
+              class="txn-row"
+              :class="{ 'txn-row--transfer': txn.isTransferSummary }"
+              :disabled="props.readonly"
+              @click="handleRowClick(txn)"
+            >
+              <div class="txn-row__left">
+                <span
+                  v-if="txn.isTransferSummary"
+                  class="txn-row__icon txn-row__icon--transfer"
+                >
+                  <i class="pi pi-arrow-right-arrow-left" />
+                </span>
+                <span
+                  v-else
+                  class="txn-row__icon"
+                  :style="{
+                    backgroundColor: (txn.categoryColor ?? '#94a3b8') + '26',
+                    color: txn.categoryColor ?? '#94a3b8'
+                  }"
+                >
+                  <span class="txn-row__dot" :style="{ backgroundColor: txn.categoryColor ?? '#94a3b8' }" />
+                </span>
+
+                <div class="txn-row__info">
+                  <span class="txn-row__category">
+                    {{ txn.categoryName ?? '—' }}
+                    <i
+                      v-if="txn.isMandatory && !txn.isTransferSummary"
+                      class="pi pi-lock txn-row__mandatory"
+                      title="Обязательный платеж"
+                    />
+                  </span>
+                  <span class="txn-row__meta">
+                    <template v-if="txn.accountName">{{ txn.accountName }}</template>
+                    <template v-if="txn.accountName && txn.description"> · </template>
+                    <template v-if="txn.description">{{ txn.description }}</template>
+                  </span>
+                </div>
+              </div>
+
+              <div class="txn-row__right">
+                <template v-if="txn.isTransferSummary">
+                  <span class="txn-row__amount txn-row__amount--negative">
+                    −{{ formatCurrency(txn.transferFromAmount ?? 0, txn.transferFromCurrency) }}
+                  </span>
+                  <span class="txn-row__amount txn-row__amount--positive">
+                    +{{ formatCurrency(txn.transferToAmount ?? 0, txn.transferToCurrency) }}
+                  </span>
+                  <span
+                    v-if="txn.transferRateLabel"
+                    class="txn-row__rate"
+                  >
+                    {{ txn.transferRateLabel }}
+                  </span>
+                </template>
+                <template v-else>
+                  <span
+                    class="txn-row__amount"
+                    :class="{
+                      'txn-row__amount--negative': txn.displayAmount < 0,
+                      'txn-row__amount--positive': txn.displayAmount > 0
+                    }"
+                  >
+                    {{ txn.displayAmount < 0 ? '−' : '+' }}{{ formatCurrency(Math.abs(txn.displayAmount), txn.displayCurrency) }}
+                  </span>
+                  <span
+                    v-if="txn.showOriginal"
+                    class="txn-row__original"
+                  >
+                    {{ formatCurrency(Math.abs(txn.originalAmount), txn.originalCurrency) }}
+                  </span>
+                </template>
+              </div>
+            </button>
           </div>
-        </template>
+        </section>
+      </div>
 
-        <Column
-          field="occurredAt"
-          header="Дата"
-          :sortable="true"
-          style="width: 140px"
-        >
-          <template #body="slotProps">
-            <div class="date-cell">
-              <span class="date-cell__main">{{ formatUtcDateOnly(slotProps.data.occurredAt) }}</span>
-            </div>
-          </template>
-        </Column>
-
-        <Column
-          field="displayAmount"
-          header="Сумма"
-          :sortable="true"
-          style="width: 170px"
-        >
-          <template #body="slotProps">
-            <div
-              v-if="slotProps.data.isTransferSummary"
-              class="transfer-amount"
-            >
-              <div class="transfer-amount__row negative">
-                − {{ formatCurrency(slotProps.data.transferFromAmount ?? 0, slotProps.data.transferFromCurrency) }}
-              </div>
-              <div class="transfer-amount__row positive">
-                + {{ formatCurrency(slotProps.data.transferToAmount ?? 0, slotProps.data.transferToCurrency) }}
-              </div>
-              <div
-                v-if="slotProps.data.transferRateLabel"
-                class="transfer-amount__rate"
-              >
-                {{ slotProps.data.transferRateLabel }}
-              </div>
-            </div>
-            <div
-              v-else
-              class="amount-cell"
-              :class="{ negative: slotProps.data.displayAmount < 0 }"
-            >
-              <span class="amount-value">
-                {{ slotProps.data.displayAmount < 0 ? '−' : '+' }}
-                {{ formatCurrency(Math.abs(slotProps.data.displayAmount), slotProps.data.displayCurrency) }}
-              </span>
-              <small
-                v-if="slotProps.data.showOriginal"
-                class="amount-original"
-              >
-                {{ formatCurrency(Math.abs(slotProps.data.originalAmount), slotProps.data.originalCurrency) }}
-              </small>
-            </div>
-          </template>
-        </Column>
-
-        <Column
-          field="categoryName"
-          header="Категория"
-          :sortable="true"
-          style="width: 200px"
-        >
-          <template #body="slotProps">
-            <div class="category-cell">
-              <UiBadge
-                :label="slotProps.data.categoryName"
-                :color="slotProps.data.categoryColor"
-              />
-              <i
-                v-if="slotProps.data.isTransferSummary"
-                class="pi pi-arrow-right-arrow-left transfer-icon"
-                title="Перевод между счетами"
-              />
-              <i
-                v-else-if="slotProps.data.isMandatory"
-                class="pi pi-lock mandatory-icon"
-                title="Обязательный платеж"
-              />
-            </div>
-          </template>
-        </Column>
-
-        <Column
-          field="accountName"
-          header="Счет"
-          :sortable="true"
-          style="width: 220px"
-        >
-          <template #body="slotProps">
-            <div class="account-cell">
-              <i
-                class="pi pi-credit-card"
-                aria-hidden="true"
-              />
-              <span>{{ slotProps.data.accountName }}</span>
-            </div>
-          </template>
-        </Column>
-
-        <Column
-          field="description"
-          header="Заметки"
-          style="width: 200px"
-        >
-          <template #body="slotProps">
-            <div
-              v-if="slotProps.data.isTransferSummary"
-              class="description-transfer"
-            >
-              <span
-                v-if="slotProps.data.description"
-                class="description-text"
-              >
-                {{ slotProps.data.description }}
-              </span>
-              <span
-                v-if="!slotProps.data.description"
-                class="description-empty"
-              >—</span>
-            </div>
-            <span
-              v-else-if="slotProps.data.description"
-              class="description-text"
-            >
-              {{ slotProps.data.description }}
-            </span>
-            <span
-              v-else
-              class="description-empty"
-            >—</span>
-          </template>
-        </Column>
-      </UiDataTable>
-    </UiCard>
+      <div class="txn-list__footer">
+        <span class="txn-list__total">
+          Итого: <strong>{{ formattedTotalAmount }}</strong>
+        </span>
+        <Paginator
+          :rows="paginationRows"
+          :first="paginationFirst"
+          :total-records="totalRecords"
+          :rows-per-page-options="[...PAGINATION_OPTIONS.options]"
+          @page="handlePage"
+        />
+      </div>
+    </template>
   </div>
 </template>
 
 <style scoped>
-.transaction-history {
+.txn-list {
   display: flex;
   flex-direction: column;
   gap: var(--ft-layout-card-gap);
 }
 
-.transaction-history__filters :deep(.transaction-filters) {
-  gap: var(--ft-space-4);
-}
-
-.table-skeleton {
+.txn-list__skeleton {
   display: grid;
   gap: var(--ft-space-2);
 }
 
-.transaction-history__table {
-  gap: var(--space-4);
-}
-
-.transaction-history__datatable :deep(.ui-datatable__shell) {
-  background: transparent;
-  border: none;
-  box-shadow: none;
-}
-
-.date-cell {
-  display: grid;
-  gap: 2px;
-}
-
-.date-cell__main {
-  font-weight: var(--ft-font-semibold);
-  color: var(--ft-text-primary);
-}
-
-
-.amount-cell {
+/* --- Groups --- */
+.txn-groups {
   display: flex;
   flex-direction: column;
-  gap: var(--ft-space-1);
-  align-items: flex-start;
-
-  font-weight: var(--ft-font-semibold);
-  line-height: 1.2;
-  color: var(--ft-success-400);
+  max-width: 960px;
+  margin: 0 auto;
+  width: 100%;
 }
 
-.amount-cell.negative {
-  color: var(--ft-danger-400);
-}
+.txn-group__header {
+  position: sticky;
+  z-index: 2;
+  top: 0;
 
-.amount-value {
-  font-size: var(--ft-text-base);
-  font-variant-numeric: tabular-nums;
-}
-
-.amount-currency {
-  font-size: var(--ft-text-xs);
-  line-height: 1;
-  color: var(--ft-text-tertiary);
-}
-
-.amount-original {
-  font-size: var(--ft-text-xs);
-  line-height: 1.1;
-  color: var(--ft-text-tertiary);
-}
-
-.transfer-amount {
-  display: grid;
-  gap: 2px;
-  font-weight: var(--ft-font-semibold);
-  font-variant-numeric: tabular-nums;
-}
-
-.transfer-amount__row {
   display: flex;
-  gap: var(--ft-space-1);
   align-items: center;
+  justify-content: space-between;
+
+  padding: var(--ft-space-2) var(--ft-space-4);
+
   font-size: var(--ft-text-sm);
-}
-
-.transfer-amount__row.negative {
-  color: var(--ft-danger-400);
-}
-
-.transfer-amount__row.positive {
-  color: var(--ft-success-400);
-}
-
-.transfer-amount__rate {
-  font-size: var(--ft-text-xs);
-  color: var(--ft-text-tertiary);
-}
-
-.category-cell {
-  display: flex;
-  gap: var(--ft-space-2);
-  align-items: center;
-}
-
-.account-cell {
-  display: flex;
-  gap: var(--ft-space-2);
-  align-items: center;
-
-  font-weight: var(--ft-font-medium);
-  color: var(--ft-text-primary);
-}
-
-.account-cell i {
-  color: var(--ft-text-tertiary);
-}
-
-.description-text {
-  overflow: hidden;
-  display: block;
-
-  color: var(--ft-text-secondary);
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.description-transfer {
-  display: grid;
-  gap: 2px;
-}
-
-.description-empty {
-  color: var(--ft-text-tertiary);
-}
-
-.mandatory-icon {
-  font-size: var(--ft-text-sm);
-  color: var(--ft-warning-400);
-}
-
-.transfer-icon {
-  font-size: var(--ft-text-sm);
-  color: var(--ft-primary-400);
-}
-
-:deep(.transaction-history__datatable .p-datatable) {
-  border: none;
-  border-radius: 0;
-}
-
-:deep(.transaction-history__datatable .p-datatable .p-datatable-thead > tr > th),
-:deep(.transaction-history__datatable .p-datatable .p-datatable-tbody > tr > td) {
-  border-right: none;
-}
-
-:deep(.transaction-history__datatable .p-datatable .p-column-header-content) {
-  display: inline-flex;
-  gap: var(--space-2);
-  align-items: center;
-}
-
-:deep(.transaction-history__datatable .p-datatable-tbody > tr.transaction-row--day-start > td) {
-  border-top: 2px solid color-mix(in srgb, var(--ft-primary-500, #3b82f6) 35%, transparent);
-}
-
-:deep(.p-datatable .p-datatable-tbody > tr > td) {
-  padding: var(--ft-space-3);
-  vertical-align: middle;
-}
-
-:deep(.p-datatable .p-datatable-thead > tr > th) {
-  font-size: var(--ft-text-sm);
-  color: var(--ft-text-tertiary);
   text-transform: uppercase;
-  letter-spacing: 0.04em;
+  letter-spacing: 0.05em;
 
-  background: color-mix(in srgb, var(--ft-surface-raised) 90%, transparent);
+  background: var(--ft-surface-base, var(--ft-bg));
+  border-bottom: 1px solid var(--ft-border-soft);
 }
 
-:deep(.transaction-history__datatable .p-datatable-tbody > tr) {
+.txn-group__date {
+  font-weight: 600;
+  color: var(--ft-text-tertiary);
+}
+
+.txn-group__total {
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  color: var(--ft-text-secondary);
+}
+
+/* --- Transaction rows --- */
+.txn-group__rows {
+  display: flex;
+  flex-direction: column;
+}
+
+.txn-row {
   cursor: pointer;
+
+  display: flex;
+  gap: var(--ft-space-3);
+  align-items: center;
+  justify-content: space-between;
+
+  width: 100%;
+  min-height: 76px;
+  padding: var(--ft-space-4) var(--ft-space-5);
+
+  font: inherit;
+  color: inherit;
+  text-align: left;
+
+  background: none;
+  border: none;
+  border-bottom: 1px solid var(--ft-border-soft);
+
+  transition: background-color 0.12s;
 }
 
-.transaction-history--readonly :deep(.transaction-history__datatable .p-datatable-tbody > tr) {
+.txn-row:hover:not(:disabled) {
+  background: var(--ft-surface-muted);
+}
+
+.txn-row:disabled {
   cursor: default;
 }
 
-
-:deep(.p-datatable .p-paginator-bottom) {
-  padding: var(--ft-space-3);
-  border-top: 1px solid var(--ft-border-soft);
+.txn-row:last-child {
+  border-bottom: none;
 }
 
-:deep(.transaction-history__datatable .p-datatable-footer) {
-  display: flex;
-  justify-content: flex-end;
-
-  padding: var(--ft-space-3);
-
-  background: transparent;
-  border-top: 1px solid var(--ft-border-soft);
-}
-
-.transaction-history__summary {
+.txn-row__left {
   display: flex;
   gap: var(--ft-space-3);
   align-items: center;
 
-  font-weight: var(--ft-font-semibold);
+  min-width: 0;
+}
+
+.txn-row__icon {
+  display: flex;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: center;
+
+  width: 44px;
+  height: 44px;
+
+  border-radius: var(--ft-radius-md);
+}
+
+.txn-row__icon--transfer {
+  color: var(--ft-primary-400);
+  background: color-mix(in srgb, var(--ft-primary-400) 15%, transparent);
+}
+
+.txn-row__dot {
+  display: block;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+}
+
+.txn-row__info {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.txn-row__category {
+  display: flex;
+  gap: var(--ft-space-1);
+  align-items: center;
+
+  font-size: var(--ft-text-lg);
+  font-weight: 600;
   color: var(--ft-text-primary);
 }
 
-.transaction-history__summary-amount {
-  font-size: var(--ft-text-base);
+.txn-row__mandatory {
+  font-size: 0.7rem;
+  color: var(--ft-warning-400);
 }
 
-:deep(.p-datatable .p-paginator .p-dropdown) {
-  min-width: 6.5rem;
+.txn-row__meta {
+  overflow: hidden;
+
+  font-size: var(--ft-text-sm);
+  color: var(--ft-text-tertiary);
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
-@media (width <= 768px) {
-  :deep(.transaction-history__datatable .p-datatable) {
-    background: transparent;
-    border: none;
+.txn-row__right {
+  display: flex;
+  flex-direction: column;
+  flex-shrink: 0;
+  gap: 2px;
+  align-items: flex-end;
+}
+
+.txn-row__amount {
+  font-size: var(--ft-text-lg);
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  line-height: 1.3;
+  color: var(--ft-text-primary);
+}
+
+.txn-row__amount--negative {
+  color: var(--ft-danger-400);
+}
+
+.txn-row__amount--positive {
+  color: var(--ft-success-400);
+}
+
+.txn-row__original {
+  font-size: var(--ft-text-xs);
+  font-variant-numeric: tabular-nums;
+  color: var(--ft-text-tertiary);
+}
+
+.txn-row__rate {
+  font-size: var(--ft-text-xs);
+  color: var(--ft-text-tertiary);
+}
+
+/* --- Footer --- */
+.txn-list__footer {
+  display: flex;
+  flex-direction: column;
+  gap: var(--ft-space-3);
+  align-items: center;
+}
+
+.txn-list__total {
+  font-size: var(--ft-text-sm);
+  color: var(--ft-text-secondary);
+}
+
+.txn-list__total strong {
+  font-weight: 700;
+  color: var(--ft-text-primary);
+}
+
+/* --- Paginator overrides --- */
+.txn-list__footer :deep(.p-paginator) {
+  padding: var(--ft-space-2);
+  background: transparent;
+  border: none;
+}
+
+@media (width <= 640px) {
+  .txn-row {
+    min-height: 56px;
+    padding: var(--ft-space-2) var(--ft-space-3);
   }
 
-  :deep(.transaction-history__datatable .p-datatable-thead) {
-    display: none;
+  .txn-group__header {
+    padding: var(--ft-space-2) var(--ft-space-3);
   }
 
-  :deep(.transaction-history__datatable .p-datatable-tbody > tr) {
-    overflow: hidden;
-    display: block;
-
-    margin-bottom: var(--space-3);
-
-    border: 1px solid var(--border);
-    border-radius: var(--radius-lg);
-  }
-
-  :deep(.transaction-history__datatable .p-datatable-tbody > tr > td) {
-    display: flex;
-    gap: var(--space-3);
-    justify-content: space-between;
-
-    padding: var(--space-3) var(--space-4);
-
-    border-bottom: 1px solid var(--border);
-  }
-
-  :deep(.transaction-history__datatable .p-datatable-tbody > tr > td:last-child) {
-    border-bottom: none;
-  }
-
-  :deep(.transaction-history__datatable .p-datatable-tbody > tr > td .p-column-title) {
-    font-size: var(--ft-text-xs);
-    font-weight: var(--ft-font-semibold);
-    color: var(--ft-text-tertiary);
-    text-transform: uppercase;
-    letter-spacing: 0.04em;
-  }
-
-  .description-text {
-    white-space: normal;
+  .txn-row__meta {
+    max-width: 160px;
   }
 }
 </style>
