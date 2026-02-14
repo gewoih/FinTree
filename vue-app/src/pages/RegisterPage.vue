@@ -1,14 +1,19 @@
 <script setup lang="ts">
-import { computed, onMounted, ref } from 'vue'
+import { computed, onMounted, onBeforeUnmount, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuthStore } from '../stores/auth'
 
 const router = useRouter()
 const authStore = useAuthStore()
 
+type RegisterMethod = 'telegram' | 'email'
+
+const registerMethod = ref<RegisterMethod>('telegram')
 const email = ref('')
 const password = ref('')
-const passwordConfirmation = ref('')
+const showPassword = ref(false)
+const telegramMount = ref<HTMLElement | null>(null)
+const telegramScript = ref<HTMLScriptElement | null>(null)
 
 const hasPasswordInput = computed(() => password.value.length > 0)
 
@@ -17,26 +22,65 @@ const passwordRules = computed(() => {
 
   return [
     { key: 'length', label: 'Минимум 8 символов', met: value.length >= 8 },
-    { key: 'digit', label: 'Хотя бы 1 цифра', met: /\d/.test(value) },
-    { key: 'lower', label: 'Хотя бы 1 строчная буква', met: /[a-z]/.test(value) },
-    { key: 'upper', label: 'Хотя бы 1 заглавная буква', met: /[A-Z]/.test(value) },
-    { key: 'symbol', label: 'Хотя бы 1 спецсимвол', met: /[^a-zA-Z0-9]/.test(value) },
+    { key: 'alphanumeric', label: 'Хотя бы 1 буква и 1 цифра', met: /[a-zA-Z]/.test(value) && /\d/.test(value) }
   ]
 })
 
-const validationError = computed(() => {
-  if (!password.value || !passwordConfirmation.value) return null
-  return password.value !== passwordConfirmation.value ? 'Пароли не совпадают' : null
-})
+const allRulesMet = computed(() => passwordRules.value.every(rule => rule.met))
 
 const isDisabled = computed(() => {
-  return authStore.isLoading || Boolean(validationError.value) || !email.value || !password.value
+  return authStore.isLoading || !email.value || !password.value || !allRulesMet.value
 })
 
 onMounted(() => {
   authStore.clearError()
   if (authStore.isAuthenticated) {
     void router.push('/analytics')
+  }
+
+  // Setup Telegram widget
+  const botName = (import.meta.env.VITE_TELEGRAM_BOT_NAME as string | undefined) ?? 'financetree_bot'
+  const mount = telegramMount.value
+  if (!mount) return
+
+  const handleTelegramAuth = async (payload: {
+    id: number
+    auth_date: number
+    hash: string
+    first_name?: string
+    last_name?: string
+    username?: string
+    photo_url?: string
+  }) => {
+    const success = await authStore.loginWithTelegram(payload)
+    if (success) {
+      router.push('/analytics')
+    }
+  }
+
+  ;(window as Window & { onTelegramAuth?: typeof handleTelegramAuth }).onTelegramAuth = handleTelegramAuth
+
+  const script = document.createElement('script')
+  script.async = true
+  script.src = 'https://telegram.org/js/telegram-widget.js?22'
+  script.setAttribute('data-telegram-login', botName)
+  script.setAttribute('data-size', 'large')
+  script.setAttribute('data-radius', '12')
+  script.setAttribute('data-userpic', 'false')
+  script.setAttribute('data-onauth', 'onTelegramAuth(user)')
+  script.setAttribute('data-request-access', 'write')
+
+  mount.appendChild(script)
+  telegramScript.value = script
+})
+
+onBeforeUnmount(() => {
+  const script = telegramScript.value
+  if (script?.parentElement) {
+    script.parentElement.removeChild(script)
+  }
+  if ((window as Window & { onTelegramAuth?: unknown }).onTelegramAuth) {
+    delete (window as Window & { onTelegramAuth?: unknown }).onTelegramAuth
   }
 })
 
@@ -45,7 +89,7 @@ const handleRegister = async () => {
   const success = await authStore.register({
     email: email.value,
     password: password.value,
-    passwordConfirmation: passwordConfirmation.value
+    passwordConfirmation: password.value
   })
 
   if (success) {
@@ -73,13 +117,16 @@ const handleRegister = async () => {
           <i class="pi pi-chart-bar" />
           <span>FinTree</span>
         </router-link>
-        <h1>Создайте аккаунт FinTree</h1>
+        <h1>Создайте аккаунт за 30 секунд</h1>
         <p>Учёт расходов через Telegram и аналитика бюджета — всё в одном простом интерфейсе.</p>
         <ul class="auth__benefits">
-          <li><i class="pi pi-check" />1 месяц бесплатного доступа</li>
-          <li><i class="pi pi-check" />Быстрый ввод трат через @financetree_bot</li>
-          <li><i class="pi pi-check" />Никаких подключений к банкам</li>
+          <li><i class="pi pi-check" />Записывайте траты за 10 секунд в Telegram</li>
+          <li><i class="pi pi-check" />Находите скрытые утечки денег</li>
+          <li><i class="pi pi-check" />Экономьте в среднем ₽15 000/месяц</li>
         </ul>
+        <p class="auth__social-proof">
+          500+ человек уже используют FinTree <span class="auth__rating">⭐⭐⭐⭐⭐ 4.9/5</span>
+        </p>
       </div>
 
       <AppCard
@@ -88,7 +135,48 @@ const handleRegister = async () => {
         padding="lg"
         elevated
       >
+        <div class="auth__tabs">
+          <button
+            type="button"
+            class="auth__tab"
+            :class="{ 'auth__tab--active': registerMethod === 'telegram' }"
+            @click="registerMethod = 'telegram'"
+          >
+            <i class="pi pi-telegram" />
+            <span>Telegram</span>
+          </button>
+          <button
+            type="button"
+            class="auth__tab"
+            :class="{ 'auth__tab--active': registerMethod === 'email' }"
+            @click="registerMethod = 'email'"
+          >
+            <i class="pi pi-envelope" />
+            <span>Email</span>
+          </button>
+        </div>
+
+        <div
+          v-if="registerMethod === 'telegram'"
+          class="auth__telegram-register"
+        >
+          <p class="auth__telegram-title">
+            🚀 Быстрая регистрация через Telegram
+          </p>
+          <p class="auth__telegram-description">
+            Нажмите кнопку ниже для регистрации через ваш Telegram аккаунт. Это займет всего 5 секунд.
+          </p>
+          <div
+            ref="telegramMount"
+            class="auth__telegram-widget"
+          />
+          <p class="auth__telegram-hint">
+            После регистрации вы сможете записывать траты прямо в Telegram боте @financetree_bot
+          </p>
+        </div>
+
         <form
+          v-else
           class="auth__form"
           @submit.prevent="handleRegister"
         >
@@ -108,10 +196,18 @@ const handleRegister = async () => {
             <InputText
               id="password"
               v-model="password"
-              type="password"
-              placeholder="Минимум 8 символов"
+              :type="showPassword ? 'text' : 'password'"
+              placeholder="Минимум 8 символов с буквой и цифрой"
               autocomplete="new-password"
             />
+            <div class="auth__password-toggle">
+              <input
+                id="showPassword"
+                v-model="showPassword"
+                type="checkbox"
+              >
+              <label for="showPassword">Показать пароль</label>
+            </div>
             <ul
               v-if="hasPasswordInput"
               class="auth__password-hints"
@@ -130,25 +226,6 @@ const handleRegister = async () => {
             </ul>
           </div>
 
-          <div class="auth__field">
-            <label for="passwordConfirmation">Подтвердите пароль</label>
-            <InputText
-              id="passwordConfirmation"
-              v-model="passwordConfirmation"
-              type="password"
-              placeholder="Введите пароль повторно"
-              autocomplete="new-password"
-            />
-          </div>
-
-          <p
-            v-if="validationError"
-            class="auth__error"
-          >
-            <i class="pi pi-exclamation-circle" />
-            <span>{{ validationError }}</span>
-          </p>
-
           <p
             v-if="authStore.error"
             class="auth__error"
@@ -157,14 +234,19 @@ const handleRegister = async () => {
             <span>{{ authStore.error }}</span>
           </p>
 
-          <AppButton
-            type="submit"
-            label="Зарегистрироваться"
-            icon="pi pi-user-plus"
-            :loading="authStore.isLoading"
-            :disabled="isDisabled"
-            block
-          />
+          <div class="auth__submit">
+            <AppButton
+              type="submit"
+              label="Получить бесплатный месяц →"
+              variant="cta"
+              :loading="authStore.isLoading"
+              :disabled="isDisabled"
+              block
+            />
+            <p class="auth__disclaimer">
+              Без карты. Отменить можно в любой момент.
+            </p>
+          </div>
         </form>
 
         <footer class="auth__footer">
@@ -298,6 +380,20 @@ const handleRegister = async () => {
   color: var(--ft-success-400);
 }
 
+.auth__social-proof {
+  margin: var(--ft-space-2) 0 0;
+  font-size: var(--ft-text-sm);
+  color: var(--ft-text-secondary);
+}
+
+.auth__rating {
+  display: inline-block;
+  margin-left: var(--ft-space-2);
+  font-size: var(--ft-text-xs);
+  color: var(--ft-text-primary);
+  letter-spacing: -0.05em;
+}
+
 .auth__card {
   width: min(460px, 100%);
 
@@ -309,6 +405,89 @@ const handleRegister = async () => {
 
 .light-mode .auth__brand {
   color: var(--ft-primary-700);
+}
+
+.auth__tabs {
+  display: flex;
+  gap: var(--ft-space-2);
+  padding: var(--ft-space-1);
+  background: var(--ft-surface-muted);
+  border-radius: var(--ft-radius-lg);
+  margin-bottom: var(--ft-space-5);
+}
+
+.auth__tab {
+  flex: 1;
+  display: flex;
+  gap: var(--ft-space-2);
+  align-items: center;
+  justify-content: center;
+
+  padding: var(--ft-space-3) var(--ft-space-4);
+
+  font-size: var(--ft-text-sm);
+  font-weight: var(--ft-font-medium);
+  color: var(--ft-text-secondary);
+
+  background: transparent;
+  border: none;
+  border-radius: var(--ft-radius-md);
+  cursor: pointer;
+
+  transition:
+    background-color var(--ft-transition-fast),
+    color var(--ft-transition-fast),
+    box-shadow var(--ft-transition-fast);
+}
+
+.auth__tab:hover {
+  color: var(--ft-text-primary);
+  background: var(--ft-surface-base);
+}
+
+.auth__tab--active {
+  color: var(--ft-text-primary);
+  background: var(--ft-surface-base);
+  box-shadow: var(--ft-shadow-sm);
+}
+
+.auth__tab i {
+  font-size: 1.1em;
+}
+
+.auth__telegram-register {
+  display: flex;
+  flex-direction: column;
+  gap: var(--ft-space-4);
+  align-items: center;
+  text-align: center;
+}
+
+.auth__telegram-title {
+  margin: 0;
+  font-size: var(--ft-text-lg);
+  font-weight: var(--ft-font-semibold);
+  color: var(--ft-text-primary);
+}
+
+.auth__telegram-description {
+  margin: 0;
+  font-size: var(--ft-text-sm);
+  color: var(--ft-text-secondary);
+  max-width: 38ch;
+}
+
+.auth__telegram-widget {
+  display: flex;
+  justify-content: center;
+  min-height: 44px;
+}
+
+.auth__telegram-hint {
+  margin: 0;
+  font-size: var(--ft-text-xs);
+  color: var(--ft-text-tertiary);
+  max-width: 42ch;
 }
 
 .auth__form {
@@ -333,6 +512,28 @@ const handleRegister = async () => {
 .auth__field small {
   font-size: var(--ft-text-xs);
   color: var(--ft-text-tertiary);
+}
+
+.auth__password-toggle {
+  display: flex;
+  gap: var(--ft-space-2);
+  align-items: center;
+  margin-top: var(--ft-space-1);
+}
+
+.auth__password-toggle input[type="checkbox"] {
+  cursor: pointer;
+  width: 16px;
+  height: 16px;
+  accent-color: var(--ft-primary-500);
+}
+
+.auth__password-toggle label {
+  cursor: pointer;
+  font-size: var(--ft-text-sm);
+  color: var(--ft-text-secondary);
+  text-transform: none;
+  letter-spacing: normal;
 }
 
 .auth__password-hints {
@@ -375,6 +576,19 @@ const handleRegister = async () => {
 
   font-size: var(--ft-text-sm);
   color: var(--ft-danger-400);
+}
+
+.auth__submit {
+  display: flex;
+  flex-direction: column;
+  gap: var(--ft-space-2);
+}
+
+.auth__disclaimer {
+  margin: 0;
+  font-size: var(--ft-text-xs);
+  color: var(--ft-text-tertiary);
+  text-align: center;
 }
 
 .auth__footer {

@@ -1,78 +1,76 @@
 <script setup lang="ts">
-import { ref, onMounted, onUnmounted } from 'vue'
+import { ref } from 'vue'
 import { useRouter } from 'vue-router'
+import { useAnalytics } from '@/composables/useAnalytics'
+import type { AnalyticsEvent } from '@/composables/useAnalytics'
+import analyticsImage from '@/assets/landing/analytics.png'
+import accountsImage from '@/assets/landing/accounts.png'
+import investmentsImage from '@/assets/landing/investments.png'
+import forecastImage from '@/assets/landing/forecast.png'
 
 const router = useRouter()
+const { trackEvent } = useAnalytics()
 
 const features = [
   {
     icon: 'pi-telegram',
-    title: 'Учёт за 10 секунд',
-    description: 'Пишете сумму боту в Telegram — трата записана. Без открытия приложений, без ручного ввода в таблицы.'
+    title: 'Запись расхода за пару секунд',
+    description: 'Простая и удобная запись расходов через Telegram поможет Вам поддерживать привычку ведения бюджета.'
   },
   {
     icon: 'pi-chart-line',
-    title: 'Аналитика, которая объясняет',
-    description: 'Доля сбережений, чистый поток, пики трат — конкретные цифры вместо абстрактных графиков.'
+    title: 'Простая и эффективная аналитика',
+    description: 'Уже в первый месяц FinTree покажет где Вы теряете деньги и как безболезненно сократить расходы.'
   },
   {
     icon: 'pi-wallet',
-    title: 'Все деньги в одном месте',
-    description: 'Счета, наличные и инвестиции — без разбросанных таблиц и приложений.'
+    title: 'Полная картина по вашим финансам',
+    description: 'Учет всех банковских счетов и инвестиций в одном месте - Вы всегда знаете точный размер своего капитала.'
   },
   {
     icon: 'pi-shield',
-    title: 'Ваши данные — только ваши',
-    description: 'Без подключения к банкам, без продажи данных. Вы вводите всё сами — и контролируете всё сами.'
+    title: 'Данные под вашим контролем',
+    description: 'Мы позаботились о защите Ваших данных, поэтому FinTree не подключается к Вашему банковскому приложению.'
   }
 ] as const
 
 const steps = [
   {
     number: '01',
-    title: 'Привяжите Telegram',
-    description: 'Отправьте /id боту @financetree_bot и вставьте цифры в профиле FinTree. Займёт 2 минуты.'
+    title: 'Создайте аккаунт за пару кликов',
+    description: 'Без персональных данных, без банковских карт.'
   },
   {
     number: '02',
-    title: 'Записывайте траты',
-    description: 'Пишите боту «кофе 350» или «продукты 2800». Можно вносить пачкой из заметок.'
+    title: 'Записывайте Ваши траты',
+    description: 'С нашим Telegram-ботом это особенно быстро и легко!'
   },
   {
     number: '03',
-    title: 'Смотрите результат',
-    description: 'Через неделю веб-кабинет покажет, куда уходят деньги и сколько вы реально откладываете.'
+    title: 'FinTree укажет на слабые места',
+    description: 'Уже через несколько дней Вы увидите детальную аналитику по Вашим финансам.'
   }
 ] as const
 
 const problems = [
   {
     icon: 'pi-file-excel',
-    text: 'Завели таблицу для бюджета — забросили через неделю',
+    text: 'Excel таблицы кажутся слишком сложными и неинформативными?',
     color: 'var(--ft-warning-500)',
     bg: 'color-mix(in srgb, var(--ft-warning-500) 18%, transparent)'
   },
   {
     icon: 'pi-credit-card',
-    text: 'Подключили банк-приложение — но категории не те, а разбираться долго',
+    text: 'Банковская аналитика показывает несуществующие траты?',
     color: 'var(--ft-danger-400)',
     bg: 'color-mix(in srgb, var(--ft-danger-400) 18%, transparent)'
   },
   {
     icon: 'pi-question-circle',
-    text: 'В конце месяца непонятно, куда делись деньги',
+    text: 'В конце месяца не понимаете куда снова делись все деньги?',
     color: 'var(--ft-info-400)',
     bg: 'color-mix(in srgb, var(--ft-info-400) 18%, transparent)'
   }
-] as const
-
-const comparisonFeatures = [
-  { label: 'Ввод за 10 секунд', fintree: true, excel: false, bank: false, zen: false },
-  { label: 'Без подключения банка', fintree: true, excel: true, bank: false, zen: false },
-  { label: 'Telegram-бот', fintree: true, excel: false, bank: false, zen: false },
-  { label: 'Аналитика по делу', fintree: true, excel: false, bank: true, zen: true },
-  { label: 'Настройка за 2 минуты', fintree: true, excel: false, bank: false, zen: false },
-  { label: 'Контроль данных', fintree: true, excel: true, bank: false, zen: false }
 ] as const
 
 const sharedPricingFeatures = [
@@ -86,13 +84,15 @@ const pricing = [
   {
     name: 'Месяц',
     price: '390 ₽',
-    subprice: '1 месяц бесплатно для новых',
+    period: 'в месяц',
+    subprice: 'Подходит, если хотите платить помесячно',
     accent: false
   },
   {
     name: 'Год',
     price: '3 900 ₽',
-    subprice: 'Экономия 780 ₽ — цена 10 месяцев',
+    period: 'в год',
+    subprice: '2 месяца бесплатно (по сравнению с ежемесячной оплатой)',
     accent: true,
     badge: 'Выгодно'
   }
@@ -100,38 +100,72 @@ const pricing = [
 
 const faq = [
   {
-    question: 'Зачем вводить вручную, если есть банковские приложения?',
-    answer: 'Ручной ввод занимает 10 секунд через Telegram — быстрее, чем разбирать автоматические категории банка. А ещё вы осознанно фиксируете каждую трату, что формирует привычку контроля.'
+    question: 'Что входит в бесплатный месяц?',
+    answer: 'Весь функционал FinTree доступен без ограничений. Вы спокойно пробуете сервис и решаете позже, нужен ли платный тариф.'
   },
   {
-    question: 'Как привязать Telegram?',
-    answer: 'Отправьте боту @financetree_bot команду /id, скопируйте цифры и вставьте в профиле FinTree. Вся настройка — 2 минуты.'
+    question: 'Как происходит оплата после пробного периода?',
+    answer: 'По окончании пробного месяца вы сами выбираете: продолжать на месячном или годовом тарифе, либо не продлевать. Никаких скрытых списаний.'
   },
   {
-    question: 'Что будет после бесплатного месяца?',
-    answer: 'Вы сможете продолжить по подписке: 390 ₽/месяц или 3 900 ₽/год. Без автопродления — оплата только когда решите сами.'
+    question: 'Как отменить подписку?',
+    answer: 'Подписка отключается в настройках аккаунта. Процедура занимает меньше минуты и не требует обращения в поддержку.'
   },
   {
-    question: 'Безопасно ли хранить финансовые данные?',
-    answer: 'Мы не подключаемся к банкам и не получаем доступ к вашим счетам. Все данные вводятся вами и хранятся только в FinTree. Доступ к ним есть только у вас.'
+    question: 'Что будет с данными, если удалить аккаунт?',
+    answer: 'После удаления аккаунта данные перестают быть доступны в сервисе. Детали хранения и удаления описаны в политике конфиденциальности.'
   },
   {
-    question: 'Чем FinTree отличается от Дзен-мани и аналогов?',
-    answer: 'FinTree проще: ввод через Telegram за секунды, без обязательной привязки банка и сложной настройки. Аналитика понятная и по делу — без десятков вкладок и графиков.'
+    question: 'Зачем вводить траты вручную, если есть банковские приложения?',
+    answer: 'Короткая запись в Telegram обычно быстрее ручной разборки банковских категорий. А главное, вы видите расходы сразу и лучше держите бюджет под контролем.'
   },
   {
-    question: 'Можно ли использовать без Telegram?',
-    answer: 'Telegram-бот — основной способ ввода, но вы можете добавлять операции и через веб-интерфейс. Бот просто делает это быстрее.'
+    question: 'Сколько времени занимает старт?',
+    answer: 'Обычно до 2 минут на привязку Telegram и первую запись. Уже через несколько дней появляется понятная картина по тратам.'
+  },
+  {
+    question: 'Насколько безопасны мои финансовые данные?',
+    answer: 'FinTree не подключается к банковским счетам напрямую. Вы сами добавляете данные и управляете ими в своем аккаунте.'
+  }
+] as const
+
+const dashboardScreens = [
+  {
+    title: 'Страница счетов',
+    description: 'Полный учет Ваших банковских счетов из всех банков на одной странице.',
+    image: accountsImage,
+    alt: 'Скриншот страницы счетов в FinTree'
+  },
+  {
+    title: 'Учет инвестиций',
+    description: 'Цельная картина Ваших инвестиций для долгосрочного планирования.',
+    image: investmentsImage,
+    alt: 'Скриншот страницы инвестиций в FinTree'
+  },
+  {
+    title: 'Умный прогноз расходов',
+    description: 'Предскажет сколько денег потребуется до конца месяца.',
+    image: forecastImage,
+    alt: 'Скриншот графика прогноза расходов в FinTree'
   }
 ] as const
 
 const expandedIndex = ref<number | null>(0)
-const showMobileCta = ref(false)
 
 const currentYear = new Date().getFullYear()
 
+const openRegister = (eventName: AnalyticsEvent, payload?: Record<string, string>) => {
+  trackEvent(eventName, payload)
+  router.push('/register')
+}
+
 const toggleFaq = (index: number) => {
+  const isOpening = expandedIndex.value !== index
   expandedIndex.value = expandedIndex.value === index ? null : index
+
+  if (isOpening && faq[index]) {
+    trackEvent('faq_open', { questionIndex: index, question: faq[index].question })
+  }
 }
 
 const scrollToSection = (sectionId: string) => {
@@ -140,25 +174,6 @@ const scrollToSection = (sectionId: string) => {
     element.scrollIntoView({ behavior: 'smooth', block: 'start' })
   }
 }
-
-const handleScroll = () => {
-  const heroEl = document.getElementById('hero')
-  const pricingEl = document.getElementById('pricing')
-  if (!heroEl || !pricingEl) return
-
-  const heroBottom = heroEl.getBoundingClientRect().bottom
-  const pricingTop = pricingEl.getBoundingClientRect().top
-
-  showMobileCta.value = heroBottom < 0 && pricingTop > window.innerHeight
-}
-
-onMounted(() => {
-  window.addEventListener('scroll', handleScroll, { passive: true })
-})
-
-onUnmounted(() => {
-  window.removeEventListener('scroll', handleScroll)
-})
 </script>
 
 <template>
@@ -173,44 +188,12 @@ onUnmounted(() => {
           <span>FinTree</span>
         </router-link>
 
-        <nav class="landing__links">
-          <button
-            type="button"
-            @click="scrollToSection('features')"
-          >
-            Возможности
-          </button>
-          <button
-            type="button"
-            @click="scrollToSection('steps')"
-          >
-            Как это работает
-          </button>
-          <button
-            type="button"
-            @click="scrollToSection('pricing')"
-          >
-            Тарифы
-          </button>
-          <button
-            type="button"
-            @click="scrollToSection('faq')"
-          >
-            FAQ
-          </button>
-        </nav>
-
         <div class="landing__actions">
           <ThemeToggle />
           <AppButton
-            variant="ghost"
-            label="Войти"
-            class="landing__actions-login"
-            @click="router.push('/login')"
-          />
-          <AppButton
-            label="Регистрация"
-            @click="router.push('/register')"
+            label="Создать аккаунт"
+            variant="cta"
+            @click="openRegister('nav_cta_click')"
           />
         </div>
       </div>
@@ -224,92 +207,64 @@ onUnmounted(() => {
       >
         <div class="landing__container landing__hero-layout">
           <div class="landing__hero-copy">
-            <span class="landing__hero-badge">
-              <i
-                class="pi pi-gift"
-                aria-hidden="true"
-              />
-              <span>Бесплатный месяц для новых пользователей</span>
-            </span>
             <h1 class="landing__hero-title">
-              Учёт расходов за 10 секунд —<br>
-              прямо в Telegram
+              Простое лекарство<br>
+              от дыр в бюджете
             </h1>
             <p class="landing__hero-subtitle">
-              Пишете трату боту — видите аналитику на сайте. Без таблиц, без подключения банков, без лишних шагов.
+              Возможны побочные эффекты в виде экономии <b>от 5.000р. в месяц.</b><br>
+              Необходима консультация со специалистом.
             </p>
 
-            <div class="landing__hero-actions">
+            <div class="landing__hero-cta">
               <AppButton
-                label="Попробовать бесплатно"
-                icon="pi pi-arrow-right"
-                icon-pos="right"
+                label="Начать бесплатно"
                 size="lg"
-                @click="router.push('/register')"
+                variant="cta"
+                @click="openRegister('hero_cta_click')"
               />
-              <AppButton
-                label="Как это работает ↓"
-                variant="ghost"
-                size="lg"
-                @click="scrollToSection('steps')"
-              />
+              <p class="landing__hero-disclaimer">
+                Первый месяц полностью бесплатно. Без привязки карты и скрытых условий.
+              </p>
             </div>
 
             <div class="landing__trust">
               <div class="landing__trust-item">
-                <i class="pi pi-credit-card" />
-                <span>Без привязки карты</span>
+                <i class="pi pi-lock" />
+                <span>Данные под защитой</span>
               </div>
               <div class="landing__trust-item">
-                <i class="pi pi-shield" />
-                <span>Данные не покидают FinTree</span>
+                <i class="pi pi-times-circle" />
+                <span>Без банковской карты</span>
               </div>
               <div class="landing__trust-item">
-                <i class="pi pi-clock" />
-                <span>Настройка за 2 минуты</span>
+                <i class="pi pi-check-circle" />
+                <span>Простая запись расходов</span>
               </div>
             </div>
           </div>
 
           <AppCard
-            class="landing__hero-card"
+            class="landing__hero-shot"
             padding="lg"
             variant="muted"
             elevated
           >
-            <template #header>
-              <div class="landing__hero-card-header">
-                <span>Ваша аналитика через неделю</span>
-                <i class="pi pi-chart-line" />
-              </div>
-            </template>
-            <div class="landing__hero-card-body">
-              <div class="landing__hero-metric">
-                <span class="landing__hero-metric-label">Доля сбережений</span>
-                <strong>24%</strong>
-                <small>+6% за месяц</small>
-              </div>
-              <div class="landing__hero-metric landing__hero-metric--split">
-                <article>
-                  <span class="landing__hero-metric-label">Ликвидные месяцы</span>
-                  <strong>5.1 мес</strong>
-                  <small>цель: 6 месяцев</small>
-                </article>
-                <article>
-                  <span class="landing__hero-metric-label">Чистый поток</span>
-                  <strong>+32 400 ₽</strong>
-                  <small>текущий месяц</small>
-                </article>
-              </div>
-              <div class="landing__hero-chart">
-                <div
-                  class="landing__hero-chart-bar"
-                  style="
-
---progress: 68%"
-                />
-              </div>
+            <p class="landing__hero-shot-title">
+              Главный экран аналитики
+            </p>
+            <div class="landing__hero-shot-frame">
+              <img
+                :src="analyticsImage"
+                alt="Скриншот главной страницы аналитики в FinTree"
+                class="landing__hero-shot-image"
+                loading="eager"
+                decoding="async"
+              >
             </div>
+            <p class="landing__hero-shot-caption">
+              Реальный скриншот из личного кабинета.
+            </p>
           </AppCard>
         </div>
       </section>
@@ -317,21 +272,50 @@ onUnmounted(() => {
       <!-- Social Proof Bar -->
       <section class="landing__social-proof">
         <div class="landing__container landing__social-proof-inner">
-          <!-- [нужны данные] — заменить на реальные метрики когда будут доступны -->
           <div class="landing__social-proof-item">
-            <strong>500+</strong>
-            <!-- [нужны данные] -->
-            <span>операций записано</span>
+            <strong>10 секунд</strong>
+            <span>на запись расхода</span>
           </div>
           <div class="landing__social-proof-divider" />
           <div class="landing__social-proof-item">
-            <strong>10 сек</strong>
-            <span>среднее время ввода</span>
+            <strong>5 минут в день</strong>
+            <span>на аналитику</span>
           </div>
           <div class="landing__social-proof-divider" />
           <div class="landing__social-proof-item">
-            <strong>2 мин</strong>
-            <span>на настройку</span>
+            <strong>От -10%</strong>
+            <span>сокращение Ваших расходов</span>
+          </div>
+        </div>
+      </section>
+
+      <!-- Product Screens -->
+      <section class="landing__section">
+        <div class="landing__container">
+          <header class="landing__section-header">
+            <h2>Сильная аналитика в реальном кабинете</h2>
+            <p>Не концепт и не мокапы: ниже живые экраны того, что увидит пользователь после регистрации.</p>
+          </header>
+
+          <div class="card-grid card-grid--auto landing__screens">
+            <AppCard
+              v-for="screen in dashboardScreens"
+              :key="screen.title"
+              variant="muted"
+              padding="lg"
+              class="landing__screen-card"
+            >
+              <div class="landing__screen-media">
+                <img
+                  :src="screen.image"
+                  :alt="screen.alt"
+                  loading="lazy"
+                  decoding="async"
+                >
+              </div>
+              <h3>{{ screen.title }}</h3>
+              <p>{{ screen.description }}</p>
+            </AppCard>
           </div>
         </div>
       </section>
@@ -363,7 +347,7 @@ onUnmounted(() => {
 
           <div class="landing__solution-bridge">
             <i class="pi pi-arrow-down" />
-            <p>FinTree решает это проще: пишете боту в Telegram — получаете ясную картину бюджета на сайте.</p>
+            <p><strong>FinTree снимает эту рутину.</strong> 10 секунд на запись в Telegram, а в кабинете уже готовые выводы по расходам.</p>
           </div>
         </div>
       </section>
@@ -405,7 +389,7 @@ onUnmounted(() => {
         <div class="landing__container">
           <header class="landing__section-header">
             <h2>Как начать за 3 шага</h2>
-            <p>Telegram для ввода, веб — для аналитики и выводов.</p>
+            <p>Сделали один раз и дальше просто фиксируете траты по дороге.</p>
           </header>
 
           <div class="card-grid card-grid--balanced landing__steps">
@@ -421,74 +405,6 @@ onUnmounted(() => {
               <p>{{ step.description }}</p>
             </AppCard>
           </div>
-
-          <div class="landing__steps-cta">
-            <AppButton
-              label="Попробовать бесплатно"
-              icon="pi pi-arrow-right"
-              icon-pos="right"
-              size="lg"
-              @click="router.push('/register')"
-            />
-          </div>
-        </div>
-      </section>
-
-      <!-- Comparison Table -->
-      <section class="landing__section">
-        <div class="landing__container">
-          <header class="landing__section-header">
-            <h2>FinTree vs альтернативы</h2>
-            <p>Сравнение по ключевым критериям.</p>
-          </header>
-
-          <div class="landing__comparison-wrapper">
-            <table class="landing__comparison">
-              <thead>
-                <tr>
-                  <th />
-                  <th class="landing__comparison-highlight">
-                    FinTree
-                  </th>
-                  <th>Excel / Таблицы</th>
-                  <th>Банк-приложение</th>
-                  <th>Дзен-мани</th>
-                </tr>
-              </thead>
-              <tbody>
-                <tr
-                  v-for="row in comparisonFeatures"
-                  :key="row.label"
-                >
-                  <td>{{ row.label }}</td>
-                  <td class="landing__comparison-highlight">
-                    <i
-                      :class="['pi', row.fintree ? 'pi-check' : 'pi-times']"
-                      :style="{ color: row.fintree ? 'var(--ft-success-400)' : 'var(--ft-text-tertiary)' }"
-                    />
-                  </td>
-                  <td>
-                    <i
-                      :class="['pi', row.excel ? 'pi-check' : 'pi-times']"
-                      :style="{ color: row.excel ? 'var(--ft-success-400)' : 'var(--ft-text-tertiary)' }"
-                    />
-                  </td>
-                  <td>
-                    <i
-                      :class="['pi', row.bank ? 'pi-check' : 'pi-times']"
-                      :style="{ color: row.bank ? 'var(--ft-success-400)' : 'var(--ft-text-tertiary)' }"
-                    />
-                  </td>
-                  <td>
-                    <i
-                      :class="['pi', row.zen ? 'pi-check' : 'pi-times']"
-                      :style="{ color: row.zen ? 'var(--ft-success-400)' : 'var(--ft-text-tertiary)' }"
-                    />
-                  </td>
-                </tr>
-              </tbody>
-            </table>
-          </div>
         </div>
       </section>
 
@@ -499,8 +415,8 @@ onUnmounted(() => {
       >
         <div class="landing__container">
           <header class="landing__section-header">
-            <h2>Прозрачная подписка</h2>
-            <p>Полный доступ без ограничений. Бесплатный месяц для новых пользователей.</p>
+            <h2>Тарифы без сюрпризов</h2>
+            <p>Один бесплатный месяц, затем выбираете удобный формат оплаты.</p>
           </header>
 
           <div class="landing__pricing-shared">
@@ -519,7 +435,7 @@ onUnmounted(() => {
             </ul>
           </div>
 
-          <div class="card-grid landing__pricing">
+          <div class="card-grid card-grid--auto landing__pricing">
             <AppCard
               v-for="plan in pricing"
               :key="plan.name"
@@ -541,17 +457,21 @@ onUnmounted(() => {
                 </div>
                 <div class="landing__pricing-price">
                   <strong>{{ plan.price }}</strong>
+                  <span>{{ plan.period }}</span>
                   <span v-if="plan.subprice">{{ plan.subprice }}</span>
                 </div>
               </header>
-
-              <AppButton
-                label="Начать бесплатно"
-                block
-                :variant="plan.accent ? 'primary' : 'ghost'"
-                @click="router.push('/register')"
-              />
             </AppCard>
+          </div>
+
+          <div class="landing__pricing-action">
+            <p>Первый месяц бесплатный для новых пользователей.</p>
+            <AppButton
+              label="Начать бесплатный месяц"
+              size="lg"
+              variant="cta"
+              @click="openRegister('pricing_cta_click')"
+            />
           </div>
         </div>
       </section>
@@ -564,7 +484,7 @@ onUnmounted(() => {
         <div class="landing__container landing__faq">
           <header class="landing__section-header">
             <h2>Частые вопросы</h2>
-            <p>Если не нашли ответ — напишите нам, отвечаем в течение дня.</p>
+            <p>Коротко о том, что обычно спрашивают перед стартом.</p>
           </header>
 
           <div class="landing__faq-list">
@@ -578,6 +498,8 @@ onUnmounted(() => {
               <button
                 type="button"
                 class="landing__faq-question"
+                :aria-expanded="expandedIndex === index"
+                :aria-controls="`faq-answer-${index}`"
                 @click="toggleFaq(index)"
               >
                 <span>{{ item.question }}</span>
@@ -586,6 +508,7 @@ onUnmounted(() => {
               <transition name="faq">
                 <p
                   v-show="expandedIndex === index"
+                  :id="`faq-answer-${index}`"
                   class="landing__faq-answer"
                 >
                   {{ item.answer }}
@@ -599,35 +522,19 @@ onUnmounted(() => {
       <!-- Final CTA -->
       <section class="landing__cta">
         <div class="landing__container landing__cta-inner">
-          <div>
-            <h2>Попробуйте — первый месяц бесплатно</h2>
-            <p>Начните записывать траты сегодня и увидите первые выводы уже через неделю.</p>
+          <div class="landing__cta-content">
+            <h2>Попробуйте FinTree бесплатно в первый месяц</h2>
+            <p>Настройка занимает пару минут. Дальше вы просто пишете траты в Telegram и видите честную картину бюджета.</p>
           </div>
           <AppButton
-            label="Создать аккаунт бесплатно"
-            icon="pi pi-arrow-right"
-            icon-pos="right"
+            label="Создать аккаунт"
             size="lg"
-            @click="router.push('/register')"
+            variant="cta"
+            @click="openRegister('final_cta_click')"
           />
         </div>
       </section>
     </main>
-
-    <!-- Sticky Mobile CTA -->
-    <transition name="mobile-cta">
-      <div
-        v-show="showMobileCta"
-        class="landing__mobile-cta"
-      >
-        <AppButton
-          label="Попробовать бесплатно"
-          size="md"
-          block
-          @click="router.push('/register')"
-        />
-      </div>
-    </transition>
 
     <footer class="landing__footer">
       <div class="landing__container landing__footer-inner">
@@ -662,16 +569,6 @@ onUnmounted(() => {
             >
               FAQ
             </button>
-          </div>
-          <div>
-            <h4>Компания</h4>
-            <a href="mailto:hello@fintree.app">Написать нам</a>
-            <router-link to="/blog">
-              Блог
-            </router-link>
-            <router-link to="/careers">
-              Карьера
-            </router-link>
           </div>
         </nav>
       </div>
@@ -761,29 +658,6 @@ onUnmounted(() => {
   color: var(--ft-primary-600);
 }
 
-.landing__links {
-  display: flex;
-  gap: var(--ft-space-4);
-  align-items: center;
-}
-
-.landing__links button {
-  cursor: pointer;
-
-  font-size: var(--ft-text-sm);
-  font-weight: var(--ft-font-medium);
-  color: var(--ft-text-tertiary);
-
-  background: transparent;
-  border: none;
-
-  transition: color var(--ft-transition-fast);
-}
-
-.landing__links button:hover {
-  color: var(--ft-text-primary);
-}
-
 .landing__actions {
   display: flex;
   flex-wrap: wrap;
@@ -807,6 +681,11 @@ onUnmounted(() => {
 
   opacity: 0.8;
   background:
+    radial-gradient(
+      900px 600px at 8% -15%,
+      color-mix(in srgb, var(--ft-success-500) 28%, transparent),
+      color-mix(in srgb, var(--ft-primary-500) 20%, transparent)
+    ),
     radial-gradient(
       55% 55% at 75% 10%,
       color-mix(in srgb, var(--ft-primary-500) 20%, transparent),
@@ -836,25 +715,6 @@ onUnmounted(() => {
   animation: fade-up 720ms var(--ft-ease-in-out) both;
 }
 
-.landing__hero-badge {
-  display: inline-flex;
-  gap: var(--ft-space-2);
-  align-items: center;
-
-  width: fit-content;
-  padding: var(--ft-space-1) var(--ft-space-3);
-
-  font-size: var(--ft-text-xs);
-  font-weight: var(--ft-font-semibold);
-  color: var(--ft-primary-200);
-  text-transform: uppercase;
-  letter-spacing: 0.16em;
-
-  background: color-mix(in srgb, var(--ft-primary-500) 20%, transparent);
-  border: 1px solid color-mix(in srgb, var(--ft-primary-500) 40%, transparent);
-  border-radius: var(--ft-radius-full);
-}
-
 .landing__hero-title {
   margin: 0;
 
@@ -865,21 +725,28 @@ onUnmounted(() => {
 }
 
 .landing__hero-subtitle {
-  max-width: 46ch;
+  max-width: 64ch;
   margin: 0;
   font-size: clamp(var(--ft-text-base), 2.2vw, 1.1rem);
   color: var(--ft-text-secondary);
 }
 
-.landing__hero-actions {
+.landing__hero-cta {
   display: flex;
-  flex-wrap: wrap;
-  gap: var(--ft-space-3);
+  flex-direction: column;
+  gap: var(--ft-space-2);
+}
+
+.landing__hero-disclaimer {
+  margin: 0;
+  font-size: var(--ft-text-xs);
+  color: var(--ft-text-tertiary);
+  text-align: center;
 }
 
 .landing__trust {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  grid-template-columns: repeat(3, 1fr);
   gap: var(--ft-space-3);
 }
 
@@ -898,10 +765,8 @@ onUnmounted(() => {
   border-radius: var(--ft-radius-lg);
 }
 
-.landing__hero-card {
+.landing__hero-shot {
   position: relative;
-
-  overflow: hidden;
 
   background: var(--ft-surface-base);
   border: 1px solid var(--ft-border-subtle);
@@ -911,75 +776,29 @@ onUnmounted(() => {
   animation-delay: 120ms;
 }
 
-.landing__hero-card::after {
-  pointer-events: none;
-  content: '';
-
-  position: absolute;
-  inset: 0;
-
-  opacity: 0.5;
-  background: linear-gradient(
-    135deg,
-    color-mix(in srgb, var(--ft-primary-500) 24%, transparent),
-    color-mix(in srgb, var(--ft-info-500) 12%, transparent)
-  );
-}
-
-.landing__hero-card-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
+.landing__hero-shot-title {
+  margin: 0 0 var(--ft-space-3);
+  font-size: var(--ft-text-lg);
   color: var(--ft-text-secondary);
 }
 
-.landing__hero-card-body {
-  position: relative;
-  z-index: 1;
-
-  display: flex;
-  flex-direction: column;
-  gap: var(--ft-space-4);
-}
-
-.landing__hero-metric {
-  display: flex;
-  flex-direction: column;
-  gap: var(--ft-space-1);
-}
-
-.landing__hero-metric strong {
-  font-size: var(--ft-text-2xl);
-  font-weight: var(--ft-font-bold);
-  color: var(--ft-text-primary);
-}
-
-.landing__hero-metric small {
-  color: var(--ft-success-400);
-}
-
-.landing__hero-metric--split {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: var(--ft-space-4);
-}
-
-.landing__hero-chart {
-  position: relative;
-
+.landing__hero-shot-frame {
   overflow: hidden;
-
-  height: 6px;
-
-  background: color-mix(in srgb, var(--ft-border-default) 65%, transparent);
-  border-radius: var(--ft-radius-full);
+  border: 1px solid var(--ft-border-subtle);
+  border-radius: var(--ft-radius-xl);
 }
 
-.landing__hero-chart-bar {
-  position: absolute;
-  inset: 0;
-  width: var(--progress);
-  background: linear-gradient(90deg, var(--ft-primary-400), var(--ft-success-400));
+.landing__hero-shot-image {
+  display: block;
+  width: 100%;
+  height: auto;
+  object-fit: contain;
+}
+
+.landing__hero-shot-caption {
+  margin: var(--ft-space-3) 0 0;
+  font-size: var(--ft-text-sm);
+  color: var(--ft-text-tertiary);
 }
 
 /* ── Social Proof Bar ── */
@@ -1201,68 +1020,46 @@ onUnmounted(() => {
   letter-spacing: 0.16em;
 }
 
-.landing__steps-cta {
-  display: flex;
-  justify-content: center;
-  margin-top: clamp(var(--ft-space-6), 4vw, var(--ft-space-8));
+/* ── Screenshots ── */
+
+.landing__screens {
+  gap: var(--ft-space-4);
 }
 
-/* ── Comparison Table ── */
+.landing__screen-card {
+  gap: var(--ft-space-3);
+  background: var(--ft-surface-base);
+  border: 1px solid var(--ft-border-subtle);
+}
 
-.landing__comparison-wrapper {
-  overflow-x: auto;
+.landing__screen-media {
+  overflow: hidden;
   border: 1px solid var(--ft-border-subtle);
   border-radius: var(--ft-radius-xl);
-
-  -webkit-overflow-scrolling: touch;
 }
 
-.landing__comparison {
-  border-collapse: collapse;
-
+.landing__screen-media img {
+  display: block;
   width: 100%;
-  min-width: 560px;
+  height: auto;
+  object-fit: contain;
+}
 
+.landing__screen-card h3 {
+  margin: 0;
+  font-size: var(--ft-text-lg);
+}
+
+.landing__screen-card p {
+  margin: 0;
   font-size: var(--ft-text-sm);
-
-  background: var(--ft-surface-base);
-}
-
-.landing__comparison th,
-.landing__comparison td {
-  padding: var(--ft-space-3) var(--ft-space-4);
-  text-align: center;
-  border-bottom: 1px solid var(--ft-border-subtle);
-}
-
-.landing__comparison th:first-child,
-.landing__comparison td:first-child {
-  font-weight: var(--ft-font-medium);
-  color: var(--ft-text-primary);
-  text-align: left;
-}
-
-.landing__comparison th {
-  font-weight: var(--ft-font-semibold);
   color: var(--ft-text-secondary);
-  white-space: nowrap;
-  background: var(--ft-bg-subtle);
-}
-
-.landing__comparison tbody tr:last-child td {
-  border-bottom: none;
-}
-
-.landing__comparison-highlight {
-  font-weight: var(--ft-font-bold);
-  color: var(--ft-primary-500);
-  background: color-mix(in srgb, var(--ft-primary-500) 8%, transparent);
 }
 
 /* ── Pricing ── */
 
 .landing__pricing-shared {
-  max-width: 480px;
+  max-width: 620px;
   margin: 0 auto clamp(var(--ft-space-6), 4vw, var(--ft-space-8));
   text-align: center;
 }
@@ -1279,7 +1076,8 @@ onUnmounted(() => {
   flex-direction: column;
   gap: var(--ft-space-2);
 
-  margin: 0;
+  max-width: 420px;
+  margin: 0 auto;
   padding: 0;
 
   list-style: none;
@@ -1289,9 +1087,10 @@ onUnmounted(() => {
   display: flex;
   gap: var(--ft-space-2);
   align-items: center;
-  justify-content: center;
+  justify-content: flex-start;
 
   color: var(--ft-text-secondary);
+  text-align: left;
 }
 
 .landing__pricing-shared li i {
@@ -1301,10 +1100,12 @@ onUnmounted(() => {
 .landing__pricing {
   gap: var(--ft-space-4);
   align-items: stretch;
+  max-width: 980px;
+  margin: 0 auto;
 }
 
 .landing__pricing-card {
-  gap: var(--ft-space-4);
+  gap: var(--ft-space-5);
   background: var(--ft-surface-base);
   border: 1px solid var(--ft-border-subtle);
 }
@@ -1366,6 +1167,23 @@ onUnmounted(() => {
   color: var(--ft-text-secondary);
 }
 
+.landing__pricing-action {
+  display: flex;
+  flex-direction: column;
+  gap: var(--ft-space-3);
+  align-items: center;
+  justify-content: center;
+
+  margin-top: clamp(var(--ft-space-5), 4vw, var(--ft-space-8));
+
+  text-align: center;
+}
+
+.landing__pricing-action p {
+  margin: 0;
+  color: var(--ft-text-secondary);
+}
+
 /* ── FAQ ── */
 
 .landing__faq {
@@ -1423,12 +1241,18 @@ onUnmounted(() => {
 
 /* ── Final CTA ── */
 
+.landing__section-urgency {
+  display: flex;
+  justify-content: center;
+  margin-bottom: var(--ft-space-4);
+}
+
 .landing__cta {
   padding-block: clamp(var(--ft-space-8), 6vw, var(--ft-space-12));
   background: linear-gradient(
     135deg,
-    color-mix(in srgb, var(--ft-primary-500) 26%, transparent),
-    color-mix(in srgb, var(--ft-primary-500) 8%, transparent)
+    color-mix(in srgb, var(--ft-success-500) 22%, transparent),
+    color-mix(in srgb, var(--ft-primary-500) 18%, transparent)
   );
   border-top: 1px solid var(--ft-border-subtle);
   border-bottom: 1px solid var(--ft-border-subtle);
@@ -1441,6 +1265,12 @@ onUnmounted(() => {
   align-items: center;
 }
 
+.landing__cta-content {
+  display: flex;
+  flex-direction: column;
+  gap: var(--ft-space-3);
+}
+
 .landing__cta-inner h2 {
   margin: 0;
   font-family: var(--ft-font-display);
@@ -1450,35 +1280,6 @@ onUnmounted(() => {
 .landing__cta-inner p {
   margin: var(--ft-space-2) 0 0;
   color: var(--ft-text-secondary);
-}
-
-/* ── Sticky Mobile CTA ── */
-
-.landing__mobile-cta {
-  position: fixed;
-  z-index: var(--ft-z-sticky);
-  right: 0;
-  bottom: 0;
-  left: 0;
-
-  display: none;
-
-  padding: var(--ft-space-3) var(--ft-space-4);
-
-  background: color-mix(in srgb, var(--ft-bg-base) 92%, transparent);
-  backdrop-filter: blur(14px);
-  border-top: 1px solid var(--ft-border-subtle);
-}
-
-.mobile-cta-enter-active,
-.mobile-cta-leave-active {
-  transition: transform 0.3s ease, opacity 0.3s ease;
-}
-
-.mobile-cta-enter-from,
-.mobile-cta-leave-to {
-  transform: translateY(100%);
-  opacity: 0;
 }
 
 /* ── Footer ── */
@@ -1507,8 +1308,14 @@ onUnmounted(() => {
   gap: var(--ft-space-4);
 }
 
+.landing__footer-links > div {
+  display: flex;
+  flex-direction: column;
+  gap: var(--ft-space-2);
+}
+
 .landing__footer-links h4 {
-  margin: 0 0 var(--ft-space-2);
+  margin: 0 0 var(--ft-space-1);
 
   font-size: var(--ft-text-sm);
   color: var(--ft-text-tertiary);
@@ -1570,12 +1377,6 @@ onUnmounted(() => {
   color: var(--ft-text-primary);
 }
 
-/* ── Light mode overrides ── */
-
-.light-mode .landing__hero-badge {
-  color: var(--ft-primary-700);
-}
-
 /* ── Animations ── */
 
 @keyframes fade-up {
@@ -1593,14 +1394,6 @@ onUnmounted(() => {
 /* ── Responsive ── */
 
 @media (width <= 960px) {
-  .landing__links {
-    display: none;
-  }
-
-  .landing__hero-metric--split {
-    grid-template-columns: 1fr;
-  }
-
   .landing__social-proof-divider {
     display: none;
   }
@@ -1612,31 +1405,8 @@ onUnmounted(() => {
     align-items: center;
   }
 
-  .landing__actions-login {
-    display: none;
-  }
-
-  .landing__hero-actions {
-    flex-direction: column;
-  }
-
-  .landing__hero-card {
-    display: none;
-  }
-
-  .landing__mobile-cta {
-    display: block;
-  }
-
   .landing__trust {
     grid-template-columns: 1fr;
-  }
-
-  .landing__comparison-wrapper {
-    margin-inline: calc(-1 * clamp(var(--ft-space-4), 5vw, var(--ft-space-8)));
-    border-right: none;
-    border-left: none;
-    border-radius: 0;
   }
 }
 </style>

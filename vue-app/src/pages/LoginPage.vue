@@ -91,8 +91,8 @@ const handleLogin = async () => {
           <i class="pi pi-chart-bar" />
           <span>FinTree</span>
         </router-link>
-        <h1>Вход в FinTree</h1>
-        <p>Продолжайте вести учёт расходов через Telegram и получать понятную аналитику в вебе.</p>
+        <h1>С возвращением!</h1>
+        <p>Продолжайте отслеживать свои финансы. Войдите через Telegram или используйте email и пароль.</p>
       </div>
 
       <UiCard
@@ -100,6 +100,19 @@ const handleLogin = async () => {
         variant="muted"
         padding="lg"
       >
+        <div class="auth__telegram auth__telegram--primary">
+          <h3 class="auth__telegram-title">🚀 Быстрый вход через Telegram</h3>
+          <p class="auth__telegram-description">Нажмите кнопку ниже для входа через ваш Telegram аккаунт</p>
+          <div
+            ref="telegramMount"
+            class="auth__telegram-widget"
+          />
+        </div>
+
+        <div class="auth__divider">
+          <span>или через email</span>
+        </div>
+
         <form
           class="auth__form"
           @submit.prevent="handleLogin"
@@ -124,6 +137,12 @@ const handleLogin = async () => {
               placeholder="Введите пароль"
               autocomplete="current-password"
             />
+            <router-link
+              to="/forgot-password"
+              class="auth__forgot-link"
+            >
+              Забыли пароль?
+            </router-link>
           </div>
 
           <p
@@ -143,18 +162,6 @@ const handleLogin = async () => {
             block
           />
         </form>
-
-        <div class="auth__divider">
-          <span>или</span>
-        </div>
-
-        <div class="auth__telegram">
-          <p>Войти через Telegram</p>
-          <div
-            ref="telegramMount"
-            class="auth__telegram-widget"
-          />
-        </div>
 
         <footer class="auth__footer">
           <span>Нет аккаунта?</span>
@@ -331,21 +338,61 @@ const handleLogin = async () => {
 }
 
 .auth__telegram {
-  display: grid;
-  gap: var(--ft-space-2);
-  justify-items: center;
+  display: flex;
+  flex-direction: column;
+  gap: var(--ft-space-3);
+  align-items: center;
 
   font-size: var(--ft-text-sm);
   color: var(--ft-text-secondary);
   text-align: center;
 }
 
+.auth__telegram--primary {
+  padding: var(--ft-space-4);
+  background: var(--ft-surface-muted);
+  border-radius: var(--ft-radius-lg);
+}
+
+.auth__telegram-title {
+  margin: 0;
+  font-size: var(--ft-text-lg);
+  font-weight: var(--ft-font-semibold);
+  color: var(--ft-text-primary);
+}
+
+.auth__telegram-description {
+  margin: 0;
+  font-size: var(--ft-text-sm);
+  color: var(--ft-text-secondary);
+  max-width: 36ch;
+}
+
 .auth__telegram p {
   margin: 0;
 }
 
+.auth__telegram-widget {
+  display: flex;
+  justify-content: center;
+  min-height: 44px;
+}
+
 .auth__telegram-widget :deep(script) {
   display: block;
+}
+
+.auth__forgot-link {
+  align-self: flex-end;
+  font-size: var(--ft-text-xs);
+  color: var(--ft-text-secondary);
+  text-decoration: none;
+  transition: color var(--ft-transition-fast);
+}
+
+.auth__forgot-link:hover {
+  color: var(--ft-text-primary);
+  text-decoration: underline;
 }
 
 .auth__footer a {
