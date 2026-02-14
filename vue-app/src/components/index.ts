@@ -9,7 +9,9 @@ import FormField from './common/FormField.vue'
 import KPICard from './common/KPICard.vue'
 import PageHeader from './common/PageHeader.vue'
 import StatusBadge from './common/StatusBadge.vue'
+import TestimonialCard from './common/TestimonialCard.vue'
 import ThemeToggle from './common/ThemeToggle.vue'
+import UrgencyBadge from './common/UrgencyBadge.vue'
 import PageContainer from './layout/PageContainer.vue'
 import UiBadge from '../ui/UiBadge.vue'
 import UiButton from '../ui/UiButton.vue'
@@ -26,7 +28,6 @@ import Button from 'primevue/button'
 import Card from 'primevue/card'
 import Skeleton from 'primevue/skeleton'
 import Menu from 'primevue/menu'
-import Sidebar from 'primevue/sidebar'
 import Drawer from 'primevue/drawer'
 import DataTable from 'primevue/datatable'
 import Column from 'primevue/column'
@@ -43,7 +44,7 @@ import Tag from 'primevue/tag'
 import Checkbox from 'primevue/checkbox'
 import Chart from 'primevue/chart'
 import Message from 'primevue/message'
-import OverlayPanel from 'primevue/overlaypanel'
+import Popover from 'primevue/popover'
 import ProgressBar from 'primevue/progressbar'
 
 export function registerComponents(app: App) {
@@ -55,7 +56,9 @@ export function registerComponents(app: App) {
   app.component('KPICard', KPICard)
   app.component('PageHeader', PageHeader)
   app.component('StatusBadge', StatusBadge)
+  app.component('TestimonialCard', TestimonialCard)
   app.component('ThemeToggle', ThemeToggle)
+  app.component('UrgencyBadge', UrgencyBadge)
   app.component('PageContainer', PageContainer)
   app.component('UiBadge', UiBadge)
   app.component('UiButton', UiButton)
@@ -72,7 +75,6 @@ export function registerComponents(app: App) {
   app.component('Card', Card)
   app.component('Skeleton', Skeleton)
   app.component('Menu', Menu)
-  app.component('Sidebar', Sidebar)
   app.component('Drawer', Drawer)
   app.component('DataTable', DataTable)
   app.component('Column', Column)
@@ -89,6 +91,6 @@ export function registerComponents(app: App) {
   app.component('Checkbox', Checkbox)
   app.component('Chart', Chart)
   app.component('Message', Message)
-  app.component('OverlayPanel', OverlayPanel)
+  app.component('Popover', Popover)
   app.component('ProgressBar', ProgressBar)
 }

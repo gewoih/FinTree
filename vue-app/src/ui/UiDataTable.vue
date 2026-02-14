@@ -1,21 +1,17 @@
 <script setup lang="ts">
-import { computed, useAttrs } from 'vue';
+import { useAttrs } from 'vue';
 import DataTable from 'primevue/datatable';
 
 defineOptions({ inheritAttrs: false });
 
 const attrs = useAttrs();
-
-const tableClasses = computed(() => [
-  'ui-datatable',
-]);
 </script>
 
 <template>
   <div class="ui-datatable__shell">
     <DataTable
       v-bind="attrs"
-      :class="tableClasses"
+      class="ui-datatable"
     >
       <template
         v-if="$slots.header"

@@ -36,8 +36,8 @@ const label = computed(() =>
   align-items: center;
   justify-content: center;
 
-  width: 42px;
-  height: 42px;
+  width: 44px;
+  height: 44px;
 
   color: var(--ft-text-primary);
 

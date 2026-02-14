@@ -1,6 +1,8 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 
+let counter = 0
+
 interface Props {
   label?: string
   hint?: string
@@ -12,7 +14,8 @@ interface Props {
 
 const props = defineProps<Props>()
 
-const fieldId = computed(() => props.inputId || `field-${Math.random().toString(36).substr(2, 9)}`)
+const stableId = `field-${++counter}`
+const fieldId = computed(() => props.inputId || stableId)
 const hintId = computed(() => `${fieldId.value}-hint`)
 const errorId = computed(() => `${fieldId.value}-error`)
 
@@ -114,6 +117,7 @@ const fieldAttrs = computed(() => ({
 .form-field__info {
   cursor: help;
 
+  position: relative;
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -126,7 +130,15 @@ const fieldAttrs = computed(() => ({
   color: var(--ft-text-tertiary);
 
   background: transparent;
+  border: 1px solid var(--ft-border-subtle);
   border-radius: 50%;
+}
+
+/* Expand touch target to 44x44 while keeping visual size compact */
+.form-field__info::before {
+  content: '';
+  position: absolute;
+  inset: -13px;
 }
 
 .form-field__info i {

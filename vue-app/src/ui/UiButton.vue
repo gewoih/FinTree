@@ -124,4 +124,16 @@ const buttonClasses = computed(() => [
 .ui-button--block {
   width: 100%;
 }
+
+.ui-button:focus-visible {
+  outline: 3px solid var(--ft-focus-ring);
+  outline-offset: 3px;
+}
+
+.ui-button:disabled {
+  cursor: not-allowed;
+  opacity: 0.7;
+  transform: none;
+  box-shadow: none;
+}
 </style>

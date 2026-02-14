@@ -11,7 +11,7 @@ const props = withDefaults(defineProps<Props>(), {
   icon: 'pi-inbox',
   description: '',
   actionLabel: '',
-  actionIcon: 'pi-plus'
+  actionIcon: 'pi pi-plus'
 })
 
 // Don't destructure props to maintain reactivity

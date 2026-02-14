@@ -104,6 +104,7 @@ onMounted(() => {
           rounded
           class="app-shell__menu-toggle"
           :aria-label="isDesktop ? (sidebarCollapsed ? 'Развернуть меню' : 'Свернуть меню') : 'Открыть меню'"
+          :aria-expanded="isDesktop ? !sidebarCollapsed : sidebarVisible"
           @click="toggleSidebar"
         />
         <router-link
