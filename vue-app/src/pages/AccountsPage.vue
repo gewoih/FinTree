@@ -389,50 +389,50 @@ onMounted(async () => {
 
 <style scoped>
 .accounts {
-  gap: var(--space-6);
+  gap: var(--ft-space-8);
 }
 
 .accounts__content {
-  gap: var(--space-4);
+  gap: var(--ft-space-4);
 }
 
 .accounts-toolbar {
-  gap: var(--space-3);
+  gap: var(--ft-space-3);
 }
 
 .accounts-toolbar__hint {
   margin: 0;
   font-size: var(--ft-text-sm);
-  color: var(--text-muted);
+  color: var(--ft-text-secondary);
 }
 
 .accounts-tabs {
   display: inline-flex;
-  gap: var(--space-2);
+  gap: var(--ft-space-2);
 
-  padding: var(--space-1);
+  padding: var(--ft-space-1);
 
   background: var(--surface-0);
-  border: 1px solid var(--border);
-  border-radius: var(--radius-md);
+  border: 1px solid var(--ft-border-default);
+  border-radius: var(--ft-radius-lg);
 }
 
 .accounts-tab {
   cursor: pointer;
 
   display: inline-flex;
-  gap: var(--space-2);
+  gap: var(--ft-space-2);
   align-items: center;
 
   min-height: 44px;
-  padding: var(--space-2) var(--space-3);
+  padding: var(--ft-space-2) var(--ft-space-3);
 
   font-weight: var(--ft-font-medium);
-  color: var(--text-muted);
+  color: var(--ft-text-secondary);
 
   background: transparent;
   border: none;
-  border-radius: var(--radius-sm);
+  border-radius: var(--ft-radius-md);
 }
 
 .accounts-tab strong {
@@ -440,7 +440,7 @@ onMounted(async () => {
 }
 
 .accounts-tab.is-active {
-  color: var(--text);
+  color: var(--ft-text-primary);
   background: color-mix(in srgb, var(--primary) 18%, transparent);
 }
 
@@ -452,25 +452,25 @@ onMounted(async () => {
 .accounts-controls {
   display: grid;
   grid-template-columns: minmax(260px, 1fr) minmax(220px, 280px) auto;
-  gap: var(--space-3);
+  gap: var(--ft-space-3);
   align-items: center;
 }
 
 .accounts-search {
   display: flex;
-  gap: var(--space-2);
+  gap: var(--ft-space-2);
   align-items: center;
 
   min-height: 44px;
-  padding: 0 var(--space-3);
+  padding: 0 var(--ft-space-3);
 
   background: var(--surface-0);
-  border: 1px solid var(--border);
-  border-radius: var(--radius-md);
+  border: 1px solid var(--ft-border-default);
+  border-radius: var(--ft-radius-lg);
 }
 
 .accounts-search i {
-  color: var(--text-muted);
+  color: var(--ft-text-secondary);
 }
 
 .accounts-search :deep(.p-inputtext) {
@@ -489,13 +489,13 @@ onMounted(async () => {
 .accounts__skeleton {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-  gap: var(--space-4);
+  gap: var(--ft-space-4);
 }
 
 .accounts-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-  gap: var(--space-4);
+  gap: var(--ft-space-4);
 }
 
 .accounts-grid--few {
@@ -507,26 +507,26 @@ onMounted(async () => {
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: var(--space-3);
+  padding: var(--ft-space-3);
 }
 
 .results-text {
   display: flex;
-  gap: var(--space-2);
+  gap: var(--ft-space-2);
   align-items: center;
 
   margin: 0;
 
   font-size: var(--ft-text-sm);
-  color: var(--text-muted);
+  color: var(--ft-text-secondary);
 }
 
 .results-text strong {
   font-weight: var(--ft-font-semibold);
-  color: var(--text);
+  color: var(--ft-text-primary);
 }
 
-@media (width <= 960px) {
+@media (width <= 1024px) {
   .accounts-controls {
     grid-template-columns: 1fr;
   }

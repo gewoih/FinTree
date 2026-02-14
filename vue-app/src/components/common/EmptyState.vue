@@ -62,7 +62,7 @@ const emit = defineEmits<{
   justify-content: center;
 
   min-height: 400px;
-  padding: var(--space-7) var(--space-6);
+  padding: var(--ft-space-12) var(--ft-space-8);
 
   text-align: center;
 }
@@ -74,15 +74,15 @@ const emit = defineEmits<{
 
   width: 80px;
   height: 80px;
-  margin-bottom: var(--space-6);
+  margin-bottom: var(--ft-space-8);
 
   background: linear-gradient(
     135deg,
-    color-mix(in srgb, var(--ft-primary-500) 14%, transparent) 0%,
-    color-mix(in srgb, var(--ft-success-400) 14%, transparent) 100%
+    color-mix(in srgb, var(--ft-primary-500) 22%, transparent) 0%,
+    color-mix(in srgb, var(--ft-success-400) 20%, transparent) 100%
   );
-  border: 1px solid var(--border);
-  border-radius: var(--radius-lg);
+  border: 1px solid var(--ft-border-default);
+  border-radius: var(--ft-radius-xl);
 }
 
 .empty-state__icon {
@@ -91,7 +91,7 @@ const emit = defineEmits<{
 }
 
 .empty-state__title {
-  margin: 0 0 var(--space-3);
+  margin: 0 0 var(--ft-space-3);
   font-size: var(--ft-text-xl);
   font-weight: var(--ft-font-semibold);
   color: var(--ft-text-primary);
@@ -99,7 +99,7 @@ const emit = defineEmits<{
 
 .empty-state__description {
   max-width: 420px;
-  margin: 0 0 var(--space-6);
+  margin: 0 0 var(--ft-space-8);
 
   font-size: var(--ft-text-base);
   line-height: var(--ft-leading-relaxed);
@@ -110,13 +110,12 @@ const emit = defineEmits<{
   min-width: 180px;
 }
 
-/* Dark mode adjustments */
-.dark-mode .empty-state__icon-wrapper {
+/* Light mode adjustments */
+.light-mode .empty-state__icon-wrapper {
   background: linear-gradient(
     135deg,
-    color-mix(in srgb, var(--ft-primary-500) 22%, transparent) 0%,
-    color-mix(in srgb, var(--ft-success-400) 20%, transparent) 100%
+    color-mix(in srgb, var(--ft-primary-500) 14%, transparent) 0%,
+    color-mix(in srgb, var(--ft-success-400) 14%, transparent) 100%
   );
-  border-color: var(--ft-border-default);
 }
 </style>

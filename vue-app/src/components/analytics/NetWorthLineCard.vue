@@ -168,6 +168,8 @@ const chartOptions = computed(() => ({
     <div
       v-else
       class="networth-card__chart"
+      role="img"
+      aria-label="График динамики капитала"
     >
       <div class="networth-card__chart-container">
         <Chart

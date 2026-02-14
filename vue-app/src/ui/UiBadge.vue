@@ -32,10 +32,10 @@ const attrs = useAttrs();
 
 <style scoped>
 .ui-badge {
-  padding: 2px var(--space-3);
+  padding: var(--ft-space-1) var(--ft-space-3);
   font-size: var(--ft-text-xs);
-  font-weight: 600;
-  border-radius: 999px;
+  font-weight: var(--ft-font-semibold);
+  border-radius: var(--ft-radius-full);
 }
 
 .ui-badge[style*='--ui-badge-color'] {

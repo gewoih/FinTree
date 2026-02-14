@@ -3,6 +3,8 @@
    Professional, trustworthy, Revolut-level polish
    ═══════════════════════════════════════════════════════════════ */
 
+@layer reset, tokens, base, components, primevue, overrides;
+
 :root {
   /* ━━━ COLOR PALETTE ━━━ */
 
@@ -197,6 +199,8 @@
   /* ━━━ Z-INDEX ━━━ */
 
   --ft-z-base: 0;
+  --ft-z-above: 1;
+  --ft-z-raised: 2;
   --ft-z-dropdown: 1000;
   --ft-z-sticky: 1020;
   --ft-z-drawer: 1030;
@@ -204,6 +208,12 @@
   --ft-z-popover: 1050;
   --ft-z-toast: 1060;
   --ft-z-tooltip: 1070;
+
+  /* ━━━ BREAKPOINTS (documented; CSS vars can't be used in @media) ━━━
+     Mobile:  640px
+     Tablet:  768px
+     Desktop: 1024px
+  */
 
   /* ━━━ LAYOUT ━━━ */
 
@@ -221,12 +231,13 @@
 
   /* ━━━ COMPONENT SIZES ━━━ */
 
-  --ft-input-height-sm: 2rem;     /* 32px */
-  --ft-input-height-md: 2.5rem;   /* 40px */
+  --ft-control-height: 2.75rem;    /* 44px — min interactive height */
+  --ft-input-height-sm: 2.25rem;  /* 36px */
+  --ft-input-height-md: 2.75rem;  /* 44px */
   --ft-input-height-lg: 3rem;     /* 48px */
-  --ft-button-height-sm: 2rem;    /* 32px */
-  --ft-button-height-md: 2.5rem;  /* 40px */
-  --ft-button-height-lg: 3rem;    /* 48px */
+  --ft-button-height-sm: 2.75rem;  /* 44px */
+  --ft-button-height-md: 3rem;    /* 48px */
+  --ft-button-height-lg: 3.25rem;  /* 52px */
 }
 
 .light-mode {

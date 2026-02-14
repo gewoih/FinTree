@@ -204,7 +204,11 @@ const chartOptions = computed(() => ({
       v-else
       class="donut-card__content"
     >
-      <div class="donut-card__chart">
+      <div
+        class="donut-card__chart"
+        role="img"
+        aria-label="Круговая диаграмма расходов по категориям"
+      >
         <Chart
           v-if="donutChartData"
           type="doughnut"

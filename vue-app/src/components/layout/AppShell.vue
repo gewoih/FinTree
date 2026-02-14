@@ -227,7 +227,7 @@ onMounted(() => {
   grid-template:
     "topnav" auto "main" 1fr / 1fr;
   min-height: 100vh;
-  background: var(--bg);
+  background: var(--ft-bg-base);
 }
 
 .app-shell__skip-link {
@@ -262,62 +262,62 @@ onMounted(() => {
   align-items: center;
   justify-content: space-between;
 
-  padding: var(--space-4) var(--space-6);
+  padding: var(--ft-space-4) var(--ft-space-8);
 
-  background: var(--surface-1);
-  border-bottom: 1px solid var(--border);
-  box-shadow: var(--shadow-soft);
+  background: var(--ft-surface-base);
+  border-bottom: 1px solid var(--ft-border-default);
+  box-shadow: var(--ft-shadow-md);
 }
 
 .app-shell__readonly-banner {
   display: flex;
-  gap: var(--space-3);
+  gap: var(--ft-space-3);
   align-items: center;
   justify-content: space-between;
 
-  padding: var(--space-2) var(--space-6);
+  padding: var(--ft-space-2) var(--ft-space-8);
 
-  background: color-mix(in srgb, var(--ft-warning) 18%, var(--surface-1));
+  background: color-mix(in srgb, var(--ft-warning) 18%, var(--ft-surface-base));
   border-bottom: 1px solid color-mix(in srgb, var(--ft-warning) 35%, transparent);
 }
 
 .app-shell__readonly-copy {
   display: inline-flex;
-  gap: var(--space-2);
+  gap: var(--ft-space-2);
   align-items: center;
 
   font-size: var(--ft-text-sm);
-  color: var(--text);
+  color: var(--ft-text-primary);
 }
 
 .app-shell__readonly-copy i {
-  color: color-mix(in srgb, var(--ft-warning) 80%, var(--text));
+  color: color-mix(in srgb, var(--ft-warning) 80%, var(--ft-text-primary));
 }
 
 .app-shell__topnav-left {
   display: flex;
-  gap: var(--space-4);
+  gap: var(--ft-space-4);
   align-items: center;
 }
 
 .app-shell__topnav-right {
   display: flex;
-  gap: var(--space-2);
+  gap: var(--ft-space-2);
   align-items: center;
 }
 
 .app-shell__menu-toggle {
-  margin-left: calc(var(--space-4) * -1);
+  margin-left: calc(var(--ft-space-4) * -1);
 }
 
 .app-shell__logo {
   display: flex;
-  gap: var(--space-3);
+  gap: var(--ft-space-3);
   align-items: center;
 
   font-size: var(--ft-text-xl);
   font-weight: var(--ft-font-bold);
-  color: var(--text);
+  color: var(--ft-text-primary);
   text-decoration: none;
 
   transition: color var(--ft-transition-fast);
@@ -325,11 +325,11 @@ onMounted(() => {
 
 .app-shell__logo i {
   font-size: 1.5rem;
-  color: var(--accent);
+  color: var(--ft-primary-500);
 }
 
 .app-shell__logo:hover {
-  color: var(--accent);
+  color: var(--ft-primary-500);
 }
 
 /* Sidebar - Desktop */
@@ -339,49 +339,49 @@ onMounted(() => {
 
 .app-shell__drawer-mobile :deep(.p-drawer) {
   width: 280px;
-  background: var(--surface-2);
-  border-right: 1px solid var(--border);
+  background: var(--ft-surface-raised);
+  border-right: 1px solid var(--ft-border-default);
 }
 
 .app-shell__drawer-mobile :deep(.p-drawer-header) {
-  padding: var(--space-5) var(--space-4) var(--space-3);
+  padding: var(--ft-space-6) var(--ft-space-4) var(--ft-space-3);
 }
 
 .app-shell__drawer-header {
   display: flex;
-  gap: var(--space-3);
+  gap: var(--ft-space-3);
   align-items: center;
 
   font-size: var(--ft-text-xl);
   font-weight: var(--ft-font-bold);
-  color: var(--text);
+  color: var(--ft-text-primary);
 }
 
 .app-shell__drawer-header i {
   font-size: 1.5rem;
-  color: var(--accent);
+  color: var(--ft-primary-500);
 }
 
 /* Navigation */
 .app-shell__nav {
   display: flex;
   flex-direction: column;
-  gap: var(--space-1);
-  margin-top: var(--space-4);
+  gap: var(--ft-space-1);
+  margin-top: var(--ft-space-4);
 }
 
 .app-shell__nav-link {
   position: relative;
 
   display: flex;
-  gap: var(--space-3);
+  gap: var(--ft-space-3);
   align-items: center;
 
-  padding: var(--space-3) var(--space-4);
+  padding: var(--ft-space-3) var(--ft-space-4);
 
   font-size: var(--ft-text-base);
   font-weight: var(--ft-font-medium);
-  color: var(--text-muted);
+  color: var(--ft-text-secondary);
   text-decoration: none;
 
   border-radius: var(--ft-radius-lg);
@@ -390,15 +390,15 @@ onMounted(() => {
 }
 
 .app-shell__nav-link:hover {
-  color: var(--text);
-  background: color-mix(in srgb, var(--accent) 18%, var(--surface-1));
+  color: var(--ft-text-primary);
+  background: color-mix(in srgb, var(--ft-primary-500) 18%, var(--ft-surface-base));
 }
 
 .app-shell__nav-link.router-link-active {
   font-weight: var(--ft-font-semibold);
-  color: var(--text);
-  background: color-mix(in srgb, var(--accent) 24%, var(--surface-1));
-  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--accent) 45%, transparent);
+  color: var(--ft-text-primary);
+  background: color-mix(in srgb, var(--ft-primary-500) 24%, var(--ft-surface-base));
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--ft-primary-500) 45%, transparent);
 }
 
 .app-shell__nav-link i {
@@ -407,7 +407,7 @@ onMounted(() => {
 
 .app-shell__nav-link--collapsed {
   justify-content: center;
-  padding: var(--space-3);
+  padding: var(--ft-space-3);
 }
 
 .app-shell__nav-link--collapsed i {
@@ -435,16 +435,16 @@ onMounted(() => {
 
 .app-shell__user-menu :deep(.p-menu) {
   min-width: 190px;
-  margin-top: var(--space-2);
-  padding: var(--space-2);
+  margin-top: var(--ft-space-2);
+  padding: var(--ft-space-2);
 
   background: linear-gradient(
     160deg,
-    color-mix(in srgb, var(--surface-1) 92%, transparent),
-    color-mix(in srgb, var(--surface-2) 92%, transparent)
+    color-mix(in srgb, var(--ft-surface-base) 92%, transparent),
+    color-mix(in srgb, var(--ft-surface-raised) 92%, transparent)
   );
   backdrop-filter: blur(10px);
-  border: 1px solid color-mix(in srgb, var(--border) 65%, transparent);
+  border: 1px solid color-mix(in srgb, var(--ft-border-default) 65%, transparent);
   border-radius: var(--ft-radius-xl);
   box-shadow:
     0 16px 32px rgb(15 23 42 / 22%),
@@ -452,12 +452,12 @@ onMounted(() => {
 }
 
 .app-shell__user-menu :deep(.p-menu .p-menuitem-link) {
-  gap: var(--space-3);
+  gap: var(--ft-space-3);
 
   min-height: 44px;
   padding: 0.7rem 0.85rem;
 
-  color: var(--text);
+  color: var(--ft-text-primary);
 
   border-radius: var(--ft-radius-lg);
 
@@ -466,21 +466,21 @@ onMounted(() => {
 
 .app-shell__user-menu :deep(.p-menu .p-menuitem-link:hover) {
   transform: translateY(-1px);
-  color: var(--text);
-  background: color-mix(in srgb, var(--accent) 18%, transparent);
+  color: var(--ft-text-primary);
+  background: color-mix(in srgb, var(--ft-primary-500) 18%, transparent);
 }
 
 .app-shell__user-menu :deep(.p-menu .p-menuitem-link:focus-visible) {
-  outline: 2px solid color-mix(in srgb, var(--accent) 60%, transparent);
+  outline: 2px solid color-mix(in srgb, var(--ft-primary-500) 60%, transparent);
   outline-offset: 2px;
 }
 
 .app-shell__user-menu :deep(.p-menu .p-menuitem-icon) {
-  color: var(--text-muted);
+  color: var(--ft-text-secondary);
 }
 
 .app-shell__user-menu :deep(.p-menu .p-menuitem-link:hover .p-menuitem-icon) {
-  color: var(--accent);
+  color: var(--ft-primary-500);
 }
 
 .app-shell__user-menu :deep(.p-menu .p-menuitem-text) {
@@ -512,17 +512,17 @@ onMounted(() => {
     grid-area: sidebar;
 
     height: calc(100vh - var(--app-shell-nav-height));
-    padding: var(--space-6) var(--space-4);
+    padding: var(--ft-space-8) var(--ft-space-4);
 
-    background: var(--surface-1);
-    border-right: 1px solid var(--border);
+    background: var(--ft-surface-base);
+    border-right: 1px solid var(--ft-border-default);
 
     transition: padding 0.2s ease;
   }
 
   .app-shell__sidebar-desktop--collapsed {
     overflow: visible;
-    padding: var(--space-6) var(--ft-space-2);
+    padding: var(--ft-space-8) var(--ft-space-2);
   }
 }
 
@@ -536,11 +536,11 @@ onMounted(() => {
   .app-shell__readonly-banner {
     flex-direction: column;
     align-items: stretch;
-    padding: var(--space-2) var(--space-4);
+    padding: var(--ft-space-2) var(--ft-space-4);
   }
 
   .app-shell__topnav {
-    padding: var(--space-3) var(--space-4);
+    padding: var(--ft-space-3) var(--ft-space-4);
   }
 
   .app-shell__logo span {

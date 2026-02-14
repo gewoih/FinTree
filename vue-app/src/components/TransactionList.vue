@@ -13,6 +13,8 @@ import { formatUtcDateOnly, getUtcDateOnlyKey, toUtcDateOnlyIso } from '../utils
 import type { Transaction, TransactionsQuery, UpdateTransferPayload } from '../types'
 import { TRANSACTION_TYPE } from '../types'
 
+const FALLBACK_CATEGORY_COLOR = '#94a3b8'
+
 interface EnrichedTransaction extends Transaction {
   accountName?: string
   accountCurrency?: string
@@ -175,7 +177,7 @@ const enrichedTransactions = computed<EnrichedTransaction[]>(() => {
       accountCurrency: fromAccount?.currency?.code ?? fromAccount?.currencyCode,
       accountSymbol: fromAccount?.currency?.symbol ?? '',
       categoryName: 'Перевод',
-      categoryColor: '#94a3b8',
+      categoryColor: FALLBACK_CATEGORY_COLOR,
       signedAmount: 0,
       signedBaseAmount: 0,
       displayAmount: 0,
@@ -527,11 +529,11 @@ const handleRowClick = (txn: EnrichedTransaction) => {
                   v-else
                   class="txn-row__icon"
                   :style="{
-                    backgroundColor: (txn.categoryColor ?? '#94a3b8') + '26',
-                    color: txn.categoryColor ?? '#94a3b8'
+                    backgroundColor: (txn.categoryColor ?? FALLBACK_CATEGORY_COLOR) + '26',
+                    color: txn.categoryColor ?? FALLBACK_CATEGORY_COLOR
                   }"
                 >
-                  <span class="txn-row__dot" :style="{ backgroundColor: txn.categoryColor ?? '#94a3b8' }" />
+                  <span class="txn-row__dot" :style="{ backgroundColor: txn.categoryColor ?? FALLBACK_CATEGORY_COLOR }" />
                 </span>
 
                 <div class="txn-row__info">
@@ -628,7 +630,7 @@ const handleRowClick = (txn: EnrichedTransaction) => {
 
 .txn-group__header {
   position: sticky;
-  z-index: 2;
+  z-index: var(--ft-z-raised);
   top: 0;
 
   display: flex;
@@ -646,12 +648,12 @@ const handleRowClick = (txn: EnrichedTransaction) => {
 }
 
 .txn-group__date {
-  font-weight: 600;
+  font-weight: var(--ft-font-semibold);
   color: var(--ft-text-tertiary);
 }
 
 .txn-group__total {
-  font-weight: 600;
+  font-weight: var(--ft-font-semibold);
   font-variant-numeric: tabular-nums;
   color: var(--ft-text-secondary);
 }
@@ -682,7 +684,7 @@ const handleRowClick = (txn: EnrichedTransaction) => {
   border: none;
   border-bottom: 1px solid var(--ft-border-soft);
 
-  transition: background-color 0.12s;
+  transition: background-color var(--ft-transition-fast);
 }
 
 .txn-row:hover:not(:disabled) {
@@ -742,7 +744,7 @@ const handleRowClick = (txn: EnrichedTransaction) => {
   align-items: center;
 
   font-size: var(--ft-text-lg);
-  font-weight: 600;
+  font-weight: var(--ft-font-semibold);
   color: var(--ft-text-primary);
 }
 
@@ -770,7 +772,7 @@ const handleRowClick = (txn: EnrichedTransaction) => {
 
 .txn-row__amount {
   font-size: var(--ft-text-lg);
-  font-weight: 600;
+  font-weight: var(--ft-font-semibold);
   font-variant-numeric: tabular-nums;
   line-height: 1.3;
   color: var(--ft-text-primary);

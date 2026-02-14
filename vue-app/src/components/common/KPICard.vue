@@ -105,12 +105,12 @@ const trendClass = computed(() => {
 }
 
 :deep(.ui-card__body) {
-  gap: var(--space-3);
+  gap: var(--ft-space-3);
 }
 
 .kpi-card__header {
   display: flex;
-  gap: var(--space-3);
+  gap: var(--ft-space-3);
   align-items: center;
   justify-content: space-between;
 }
@@ -118,69 +118,67 @@ const trendClass = computed(() => {
 .kpi-card__title {
   font-size: var(--ft-text-sm);
   font-weight: var(--ft-font-medium);
-  color: var(--text-muted);
+  color: var(--ft-text-secondary);
   text-transform: uppercase;
   letter-spacing: 0.05em;
 }
 
 .kpi-card__icon {
   font-size: 1.25rem;
-  color: var(--text-muted);
+  color: var(--ft-text-secondary);
 }
 
 .kpi-card__value {
   font-size: var(--ft-text-3xl);
   font-weight: var(--ft-font-bold);
   line-height: 1.2;
-  color: var(--text);
+  color: var(--ft-text-primary);
 }
 
 .kpi-card__footer {
   display: flex;
-  gap: var(--space-2);
+  gap: var(--ft-space-2);
   align-items: center;
   font-size: var(--ft-text-sm);
 }
 
 .kpi-card__trend {
   display: inline-flex;
-  gap: var(--space-1);
+  gap: var(--ft-space-1);
   align-items: center;
 
-  padding: var(--space-1) var(--space-2);
+  padding: var(--ft-space-1) var(--ft-space-2);
 
   font-weight: var(--ft-font-semibold);
 
-  border-radius: var(--radius-md);
+  border-radius: var(--ft-radius-lg);
 }
 
 .kpi-card__trend--up {
   color: var(--success);
-  background: rgb(34 197 94 / 10%);
+  background: rgb(34 197 94 / 15%);
 }
 
-.dark-mode .kpi-card__trend--up {
-  color: var(--success);
-  background: rgb(34 197 94 / 15%);
+.light-mode .kpi-card__trend--up {
+  background: rgb(34 197 94 / 10%);
 }
 
 .kpi-card__trend--down {
   color: var(--danger);
-  background: rgb(239 68 68 / 10%);
-}
-
-.dark-mode .kpi-card__trend--down {
-  color: var(--danger);
   background: rgb(239 68 68 / 15%);
 }
 
+.light-mode .kpi-card__trend--down {
+  background: rgb(239 68 68 / 10%);
+}
+
 .kpi-card__trend--neutral {
-  color: var(--text-muted);
+  color: var(--ft-text-secondary);
   background: rgb(107 114 128 / 10%);
 }
 
 .kpi-card__trend-label {
-  color: var(--text-muted);
+  color: var(--ft-text-secondary);
 }
 
 /* Variant styles */
@@ -199,6 +197,6 @@ const trendClass = computed(() => {
 .kpi-card__loading {
   display: flex;
   flex-direction: column;
-  gap: var(--space-2);
+  gap: var(--ft-space-2);
 }
 </style>

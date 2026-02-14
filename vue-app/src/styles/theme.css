@@ -1,3 +1,4 @@
+@layer components {
 :root {
   --ft-primary: var(--ft-primary-500);
   --ft-primary-hover: var(--ft-primary-600);
@@ -378,4 +379,5 @@
   .ft-hero__actions {
     flex-direction: column;
   }
+}
 }

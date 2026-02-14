@@ -195,18 +195,18 @@ const handleTypeUpdate = (value: AccountType | null | undefined) => {
 
 .filter-input {
   display: flex;
-  gap: var(--space-2);
+  gap: var(--ft-space-2);
   align-items: center;
 
-  padding: var(--space-2) var(--space-3);
+  padding: var(--ft-space-2) var(--ft-space-3);
 
-  background: var(--surface-1);
-  border: 1px solid var(--border);
-  border-radius: var(--radius-md);
+  background: var(--ft-surface-base);
+  border: 1px solid var(--ft-border-default);
+  border-radius: var(--ft-radius-lg);
 }
 
 .filter-input i {
-  color: var(--text-muted);
+  color: var(--ft-text-secondary);
 }
 
 .filter-input :deep(.p-inputtext) {
@@ -252,13 +252,13 @@ const handleTypeUpdate = (value: AccountType | null | undefined) => {
 }
 
 .active-filters__label i {
-  color: var(--accent);
+  color: var(--ft-primary-500);
 }
 
 .active-filters__tags {
   display: flex;
   flex-wrap: wrap;
-  gap: var(--space-2);
+  gap: var(--ft-space-2);
 }
 
 .active-filters__tag {
@@ -266,7 +266,7 @@ const handleTypeUpdate = (value: AccountType | null | undefined) => {
 }
 
 .active-filters__tag-icon {
-  margin-left: var(--space-2);
+  margin-left: var(--ft-space-2);
 }
 
 @media (width <= 768px) {

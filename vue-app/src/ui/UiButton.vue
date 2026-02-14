@@ -78,17 +78,17 @@ const buttonClasses = computed(() => [
 <style scoped>
 .ui-button {
   display: inline-flex;
-  gap: var(--space-2);
+  gap: var(--ft-space-2);
   align-items: center;
   justify-content: center;
 
-  min-height: var(--control-height);
-  padding: 0 var(--space-4);
+  min-height: var(--ft-button-height-sm);
+  padding: 0 var(--ft-space-4);
 
-  font-weight: 600;
+  font-weight: var(--ft-font-semibold);
   letter-spacing: 0.01em;
 
-  border-radius: var(--radius-md);
+  border-radius: var(--ft-radius-lg);
 
   transition:
     transform var(--ft-transition-fast),
@@ -98,27 +98,27 @@ const buttonClasses = computed(() => [
 }
 
 .ui-button--sm {
-  min-height: 36px;
-  padding: 0 var(--space-3);
+  min-height: var(--ft-button-height-sm);
+  padding: 0 var(--ft-space-3);
   font-size: var(--ft-text-sm);
 }
 
 .ui-button--lg {
-  min-height: 52px;
-  padding: 0 var(--space-5);
+  min-height: var(--ft-button-height-lg);
+  padding: 0 var(--ft-space-6);
   font-size: var(--ft-text-base);
 }
 
 .ui-button--primary {
-  box-shadow: var(--shadow-soft);
+  box-shadow: var(--ft-shadow-md);
 }
 
 .ui-button--ghost {
-  color: var(--text);
+  color: var(--ft-text-primary);
 }
 
 .ui-button--secondary {
-  color: var(--text);
+  color: var(--ft-text-primary);
 }
 
 .ui-button--block {

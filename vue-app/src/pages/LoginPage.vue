@@ -231,7 +231,7 @@ const handleLogin = async () => {
 
 .auth__theme-toggle {
   position: absolute;
-  z-index: 1;
+  z-index: var(--ft-z-above);
   top: clamp(var(--ft-space-4), 4vw, var(--ft-space-6));
   right: clamp(var(--ft-space-4), 4vw, var(--ft-space-6));
 }

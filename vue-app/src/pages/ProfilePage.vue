@@ -48,10 +48,12 @@ const userInitials = computed(() => {
   const name = currentUser.value?.name;
   if (!name) return '?';
   const parts = name.trim().split(/\s+/);
-  if (parts.length >= 2) {
-    return (parts[0][0] + parts[1][0]).toUpperCase();
+  const first = parts[0] ?? '';
+  const second = parts[1];
+  if (second) {
+    return ((first[0] ?? '') + (second[0] ?? '')).toUpperCase();
   }
-  return parts[0].slice(0, 2).toUpperCase();
+  return first.slice(0, 2).toUpperCase();
 });
 
 const subscriptionPlans = computed(() => {
@@ -597,44 +599,44 @@ async function handlePay(plan: SubscriptionPlan) {
 
 <style scoped>
 .profile-page {
-  gap: var(--ft-space-6, var(--space-6));
+  gap: var(--ft-space-6);
 }
 
 .profile-tabs {
   display: flex;
   flex-direction: column;
-  gap: var(--ft-space-5, var(--space-5));
+  gap: var(--ft-space-5);
 }
 
 .profile-tabs__bar {
   display: inline-flex;
-  gap: var(--ft-space-2, var(--space-2));
+  gap: var(--ft-space-2);
   align-items: center;
 
-  padding: var(--ft-space-2, var(--space-2));
+  padding: var(--ft-space-2);
 
-  background: linear-gradient(135deg, color-mix(in srgb, var(--surface-2) 70%, transparent), var(--surface-1));
-  border: 1px solid var(--border);
-  border-radius: var(--ft-radius-lg, var(--radius-lg));
-  box-shadow: var(--shadow-soft);
+  background: linear-gradient(135deg, color-mix(in srgb, var(--ft-surface-raised) 70%, transparent), var(--ft-surface-base));
+  border: 1px solid var(--ft-border-default);
+  border-radius: var(--ft-radius-lg, var(--ft-radius-xl));
+  box-shadow: var(--ft-shadow-md);
 }
 
 .profile-tab {
   cursor: pointer;
 
   display: inline-flex;
-  gap: var(--ft-space-2, var(--space-2));
+  gap: var(--ft-space-2);
   align-items: center;
 
   padding: 0.6rem 1.4rem;
 
   font-size: var(--ft-text-base);
-  font-weight: 600;
-  color: var(--text);
+  font-weight: var(--ft-font-semibold);
+  color: var(--ft-text-primary);
 
   background: transparent;
   border: none;
-  border-radius: var(--ft-radius-lg, var(--radius-lg));
+  border-radius: var(--ft-radius-lg, var(--ft-radius-xl));
 
   transition:
     background-color var(--ft-transition-fast),
@@ -644,7 +646,7 @@ async function handlePay(plan: SubscriptionPlan) {
 
 .profile-tab.is-active {
   color: var(--ft-text-inverse);
-  background: color-mix(in srgb, var(--accent) 75%, transparent);
+  background: color-mix(in srgb, var(--ft-primary-500) 75%, transparent);
   box-shadow: var(--ft-shadow-md);
 }
 
@@ -653,14 +655,14 @@ async function handlePay(plan: SubscriptionPlan) {
 }
 
 .profile-tab:focus-visible {
-  outline: 2px solid color-mix(in srgb, var(--accent) 60%, transparent);
+  outline: 2px solid color-mix(in srgb, var(--ft-primary-500) 60%, transparent);
   outline-offset: 2px;
 }
 
 .profile-tab-panel {
   display: flex;
   flex-direction: column;
-  gap: var(--ft-space-5, var(--space-5));
+  gap: var(--ft-space-5);
 }
 
 .profile-tab-panel--categories {
@@ -668,17 +670,17 @@ async function handlePay(plan: SubscriptionPlan) {
 }
 
 .profile-card {
-  gap: var(--ft-space-5, var(--space-5));
+  gap: var(--ft-space-5);
 }
 
 :deep(.profile-card .ui-card__body) {
-  gap: var(--ft-space-5, var(--space-5));
+  gap: var(--ft-space-5);
 }
 
 /* Card 1: Profile identity */
 .profile-identity {
   display: flex;
-  gap: var(--ft-space-4, var(--space-4));
+  gap: var(--ft-space-4);
   align-items: center;
 }
 
@@ -696,7 +698,7 @@ async function handlePay(plan: SubscriptionPlan) {
   color: var(--ft-text-inverse);
   letter-spacing: 0.04em;
 
-  background: linear-gradient(135deg, var(--accent), color-mix(in srgb, var(--accent) 70%, #000));
+  background: linear-gradient(135deg, var(--ft-primary-500), color-mix(in srgb, var(--ft-primary-500) 70%, #000));
   border-radius: 50%;
 }
 
@@ -709,14 +711,14 @@ async function handlePay(plan: SubscriptionPlan) {
 .profile-identity__name {
   margin: 0;
   font-size: var(--ft-text-base);
-  font-weight: 600;
-  color: var(--text);
+  font-weight: var(--ft-font-semibold);
+  color: var(--ft-text-primary);
 }
 
 .profile-identity__email {
   margin: 0;
   font-size: var(--ft-text-sm);
-  color: var(--text-muted);
+  color: var(--ft-text-secondary);
 }
 
 /* Card 2: Settings form */
@@ -731,37 +733,37 @@ async function handlePay(plan: SubscriptionPlan) {
   margin: 0;
   font-size: var(--ft-text-xl);
   font-weight: var(--ft-font-semibold);
-  color: var(--text);
+  color: var(--ft-text-primary);
 }
 
 .settings-form {
   display: flex;
   flex-direction: column;
-  gap: var(--ft-space-5, var(--space-5));
+  gap: var(--ft-space-5);
 }
 
 .settings-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-  gap: var(--ft-space-4, var(--space-4));
+  gap: var(--ft-space-4);
 }
 
 .settings-field {
   display: flex;
   flex-direction: column;
-  gap: var(--ft-space-2, var(--space-2));
+  gap: var(--ft-space-2);
 }
 
 .settings-label {
   font-size: var(--ft-text-xs);
-  color: var(--text-muted);
+  color: var(--ft-text-secondary);
   text-transform: uppercase;
   letter-spacing: 0.16em;
 }
 
 .helper-text {
   font-size: var(--ft-text-xs);
-  color: var(--text-muted);
+  color: var(--ft-text-secondary);
 }
 
 .helper-text code {
@@ -770,20 +772,20 @@ async function handlePay(plan: SubscriptionPlan) {
   font-family: var(--ft-font-mono, 'JetBrains Mono', monospace);
   font-size: 0.9em;
 
-  background: var(--surface-2);
-  border-radius: var(--ft-radius-sm, var(--radius-sm));
+  background: var(--ft-surface-raised);
+  border-radius: var(--ft-radius-sm, var(--ft-radius-md));
 }
 
 .telegram-input {
   display: flex;
-  gap: var(--ft-space-3, var(--space-3));
+  gap: var(--ft-space-3);
   align-items: center;
 }
 
 .settings-actions {
   display: flex;
   flex-wrap: wrap;
-  gap: var(--ft-space-3, var(--space-3));
+  gap: var(--ft-space-3);
   justify-content: flex-end;
 }
 
@@ -795,24 +797,24 @@ async function handlePay(plan: SubscriptionPlan) {
 .subscription-status-line {
   margin: 0;
   font-size: var(--ft-text-sm);
-  color: var(--text-muted);
+  color: var(--ft-text-secondary);
 }
 
 .subscription-plans {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-  gap: var(--ft-space-3, var(--space-3));
+  gap: var(--ft-space-3);
 }
 
 .subscription-plan {
   display: grid;
-  gap: var(--ft-space-2, var(--space-2));
+  gap: var(--ft-space-2);
 
-  padding: var(--ft-space-3, var(--space-3));
+  padding: var(--ft-space-3);
 
-  background: var(--surface-1);
-  border: 1px solid var(--border);
-  border-radius: var(--ft-radius-md, var(--radius-md));
+  background: var(--ft-surface-base);
+  border: 1px solid var(--ft-border-default);
+  border-radius: var(--ft-radius-md, var(--ft-radius-lg));
 }
 
 .subscription-plan h4 {
@@ -828,13 +830,13 @@ async function handlePay(plan: SubscriptionPlan) {
 .subscription-plan__hint {
   margin: 0;
   font-size: var(--ft-text-sm);
-  color: var(--text-muted);
+  color: var(--ft-text-secondary);
 }
 
 .subscription-sim-note {
   margin: 0;
   font-size: var(--ft-text-xs);
-  color: var(--text-muted);
+  color: var(--ft-text-secondary);
 }
 
 /* Card 4: Collapsible payment history */
@@ -842,7 +844,7 @@ async function handlePay(plan: SubscriptionPlan) {
   cursor: pointer;
 
   display: flex;
-  gap: var(--ft-space-3, var(--space-3));
+  gap: var(--ft-space-3);
   align-items: center;
 
   width: 100%;
@@ -855,9 +857,9 @@ async function handlePay(plan: SubscriptionPlan) {
 }
 
 .collapsible-header:focus-visible {
-  outline: 2px solid color-mix(in srgb, var(--accent) 60%, transparent);
+  outline: 2px solid color-mix(in srgb, var(--ft-primary-500) 60%, transparent);
   outline-offset: 2px;
-  border-radius: var(--ft-radius-sm, var(--radius-sm));
+  border-radius: var(--ft-radius-sm, var(--ft-radius-md));
 }
 
 .payment-count-badge {
@@ -870,42 +872,42 @@ async function handlePay(plan: SubscriptionPlan) {
   padding: 0 6px;
 
   font-size: var(--ft-text-xs);
-  font-weight: 600;
+  font-weight: var(--ft-font-semibold);
   color: var(--ft-text-inverse);
 
-  background: color-mix(in srgb, var(--accent) 80%, transparent);
+  background: color-mix(in srgb, var(--ft-primary-500) 80%, transparent);
   border-radius: 11px;
 }
 
 .collapsible-chevron {
   margin-left: auto;
   font-size: 0.875rem;
-  color: var(--text-muted);
+  color: var(--ft-text-secondary);
   transition: transform var(--ft-transition-fast);
 }
 
 .payment-history-body {
-  margin-top: var(--ft-space-4, var(--space-4));
+  margin-top: var(--ft-space-4);
 }
 
 .payment-history__skeleton {
   display: grid;
-  gap: var(--ft-space-2, var(--space-2));
+  gap: var(--ft-space-2);
 }
 
 .payment-history__empty {
-  padding: var(--ft-space-3, var(--space-3));
+  padding: var(--ft-space-3);
 
-  color: var(--text-muted);
+  color: var(--ft-text-secondary);
 
-  background: var(--surface-1);
-  border: 1px dashed var(--border);
-  border-radius: var(--ft-radius-md, var(--radius-md));
+  background: var(--ft-surface-base);
+  border: 1px dashed var(--ft-border-default);
+  border-radius: var(--ft-radius-md, var(--ft-radius-lg));
 }
 
 .payment-history__list {
   display: grid;
-  gap: var(--ft-space-2, var(--space-2));
+  gap: var(--ft-space-2);
 
   margin: 0;
   padding: 0;
@@ -915,26 +917,26 @@ async function handlePay(plan: SubscriptionPlan) {
 
 .payment-history__item {
   display: flex;
-  gap: var(--ft-space-3, var(--space-3));
+  gap: var(--ft-space-3);
   align-items: flex-start;
   justify-content: space-between;
 
-  padding: var(--ft-space-3, var(--space-3));
+  padding: var(--ft-space-3);
 
-  background: var(--surface-1);
-  border: 1px solid var(--border);
-  border-radius: var(--ft-radius-md, var(--radius-md));
+  background: var(--ft-surface-base);
+  border: 1px solid var(--ft-border-default);
+  border-radius: var(--ft-radius-md, var(--ft-radius-lg));
 }
 
 .payment-history__title {
   margin: 0;
-  font-weight: 600;
+  font-weight: var(--ft-font-semibold);
 }
 
 .payment-history__meta {
-  margin: var(--ft-space-1, var(--space-1)) 0 0;
+  margin: var(--ft-space-1) 0 0;
   font-size: var(--ft-text-sm);
-  color: var(--text-muted);
+  color: var(--ft-text-secondary);
 }
 
 .payment-history__amounts {
@@ -944,7 +946,7 @@ async function handlePay(plan: SubscriptionPlan) {
 }
 
 .payment-history__amounts small {
-  color: var(--text-muted);
+  color: var(--ft-text-secondary);
 }
 
 @media (width <= 768px) {

@@ -731,7 +731,7 @@ const hasMorePeaks = computed(() => props.peaks.length > 3);
   border: none;
 }
 
-@media (width <= 992px) {
+@media (width <= 1024px) {
   .hero-card__insights {
     grid-template-columns: 1fr;
   }

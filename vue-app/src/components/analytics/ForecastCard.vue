@@ -242,7 +242,11 @@ const chartOptions = computed(() => ({
         </div>
       </div>
 
-      <div class="forecast-card__chart">
+      <div
+        class="forecast-card__chart"
+        role="img"
+        aria-label="График прогноза расходов"
+      >
         <div class="forecast-card__chart-container">
           <Chart
             v-if="chartData"

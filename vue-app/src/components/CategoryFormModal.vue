@@ -497,7 +497,7 @@ const handleDelete = () => {
   gap: var(--ft-space-2);
   align-items: center;
 
-  min-height: var(--control-height);
+  min-height: var(--ft-control-height);
   padding: var(--ft-space-2) var(--ft-space-3);
 
   color: var(--ft-text-primary);
@@ -685,7 +685,7 @@ const handleDelete = () => {
   color: var(--ft-text-tertiary);
 }
 
-@media (width <= 576px) {
+@media (width <= 640px) {
   .category-form {
     gap: var(--ft-space-3);
   }

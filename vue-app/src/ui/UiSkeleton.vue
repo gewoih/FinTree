@@ -19,6 +19,6 @@ const props = defineProps<{
 
 <style scoped>
 .ui-skeleton {
-  border-radius: var(--radius-md);
+  border-radius: var(--ft-radius-lg);
 }
 </style>

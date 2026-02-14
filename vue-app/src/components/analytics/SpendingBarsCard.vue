@@ -218,6 +218,8 @@ const chartOptions = computed(() => ({
     <div
       v-else
       class="bars-card__chart"
+      role="img"
+      aria-label="Столбчатая диаграмма расходов по дням"
     >
       <div class="bars-card__chart-container">
         <Chart

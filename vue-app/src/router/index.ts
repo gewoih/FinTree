@@ -1,6 +1,14 @@
 import { createRouter, createWebHistory } from 'vue-router';
 import { useAuthStore } from '../stores/auth';
 
+declare module 'vue-router' {
+  interface RouteMeta {
+    title?: string;
+    public?: boolean;
+    requiresAuth?: boolean;
+  }
+}
+
 export const router = createRouter({
   history: createWebHistory(),
   routes: [

@@ -196,11 +196,11 @@ onMounted(async () => {
 
 <style scoped>
 .transactions {
-  gap: var(--space-6);
+  gap: var(--ft-space-8);
 }
 
 .transactions__content {
-  gap: var(--space-5);
+  gap: var(--ft-space-6);
 }
 
 .transactions__action-menu :deep(.p-menu) {
