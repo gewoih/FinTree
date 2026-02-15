@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import PublicPageLayout from '../components/layout/PublicPageLayout.vue';
-import AppCard from '../components/common/AppCard.vue';
+import UiCard from '@/ui/UiCard.vue';
 </script>
 
 <template>
@@ -8,7 +8,7 @@ import AppCard from '../components/common/AppCard.vue';
     title="Блог"
     subtitle="Здесь будут короткие статьи про финансовую дисциплину и работу с FinTree."
   >
-    <AppCard
+    <UiCard
       variant="muted"
       padding="lg"
     >
@@ -17,7 +17,7 @@ import AppCard from '../components/common/AppCard.vue';
         Мы готовим гайды по учёту расходов, финансовым привычкам и работе с аналитикой. Подпишитесь
         на рассылку или загляните позже.
       </p>
-    </AppCard>
+    </UiCard>
   </PublicPageLayout>
 </template>
 

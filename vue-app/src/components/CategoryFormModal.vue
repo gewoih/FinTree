@@ -266,6 +266,7 @@ const handleDelete = () => {
               class="w-full"
               autocomplete="off"
               :disabled="props.readonly"
+              :autofocus="props.visible"
             />
           </template>
         </FormField>
@@ -330,6 +331,7 @@ const handleDelete = () => {
                   type="button"
                   class="icon-grid__item"
                   :class="{ 'is-selected': option.value === icon }"
+                  :aria-label="option.label"
                   :aria-pressed="option.value === icon"
                   :disabled="props.readonly"
                   @click="

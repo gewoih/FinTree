@@ -125,6 +125,7 @@ const shareAccent = computed(() => {
         type="button"
         class="peak-days__summary"
         :class="`peak-days__summary--${shareAccent}`"
+        :aria-label="`${summary.shareLabel} расходов в пиковые дни: ${summary.count} дней, ${summary.totalLabel} из ${summary.monthLabel}`"
         @click="emit('select-peak-summary')"
       >
         <span class="peak-days__share-value">{{ summary.shareLabel }}</span>

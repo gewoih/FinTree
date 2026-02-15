@@ -470,7 +470,12 @@ watch(filteredCategories, () => {
               binary
               :disabled="props.readonly"
             />
-            <span>Обязательный расход</span>
+            <span
+              v-tooltip.bottom="'Расходы, которые нельзя избежать: аренда, коммуналка, кредиты. Влияет на расчёт финансовой устойчивости.'"
+              style="cursor: help"
+            >
+              Обязательный расход
+            </span>
           </label>
         </div>
 

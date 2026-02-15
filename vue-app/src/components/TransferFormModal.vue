@@ -318,6 +318,7 @@ const handleDelete = () => {
             option-label="name"
             placeholder="Выберите счёт"
             :disabled="props.readonly"
+            :autofocus="props.visible"
             class="w-full"
           >
             <template #option="slotProps">

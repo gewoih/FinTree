@@ -100,8 +100,8 @@ const valueClass = (accent: HealthAccent) => `health-score__main-value--${accent
   flex-shrink: 0;
   place-items: center;
 
-  width: 40px;
-  height: 40px;
+  width: var(--ft-control-height);
+  height: var(--ft-control-height);
 
   font-size: 1.05rem;
   color: var(--ft-text-secondary);

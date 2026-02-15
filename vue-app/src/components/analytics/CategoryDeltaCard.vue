@@ -366,6 +366,7 @@ const formatPercent = (value: number | null) =>
 .delta-item__delta {
   font-size: var(--ft-text-base);
   font-weight: var(--ft-font-bold);
+  font-variant-numeric: tabular-nums;
   white-space: nowrap;
 }
 

@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import PublicPageLayout from '../components/layout/PublicPageLayout.vue';
-import AppCard from '../components/common/AppCard.vue';
+import UiCard from '@/ui/UiCard.vue';
 </script>
 
 <template>
@@ -8,7 +8,7 @@ import AppCard from '../components/common/AppCard.vue';
     title="Условия использования"
     subtitle="Пожалуйста, ознакомьтесь с основными правилами работы FinTree."
   >
-    <AppCard
+    <UiCard
       variant="muted"
       padding="lg"
     >
@@ -17,9 +17,9 @@ import AppCard from '../components/common/AppCard.vue';
         FinTree помогает вести учёт расходов и анализировать личные финансы. Мы не даём
         индивидуальные финансовые рекомендации и не выступаем финансовым консультантом.
       </p>
-    </AppCard>
+    </UiCard>
 
-    <AppCard
+    <UiCard
       variant="muted"
       padding="lg"
     >
@@ -28,9 +28,9 @@ import AppCard from '../components/common/AppCard.vue';
         Вы самостоятельно вводите данные и принимаете решения на основе аналитики. Финансовые
         результаты зависят от ваших действий.
       </p>
-    </AppCard>
+    </UiCard>
 
-    <AppCard
+    <UiCard
       variant="muted"
       padding="lg"
     >
@@ -39,9 +39,9 @@ import AppCard from '../components/common/AppCard.vue';
         Новым пользователям доступен бесплатный пробный месяц. После этого доступ сохраняется по подписке.
         Актуальные условия публикуются на сайте.
       </p>
-    </AppCard>
+    </UiCard>
 
-    <AppCard
+    <UiCard
       variant="muted"
       padding="lg"
     >
@@ -50,7 +50,7 @@ import AppCard from '../components/common/AppCard.vue';
         Если у вас есть вопросы по условиям использования, напишите на
         <a href="mailto:hello@fintree.app">hello@fintree.app</a>.
       </p>
-    </AppCard>
+    </UiCard>
   </PublicPageLayout>
 </template>
 

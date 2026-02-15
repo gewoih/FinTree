@@ -386,6 +386,7 @@ watch(
 
 .adjustments-list__amount {
   font-weight: var(--ft-font-semibold);
+  font-variant-numeric: tabular-nums;
   color: var(--ft-text-primary);
 }
 

@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { computed } from 'vue';
-import AppCard from '../common/AppCard.vue';
+import UiCard from '@/ui/UiCard.vue';
 
 interface FinancialMetric {
   key: string;
@@ -20,10 +20,9 @@ const showEmptyState = computed(() => !props.loading && (!props.hasData || !prop
 </script>
 
 <template>
-  <AppCard
+  <UiCard
     class="analytics-card analytics-card--health"
     padding="lg"
-    elevated
   >
     <template #header>
       <div class="analytics-card__head">
@@ -101,7 +100,7 @@ const showEmptyState = computed(() => !props.loading && (!props.hasData || !prop
         </p>
       </article>
     </div>
-  </AppCard>
+  </UiCard>
 </template>
 
 <style scoped>

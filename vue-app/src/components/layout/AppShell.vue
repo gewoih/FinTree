@@ -232,9 +232,10 @@ onMounted(() => {
 .app-shell {
   --app-shell-nav-height: 72px;
 
+  overflow-x: clip;
   display: grid;
   grid-template:
-    "topnav" auto "main" 1fr / 1fr;
+    "topnav" auto "main" 1fr / minmax(0, 1fr);
   min-height: 100vh;
   background: var(--ft-bg-base);
 }
@@ -425,8 +426,10 @@ onMounted(() => {
 
 /* Main Content */
 .app-shell__main {
+  overflow-x: hidden;
   grid-area: main;
   width: 100%;
+  min-width: 0;
   padding: 0;
   outline: none;
 }
@@ -502,12 +505,12 @@ onMounted(() => {
     grid-template-areas:
       "topnav topnav"
       "sidebar main";
-    grid-template-columns: 240px 1fr;
+    grid-template-columns: 240px minmax(0, 1fr);
     transition: grid-template-columns 0.2s ease;
   }
 
   .app-shell--collapsed {
-    grid-template-columns: 64px 1fr;
+    grid-template-columns: 64px minmax(0, 1fr);
   }
 }
 

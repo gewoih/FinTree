@@ -368,6 +368,7 @@ const chartOptions = computed(() => ({
 .forecast-chip__value {
   font-size: var(--ft-text-base);
   font-weight: var(--ft-font-bold);
+  font-variant-numeric: tabular-nums;
   color: var(--ft-text-primary);
 }
 
@@ -527,12 +528,20 @@ const chartOptions = computed(() => ({
     padding: var(--ft-space-1) var(--ft-space-2);
   }
 
+  .forecast-chip__label {
+    font-size: var(--ft-text-sm);
+  }
+
   .forecast-chip__value {
     font-size: var(--ft-text-xs);
   }
 
   .forecast-card__chart {
     height: 280px;
+  }
+
+  .forecast-legend__item {
+    font-size: var(--ft-text-sm);
   }
 }
 </style>

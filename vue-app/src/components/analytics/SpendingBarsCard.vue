@@ -144,6 +144,8 @@ const chartOptions = computed(() => ({
     <div
       v-if="loading"
       class="bars-card__loading"
+      role="status"
+      aria-live="polite"
     >
       <Skeleton
         width="100%"

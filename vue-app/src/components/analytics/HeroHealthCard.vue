@@ -105,6 +105,8 @@ const hasMorePeaks = computed(() => props.peaks.length > 3);
       <div
         v-if="loading"
         class="hero-card__loading"
+        role="status"
+        aria-live="polite"
       >
         <Skeleton
           width="128px"
@@ -512,6 +514,7 @@ const hasMorePeaks = computed(() => props.peaks.length > 3);
   margin: 0;
   font-size: clamp(1.6rem, 2.4vw, 2rem);
   font-weight: var(--ft-font-bold);
+  font-variant-numeric: tabular-nums;
 }
 
 .hero-card__metric-value--compact {
@@ -531,8 +534,8 @@ const hasMorePeaks = computed(() => props.peaks.length > 3);
   flex-shrink: 0;
   place-items: center;
 
-  width: 36px;
-  height: 36px;
+  width: 44px;
+  height: 44px;
 
   font-size: 0.95rem;
   color: var(--ft-text-secondary);
@@ -652,6 +655,7 @@ const hasMorePeaks = computed(() => props.peaks.length > 3);
 
   font-size: clamp(2.4rem, 3.4vw, 3rem);
   font-weight: var(--ft-font-bold);
+  font-variant-numeric: tabular-nums;
   line-height: 1;
   color: var(--ft-text-primary);
 }
@@ -766,8 +770,8 @@ const hasMorePeaks = computed(() => props.peaks.length > 3);
   }
 
   .hero-card__metric-icon {
-    width: 30px;
-    height: 30px;
+    width: 44px;
+    height: 44px;
     font-size: 0.85rem;
   }
 

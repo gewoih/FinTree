@@ -11,6 +11,8 @@ const props = defineProps<{
 <template>
   <Skeleton
     class="ui-skeleton"
+    role="status"
+    aria-busy="true"
     :height="props.height"
     :width="props.width"
     :border-radius="props.borderRadius"

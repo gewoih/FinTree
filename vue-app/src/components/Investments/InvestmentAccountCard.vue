@@ -105,8 +105,10 @@ const toggleMenu = (event: Event) => {
     <div class="investment-card__body">
       <span class="investment-card__balance">{{ formattedBaseBalance }}</span>
       <span
+        v-tooltip.bottom="'Сколько вы заработали или потеряли на этой инвестиции в процентах.'"
         class="investment-card__return"
         :class="returnClass"
+        style="cursor: help"
       >
         {{ returnLabel }}
       </span>
@@ -235,6 +237,7 @@ const toggleMenu = (event: Event) => {
 .investment-card__balance {
   font-size: var(--ft-text-xl);
   font-weight: var(--ft-font-bold);
+  font-variant-numeric: tabular-nums;
   line-height: 1.2;
   color: var(--ft-text-primary);
 }
@@ -242,6 +245,7 @@ const toggleMenu = (event: Event) => {
 .investment-card__return {
   font-size: var(--ft-text-base);
   font-weight: var(--ft-font-semibold);
+  font-variant-numeric: tabular-nums;
   white-space: nowrap;
 }
 

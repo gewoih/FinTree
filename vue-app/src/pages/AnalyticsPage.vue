@@ -845,6 +845,7 @@ onMounted(async () => {
 
 .analytics-grid__item {
   grid-column: span 12;
+  min-width: 0;
 }
 
 .analytics-month-selector {
@@ -984,6 +985,10 @@ onMounted(async () => {
 
   .analytics-grid {
     gap: var(--ft-space-3);
+  }
+
+  .analytics-grid__item {
+    grid-column: span 1;
   }
 }
 </style>

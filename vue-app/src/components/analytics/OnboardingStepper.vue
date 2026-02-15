@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { computed } from 'vue';
-import AppCard from '../common/AppCard.vue';
+import UiCard from '@/ui/UiCard.vue';
 import UiButton from '../../ui/UiButton.vue';
 
 export interface OnboardingStep {
@@ -35,11 +35,10 @@ function getStepStatus(index: number): 'completed' | 'current' | 'locked' {
 </script>
 
 <template>
-  <AppCard
+  <UiCard
     class="onboarding-stepper"
     variant="muted"
     padding="lg"
-    elevated
   >
     <div class="onboarding-stepper__header">
       <h2 class="onboarding-stepper__title">
@@ -98,7 +97,7 @@ function getStepStatus(index: number): 'completed' | 'current' | 'locked' {
     >
       Пропустить обучение
     </button>
-  </AppCard>
+  </UiCard>
 </template>
 
 <style scoped>

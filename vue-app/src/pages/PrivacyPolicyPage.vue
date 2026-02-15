@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import PublicPageLayout from '../components/layout/PublicPageLayout.vue';
-import AppCard from '../components/common/AppCard.vue';
+import UiCard from '@/ui/UiCard.vue';
 </script>
 
 <template>
@@ -8,7 +8,7 @@ import AppCard from '../components/common/AppCard.vue';
     title="Политика конфиденциальности"
     subtitle="Кратко о том, какие данные нужны FinTree и как мы их защищаем."
   >
-    <AppCard
+    <UiCard
       variant="muted"
       padding="lg"
     >
@@ -19,9 +19,9 @@ import AppCard from '../components/common/AppCard.vue';
         <li>Данные о счетах, транзакциях и категориях, которые вы вводите вручную.</li>
         <li>Технические логи для диагностики ошибок.</li>
       </ul>
-    </AppCard>
+    </UiCard>
 
-    <AppCard
+    <UiCard
       variant="muted"
       padding="lg"
     >
@@ -31,9 +31,9 @@ import AppCard from '../components/common/AppCard.vue';
         <li>Обеспечиваем работу Telegram-бота и веб-кабинета.</li>
         <li>Улучшаем продукт на основе обезличенной статистики.</li>
       </ul>
-    </AppCard>
+    </UiCard>
 
-    <AppCard
+    <UiCard
       variant="muted"
       padding="lg"
     >
@@ -42,9 +42,9 @@ import AppCard from '../components/common/AppCard.vue';
         Мы не подключаемся к вашим банкам, не продаем данные и не делимся ими с третьими лицами.
         Доступ к данным есть только у вас.
       </p>
-    </AppCard>
+    </UiCard>
 
-    <AppCard
+    <UiCard
       variant="muted"
       padding="lg"
     >
@@ -53,7 +53,7 @@ import AppCard from '../components/common/AppCard.vue';
         Если есть вопросы по данным или нужна помощь, напишите нам на
         <a href="mailto:hello@fintree.app">hello@fintree.app</a>.
       </p>
-    </AppCard>
+    </UiCard>
   </PublicPageLayout>
 </template>
 

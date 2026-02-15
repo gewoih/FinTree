@@ -7,7 +7,7 @@ import { useFinanceStore } from '../stores/finance'
 import CategoryFormModal from './CategoryFormModal.vue'
 import type { Category, CategoryType } from '../types'
 import { CATEGORY_TYPE } from '../types'
-import AppCard from './common/AppCard.vue'
+import UiCard from '@/ui/UiCard.vue'
 import UiButton from "@/ui/UiButton.vue";
 import EmptyState from "@/components/common/EmptyState.vue";
 
@@ -66,7 +66,7 @@ defineExpose({
 </script>
 
 <template>
-  <AppCard
+  <UiCard
     class="categories-manager"
     variant="muted"
     padding="lg"
@@ -104,6 +104,8 @@ defineExpose({
       <div
         v-if="loadingCategories"
         class="categories__skeleton"
+        role="status"
+        aria-live="polite"
       >
         <Skeleton
           v-for="i in 3"
@@ -177,7 +179,7 @@ defineExpose({
       :default-type="selectedCategoryType"
       :readonly="props.readonly"
     />
-  </AppCard>
+  </UiCard>
 </template>
 
 <style scoped>

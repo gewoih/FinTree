@@ -218,6 +218,7 @@ const iconAccentClass = (accent: MetricAccent) => `summary-strip__icon--${accent
 
   font-size: clamp(1.5rem, 2.5vw, 2rem);
   font-weight: var(--ft-font-bold);
+  font-variant-numeric: tabular-nums;
   line-height: 1.15;
   color: var(--ft-text-primary);
 }

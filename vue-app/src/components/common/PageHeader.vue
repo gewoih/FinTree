@@ -10,9 +10,10 @@ defineProps<Props>()
 
 <template>
   <div class="page-header">
-    <div
+    <nav
       v-if="breadcrumbs && breadcrumbs.length"
       class="page-header__breadcrumbs"
+      aria-label="Навигация"
     >
       <template
         v-for="(crumb, index) in breadcrumbs"
@@ -28,15 +29,17 @@ defineProps<Props>()
         <span
           v-else
           class="page-header__breadcrumb-current"
+          aria-current="page"
         >
           {{ crumb.label }}
         </span>
         <i
           v-if="index < breadcrumbs.length - 1"
           class="pi pi-chevron-right page-header__breadcrumb-separator"
+          aria-hidden="true"
         />
       </template>
-    </div>
+    </nav>
 
     <div class="page-header__main">
       <div class="page-header__text">
@@ -96,7 +99,7 @@ defineProps<Props>()
 }
 
 .page-header__breadcrumb-separator {
-  font-size: 0.75rem;
+  font-size: var(--ft-space-3);
   color: var(--ft-text-secondary);
 }
 

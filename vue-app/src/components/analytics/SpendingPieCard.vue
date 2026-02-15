@@ -220,6 +220,11 @@ const chartOptions = computed(() => ({
           class="donut-card__legend-item"
           role="button"
           tabindex="0"
+          :aria-label="`${item.name}, ${item.amount.toLocaleString('ru-RU', {
+            style: 'currency',
+            currency,
+            maximumFractionDigits: 0,
+          })}, ${item.percent.toFixed(1)}%`"
           @click="handleCategoryClick(item)"
           @keydown.enter.prevent="handleCategoryClick(item)"
           @keydown.space.prevent="handleCategoryClick(item)"
@@ -403,6 +408,7 @@ const chartOptions = computed(() => ({
 .donut-card__legend-amount {
   font-size: var(--ft-text-sm);
   font-weight: var(--ft-font-semibold);
+  font-variant-numeric: tabular-nums;
   color: var(--ft-text-secondary);
 }
 

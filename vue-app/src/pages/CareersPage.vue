@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import PublicPageLayout from '../components/layout/PublicPageLayout.vue';
-import AppCard from '../components/common/AppCard.vue';
+import UiCard from '@/ui/UiCard.vue';
 </script>
 
 <template>
@@ -8,7 +8,7 @@ import AppCard from '../components/common/AppCard.vue';
     title="Карьера"
     subtitle="Мы строим простой и честный финансовый продукт. Если хотите присоединиться — напишите."
   >
-    <AppCard
+    <UiCard
       variant="muted"
       padding="lg"
     >
@@ -17,7 +17,7 @@ import AppCard from '../components/common/AppCard.vue';
         Сейчас нет активных вакансий, но мы всегда рады сильным специалистам. Напишите нам на
         <a href="mailto:hello@fintree.app">hello@fintree.app</a> и расскажите о себе.
       </p>
-    </AppCard>
+    </UiCard>
   </PublicPageLayout>
 </template>
 

@@ -421,7 +421,7 @@ onMounted(async () => {
 
   padding: var(--ft-space-1);
 
-  background: var(--surface-0);
+  background: var(--ft-surface-base);
   border: 1px solid var(--ft-border-default);
   border-radius: var(--ft-radius-lg);
 }
@@ -450,11 +450,11 @@ onMounted(async () => {
 
 .accounts-tab.is-active {
   color: var(--ft-text-primary);
-  background: color-mix(in srgb, var(--primary) 18%, transparent);
+  background: color-mix(in srgb, var(--ft-primary-500) 18%, transparent);
 }
 
 .accounts-tab:focus-visible {
-  outline: 2px solid var(--primary);
+  outline: 2px solid var(--ft-primary-500);
   outline-offset: 1px;
 }
 
@@ -473,7 +473,7 @@ onMounted(async () => {
   min-height: 44px;
   padding: 0 var(--ft-space-3);
 
-  background: var(--surface-0);
+  background: var(--ft-surface-base);
   border: 1px solid var(--ft-border-default);
   border-radius: var(--ft-radius-lg);
 }

@@ -182,7 +182,12 @@ const toggleMenu = (event: Event) => {
         </dd>
       </div>
       <div class="meta-row">
-        <dt>Доступность</dt>
+        <dt
+          v-tooltip.bottom="'Можно ли быстро снять деньги без потерь. Быстрый доступ — наличные, карта. Долгосрочный — вклад, инвестиции.'"
+          style="cursor: help"
+        >
+          Доступность
+        </dt>
         <dd>
           <div
             v-if="!readonly && !interactionLocked"
@@ -352,12 +357,14 @@ const toggleMenu = (event: Event) => {
   margin: var(--ft-space-1) 0 0;
   font-size: clamp(1.1rem, 1.5vw, 1.4rem);
   font-weight: var(--ft-font-semibold);
+  font-variant-numeric: tabular-nums;
   color: var(--ft-heading);
 }
 
 .account-card__balance-secondary {
   margin: var(--ft-space-1) 0 0;
   font-size: var(--ft-text-sm);
+  font-variant-numeric: tabular-nums;
   color: var(--ft-text-muted);
 }
 

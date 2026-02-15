@@ -4,7 +4,7 @@ import { useRouter } from 'vue-router'
 import { useAnalytics } from '@/composables/useAnalytics'
 import type { AnalyticsEvent } from '@/composables/useAnalytics'
 import UiButton from '@/ui/UiButton.vue'
-import AppCard from '@/components/common/AppCard.vue'
+import UiCard from '@/ui/UiCard.vue'
 import ThemeToggle from '@/components/common/ThemeToggle.vue'
 import analyticsImage from '@/assets/landing/analytics.png'
 import accountsImage from '@/assets/landing/accounts.png'
@@ -184,7 +184,7 @@ const scrollToSection = (sectionId: string) => {
           to="/"
           class="landing__brand"
         >
-          <i class="pi pi-chart-bar" />
+          <i class="pi pi-chart-bar" aria-hidden="true" />
           <span>FinTree</span>
         </router-link>
 
@@ -230,25 +230,24 @@ const scrollToSection = (sectionId: string) => {
 
             <div class="landing__trust">
               <div class="landing__trust-item">
-                <i class="pi pi-lock" />
+                <i class="pi pi-lock" aria-hidden="true" />
                 <span>Данные под защитой</span>
               </div>
               <div class="landing__trust-item">
-                <i class="pi pi-times-circle" />
+                <i class="pi pi-times-circle" aria-hidden="true" />
                 <span>Без банковской карты</span>
               </div>
               <div class="landing__trust-item">
-                <i class="pi pi-check-circle" />
+                <i class="pi pi-check-circle" aria-hidden="true" />
                 <span>Простая запись расходов</span>
               </div>
             </div>
           </div>
 
-          <AppCard
+          <UiCard
             class="landing__hero-shot"
             padding="lg"
             variant="muted"
-            elevated
           >
             <p class="landing__hero-shot-title">
               Главный экран аналитики
@@ -265,7 +264,7 @@ const scrollToSection = (sectionId: string) => {
             <p class="landing__hero-shot-caption">
               Реальный скриншот из личного кабинета.
             </p>
-          </AppCard>
+          </UiCard>
         </div>
       </section>
 
@@ -298,7 +297,7 @@ const scrollToSection = (sectionId: string) => {
           </header>
 
           <div class="card-grid card-grid--auto landing__screens">
-            <AppCard
+            <UiCard
               v-for="screen in dashboardScreens"
               :key="screen.title"
               variant="muted"
@@ -315,7 +314,7 @@ const scrollToSection = (sectionId: string) => {
               </div>
               <h3>{{ screen.title }}</h3>
               <p>{{ screen.description }}</p>
-            </AppCard>
+            </UiCard>
           </div>
         </div>
       </section>
@@ -328,7 +327,7 @@ const scrollToSection = (sectionId: string) => {
           </header>
 
           <div class="card-grid card-grid--balanced landing__problems">
-            <AppCard
+            <UiCard
               v-for="problem in problems"
               :key="problem.text"
               variant="muted"
@@ -339,14 +338,14 @@ const scrollToSection = (sectionId: string) => {
                 class="landing__problem-icon"
                 :style="{ background: problem.bg, color: problem.color }"
               >
-                <i :class="['pi', problem.icon]" />
+                <i :class="['pi', problem.icon]" aria-hidden="true" />
               </div>
               <p>{{ problem.text }}</p>
-            </AppCard>
+            </UiCard>
           </div>
 
           <div class="landing__solution-bridge">
-            <i class="pi pi-arrow-down" />
+            <i class="pi pi-arrow-down" aria-hidden="true" />
             <p><strong>FinTree снимает эту рутину.</strong> 10 секунд на запись в Telegram, а в кабинете уже готовые выводы по расходам.</p>
           </div>
         </div>
@@ -364,7 +363,7 @@ const scrollToSection = (sectionId: string) => {
           </header>
 
           <div class="card-grid card-grid--balanced card-grid--dense landing__feature-grid">
-            <AppCard
+            <UiCard
               v-for="feature in features"
               :key="feature.title"
               variant="muted"
@@ -372,11 +371,11 @@ const scrollToSection = (sectionId: string) => {
               class="landing__feature-card"
             >
               <div class="landing__feature-icon">
-                <i :class="['pi', feature.icon]" />
+                <i :class="['pi', feature.icon]" aria-hidden="true" />
               </div>
               <h3>{{ feature.title }}</h3>
               <p>{{ feature.description }}</p>
-            </AppCard>
+            </UiCard>
           </div>
         </div>
       </section>
@@ -393,7 +392,7 @@ const scrollToSection = (sectionId: string) => {
           </header>
 
           <div class="card-grid card-grid--balanced landing__steps">
-            <AppCard
+            <UiCard
               v-for="step in steps"
               :key="step.number"
               variant="outlined"
@@ -403,7 +402,7 @@ const scrollToSection = (sectionId: string) => {
               <span class="landing__step-number">{{ step.number }}</span>
               <h3>{{ step.title }}</h3>
               <p>{{ step.description }}</p>
-            </AppCard>
+            </UiCard>
           </div>
         </div>
       </section>
@@ -420,14 +419,13 @@ const scrollToSection = (sectionId: string) => {
           </header>
 
           <div class="card-grid card-grid--auto landing__pricing">
-            <AppCard
+            <UiCard
               v-for="plan in pricing"
               :key="plan.name"
               :variant="plan.accent ? 'outlined' : 'muted'"
               padding="lg"
               class="landing__pricing-card"
               :class="{ 'landing__pricing-card--accent': plan.accent }"
-              :elevated="plan.accent"
             >
               <header class="landing__pricing-header">
                 <div class="landing__pricing-title-row">
@@ -460,7 +458,7 @@ const scrollToSection = (sectionId: string) => {
                   {{ plan.description }}
                 </p>
               </div>
-            </AppCard>
+            </UiCard>
           </div>
 
           <div class="landing__pricing-action">
@@ -487,7 +485,7 @@ const scrollToSection = (sectionId: string) => {
           </header>
 
           <div class="landing__faq-list">
-            <AppCard
+            <UiCard
               v-for="(item, index) in faq"
               :key="item.question"
               variant="muted"
@@ -502,7 +500,7 @@ const scrollToSection = (sectionId: string) => {
                 @click="toggleFaq(index)"
               >
                 <span>{{ item.question }}</span>
-                <i :class="['pi', expandedIndex === index ? 'pi-chevron-up' : 'pi-chevron-down']" />
+                <i :class="['pi', expandedIndex === index ? 'pi-chevron-up' : 'pi-chevron-down']" aria-hidden="true" />
               </button>
               <transition name="faq">
                 <p
@@ -513,7 +511,7 @@ const scrollToSection = (sectionId: string) => {
                   {{ item.answer }}
                 </p>
               </transition>
-            </AppCard>
+            </UiCard>
           </div>
         </div>
       </section>
@@ -526,7 +524,7 @@ const scrollToSection = (sectionId: string) => {
             to="/"
             class="landing__brand"
           >
-            <i class="pi pi-chart-bar" />
+            <i class="pi pi-chart-bar" aria-hidden="true" />
             <span>FinTree</span>
           </router-link>
           <p>Финансовый помощник для тех, кто хочет тратить осознанно.</p>
