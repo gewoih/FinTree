@@ -1,7 +1,12 @@
 <script setup lang="ts">
 import { computed, ref, onMounted } from 'vue';
 import type { ChartData, TooltipItem } from 'chart.js';
-import type { ForecastSummary } from '../../types/analytics';
+import Tag from 'primevue/tag';
+import Skeleton from 'primevue/skeleton';
+import Message from 'primevue/message';
+import UiButton from '../../ui/UiButton.vue';
+import Chart from 'primevue/chart';
+import type { ForecastSummary } from '@/types/analytics.ts';
 
 const props = defineProps<{
   loading: boolean;
@@ -185,10 +190,10 @@ const chartOptions = computed(() => ({
           <p class="forecast-card__message-text">
             {{ error }}
           </p>
-          <Button
+          <UiButton
             label="Повторить"
             icon="pi pi-refresh"
-            size="small"
+            size="sm"
             @click="emit('retry')"
           />
         </div>

@@ -1,6 +1,9 @@
 <script setup lang="ts">
 import { computed } from 'vue';
 import type { Plugin } from 'chart.js';
+import Skeleton from 'primevue/skeleton';
+import Message from 'primevue/message';
+import Chart from 'primevue/chart';
 
 interface AllocationAccount {
   id: string;

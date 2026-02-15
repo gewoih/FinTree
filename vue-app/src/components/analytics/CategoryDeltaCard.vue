@@ -1,5 +1,8 @@
 <script setup lang="ts">
 import { computed } from 'vue';
+import Skeleton from 'primevue/skeleton';
+import Message from 'primevue/message';
+import UiButton from '../../ui/UiButton.vue';
 
 interface CategoryDeltaItem {
   id: string;
@@ -108,10 +111,10 @@ const formatPercent = (value: number | null) =>
           <p class="delta-card__message-text">
             {{ error }}
           </p>
-          <Button
+          <UiButton
             label="Повторить"
             icon="pi pi-refresh"
-            size="small"
+            size="sm"
             @click="emit('retry')"
           />
         </div>

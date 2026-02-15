@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { computed } from 'vue';
+import AppCard from '../common/AppCard.vue';
 
 interface FinancialMetric {
   key: string;

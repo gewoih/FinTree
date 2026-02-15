@@ -2,6 +2,11 @@
 import { computed } from 'vue'
 import type { AccountType } from '../types'
 import { getAccountTypeInfo } from '../utils/accountHelpers'
+import UiInputText from '../ui/UiInputText.vue'
+import UiSelect from '../ui/UiSelect.vue'
+import UiButton from '../ui/UiButton.vue'
+import UiBadge from '../ui/UiBadge.vue'
+import FormField from './common/FormField.vue'
 
 const props = defineProps<{
   searchText: string
@@ -39,8 +44,8 @@ const handleSearchUpdate = (value: string | null | undefined) => {
   emit('update:searchText', value ?? '')
 }
 
-const handleTypeUpdate = (value: AccountType | null | undefined) => {
-  emit('update:selectedType', value ?? null)
+const handleTypeUpdate = (value: unknown) => {
+  emit('update:selectedType', (value as AccountType | null) ?? null)
 }
 </script>
 

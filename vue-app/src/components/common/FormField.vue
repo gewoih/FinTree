@@ -6,7 +6,7 @@ let counter = 0
 interface Props {
   label?: string
   hint?: string
-  error?: string
+  error?: string | null
   required?: boolean
   inputId?: string
   labelSrOnly?: boolean
@@ -22,8 +22,8 @@ const errorId = computed(() => `${fieldId.value}-error`)
 const fieldAttrs = computed(() => ({
   id: fieldId.value,
   'aria-describedby': props.hint && !props.error ? hintId.value : props.error ? errorId.value : undefined,
-  'aria-invalid': props.error ? 'true' : undefined,
-  'aria-required': props.required ? 'true' : undefined,
+  'aria-invalid': (props.error ? 'true' : undefined) as 'true' | undefined,
+  'aria-required': (props.required ? 'true' : undefined) as 'true' | undefined,
 }))
 </script>
 

@@ -23,14 +23,6 @@ export default defineConfig(({ mode }) => {
                 return 'vue-vendor';
               if (id.includes('@primeuix'))
                 return 'primevue-theme';
-              if (id.includes('primevue/datatable') || id.includes('primevue/column'))
-                return 'primevue-table';
-              if (id.includes('primevue/datepicker') || id.includes('primevue/select') || id.includes('primevue/inputnumber'))
-                return 'primevue-form';
-              if (id.includes('primevue'))
-                return 'primevue-core';
-              if (id.includes('chart.js') || id.includes('vue-chartjs'))
-                return 'charts';
             }
           }
         }

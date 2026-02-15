@@ -1,6 +1,10 @@
 <script setup lang="ts">
 import { computed, onMounted, ref } from 'vue';
 import type { ChartData, TooltipItem } from 'chart.js';
+import Skeleton from 'primevue/skeleton';
+import Message from 'primevue/message';
+import UiButton from '../../ui/UiButton.vue';
+import Chart from 'primevue/chart';
 
 const props = withDefaults(
   defineProps<{
@@ -135,10 +139,10 @@ const chartOptions = computed(() => ({
           <p class="networth-card__message-text">
             {{ error }}
           </p>
-          <Button
+          <UiButton
             label="Повторить"
             icon="pi pi-refresh"
-            size="small"
+            size="sm"
             @click="emit('retry')"
           />
         </div>

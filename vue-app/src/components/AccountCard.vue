@@ -2,11 +2,13 @@
 import { computed, ref } from 'vue'
 import ToggleSwitch from 'primevue/toggleswitch'
 import Menu from 'primevue/menu'
+import StatusBadge from './common/StatusBadge.vue'
 import type { MenuItem } from 'primevue/menuitem'
 import type { Account } from '../types'
 import { getCurrencyFlag } from '../utils/accountHelpers'
 import { formatCurrency } from '../utils/formatters'
 import { useUserStore } from '../stores/user'
+import UiButton from '../ui/UiButton.vue'
 
 const props = withDefaults(defineProps<{
   account: Account

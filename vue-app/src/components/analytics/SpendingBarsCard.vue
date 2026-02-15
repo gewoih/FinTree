@@ -1,6 +1,11 @@
 <script setup lang="ts">
 import { computed, ref, onMounted } from 'vue';
 import type { ChartData, ChartDataset, TooltipItem } from 'chart.js';
+import SelectButton from 'primevue/selectbutton';
+import Skeleton from 'primevue/skeleton';
+import Message from 'primevue/message';
+import UiButton from '../../ui/UiButton.vue';
+import Chart from 'primevue/chart';
 import type { ExpenseGranularity } from '../../types/analytics';
 
 const props = defineProps<{
@@ -185,10 +190,10 @@ const chartOptions = computed(() => ({
           <p class="bars-card__message-text">
             {{ error }}
           </p>
-          <Button
+          <UiButton
             label="Повторить"
             icon="pi pi-refresh"
-            size="small"
+            size="sm"
             @click="emit('retry')"
           />
         </div>

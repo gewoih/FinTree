@@ -3,6 +3,9 @@ import { ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAnalytics } from '@/composables/useAnalytics'
 import type { AnalyticsEvent } from '@/composables/useAnalytics'
+import UiButton from '@/ui/UiButton.vue'
+import AppCard from '@/components/common/AppCard.vue'
+import ThemeToggle from '@/components/common/ThemeToggle.vue'
 import analyticsImage from '@/assets/landing/analytics.png'
 import accountsImage from '@/assets/landing/accounts.png'
 import investmentsImage from '@/assets/landing/investments.png'
@@ -187,7 +190,7 @@ const scrollToSection = (sectionId: string) => {
 
         <div class="landing__actions">
           <ThemeToggle />
-          <AppButton
+          <UiButton
             label="Создать аккаунт"
             variant="cta"
             @click="openRegister('nav_cta_click')"
@@ -214,7 +217,7 @@ const scrollToSection = (sectionId: string) => {
             </p>
 
             <div class="landing__hero-cta">
-              <AppButton
+              <UiButton
                 label="Начать бесплатно"
                 size="lg"
                 variant="cta"
@@ -462,7 +465,7 @@ const scrollToSection = (sectionId: string) => {
 
           <div class="landing__pricing-action">
             <p>Первый месяц бесплатный для новых пользователей.</p>
-            <AppButton
+            <UiButton
               label="Начать бесплатный месяц"
               size="lg"
               variant="cta"

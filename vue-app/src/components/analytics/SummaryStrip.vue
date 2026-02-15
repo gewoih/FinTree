@@ -1,4 +1,8 @@
 <script setup lang="ts">
+import Skeleton from 'primevue/skeleton';
+import Message from 'primevue/message';
+import UiButton from '../../ui/UiButton.vue';
+
 type MetricAccent = 'income' | 'expense' | 'good' | 'poor' | 'neutral';
 
 interface SummaryMetric {
@@ -62,10 +66,10 @@ const iconAccentClass = (accent: MetricAccent) => `summary-strip__icon--${accent
             <p class="summary-strip__error-title">
               Не удалось загрузить сводку
             </p>
-            <Button
+            <UiButton
               label="Повторить"
               icon="pi pi-refresh"
-              size="small"
+              size="sm"
               @click="emit('retry')"
             />
           </div>

@@ -5,8 +5,8 @@ import Select from 'primevue/select';
 import InputNumber from 'primevue/inputnumber';
 import InputText from 'primevue/inputtext';
 import DatePicker from 'primevue/datepicker';
-import Button from 'primevue/button';
 import { useConfirm } from 'primevue/useconfirm';
+import UiButton from '../ui/UiButton.vue';
 import { useToast } from 'primevue/usetoast';
 import { useFinanceStore } from '../stores/finance';
 import type { Account, CreateTransferPayload, UpdateTransferPayload } from '../types';
@@ -458,28 +458,26 @@ const handleDelete = () => {
       <!-- Footer -->
       <footer class="xfer-form__footer">
         <div class="xfer-form__footer-left">
-          <Button
+          <UiButton
             v-if="isEditMode"
             type="button"
             label="Удалить"
             icon="pi pi-trash"
-            severity="danger"
-            outlined
+            variant="danger"
             :loading="isDeleting"
             :disabled="props.readonly || isSubmitting"
             @click="handleDelete"
           />
         </div>
         <div class="xfer-form__footer-right">
-          <Button
+          <UiButton
             type="button"
             label="Отмена"
-            severity="secondary"
-            outlined
+            variant="secondary"
             :disabled="isSubmitting || isDeleting"
             @click="emit('update:visible', false)"
           />
-          <Button
+          <UiButton
             type="submit"
             :label="isEditMode ? 'Обновить' : 'Сохранить'"
             icon="pi pi-check"

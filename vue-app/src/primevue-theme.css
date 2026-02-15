@@ -51,7 +51,7 @@
     border-color var(--ft-transition-fast);
 }
 
-.p-button:not(.p-button-link):hover:not(:disabled) {
+.p-button:not(.p-button-link):not(.p-button-text):hover:not(:disabled) {
   transform: translateY(-1px);
   box-shadow: var(--ft-shadow-md);
 }

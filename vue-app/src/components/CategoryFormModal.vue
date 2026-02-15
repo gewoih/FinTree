@@ -11,6 +11,8 @@ import { CATEGORY_TYPE } from '../types';
 import { useFinanceStore } from '../stores/finance';
 import { useFormModal } from '../composables/useFormModal';
 import { CATEGORY_ICON_OPTIONS } from '../constants';
+import UiButton from '../ui/UiButton.vue';
+import FormField from './common/FormField.vue';
 
 const props = withDefaults(defineProps<{
   visible: boolean;
@@ -392,7 +394,7 @@ const handleDelete = () => {
             Транзакции перейдут в «Без категории».
           </p>
         </div>
-        <AppButton
+        <UiButton
           type="button"
           variant="danger"
           icon="pi pi-trash"
@@ -406,14 +408,14 @@ const handleDelete = () => {
 
       <div class="category-form__footer">
         <div class="actions">
-          <AppButton
+          <UiButton
             type="submit"
             icon="pi pi-check"
             :loading="isSubmitting"
             :disabled="props.readonly || isSubmitting || isDeleting"
           >
             {{ props.category ? 'Сохранить' : 'Создать' }}
-          </AppButton>
+          </UiButton>
         </div>
       </div>
     </form>
@@ -608,7 +610,7 @@ const handleDelete = () => {
   width: 100%;
 }
 
-.actions :deep(.app-button) {
+.actions :deep(.ui-button) {
   justify-content: center;
   width: auto;
   min-width: max-content;
@@ -649,7 +651,7 @@ const handleDelete = () => {
   box-shadow: none;
 }
 
-.category-form__danger-button.app-button--danger {
+.category-form__danger-button.ui-button--danger {
   box-shadow: none;
 }
 
@@ -703,7 +705,7 @@ const handleDelete = () => {
     flex-direction: column;
   }
 
-  .actions :deep(.app-button) {
+  .actions :deep(.ui-button) {
     width: 100%;
   }
 }

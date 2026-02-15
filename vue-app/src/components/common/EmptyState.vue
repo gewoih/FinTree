@@ -1,4 +1,6 @@
 <script setup lang="ts">
+import UiButton from '../../ui/UiButton.vue'
+
 interface Props {
   icon?: string
   title: string

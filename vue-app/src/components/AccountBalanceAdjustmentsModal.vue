@@ -1,10 +1,17 @@
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue'
 import { useToast } from 'primevue/usetoast'
+import Dialog from 'primevue/dialog'
+import InputNumber from 'primevue/inputnumber'
+import Message from 'primevue/message'
 import type { Account, AccountBalanceAdjustmentDto } from '../types'
 import { apiService } from '../services/api.service'
 import { formatCurrency, formatDate } from '../utils/formatters'
 import { useFinanceStore } from '../stores/finance'
+import FormField from "@/components/common/FormField.vue";
+import UiButton from "@/ui/UiButton.vue";
+import UiSkeleton from "@/ui/UiSkeleton.vue";
+import EmptyState from "@/components/common/EmptyState.vue";
 
 type BalanceAdjustableAccount = {
   id: string
@@ -175,7 +182,7 @@ watch(
       </FormField>
 
       <div class="adjustments-modal__actions">
-        <AppButton
+        <UiButton
           type="button"
           icon="pi pi-check"
           :loading="saving"
@@ -183,7 +190,7 @@ watch(
           @click="submitAdjustment"
         >
           Сохранить
-        </AppButton>
+        </UiButton>
       </div>
 
       <section class="adjustments-history">
@@ -281,7 +288,7 @@ watch(
   justify-content: flex-end;
 }
 
-.adjustments-modal__actions :deep(.app-button) {
+.adjustments-modal__actions :deep(.ui-button) {
   flex: 0 0 auto;
   min-width: 156px;
   min-height: 44px;
@@ -347,7 +354,7 @@ watch(
 }
 
 @media (width <= 640px) {
-  .adjustments-modal__actions :deep(.app-button) {
+  .adjustments-modal__actions :deep(.ui-button) {
     width: 100%;
     min-width: 0;
   }

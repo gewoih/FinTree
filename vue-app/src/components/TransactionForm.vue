@@ -17,8 +17,8 @@ import SelectButton from 'primevue/selectbutton';
 import InputNumber from 'primevue/inputnumber';
 import InputText from 'primevue/inputtext';
 import DatePicker from 'primevue/datepicker';
-import Button from 'primevue/button';
 import Checkbox from 'primevue/checkbox';
+import UiButton from '../ui/UiButton.vue';
 
 const store = useFinanceStore();
 const confirm = useConfirm();
@@ -489,13 +489,12 @@ watch(filteredCategories, () => {
       <!-- Footer actions -->
       <footer class="txn-form__footer">
         <div class="txn-form__footer-left">
-          <Button
+          <UiButton
             v-if="isEditMode"
             type="button"
             label="Удалить"
             icon="pi pi-trash"
-            severity="danger"
-            outlined
+            variant="danger"
             :loading="isDeleting"
             :disabled="props.readonly || isSubmitting"
             @click="handleDelete"
@@ -511,15 +510,14 @@ watch(filteredCategories, () => {
           >
             Сохранить и добавить ещё
           </button>
-          <Button
+          <UiButton
             type="button"
             label="Отмена"
-            severity="secondary"
-            outlined
+            variant="secondary"
             :disabled="isDeleting"
             @click="emit('update:visible', false)"
           />
-          <Button
+          <UiButton
             type="submit"
             :label="isEditMode ? 'Обновить' : 'Сохранить'"
             icon="pi pi-check"

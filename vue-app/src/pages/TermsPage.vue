@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import PublicPageLayout from '../components/layout/PublicPageLayout.vue';
+import AppCard from '../components/common/AppCard.vue';
 </script>
 
 <template>

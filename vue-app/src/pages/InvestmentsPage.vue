@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { computed, onMounted, ref, watch } from 'vue';
 import { useToast } from 'primevue/usetoast';
+import Message from 'primevue/message';
 import type {
   AccountType,
   InvestmentAccountOverviewDto,
@@ -21,6 +22,11 @@ import NetWorthLineCard from '../components/analytics/NetWorthLineCard.vue';
 import SummaryStrip from '../components/analytics/SummaryStrip.vue';
 import { mapAccount } from '../utils/mappers';
 import { formatCurrency } from '../utils/formatters';
+import UiSkeleton from '../ui/UiSkeleton.vue';
+import EmptyState from '../components/common/EmptyState.vue';
+import PageContainer from '../components/layout/PageContainer.vue';
+import PageHeader from '../components/common/PageHeader.vue';
+import UiButton from "@/ui/UiButton.vue";
 
 interface InvestmentAccount extends Omit<InvestmentAccountOverviewDto, 'type'> {
   type: AccountType;

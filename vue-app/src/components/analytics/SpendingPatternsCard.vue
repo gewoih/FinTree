@@ -1,5 +1,9 @@
 <script setup lang="ts">
 import { computed } from 'vue';
+import Card from 'primevue/card';
+import Skeleton from 'primevue/skeleton';
+import Message from 'primevue/message';
+import UiButton from '../../ui/UiButton.vue';
 
 interface PeakDayItem {
   label: string;
@@ -80,10 +84,10 @@ const spikeLabel = computed(() => (props.spikeCount == null ? '—' : props.spik
             <p class="card-message__text">
               {{ error }}
             </p>
-            <Button
+            <UiButton
               label="Повторить"
               icon="pi pi-refresh"
-              size="small"
+              size="sm"
               @click="emit('retry')"
             />
           </div>

@@ -2,7 +2,7 @@
 import { computed, useAttrs } from 'vue';
 import Button from 'primevue/button';
 
-type ButtonVariant = 'primary' | 'secondary' | 'ghost' | 'danger';
+type ButtonVariant = 'primary' | 'secondary' | 'ghost' | 'danger' | 'cta';
 type ButtonSize = 'sm' | 'md' | 'lg';
 
 const props = withDefaults(
@@ -15,6 +15,7 @@ const props = withDefaults(
     variant?: ButtonVariant;
     size?: ButtonSize;
     block?: boolean;
+    rounded?: boolean;
   }>(),
   {
     label: '',
@@ -25,6 +26,7 @@ const props = withDefaults(
     variant: 'primary',
     size: 'md',
     block: false,
+    rounded: false,
   }
 );
 
@@ -33,6 +35,7 @@ const attrs = useAttrs();
 const severity = computed(() => {
   if (props.variant === 'danger') return 'danger';
   if (props.variant === 'secondary') return 'secondary';
+  if (props.variant === 'cta') return 'success';
   return 'primary';
 });
 
@@ -43,7 +46,7 @@ const buttonClasses = computed(() => [
   'ui-button',
   `ui-button--${props.size}`,
   `ui-button--${props.variant}`,
-  { 'ui-button--block': props.block },
+  { 'ui-button--block': props.block, 'ui-button--rounded': props.rounded },
 ]);
 </script>
 
@@ -58,6 +61,7 @@ const buttonClasses = computed(() => [
     :severity="severity"
     :text="isText"
     :outlined="isOutlined && !isText"
+    :rounded="rounded"
     :class="buttonClasses"
   >
     <template
@@ -119,6 +123,45 @@ const buttonClasses = computed(() => [
 
 .ui-button--secondary {
   color: var(--ft-text-primary);
+}
+
+.ui-button--cta {
+  color: var(--ft-text-inverse);
+  background: linear-gradient(
+    135deg,
+    var(--ft-success-500),
+    var(--ft-success-600)
+  );
+  border: 1px solid var(--ft-success-600);
+  box-shadow: 0 8px 20px rgb(34 197 94 / 30%);
+}
+
+.ui-button--cta:hover:not(:disabled) {
+  background: linear-gradient(
+    135deg,
+    var(--ft-success-600),
+    var(--ft-success-700)
+  );
+  box-shadow: 0 12px 28px rgb(34 197 94 / 40%);
+  transform: translateY(-2px);
+}
+
+.ui-button--cta:active:not(:disabled) {
+  transform: translateY(-1px);
+  box-shadow: 0 6px 16px rgb(34 197 94 / 30%);
+}
+
+.light-mode .ui-button--cta {
+  box-shadow: 0 8px 20px rgb(34 197 94 / 25%);
+}
+
+.light-mode .ui-button--cta:hover:not(:disabled) {
+  box-shadow: 0 12px 28px rgb(34 197 94 / 35%);
+}
+
+.ui-button--rounded {
+  border-radius: 50%;
+  padding: 0;
 }
 
 .ui-button--block {

@@ -77,7 +77,7 @@
     transition: transform var(--ft-transition-fast), box-shadow var(--ft-transition-fast);
   }
 
-  .p-button:not(.p-button-link):hover:not(:disabled) {
+  .p-button:not(.p-button-link):not(.p-button-text):hover:not(:disabled) {
     transform: translateY(-1px);
     box-shadow: 0 8px 20px color-mix(in srgb, var(--ft-primary-500) 40%, transparent);
   }

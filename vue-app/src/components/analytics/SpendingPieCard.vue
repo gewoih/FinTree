@@ -1,6 +1,11 @@
 <script setup lang="ts">
 import { computed } from 'vue';
 import type { ChartData, Plugin } from 'chart.js';
+import SelectButton from 'primevue/selectbutton';
+import Skeleton from 'primevue/skeleton';
+import Message from 'primevue/message';
+import UiButton from '../../ui/UiButton.vue';
+import Chart from 'primevue/chart';
 import type { CategoryLegendItem, CategoryScope } from '../../types/analytics';
 
 const props = defineProps<{
@@ -170,10 +175,10 @@ const chartOptions = computed(() => ({
           <p class="donut-card__message-text">
             {{ error }}
           </p>
-          <Button
+          <UiButton
             label="Попробовать снова"
             icon="pi pi-refresh"
-            size="small"
+            size="sm"
             @click="emit('retry')"
           />
         </div>

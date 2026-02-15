@@ -1,5 +1,7 @@
 <script setup lang="ts">
 import { computed } from 'vue'
+import UiCard from '../../ui/UiCard.vue'
+import UiSkeleton from '../../ui/UiSkeleton.vue'
 
 interface Props {
   title: string

@@ -7,6 +7,14 @@ import { useFinanceStore } from '../stores/finance';
 import { useUserStore } from '../stores/user';
 import CategoryManager from '../components/CategoryManager.vue';
 import type { SubscriptionPlan } from '../types';
+import UiButton from '../ui/UiButton.vue';
+import UiCard from '../ui/UiCard.vue';
+import UiInputText from '../ui/UiInputText.vue';
+import UiSelect from '../ui/UiSelect.vue';
+import UiSkeleton from '../ui/UiSkeleton.vue';
+import StatusBadge from '../components/common/StatusBadge.vue';
+import PageContainer from '../components/layout/PageContainer.vue';
+import PageHeader from '../components/common/PageHeader.vue';
 
 const financeStore = useFinanceStore();
 const userStore = useUserStore();

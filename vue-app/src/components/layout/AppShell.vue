@@ -1,10 +1,14 @@
 <script setup lang="ts">
 import { ref, computed, onMounted, watch } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
-import { useAuthStore } from '../../stores/auth'
-import { useUserStore } from '../../stores/user'
-import { useTheme } from '../../composables/useTheme'
-import { useViewport } from '../../composables/useViewport'
+import { useAuthStore } from '@/stores/auth.ts'
+import { useUserStore } from '@/stores/user.ts'
+import { useTheme } from '@/composables/useTheme.ts'
+import { useViewport } from '@/composables/useViewport.ts'
+import Menu from 'primevue/menu'
+import Drawer from 'primevue/drawer'
+import ThemeToggle from '../common/ThemeToggle.vue'
+import UiButton from '../../ui/UiButton.vue'
 
 const authStore = useAuthStore()
 const userStore = useUserStore()
@@ -98,9 +102,9 @@ onMounted(() => {
     <!-- Top Navigation -->
     <div class="app-shell__topnav">
       <div class="app-shell__topnav-left">
-        <Button
+        <UiButton
           :icon="isDesktop && sidebarCollapsed ? 'pi pi-angle-right' : isDesktop ? 'pi pi-angle-left' : 'pi pi-bars'"
-          text
+          variant="ghost"
           rounded
           class="app-shell__menu-toggle"
           :aria-label="isDesktop ? (sidebarCollapsed ? 'Развернуть меню' : 'Свернуть меню') : 'Открыть меню'"
@@ -119,11 +123,11 @@ onMounted(() => {
       <div class="app-shell__topnav-right">
         <ThemeToggle />
         <div class="app-shell__user-menu">
-          <Button
+          <UiButton
             type="button"
             :label="userButtonLabel"
             icon="pi pi-user"
-            text
+            variant="ghost"
             class="app-shell__user-button"
             @click="handleUserMenuToggle"
           />

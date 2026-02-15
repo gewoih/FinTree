@@ -1,5 +1,7 @@
 <script setup lang="ts">
 import { useRouter } from 'vue-router';
+import UiButton from '../../ui/UiButton.vue';
+import ThemeToggle from '../common/ThemeToggle.vue';
 
 defineProps<{
   title: string;
@@ -23,12 +25,12 @@ const currentYear = new Date().getFullYear();
 
       <div class="public-page__actions">
         <ThemeToggle />
-        <AppButton
+        <UiButton
           variant="ghost"
           label="Войти"
           @click="router.push('/login')"
         />
-        <AppButton
+        <UiButton
           label="Регистрация"
           @click="router.push('/register')"
         />

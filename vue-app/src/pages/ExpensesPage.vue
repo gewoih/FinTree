@@ -12,6 +12,10 @@ import TransactionForm from '../components/TransactionForm.vue'
 import TransferFormModal from '../components/TransferFormModal.vue'
 import { apiService } from '../services/api.service'
 import { useViewport } from '../composables/useViewport'
+import UiButton from '../ui/UiButton.vue'
+import UiSection from '../ui/UiSection.vue'
+import PageContainer from '../components/layout/PageContainer.vue'
+import PageHeader from '../components/common/PageHeader.vue'
 
 const financeStore = useFinanceStore()
 const userStore = useUserStore()

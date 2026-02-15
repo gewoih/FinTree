@@ -7,6 +7,9 @@ import { useFinanceStore } from '../stores/finance'
 import CategoryFormModal from './CategoryFormModal.vue'
 import type { Category, CategoryType } from '../types'
 import { CATEGORY_TYPE } from '../types'
+import AppCard from './common/AppCard.vue'
+import UiButton from "@/ui/UiButton.vue";
+import EmptyState from "@/components/common/EmptyState.vue";
 
 const props = withDefaults(defineProps<{
   readonly?: boolean

@@ -1,5 +1,9 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue';
+import Card from 'primevue/card';
+import Skeleton from 'primevue/skeleton';
+import Message from 'primevue/message';
+import UiButton from '../../ui/UiButton.vue';
 
 type MetricAccent = 'good' | 'average' | 'poor' | 'neutral' | 'income' | 'expense';
 
@@ -134,10 +138,10 @@ const hasMorePeaks = computed(() => props.peaks.length > 3);
             <p class="hero-card__message-text">
               {{ error }}
             </p>
-            <Button
+            <UiButton
               label="Повторить"
               icon="pi pi-refresh"
-              size="small"
+              size="sm"
               @click="emit('retry')"
             />
           </div>

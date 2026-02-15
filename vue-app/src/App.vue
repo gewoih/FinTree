@@ -1,6 +1,8 @@
 <script setup lang="ts">
 import { computed } from 'vue';
 import { useRoute } from 'vue-router';
+import Toast from 'primevue/toast';
+import ConfirmDialog from 'primevue/confirmdialog';
 import AppShell from './components/layout/AppShell.vue';
 
 const route = useRoute();

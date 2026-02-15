@@ -2,6 +2,10 @@
 import { computed, onBeforeUnmount, onMounted, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuthStore } from '../stores/auth'
+import UiButton from '../ui/UiButton.vue'
+import UiCard from '../ui/UiCard.vue'
+import UiInputText from '../ui/UiInputText.vue'
+import ThemeToggle from '../components/common/ThemeToggle.vue'
 
 const router = useRouter()
 const authStore = useAuthStore()

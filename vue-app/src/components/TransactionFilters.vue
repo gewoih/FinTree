@@ -1,6 +1,9 @@
 <script setup lang="ts">
 import { computed } from 'vue';
 import type { Account, Category } from '../types';
+import UiInputText from '../ui/UiInputText.vue';
+import UiSelect from '../ui/UiSelect.vue';
+import UiDatePicker from '../ui/UiDatePicker.vue';
 
 const props = defineProps<{
   searchText: string;
@@ -33,12 +36,12 @@ const handleSearchUpdate = (value: string | null | undefined) => {
   emit('update:searchText', value ?? '');
 };
 
-const handleCategoryUpdate = (value: Category | null | undefined) => {
-  emit('update:selectedCategory', value ?? null);
+const handleCategoryUpdate = (value: unknown) => {
+  emit('update:selectedCategory', (value as Category | null) ?? null);
 };
 
-const handleAccountUpdate = (value: Account | null | undefined) => {
-  emit('update:selectedAccount', value ?? null);
+const handleAccountUpdate = (value: unknown) => {
+  emit('update:selectedAccount', (value as Account | null) ?? null);
 };
 
 const handleDateRangeUpdate = (

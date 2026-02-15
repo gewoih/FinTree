@@ -9,6 +9,8 @@ import { useFinanceStore } from '../stores/finance'
 import { useFormModal } from '../composables/useFormModal'
 import type { Account, AccountType } from '../types'
 import { getAccountTypeInfo } from '../utils/accountHelpers'
+import UiButton from '../ui/UiButton.vue'
+import FormField from './common/FormField.vue'
 
 const props = withDefaults(
   defineProps<{
@@ -329,14 +331,14 @@ const handleSubmit = async () => {
       </FormField>
 
       <div class="actions">
-        <AppButton
+        <UiButton
           type="submit"
           :icon="submitIcon"
           :loading="isSubmitting"
           :disabled="!isFormReady || isSubmitting"
         >
           {{ submitLabel }}
-        </AppButton>
+        </UiButton>
       </div>
     </form>
   </Dialog>
@@ -391,7 +393,7 @@ const handleSubmit = async () => {
   margin-top: var(--ft-space-4);
 }
 
-.actions :deep(.app-button) {
+.actions :deep(.ui-button) {
   flex: 0 0 auto;
   min-width: 148px;
   min-height: 44px;
@@ -431,7 +433,7 @@ const handleSubmit = async () => {
 }
 
 @media (width <= 640px) {
-  .actions :deep(.app-button) {
+  .actions :deep(.ui-button) {
     width: 100%;
     min-width: 0;
   }
