@@ -144,14 +144,26 @@ watch(
 <template>
   <Dialog
     :visible="props.visible"
-    header="Корректировка баланса"
+    :closable="false"
     modal
+    class="adjustments-dialog"
     :style="{ width: '420px' }"
     :breakpoints="{ '640px': 'calc(100vw - 1rem)' }"
     dismissable-mask
     @update:visible="val => emit('update:visible', val)"
   >
     <div class="adjustments-modal">
+      <header class="adjustments-modal__header">
+        <h2 class="adjustments-modal__title">Корректировка баланса</h2>
+        <button
+          type="button"
+          class="adjustments-modal__close"
+          aria-label="Закрыть"
+          @click="emit('update:visible', false)"
+        >
+          <i class="pi pi-times" />
+        </button>
+      </header>
       <div class="adjustments-account">
         <h4>{{ props.account?.name ?? 'Счет' }}</h4>
         <p>Текущий баланс: <strong>{{ currentBalanceLabel }}</strong></p>
@@ -255,6 +267,45 @@ watch(
 .adjustments-modal {
   display: grid;
   gap: var(--ft-space-4);
+  padding: var(--ft-space-6);
+}
+
+.adjustments-modal__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.adjustments-modal__title {
+  margin: 0;
+  font-size: var(--ft-text-lg);
+  font-weight: 700;
+  color: var(--ft-text-primary);
+}
+
+.adjustments-modal__close {
+  cursor: pointer;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  width: 36px;
+  height: 36px;
+  padding: 0;
+
+  color: var(--ft-text-tertiary);
+
+  background: none;
+  border: none;
+  border-radius: var(--ft-radius-md);
+
+  transition: color 0.15s, background-color 0.15s;
+}
+
+.adjustments-modal__close:hover {
+  color: var(--ft-text-primary);
+  background: var(--ft-surface-muted);
 }
 
 .adjustments-account {
@@ -341,16 +392,6 @@ watch(
 .adjustments-list__date {
   font-size: var(--ft-text-xs);
   color: var(--ft-text-muted);
-}
-
-:deep(.p-dialog-header-actions .p-dialog-header-icon) {
-  width: 36px;
-  height: 36px;
-  border-radius: 10px;
-}
-
-:deep(.p-dialog-header-actions .p-button-icon) {
-  margin: 0;
 }
 
 @media (width <= 640px) {

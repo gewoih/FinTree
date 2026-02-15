@@ -220,14 +220,15 @@ const handleDelete = () => {
 <template>
   <Dialog
     :visible="props.visible"
+    :closable="false"
     modal
     :dismissable-mask="true"
     :style="{ width: '560px' }"
     class="category-dialog"
     @update:visible="val => emit('update:visible', val)"
   >
-    <template #header>
-      <div class="category-dialog__header">
+    <div class="category-dialog__container">
+      <header class="category-dialog__header">
         <div>
           <h2 class="category-dialog__title">
             {{ props.category ? 'Категория' : 'Новая категория' }}
@@ -236,8 +237,16 @@ const handleDelete = () => {
             {{ props.category ? 'Обновите параметры категории.' : 'Создайте категорию для удобной аналитики.' }}
           </p>
         </div>
-      </div>
-    </template>
+        <button
+          type="button"
+          class="category-dialog__close"
+          aria-label="Закрыть"
+          @click="emit('update:visible', false)"
+        >
+          <i class="pi pi-times" />
+        </button>
+      </header>
+
     <form
       class="category-form"
       novalidate
@@ -419,6 +428,7 @@ const handleDelete = () => {
         </div>
       </div>
     </form>
+    </div>
   </Dialog>
 </template>
 
@@ -429,13 +439,8 @@ const handleDelete = () => {
   gap: var(--ft-space-4);
 }
 
-.category-dialog :deep(.p-dialog-header) {
-  padding: var(--ft-space-4) var(--ft-space-5) var(--ft-space-3);
-  border-bottom: none;
-}
-
-.category-dialog :deep(.p-dialog-content) {
-  padding: 0 var(--ft-space-5) var(--ft-space-5);
+.category-dialog__container {
+  padding: var(--ft-space-6);
 }
 
 .category-dialog__header {
@@ -443,6 +448,7 @@ const handleDelete = () => {
   gap: var(--ft-space-4);
   align-items: flex-start;
   justify-content: space-between;
+  margin-bottom: var(--ft-space-5);
 }
 
 .category-dialog__title {
@@ -457,6 +463,33 @@ const handleDelete = () => {
   margin: 0;
   font-size: var(--ft-text-sm);
   color: var(--ft-text-tertiary);
+}
+
+.category-dialog__close {
+  cursor: pointer;
+
+  display: flex;
+  flex-shrink: 0;
+  align-items: center;
+  align-self: flex-start;
+  justify-content: center;
+
+  width: 36px;
+  height: 36px;
+  padding: 0;
+
+  color: var(--ft-text-tertiary);
+
+  background: none;
+  border: none;
+  border-radius: var(--ft-radius-md);
+
+  transition: color 0.15s, background-color 0.15s;
+}
+
+.category-dialog__close:hover {
+  color: var(--ft-text-primary);
+  background: var(--ft-surface-muted);
 }
 
 .category-form__type-button {

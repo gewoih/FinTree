@@ -188,13 +188,27 @@ const handleSubmit = async () => {
 <template>
   <Dialog
     :visible="props.visible"
-    :header="dialogTitle"
+    :closable="false"
     modal
+    class="account-dialog"
     :style="{ width: '400px' }"
     :breakpoints="{ '640px': 'calc(100vw - 1rem)' }"
     dismissable-mask
     @update:visible="val => emit('update:visible', val)"
   >
+    <div class="account-form__container">
+      <header class="account-form__header">
+        <h2 class="account-form__title">{{ dialogTitle }}</h2>
+        <button
+          type="button"
+          class="account-form__close"
+          aria-label="Закрыть"
+          @click="emit('update:visible', false)"
+        >
+          <i class="pi pi-times" />
+        </button>
+      </header>
+
     <form
       class="form-layout"
       novalidate
@@ -341,10 +355,54 @@ const handleSubmit = async () => {
         </UiButton>
       </div>
     </form>
+    </div>
   </Dialog>
 </template>
 
 <style scoped>
+.account-form__container {
+  padding: var(--ft-space-6);
+}
+
+.account-form__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: var(--ft-space-5);
+}
+
+.account-form__title {
+  margin: 0;
+  font-size: var(--ft-text-lg);
+  font-weight: 700;
+  color: var(--ft-text-primary);
+}
+
+.account-form__close {
+  cursor: pointer;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  width: 36px;
+  height: 36px;
+  padding: 0;
+
+  color: var(--ft-text-tertiary);
+
+  background: none;
+  border: none;
+  border-radius: var(--ft-radius-md);
+
+  transition: color 0.15s, background-color 0.15s;
+}
+
+.account-form__close:hover {
+  color: var(--ft-text-primary);
+  background: var(--ft-surface-muted);
+}
+
 .form-layout {
   display: grid;
   gap: var(--ft-space-4);
@@ -420,16 +478,6 @@ const handleSubmit = async () => {
 
   font-size: var(--ft-text-sm);
   color: var(--ft-text-secondary);
-}
-
-:deep(.p-dialog-header-actions .p-dialog-header-icon) {
-  width: 36px;
-  height: 36px;
-  border-radius: 10px;
-}
-
-:deep(.p-dialog-header-actions .p-button-icon) {
-  margin: 0;
 }
 
 @media (width <= 640px) {
