@@ -9,6 +9,7 @@ import Menu from 'primevue/menu'
 import Drawer from 'primevue/drawer'
 import ThemeToggle from '../common/ThemeToggle.vue'
 import UiButton from '../../ui/UiButton.vue'
+import BottomTabBar from './BottomTabBar.vue'
 
 const authStore = useAuthStore()
 const userStore = useUserStore()
@@ -103,12 +104,13 @@ onMounted(() => {
     <div class="app-shell__topnav">
       <div class="app-shell__topnav-left">
         <UiButton
-          :icon="isDesktop && sidebarCollapsed ? 'pi pi-angle-right' : isDesktop ? 'pi pi-angle-left' : 'pi pi-bars'"
+          v-if="isDesktop"
+          :icon="sidebarCollapsed ? 'pi pi-angle-right' : 'pi pi-angle-left'"
           variant="ghost"
           rounded
           class="app-shell__menu-toggle"
-          :aria-label="isDesktop ? (sidebarCollapsed ? 'Развернуть меню' : 'Свернуть меню') : 'Открыть меню'"
-          :aria-expanded="isDesktop ? !sidebarCollapsed : sidebarVisible"
+          :aria-label="sidebarCollapsed ? 'Развернуть меню' : 'Свернуть меню'"
+          :aria-expanded="!sidebarCollapsed"
           @click="toggleSidebar"
         />
         <router-link
@@ -221,6 +223,8 @@ onMounted(() => {
     >
       <slot />
     </main>
+
+    <BottomTabBar />
   </div>
 </template>
 
@@ -531,9 +535,9 @@ onMounted(() => {
   }
 }
 
-@media (width <= 768px) {
+@media (width < 1024px) {
   .app-shell__main {
-    padding: 0;
+    padding-bottom: calc(var(--ft-bottom-bar-height) + env(safe-area-inset-bottom, 0px));
   }
 }
 

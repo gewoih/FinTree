@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, ref, onMounted } from 'vue';
+import { computed } from 'vue';
 import type { ChartData, TooltipItem } from 'chart.js';
 import Tag from 'primevue/tag';
 import Skeleton from 'primevue/skeleton';
@@ -7,6 +7,7 @@ import Message from 'primevue/message';
 import UiButton from '../../ui/UiButton.vue';
 import Chart from 'primevue/chart';
 import type { ForecastSummary } from '@/types/analytics.ts';
+import { useChartColors } from '../../composables/useChartColors';
 
 const props = defineProps<{
   loading: boolean;
@@ -20,23 +21,7 @@ const emit = defineEmits<{
   (event: 'retry'): void;
 }>();
 
-const textColor = ref('#1e293b');
-const gridColor = ref('rgba(148,163,184,0.2)');
-const surfaceRaised = ref('#1e293b');
-
-const updateColors = () => {
-  if (typeof window === 'undefined') return;
-  const styles = getComputedStyle(document.documentElement);
-  textColor.value = styles.getPropertyValue('--ft-text-primary').trim() || '#1e293b';
-  gridColor.value = styles.getPropertyValue('--ft-border-subtle').trim() || 'rgba(148,163,184,0.2)';
-  surfaceRaised.value = styles.getPropertyValue('--ft-surface-raised').trim() || '#1e293b';
-};
-
-onMounted(() => {
-  updateColors();
-  const observer = new MutationObserver(updateColors);
-  observer.observe(document.documentElement, { attributes: true, attributeFilter: ['class'] });
-});
+const { colors, tooltipConfig } = useChartColors();
 
 const showEmpty = computed(
   () =>
@@ -86,13 +71,13 @@ const chartOptions = computed(() => ({
   maintainAspectRatio: false,
   scales: {
     x: {
-      grid: { color: gridColor.value },
-      ticks: { color: textColor.value, font: { size: 12 } },
+      grid: { color: colors.grid },
+      ticks: { color: colors.text, font: { size: 12 } },
     },
     y: {
-      grid: { color: gridColor.value, drawBorder: false },
+      grid: { color: colors.grid, drawBorder: false },
       ticks: {
-        color: textColor.value,
+        color: colors.text,
         font: { size: 12 },
         callback(value: number | string) {
           const numeric = typeof value === 'string' ? Number(value) : value;
@@ -108,13 +93,7 @@ const chartOptions = computed(() => ({
   plugins: {
     legend: { display: false },
     tooltip: {
-      backgroundColor: surfaceRaised.value,
-      titleColor: textColor.value,
-      bodyColor: textColor.value,
-      borderColor: gridColor.value,
-      borderWidth: 1,
-      cornerRadius: 10,
-      padding: 12,
+      ...tooltipConfig(),
       callbacks: {
         label(context: TooltipItem<'line'>) {
           const label = context.dataset.label ?? '';
@@ -524,8 +503,8 @@ const chartOptions = computed(() => ({
 
 .forecast-legend__line--risk {
   height: 0;
-  background: #f97316;
-  border-top: 2px dashed #f97316;
+  background: var(--ft-chart-risk);
+  border-top: 2px dashed var(--ft-chart-risk);
 }
 
 .forecast-legend__line--baseline {

@@ -706,7 +706,7 @@ async function handlePay(plan: SubscriptionPlan) {
   color: var(--ft-text-inverse);
   letter-spacing: 0.04em;
 
-  background: linear-gradient(135deg, var(--ft-primary-500), color-mix(in srgb, var(--ft-primary-500) 70%, #000));
+  background: linear-gradient(135deg, var(--ft-primary-500), var(--ft-primary-800));
   border-radius: 50%;
 }
 

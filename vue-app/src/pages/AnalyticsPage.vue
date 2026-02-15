@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, onMounted, reactive, ref, watch } from 'vue';
+import { computed, onMounted, ref, watch } from 'vue';
 import { useRouter } from 'vue-router';
 import PageHeader from '../components/common/PageHeader.vue';
 import SummaryStrip from '../components/analytics/SummaryStrip.vue';
@@ -27,6 +27,7 @@ import type {
   ForecastSummary,
 } from '../types/analytics';
 import PageContainer from '../components/layout/PageContainer.vue';
+import { useChartColors } from '../composables/useChartColors';
 
 type MonthPickerInstance = {
   show?: () => void;
@@ -69,13 +70,7 @@ const dashboardLoading = ref(false);
 const dashboardError = ref<string | null>(null);
 const dashboardRequestId = ref(0);
 
-const chartPalette = reactive({
-  primary: '#2e5bff',
-  surface: '#283449',
-  accent: '#0ea5e9',
-  pointBorder: '#0b111a',
-  categories: ['#2e5bff', '#0ea5e9', '#22c55e', '#a855f7', '#f59e0b'],
-});
+const { colors: chartColors } = useChartColors();
 
 const baseCurrency = computed(() => userStore.baseCurrencyCode ?? 'RUB');
 
@@ -309,23 +304,7 @@ function resolveErrorMessage(error: unknown, fallback: string): string {
   return fallback;
 }
 
-// --- CSS palette ---
-function resolveCssVariables() {
-  if (typeof window === 'undefined') return;
-  const styles = getComputedStyle(document.documentElement);
-  chartPalette.primary = styles.getPropertyValue('--ft-primary-400').trim() || chartPalette.primary;
-  chartPalette.surface = styles.getPropertyValue('--ft-border-default').trim() || chartPalette.surface;
-  chartPalette.accent = styles.getPropertyValue('--ft-info-400').trim() || chartPalette.accent;
-  chartPalette.pointBorder = styles.getPropertyValue('--ft-surface-base').trim() || chartPalette.pointBorder;
-  const fallback = [
-    styles.getPropertyValue('--ft-primary-400').trim(),
-    styles.getPropertyValue('--ft-info-400').trim(),
-    styles.getPropertyValue('--ft-success-400').trim(),
-    styles.getPropertyValue('--ft-warning-400').trim(),
-    styles.getPropertyValue('--ft-danger-400').trim(),
-  ].filter(Boolean);
-  if (fallback.length) chartPalette.categories = fallback;
-}
+// --- CSS palette is provided by useChartColors composable ---
 
 // --- Date helpers ---
 function normalizeMonth(date: Date): Date {
@@ -360,18 +339,13 @@ function formatMonthLabel(year: number, month: number): string {
   return formatter.format(new Date(year, month - 1, 1));
 }
 
-function extractRgb(color: string): string {
-  if (typeof document === 'undefined') return '46,91,255';
-  const canvas = document.createElement('canvas');
-  const ctx = canvas.getContext('2d');
-  if (!ctx) return '46,91,255';
-  ctx.fillStyle = color;
-  const computed = ctx.fillStyle as string;
-  const rgbMatch = computed.match(/rgba?\((\d+),\s*(\d+),\s*(\d+)/i);
-  if (rgbMatch) return `${rgbMatch[1]},${rgbMatch[2]},${rgbMatch[3]}`;
-  const match = computed.match(/^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i);
-  if (!match || !match[1] || !match[2] || !match[3]) return '46,91,255';
-  return `${parseInt(match[1], 16)},${parseInt(match[2], 16)},${parseInt(match[3], 16)}`;
+function hexToRgb(hex: string): string {
+  const clean = hex.replace('#', '');
+  if (clean.length !== 6) return '107,130,219';
+  const r = parseInt(clean.substring(0, 2), 16);
+  const g = parseInt(clean.substring(2, 4), 16);
+  const b = parseInt(clean.substring(4, 6), 16);
+  return `${r},${g},${b}`;
 }
 
 function getIsoWeekRange(year: number, week: number) {
@@ -460,7 +434,7 @@ const categoryLegend = computed<CategoryLegendItem[]>(() => {
     mandatoryAmount: Number(item.mandatoryAmount ?? 0),
     discretionaryAmount: Number(item.discretionaryAmount ?? 0),
     percent: Number(item.percent ?? 0),
-    color: item.color?.trim() ?? chartPalette.categories[index % chartPalette.categories.length],
+    color: item.color?.trim() ?? chartColors.palette[index % chartColors.palette.length],
     isMandatory: item.isMandatory ?? false,
   }));
 });
@@ -495,7 +469,7 @@ const categoryChartData = computed(() => {
         data: filteredCategoryLegend.value.map((item) => item.amount),
         backgroundColor: filteredCategoryLegend.value.map((item) => item.color),
         borderWidth: 1,
-        borderColor: 'rgba(255,255,255,0.8)',
+        borderColor: chartColors.surface,
       },
     ],
   };
@@ -566,8 +540,8 @@ const expensesChartData = computed(() => {
     datasets: [
       {
         data: data.map((item) => Number(item.amount ?? 0)),
-        backgroundColor: `rgba(${extractRgb(chartPalette.accent)}, 0.65)`,
-        borderColor: chartPalette.accent,
+        backgroundColor: `rgba(${hexToRgb(chartColors.accent)}, 0.65)`,
+        borderColor: chartColors.accent,
         borderRadius: 8,
         maxBarThickness: 48,
       },
@@ -624,20 +598,20 @@ const forecastChartData = computed(() => {
       {
         label: 'Факт',
         data: series.actual,
-        borderColor: chartPalette.accent,
-        backgroundColor: `rgba(${extractRgb(chartPalette.accent)}, 0.18)`,
+        borderColor: chartColors.accent,
+        backgroundColor: `rgba(${hexToRgb(chartColors.accent)}, 0.18)`,
         fill: true,
         borderWidth: 2,
         tension: 0.35,
         pointRadius: 3,
-        pointBackgroundColor: chartPalette.accent,
-        pointBorderColor: chartPalette.pointBorder,
+        pointBackgroundColor: chartColors.accent,
+        pointBorderColor: chartColors.surface,
         spanGaps: false,
       },
       {
         label: 'Оптимистичный',
         data: series.optimistic,
-        borderColor: chartPalette.accent,
+        borderColor: chartColors.accent,
         borderDash: [3, 5],
         borderWidth: 1.5,
         pointRadius: 0,
@@ -647,7 +621,7 @@ const forecastChartData = computed(() => {
       {
         label: 'Базовый',
         data: series.forecast,
-        borderColor: chartPalette.primary,
+        borderColor: chartColors.primary,
         borderDash: [8, 6],
         borderWidth: 2,
         pointRadius: 0,
@@ -657,7 +631,7 @@ const forecastChartData = computed(() => {
       {
         label: 'Риск',
         data: series.risk,
-        borderColor: '#f97316',
+        borderColor: chartColors.risk,
         borderDash: [10, 6],
         borderWidth: 1.5,
         pointRadius: 0,
@@ -668,7 +642,7 @@ const forecastChartData = computed(() => {
         ? [{
             label: 'Лимит прошлого месяца',
             data: baselineData,
-            borderColor: chartPalette.surface,
+            borderColor: chartColors.grid,
             borderDash: [4, 4],
             borderWidth: 1.5,
             pointRadius: 0,
@@ -699,7 +673,6 @@ watch(selectedMonth, (value) => {
 });
 
 onMounted(async () => {
-  resolveCssVariables();
   await userStore.fetchCurrentUser(true);
   await Promise.all([
     loadDashboard(normalizedSelectedMonth.value),
@@ -893,9 +866,14 @@ onMounted(async () => {
 .analytics-month-selector__button {
   cursor: pointer;
 
-  padding: 0.2rem;
+  display: grid;
+  place-items: center;
 
-  font-size: 0.9rem;
+  width: 44px;
+  height: 44px;
+  padding: 0;
+
+  font-size: var(--ft-text-base);
   color: var(--ft-text-secondary);
 
   background: transparent;
@@ -918,7 +896,8 @@ onMounted(async () => {
 .analytics-month-selector__label {
   cursor: pointer;
 
-  padding: 0.2rem 0.35rem;
+  min-height: 44px;
+  padding: var(--ft-space-2) var(--ft-space-3);
 
   font-size: var(--ft-text-sm);
   font-weight: var(--ft-font-semibold);
@@ -927,6 +906,7 @@ onMounted(async () => {
 
   background: transparent;
   border: none;
+  border-radius: var(--ft-radius-md);
 }
 
 .analytics-month-selector__picker {

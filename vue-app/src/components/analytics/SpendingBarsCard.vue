@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, ref, onMounted } from 'vue';
+import { computed } from 'vue';
 import type { ChartData, ChartDataset, TooltipItem } from 'chart.js';
 import SelectButton from 'primevue/selectbutton';
 import Skeleton from 'primevue/skeleton';
@@ -7,6 +7,7 @@ import Message from 'primevue/message';
 import UiButton from '../../ui/UiButton.vue';
 import Chart from 'primevue/chart';
 import type { ExpenseGranularity } from '../../types/analytics';
+import { useChartColors } from '../../composables/useChartColors';
 
 const props = defineProps<{
   loading: boolean;
@@ -23,25 +24,7 @@ const emit = defineEmits<{
   (event: 'retry'): void;
 }>();
 
-const textColor = ref('#1e293b');
-const gridColor = ref('rgba(148,163,184,0.2)');
-const accentColor = ref('#0ea5e9');
-const surfaceBase = ref('#0b111a');
-
-const updateColors = () => {
-  if (typeof window === 'undefined') return;
-  const styles = getComputedStyle(document.documentElement);
-  textColor.value = styles.getPropertyValue('--ft-text-primary').trim() || '#1e293b';
-  gridColor.value = styles.getPropertyValue('--ft-border-subtle').trim() || 'rgba(148,163,184,0.2)';
-  accentColor.value = styles.getPropertyValue('--ft-info-400').trim() || '#0ea5e9';
-  surfaceBase.value = styles.getPropertyValue('--ft-surface-raised').trim() || '#1e293b';
-};
-
-onMounted(() => {
-  updateColors();
-  const observer = new MutationObserver(updateColors);
-  observer.observe(document.documentElement, { attributes: true, attributeFilter: ['class'] });
-});
+const { colors, tooltipConfig } = useChartColors();
 
 const averageValue = computed(() => {
   if (!props.chartData?.datasets?.[0]?.data) return null;
@@ -61,7 +44,7 @@ const styledChartData = computed(() => {
       label: 'Среднее',
       data: Array(len).fill(averageValue.value),
       type: 'line' as const,
-      borderColor: gridColor.value,
+      borderColor: colors.grid,
       borderDash: [6, 4],
       borderWidth: 1.5,
       pointRadius: 0,
@@ -84,16 +67,16 @@ const chartOptions = computed(() => ({
         display: false,
       },
       ticks: {
-        color: textColor.value,
+        color: colors.text,
         font: { size: 12 },
       },
     },
     y: {
       grid: {
-        color: gridColor.value,
+        color: colors.grid,
       },
       ticks: {
-        color: textColor.value,
+        color: colors.text,
         font: { size: 12 },
         callback(value: number | string) {
           const numeric = typeof value === 'string' ? Number(value) : value;
@@ -111,12 +94,7 @@ const chartOptions = computed(() => ({
       display: false,
     },
     tooltip: {
-      backgroundColor: surfaceBase.value,
-      titleColor: textColor.value,
-      bodyColor: textColor.value,
-      borderColor: gridColor.value,
-      borderWidth: 1,
-      cornerRadius: 10,
+      ...tooltipConfig(),
       padding: 14,
       titleFont: { size: 13 },
       bodyFont: { size: 13 },

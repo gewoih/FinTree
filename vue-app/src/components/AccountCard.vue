@@ -304,9 +304,9 @@ const toggleMenu = (event: Event) => {
 }
 
 .account-card__icon-button {
-  width: 40px;
-  min-width: 40px;
-  height: 40px;
+  width: 44px;
+  min-width: 44px;
+  height: 44px;
   padding: 0;
 
   border-radius: var(--ft-radius-lg);

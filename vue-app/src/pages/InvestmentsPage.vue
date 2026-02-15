@@ -22,6 +22,7 @@ import NetWorthLineCard from '../components/analytics/NetWorthLineCard.vue';
 import SummaryStrip from '../components/analytics/SummaryStrip.vue';
 import { mapAccount } from '../utils/mappers';
 import { formatCurrency } from '../utils/formatters';
+import { useChartColors } from '../composables/useChartColors';
 import UiSkeleton from '../ui/UiSkeleton.vue';
 import EmptyState from '../components/common/EmptyState.vue';
 import PageContainer from '../components/layout/PageContainer.vue';
@@ -39,6 +40,7 @@ interface InvestmentAccount extends Omit<InvestmentAccountOverviewDto, 'type'> {
 const toast = useToast();
 const financeStore = useFinanceStore();
 const userStore = useUserStore();
+const { colors: chartColors } = useChartColors();
 
 const overview = ref<InvestmentsOverviewDto | null>(null);
 const overviewLoading = ref(false);
@@ -146,7 +148,7 @@ const netWorthChartData = computed(() => {
     datasets: [
       {
         data: sortedNetWorth.value.map(item => Number(item.netWorth ?? 0)),
-        backgroundColor: '#6B82DB',
+        backgroundColor: chartColors.primary,
         borderRadius: 8,
         maxBarThickness: 48,
       },

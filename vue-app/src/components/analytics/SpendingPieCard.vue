@@ -7,6 +7,7 @@ import Message from 'primevue/message';
 import UiButton from '../../ui/UiButton.vue';
 import Chart from 'primevue/chart';
 import type { CategoryLegendItem, CategoryScope } from '../../types/analytics';
+import { useChartColors } from '../../composables/useChartColors';
 
 const props = defineProps<{
   loading: boolean;
@@ -23,6 +24,8 @@ const emit = defineEmits<{
   (event: 'select-category', value: CategoryLegendItem): void;
   (event: 'update:scope', value: CategoryScope): void;
 }>();
+
+const { colors, tooltipConfig } = useChartColors();
 
 const handleCategoryClick = (item: CategoryLegendItem) => {
   emit('select-category', item);
@@ -55,8 +58,7 @@ const centerTextPlugin = computed<Plugin<'doughnut'>>(() => ({
     const text = formattedTotal.value;
     const fontSize = Math.min(width, height) * 0.08;
     ctx.font = `bold ${fontSize}px sans-serif`;
-    ctx.fillStyle = getComputedStyle(document.documentElement)
-      .getPropertyValue('--ft-text-primary').trim() || '#1e293b';
+    ctx.fillStyle = colors.tooltipText;
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
     ctx.fillText(text, width / 2, height / 2);
@@ -72,8 +74,7 @@ const donutChartData = computed(() => {
     datasets: props.chartData.datasets.map(ds => ({
       ...ds,
       borderWidth: 2,
-      borderColor: getComputedStyle(document.documentElement)
-        .getPropertyValue('--ft-surface-base').trim() || '#0b111a',
+      borderColor: colors.surface,
       hoverBorderWidth: 3,
       hoverOffset: 8,
     })),
@@ -90,17 +91,7 @@ const chartOptions = computed(() => ({
       display: false,
     },
     tooltip: {
-      backgroundColor: getComputedStyle(document.documentElement)
-        .getPropertyValue('--ft-surface-raised').trim() || '#1e293b',
-      titleColor: getComputedStyle(document.documentElement)
-        .getPropertyValue('--ft-text-primary').trim() || '#f1f5f9',
-      bodyColor: getComputedStyle(document.documentElement)
-        .getPropertyValue('--ft-text-secondary').trim() || '#94a3b8',
-      borderColor: getComputedStyle(document.documentElement)
-        .getPropertyValue('--ft-border-subtle').trim() || '#334155',
-      borderWidth: 1,
-      cornerRadius: 10,
-      padding: 12,
+      ...tooltipConfig(),
       callbacks: {
         label(context: { parsed: number; label: string }) {
           const formatted = context.parsed.toLocaleString('ru-RU', {

@@ -169,8 +169,8 @@ const hasActiveFilters = computed(() =>
   align-items: center;
   justify-content: center;
 
-  width: 36px;
-  height: 36px;
+  width: 44px;
+  height: 44px;
   padding: 0;
 
   color: var(--ft-text-tertiary);

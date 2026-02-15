@@ -206,8 +206,8 @@ const toggleMenu = (event: Event) => {
   flex-shrink: 0;
   place-items: center;
 
-  width: 32px;
-  height: 32px;
+  width: 44px;
+  height: 44px;
 
   color: var(--ft-text-secondary);
 

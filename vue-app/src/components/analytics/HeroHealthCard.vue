@@ -424,7 +424,7 @@ const hasMorePeaks = computed(() => props.peaks.length > 3);
 }
 
 .hero-card__metric--clickable:focus-visible {
-  outline: 2px solid color-mix(in srgb, var(--ft-primary-500, #3b82f6) 65%, transparent);
+  outline: 2px solid color-mix(in srgb, var(--ft-primary-500) 65%, transparent);
   outline-offset: 2px;
 }
 
@@ -437,15 +437,15 @@ const hasMorePeaks = computed(() => props.peaks.length > 3);
 }
 
 .hero-card__group--good {
-  --group-accent: var(--ft-success-400, #4ade80);
+  --group-accent: var(--ft-success-400);
 }
 
 .hero-card__group--average {
-  --group-accent: var(--ft-warning-400, #fb923c);
+  --group-accent: var(--ft-warning-400);
 }
 
 .hero-card__group--poor {
-  --group-accent: var(--ft-danger-400, #f87171);
+  --group-accent: var(--ft-danger-400);
 }
 
 .hero-card__group-title {
@@ -531,8 +531,8 @@ const hasMorePeaks = computed(() => props.peaks.length > 3);
   flex-shrink: 0;
   place-items: center;
 
-  width: 34px;
-  height: 34px;
+  width: 36px;
+  height: 36px;
 
   font-size: 0.95rem;
   color: var(--ft-text-secondary);
@@ -544,27 +544,27 @@ const hasMorePeaks = computed(() => props.peaks.length > 3);
 
 .hero-card__metric-value--good,
 .hero-card__metric-icon--good {
-  color: var(--ft-success-400, #4ade80);
+  color: var(--ft-success-400);
 }
 
 .hero-card__metric-value--average,
 .hero-card__metric-icon--average {
-  color: var(--ft-warning-400, #fb923c);
+  color: var(--ft-warning-400);
 }
 
 .hero-card__metric-value--poor,
 .hero-card__metric-icon--poor {
-  color: var(--ft-danger-400, #f87171);
+  color: var(--ft-danger-400);
 }
 
 .hero-card__metric-value--income,
 .hero-card__metric-icon--income {
-  color: var(--ft-success-400, #4ade80);
+  color: var(--ft-success-400);
 }
 
 .hero-card__metric-value--expense,
 .hero-card__metric-icon--expense {
-  color: var(--ft-danger-400, #f87171);
+  color: var(--ft-danger-400);
 }
 
 .hero-card__metric-value--neutral,
@@ -573,28 +573,28 @@ const hasMorePeaks = computed(() => props.peaks.length > 3);
 }
 
 .hero-card__metric-icon--good {
-  background: color-mix(in srgb, var(--ft-success-400, #4ade80) 12%, transparent);
-  border-color: color-mix(in srgb, var(--ft-success-400, #4ade80) 25%, var(--ft-border-subtle));
+  background: color-mix(in srgb, var(--ft-success-400) 12%, transparent);
+  border-color: color-mix(in srgb, var(--ft-success-400) 25%, var(--ft-border-subtle));
 }
 
 .hero-card__metric-icon--average {
-  background: color-mix(in srgb, var(--ft-warning-400, #fb923c) 12%, transparent);
-  border-color: color-mix(in srgb, var(--ft-warning-400, #fb923c) 25%, var(--ft-border-subtle));
+  background: color-mix(in srgb, var(--ft-warning-400) 12%, transparent);
+  border-color: color-mix(in srgb, var(--ft-warning-400) 25%, var(--ft-border-subtle));
 }
 
 .hero-card__metric-icon--poor {
-  background: color-mix(in srgb, var(--ft-danger-400, #f87171) 12%, transparent);
-  border-color: color-mix(in srgb, var(--ft-danger-400, #f87171) 25%, var(--ft-border-subtle));
+  background: color-mix(in srgb, var(--ft-danger-400) 12%, transparent);
+  border-color: color-mix(in srgb, var(--ft-danger-400) 25%, var(--ft-border-subtle));
 }
 
 .hero-card__metric-icon--income {
-  background: color-mix(in srgb, var(--ft-success-400, #4ade80) 12%, transparent);
-  border-color: color-mix(in srgb, var(--ft-success-400, #4ade80) 25%, var(--ft-border-subtle));
+  background: color-mix(in srgb, var(--ft-success-400) 12%, transparent);
+  border-color: color-mix(in srgb, var(--ft-success-400) 25%, var(--ft-border-subtle));
 }
 
 .hero-card__metric-icon--expense {
-  background: color-mix(in srgb, var(--ft-danger-400, #f87171) 12%, transparent);
-  border-color: color-mix(in srgb, var(--ft-danger-400, #f87171) 25%, var(--ft-border-subtle));
+  background: color-mix(in srgb, var(--ft-danger-400) 12%, transparent);
+  border-color: color-mix(in srgb, var(--ft-danger-400) 25%, var(--ft-border-subtle));
 }
 
 .hero-card__peaks {
@@ -643,7 +643,7 @@ const hasMorePeaks = computed(() => props.peaks.length > 3);
 }
 
 .hero-card__peak-share:focus-visible {
-  outline: 2px solid color-mix(in srgb, var(--ft-primary-500, #3b82f6) 55%, transparent);
+  outline: 2px solid color-mix(in srgb, var(--ft-primary-500) 55%, transparent);
   outline-offset: 2px;
 }
 
@@ -674,27 +674,27 @@ const hasMorePeaks = computed(() => props.peaks.length > 3);
 }
 
 .hero-card__peak-share--good {
-  border-color: color-mix(in srgb, var(--ft-success-400, #4ade80) 40%, var(--ft-border-subtle));
+  border-color: color-mix(in srgb, var(--ft-success-400) 40%, var(--ft-border-subtle));
 }
 
 .hero-card__peak-share--average {
-  border-color: color-mix(in srgb, var(--ft-warning-400, #fb923c) 40%, var(--ft-border-subtle));
+  border-color: color-mix(in srgb, var(--ft-warning-400) 40%, var(--ft-border-subtle));
 }
 
 .hero-card__peak-share--poor {
-  border-color: color-mix(in srgb, var(--ft-orange-400, #fb923c) 45%, var(--ft-border-subtle));
+  border-color: color-mix(in srgb, var(--ft-orange-400) 45%, var(--ft-border-subtle));
 }
 
 .hero-card__peak-share--good .hero-card__peak-share-value {
-  color: var(--ft-success-400, #4ade80);
+  color: var(--ft-success-400);
 }
 
 .hero-card__peak-share--average .hero-card__peak-share-value {
-  color: var(--ft-warning-400, #fb923c);
+  color: var(--ft-warning-400);
 }
 
 .hero-card__peak-share--poor .hero-card__peak-share-value {
-  color: var(--ft-orange-400, #fb923c);
+  color: var(--ft-orange-400);
 }
 
 .hero-card__peaks-grid {

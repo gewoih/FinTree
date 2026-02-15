@@ -1,10 +1,11 @@
 <script setup lang="ts">
-import { computed, onMounted, ref } from 'vue';
+import { computed } from 'vue';
 import type { ChartData, TooltipItem } from 'chart.js';
 import Skeleton from 'primevue/skeleton';
 import Message from 'primevue/message';
 import UiButton from '../../ui/UiButton.vue';
 import Chart from 'primevue/chart';
+import { useChartColors } from '../../composables/useChartColors';
 
 const props = withDefaults(
   defineProps<{
@@ -21,29 +22,7 @@ const emit = defineEmits<{
   (event: 'retry'): void;
 }>();
 
-const textColor = ref('#1e293b');
-const gridColor = ref('rgba(148,163,184,0.2)');
-const tooltipBg = ref('#1e293b');
-const tooltipTitle = ref('#f1f5f9');
-const tooltipBody = ref('#94a3b8');
-const tooltipBorder = ref('#334155');
-
-const updateColors = () => {
-  if (typeof window === 'undefined') return;
-  const styles = getComputedStyle(document.documentElement);
-  textColor.value = styles.getPropertyValue('--ft-text-primary').trim() || '#1e293b';
-  gridColor.value = styles.getPropertyValue('--ft-border-subtle').trim() || 'rgba(148,163,184,0.2)';
-  tooltipBg.value = styles.getPropertyValue('--ft-surface-raised').trim() || '#1e293b';
-  tooltipTitle.value = styles.getPropertyValue('--ft-text-primary').trim() || '#f1f5f9';
-  tooltipBody.value = styles.getPropertyValue('--ft-text-secondary').trim() || '#94a3b8';
-  tooltipBorder.value = styles.getPropertyValue('--ft-border-subtle').trim() || '#334155';
-};
-
-onMounted(() => {
-  updateColors();
-  const observer = new MutationObserver(updateColors);
-  observer.observe(document.documentElement, { attributes: true, attributeFilter: ['class'] });
-});
+const { colors, tooltipConfig } = useChartColors();
 
 const showEmpty = computed(() => !props.loading && !props.error && !props.chartData);
 
@@ -55,15 +34,15 @@ const chartOptions = computed(() => ({
         display: false,
       },
       ticks: {
-        color: textColor.value,
+        color: colors.text,
       },
     },
     y: {
       grid: {
-        color: gridColor.value,
+        color: colors.grid,
       },
       ticks: {
-        color: textColor.value,
+        color: colors.text,
         callback(value: number | string) {
           const numeric = typeof value === 'string' ? Number(value) : value;
           return numeric.toLocaleString('ru-RU', {
@@ -80,13 +59,7 @@ const chartOptions = computed(() => ({
       display: false,
     },
     tooltip: {
-      backgroundColor: tooltipBg.value,
-      titleColor: tooltipTitle.value,
-      bodyColor: tooltipBody.value,
-      borderColor: tooltipBorder.value,
-      borderWidth: 1,
-      cornerRadius: 10,
-      padding: 12,
+      ...tooltipConfig(),
       callbacks: {
         label(context: TooltipItem<'line' | 'bar'>) {
           const value = context.parsed.y ?? 0;
