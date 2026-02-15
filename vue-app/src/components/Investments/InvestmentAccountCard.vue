@@ -58,7 +58,7 @@ const menuItems = computed(() => [
     command: () => emit('open'),
   },
   {
-    label: props.account.isLiquid ? 'Сделать неликвидным' : 'Сделать ликвидным',
+    label: props.account.isLiquid ? 'Сделать долгосрочным' : 'Быстрый доступ',
     icon: props.account.isLiquid ? 'pi pi-lock' : 'pi pi-bolt',
     disabled: props.isLiquidityLoading,
     command: () => emit('updateLiquidity', !props.account.isLiquid),
@@ -117,11 +117,11 @@ const toggleMenu = (event: Event) => {
         <template v-if="currencyFlag">{{ currencyFlag }}&nbsp;</template>{{ currencyCode }}
         <span class="investment-card__separator">&middot;</span>
         <span
-          v-tooltip.bottom="'Ликвидный = можно быстро вывести деньги'"
+          v-tooltip.bottom="'Можно ли быстро вывести деньги без потерь'"
           class="investment-card__liquidity-badge"
           :class="{ 'investment-card__liquidity-badge--liquid': account.isLiquid }"
         >
-          {{ account.isLiquid ? 'Ликвидный' : 'Неликвидный' }}
+          {{ account.isLiquid ? 'Быстрый доступ' : 'Долгосрочный' }}
         </span>
       </span>
       <span class="investment-card__updated">

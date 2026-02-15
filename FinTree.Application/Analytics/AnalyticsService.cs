@@ -32,6 +32,7 @@ public sealed class AnalyticsService(
         var monthStartUtc = new DateTime(year, month, 1, 0, 0, 0, DateTimeKind.Utc);
         var monthEndUtc = monthStartUtc.AddMonths(1);
         var previousMonthStartUtc = monthStartUtc.AddMonths(-1);
+        var deltaWindowStartUtc = monthStartUtc.AddMonths(-3);
         var nowUtc = DateTime.UtcNow;
 
         var categories = (await userService.GetUserCategoriesAsync(ct))
@@ -40,7 +41,7 @@ public sealed class AnalyticsService(
         var transactions = await context.Transactions
             .Where(t => t.Account.UserId == currentUserId &&
                         !t.IsTransfer &&
-                        t.OccurredAt >= previousMonthStartUtc &&
+                        t.OccurredAt >= deltaWindowStartUtc &&
                         t.OccurredAt < monthEndUtc)
             .Select(t => new { t.CategoryId, t.Money, t.OccurredAt, t.Type, t.IsMandatory })
             .ToListAsync(ct);
@@ -60,8 +61,10 @@ public sealed class AnalyticsService(
             ct);
 
         var dailyTotals = new Dictionary<DateOnly, decimal>();
+        var dailyTotalsDiscretionary = new Dictionary<DateOnly, decimal>();
         var currentCategoryTotals = new Dictionary<Guid, CategoryTotals>();
-        var previousCategoryTotals = new Dictionary<Guid, decimal>();
+        var priorCategoryTotals = new Dictionary<Guid, decimal>();
+        var priorMonthsWithData = new HashSet<(int Year, int Month)>();
 
         var totalIncome = 0m;
         var totalExpenses = 0m;
@@ -94,6 +97,14 @@ public sealed class AnalyticsService(
                 else
                     dailyTotals[dateKey] = amount;
 
+                if (!txn.IsMandatory)
+                {
+                    if (dailyTotalsDiscretionary.TryGetValue(dateKey, out var currentDisc))
+                        dailyTotalsDiscretionary[dateKey] = currentDisc + amount;
+                    else
+                        dailyTotalsDiscretionary[dateKey] = amount;
+                }
+
                 if (currentCategoryTotals.TryGetValue(txn.CategoryId, out var categoryTotals))
                 {
                     categoryTotals = categoryTotals with
@@ -116,13 +127,20 @@ public sealed class AnalyticsService(
                     discretionaryTotal += amount;
             }
 
+            var isPriorWindow = occurredUtc >= deltaWindowStartUtc && occurredUtc < monthStartUtc;
+
+            if (isPriorWindow)
+            {
+                if (priorCategoryTotals.TryGetValue(txn.CategoryId, out var priorTotal))
+                    priorCategoryTotals[txn.CategoryId] = priorTotal + amount;
+                else
+                    priorCategoryTotals[txn.CategoryId] = amount;
+                priorMonthsWithData.Add((occurredUtc.Year, occurredUtc.Month));
+            }
+
             if (isPreviousMonth)
             {
                 previousMonthExpenses += amount;
-                if (previousCategoryTotals.TryGetValue(txn.CategoryId, out var previousTotal))
-                    previousCategoryTotals[txn.CategoryId] = previousTotal + amount;
-                else
-                    previousCategoryTotals[txn.CategoryId] = amount;
             }
         }
 
@@ -142,8 +160,8 @@ public sealed class AnalyticsService(
 
         var meanDaily = observedDailyValues.Count > 0 ? observedDailyValues.Average() : (decimal?)null;
         var medianDaily = observedDailyValues.Count > 0 ? ComputeMedian(observedDailyValues) : null;
-        var expenseDayValues = dailyTotals.Values.Where(v => v > 0m).ToList();
-        var peakMedianDaily = expenseDayValues.Count > 0 ? ComputeMedian(expenseDayValues) : null;
+        var discretionaryDayValues = dailyTotalsDiscretionary.Values.Where(v => v > 0m).ToList();
+        var peakMedianDaily = discretionaryDayValues.Count > 0 ? ComputeMedian(discretionaryDayValues) : null;
         decimal? meanMedianRatio = null;
         if (meanDaily.HasValue && medianDaily is > 0m)
             meanMedianRatio = meanDaily.Value / medianDaily.Value;
@@ -155,7 +173,7 @@ public sealed class AnalyticsService(
             ? (totalExpenses - previousMonthExpenses) / previousMonthExpenses * 100
             : (decimal?)null;
 
-        var peaks = BuildPeakDays(dailyTotals, peakMedianDaily, totalExpenses);
+        var peaks = BuildPeakDays(dailyTotalsDiscretionary, peakMedianDaily, totalExpenses);
 
         var categoryItems = currentCategoryTotals.Select(kv =>
         {
@@ -173,9 +191,13 @@ public sealed class AnalyticsService(
                 info.IsMandatory);
         }).OrderByDescending(x => x.Amount).ToList();
 
+        var priorMonthCount = Math.Max(priorMonthsWithData.Count, 1);
+        var averagedPriorTotals = priorCategoryTotals
+            .ToDictionary(kv => kv.Key, kv => kv.Value / priorMonthCount);
+
         var categoryDelta = BuildCategoryDelta(
             currentCategoryTotals.ToDictionary(kv => kv.Key, kv => kv.Value.Total),
-            previousCategoryTotals,
+            averagedPriorTotals,
             categories);
 
         var spending = await BuildSpendingBreakdownAsync(
@@ -186,7 +208,7 @@ public sealed class AnalyticsService(
             monthEndUtc,
             ct);
 
-        var forecast = await BuildForecastAsync(year, month, dailyTotals, previousMonthExpenses, baseCurrencyCode, ct);
+        var forecast = await BuildForecastAsync(year, month, dailyTotals, baseCurrencyCode, ct);
 
         var (liquidAssets, liquidMonths, liquidStatus) = await BuildLiquidMetricsAsync(
             baseCurrencyCode,
@@ -850,7 +872,6 @@ public sealed class AnalyticsService(
         int year,
         int month,
         Dictionary<DateOnly, decimal> dailyTotals,
-        decimal previousMonthTotal,
         string baseCurrencyCode,
         CancellationToken ct)
     {
@@ -861,7 +882,7 @@ public sealed class AnalyticsService(
         var lastDate = isCurrentMonth ? nowUtc.Date : monthEndUtc.AddDays(-1).Date;
 
         var forecastEnd = new DateTime(lastDate.Year, lastDate.Month, lastDate.Day, 0, 0, 0, DateTimeKind.Utc);
-        var forecastStart = forecastEnd.AddDays(-89);
+        var forecastStart = forecastEnd.AddDays(-179);
 
         var forecastTransactions = await context.Transactions
             .Where(t => t.Account.UserId == currentUserService.Id &&
@@ -976,7 +997,14 @@ public sealed class AnalyticsService(
             daysInMonth,
             observedDays,
             observedCumulative);
-        var baselineLimit = previousMonthTotal > 0m ? Round2(previousMonthTotal) : (decimal?)null;
+        var totalHistorical = forecastDailyTotals.Values.Sum();
+        var effectiveStart = forecastDailyTotals.Count > 0
+            ? forecastDailyTotals.Keys.Min().ToDateTime(TimeOnly.MinValue, DateTimeKind.Utc)
+            : forecastEnd;
+        var historicalDayCount = (forecastEnd - effectiveStart).Days + 1;
+        var baselineLimit = historicalDayCount > 0 && totalHistorical > 0
+            ? Round2(totalHistorical / historicalDayCount * daysInMonth)
+            : (decimal?)null;
 
         string? status = null;
         if (baselineLimit.HasValue && forecastTotal.HasValue)

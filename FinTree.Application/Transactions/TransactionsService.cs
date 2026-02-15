@@ -33,7 +33,7 @@ public sealed class TransactionsService(IAppDbContext context, ICurrentUser curr
         EnsureCategoryTypeMatchesTransactionType(categoryAccess.Type, command.Type);
 
         var newTransaction = account.AddTransaction(command.Type, command.CategoryId, command.Amount,
-            command.OccurredAt, command.Description, categoryAccess.IsMandatory);
+            command.OccurredAt, command.Description, command.IsMandatory);
 
         await context.SaveChangesAsync(ct);
         return newTransaction.Id;

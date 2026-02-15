@@ -103,11 +103,11 @@ const summaryMetrics = computed(() => {
     },
     {
       key: 'liquid',
-      label: 'Ликвидные',
+      label: 'Быстрый доступ',
       value: formatCurrency(liquidValue.value, baseCurrency.value),
       icon: 'pi pi-bolt',
       accent: (liquidValue.value > 0 ? 'good' : 'neutral') as 'good' | 'neutral',
-      tooltip: 'Сумма средств на счетах, отмеченных как ликвидные \u2014 те, что можно быстро вывести',
+      tooltip: 'Сумма средств на счетах, которые можно быстро вывести без потерь. Учитывается в финансовой подушке.',
     },
     {
       key: 'return',

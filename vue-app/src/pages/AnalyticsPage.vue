@@ -156,6 +156,12 @@ const summaryMetrics = computed(() => {
       icon: 'pi pi-minus-circle',
       accent: 'expense' as const,
       tooltip: 'Все расходы за выбранный месяц.',
+      secondary: (() => {
+        const momChange = health?.monthOverMonthChangePercent ?? null;
+        return momChange != null
+          ? `${momChange > 0 ? '+' : ''}${momChange.toFixed(1)}% к пр. месяцу`
+          : undefined;
+      })(),
     },
     {
       key: 'balance',
@@ -178,8 +184,8 @@ const healthCards = computed(() => {
     health?.monthIncome ?? null,
     health?.monthTotal ?? null
   );
-  const liquidityAccent = resolveLiquidityStatus(health?.liquidMonthsStatus ?? null);
-  const typicalAccent = resolveMeanMedianStatus(health?.meanMedianRatio ?? null);
+  const cushionAccent = resolveCushionStatus(health?.liquidMonthsStatus ?? null);
+  const stabilityAccent = resolveMeanMedianStatus(health?.meanMedianRatio ?? null);
   const discretionaryAccent = resolveDiscretionaryStatus(health?.discretionarySharePercent ?? null);
 
   return [
@@ -196,25 +202,25 @@ const healthCards = computed(() => {
     },
     {
       key: 'liquidity',
-      title: 'Ликвидность',
+      title: 'Финансовая подушка',
       icon: 'pi pi-shield',
       mainValue: health?.liquidMonths == null ? '—' : `${health.liquidMonths.toFixed(1)} мес.`,
-      mainLabel: 'Ликвидные месяцы',
+      mainLabel: 'Месяцев подушки',
       secondaryValue: formatMoney(health?.liquidAssets ?? null),
-      secondaryLabel: 'ликвидные активы',
-      accent: liquidityAccent,
-      tooltip: 'На сколько месяцев хватит ликвидных средств при текущих расходах. Хорошо — 3+ месяца.',
+      secondaryLabel: 'сумма подушки',
+      accent: cushionAccent,
+      tooltip: 'На сколько месяцев хватит средств из подушки безопасности при текущих расходах. Хорошо — 3+ месяца.',
     },
     {
-      key: 'regularity',
-      title: 'Регулярность',
+      key: 'stability',
+      title: 'Стабильность',
       icon: 'pi pi-chart-line',
-      mainValue: formatRatio(health?.meanMedianRatio ?? null),
-      mainLabel: 'Средний / медианный',
-      secondaryValue: `${formatMoney(health?.meanDaily ?? null)} / ${formatMoney(health?.medianDaily ?? null)}`,
-      secondaryLabel: 'ср. / мед. в день',
-      accent: typicalAccent,
-      tooltip: 'Насколько пики трат поднимают среднее. Чем ближе к 1× — тем стабильнее расходы.',
+      mainValue: formatMoneyPerDay(health?.medianDaily ?? null),
+      mainLabel: 'Типичный расход в день',
+      secondaryValue: resolveStabilityLabel(health?.meanMedianRatio ?? null),
+      secondaryLabel: '',
+      accent: stabilityAccent,
+      tooltip: 'Сколько вы обычно тратите в день. Если бывают крупные разовые траты — среднее будет значительно выше.',
     },
     {
       key: 'discretionary',
@@ -290,12 +296,24 @@ function resolveMeanMedianStatus(value: number | null): 'good' | 'average' | 'po
   return 'poor';
 }
 
-function resolveLiquidityStatus(status: string | null): 'good' | 'average' | 'poor' | 'neutral' {
+function resolveCushionStatus(status: string | null): 'good' | 'average' | 'poor' | 'neutral' {
   if (!status) return 'neutral';
   if (status === 'good') return 'good';
   if (status === 'average') return 'average';
   if (status === 'poor') return 'poor';
   return 'neutral';
+}
+
+function formatMoneyPerDay(value: number | null): string {
+  if (value == null || Number.isNaN(value)) return '—';
+  return `${formatMoney(value)}/день`;
+}
+
+function resolveStabilityLabel(ratio: number | null): string {
+  if (ratio == null || Number.isNaN(ratio)) return '—';
+  if (ratio <= 1.3) return 'Расходы стабильны';
+  if (ratio <= 1.8) return 'Бывают всплески';
+  return 'Частые всплески';
 }
 
 function resolveErrorMessage(error: unknown, fallback: string): string {

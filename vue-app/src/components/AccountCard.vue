@@ -64,7 +64,7 @@ const liquidityModel = computed({
   set: (value: boolean) => emit('updateLiquidity', value),
 })
 
-const liquidityLabel = computed(() => (props.account.isLiquid ? 'Ликвидный' : 'Неликвидный'))
+const liquidityLabel = computed(() => (props.account.isLiquid ? 'Быстрый доступ' : 'Долгосрочный'))
 
 const menuItems = computed<MenuItem[]>(() => {
   if (props.readonly || props.interactionLocked) return []
@@ -180,7 +180,7 @@ const toggleMenu = (event: Event) => {
         </dd>
       </div>
       <div class="meta-row">
-        <dt>Ликвидность</dt>
+        <dt>Доступность</dt>
         <dd>
           <div
             v-if="!readonly && !interactionLocked"

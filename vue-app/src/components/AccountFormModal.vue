@@ -312,7 +312,7 @@ const handleSubmit = async () => {
 
       <FormField
         v-if="!isEditing"
-        label="Ликвидный счет"
+        label="Доступность средств"
       >
         <template #default="{ fieldAttrs }">
           <div class="liquidity-toggle">
@@ -320,11 +320,11 @@ const handleSubmit = async () => {
               v-bind="fieldAttrs"
               v-model="isLiquid"
             />
-            <span>{{ isLiquid ? 'Учитывать в ликвидных' : 'Не учитывать в ликвидных' }}</span>
+            <span>{{ isLiquid ? 'Быстрый доступ' : 'Долгосрочный' }}</span>
           </div>
         </template>
         <template #hint>
-          Учитывается при расчете «ликвидных месяцев» в аналитике.
+          Можно ли быстро снять деньги без потерь. Счета с быстрым доступом учитываются в финансовой подушке.
         </template>
       </FormField>
 

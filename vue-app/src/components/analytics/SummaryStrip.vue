@@ -96,6 +96,12 @@ const iconAccentClass = (accent: MetricAccent) => `summary-strip__icon--${accent
           >
             {{ metric.value }}
           </p>
+          <p
+            v-if="metric.secondary"
+            class="summary-strip__secondary"
+          >
+            {{ metric.secondary }}
+          </p>
         </div>
       </div>
     </template>
