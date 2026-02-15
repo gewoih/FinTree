@@ -135,6 +135,7 @@ onMounted(() => {
             ref="userMenuRef"
             :model="userMenuItems"
             popup
+            :base-z-index="1030"
           />
         </div>
       </div>
