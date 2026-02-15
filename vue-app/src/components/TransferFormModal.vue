@@ -35,6 +35,7 @@ const fromAmount = ref<number | null>(null);
 const toAmount = ref<number | null>(null);
 const feeAmount = ref<number | null>(null);
 const description = ref<string>('');
+const today = new Date();
 const date = ref<Date>(new Date());
 const isDeleting = ref(false);
 
@@ -438,6 +439,8 @@ const handleDelete = () => {
             v-model="date"
             date-format="dd.mm.yy"
             :show-icon="true"
+            :select-other-months="true"
+            :max-date="today"
             :disabled="props.readonly"
             class="w-full"
           />

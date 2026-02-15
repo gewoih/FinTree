@@ -30,6 +30,7 @@ const attrs = useAttrs();
     :manual-input="props.manualInput"
     :date-format="props.dateFormat"
     :show-button-bar="props.showButtonBar"
+    :select-other-months="true"
     @update:model-value="val => emit('update:modelValue', val as Date[] | Date | null)"
   />
 </template>
