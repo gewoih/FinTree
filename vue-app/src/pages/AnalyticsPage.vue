@@ -188,6 +188,7 @@ const healthCards = computed(() => {
       title: 'Сбережения',
       icon: 'pi pi-percentage',
       mainValue: health?.savingsRate == null ? '—' : formatPercent(health.savingsRate, 1),
+      mainLabel: '',
       secondaryValue: formatSignedMoney(health?.netCashflow ?? null),
       secondaryLabel: 'сохранено',
       accent: savingsAccent,
@@ -198,6 +199,7 @@ const healthCards = computed(() => {
       title: 'Финансовая подушка',
       icon: 'pi pi-shield',
       mainValue: health?.liquidMonths == null ? '—' : `${health.liquidMonths.toFixed(1)} мес.`,
+      mainLabel: '',
       secondaryValue: formatMoney(health?.liquidAssets ?? null),
       secondaryLabel: 'сумма подушки',
       accent: cushionAccent,
@@ -208,6 +210,7 @@ const healthCards = computed(() => {
       title: 'Индекс стабильности',
       icon: 'pi pi-chart-line',
       mainValue: health?.stabilityIndex == null ? '-' : health?.stabilityIndex.toString(),
+      mainLabel: '',
       secondaryValue: resolveStabilityLabel(health?.stabilityIndex ?? null),
       secondaryLabel: '',
       accent: stabilityAccent,
@@ -218,6 +221,7 @@ const healthCards = computed(() => {
       title: 'Необязательные',
       icon: 'pi pi-shopping-bag',
       mainValue: formatPercentValue(health?.discretionarySharePercent ?? null),
+      mainLabel: '',
       secondaryValue: formatMoney(health?.discretionaryTotal ?? null),
       secondaryLabel: 'сумма',
       accent: discretionaryAccent,
@@ -250,11 +254,6 @@ function formatSignedMoney(value: number | null): string {
   if (value == null || Number.isNaN(value)) return '—';
   const sign = value < 0 ? '−' : '+';
   return `${sign} ${formatMoney(Math.abs(value))}`;
-}
-
-function formatRatio(value: number | null, fractionDigits = 2): string {
-  if (value == null || Number.isNaN(value)) return '—';
-  return `${value.toFixed(fractionDigits)}×`;
 }
 
 // --- Status resolvers ---
@@ -292,11 +291,6 @@ function resolveCushionStatus(status: string | null): 'good' | 'average' | 'poor
   if (status === 'average') return 'average';
   if (status === 'poor') return 'poor';
   return 'neutral';
-}
-
-function formatMoneyPerDay(value: number | null): string {
-  if (value == null || Number.isNaN(value)) return '—';
-  return `${formatMoney(value)}/день`;
 }
 
 function resolveStabilityLabel(index: number | null): string {
