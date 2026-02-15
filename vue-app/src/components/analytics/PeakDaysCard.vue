@@ -57,14 +57,15 @@ const shareAccent = computed(() => {
 <template>
   <div class="peak-days">
     <div class="peak-days__header">
-      <div>
-        <h3
-          v-tooltip.top="'Дни, когда расходы значительно превысили среднедневной уровень. Помогает выявить крупные разовые траты.'"
-          class="peak-days__title"
-        >
+      <div class="peak-days__title-row">
+        <h3 class="peak-days__title">
           <i class="pi pi-bolt" />
           Пиковые дни
         </h3>
+        <i
+          v-tooltip.top="'Дни, когда расходы значительно превысили среднедневной уровень. Помогает выявить крупные разовые траты.'"
+          class="pi pi-question-circle peak-days__hint"
+        />
       </div>
     </div>
 
@@ -179,9 +180,13 @@ const shareAccent = computed(() => {
   justify-content: space-between;
 }
 
-.peak-days__title {
-  cursor: help;
+.peak-days__title-row {
+  display: inline-flex;
+  gap: var(--ft-space-2);
+  align-items: center;
+}
 
+.peak-days__title {
   display: inline-flex;
   gap: var(--ft-space-2);
   align-items: center;
@@ -193,9 +198,20 @@ const shareAccent = computed(() => {
   color: var(--ft-text-primary);
 }
 
-.peak-days__title i {
+.peak-days__title i.pi-bolt {
   font-size: 1rem;
   color: var(--ft-warning-400);
+}
+
+.peak-days__hint {
+  cursor: help;
+  font-size: 0.85rem;
+  color: var(--ft-text-muted);
+  transition: color var(--ft-transition-fast);
+}
+
+.peak-days__hint:hover {
+  color: var(--ft-text-secondary);
 }
 
 .peak-days__loading {

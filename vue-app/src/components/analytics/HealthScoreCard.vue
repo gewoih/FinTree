@@ -17,10 +17,7 @@ const valueClass = (accent: HealthAccent) => `health-score__main-value--${accent
 </script>
 
 <template>
-  <div
-    v-tooltip.bottom="tooltip"
-    class="health-score"
-  >
+  <div class="health-score">
     <div class="health-score__header">
       <span
         class="health-score__icon"
@@ -31,6 +28,10 @@ const valueClass = (accent: HealthAccent) => `health-score__main-value--${accent
       <p class="health-score__title">
         {{ title }}
       </p>
+      <i
+        v-tooltip.top="tooltip"
+        class="pi pi-question-circle health-score__hint"
+      />
     </div>
 
     <div class="health-score__body">
@@ -65,8 +66,6 @@ const valueClass = (accent: HealthAccent) => `health-score__main-value--${accent
 
 <style scoped>
 .health-score {
-  cursor: help;
-
   position: relative;
 
   overflow: hidden;
@@ -80,13 +79,6 @@ const valueClass = (accent: HealthAccent) => `health-score__main-value--${accent
   border: 1px solid var(--ft-border-subtle);
   border-radius: var(--ft-radius-2xl);
   box-shadow: var(--ft-shadow-sm);
-
-  transition: transform var(--ft-transition-fast), box-shadow var(--ft-transition-fast);
-}
-
-.health-score:hover {
-  transform: translateY(-2px);
-  box-shadow: var(--ft-shadow-md);
 }
 
 .health-score__header {
@@ -133,6 +125,18 @@ const valueClass = (accent: HealthAccent) => `health-score__main-value--${accent
   margin: 0;
   font-size: var(--ft-text-base);
   font-weight: var(--ft-font-semibold);
+  color: var(--ft-text-secondary);
+}
+
+.health-score__hint {
+  cursor: help;
+  margin-left: auto;
+  font-size: 0.85rem;
+  color: var(--ft-text-muted);
+  transition: color var(--ft-transition-fast);
+}
+
+.health-score__hint:hover {
   color: var(--ft-text-secondary);
 }
 

@@ -121,12 +121,15 @@ const chartOptions = computed(() => ({
   <div class="bars-card">
     <div class="bars-card__head">
       <div>
-        <h3
-          v-tooltip.top="'Как менялись расходы день за днём, по неделям или месяцам. Пунктирная линия — среднее значение.'"
-          class="bars-card__title"
-        >
-          Динамика расходов
-        </h3>
+        <div class="bars-card__title-row">
+          <h3 class="bars-card__title">
+            Динамика расходов
+          </h3>
+          <i
+            v-tooltip.top="'Как менялись расходы день за днём, по неделям или месяцам. Пунктирная линия — среднее значение.'"
+            class="pi pi-question-circle bars-card__hint"
+          />
+        </div>
         <p class="bars-card__subtitle">
           Как менялись расходы по выбранной детализации
         </p>
@@ -239,14 +242,29 @@ const chartOptions = computed(() => ({
   justify-content: space-between;
 }
 
-.bars-card__title {
-  cursor: help;
+.bars-card__title-row {
+  display: inline-flex;
+  gap: var(--ft-space-2);
+  align-items: center;
+}
 
+.bars-card__title {
   margin: 0;
 
   font-size: var(--ft-text-lg);
   font-weight: var(--ft-font-semibold);
   color: var(--ft-text-primary);
+}
+
+.bars-card__hint {
+  cursor: help;
+  font-size: 0.85rem;
+  color: var(--ft-text-muted);
+  transition: color var(--ft-transition-fast);
+}
+
+.bars-card__hint:hover {
+  color: var(--ft-text-secondary);
 }
 
 .bars-card__subtitle {

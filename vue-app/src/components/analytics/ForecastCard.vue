@@ -115,12 +115,15 @@ const chartOptions = computed(() => ({
   <div class="forecast-card">
     <div class="forecast-card__head">
       <div>
-        <h3
-          v-tooltip.top="'Оценка расходов до конца месяца на основе текущего темпа трат. Три сценария: оптимистичный, базовый и рисковый.'"
-          class="forecast-card__title"
-        >
-          Прогноз расходов
-        </h3>
+        <div class="forecast-card__title-row">
+          <h3 class="forecast-card__title">
+            Прогноз расходов
+          </h3>
+          <i
+            v-tooltip.top="'Оценка расходов до конца месяца на основе текущего темпа трат. Три сценария: оптимистичный, базовый и рисковый.'"
+            class="pi pi-question-circle forecast-card__hint"
+          />
+        </div>
         <p class="forecast-card__subtitle">
           Оценка расходов до конца месяца
         </p>
@@ -291,14 +294,29 @@ const chartOptions = computed(() => ({
   justify-content: space-between;
 }
 
-.forecast-card__title {
-  cursor: help;
+.forecast-card__title-row {
+  display: inline-flex;
+  gap: var(--ft-space-2);
+  align-items: center;
+}
 
+.forecast-card__title {
   margin: 0;
 
   font-size: var(--ft-text-lg);
   font-weight: var(--ft-font-semibold);
   color: var(--ft-text-primary);
+}
+
+.forecast-card__hint {
+  cursor: help;
+  font-size: 0.85rem;
+  color: var(--ft-text-muted);
+  transition: color var(--ft-transition-fast);
+}
+
+.forecast-card__hint:hover {
+  color: var(--ft-text-secondary);
 }
 
 .forecast-card__subtitle {

@@ -72,12 +72,15 @@ const formatPercent = (value: number | null) =>
 <template>
   <div class="delta-card">
     <div class="delta-card__head">
-      <h3
-        v-tooltip.top="'Какие категории расходов выросли или снизились по сравнению с прошлым месяцем. Помогает увидеть тренды.'"
-        class="delta-card__title"
-      >
-        Изменения по категориям
-      </h3>
+      <div class="delta-card__title-row">
+        <h3 class="delta-card__title">
+          Изменения по категориям
+        </h3>
+        <i
+          v-tooltip.top="'Какие категории расходов выросли или снизились по сравнению с прошлым месяцем. Помогает увидеть тренды.'"
+          class="pi pi-question-circle delta-card__hint"
+        />
+      </div>
       <p class="delta-card__subtitle">
         Сравнение с прошлым месяцем ({{ periodLabel }})
       </p>
@@ -250,14 +253,29 @@ const formatPercent = (value: number | null) =>
   gap: var(--ft-space-1);
 }
 
-.delta-card__title {
-  cursor: help;
+.delta-card__title-row {
+  display: inline-flex;
+  gap: var(--ft-space-2);
+  align-items: center;
+}
 
+.delta-card__title {
   margin: 0;
 
   font-size: var(--ft-text-lg);
   font-weight: var(--ft-font-semibold);
   color: var(--ft-text-primary);
+}
+
+.delta-card__hint {
+  cursor: help;
+  font-size: 0.85rem;
+  color: var(--ft-text-muted);
+  transition: color var(--ft-transition-fast);
+}
+
+.delta-card__hint:hover {
+  color: var(--ft-text-secondary);
 }
 
 .delta-card__subtitle {

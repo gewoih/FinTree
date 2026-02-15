@@ -81,7 +81,6 @@ const iconAccentClass = (accent: MetricAccent) => `summary-strip__icon--${accent
       <div
         v-for="metric in metrics"
         :key="metric.key"
-        v-tooltip.bottom="metric.tooltip"
         class="summary-strip__item"
       >
         <span
@@ -93,6 +92,10 @@ const iconAccentClass = (accent: MetricAccent) => `summary-strip__icon--${accent
         <div class="summary-strip__text">
           <p class="summary-strip__label">
             {{ metric.label }}
+            <i
+              v-tooltip.top="metric.tooltip"
+              class="pi pi-question-circle summary-strip__hint"
+            />
           </p>
           <p
             class="summary-strip__value"
@@ -127,8 +130,6 @@ const iconAccentClass = (accent: MetricAccent) => `summary-strip__icon--${accent
 }
 
 .summary-strip__item {
-  cursor: help;
-
   display: flex;
   gap: var(--ft-space-3);
   align-items: flex-start;
@@ -136,12 +137,6 @@ const iconAccentClass = (accent: MetricAccent) => `summary-strip__icon--${accent
   padding: var(--ft-space-3);
 
   border-radius: var(--ft-radius-xl);
-
-  transition: background var(--ft-transition-fast);
-}
-
-.summary-strip__item:hover {
-  background: color-mix(in srgb, var(--ft-surface-raised) 60%, transparent);
 }
 
 .summary-strip__item--skeleton {
@@ -204,6 +199,10 @@ const iconAccentClass = (accent: MetricAccent) => `summary-strip__icon--${accent
 }
 
 .summary-strip__label {
+  display: flex;
+  gap: var(--ft-space-1);
+  align-items: center;
+
   margin: 0;
 
   font-size: var(--ft-text-sm);
@@ -211,6 +210,18 @@ const iconAccentClass = (accent: MetricAccent) => `summary-strip__icon--${accent
   color: var(--ft-text-secondary);
   text-transform: uppercase;
   letter-spacing: 0.04em;
+}
+
+.summary-strip__hint {
+  cursor: help;
+  font-size: 0.75rem;
+  color: var(--ft-text-muted);
+  text-transform: none;
+  transition: color var(--ft-transition-fast);
+}
+
+.summary-strip__hint:hover {
+  color: var(--ft-text-secondary);
 }
 
 .summary-strip__value {

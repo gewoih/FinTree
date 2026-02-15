@@ -111,12 +111,15 @@ const chartOptions = computed(() => ({
   <div class="donut-card">
     <div class="donut-card__head">
       <div>
-        <h3
-          v-tooltip.top="'Показывает, на что уходят деньги. Кликните на категорию, чтобы увидеть транзакции.'"
-          class="donut-card__title"
-        >
-          Расходы по категориям
-        </h3>
+        <div class="donut-card__title-row">
+          <h3 class="donut-card__title">
+            Расходы по категориям
+          </h3>
+          <i
+            v-tooltip.top="'Показывает, на что уходят деньги. Кликните на категорию, чтобы увидеть транзакции.'"
+            class="pi pi-question-circle donut-card__hint"
+          />
+        </div>
         <p class="donut-card__subtitle">
           Распределение за выбранный месяц
         </p>
@@ -273,14 +276,29 @@ const chartOptions = computed(() => ({
   justify-content: space-between;
 }
 
-.donut-card__title {
-  cursor: help;
+.donut-card__title-row {
+  display: inline-flex;
+  gap: var(--ft-space-2);
+  align-items: center;
+}
 
+.donut-card__title {
   margin: 0;
 
   font-size: var(--ft-text-lg);
   font-weight: var(--ft-font-semibold);
   color: var(--ft-text-primary);
+}
+
+.donut-card__hint {
+  cursor: help;
+  font-size: 0.85rem;
+  color: var(--ft-text-muted);
+  transition: color var(--ft-transition-fast);
+}
+
+.donut-card__hint:hover {
+  color: var(--ft-text-secondary);
 }
 
 .donut-card__subtitle {
