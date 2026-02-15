@@ -162,9 +162,14 @@ public sealed class AnalyticsService(
         var medianDaily = observedDailyValues.Count > 0 ? ComputeMedian(observedDailyValues) : null;
         var discretionaryDayValues = dailyTotalsDiscretionary.Values.Where(v => v > 0m).ToList();
         var peakMedianDaily = discretionaryDayValues.Count > 0 ? ComputeMedian(discretionaryDayValues) : null;
-        decimal? meanMedianRatio = null;
-        if (meanDaily.HasValue && medianDaily is > 0m)
-            meanMedianRatio = meanDaily.Value / medianDaily.Value;
+        decimal? stabilityIndex = null;
+        if (observedDailyValues.Count >= 4 && medianDaily is > 0m)
+        {
+            var q1 = ComputeQuantile(observedDailyValues, 0.25d);
+            var q3 = ComputeQuantile(observedDailyValues, 0.75d);
+            if (q1.HasValue && q3.HasValue)
+                stabilityIndex = (q3.Value - q1.Value) / medianDaily.Value;
+        }
 
         var netCashflow = totalIncome - totalExpenses;
         var savingsRate = totalIncome > 0m ? netCashflow / totalIncome : (decimal?)null;
@@ -221,7 +226,7 @@ public sealed class AnalyticsService(
             MonthTotal: Round2(totalExpenses),
             MeanDaily: meanDaily.HasValue ? Round2(meanDaily.Value) : null,
             MedianDaily: medianDaily.HasValue ? Round2(medianDaily.Value) : null,
-            MeanMedianRatio: meanMedianRatio.HasValue ? Round2(meanMedianRatio.Value) : null,
+            StabilityIndex: stabilityIndex.HasValue ? Round2(stabilityIndex.Value) : null,
             SavingsRate: savingsRate,
             NetCashflow: Round2(netCashflow),
             DiscretionaryTotal: Round2(discretionaryTotal),
@@ -743,12 +748,13 @@ public sealed class AnalyticsService(
         var increased = entries
             .Where(x => x.DeltaAmount > 0)
             .OrderByDescending(x => x.DeltaAmount)
-            .Take(4)
+            .Take(3)
             .ToList();
+        
         var decreased = entries
             .Where(x => x.DeltaAmount < 0)
             .OrderBy(x => x.DeltaAmount)
-            .Take(4)
+            .Take(3)
             .ToList();
 
         return new CategoryDeltaDto(increased, decreased);

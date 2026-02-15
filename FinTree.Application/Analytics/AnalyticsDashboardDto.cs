@@ -17,7 +17,7 @@ public readonly record struct FinancialHealthSummaryDto(
     decimal? MonthTotal,
     decimal? MeanDaily,
     decimal? MedianDaily,
-    decimal? MeanMedianRatio,
+    decimal? StabilityIndex,
     decimal? SavingsRate,
     decimal? NetCashflow,
     decimal? DiscretionaryTotal,

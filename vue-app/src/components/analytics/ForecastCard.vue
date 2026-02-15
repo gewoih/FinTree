@@ -237,7 +237,7 @@ const chartOptions = computed(() => ({
           v-if="hasBaseline"
           class="forecast-chip forecast-chip--outline"
         >
-          <span class="forecast-chip__label">Лимит</span>
+          <span class="forecast-chip__label">Базовые расходы</span>
           <span class="forecast-chip__value">{{ formattedLimit }}</span>
         </div>
       </div>
@@ -264,7 +264,7 @@ const chartOptions = computed(() => ({
         </span>
         <span class="forecast-legend__item">
           <span class="forecast-legend__line forecast-legend__line--forecast" />
-          Базовый
+          Прогноз
         </span>
         <span class="forecast-legend__item">
           <span class="forecast-legend__line forecast-legend__line--optimistic" />
@@ -279,7 +279,7 @@ const chartOptions = computed(() => ({
           class="forecast-legend__item"
         >
           <span class="forecast-legend__line forecast-legend__line--baseline" />
-          Лимит
+          Базовые расходы
         </span>
       </div>
     </template>

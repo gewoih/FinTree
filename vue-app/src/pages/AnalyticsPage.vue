@@ -131,14 +131,9 @@ async function handleSkipOnboarding() {
 const summaryMetrics = computed(() => {
   const health = dashboard.value?.health;
   const netCashflow = health?.netCashflow ?? null;
-  const savingsRate = health?.savingsRate;
 
   const balanceAccent: 'good' | 'poor' | 'neutral' =
     netCashflow == null ? 'neutral' : netCashflow >= 0 ? 'good' : 'poor';
-
-  const savingsLabel = savingsRate != null
-    ? `Доля сбережений: ${(savingsRate * 100).toFixed(1)}%`
-    : undefined;
 
   return [
     {
@@ -147,7 +142,7 @@ const summaryMetrics = computed(() => {
       value: formatMoney(health?.monthIncome ?? null),
       icon: 'pi pi-plus-circle',
       accent: 'income' as const,
-      tooltip: 'Все поступления за выбранный месяц.',
+      tooltip: 'Все доходы за выбранный месяц.',
     },
     {
       key: 'expense',
@@ -159,7 +154,7 @@ const summaryMetrics = computed(() => {
       secondary: (() => {
         const momChange = health?.monthOverMonthChangePercent ?? null;
         return momChange != null
-          ? `${momChange > 0 ? '+' : ''}${momChange.toFixed(1)}% к пр. месяцу`
+          ? `${momChange > 0 ? '+' : ''}${momChange.toFixed(1)}% к пред. месяцу`
           : undefined;
       })(),
     },
@@ -169,8 +164,7 @@ const summaryMetrics = computed(() => {
       value: formatSignedMoney(netCashflow),
       icon: 'pi pi-wallet',
       accent: balanceAccent,
-      tooltip: 'Доходы минус расходы. Положительный баланс — вы в плюсе.',
-      secondary: savingsLabel,
+      tooltip: 'Доходы минус расходы.',
     },
   ];
 });
@@ -185,7 +179,7 @@ const healthCards = computed(() => {
     health?.monthTotal ?? null
   );
   const cushionAccent = resolveCushionStatus(health?.liquidMonthsStatus ?? null);
-  const stabilityAccent = resolveMeanMedianStatus(health?.meanMedianRatio ?? null);
+  const stabilityAccent = resolveStabilityStatus(health?.stabilityIndex ?? null);
   const discretionaryAccent = resolveDiscretionaryStatus(health?.discretionarySharePercent ?? null);
 
   return [
@@ -194,44 +188,40 @@ const healthCards = computed(() => {
       title: 'Сбережения',
       icon: 'pi pi-percentage',
       mainValue: health?.savingsRate == null ? '—' : formatPercent(health.savingsRate, 1),
-      mainLabel: 'Доля сбережений',
       secondaryValue: formatSignedMoney(health?.netCashflow ?? null),
-      secondaryLabel: 'чистый поток',
+      secondaryLabel: 'сохранено',
       accent: savingsAccent,
-      tooltip: 'Часть дохода, которая осталась после расходов. Хорошо, если выше 20%.',
+      tooltip: 'Ваша сэкономленная часть от доходов.',
     },
     {
       key: 'liquidity',
       title: 'Финансовая подушка',
       icon: 'pi pi-shield',
       mainValue: health?.liquidMonths == null ? '—' : `${health.liquidMonths.toFixed(1)} мес.`,
-      mainLabel: 'Месяцев подушки',
       secondaryValue: formatMoney(health?.liquidAssets ?? null),
       secondaryLabel: 'сумма подушки',
       accent: cushionAccent,
-      tooltip: 'На сколько месяцев хватит средств из подушки безопасности при текущих расходах. Хорошо — 3+ месяца.',
+      tooltip: 'На сколько месяцев жизни хватит средств из подушки безопасности.',
     },
     {
       key: 'stability',
-      title: 'Стабильность',
+      title: 'Индекс стабильности',
       icon: 'pi pi-chart-line',
-      mainValue: formatMoneyPerDay(health?.medianDaily ?? null),
-      mainLabel: 'Типичный расход в день',
-      secondaryValue: resolveStabilityLabel(health?.meanMedianRatio ?? null),
+      mainValue: health?.stabilityIndex == null ? '-' : health?.stabilityIndex.toString(),
+      secondaryValue: resolveStabilityLabel(health?.stabilityIndex ?? null),
       secondaryLabel: '',
       accent: stabilityAccent,
-      tooltip: 'Сколько вы обычно тратите в день. Если бывают крупные разовые траты — среднее будет значительно выше.',
+      tooltip: 'Насколько стабильны ваши расходы. Чем ниже ниже индекс — тем лучше.',
     },
     {
       key: 'discretionary',
       title: 'Необязательные',
       icon: 'pi pi-shopping-bag',
       mainValue: formatPercentValue(health?.discretionarySharePercent ?? null),
-      mainLabel: 'Доля необязательных',
       secondaryValue: formatMoney(health?.discretionaryTotal ?? null),
       secondaryLabel: 'сумма',
       accent: discretionaryAccent,
-      tooltip: 'Часть расходов на необязательные категории. Хорошо, если ниже 25%.',
+      tooltip: 'Ваши необязательные расходы.',
     },
   ];
 });
@@ -289,10 +279,10 @@ function resolveDiscretionaryStatus(value: number | null): 'good' | 'average' | 
   return 'poor';
 }
 
-function resolveMeanMedianStatus(value: number | null): 'good' | 'average' | 'poor' | 'neutral' {
+function resolveStabilityStatus(value: number | null): 'good' | 'average' | 'poor' | 'neutral' {
   if (value == null || Number.isNaN(value)) return 'neutral';
-  if (value <= 1.3) return 'good';
-  if (value <= 1.8) return 'average';
+  if (value <= 1.0) return 'good';
+  if (value <= 2.0) return 'average';
   return 'poor';
 }
 
@@ -309,11 +299,11 @@ function formatMoneyPerDay(value: number | null): string {
   return `${formatMoney(value)}/день`;
 }
 
-function resolveStabilityLabel(ratio: number | null): string {
-  if (ratio == null || Number.isNaN(ratio)) return '—';
-  if (ratio <= 1.3) return 'Расходы стабильны';
-  if (ratio <= 1.8) return 'Бывают всплески';
-  return 'Частые всплески';
+function resolveStabilityLabel(index: number | null): string {
+  if (index == null || Number.isNaN(index)) return '—';
+  if (index <= 1.0) return 'Ваши расходы стабильны';
+  if (index <= 2.0) return 'Редкие всплески расходов';
+  return 'Частые всплески расходов, много крупных покупок';
 }
 
 function resolveErrorMessage(error: unknown, fallback: string): string {
