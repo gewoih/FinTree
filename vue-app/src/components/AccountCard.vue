@@ -312,17 +312,8 @@ const toggleMenu = (event: Event) => {
   width: 44px;
   min-width: 44px;
   height: 44px;
-  padding: 0;
 
   border-radius: var(--ft-radius-lg);
-}
-
-.account-card__icon-button :deep(.p-button-icon) {
-  margin: 0;
-}
-
-.account-card__icon-button :deep(.p-button-label) {
-  display: none;
 }
 
 .account-card__badges {

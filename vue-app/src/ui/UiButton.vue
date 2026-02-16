@@ -41,12 +41,17 @@ const severity = computed(() => {
 
 const isText = computed(() => props.variant === 'ghost');
 const isOutlined = computed(() => props.variant === 'secondary');
+const isIconOnly = computed(() => props.icon && !props.label);
 
 const buttonClasses = computed(() => [
   'ui-button',
   `ui-button--${props.size}`,
   `ui-button--${props.variant}`,
-  { 'ui-button--block': props.block, 'ui-button--rounded': props.rounded },
+  {
+    'ui-button--block': props.block,
+    'ui-button--rounded': props.rounded,
+    'ui-button--icon-only': isIconOnly.value
+  },
 ]);
 </script>
 
@@ -99,6 +104,20 @@ const buttonClasses = computed(() => [
     box-shadow var(--ft-transition-fast),
     background-color var(--ft-transition-fast),
     border-color var(--ft-transition-fast);
+}
+
+/* Icon-only buttons - ensure perfect centering */
+.ui-button--icon-only {
+  gap: 0 !important;
+  padding: 0 !important;
+}
+
+.ui-button--icon-only :deep(.p-button-icon) {
+  margin: 0 !important;
+}
+
+.ui-button--icon-only :deep(.p-button-label) {
+  display: none;
 }
 
 .ui-button--sm {

@@ -667,15 +667,10 @@ const handleDelete = () => {
 }
 
 .category-form__danger-button {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-
   width: 40px;
   min-width: 40px;
   height: 40px;
   min-height: 40px;
-  padding: 0;
 
   line-height: 1;
   color: var(--ft-danger-500);
@@ -695,17 +690,7 @@ const handleDelete = () => {
   border-color: var(--ft-danger-500);
 }
 
-.category-form__danger-button :deep(.p-button-label) {
-  display: none;
-}
-
 .category-form__danger-button :deep(.p-button-icon) {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-
-  margin: 0;
-
   font-size: 1rem;
 }
 
