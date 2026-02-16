@@ -79,9 +79,24 @@
     transition: transform var(--ft-transition-fast), box-shadow var(--ft-transition-fast);
   }
 
-  .p-button:not(.p-button-link):not(.p-button-text):hover:not(:disabled) {
+  /* Primary buttons get blue glow */
+  .p-button:not(.p-button-secondary):not(.p-button-outlined):not(.p-button-text):not(.p-button-link):not(.p-button-danger):hover:not(:disabled) {
     transform: translateY(-1px);
     box-shadow: 0 8px 20px color-mix(in srgb, var(--ft-primary-500) 40%, transparent);
+  }
+
+  /* Secondary/outlined/text buttons get neutral shadow */
+  .p-button.p-button-secondary:hover:not(:disabled),
+  .p-button.p-button-outlined:hover:not(:disabled),
+  .p-button.p-button-text:hover:not(:disabled) {
+    transform: translateY(-1px);
+    box-shadow: var(--ft-shadow-md);
+  }
+
+  /* Danger buttons get red glow */
+  .p-button.p-button-danger:hover:not(:disabled) {
+    transform: translateY(-1px);
+    box-shadow: 0 8px 20px color-mix(in srgb, var(--ft-danger-500) 40%, transparent);
   }
 
   .p-button:not(.p-button-link):active:not(:disabled) {

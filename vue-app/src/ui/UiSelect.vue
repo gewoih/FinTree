@@ -57,4 +57,10 @@ const attrs = useAttrs();
   min-height: var(--ft-control-height);
   border-radius: var(--ft-radius-lg);
 }
+
+/* Ensure no double borders from nested elements */
+.ui-select :deep(.p-select-label),
+.ui-select :deep(.p-select-trigger) {
+  border: none;
+}
 </style>

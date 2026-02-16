@@ -6,7 +6,7 @@ const route = useRoute()
 const tabs = [
   { label: 'Обзор', icon: 'pi-chart-line', to: '/analytics' },
   { label: 'Счета', icon: 'pi-wallet', to: '/accounts' },
-  { label: 'Транзакции', icon: 'pi-list', to: '/expenses' },
+  { label: 'Транзакции', icon: 'pi-list', to: '/transactions' },
   { label: 'Инвестиции', icon: 'pi-briefcase', to: '/investments' },
   { label: 'Ещё', icon: 'pi-ellipsis-h', to: '/profile' }
 ]

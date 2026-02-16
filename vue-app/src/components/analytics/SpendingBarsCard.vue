@@ -1,10 +1,10 @@
 <script setup lang="ts">
 import { computed } from 'vue';
 import type { ChartData, ChartDataset, TooltipItem } from 'chart.js';
-import SelectButton from 'primevue/selectbutton';
 import Skeleton from 'primevue/skeleton';
 import Message from 'primevue/message';
 import UiButton from '../../ui/UiButton.vue';
+import UiSelect from '../../ui/UiSelect.vue';
 import Chart from 'primevue/chart';
 import type { ExpenseGranularity } from '../../types/analytics';
 import { useChartColors } from '../../composables/useChartColors';
@@ -134,12 +134,12 @@ const chartOptions = computed(() => ({
           Как менялись расходы по выбранной детализации
         </p>
       </div>
-      <SelectButton
+      <UiSelect
         :model-value="granularity"
         :options="granularityOptions"
         option-label="label"
         option-value="value"
-        class="bars-card__toggle"
+        class="bars-card__select"
         @update:model-value="emit('update:granularity', $event)"
       />
     </div>
@@ -335,6 +335,13 @@ const chartOptions = computed(() => ({
   max-height: 100%;
 }
 
+@media (width >= 768px) {
+  .bars-card__select {
+    min-width: 180px;
+    max-width: 220px;
+  }
+}
+
 @media (width <= 640px) {
   .bars-card__head {
     flex-direction: column;
@@ -345,17 +352,8 @@ const chartOptions = computed(() => ({
     font-size: var(--ft-text-xs);
   }
 
-  .bars-card__toggle {
+  .bars-card__select {
     width: 100%;
-  }
-
-  .bars-card__toggle :deep(.p-button) {
-    flex: 1 1 0;
-    min-width: 0;
-  }
-
-  .bars-card__toggle :deep(.p-button-label) {
-    font-size: var(--ft-text-xs);
   }
 
   .bars-card__chart {

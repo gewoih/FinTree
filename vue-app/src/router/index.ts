@@ -75,12 +75,12 @@ export const router = createRouter({
     {
       path: '/categories',
       name: 'categories',
-      redirect: { path: '/profile', hash: '#categories' },
+      component: () => import('../pages/CategoriesPage.vue'),
       meta: { title: 'Categories', requiresAuth: true },
     },
     {
-      path: '/expenses',
-      name: 'expenses',
+      path: '/transactions',
+      name: 'transactions',
       component: () => import('../pages/ExpensesPage.vue'),
       meta: { title: 'Transactions', requiresAuth: true },
     },
@@ -95,6 +95,10 @@ export const router = createRouter({
       name: 'profile',
       component: () => import('../pages/ProfilePage.vue'),
       meta: { title: 'Profile', requiresAuth: true },
+    },
+    {
+      path: '/expenses',
+      redirect: '/transactions',
     },
     {
       path: '/:pathMatch(.*)*',

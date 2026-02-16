@@ -1,10 +1,10 @@
 <script setup lang="ts">
 import { computed } from 'vue';
 import type { ChartData, Plugin } from 'chart.js';
-import SelectButton from 'primevue/selectbutton';
 import Skeleton from 'primevue/skeleton';
 import Message from 'primevue/message';
 import UiButton from '../../ui/UiButton.vue';
+import UiSelect from '../../ui/UiSelect.vue';
 import Chart from 'primevue/chart';
 import type { CategoryLegendItem, CategoryScope } from '../../types/analytics';
 import { useChartColors } from '../../composables/useChartColors';
@@ -124,12 +124,12 @@ const chartOptions = computed(() => ({
           Распределение за выбранный месяц
         </p>
       </div>
-      <SelectButton
+      <UiSelect
         :model-value="scope"
         :options="scopeOptions"
         option-label="label"
         option-value="value"
-        class="donut-card__scope-toggle"
+        class="donut-card__scope-select"
         @update:model-value="emit('update:scope', $event)"
       />
     </div>
@@ -449,6 +449,11 @@ const chartOptions = computed(() => ({
 }
 
 @media (width >= 768px) {
+  .donut-card__scope-select {
+    min-width: 180px;
+    max-width: 220px;
+  }
+
   .donut-card__content {
     grid-template-columns: minmax(200px, 280px) minmax(0, 1fr);
   }
@@ -466,17 +471,8 @@ const chartOptions = computed(() => ({
     align-items: stretch;
   }
 
-  .donut-card__scope-toggle {
+  .donut-card__scope-select {
     width: 100%;
-  }
-
-  .donut-card__scope-toggle :deep(.p-button) {
-    flex: 1 1 0;
-    min-width: 0;
-  }
-
-  .donut-card__scope-toggle :deep(.p-button-label) {
-    font-size: var(--ft-text-xs);
   }
 
   .donut-card__chart :deep(.p-chart) {
