@@ -129,15 +129,26 @@ const valueClass = (accent: HealthAccent) => `health-score__main-value--${accent
 }
 
 .health-score__hint {
-  cursor: help;
+  cursor: pointer;
   margin-left: auto;
-  font-size: 0.85rem;
+  font-size: 1rem;
   color: var(--ft-text-muted);
   transition: color var(--ft-transition-fast);
+
+  /* Ensure minimum touch target size */
+  min-width: var(--ft-control-height);
+  min-height: var(--ft-control-height);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .health-score__hint:hover {
   color: var(--ft-text-secondary);
+}
+
+.health-score__hint:active {
+  color: var(--ft-accent-primary);
 }
 
 .health-score__body {

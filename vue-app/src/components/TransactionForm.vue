@@ -231,10 +231,11 @@ const submitTransaction = async (addAnother = false) => {
     }
 
     if (addAnother) {
-      // Reset form for next transaction, but keep type, account, category
+      // Reset form for next transaction, but keep type, account, category, date
       const keepAccount = selectedAccount.value;
       const keepCategory = selectedCategory.value;
       const keepType = transactionType.value;
+      const keepDate = date.value;
 
       amount.value = null;
       description.value = '';
@@ -245,6 +246,7 @@ const submitTransaction = async (addAnother = false) => {
       selectedAccount.value = keepAccount;
       selectedCategory.value = keepCategory;
       transactionType.value = keepType;
+      date.value = keepDate;
       syncMandatoryWithCategory();
     } else {
       emit('update:visible', false);
@@ -794,7 +796,7 @@ watch(filteredCategories, () => {
 
 @media (width <= 640px) {
   .txn-form {
-    padding: var(--ft-space-5, 1.25rem);
+    padding: var(--ft-space-4);
   }
 
   .txn-form__fields {

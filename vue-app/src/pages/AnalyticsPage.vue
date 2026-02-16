@@ -673,10 +673,10 @@ watch(selectedMonth, (value) => {
 });
 
 onMounted(async () => {
-  await userStore.fetchCurrentUser(true);
+  await userStore.fetchCurrentUser();
   await Promise.all([
     loadDashboard(normalizedSelectedMonth.value),
-    financeStore.fetchAccounts(true),
+    financeStore.fetchAccounts(),
   ]);
 
   if (isFirstRun.value) {

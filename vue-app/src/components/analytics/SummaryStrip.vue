@@ -213,15 +213,26 @@ const iconAccentClass = (accent: MetricAccent) => `summary-strip__icon--${accent
 }
 
 .summary-strip__hint {
-  cursor: help;
-  font-size: 0.75rem;
+  cursor: pointer;
+  font-size: 0.95rem;
   color: var(--ft-text-muted);
   text-transform: none;
   transition: color var(--ft-transition-fast);
+
+  /* Ensure minimum touch target size */
+  min-width: var(--ft-control-height);
+  min-height: var(--ft-control-height);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .summary-strip__hint:hover {
   color: var(--ft-text-secondary);
+}
+
+.summary-strip__hint:active {
+  color: var(--ft-accent-primary);
 }
 
 .summary-strip__value {

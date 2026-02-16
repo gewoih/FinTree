@@ -197,6 +197,7 @@ const handleUnarchiveAccount = async (account: Account) => {
 
 const clearFilters = () => {
   searchText.value = ''
+  sortBy.value = 'balance-desc'
 }
 
 onMounted(async () => {

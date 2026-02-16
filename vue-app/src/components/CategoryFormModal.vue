@@ -554,7 +554,7 @@ const handleDelete = () => {
   grid-template-columns: repeat(auto-fill, minmax(38px, 1fr));
   gap: var(--ft-space-2);
 
-  max-height: 220px;
+  max-height: 40vh;
   padding: var(--ft-space-2);
 
   background: var(--ft-surface-base);
@@ -708,12 +708,12 @@ const handleDelete = () => {
 }
 
 @media (width <= 640px) {
-  .category-form {
-    gap: var(--ft-space-3);
+  .category-dialog__container {
+    padding: var(--ft-space-4);
   }
 
-  .category-dialog :deep(.p-dialog) {
-    width: 92vw !important;
+  .category-form {
+    gap: var(--ft-space-3);
   }
 
   .category-form__danger {

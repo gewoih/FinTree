@@ -737,7 +737,7 @@ const handleDelete = () => {
 
 @media (width <= 640px) {
   .xfer-form {
-    padding: var(--ft-space-5, 1.25rem);
+    padding: var(--ft-space-4);
   }
 
   .xfer-form__fields {

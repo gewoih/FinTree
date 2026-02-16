@@ -106,7 +106,6 @@
     overflow-y: auto;
     padding: 0;
     background: var(--ft-surface-raised);
-    border-radius: var(--ft-radius-xl);
   }
 
   /* ━━━ Dropdowns and Panels ━━━ */
@@ -200,10 +199,11 @@
 
   @media (width <= 640px) {
     .p-dialog {
-      width: calc(100vw - 32px) !important;
-      max-height: 90vh;
-      margin: 0 auto;
-      border-radius: var(--ft-radius-xl);
+      width: 100vw !important;
+      max-width: 100vw !important;
+      max-height: 95vh;
+      margin: 0;
+      border-radius: var(--ft-radius-lg);
     }
 
     .p-dialog .p-dialog-footer {

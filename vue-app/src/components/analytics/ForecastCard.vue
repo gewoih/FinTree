@@ -309,14 +309,25 @@ const chartOptions = computed(() => ({
 }
 
 .forecast-card__hint {
-  cursor: help;
-  font-size: 0.85rem;
+  cursor: pointer;
+  font-size: 1rem;
   color: var(--ft-text-muted);
   transition: color var(--ft-transition-fast);
+
+  /* Ensure minimum touch target size */
+  min-width: var(--ft-control-height);
+  min-height: var(--ft-control-height);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .forecast-card__hint:hover {
   color: var(--ft-text-secondary);
+}
+
+.forecast-card__hint:active {
+  color: var(--ft-accent-primary);
 }
 
 .forecast-card__subtitle {
@@ -461,7 +472,8 @@ const chartOptions = computed(() => ({
 /* Chart */
 .forecast-card__chart {
   width: 100%;
-  height: 400px;
+  aspect-ratio: 16 / 9;
+  max-height: 400px;
 }
 
 .forecast-card__chart-container {
@@ -555,7 +567,8 @@ const chartOptions = computed(() => ({
   }
 
   .forecast-card__chart {
-    height: 280px;
+    aspect-ratio: 4 / 3;
+    max-height: 280px;
   }
 
   .forecast-legend__item {

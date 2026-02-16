@@ -204,14 +204,25 @@ const shareAccent = computed(() => {
 }
 
 .peak-days__hint {
-  cursor: help;
-  font-size: 0.85rem;
+  cursor: pointer;
+  font-size: 1rem;
   color: var(--ft-text-muted);
   transition: color var(--ft-transition-fast);
+
+  /* Ensure minimum touch target size */
+  min-width: var(--ft-control-height);
+  min-height: var(--ft-control-height);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .peak-days__hint:hover {
   color: var(--ft-text-secondary);
+}
+
+.peak-days__hint:active {
+  color: var(--ft-accent-primary);
 }
 
 .peak-days__loading {
