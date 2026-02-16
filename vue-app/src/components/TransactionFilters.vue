@@ -141,6 +141,17 @@ const hasActiveFilters = computed(() =>
   background: var(--ft-surface-0, var(--ft-surface-base));
   border: 1px solid var(--ft-border-default, var(--ft-border-soft));
   border-radius: var(--ft-radius-md);
+
+  transition:
+    border-color var(--ft-transition-fast),
+    box-shadow var(--ft-transition-fast);
+}
+
+.transaction-filters__search:focus-within {
+  border-color: var(--ft-border-strong);
+  box-shadow:
+    0 0 0 3px var(--ft-focus-ring),
+    0 1px 3px rgb(0 0 0 / 12%);
 }
 
 .transaction-filters__search i {
@@ -153,8 +164,14 @@ const hasActiveFilters = computed(() =>
   flex: 1;
   background: transparent;
   border: none;
-  box-shadow: none;
+  box-shadow: none !important;
   padding-left: 0;
+}
+
+.transaction-filters__search :deep(.p-inputtext:focus) {
+  border: none !important;
+  box-shadow: none !important;
+  outline: none;
 }
 
 .transaction-filters__control {

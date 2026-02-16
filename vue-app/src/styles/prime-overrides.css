@@ -48,8 +48,10 @@
   .p-calendar:focus-within,
   .p-inputnumber:focus-within,
   .p-inputtextarea:focus {
-    border-color: var(--ft-primary-500);
-    box-shadow: 0 0 0 3px var(--ft-focus-ring);
+    border-color: var(--ft-border-strong);
+    box-shadow:
+      0 0 0 3px var(--ft-focus-ring),
+      0 1px 3px rgb(0 0 0 / 12%);
   }
 
   /* ━━━ Placeholders ━━━ */
@@ -87,7 +89,8 @@
   }
 
   .p-button:focus-visible {
-    outline-offset: 4px;
+    outline: 2px solid var(--ft-primary-400);
+    outline-offset: 3px;
   }
 
   /* ━━━ Dialogs ━━━ */
@@ -181,8 +184,8 @@
   /* ━━━ Global Focus States ━━━ */
   *:focus-visible {
     border-radius: var(--ft-radius-md);
-    outline: 2px solid var(--ft-primary-500);
-    outline-offset: 3px;
+    outline: 2px solid var(--ft-primary-400);
+    outline-offset: 2px;
   }
 
   /* ━━━ Cards Hover Effect ━━━ */

@@ -104,10 +104,10 @@ const iconAccentClass = (accent: MetricAccent) => `summary-strip__icon--${accent
             {{ metric.value }}
           </p>
           <p
-            v-if="metric.secondary"
             class="summary-strip__secondary"
+            :class="{ 'summary-strip__secondary--empty': !metric.secondary }"
           >
-            {{ metric.secondary }}
+            {{ metric.secondary || '\u00A0' }}
           </p>
         </div>
       </div>
@@ -132,7 +132,7 @@ const iconAccentClass = (accent: MetricAccent) => `summary-strip__icon--${accent
 .summary-strip__item {
   display: flex;
   gap: var(--ft-space-3);
-  align-items: flex-start;
+  align-items: center;
 
   padding: var(--ft-space-3);
 
@@ -265,6 +265,12 @@ const iconAccentClass = (accent: MetricAccent) => `summary-strip__icon--${accent
   margin: 0;
   font-size: var(--ft-text-sm);
   color: var(--ft-text-secondary);
+  min-height: 1.25em; /* Maintain consistent height */
+}
+
+.summary-strip__secondary--empty {
+  opacity: 0;
+  pointer-events: none;
 }
 
 .summary-strip__error {

@@ -132,7 +132,7 @@
   --ft-interactive-disabled: #223047;
 
   /* Focus */
-  --ft-focus-ring: rgb(107 130 219 / 60%);
+  --ft-focus-ring: rgb(107 130 219 / 28%);
   --ft-focus-ring-offset: #0C1017;
 
   /* ━━━ TYPOGRAPHY ━━━ */
@@ -296,7 +296,7 @@
   --ft-interactive-hover: var(--ft-primary-600);
   --ft-interactive-active: var(--ft-primary-700);
   --ft-interactive-disabled: #E5E7EB;
-  --ft-focus-ring: rgb(79 99 184 / 35%);
+  --ft-focus-ring: rgb(79 99 184 / 22%);
   --ft-focus-ring-offset: #FFF;
   --ft-shadow-xs: 0 1px 2px rgb(15 23 42 / 5%);
   --ft-shadow-sm: 0 1px 3px rgb(15 23 42 / 8%), 0 1px 2px rgb(15 23 42 / 6%);

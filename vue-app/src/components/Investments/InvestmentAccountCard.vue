@@ -33,6 +33,15 @@ const formattedBaseBalance = computed(() =>
   formatCurrency(balanceInBase.value, props.baseCurrencyCode)
 );
 
+const originalBalance = computed(() => Number(props.account.balance ?? 0));
+const formattedOriginalBalance = computed(() =>
+  formatCurrency(originalBalance.value, currencyCode.value)
+);
+
+const showOriginalCurrency = computed(() =>
+  currencyCode.value !== props.baseCurrencyCode
+);
+
 const returnLabel = computed(() => {
   if (props.account.returnPercent == null) return '\u2014';
   const sign = props.account.returnPercent > 0 ? '+' : '';
@@ -103,7 +112,16 @@ const toggleMenu = (event: Event) => {
     </header>
 
     <div class="investment-card__body">
-      <span class="investment-card__balance">{{ formattedBaseBalance }}</span>
+      <div class="investment-card__balance-group">
+        <span class="investment-card__balance">{{ formattedBaseBalance }}</span>
+        <span
+          v-if="showOriginalCurrency"
+          v-tooltip.bottom="`Оригинальный баланс в ${currencyCode}`"
+          class="investment-card__balance-original"
+        >
+          {{ formattedOriginalBalance }}
+        </span>
+      </div>
       <span
         v-tooltip.bottom="'Сколько вы заработали или потеряли на этой инвестиции в процентах.'"
         class="investment-card__return"
@@ -234,12 +252,25 @@ const toggleMenu = (event: Event) => {
   padding: var(--ft-space-1) 0;
 }
 
+.investment-card__balance-group {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
 .investment-card__balance {
   font-size: var(--ft-text-xl);
   font-weight: var(--ft-font-bold);
   font-variant-numeric: tabular-nums;
   line-height: 1.2;
   color: var(--ft-text-primary);
+}
+
+.investment-card__balance-original {
+  font-size: var(--ft-text-sm);
+  font-weight: var(--ft-font-medium);
+  font-variant-numeric: tabular-nums;
+  color: var(--ft-text-secondary);
 }
 
 .investment-card__return {
