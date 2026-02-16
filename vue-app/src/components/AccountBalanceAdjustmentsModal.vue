@@ -7,7 +7,6 @@ import Message from 'primevue/message'
 import type { Account, AccountBalanceAdjustmentDto } from '../types'
 import { apiService } from '../services/api.service'
 import { formatCurrency, formatDate } from '../utils/formatters'
-import { useFinanceStore } from '../stores/finance'
 import FormField from "@/components/common/FormField.vue";
 import UiButton from "@/ui/UiButton.vue";
 import UiSkeleton from "@/ui/UiSkeleton.vue";
@@ -32,7 +31,6 @@ const emit = defineEmits<{
 }>()
 
 const toast = useToast()
-const financeStore = useFinanceStore()
 
 const adjustments = ref<AccountBalanceAdjustmentDto[]>([])
 const loading = ref(false)

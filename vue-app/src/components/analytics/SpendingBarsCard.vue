@@ -6,8 +6,8 @@ import Message from 'primevue/message';
 import UiButton from '../../ui/UiButton.vue';
 import UiSelect from '../../ui/UiSelect.vue';
 import Chart from 'primevue/chart';
-import type { ExpenseGranularity } from '../../types/analytics';
-import { useChartColors } from '../../composables/useChartColors';
+import type { ExpenseGranularity } from '@/types/analytics.ts';
+import { useChartColors } from '@/composables/useChartColors.ts';
 
 const props = defineProps<{
   loading: boolean;
@@ -140,7 +140,7 @@ const chartOptions = computed(() => ({
         option-label="label"
         option-value="value"
         class="bars-card__select"
-        @update:model-value="emit('update:granularity', $event)"
+        @update:model-value="emit('update:granularity', $event as ExpenseGranularity)"
       />
     </div>
 

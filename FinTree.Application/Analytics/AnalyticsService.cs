@@ -249,10 +249,14 @@ public sealed class AnalyticsService(
 
     public async Task<List<NetWorthSnapshotDto>> GetNetWorthTrendAsync(int months = 12, CancellationToken ct = default)
     {
-        if (months <= 0)
-            return [];
-        if (months > 120)
-            months = 120;
+        switch (months)
+        {
+            case <= 0:
+                return [];
+            case > 12:
+                months = 12;
+                break;
+        }
 
         var currentUserId = currentUserService.Id;
         var userMeta = await context.Users
@@ -268,9 +272,7 @@ public sealed class AnalyticsService(
             .ToListAsync(ct);
 
         if (accounts.Count == 0)
-        {
             return BuildEmptyNetWorth(months);
-        }
 
         var accountCreatedAtById = accounts
             .ToDictionary(a => a.Id, a => NormalizeUtc(a.CreatedAt.UtcDateTime));

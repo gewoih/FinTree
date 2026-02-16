@@ -1,7 +1,6 @@
 import { ref, computed } from 'vue';
 import { defineStore } from 'pinia';
 import axios from 'axios';
-import { apiService } from '../services/api.service.ts';
 import { useUserStore } from './user.ts';
 
 interface AuthResponse {

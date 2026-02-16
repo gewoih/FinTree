@@ -130,7 +130,7 @@ const chartOptions = computed(() => ({
         option-label="label"
         option-value="value"
         class="donut-card__scope-select"
-        @update:model-value="emit('update:scope', $event)"
+        @update:model-value="emit('update:scope', $event as CategoryScope)"
       />
     </div>
 
