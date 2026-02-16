@@ -1,14 +1,12 @@
 # CLAUDE.md
 
+**Quick Reference:** [DESIGN.md](./DESIGN.md) for design tokens, visual patterns, and UI/UX guidelines.
+
 ## Commands
 
 ```bash
 cd vue-app && npm run build   # Type-check + Vite build
 ```
-
-## UI/UX
-
-When working with ui/ux or any frontend visuals, consider to check full token tables (typography, spacing, colors, radius, shadows, z-index, motion) at **[DESIGN.md](./DESIGN.md)**.
 
 
 ## Project Overview
@@ -22,10 +20,36 @@ FinTree is a personal finance management application with:
 
 ## Product Context
 
-**Target Users**: 25-35 year olds, average income, low financial literacy
-- Need hints/tooltips for all financial terms
-- Telegram bot (primary) for daily input, web app for review/analytics
-- Quality bar: Stripe/Revolut-level UX, instant performance, mobile-first, dark mode essential
+**Target Users:** 25-35 y.o., average income, low financial literacy
+- Hints/tooltips mandatory for all financial terms
+- Primary input: Telegram bot → Review/analytics: Web app
+- **Quality bar:** Stripe/Revolut-level UX, instant performance, mobile-first, dark-default
+
+## Development Principles
+
+**Code Quality:**
+- ✓ **Simple > Clever** — Prefer readable, obvious code over "smart" abstractions
+- ✓ **Extend, don't modify** — Design for extension (open/closed principle)
+- ✓ **YAGNI** — Don't build features/abstractions until actually needed
+- ✓ **DRY with judgment** — Eliminate duplication, but don't force premature abstractions
+- ✓ **Explicit > Implicit** — Avoid magic, prefer clear data flow and dependencies
+- ✓ **Modern standards** — Use current language/framework idioms (C# 13, Vue 3 Composition API, ES2024+)
+
+**Component & Style Architecture:**
+- ✓ **Atomic design** — Small, composable components over monoliths
+- ✓ **Single responsibility** — Components do one thing well
+- ✓ **Design tokens first** — Never hardcode values; always use `--ft-*` tokens
+- ✓ **CSS layers** — Respect layer order; never fight specificity with `!important` stacking
+- ✓ **Scoped styles** — Component styles are scoped; shared patterns go to `theme.css`
+- ✓ **No style duplication** — Shared patterns become utilities or tokens, not copy-paste
+- ✓ **Consistent patterns** — Follow established conventions (e.g., `UiButton` patterns apply to all buttons)
+
+**Maintainability First:**
+- ✓ **Self-documenting code** — Names explain intent; comments explain "why", not "what"
+- ✓ **Predictable structure** — Follow project conventions; no surprises
+- ✓ **Fail fast** — Validate early, return early, make invalid states unrepresentable
+- ✓ **Testable by default** — Separate concerns, inject dependencies, avoid tight coupling
+- ✓ **Delete over disable** — Remove unused code; don't comment out or feature-flag dead paths
 
 ## Architecture
 
@@ -46,27 +70,28 @@ FinTree is a personal finance management application with:
 
 ### Frontend (Vue 3 + TypeScript)
 
-**Structure** (`vue-app/src/`):
-- `pages/`: Top-level routed components (AnalyticsPage, AccountsPage, TransactionsPage, InvestmentsPage, SettingsPage)
-- `components/`: Reusable components (feature-specific, not global UI)
-- `ui/`: Shared UI primitives (buttons, inputs, cards, modals)
-- `stores/`: Pinia stores for state management
-- `services/`: API client layer (centralized, typed)
-- `composables/`: Reusable composition functions
-- `router/`: Vue Router configuration
-- `types.ts`: Global TypeScript type definitions
-- `primevue-theme.css`, `style.css`, `styles/`: Design tokens and styling
+**Directory Structure** (`vue-app/src/`):
+| Folder | Purpose |
+|--------|---------|
+| `pages/` | Routed page components (Analytics, Accounts, Transactions, Investments, Settings) |
+| `components/` | Feature-specific reusable components |
+| `ui/` | Shared UI primitives (buttons, inputs, cards, modals) |
+| `stores/` | Pinia state management |
+| `services/` | API client layer (centralized, typed) |
+| `composables/` | Reusable composition functions |
+| `router/` | Vue Router config |
+| `types.ts` | Global TypeScript types |
+| `assets/design-tokens.css` | `--ft-*` design tokens |
+| `styles/` | Theme, overrides, base styles |
 
-**Key patterns**:
-- API calls centralized in services layer (no ad-hoc requests in page components)
-- Async states always explicit: `loading`, `empty`, `error`, `success`
-- TypeScript strict mode (avoid implicit `any`)
-- DTOs and UI models explicitly separated and mapped
-- Mobile-first (≥360px width), minimum interactive hit area 44x44
-- Design tokens: Use `--ft-*` prefix (e.g., `--ft-space-md`, `--ft-radius-lg`)
-- Primary font: Inter; Mono: JetBrains Mono
-- Forms validate in Russian with UI-friendly messages
-- Destructive actions require confirmation
+**Core Patterns:**
+- API calls **only** in services layer — never in components
+- Async states **must be explicit:** `loading`, `empty`, `error`, `success`
+- TypeScript strict mode — no implicit `any`
+- DTOs ≠ UI models — always map explicitly
+- Mobile-first (≥360px), min touch target 44×44px
+- Fonts: Inter (UI), JetBrains Mono (amounts/code)
+- Validation in Russian, destructive actions require confirmation
 
 **Working with PrimeVue Components**:
 
@@ -91,49 +116,36 @@ Our `ui/` components (e.g., `UiButton`, `UiCard`) wrap PrimeVue primitives. Crit
 
 - **Quality Policy**: Fix broken components immediately when discovered (e.g., misaligned icons due to PrimeVue `gap`/`padding`). Don't defer UI bugs — they compound and erode UX quality bar.
 
-**Premium Visual Patterns** (Stripe/Revolut quality):
+**Visual Quality Standards**: See [DESIGN.md](./DESIGN.md) for premium visual patterns (frosted glass, gradient badges, active states, hover microinteractions, etc.)
 
-- **Frosted glass effects**: `backdrop-filter: blur(12px)` + gradient backgrounds (top nav, bottom bar, modals)
-- **Gradient badges**: Logo and avatar use `linear-gradient(135deg, primary-500, primary-600)` + glow shadow
-- **Active state signatures**:
-  - `::before` pseudo-element with gradient background (opacity 0 → 1 on active)
-  - Inset border glow: `box-shadow: inset 0 0 0 1px color-mix(...)`
-  - Outer glow shadow with primary color tint
-- **Hover microinteractions**:
-  - Icons scale 1.05x–1.08x + color shift to primary-400
-  - Lift animations: `translateY(-1px)` or `translateY(-2px)`
-  - Enhanced shadow on lift
-- **Status indicators**: Always color + icon + text (never color alone for accessibility)
-- **Gradient dividers**: Not solid lines — fade from transparent to color to transparent
-- **Button hierarchy**: Primary (gradient bg) > Secondary (outline) > Ghost (text) > Danger (red theme)
-- **Z-index layering**: Use `position: relative; z-index: 0/1` for pseudo-elements to prevent overlap issues
+## Product Rules
 
-## Key Product Rules
-
-**Telegram Bot**: Fast input over precision (users fix errors in web later), must feel instant
-**Analytics**: Every metric needs tooltip (simple Russian), status indicators with color coding, progressive disclosure
-**Subscription**: Full access with active sub, read-only without, payment history append-only
-**Performance**: Don't block first render, lazy load non-critical data, paginate/virtualize large lists
-**Security**: JWT auth, all ops auto-scoped to current user, soft-delete by default
-**Validation**: UI-friendly Russian messages, all financial terms need hints/tooltips
+| Domain | Rule |
+|--------|------|
+| **Telegram Bot** | Speed > precision (fix errors in web later), must feel instant |
+| **Analytics** | Every metric needs tooltip (simple Russian), progressive disclosure |
+| **Subscription** | Active = full access; expired = read-only; payment history append-only |
+| **Performance** | Never block first render, lazy load non-critical, paginate/virtualize lists |
+| **Security** | JWT auth, all ops auto-scoped to current user, soft-delete default |
+| **Validation** | Russian UI messages, financial terms need hints/tooltips |
 
 ## Localization
 
-**Russian only**: All UI text, validation messages, financial hints in simple Russian
-**Formats**: Standard Russian date/number formats
-**Currency**: Multi-currency with base currency setting
+- **Language:** Russian only (UI, validation, hints in simple Russian)
+- **Formats:** Russian standards (date, numbers, currency)
+- **Currency:** Multi-currency support with user-defined base currency
 
-## Critical Constraints
+## Non-Negotiable Constraints
 
-### Backend
-- Respect DDD layers (API → Application → Domain ← Infrastructure)
-- No domain logic in controllers
-- API errors: consistent payload, unambiguous HTTP status
-- Multi-step workflows must be atomic (transactions)
+**Backend:**
+- ✓ Respect DDD layers: API → Application → Domain ← Infrastructure
+- ✓ Controllers are thin — no domain logic
+- ✓ API errors: consistent payload + unambiguous HTTP status
+- ✓ Multi-step workflows are atomic (transactions)
 
-### Frontend
-- API calls in services layer only (no ad-hoc requests in components)
-- Async states explicit: `loading`, `empty`, `error`, `success`
-- TypeScript strict mode (no implicit `any`)
-- No expensive deep-watch usage
-- Always ask: "Will low financial literacy users understand this?"
+**Frontend:**
+- ✓ API calls **only** in services layer — never in components
+- ✓ Async states **must be explicit:** `loading`, `empty`, `error`, `success`
+- ✓ TypeScript strict mode — no implicit `any`
+- ✓ No expensive deep watchers
+- ✓ **UX litmus test:** "Will low financial literacy users understand this?"
