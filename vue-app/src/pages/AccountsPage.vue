@@ -413,6 +413,7 @@ onMounted(async () => {
   margin: 0;
   font-size: var(--ft-text-sm);
   color: var(--ft-text-secondary);
+  text-shadow: 0 1px 2px rgb(0 0 0 / 15%);
 }
 
 .accounts-tabs {
@@ -421,9 +422,12 @@ onMounted(async () => {
 
   padding: var(--ft-space-1);
 
-  background: var(--ft-surface-base);
-  border: 1px solid var(--ft-border-default);
+  background: color-mix(in srgb, var(--ft-surface-base) 85%, transparent);
+  border: 1px solid color-mix(in srgb, var(--ft-border-default) 60%, transparent);
   border-radius: var(--ft-radius-lg);
+  box-shadow: 0 2px 8px rgb(0 0 0 / 10%);
+
+  backdrop-filter: blur(8px);
 }
 
 .accounts-tab {
@@ -436,21 +440,42 @@ onMounted(async () => {
   min-height: 44px;
   padding: var(--ft-space-2) var(--ft-space-3);
 
-  font-weight: var(--ft-font-medium);
+  font-weight: var(--ft-font-semibold);
   color: var(--ft-text-secondary);
 
   background: transparent;
   border: none;
   border-radius: var(--ft-radius-md);
+
+  transition:
+    all 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
 }
 
 .accounts-tab strong {
   font-size: var(--ft-text-sm);
+  transition: all 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.accounts-tab:hover {
+  color: var(--ft-text-primary);
+  background: color-mix(in srgb, var(--ft-primary-500) 12%, transparent);
+  transform: translateY(-1px);
 }
 
 .accounts-tab.is-active {
   color: var(--ft-text-primary);
-  background: color-mix(in srgb, var(--ft-primary-500) 18%, transparent);
+  background: linear-gradient(
+    135deg,
+    color-mix(in srgb, var(--ft-primary-500) 22%, transparent),
+    color-mix(in srgb, var(--ft-primary-600) 16%, transparent)
+  );
+  box-shadow:
+    0 2px 6px color-mix(in srgb, var(--ft-primary-500) 20%, transparent),
+    inset 0 1px 0 color-mix(in srgb, var(--ft-primary-300) 15%, transparent);
+}
+
+.accounts-tab.is-active strong {
+  transform: scale(1.05);
 }
 
 .accounts-tab:focus-visible {
@@ -467,23 +492,60 @@ onMounted(async () => {
 
 .accounts-search {
   display: flex;
-  gap: var(--ft-space-2);
+  gap: var(--ft-space-3);
   align-items: center;
 
   min-height: 44px;
-  padding: 0 var(--ft-space-3);
+  padding: var(--ft-space-3) var(--ft-space-4);
 
-  background: var(--ft-surface-base);
-  border: 1px solid var(--ft-border-default);
+  background: color-mix(in srgb, var(--ft-surface-base) 85%, transparent);
+  border: 1px solid color-mix(in srgb, var(--ft-border-default) 60%, transparent);
   border-radius: var(--ft-radius-lg);
+  box-shadow: 0 2px 8px rgb(0 0 0 / 10%);
+
+  backdrop-filter: blur(8px);
+
+  transition:
+    all var(--ft-transition-fast),
+    transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.accounts-search:hover {
+  background: color-mix(in srgb, var(--ft-surface-base) 95%, transparent);
+  border-color: color-mix(in srgb, var(--ft-border-strong) 80%, transparent);
+  box-shadow: 0 4px 12px rgb(0 0 0 / 15%);
+  transform: translateY(-2px);
+}
+
+.accounts-search:focus-within {
+  background: var(--ft-surface-base);
+  border-color: var(--ft-primary-500);
+  box-shadow:
+    0 0 0 3px color-mix(in srgb, var(--ft-primary-500) 15%, transparent),
+    0 6px 16px rgb(0 0 0 / 20%);
+  transform: translateY(-2px);
 }
 
 .accounts-search i {
+  flex-shrink: 0;
+  font-size: 1.125rem;
+  color: var(--ft-text-tertiary);
+
+  transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.accounts-search:hover i {
   color: var(--ft-text-secondary);
+  transform: scale(1.05);
+}
+
+.accounts-search:focus-within i {
+  color: var(--ft-primary-400);
+  transform: scale(1.15) rotate(-12deg);
 }
 
 .accounts-search :deep(.p-inputtext) {
-  width: 100%;
+  flex: 1;
   padding: 0;
 
   background: transparent;
@@ -491,8 +553,43 @@ onMounted(async () => {
   box-shadow: none;
 }
 
+.accounts-search :deep(.p-inputtext):focus {
+  outline: none;
+  box-shadow: none;
+}
+
 .accounts-sort {
   min-height: 44px;
+}
+
+.accounts-sort :deep(.p-select) {
+  background: color-mix(in srgb, var(--ft-surface-base) 85%, transparent);
+  border-color: color-mix(in srgb, var(--ft-border-default) 60%, transparent);
+  box-shadow: 0 2px 8px rgb(0 0 0 / 10%);
+
+  backdrop-filter: blur(8px);
+
+  transition:
+    all var(--ft-transition-fast),
+    transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.accounts-sort :deep(.p-select:hover) {
+  background: color-mix(in srgb, var(--ft-surface-base) 95%, transparent);
+  border-color: color-mix(in srgb, var(--ft-border-strong) 80%, transparent);
+  box-shadow: 0 4px 12px rgb(0 0 0 / 15%);
+  transform: translateY(-2px);
+}
+
+.accounts-sort :deep(.p-select:focus),
+.accounts-sort :deep(.p-select.p-focus) {
+  background: var(--ft-surface-base);
+  border-color: var(--ft-primary-500);
+  box-shadow:
+    0 0 0 3px color-mix(in srgb, var(--ft-primary-500) 15%, transparent),
+    0 6px 16px rgb(0 0 0 / 20%);
+  outline: none;
+  transform: translateY(-2px);
 }
 
 .accounts__skeleton {
