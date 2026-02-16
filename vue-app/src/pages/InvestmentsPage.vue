@@ -257,15 +257,17 @@ const refreshInvestmentsData = async () => {
   ]);
 };
 
+// Balance adjustment only affects overview, not net worth trend
 watch(
   () => adjustmentsVisible.value,
   (visible, prev) => {
     if (prev && !visible) {
-      void refreshInvestmentsData();
+      void loadOverview();
     }
   }
 );
 
+// Account creation/editing affects both overview and net worth
 watch(
   () => modalVisible.value,
   (visible, prev) => {
@@ -276,7 +278,7 @@ watch(
 );
 
 onMounted(async () => {
-  await userStore.fetchCurrentUser();
+  // User is already loaded by AppShell on mount
   await financeStore.fetchCurrencies();
   await refreshInvestmentsData();
 });

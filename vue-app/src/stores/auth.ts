@@ -2,6 +2,7 @@ import { ref, computed } from 'vue';
 import { defineStore } from 'pinia';
 import axios from 'axios';
 import { apiService } from '../services/api.service.ts';
+import { useUserStore } from './user.ts';
 
 interface AuthResponse {
     email: string;
@@ -129,7 +130,10 @@ export const useAuthStore = defineStore('auth', () => {
 
         isSessionChecked.value = true;
         try {
-            const me = await apiService.getCurrentUser();
+            const userStore = useUserStore();
+            await userStore.fetchCurrentUser();
+            const me = userStore.currentUser;
+            if (!me) throw new Error('User not loaded');
             setAuthenticated(me.email);
             return true;
         } catch {

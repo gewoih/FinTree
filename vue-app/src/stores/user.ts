@@ -26,22 +26,32 @@ export const useUserStore = defineStore('user', () => {
         return !currentUser.value.onboardingCompleted && !currentUser.value.onboardingSkipped;
     });
 
-    async function fetchCurrentUser(force = false) {
-        if (isLoading.value) return;
-        if (currentUser.value && !force) return;
+    /**
+     * Request deduplication: prevents duplicate /me calls
+     */
+    let pendingUserRequest: Promise<void> | null = null;
 
-        isLoading.value = true;
-        try {
-            const data = await apiService.getCurrentUser();
-            currentUser.value = data;
-        } catch (error) {
-            console.error('Не удалось загрузить данные пользователя:', error);
-            currentUser.value = null;
-            subscriptionPayments.value = [];
-            hasSubscriptionPaymentsLoaded.value = false;
-        } finally {
-            isLoading.value = false;
-        }
+    async function fetchCurrentUser(force = false) {
+        if (!force && currentUser.value) return;
+        if (pendingUserRequest) return pendingUserRequest;
+
+        pendingUserRequest = (async () => {
+            isLoading.value = true;
+            try {
+                const data = await apiService.getCurrentUser();
+                currentUser.value = data;
+            } catch (error) {
+                console.error('Не удалось загрузить данные пользователя:', error);
+                currentUser.value = null;
+                subscriptionPayments.value = [];
+                hasSubscriptionPaymentsLoaded.value = false;
+            } finally {
+                isLoading.value = false;
+                pendingUserRequest = null;
+            }
+        })();
+
+        return pendingUserRequest;
     }
 
     async function saveProfileSettings(payload: UpdateUserProfilePayload) {

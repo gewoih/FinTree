@@ -201,7 +201,7 @@ const clearFilters = () => {
 }
 
 onMounted(async () => {
-  await userStore.fetchCurrentUser()
+  // User is already loaded by AppShell on mount
   await Promise.all([
     financeStore.fetchCurrencies(),
     financeStore.fetchAccounts(),

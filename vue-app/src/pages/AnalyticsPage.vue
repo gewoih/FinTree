@@ -673,7 +673,7 @@ watch(selectedMonth, (value) => {
 });
 
 onMounted(async () => {
-  await userStore.fetchCurrentUser();
+  // User is already loaded by router guard (authStore.ensureSession)
   await Promise.all([
     loadDashboard(normalizedSelectedMonth.value),
     financeStore.fetchAccounts(),

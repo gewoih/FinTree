@@ -38,6 +38,20 @@ export const useFinanceStore = defineStore('finance', () => {
     const areCategoriesLoading = ref(false);
     const areCurrenciesLoading = ref(false);
     const isTransactionsLoading = ref(false);
+
+    /**
+     * Request deduplication: prevents same query from firing twice on rapid clicks
+     */
+    const pendingRequests = new Map<string, Promise<any>>();
+
+    async function fetchWithDedup<T>(key: string, fetcher: () => Promise<T>): Promise<T> {
+        if (pendingRequests.has(key)) {
+            return pendingRequests.get(key) as Promise<T>;
+        }
+        const promise = fetcher().finally(() => pendingRequests.delete(key));
+        pendingRequests.set(key, promise);
+        return promise;
+    }
     const currentTransactionsQuery = ref<TransactionsQuery>({
         accountId: null,
         categoryId: null,
@@ -203,33 +217,37 @@ export const useFinanceStore = defineStore('finance', () => {
     }
 
     async function fetchTransactions(query: TransactionsQuery = {}) {
-        isTransactionsLoading.value = true;
         const normalizedQuery = normalizeTransactionsQuery(query);
-        currentTransactionsQuery.value = normalizedQuery;
+        const queryKey = `transactions:${JSON.stringify(normalizedQuery)}`;
 
-        try {
-            const data = await apiService.getTransactions(normalizedQuery);
-            if (!hasArchivedAccountsLoaded.value) {
-                await fetchArchivedAccounts();
+        return fetchWithDedup(queryKey, async () => {
+            isTransactionsLoading.value = true;
+            currentTransactionsQuery.value = normalizedQuery;
+
+            try {
+                const data = await apiService.getTransactions(normalizedQuery);
+                if (!hasArchivedAccountsLoaded.value) {
+                    await fetchArchivedAccounts();
+                }
+
+                const accountCatalog = [...accounts.value, ...archivedAccounts.value];
+                transactions.value = mapTransactions(data.items, accountCatalog, categories.value);
+                transactionsPage.value = data.page;
+                transactionsPageSize.value = data.size;
+                transactionsTotal.value = data.total;
+                currentTransactionsQuery.value = {
+                    ...normalizedQuery,
+                    page: data.page,
+                    size: data.size,
+                };
+            } catch (error) {
+                console.error('Ошибка загрузки транзакций:', error);
+                transactions.value = [];
+                transactionsTotal.value = 0;
+            } finally {
+                isTransactionsLoading.value = false;
             }
-
-            const accountCatalog = [...accounts.value, ...archivedAccounts.value];
-            transactions.value = mapTransactions(data.items, accountCatalog, categories.value);
-            transactionsPage.value = data.page;
-            transactionsPageSize.value = data.size;
-            transactionsTotal.value = data.total;
-            currentTransactionsQuery.value = {
-                ...normalizedQuery,
-                page: data.page,
-                size: data.size,
-            };
-        } catch (error) {
-            console.error('Ошибка загрузки транзакций:', error);
-            transactions.value = [];
-            transactionsTotal.value = 0;
-        } finally {
-            isTransactionsLoading.value = false;
-        }
+        });
     }
 
     async function refetchCurrentTransactions() {

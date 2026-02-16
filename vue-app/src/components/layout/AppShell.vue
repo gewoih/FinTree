@@ -78,7 +78,8 @@ watch(
 
 onMounted(() => {
   initTheme()
-  void userStore.fetchCurrentUser(true)
+  // User is already loaded by router guard (authStore.ensureSession)
+  // No need to fetch again
 })
 </script>
 

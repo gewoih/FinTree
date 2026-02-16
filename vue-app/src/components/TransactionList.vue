@@ -73,6 +73,7 @@ const baseCurrency = computed(() => userStore.baseCurrencyCode ?? store.primaryA
 const transactionsLoading = computed(() => store.isTransactionsLoading)
 const debouncedSearchText = ref('')
 let searchDebounceTimer: ReturnType<typeof setTimeout> | null = null
+let filterDebounceTimer: ReturnType<typeof setTimeout> | null = null
 
 const formatRate = (value: number): string =>
   new Intl.NumberFormat('ru-RU', {
@@ -402,6 +403,9 @@ onBeforeUnmount(() => {
   if (searchDebounceTimer) {
     clearTimeout(searchDebounceTimer)
   }
+  if (filterDebounceTimer) {
+    clearTimeout(filterDebounceTimer)
+  }
 })
 
 const canLoadTransactions = computed(() => {
@@ -421,7 +425,15 @@ watch(
   ],
   () => {
     if (!canLoadTransactions.value) return
-    fetchFilteredTransactions({ page: 1 })
+
+    // Debounce filter changes to avoid redundant API calls
+    if (filterDebounceTimer) {
+      clearTimeout(filterDebounceTimer)
+    }
+
+    filterDebounceTimer = setTimeout(() => {
+      fetchFilteredTransactions({ page: 1 })
+    }, 150)
   },
   { immediate: true }
 )
