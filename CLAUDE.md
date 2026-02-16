@@ -68,6 +68,29 @@ FinTree is a personal finance management application with:
 - Forms validate in Russian with UI-friendly messages
 - Destructive actions require confirmation
 
+**Working with PrimeVue Components**:
+
+Our `ui/` components (e.g., `UiButton`, `UiCard`) wrap PrimeVue primitives. Critical architectural points:
+
+- **Wrapper Structure**: PrimeVue components render as the root element, not nested. `<UiButton>` renders as `<button class="p-button ui-button">`, not `<div class="ui-button"><button class="p-button">`. This affects CSS selectors.
+
+- **Overriding PrimeVue Styles**:
+  - Do NOT use `:deep(.p-button)` for root-level PrimeVue elements — selector won't match
+  - Target wrapper classes directly: `.ui-button--icon-only { gap: 0 !important; }`
+  - Use `!important` when overriding library defaults (justified to enforce design system)
+  - Use `:deep()` only for nested PrimeVue internals (e.g., `.ui-button :deep(.p-button-icon)`)
+
+- **Component Variations**: Auto-detect via `computed`, never manual props:
+  ```ts
+  const isIconOnly = computed(() => props.icon && !props.label)
+  const buttonClasses = computed(() => [
+    'ui-button',
+    { 'ui-button--icon-only': isIconOnly.value }
+  ])
+  ```
+
+- **Quality Policy**: Fix broken components immediately when discovered (e.g., misaligned icons due to PrimeVue `gap`/`padding`). Don't defer UI bugs — they compound and erode UX quality bar.
+
 ## Key Product Rules
 
 **Telegram Bot**: Fast input over precision (users fix errors in web later), must feel instant
