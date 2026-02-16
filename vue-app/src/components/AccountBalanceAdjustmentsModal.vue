@@ -99,7 +99,6 @@ const submitAdjustment = async () => {
   try {
     await apiService.createAccountBalanceAdjustment(props.account.id, newBalance.value)
     await loadAdjustments()
-    await financeStore.fetchAccounts(true)
     toast.add({
       severity: 'success',
       summary: 'Баланс обновлен',

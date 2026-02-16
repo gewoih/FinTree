@@ -404,15 +404,23 @@ onBeforeUnmount(() => {
   }
 })
 
+const canLoadTransactions = computed(() => {
+  // Wait for categories to load before fetching transactions
+  // This prevents race conditions where transactions load before category data is available
+  return !store.areCategoriesLoading && store.categories.length > 0
+})
+
 watch(
   [
     () => selectedAccount.value?.id ?? null,
     () => selectedCategory.value?.id ?? null,
     () => dateRange.value?.[0]?.getTime?.() ?? null,
     () => dateRange.value?.[1]?.getTime?.() ?? null,
-    () => debouncedSearchText.value
+    () => debouncedSearchText.value,
+    () => canLoadTransactions.value
   ],
   () => {
+    if (!canLoadTransactions.value) return
     fetchFilteredTransactions({ page: 1 })
   },
   { immediate: true }

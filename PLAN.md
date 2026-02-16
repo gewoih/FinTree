@@ -2,9 +2,9 @@
 
 ## Progress Overview
 
-**Completed:** 7/19 tasks ✅
-**In Progress:** 1 task 🔄
-**Pending:** 11 tasks ⏳
+**Completed:** 14/19 tasks ✅
+**In Progress:** 0 tasks 🔄
+**Pending:** 5 tasks ⏳
 
 ---
 
@@ -42,15 +42,61 @@
   - Date is now preserved along with type, account, and category
   - Users can batch-enter transactions for the same date
 
+### Phase 2: Mobile-First Refactor (UI/UX Polish)
+- **✅ Task #13: Fix SummaryStrip vertical alignment**
+  - Always render secondary element with visibility control (`opacity: 0` when empty)
+  - Changed icon alignment from `flex-start` to `center` for balanced look
+  - Consistent layout regardless of secondary text presence
+
+### Phase 4: Filter Consistency & UX
+- **✅ Task #4.1: Remove Aggressive Focus Styling**
+  - Replaced bright blue borders with subtle `--ft-border-strong`
+  - Reduced focus ring opacity: 60% → 28% (dark), 35% → 22% (light)
+  - Added `:focus-within` styles to custom search input wrappers
+  - Maintains WCAG 2.4.7 accessibility with refined Stripe/Revolut aesthetic
+
+### Phase 6: Investment & Analytics
+- **✅ Task #6.1: Investment Cards - Show Original Currency**
+  - Displays original balance below converted amount when currencies differ
+  - Secondary styling with tooltip for context
+  - File: `InvestmentAccountCard.vue`
+
+### Phase 8: Design System Audit
+- **✅ Task #8.1: Global Visual Audit**
+  - ✅ Zero hardcoded colors in components
+  - ✅ Zero hardcoded spacing values
+  - ✅ Zero hardcoded shadows or font families
+  - ✅ Consistent `--ft-*` token usage across all files
+  - ⚠️ Minor: CTA button uses hardcoded RGB in shadows (acceptable - custom effect)
+  - ✅ Dynamic inline styles in LandingPage (data-driven - acceptable)
+
 ---
 
 ## 🔄 In Progress
 
-### Phase 2: Mobile-First Refactor
-- **🔄 Task #13: Fix SummaryStrip vertical alignment**
-  - **Issue:** Summary items misaligned when some have secondary text
-  - **File:** `vue-app/src/components/analytics/SummaryStrip.vue`
-  - **Solution:** Always render secondary element with visibility control
+_(No tasks in progress)_
+
+---
+
+### Phase 1: Critical Business Logic
+- **✅ Task #1.2: Balance Adjustment - UI Refresh**
+  - Removed optimistic `fetchAccounts(true)` from AccountBalanceAdjustmentsModal
+  - Now relies on InvestmentsPage modal watcher for proper data refresh
+  - Account cards update correctly after balance adjustment
+
+### Phase 5: Transaction UX (Continued)
+- **✅ Task #5.1: Fix Category Loading Race Condition**
+  - Added `canLoadTransactions` computed guard in TransactionList
+  - Checks: `!areCategoriesLoading && categories.length > 0`
+  - Prevents transactions from loading before categories are available
+  - Filter watcher now waits for category data
+
+### Phase 7: Account Type Selection
+- **✅ Task #7.1: Add Account Type Dropdown**
+  - Added `allowedTypes: [0, 3, 2, 4]` prop to AccountFormModal in AccountsPage
+  - Users can now select: Банковский счет, Брокерский счет, Криптовалютный счет, Вклад
+  - Updated hint text for generic usage (not just investments)
+  - Type is included in API request payload
 
 ---
 
@@ -67,13 +113,6 @@
 - Disable submit button when insufficient funds
 - Show error: "Недостаточно средств на счёте"
 - Display available balance
-
-#### 1.2 Balance Adjustment - UI Refresh
-**Issue:** Account card doesn't update after balance adjustment without page reload
-
-**Files:** `InvestmentsPage.vue`, `finance.ts`
-
-**Solution:** Remove optimistic update, rely on full refresh from modal watcher
 
 ---
 
@@ -141,19 +180,6 @@ async function fetchWithDedup(key: string, fetcher: () => Promise<any>) {
 
 ---
 
-### Phase 5: Transaction UX (P1)
-#### 5.1 Fix Category Loading Race Condition
-**Issue:** Categories sometimes don't load before transaction list renders
-
-**Files:** `ExpensesPage.vue`, `TransactionList.vue`
-
-**Implementation:**
-1. In `ExpensesPage.vue`: Await `fetchCategories()` in onMounted
-2. In `TransactionList.vue`: Add `canLoadTransactions` computed check
-3. Only fetch transactions when categories available
-
----
-
 ### Phase 6: Investment & Analytics (P2)
 #### 6.1 Investment Cards - Show Original Currency
 **Issue:** If account currency ≠ base currency, should show original amount
@@ -173,18 +199,6 @@ async function fetchWithDedup(key: string, fetcher: () => Promise<any>) {
 - Detects opening balance via 5-second window
 - Maps to `DateTime.UnixEpoch` for historical calculations
 - **Action:** Verify frontend doesn't extrapolate backward
-
----
-
-### Phase 7: Account Type Selection (P2)
-#### 7.1 Add Account Type Dropdown
-**Issue:** No way to specify account type (Cash vs Bank) during creation
-
-**File:** `AccountFormModal.vue`
-
-**Implementation:**
-- Add dropdown with options: Наличные, Банковский счёт, Брокерский счёт, Криптокошелёк, Депозит
-- Include `type` in API request payload
 
 ---
 
@@ -213,14 +227,16 @@ async function fetchWithDedup(key: string, fetcher: () => Promise<any>) {
 - [x] Analytics page renders correctly on mobile
 - [x] "Save and add another" preserves date
 - [x] Filters reset completely (except tabs)
-- [ ] Balance adjustments update UI immediately
+- [x] SummaryStrip items aligned correctly (icons centered)
+- [x] Focus states are subtle and refined (no aggressive blue)
+- [x] Investment cards show original currency when applicable
+- [x] Design token consistency verified across codebase
+- [x] Balance adjustments update UI immediately
+- [x] Categories load before transaction rendering
+- [x] Account type selectable during creation
 - [ ] Transfers validate balance before submission
-- [ ] Categories load before transaction rendering
 - [ ] No duplicate API calls on navigation
-- [ ] Investment cards show original currency
 - [ ] Net Worth chart starts from first account
-- [ ] Account type selectable during creation
-- [ ] Visual consistency across all pages
 - [ ] Dark/light mode works correctly
 - [ ] Accessibility: keyboard, screen reader, focus states
 
