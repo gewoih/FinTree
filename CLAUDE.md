@@ -91,6 +91,23 @@ Our `ui/` components (e.g., `UiButton`, `UiCard`) wrap PrimeVue primitives. Crit
 
 - **Quality Policy**: Fix broken components immediately when discovered (e.g., misaligned icons due to PrimeVue `gap`/`padding`). Don't defer UI bugs — they compound and erode UX quality bar.
 
+**Premium Visual Patterns** (Stripe/Revolut quality):
+
+- **Frosted glass effects**: `backdrop-filter: blur(12px)` + gradient backgrounds (top nav, bottom bar, modals)
+- **Gradient badges**: Logo and avatar use `linear-gradient(135deg, primary-500, primary-600)` + glow shadow
+- **Active state signatures**:
+  - `::before` pseudo-element with gradient background (opacity 0 → 1 on active)
+  - Inset border glow: `box-shadow: inset 0 0 0 1px color-mix(...)`
+  - Outer glow shadow with primary color tint
+- **Hover microinteractions**:
+  - Icons scale 1.05x–1.08x + color shift to primary-400
+  - Lift animations: `translateY(-1px)` or `translateY(-2px)`
+  - Enhanced shadow on lift
+- **Status indicators**: Always color + icon + text (never color alone for accessibility)
+- **Gradient dividers**: Not solid lines — fade from transparent to color to transparent
+- **Button hierarchy**: Primary (gradient bg) > Secondary (outline) > Ghost (text) > Danger (red theme)
+- **Z-index layering**: Use `position: relative; z-index: 0/1` for pseudo-elements to prevent overlap issues
+
 ## Key Product Rules
 
 **Telegram Bot**: Fast input over precision (users fix errors in web later), must feel instant

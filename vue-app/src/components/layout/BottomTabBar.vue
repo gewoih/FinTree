@@ -4,11 +4,11 @@ import { useRoute } from 'vue-router'
 const route = useRoute()
 
 const tabs = [
-  { label: 'Главная', icon: 'pi-home', to: '/analytics' },
-  { label: 'Транзакции', icon: 'pi-list', to: '/expenses' },
+  { label: 'Обзор', icon: 'pi-chart-line', to: '/analytics' },
   { label: 'Счета', icon: 'pi-wallet', to: '/accounts' },
+  { label: 'Транзакции', icon: 'pi-list', to: '/expenses' },
   { label: 'Инвестиции', icon: 'pi-briefcase', to: '/investments' },
-  { label: 'Профиль', icon: 'pi-user', to: '/profile' },
+  { label: 'Ещё', icon: 'pi-ellipsis-h', to: '/profile' }
 ]
 </script>
 
@@ -47,12 +47,21 @@ const tabs = [
   height: var(--ft-bottom-bar-height);
   padding-bottom: env(safe-area-inset-bottom, 0px);
 
-  background: var(--ft-surface-base);
+  background: linear-gradient(
+    180deg,
+    color-mix(in srgb, var(--ft-surface-base) 95%, transparent),
+    color-mix(in srgb, var(--ft-surface-raised) 98%, transparent)
+  );
+  backdrop-filter: blur(12px);
   border-top: 1px solid var(--ft-border-default);
-  box-shadow: 0 -2px 8px rgb(0 0 0 / 8%);
+  box-shadow:
+    0 -4px 16px rgb(0 0 0 / 12%),
+    inset 0 1px 0 rgb(255 255 255 / 3%);
 }
 
 .bottom-tab-bar__item {
+  position: relative;
+
   display: flex;
   flex: 1 1 0;
   flex-direction: column;
@@ -64,23 +73,65 @@ const tabs = [
   min-height: 44px;
 
   font-size: var(--ft-text-xs);
+  font-weight: var(--ft-font-medium);
   color: var(--ft-text-tertiary);
   text-decoration: none;
 
-  transition: color var(--ft-transition-fast), background-color var(--ft-transition-fast);
+  transition:
+    color var(--ft-transition-fast),
+    background-color var(--ft-transition-fast),
+    transform 0.18s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.bottom-tab-bar__item::before {
+  content: '';
+
+  position: absolute;
+  top: 0;
+  left: 50%;
+
+  width: 0;
+  height: 2px;
+
+  background: linear-gradient(90deg, var(--ft-primary-400), var(--ft-primary-500));
+  border-radius: 0 0 2px 2px;
+  box-shadow: 0 2px 8px color-mix(in srgb, var(--ft-primary-500) 50%, transparent);
+  transform: translateX(-50%);
+
+  transition: width var(--ft-transition-base);
 }
 
 .bottom-tab-bar__item i {
-  font-size: 1.25rem;
+  font-size: 1.3rem;
+
+  transition: all var(--ft-transition-fast);
+}
+
+.bottom-tab-bar__item:active {
+  transform: scale(0.96);
 }
 
 .bottom-tab-bar__item:hover {
   color: var(--ft-text-secondary);
-  background: color-mix(in srgb, var(--ft-primary-500) 8%, transparent);
+  background: color-mix(in srgb, var(--ft-primary-500) 6%, transparent);
+}
+
+.bottom-tab-bar__item:hover i {
+  transform: translateY(-1px);
 }
 
 .bottom-tab-bar__item[aria-current='page'] {
-  color: var(--ft-primary-500);
+  font-weight: var(--ft-font-semibold);
+  color: var(--ft-primary-400);
+}
+
+.bottom-tab-bar__item[aria-current='page']::before {
+  width: 40%;
+}
+
+.bottom-tab-bar__item[aria-current='page'] i {
+  color: var(--ft-primary-400);
+  transform: scale(1.05);
 }
 
 .bottom-tab-bar__item:focus-visible {
@@ -91,6 +142,7 @@ const tabs = [
 .bottom-tab-bar__label {
   overflow: hidden;
   max-width: 100%;
+  letter-spacing: -0.01em;
   text-overflow: ellipsis;
   white-space: nowrap;
 }

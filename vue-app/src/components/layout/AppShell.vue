@@ -5,7 +5,6 @@ import { useAuthStore } from '@/stores/auth.ts'
 import { useUserStore } from '@/stores/user.ts'
 import { useTheme } from '@/composables/useTheme.ts'
 import { useViewport } from '@/composables/useViewport.ts'
-import Menu from 'primevue/menu'
 import Drawer from 'primevue/drawer'
 import ThemeToggle from '../common/ThemeToggle.vue'
 import UiButton from '../../ui/UiButton.vue'
@@ -20,19 +19,16 @@ const sidebarVisible = ref(false)
 const sidebarCollapsed = ref(
   typeof localStorage !== 'undefined' && localStorage.getItem('ft-sidebar-collapsed') === '1'
 )
-const userMenuRef = ref<{ toggle: (event: Event) => void } | null>(null)
-
 const { initTheme } = useTheme()
 
 const userEmail = computed(() => authStore.userEmail ?? 'Аккаунт')
 
-const { isMobile, isTablet } = useViewport()
+const { isTablet } = useViewport()
 
 // Only show drawer on mobile (width < 1024px)
 const isDrawerVisible = computed(() => isTablet.value)
 const isDesktop = computed(() => !isTablet.value)
 
-const userButtonLabel = computed(() => (isMobile.value ? undefined : userEmail.value))
 const isReadOnlyMode = computed(() => userStore.isReadOnlyMode)
 const subscriptionExpiresAtLabel = computed(() => {
   const rawExpiresAt = userStore.subscription?.expiresAtUtc
@@ -43,21 +39,17 @@ const subscriptionExpiresAtLabel = computed(() => {
   return expiresAt.toLocaleDateString('ru-RU')
 })
 
-const navigationItems = [
-  { label: 'Главная', icon: 'pi-home', to: '/analytics' },
-  { label: 'Транзакции', icon: 'pi-list', to: '/expenses' },
-  { label: 'Счета', icon: 'pi-wallet', to: '/accounts' },
-  { label: 'Инвестиции', icon: 'pi-briefcase', to: '/investments' }
+const primaryNavItems = [
+  { label: 'Обзор', icon: 'pi-chart-line', to: '/analytics', badge: null },
+  { label: 'Счета', icon: 'pi-wallet', to: '/accounts', badge: null },
+  { label: 'Транзакции', icon: 'pi-list', to: '/expenses', badge: null },
+  { label: 'Инвестиции', icon: 'pi-briefcase', to: '/investments', badge: null }
 ]
 
-const userMenuItems = [
-  { label: 'Настройки', icon: 'pi pi-cog', command: () => router.push('/profile') },
-  { label: 'Выйти', icon: 'pi pi-sign-out', command: () => handleLogout() }
+const secondaryNavItems = [
+  { label: 'Категории', icon: 'pi-tags', to: '/categories' },
+  { label: 'Настройки', icon: 'pi-cog', to: '/profile' }
 ]
-
-const handleUserMenuToggle = (event: Event) => {
-  userMenuRef.value?.toggle(event)
-}
 
 const toggleSidebar = () => {
   if (isDesktop.value) {
@@ -101,10 +93,10 @@ onMounted(() => {
     >Перейти к основному содержимому</a>
 
     <!-- Top Navigation -->
-    <div class="app-shell__topnav">
+    <header class="app-shell__topnav">
       <div class="app-shell__topnav-left">
         <UiButton
-          v-if="isDesktop"
+          v-if="!isTablet"
           :icon="sidebarCollapsed ? 'pi pi-angle-right' : 'pi pi-angle-left'"
           variant="ghost"
           rounded
@@ -113,35 +105,30 @@ onMounted(() => {
           :aria-expanded="!sidebarCollapsed"
           @click="toggleSidebar"
         />
+        <UiButton
+          v-if="isTablet"
+          icon="pi pi-bars"
+          variant="ghost"
+          rounded
+          class="app-shell__menu-toggle"
+          aria-label="Открыть меню"
+          @click="toggleSidebar"
+        />
         <router-link
           to="/analytics"
           class="app-shell__logo"
         >
-          <i class="pi pi-chart-bar" />
-          <span>FinTree</span>
+          <div class="app-shell__logo-icon">
+            <i class="pi pi-chart-bar" />
+          </div>
+          <span class="app-shell__logo-text">FinTree</span>
         </router-link>
       </div>
 
       <div class="app-shell__topnav-right">
         <ThemeToggle />
-        <div class="app-shell__user-menu">
-          <UiButton
-            type="button"
-            :label="userButtonLabel"
-            icon="pi pi-user"
-            variant="ghost"
-            class="app-shell__user-button"
-            @click="handleUserMenuToggle"
-          />
-          <Menu
-            ref="userMenuRef"
-            :model="userMenuItems"
-            popup
-            :base-z-index="1030"
-          />
-        </div>
       </div>
-    </div>
+    </header>
 
     <div
       v-if="isReadOnlyMode"
@@ -177,18 +164,76 @@ onMounted(() => {
           <span>FinTree</span>
         </div>
       </template>
-      <nav class="app-shell__nav">
-        <router-link
-          v-for="item in navigationItems"
-          :key="item.to"
-          :to="item.to"
-          class="app-shell__nav-link"
-          :aria-current="route.path === item.to ? 'page' : undefined"
+
+      <div class="app-shell__drawer-content">
+        <!-- Primary Navigation -->
+        <nav
+          class="app-shell__nav"
+          aria-label="Основная навигация"
         >
-          <i :class="['pi', item.icon]" />
-          <span>{{ item.label }}</span>
-        </router-link>
-      </nav>
+          <router-link
+            v-for="item in primaryNavItems"
+            :key="item.to"
+            :to="item.to"
+            class="app-shell__nav-link"
+            :aria-current="route.path === item.to ? 'page' : undefined"
+          >
+            <i :class="['pi', item.icon]" />
+            <span>{{ item.label }}</span>
+          </router-link>
+        </nav>
+
+        <!-- Secondary Navigation -->
+        <nav
+          class="app-shell__nav app-shell__nav--secondary"
+          aria-label="Дополнительная навигация"
+        >
+          <router-link
+            v-for="item in secondaryNavItems"
+            :key="item.to"
+            :to="item.to"
+            class="app-shell__nav-link app-shell__nav-link--secondary"
+            :aria-current="route.path === item.to ? 'page' : undefined"
+          >
+            <i :class="['pi', item.icon]" />
+            <span>{{ item.label }}</span>
+          </router-link>
+        </nav>
+
+        <!-- User Section -->
+        <div class="app-shell__drawer-user">
+          <div class="app-shell__user-card">
+            <div class="app-shell__user-avatar">
+              <i class="pi pi-user" />
+            </div>
+            <div class="app-shell__user-info">
+              <div class="app-shell__user-email">{{ userEmail }}</div>
+              <div
+                v-if="!isReadOnlyMode"
+                class="app-shell__user-status app-shell__user-status--active"
+              >
+                <span class="app-shell__user-status-dot" />
+                <span>Подписка активна</span>
+              </div>
+              <div
+                v-else
+                class="app-shell__user-status app-shell__user-status--inactive"
+              >
+                <span class="app-shell__user-status-dot" />
+                <span>Режим просмотра</span>
+              </div>
+            </div>
+          </div>
+          <button
+            type="button"
+            class="app-shell__logout-btn"
+            @click="handleLogout"
+          >
+            <i class="pi pi-sign-out" />
+            <span>Выйти</span>
+          </button>
+        </div>
+      </div>
     </Drawer>
 
     <!-- Desktop Sidebar -->
@@ -196,23 +241,88 @@ onMounted(() => {
       class="app-shell__sidebar-desktop"
       :class="{ 'app-shell__sidebar-desktop--collapsed': sidebarCollapsed }"
     >
-      <nav class="app-shell__nav">
-        <router-link
-          v-for="item in navigationItems"
-          :key="item.to"
-          :to="item.to"
-          class="app-shell__nav-link"
-          :class="{ 'app-shell__nav-link--collapsed': sidebarCollapsed }"
-          :aria-current="route.path === item.to ? 'page' : undefined"
-          :title="sidebarCollapsed ? item.label : undefined"
+      <div class="app-shell__sidebar-content">
+        <!-- Primary Navigation -->
+        <nav
+          class="app-shell__nav"
+          aria-label="Основная навигация"
         >
-          <i :class="['pi', item.icon]" />
-          <span
-            v-if="!sidebarCollapsed"
-            class="app-shell__nav-label"
-          >{{ item.label }}</span>
-        </router-link>
-      </nav>
+          <router-link
+            v-for="item in primaryNavItems"
+            :key="item.to"
+            :to="item.to"
+            class="app-shell__nav-link"
+            :class="{ 'app-shell__nav-link--collapsed': sidebarCollapsed }"
+            :aria-current="route.path === item.to ? 'page' : undefined"
+            :title="sidebarCollapsed ? item.label : undefined"
+          >
+            <i :class="['pi', item.icon]" />
+            <span
+              v-if="!sidebarCollapsed"
+              class="app-shell__nav-label"
+            >{{ item.label }}</span>
+            <span
+              v-if="item.badge && !sidebarCollapsed"
+              class="app-shell__nav-badge"
+            >{{ item.badge }}</span>
+          </router-link>
+        </nav>
+
+        <!-- Secondary Navigation -->
+        <nav
+          v-if="!sidebarCollapsed"
+          class="app-shell__nav app-shell__nav--secondary"
+          aria-label="Дополнительная навигация"
+        >
+          <router-link
+            v-for="item in secondaryNavItems"
+            :key="item.to"
+            :to="item.to"
+            class="app-shell__nav-link app-shell__nav-link--secondary"
+            :aria-current="route.path === item.to ? 'page' : undefined"
+          >
+            <i :class="['pi', item.icon]" />
+            <span class="app-shell__nav-label">{{ item.label }}</span>
+          </router-link>
+        </nav>
+
+        <!-- User Section -->
+        <div
+          v-if="!sidebarCollapsed"
+          class="app-shell__sidebar-user"
+        >
+          <div class="app-shell__user-card">
+            <div class="app-shell__user-avatar">
+              <i class="pi pi-user" />
+            </div>
+            <div class="app-shell__user-info">
+              <div class="app-shell__user-email">{{ userEmail }}</div>
+              <div
+                v-if="!isReadOnlyMode"
+                class="app-shell__user-status app-shell__user-status--active"
+              >
+                <span class="app-shell__user-status-dot" />
+                <span>Подписка активна</span>
+              </div>
+              <div
+                v-else
+                class="app-shell__user-status app-shell__user-status--inactive"
+              >
+                <span class="app-shell__user-status-dot" />
+                <span>Режим просмотра</span>
+              </div>
+            </div>
+          </div>
+          <button
+            type="button"
+            class="app-shell__logout-btn"
+            @click="handleLogout"
+          >
+            <i class="pi pi-sign-out" />
+            <span>Выйти</span>
+          </button>
+        </div>
+      </div>
     </aside>
 
     <!-- Main Content -->
@@ -272,11 +382,20 @@ onMounted(() => {
   align-items: center;
   justify-content: space-between;
 
-  padding: var(--ft-space-4) var(--ft-space-8);
+  min-height: var(--app-shell-nav-height);
+  padding: var(--ft-space-3) var(--ft-space-8);
 
-  background: var(--ft-surface-base);
+  background: linear-gradient(
+    180deg,
+    color-mix(in srgb, var(--ft-surface-base) 98%, var(--ft-bg-base)),
+    color-mix(in srgb, var(--ft-surface-raised) 95%, var(--ft-surface-base))
+  );
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
   border-bottom: 1px solid var(--ft-border-default);
-  box-shadow: var(--ft-shadow-md);
+  box-shadow:
+    0 2px 12px rgb(0 0 0 / 8%),
+    inset 0 -1px 0 rgb(255 255 255 / 3%);
 }
 
 .app-shell__readonly-banner {
@@ -317,29 +436,60 @@ onMounted(() => {
 }
 
 .app-shell__menu-toggle {
-  margin-left: calc(var(--ft-space-4) * -1);
+  margin-left: calc(var(--ft-space-2) * -1);
+  transition: all var(--ft-transition-fast);
+}
+
+.app-shell__menu-toggle:hover {
+  transform: scale(1.05);
 }
 
 .app-shell__logo {
   display: flex;
   gap: var(--ft-space-3);
   align-items: center;
+  text-decoration: none;
 
+  transition: all var(--ft-transition-fast);
+}
+
+.app-shell__logo-icon {
+  display: grid;
+  place-items: center;
+
+  width: 40px;
+  height: 40px;
+
+  background: linear-gradient(135deg, var(--ft-primary-500), var(--ft-primary-600));
+  border-radius: var(--ft-radius-lg);
+  box-shadow: 0 2px 8px color-mix(in srgb, var(--ft-primary-500) 30%, transparent);
+
+  transition: all var(--ft-transition-fast);
+}
+
+.app-shell__logo-icon i {
+  font-size: 1.2rem;
+  color: var(--ft-text-inverse);
+}
+
+.app-shell__logo-text {
   font-size: var(--ft-text-xl);
   font-weight: var(--ft-font-bold);
+  letter-spacing: -0.02em;
   color: var(--ft-text-primary);
-  text-decoration: none;
 
   transition: color var(--ft-transition-fast);
 }
 
-.app-shell__logo i {
-  font-size: 1.5rem;
-  color: var(--ft-primary-500);
+.app-shell__logo:hover .app-shell__logo-icon {
+  transform: translateY(-2px);
+  box-shadow:
+    0 4px 12px color-mix(in srgb, var(--ft-primary-500) 40%, transparent),
+    0 0 0 3px color-mix(in srgb, var(--ft-primary-500) 12%, transparent);
 }
 
-.app-shell__logo:hover {
-  color: var(--ft-primary-500);
+.app-shell__logo:hover .app-shell__logo-text {
+  color: var(--ft-primary-400);
 }
 
 /* Sidebar - Desktop */
@@ -348,13 +498,25 @@ onMounted(() => {
 }
 
 .app-shell__drawer-mobile :deep(.p-drawer) {
-  width: 280px;
-  background: var(--ft-surface-raised);
+  width: 300px;
+  background: linear-gradient(
+    180deg,
+    var(--ft-surface-raised),
+    color-mix(in srgb, var(--ft-surface-base) 90%, var(--ft-surface-raised))
+  );
   border-right: 1px solid var(--ft-border-default);
+  box-shadow: 4px 0 24px rgb(0 0 0 / 15%);
 }
 
 .app-shell__drawer-mobile :deep(.p-drawer-header) {
-  padding: var(--ft-space-6) var(--ft-space-4) var(--ft-space-3);
+  padding: var(--ft-space-6) var(--ft-space-5) var(--ft-space-4);
+  border-bottom: 1px solid var(--ft-border-subtle);
+}
+
+.app-shell__drawer-mobile :deep(.p-drawer-content) {
+  display: flex;
+  flex-direction: column;
+  padding: var(--ft-space-4) var(--ft-space-5);
 }
 
 .app-shell__drawer-header {
@@ -364,20 +526,55 @@ onMounted(() => {
 
   font-size: var(--ft-text-xl);
   font-weight: var(--ft-font-bold);
+  letter-spacing: -0.02em;
   color: var(--ft-text-primary);
 }
 
 .app-shell__drawer-header i {
-  font-size: 1.5rem;
-  color: var(--ft-primary-500);
+  display: grid;
+  place-items: center;
+
+  width: 36px;
+  height: 36px;
+
+  font-size: 1.2rem;
+  color: var(--ft-text-inverse);
+
+  background: linear-gradient(135deg, var(--ft-primary-500), var(--ft-primary-600));
+  border-radius: var(--ft-radius-lg);
+  box-shadow: 0 2px 8px color-mix(in srgb, var(--ft-primary-500) 30%, transparent);
 }
 
 /* Navigation */
 .app-shell__nav {
   display: flex;
   flex-direction: column;
-  gap: var(--ft-space-1);
-  margin-top: var(--ft-space-4);
+  gap: var(--ft-space-2);
+}
+
+.app-shell__nav--secondary {
+  position: relative;
+  margin-top: var(--ft-space-6);
+  padding-top: var(--ft-space-6);
+}
+
+.app-shell__nav--secondary::before {
+  content: '';
+
+  position: absolute;
+  top: 0;
+  left: var(--ft-space-4);
+  right: var(--ft-space-4);
+
+  height: 1px;
+
+  background: linear-gradient(
+    90deg,
+    transparent,
+    var(--ft-border-default) 20%,
+    var(--ft-border-default) 80%,
+    transparent
+  );
 }
 
 .app-shell__nav-link {
@@ -387,32 +584,110 @@ onMounted(() => {
   gap: var(--ft-space-3);
   align-items: center;
 
+  min-height: 44px;
   padding: var(--ft-space-3) var(--ft-space-4);
 
   font-size: var(--ft-text-base);
   font-weight: var(--ft-font-medium);
+  letter-spacing: -0.01em;
   color: var(--ft-text-secondary);
   text-decoration: none;
 
+  background: transparent;
   border-radius: var(--ft-radius-lg);
+
+  transition:
+    all var(--ft-transition-fast),
+    transform 0.18s cubic-bezier(0.22, 1, 0.36, 1),
+    box-shadow 0.18s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.app-shell__nav-link::before {
+  content: '';
+
+  position: absolute;
+  z-index: 0;
+  inset: 0;
+
+  border-radius: inherit;
+  opacity: 0;
+  pointer-events: none;
+
+  background: linear-gradient(
+    135deg,
+    color-mix(in srgb, var(--ft-primary-500) 24%, transparent),
+    color-mix(in srgb, var(--ft-primary-600) 18%, transparent)
+  );
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--ft-primary-400) 35%, transparent);
+
+  transition: opacity var(--ft-transition-fast);
+}
+
+.app-shell__nav-link i {
+  position: relative;
+  z-index: 1;
+
+  font-size: 1.25rem;
 
   transition: all var(--ft-transition-fast);
 }
 
+.app-shell__nav-label {
+  position: relative;
+  z-index: 1;
+  flex: 1;
+}
+
+.app-shell__nav-badge {
+  position: relative;
+  z-index: 1;
+
+  min-width: 20px;
+  padding: 2px 6px;
+
+  font-size: var(--ft-text-xs);
+  font-weight: var(--ft-font-semibold);
+  line-height: 1;
+  color: var(--ft-text-inverse);
+  text-align: center;
+
+  background: var(--ft-primary-500);
+  border-radius: var(--ft-radius-full);
+}
+
 .app-shell__nav-link:hover {
   color: var(--ft-text-primary);
-  background: color-mix(in srgb, var(--ft-primary-500) 18%, var(--ft-surface-base));
+  background: color-mix(in srgb, var(--ft-primary-500) 12%, transparent);
+  transform: translateX(2px);
+}
+
+.app-shell__nav-link:hover i {
+  color: var(--ft-primary-400);
+  transform: scale(1.08);
 }
 
 .app-shell__nav-link.router-link-active {
   font-weight: var(--ft-font-semibold);
   color: var(--ft-text-primary);
-  background: color-mix(in srgb, var(--ft-primary-500) 24%, var(--ft-surface-base));
-  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--ft-primary-500) 45%, transparent);
+  transform: translateX(0);
+  box-shadow:
+    0 2px 8px color-mix(in srgb, var(--ft-primary-500) 20%, transparent),
+    0 0 0 1px color-mix(in srgb, var(--ft-primary-400) 25%, transparent);
 }
 
-.app-shell__nav-link i {
-  font-size: 1.25rem;
+.app-shell__nav-link.router-link-active::before {
+  opacity: 1;
+}
+
+.app-shell__nav-link.router-link-active i {
+  color: var(--ft-primary-300);
+  transform: scale(1.05);
+}
+
+.app-shell__nav-link--secondary {
+  min-height: 40px;
+  padding: var(--ft-space-2) var(--ft-space-4);
+  font-size: var(--ft-text-sm);
 }
 
 .app-shell__nav-link--collapsed {
@@ -421,7 +696,7 @@ onMounted(() => {
 }
 
 .app-shell__nav-link--collapsed i {
-  font-size: 1.3rem;
+  font-size: 1.35rem;
 }
 
 /* Main Content */
@@ -432,72 +707,6 @@ onMounted(() => {
   min-width: 0;
   padding: 0;
   outline: none;
-}
-
-/* User Menu */
-.app-shell__user-menu {
-  position: relative;
-}
-
-.app-shell__user-button :deep(.p-button-label) {
-  overflow: hidden;
-  max-width: 220px;
-  text-overflow: ellipsis;
-}
-
-.app-shell__user-menu :deep(.p-menu) {
-  min-width: 190px;
-  margin-top: var(--ft-space-2);
-  padding: var(--ft-space-2);
-
-  background: linear-gradient(
-    160deg,
-    color-mix(in srgb, var(--ft-surface-base) 92%, transparent),
-    color-mix(in srgb, var(--ft-surface-raised) 92%, transparent)
-  );
-  backdrop-filter: blur(10px);
-  border: 1px solid color-mix(in srgb, var(--ft-border-default) 65%, transparent);
-  border-radius: var(--ft-radius-xl);
-  box-shadow:
-    0 16px 32px rgb(15 23 42 / 22%),
-    inset 0 1px 0 rgb(255 255 255 / 4%);
-}
-
-.app-shell__user-menu :deep(.p-menu .p-menuitem-link) {
-  gap: var(--ft-space-3);
-
-  min-height: 44px;
-  padding: 0.7rem 0.85rem;
-
-  color: var(--ft-text-primary);
-
-  border-radius: var(--ft-radius-lg);
-
-  transition: background var(--ft-transition-fast), color var(--ft-transition-fast), transform var(--ft-transition-fast);
-}
-
-.app-shell__user-menu :deep(.p-menu .p-menuitem-link:hover) {
-  transform: translateY(-1px);
-  color: var(--ft-text-primary);
-  background: color-mix(in srgb, var(--ft-primary-500) 18%, transparent);
-}
-
-.app-shell__user-menu :deep(.p-menu .p-menuitem-link:focus-visible) {
-  outline: 2px solid color-mix(in srgb, var(--ft-primary-500) 60%, transparent);
-  outline-offset: 2px;
-}
-
-.app-shell__user-menu :deep(.p-menu .p-menuitem-icon) {
-  color: var(--ft-text-secondary);
-}
-
-.app-shell__user-menu :deep(.p-menu .p-menuitem-link:hover .p-menuitem-icon) {
-  color: var(--ft-primary-500);
-}
-
-.app-shell__user-menu :deep(.p-menu .p-menuitem-text) {
-  font-size: var(--ft-text-sm);
-  font-weight: var(--ft-font-medium);
 }
 
 @media (width >= 1024px) {
@@ -514,6 +723,138 @@ onMounted(() => {
   }
 }
 
+/* User Section */
+.app-shell__sidebar-user,
+.app-shell__drawer-user {
+  margin-top: auto;
+  padding-top: var(--ft-space-6);
+}
+
+.app-shell__user-card {
+  display: flex;
+  gap: var(--ft-space-3);
+  align-items: center;
+
+  padding: var(--ft-space-4);
+
+  background: linear-gradient(
+    135deg,
+    color-mix(in srgb, var(--ft-surface-raised) 85%, transparent),
+    color-mix(in srgb, var(--ft-surface-base) 90%, transparent)
+  );
+  border: 1px solid var(--ft-border-subtle);
+  border-radius: var(--ft-radius-xl);
+  box-shadow: inset 0 1px 2px rgb(255 255 255 / 3%);
+}
+
+.app-shell__user-avatar {
+  display: grid;
+  place-items: center;
+
+  width: 40px;
+  height: 40px;
+
+  background: linear-gradient(135deg, var(--ft-primary-500), var(--ft-primary-600));
+  border-radius: var(--ft-radius-full);
+  box-shadow:
+    0 0 0 2px var(--ft-surface-base),
+    0 2px 8px color-mix(in srgb, var(--ft-primary-500) 30%, transparent);
+}
+
+.app-shell__user-avatar i {
+  font-size: 1.1rem;
+  color: var(--ft-text-inverse);
+}
+
+.app-shell__user-info {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: var(--ft-space-1);
+  overflow: hidden;
+}
+
+.app-shell__user-email {
+  overflow: hidden;
+
+  font-size: var(--ft-text-sm);
+  font-weight: var(--ft-font-semibold);
+  color: var(--ft-text-primary);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.app-shell__user-status {
+  display: flex;
+  gap: var(--ft-space-1);
+  align-items: center;
+
+  font-size: var(--ft-text-xs);
+  font-weight: var(--ft-font-medium);
+}
+
+.app-shell__user-status--active {
+  color: var(--ft-success-500);
+}
+
+.app-shell__user-status--inactive {
+  color: var(--ft-warning-500);
+}
+
+.app-shell__user-status-dot {
+  display: block;
+  width: 6px;
+  height: 6px;
+  background: currentcolor;
+  border-radius: var(--ft-radius-full);
+  box-shadow: 0 0 6px currentcolor;
+}
+
+.app-shell__logout-btn {
+  display: flex;
+  gap: var(--ft-space-3);
+  align-items: center;
+  justify-content: center;
+
+  width: 100%;
+  min-height: 44px;
+  margin-top: var(--ft-space-3);
+  padding: var(--ft-space-3) var(--ft-space-4);
+
+  font-size: var(--ft-text-sm);
+  font-weight: var(--ft-font-medium);
+  color: var(--ft-text-secondary);
+
+  cursor: pointer;
+  background: transparent;
+  border: 1px solid var(--ft-border-default);
+  border-radius: var(--ft-radius-lg);
+
+  transition:
+    all var(--ft-transition-fast),
+    transform 0.18s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.app-shell__logout-btn:hover {
+  color: var(--ft-danger-400);
+  background: color-mix(in srgb, var(--ft-danger-500) 8%, transparent);
+  border-color: color-mix(in srgb, var(--ft-danger-500) 25%, transparent);
+  transform: translateY(-1px);
+  box-shadow: 0 2px 8px color-mix(in srgb, var(--ft-danger-500) 12%, transparent);
+}
+
+.app-shell__logout-btn i {
+  font-size: 1.1rem;
+}
+
+.app-shell__sidebar-content,
+.app-shell__drawer-content {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  height: 100%;
+}
+
 @media (width >= 1024px) {
   .app-shell__sidebar-desktop {
     position: sticky;
@@ -524,9 +865,13 @@ onMounted(() => {
     grid-area: sidebar;
 
     height: calc(100vh - var(--app-shell-nav-height));
-    padding: var(--ft-space-8) var(--ft-space-4);
+    padding: var(--ft-space-6) var(--ft-space-4);
 
-    background: var(--ft-surface-base);
+    background: linear-gradient(
+      180deg,
+      var(--ft-surface-base),
+      color-mix(in srgb, var(--ft-bg-subtle) 90%, var(--ft-surface-base))
+    );
     border-right: 1px solid var(--ft-border-default);
 
     transition: padding 0.2s ease;
@@ -534,7 +879,11 @@ onMounted(() => {
 
   .app-shell__sidebar-desktop--collapsed {
     overflow: visible;
-    padding: var(--ft-space-8) var(--ft-space-2);
+    padding: var(--ft-space-6) var(--ft-space-2);
+  }
+
+  .app-shell__sidebar-desktop--collapsed .app-shell__sidebar-user {
+    display: none;
   }
 }
 
@@ -555,17 +904,17 @@ onMounted(() => {
     padding: var(--ft-space-3) var(--ft-space-4);
   }
 
-  .app-shell__logo span {
-    font-size: 1rem;
+  .app-shell__logo-icon {
+    width: 36px;
+    height: 36px;
   }
 
-  .app-shell__user-button :deep(.p-button-label) {
-    display: none;
+  .app-shell__logo-icon i {
+    font-size: 1.1rem;
   }
 
-  .app-shell__user-button {
-    min-width: 44px;
-    padding-inline: 0.6rem;
+  .app-shell__logo-text {
+    font-size: var(--ft-text-lg);
   }
 }
 </style>

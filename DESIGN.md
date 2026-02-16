@@ -146,24 +146,37 @@ All tokens use `--ft-*` prefix, defined in `vue-app/src/assets/design-tokens.css
 
 **App shell structure** (desktop ≥1024px):
 ```
-┌─ TopNav (sticky, 72px) ─────────────────────┐
-├─ Sidebar (240px, collapsible to 64px) ──┬────┤
-│  - Nav links (4-5 items)                │    │
-│  - Collapsible                          │Main│
-│                                         │    │
-└─────────────────────────────────────────┴────┘
+┌─ TopNav (sticky, 72px) ──────────────────────┐
+│  [≡] [🔷 FinTree]                   [☀️/🌙]  │
+├─ Sidebar (240px, collapsible) ───┬───────────┤
+│  PRIMARY NAV                     │           │
+│  • Обзор                         │           │
+│  • Счета                         │   Main    │
+│  • Транзакции                    │ Content   │
+│  • Инвестиции                    │           │
+│  ─────────────────               │           │
+│  SECONDARY NAV                   │           │
+│  • Категории                     │           │
+│  • Настройки                     │           │
+│  ─────────────────               │           │
+│  USER SECTION                    │           │
+│  [👤] email@example.com          │           │
+│      ● Подписка активна          │           │
+│  [🚪 Выйти]                      │           │
+└──────────────────────────────────┴───────────┘
 ```
 
 **App shell structure** (mobile <1024px):
 ```
 ┌─ TopNav (sticky) ────────────────────────────┐
-│  [☰ burger] [Logo]              [theme] [👤] │
+│  [☰ burger] [🔷 FinTree]           [☀️/🌙]  │
 ├──────────────────────────────────────────────┤
 │                                              │
 │              Main Content                    │
 │                                              │
 ├──────────────────────────────────────────────┤
-│  Bottom Tab Bar (fixed, 4-5 items)           │
+│  Bottom Tab Bar (fixed, 5 items)             │
+│  [Обзор] [Счета] [Транзакции] [Инвест] [Ещё] │
 └──────────────────────────────────────────────┘
 ```
 
@@ -218,6 +231,44 @@ All tokens use `--ft-*` prefix, defined in `vue-app/src/assets/design-tokens.css
 - Error text: below input, `--ft-text-sm`, `--ft-danger-500`
 - Group related fields visually with spacing, not with borders
 - Validate on blur + on submit, show errors in Russian
+
+**Navigation** (`AppShell`, `BottomTabBar`):
+
+*Top Navigation:*
+- Height: 72px (`--app-shell-nav-height`)
+- Background: Gradient + frosted glass (`backdrop-filter: blur(12px)`)
+- Logo: Icon in 40x40px gradient badge (`linear-gradient(135deg, primary-500, primary-600)`) + glow shadow
+- Contents: Toggle button + logo + theme toggle only (no user menu)
+- Sticky positioned with `z-index: --ft-z-sticky`
+
+*Sidebar (Desktop):*
+- Width: 240px (collapsible to 64px)
+- Background: Subtle vertical gradient
+- **Structure** (top to bottom):
+  1. Primary nav (4 items) — main app sections
+  2. Gradient divider line
+  3. Secondary nav (2 items) — utility/config
+  4. User section at bottom — profile card + logout
+- **Nav item states**:
+  - Default: `--ft-text-secondary`, transparent background
+  - Hover: Slide right 2px, icon scale 1.08x, `primary-500 12%` background
+  - Active: Gradient background via `::before` pseudo-element, inset glow border, outer glow shadow
+- **Section separator**: `linear-gradient(90deg, transparent, border-default 20%, border-default 80%, transparent)`
+- **User card**: Gradient background, 40px circular avatar with gradient + glow, status dot (color + icon + text)
+
+*Mobile Drawer:*
+- Width: 300px
+- Same structure as desktop sidebar
+- Logo in header matches top nav badge style
+- Slide-in from left
+
+*Bottom Tab Bar (Mobile):*
+- Height: 64px (`--ft-bottom-bar-height`)
+- Background: Gradient + frosted glass
+- 5 items: Обзор, Счета, Транзакции, Инвестиции, Ещё
+- Active indicator: Animated top border (expands to 40% width)
+- Icons: 1.3rem, scale 1.05x on active
+- Fixed positioned, only visible <1024px
 
 **Tables** (`UiDataTable` / `table-shell`):
 - Wrapped in `.table-shell` for consistent styling
@@ -329,6 +380,85 @@ All tokens use `--ft-*` prefix, defined in `vue-app/src/assets/design-tokens.css
 - Never convey meaning by color alone — always pair with icon + text
 - Status badges: icon + color + text label
 - Form errors: red border + error message text
+
+### Premium Visual Effects
+
+**Stripe/Revolut-quality polish patterns:**
+
+**Frosted Glass** (modern depth):
+```css
+background: linear-gradient(
+  180deg,
+  color-mix(in srgb, var(--ft-surface-base) 98%, var(--ft-bg-base)),
+  color-mix(in srgb, var(--ft-surface-raised) 95%, var(--ft-surface-base))
+);
+backdrop-filter: blur(12px);
+-webkit-backdrop-filter: blur(12px); /* Safari support */
+```
+Use on: Top nav, bottom tab bar, modals, overlay panels
+
+**Gradient Badges** (signature visual):
+```css
+background: linear-gradient(135deg, var(--ft-primary-500), var(--ft-primary-600));
+box-shadow: 0 2px 8px color-mix(in srgb, var(--ft-primary-500) 30%, transparent);
+```
+Use on: Logo icon, user avatar, premium features
+
+**Active State Glow** (layered depth):
+```css
+.element::before {
+  background: linear-gradient(
+    135deg,
+    color-mix(in srgb, var(--ft-primary-500) 24%, transparent),
+    color-mix(in srgb, var(--ft-primary-600) 18%, transparent)
+  );
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--ft-primary-400) 35%, transparent);
+}
+.element.active {
+  box-shadow: 0 2px 8px color-mix(in srgb, var(--ft-primary-500) 20%, transparent);
+}
+```
+Use on: Active nav links, selected items, focused cards
+
+**Gradient Dividers** (soft separation):
+```css
+background: linear-gradient(
+  90deg,
+  transparent,
+  var(--ft-border-default) 20%,
+  var(--ft-border-default) 80%,
+  transparent
+);
+```
+Use on: Section separators, nav group dividers
+
+**Hover Microinteractions** (premium feel):
+```css
+.element {
+  transition: all 150ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+.element:hover {
+  transform: translateY(-2px); /* or translateX(2px) for nav */
+}
+.element:hover .icon {
+  transform: scale(1.08);
+  color: var(--ft-primary-400);
+}
+```
+Use on: Cards, buttons, nav items, interactive elements
+
+**Status Indicators** (animated presence):
+```css
+.status-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: var(--ft-radius-full);
+  background: currentcolor;
+  box-shadow: 0 0 6px currentcolor;
+  animation: pulse 2s ease-in-out infinite;
+}
+```
+Use on: Online status, active subscription, live updates
 
 ### Financial Data Display
 
