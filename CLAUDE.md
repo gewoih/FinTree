@@ -97,6 +97,8 @@ FinTree is a personal finance management application with:
 
 Our `ui/` components (e.g., `UiButton`, `UiCard`) wrap PrimeVue primitives. Critical architectural points:
 
+- **Input Wrappers Are Mandatory**: In `pages/` and `components/`, always use controls from `vue-app/src/ui` (`UiInputText`, `UiInputNumber`, `UiSelect`, `UiDatePicker`, `UiSelectButton`, etc.). Do not import PrimeVue input controls directly outside `src/ui/*`.
+
 - **Wrapper Structure**: PrimeVue components render as the root element, not nested. `<UiButton>` renders as `<button class="p-button ui-button">`, not `<div class="ui-button"><button class="p-button">`. This affects CSS selectors.
 
 - **Overriding PrimeVue Styles**:
