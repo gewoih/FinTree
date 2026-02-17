@@ -61,8 +61,13 @@ const handleBlur = (event: InputNumberBlurEvent) => {
 
 <style scoped>
 .ui-input-number {
+  overflow: hidden;
   width: 100%;
   min-height: var(--ft-control-height);
   border-radius: var(--ft-radius-lg);
+}
+
+.ui-input-number :deep(.p-inputnumber-input) {
+  border-radius: 0;
 }
 </style>

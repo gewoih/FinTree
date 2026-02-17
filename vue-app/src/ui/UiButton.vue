@@ -156,13 +156,13 @@ const buttonClasses = computed(() => [
 }
 
 .ui-button--cta:hover:not(:disabled) {
+  transform: translateY(-2px);
   background: linear-gradient(
     135deg,
     var(--ft-success-600),
     var(--ft-success-700)
   );
   box-shadow: 0 12px 28px rgb(34 197 94 / 40%);
-  transform: translateY(-2px);
 }
 
 .ui-button--cta:active:not(:disabled) {
@@ -179,8 +179,8 @@ const buttonClasses = computed(() => [
 }
 
 .ui-button--rounded {
-  border-radius: 50%;
   padding: 0;
+  border-radius: 50%;
 }
 
 .ui-button--block {
@@ -194,8 +194,8 @@ const buttonClasses = computed(() => [
 
 .ui-button:disabled {
   cursor: not-allowed;
-  opacity: 0.7;
   transform: none;
+  opacity: 0.7;
   box-shadow: none;
 }
 </style>

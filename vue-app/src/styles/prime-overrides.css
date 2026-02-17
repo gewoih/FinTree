@@ -5,16 +5,13 @@
 
 @layer overrides {
   /* ━━━ Input Fields Base Styles ━━━ */
-  .p-component,
   .p-inputtext,
   .p-select,
   .p-dropdown,
   .p-multiselect,
-  .p-select-label,
-  .p-select-trigger,
-  .p-datepicker input,
-  .p-calendar input,
-  .p-inputnumber-input,
+  .p-datepicker,
+  .p-calendar,
+  .p-inputnumber,
   .p-inputtextarea,
   .p-autocomplete-input,
   .p-password-input {
@@ -35,9 +32,11 @@
   .p-inputtext:hover:not(:disabled),
   .p-select:hover:not(:disabled),
   .p-dropdown:hover:not(:disabled),
+  .p-datepicker:hover:not(:disabled),
   .p-calendar:hover:not(:disabled),
   .p-inputnumber:hover:not(:disabled),
-  .p-inputtextarea:hover:not(:disabled) {
+  .p-inputtextarea:hover:not(:disabled),
+  .p-multiselect:hover:not(:disabled) {
     border-color: var(--ft-border-default);
   }
 
@@ -45,13 +44,25 @@
   .p-inputtext:focus,
   .p-select:focus-within,
   .p-dropdown:focus-within,
+  .p-datepicker:focus-within,
   .p-calendar:focus-within,
   .p-inputnumber:focus-within,
-  .p-inputtextarea:focus {
+  .p-inputtextarea:focus,
+  .p-multiselect:focus-within {
     border-color: var(--ft-border-strong);
+    outline: none;
     box-shadow:
       0 0 0 3px var(--ft-focus-ring),
       0 1px 3px rgb(0 0 0 / 12%);
+  }
+
+  /* Composite controls: keep one visible focus layer on the control root. */
+  .p-datepicker:focus-within .p-datepicker-input:focus,
+  .p-datepicker:focus-within .p-datepicker-input:focus-visible,
+  .p-inputnumber:focus-within .p-inputnumber-input:focus,
+  .p-inputnumber:focus-within .p-inputnumber-input:focus-visible {
+    outline: none;
+    box-shadow: none;
   }
 
   /* ━━━ Placeholders ━━━ */
@@ -64,11 +75,39 @@
   /* ━━━ Component Sizing ━━━ */
   .p-dropdown,
   .p-select,
+  .p-datepicker,
   .p-calendar,
   .p-inputnumber,
   .p-multiselect {
     min-height: var(--ft-control-height);
     border-radius: var(--ft-radius-lg);
+  }
+
+  /* Composite controls: clip inner edges to prevent sharp/double corners. */
+  .p-select,
+  .p-datepicker,
+  .p-inputnumber,
+  .p-multiselect {
+    overflow: hidden;
+  }
+
+  .p-select .p-select-label,
+  .p-select .p-select-dropdown,
+  .p-datepicker .p-datepicker-input,
+  .p-datepicker .p-datepicker-dropdown,
+  .p-inputnumber .p-inputnumber-input,
+  .p-multiselect .p-multiselect-label,
+  .p-multiselect .p-multiselect-dropdown {
+    background: transparent;
+    border: 0;
+    border-radius: 0;
+    box-shadow: none;
+  }
+
+  .p-select .p-select-dropdown,
+  .p-datepicker .p-datepicker-dropdown,
+  .p-multiselect .p-multiselect-dropdown {
+    border-inline-start: 1px solid var(--ft-border-soft);
   }
 
   /* ━━━ Buttons ━━━ */
@@ -80,7 +119,7 @@
   }
 
   /* Primary buttons get blue glow */
-  .p-button:not(.p-button-secondary):not(.p-button-outlined):not(.p-button-text):not(.p-button-link):not(.p-button-danger):hover:not(:disabled) {
+  .p-button:not(.p-button-secondary, .p-button-outlined, .p-button-text, .p-button-link, .p-button-danger):hover:not(:disabled) {
     transform: translateY(-1px);
     box-shadow: 0 8px 20px color-mix(in srgb, var(--ft-primary-500) 40%, transparent);
   }
@@ -110,6 +149,7 @@
 
   /* ━━━ Dialogs ━━━ */
   .p-dialog {
+    overflow: hidden;
     border: 1px solid var(--ft-border-default);
     border-radius: var(--ft-radius-xl);
     box-shadow: var(--ft-shadow-lg);
@@ -120,21 +160,57 @@
   }
 
   .p-dialog .p-dialog-content {
-    overflow-x: hidden;
-    overflow-y: auto;
+    overflow: hidden auto;
     padding: 0;
     background: var(--ft-surface-raised);
+    border-radius: inherit;
   }
 
   /* ━━━ Dropdowns and Panels ━━━ */
-  .p-datepicker,
+  .p-datepicker-panel,
+  .p-select-overlay,
   .p-select-panel,
   .p-dropdown-panel,
-  .p-multiselect-panel {
+  .p-multiselect-overlay,
+  .p-multiselect-panel,
+  .ui-select-overlay,
+  .ui-date-picker-overlay {
+    overflow: hidden;
+
     background: var(--ft-surface-raised);
     border: 1px solid var(--ft-border-default);
     border-radius: var(--ft-radius-xl);
     box-shadow: var(--ft-shadow-md);
+  }
+
+  .p-datepicker-panel .p-datepicker-header,
+  .ui-date-picker-overlay .p-datepicker-header {
+    padding: var(--ft-space-2) var(--ft-space-3);
+  }
+
+  .p-datepicker-panel .p-datepicker-title,
+  .ui-date-picker-overlay .p-datepicker-title {
+    gap: var(--ft-space-3);
+    font-size: var(--ft-text-lg);
+  }
+
+  .p-datepicker-panel .p-datepicker-calendar th,
+  .ui-date-picker-overlay .p-datepicker-calendar th {
+    padding: var(--ft-space-1);
+    font-size: var(--ft-text-sm);
+    font-weight: var(--ft-font-medium);
+  }
+
+  .p-datepicker-panel .p-datepicker-calendar td,
+  .ui-date-picker-overlay .p-datepicker-calendar td {
+    padding: var(--ft-space-1);
+  }
+
+  .p-datepicker-panel .p-datepicker-calendar td > span,
+  .ui-date-picker-overlay .p-datepicker-calendar td > span {
+    width: 2.25rem;
+    height: 2.25rem;
+    font-size: var(--ft-text-base);
   }
 
   /* ━━━ DataTable ━━━ */
@@ -196,8 +272,11 @@
     border-radius: var(--ft-radius-md);
   }
 
-  /* ━━━ Global Focus States ━━━ */
-  *:focus-visible {
+  /* ━━━ Fallback Focus (non-Prime interactive elements) ━━━ */
+  a[href]:focus-visible,
+  button:not(.p-component):focus-visible,
+  [role='button']:not(.p-component):focus-visible,
+  [tabindex]:not([tabindex='-1'], .p-component):focus-visible {
     border-radius: var(--ft-radius-md);
     outline: 2px solid var(--ft-primary-400);
     outline-offset: 2px;
@@ -215,12 +294,23 @@
     box-shadow: var(--ft-shadow-soft);
   }
 
+  /* Compact DatePicker overlay on desktop while preserving mobile adaptability. */
+  @media (width > 640px) {
+    .p-datepicker-panel,
+    .ui-date-picker-overlay {
+      width: min(320px, calc(100vw - (var(--ft-space-6) * 2))) !important;
+      min-width: min(320px, calc(100vw - (var(--ft-space-6) * 2))) !important;
+      max-width: min(320px, calc(100vw - (var(--ft-space-6) * 2)));
+    }
+  }
+
   @media (width <= 640px) {
     .p-dialog {
       width: 100vw !important;
       max-width: 100vw !important;
       max-height: 95vh;
       margin: 0;
+
       border-radius: var(--ft-radius-lg);
     }
 

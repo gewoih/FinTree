@@ -868,6 +868,11 @@ const handleDelete = () => {
   max-width: min(95vw, var(--ft-container-sm));
 }
 
+.txn-dialog :deep(.p-dialog) {
+  overflow: hidden;
+  border-radius: var(--ft-radius-xl);
+}
+
 .txn-dialog :deep(.p-dialog-header) {
   display: none;
 }
@@ -930,6 +935,7 @@ const handleDelete = () => {
 }
 
 .txn-form__type-control {
+  overflow: hidden;
   display: flex;
   gap: var(--ft-space-1);
 
@@ -966,17 +972,21 @@ const handleDelete = () => {
 
 .txn-form__type-control :deep(.p-togglebutton.p-togglebutton-checked) {
   color: var(--ft-text-primary);
+  background: color-mix(in srgb, var(--ft-primary-500) 12%, var(--ft-surface-base));
+  border-color: color-mix(in srgb, var(--ft-primary-400) 36%, var(--ft-border-default));
   box-shadow: none;
 }
 
 .txn-form__type-control :deep(.p-togglebutton:nth-of-type(1).p-togglebutton-checked) {
-  background: color-mix(in srgb, var(--ft-danger-500) 14%, var(--ft-surface-base));
-  border-color: color-mix(in srgb, var(--ft-danger-400) 45%, transparent);
+  color: var(--ft-text-primary);
+  background: color-mix(in srgb, var(--ft-danger-500) 16%, var(--ft-surface-base));
+  border-color: color-mix(in srgb, var(--ft-danger-400) 48%, var(--ft-border-default));
 }
 
 .txn-form__type-control :deep(.p-togglebutton:nth-of-type(2).p-togglebutton-checked) {
-  background: color-mix(in srgb, var(--ft-success-500) 14%, var(--ft-surface-base));
-  border-color: color-mix(in srgb, var(--ft-success-400) 45%, transparent);
+  color: var(--ft-text-primary);
+  background: color-mix(in srgb, var(--ft-success-500) 16%, var(--ft-surface-base));
+  border-color: color-mix(in srgb, var(--ft-success-400) 48%, var(--ft-border-default));
 }
 
 .txn-form__section {
@@ -1035,13 +1045,23 @@ const handleDelete = () => {
 
 .txn-form__amount-input {
   flex: 1;
-  min-width: 0;
-}
 
-.txn-form__amount-input :deep(.p-inputnumber) {
-  width: 100%;
+  min-width: 0;
+
   background: transparent;
   border: none;
+  outline: none;
+  box-shadow: none;
+}
+
+.txn-form__amount-input:focus-within {
+  outline: none;
+  box-shadow: none;
+}
+
+.txn-form__amount-input :deep(.p-inputnumber-input.p-inputtext:focus),
+.txn-form__amount-input :deep(.p-inputnumber-input.p-inputtext:focus-visible) {
+  outline: none;
   box-shadow: none;
 }
 
@@ -1057,10 +1077,6 @@ const handleDelete = () => {
 
   background: transparent;
   border: none;
-  box-shadow: none;
-}
-
-.txn-form__amount-input :deep(.p-inputnumber-input.p-inputtext:focus) {
   box-shadow: none;
 }
 
@@ -1179,21 +1195,27 @@ const handleDelete = () => {
   border-radius: var(--ft-radius-lg);
 }
 
-.txn-form__date-picker :deep(.p-datepicker) {
+.txn-form__date-picker {
+  overflow: hidden;
   display: grid;
   grid-template-columns: minmax(0, 1fr) auto;
+
   width: 100%;
+
+  border-radius: var(--ft-radius-lg);
 }
 
 .txn-form__date-picker :deep(.p-datepicker-input),
 .txn-form__date-picker :deep(.p-datepicker input.p-inputtext) {
   width: 100%;
   min-width: 0;
+  border-radius: 0;
 }
 
 .txn-form__date-picker :deep(.p-datepicker-dropdown) {
   width: var(--ft-control-height);
   min-width: var(--ft-control-height);
+  border-radius: 0;
 }
 
 .txn-form__date-picker :deep(.p-datepicker-input:focus-visible),

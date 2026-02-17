@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { useAttrs } from 'vue';
+import { computed, useAttrs } from 'vue';
 import Select from 'primevue/select';
 
 const props = defineProps<{
@@ -9,6 +9,8 @@ const props = defineProps<{
   optionValue?: string;
   placeholder?: string;
   disabled?: boolean;
+  panelClass?: unknown;
+  overlayClass?: unknown;
 }>();
 
 const emit = defineEmits<{
@@ -16,6 +18,8 @@ const emit = defineEmits<{
 }>();
 
 const attrs = useAttrs();
+const mergedPanelClass = computed(() => ['ui-select-overlay', props.panelClass]);
+const mergedOverlayClass = computed(() => ['ui-select-overlay', props.overlayClass]);
 </script>
 
 <template>
@@ -28,6 +32,8 @@ const attrs = useAttrs();
     :option-value="props.optionValue"
     :placeholder="props.placeholder"
     :disabled="props.disabled"
+    :panel-class="mergedPanelClass"
+    :overlay-class="mergedOverlayClass"
     @update:model-value="val => emit('update:modelValue', val)"
   >
     <template
@@ -53,14 +59,18 @@ const attrs = useAttrs();
 
 <style scoped>
 .ui-select {
+  overflow: hidden;
   width: 100%;
   min-height: var(--ft-control-height);
   border-radius: var(--ft-radius-lg);
 }
 
-/* Ensure no double borders from nested elements */
 .ui-select :deep(.p-select-label),
-.ui-select :deep(.p-select-trigger) {
-  border: none;
+.ui-select :deep(.p-select-dropdown) {
+  border-radius: 0;
+}
+
+.ui-select :deep(.p-select-label) {
+  background: transparent;
 }
 </style>

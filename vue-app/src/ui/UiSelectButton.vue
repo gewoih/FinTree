@@ -48,8 +48,20 @@ const attrs = useAttrs();
 
 <style scoped>
 .ui-select-button {
+  overflow: hidden;
   width: 100%;
   min-height: var(--ft-control-height);
   border-radius: var(--ft-radius-lg);
+}
+
+.ui-select-button :deep(.p-selectbutton) {
+  overflow: hidden;
+  width: 100%;
+  border-radius: inherit;
+}
+
+.ui-select-button :deep(.p-togglebutton) {
+  border-radius: 0;
+  box-shadow: none;
 }
 </style>

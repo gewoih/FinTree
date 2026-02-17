@@ -34,6 +34,7 @@ const handleUpdateModelValue = (value: string | null | undefined) => {
 
 <style scoped>
 .ui-input {
+  overflow: hidden;
   width: 100%;
   min-height: var(--ft-control-height);
   border-radius: var(--ft-radius-lg);

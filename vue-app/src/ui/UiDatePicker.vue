@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { useAttrs } from 'vue';
+import { computed, useAttrs } from 'vue';
 import DatePicker from 'primevue/datepicker';
 
 const props = defineProps<{
@@ -10,6 +10,7 @@ const props = defineProps<{
   manualInput?: boolean;
   dateFormat?: string;
   showButtonBar?: boolean;
+  panelClass?: unknown;
 }>();
 
 const emit = defineEmits<{
@@ -17,6 +18,7 @@ const emit = defineEmits<{
 }>();
 
 const attrs = useAttrs();
+const mergedPanelClass = computed(() => ['ui-date-picker-overlay', props.panelClass]);
 </script>
 
 <template>
@@ -30,6 +32,7 @@ const attrs = useAttrs();
     :manual-input="props.manualInput"
     :date-format="props.dateFormat"
     :show-button-bar="props.showButtonBar"
+    :panel-class="mergedPanelClass"
     :select-other-months="true"
     @update:model-value="val => emit('update:modelValue', val as Date[] | Date | null)"
   />
@@ -37,8 +40,14 @@ const attrs = useAttrs();
 
 <style scoped>
 .ui-date-picker {
+  overflow: hidden;
   width: 100%;
   min-height: var(--ft-control-height);
   border-radius: var(--ft-radius-lg);
+}
+
+.ui-date-picker :deep(.p-datepicker-input),
+.ui-date-picker :deep(.p-datepicker-dropdown) {
+  border-radius: 0;
 }
 </style>

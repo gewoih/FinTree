@@ -106,6 +106,7 @@ Our `ui/` components (e.g., `UiButton`, `UiCard`) wrap PrimeVue primitives. Crit
   - Target wrapper classes directly: `.ui-button--icon-only { gap: 0 !important; }`
   - Use `!important` when overriding library defaults (justified to enforce design system)
   - Use `:deep()` only for nested PrimeVue internals (e.g., `.ui-button :deep(.p-button-icon)`)
+  - For `Ui*` wrappers, do NOT target wrapper roots with descendant selectors like `.field :deep(.p-inputnumber)` / `.field :deep(.p-datepicker)`. Root styling must be applied to wrapper class itself (e.g., `.field`) and `:deep()` must remain for nested internals only.
 
 - **Component Variations**: Auto-detect via `computed`, never manual props:
   ```ts

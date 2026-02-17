@@ -129,7 +129,7 @@ onMounted(async () => {
           v-if="!isMobile"
           label="Экспорт"
           icon="pi pi-download"
-          variant="ghost"
+          variant="secondary"
           :loading="isExporting"
           @click="exportTransactions"
         />
@@ -137,7 +137,7 @@ onMounted(async () => {
           v-if="!isMobile"
           label="Категории"
           icon="pi pi-tags"
-          variant="ghost"
+          variant="secondary"
           @click="router.push('/profile#categories')"
         />
         <UiButton
@@ -151,6 +151,7 @@ onMounted(async () => {
         <UiButton
           label="Добавить транзакцию"
           icon="pi pi-plus"
+          variant="primary"
           :disabled="isReadOnlyMode"
           @click="openTransactionDialog"
         />
