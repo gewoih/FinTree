@@ -1,0 +1,7 @@
+interface:
+  display_name: "Code Simplifier"
+  short_description: "Refine code without changing behavior"
+  default_prompt: "Use $code-simplifier to clean up recently modified code for clarity and maintainability while preserving exact behavior."
+
+policy:
+  allow_implicit_invocation: true
