@@ -5,6 +5,7 @@
 
 @layer reset, tokens, base, components, primevue, overrides;
 
+@layer tokens {
 :root {
   /* ━━━ COLOR PALETTE ━━━ */
 
@@ -240,6 +241,7 @@
   --ft-layout-page-padding: clamp(var(--ft-space-6), 4vw, var(--ft-space-10));
   --ft-layout-section-gap: clamp(var(--ft-space-6), 3vw, var(--ft-space-9));
   --ft-layout-card-gap: clamp(var(--ft-space-4), 2vw, var(--ft-space-6));
+  --ft-app-shell-nav-height: 72px;
   --ft-bottom-bar-height: 64px;
 
   /* ━━━ CHART PALETTE ━━━ */
@@ -307,29 +309,24 @@
   --ft-shadow-inner: inset 0 2px 4px rgb(15 23 42 / 6%);
 }
 
-/* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-   ACCESSIBILITY
-   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
-
-/* Respect prefers-reduced-motion */
-@media (prefers-reduced-motion: reduce) {
-  *,
-  *::before,
-  *::after {
-    scroll-behavior: auto !important;
-    transition-duration: 0.01ms !important;
-    animation-duration: 0.01ms !important;
-    animation-iteration-count: 1 !important;
-  }
-}
-
 /* High contrast mode support */
 @media (prefers-contrast: high) {
   :root {
-    --ft-border-default: var(--ft-gray-100);
+    --ft-border-default: var(--ft-gray-200);
     --ft-text-secondary: var(--ft-gray-100);
   }
+
+  .light-mode {
+    --ft-border-default: var(--ft-gray-600);
+    --ft-text-secondary: var(--ft-gray-800);
+  }
 }
+}
+
+@layer base {
+/* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+   ACCESSIBILITY
+   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
 
 /* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
    UTILITY CLASSES
@@ -354,6 +351,19 @@
 
 /* Focus visible for keyboard nav */
 .focus-visible:focus-visible {
-  outline: 2px solid var(--ft-focus-ring);
-  outline-offset: 2px;
+  outline: 3px solid var(--ft-focus-ring);
+  outline-offset: 3px;
+}
+
+/* Respect prefers-reduced-motion */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    scroll-behavior: auto !important;
+    transition-duration: 0.01ms !important;
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+  }
+}
 }

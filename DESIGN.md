@@ -15,6 +15,7 @@ All tokens use `--ft-*` prefix, defined in `vue-app/src/assets/design-tokens.css
 **Theming**:
 - Dark is DEFAULT (`:root` = dark values)
 - Light overrides via `.light-mode` selector
+- Runtime applies `.dark-mode` / `.light-mode` on `<html>` before app mount (`fintree-theme`), and PrimeVue dark variants use `.dark-mode`
 - Never use `.dark-mode` in component styles
 - Only 2 themes (dark + light), no user customization
 - CSS layers order: `@layer reset, tokens, base, components, primevue, overrides;`
@@ -22,7 +23,7 @@ All tokens use `--ft-*` prefix, defined in `vue-app/src/assets/design-tokens.css
 **Token files**:
 - `design-tokens.css` — primitive + semantic tokens (colors, spacing, typography, shadows, z-index)
 - `styles/theme.css` — component-level aliases and shared UI classes (`@layer components`)
-- `styles/prime-overrides.css` — PrimeVue overrides (`@layer overrides`)
+- `styles/prime-overrides.css` — single source of truth for PrimeVue overrides (`@layer overrides`)
 - `style.css` — base resets, layout helpers (`@layer base`)
 
 ### Typography
@@ -86,6 +87,7 @@ All tokens use `--ft-*` prefix, defined in `vue-app/src/assets/design-tokens.css
 - `--ft-layout-page-padding`: Page vertical padding (`clamp(24px, 4vw, 40px)`)
 - `--ft-layout-section-gap`: Gap between page sections (`clamp(24px, 3vw, 36px)`)
 - `--ft-layout-card-gap`: Gap between cards in grid (`clamp(16px, 2vw, 24px)`)
+- `--ft-app-shell-nav-height`: Top navigation height (`72px`)
 
 **Spacing rules**:
 - Inside cards/panels: `--ft-space-3` to `--ft-space-6` depending on card variant
@@ -235,7 +237,7 @@ All tokens use `--ft-*` prefix, defined in `vue-app/src/assets/design-tokens.css
 **Navigation** (`AppShell`, `BottomTabBar`):
 
 *Top Navigation:*
-- Height: 72px (`--app-shell-nav-height`)
+- Height: 72px (`--ft-app-shell-nav-height`)
 - Background: Gradient + frosted glass (`backdrop-filter: blur(12px)`)
 - Logo: Icon in 40x40px gradient badge (`linear-gradient(135deg, primary-500, primary-600)`) + glow shadow
 - Contents: Toggle button + logo + theme toggle only (no user menu)

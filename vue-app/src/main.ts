@@ -2,7 +2,6 @@ import './assets/design-tokens.css';
 import './style.css';
 import './styles/theme.css';
 import './styles/prime-overrides.css';
-import './primevue-theme.css';
 import { createApp } from 'vue';
 import { createPinia } from 'pinia';
 import App from './App.vue';
@@ -16,6 +15,31 @@ import ToastService from 'primevue/toastservice';
 import ConfirmationService from 'primevue/confirmationservice';
 import Tooltip from 'primevue/tooltip';
 import { registerComponents } from './components';
+
+const THEME_STORAGE_KEY = 'fintree-theme';
+
+const applyInitialThemeClass = () => {
+    if (typeof document === 'undefined') return;
+
+    let initialTheme: 'dark' | 'light' = 'dark';
+
+    if (typeof window !== 'undefined') {
+        try {
+            const storedTheme = window.localStorage.getItem(THEME_STORAGE_KEY);
+            if (storedTheme === 'dark' || storedTheme === 'light') {
+                initialTheme = storedTheme;
+            }
+        } catch {
+            initialTheme = 'dark';
+        }
+    }
+
+    const root = document.documentElement;
+    root.classList.toggle('dark-mode', initialTheme === 'dark');
+    root.classList.toggle('light-mode', initialTheme === 'light');
+};
+
+applyInitialThemeClass();
 
 const FinTreePreset = definePreset(Aura, {
     semantic: {
@@ -68,7 +92,7 @@ app.use(PrimeVue, {
             darkModeSelector: '.dark-mode',
             cssLayer: {
                 name: 'primevue',
-                order: 'reset, primevue'
+                order: 'reset, tokens, base, components, primevue, overrides'
             }
         }
     }

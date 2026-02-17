@@ -349,8 +349,6 @@ onMounted(() => {
 
 <style scoped>
 .app-shell {
-  --app-shell-nav-height: 72px;
-
   overflow-x: clip;
   display: grid;
   grid-template:
@@ -391,7 +389,7 @@ onMounted(() => {
   align-items: center;
   justify-content: space-between;
 
-  min-height: var(--app-shell-nav-height);
+  min-height: var(--ft-app-shell-nav-height);
   padding: var(--ft-space-3) var(--ft-space-8);
 
   background: linear-gradient(
@@ -867,13 +865,13 @@ onMounted(() => {
 @media (width >= 1024px) {
   .app-shell__sidebar-desktop {
     position: sticky;
-    top: var(--app-shell-nav-height);
+    top: var(--ft-app-shell-nav-height);
 
     overflow-y: auto;
     display: block;
     grid-area: sidebar;
 
-    height: calc(100vh - var(--app-shell-nav-height));
+    height: calc(100vh - var(--ft-app-shell-nav-height));
     padding: var(--ft-space-6) var(--ft-space-4);
 
     background: linear-gradient(

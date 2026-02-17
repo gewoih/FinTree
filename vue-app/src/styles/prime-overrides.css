@@ -4,6 +4,50 @@
    ═══════════════════════════════════════════════════════════════ */
 
 @layer overrides {
+  :root {
+    --p-card-background: var(--ft-surface-soft);
+    --p-card-border-color: var(--ft-border-soft);
+    --p-card-border-radius: var(--ft-radius-xl);
+    --p-card-shadow: var(--ft-shadow-sm);
+  }
+
+  /* ━━━ Card ━━━ */
+  .p-card {
+    overflow: hidden;
+
+    background: var(--ft-surface-soft);
+    border: 1px solid var(--ft-border-soft);
+    border-radius: var(--ft-radius-xl);
+    box-shadow: var(--ft-shadow-sm);
+
+    transition:
+      box-shadow var(--ft-transition-fast),
+      border-color var(--ft-transition-fast),
+      transform var(--ft-transition-fast);
+  }
+
+  .p-card:hover {
+    transform: translateY(-2px);
+    border-color: var(--ft-border-default);
+    box-shadow: var(--ft-shadow-card);
+  }
+
+  .p-card .p-card-title {
+    font-size: var(--ft-text-lg);
+    font-weight: var(--ft-font-semibold);
+    color: var(--ft-heading);
+  }
+
+  .p-card .p-card-subtitle {
+    font-size: var(--ft-text-sm);
+    color: var(--ft-text-muted);
+  }
+
+  .p-card .p-card-content {
+    font-size: var(--ft-text-sm);
+    color: var(--ft-text);
+  }
+
   /* ━━━ Input Fields Base Styles ━━━ */
   .p-inputtext,
   .p-select,
@@ -143,8 +187,67 @@
   }
 
   .p-button:focus-visible {
-    outline: 2px solid var(--ft-primary-400);
+    outline: 3px solid var(--ft-focus-ring);
     outline-offset: 3px;
+  }
+
+  /* ━━━ Tag ━━━ */
+  .p-tag {
+    gap: var(--ft-space-1);
+
+    padding: var(--ft-space-1) var(--ft-space-3);
+
+    font-size: var(--ft-text-xs);
+    font-weight: var(--ft-font-medium);
+
+    border-radius: var(--ft-radius-full);
+  }
+
+  .p-tag-success {
+    color: var(--ft-success-600);
+    background: color-mix(in srgb, var(--ft-success-500) 16%, transparent);
+    border: 1px solid color-mix(in srgb, var(--ft-success-500) 32%, transparent);
+  }
+
+  .p-tag-danger {
+    color: var(--ft-danger-600);
+    background: color-mix(in srgb, var(--ft-danger-500) 16%, transparent);
+    border: 1px solid color-mix(in srgb, var(--ft-danger-500) 32%, transparent);
+  }
+
+  .p-tag-info {
+    color: var(--ft-info-600);
+    background: color-mix(in srgb, var(--ft-info-500) 16%, transparent);
+    border: 1px solid color-mix(in srgb, var(--ft-info-500) 32%, transparent);
+  }
+
+  .p-tag-warning {
+    color: var(--ft-warning-600);
+    background: color-mix(in srgb, var(--ft-warning-500) 16%, transparent);
+    border: 1px solid color-mix(in srgb, var(--ft-warning-500) 32%, transparent);
+  }
+
+  /* ━━━ Skeleton ━━━ */
+  .p-skeleton {
+    background-image: linear-gradient(
+      90deg,
+      rgb(148 163 184 / 8%) 0%,
+      rgb(148 163 184 / 18%) 50%,
+      rgb(148 163 184 / 8%) 100%
+    );
+    background-size: 200% 100%;
+    border-radius: var(--ft-radius-lg);
+    animation: app-skeleton-loading 1.5s ease-in-out infinite;
+  }
+
+  @keyframes app-skeleton-loading {
+    0% {
+      background-position: 200% 0;
+    }
+
+    100% {
+      background-position: -200% 0;
+    }
   }
 
   /* ━━━ Dialogs ━━━ */
@@ -228,6 +331,13 @@
     background: transparent;
   }
 
+  .p-datatable .p-datatable-header {
+    padding: var(--ft-space-4) var(--ft-space-5);
+    color: var(--ft-text-secondary);
+    background: var(--ft-surface-base);
+    border-bottom: 1px solid var(--ft-border-default);
+  }
+
   .p-datatable .p-datatable-thead > tr > th {
     position: sticky;
     z-index: var(--ft-z-above);
@@ -267,6 +377,31 @@
     border-bottom: 1px solid var(--ft-border-default);
   }
 
+  .p-paginator {
+    padding: var(--ft-space-3) var(--ft-space-4);
+    border-top: 1px solid var(--ft-border-default);
+  }
+
+  /* ━━━ SelectButton ━━━ */
+  .p-selectbutton .p-button {
+    color: var(--ft-text-secondary);
+    background: var(--ft-surface-raised);
+    border-color: var(--ft-border-subtle);
+  }
+
+  .p-selectbutton .p-button:hover {
+    color: var(--ft-text-primary);
+    background: var(--ft-surface-overlay);
+    border-color: var(--ft-border-default);
+  }
+
+  .p-selectbutton .p-button.p-highlight,
+  .p-selectbutton .p-button.p-highlight:hover {
+    color: var(--ft-text-inverse);
+    background: var(--ft-primary-500);
+    border-color: var(--ft-primary-500);
+  }
+
   /* ━━━ DatePicker Calendar Cells ━━━ */
   .p-datepicker .p-datepicker-calendar table td > span {
     border-radius: var(--ft-radius-md);
@@ -278,18 +413,16 @@
   [role='button']:not(.p-component):focus-visible,
   [tabindex]:not([tabindex='-1'], .p-component):focus-visible {
     border-radius: var(--ft-radius-md);
-    outline: 2px solid var(--ft-primary-400);
-    outline-offset: 2px;
+    outline: 3px solid var(--ft-focus-ring);
+    outline-offset: 3px;
   }
 
   /* ━━━ Cards Hover Effect ━━━ */
-  .ft-card,
-  .p-card {
+  .ft-card {
     transition: transform var(--ft-transition-fast), box-shadow var(--ft-transition-fast);
   }
 
-  .ft-card:hover,
-  .p-card:hover {
+  .ft-card:hover {
     transform: translateY(-2px);
     box-shadow: var(--ft-shadow-soft);
   }
