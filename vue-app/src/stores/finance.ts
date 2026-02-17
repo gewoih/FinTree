@@ -16,6 +16,7 @@ import type {
     UpdateTransferPayload,
     TransactionsQuery
 } from '../types.ts';
+import { TRANSACTION_TYPE } from '../types.ts';
 import { PAGINATION_OPTIONS } from '../constants';
 
 import {
@@ -216,6 +217,93 @@ export const useFinanceStore = defineStore('finance', () => {
         };
     }
 
+    function toUtcDateOnlyKey(value: string): string | null {
+        const parsed = new Date(value);
+        if (Number.isNaN(parsed.getTime())) return null;
+        const year = parsed.getUTCFullYear();
+        const month = `${parsed.getUTCMonth() + 1}`.padStart(2, '0');
+        const day = `${parsed.getUTCDate()}`.padStart(2, '0');
+        return `${year}-${month}-${day}`;
+    }
+
+    function inferBaseRate(account: Account): number | null {
+        const baseCurrencyCode = userStore.baseCurrencyCode;
+        if (baseCurrencyCode && account.currencyCode === baseCurrencyCode) return 1;
+
+        const balance = Number(account.balance ?? 0);
+        const balanceInBase = Number(account.balanceInBaseCurrency ?? account.balance ?? 0);
+        if (Math.abs(balance) < 0.000001) return null;
+
+        const rawRate = Math.abs(balanceInBase / balance);
+        return Number.isFinite(rawRate) && rawRate > 0 ? rawRate : null;
+    }
+
+    function applyAccountBalanceDelta(accountId: string, signedAmount: number): number | null {
+        const target = accounts.value.find(account => account.id === accountId);
+        if (!target) return null;
+
+        const rate = inferBaseRate(target);
+        const signedAmountInBase = rate == null ? null : signedAmount * rate;
+
+        accounts.value = accounts.value.map(account => {
+            if (account.id !== accountId) return account;
+
+            const nextBalance = Number(account.balance ?? 0) + signedAmount;
+            const currentBalanceInBase = Number(account.balanceInBaseCurrency ?? account.balance ?? 0);
+            const nextBalanceInBase = signedAmountInBase == null
+                ? currentBalanceInBase
+                : currentBalanceInBase + signedAmountInBase;
+
+            return {
+                ...account,
+                balance: nextBalance,
+                balanceInBaseCurrency: nextBalanceInBase,
+            };
+        });
+
+        return signedAmountInBase;
+    }
+
+    function transactionMatchesCurrentQuery(
+        payload: NewTransactionPayload,
+        accountName: string | null,
+        categoryName: string | null
+    ): boolean {
+        const query = currentTransactionsQuery.value;
+        if (query.accountId && query.accountId !== payload.accountId) return false;
+        if (query.categoryId && query.categoryId !== payload.categoryId) return false;
+
+        const txDateKey = toUtcDateOnlyKey(payload.occurredAt);
+        if (!txDateKey) return false;
+        if (query.from && txDateKey < query.from) return false;
+        if (query.to && txDateKey > query.to) return false;
+
+        const search = query.search?.trim().toLowerCase();
+        if (search) {
+            const description = (payload.description ?? '').toLowerCase();
+            const account = (accountName ?? '').toLowerCase();
+            const category = (categoryName ?? '').toLowerCase();
+            if (!description.includes(search) && !account.includes(search) && !category.includes(search)) {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+    function appendCreatedTransactionToState(transaction: Transaction) {
+        const pageSize = transactionsPageSize.value || PAGINATION_OPTIONS.defaultRows;
+        const next = [transaction, ...transactions.value]
+            .sort((a, b) => {
+                const timeDiff = new Date(b.occurredAt).getTime() - new Date(a.occurredAt).getTime();
+                if (timeDiff !== 0) return timeDiff;
+                return b.id.localeCompare(a.id);
+            })
+            .slice(0, pageSize);
+
+        transactions.value = next;
+    }
+
     async function fetchTransactions(query: TransactionsQuery = {}) {
         const normalizedQuery = normalizeTransactionsQuery(query);
         const queryKey = `transactions:${JSON.stringify(normalizedQuery)}`;
@@ -254,6 +342,13 @@ export const useFinanceStore = defineStore('finance', () => {
         await fetchTransactions(currentTransactionsQuery.value);
     }
 
+    async function refreshTransactionsAndBalances() {
+        await Promise.all([
+            refetchCurrentTransactions(),
+            fetchAccounts(true),
+        ]);
+    }
+
     /**
      * Creates a new transaction (expense or income)
      * @param payload - Transaction data
@@ -262,8 +357,50 @@ export const useFinanceStore = defineStore('finance', () => {
     async function addTransaction(payload: NewTransactionPayload) {
         if (!ensureWritableMode()) return false;
         try {
-            await apiService.createTransaction(payload);
-            await refetchCurrentTransactions();
+            const transactionId = await apiService.createTransaction(payload);
+
+            const amount = Math.abs(Number(payload.amount));
+            const isIncome = payload.type === TRANSACTION_TYPE.Income;
+            const signedAmount = isIncome ? amount : -amount;
+            const signedAmountInBase = applyAccountBalanceDelta(payload.accountId, signedAmount);
+
+            const account = accounts.value.find(item => item.id === payload.accountId) ?? null;
+            const category = categories.value.find(item => item.id === payload.categoryId) ?? null;
+            const matchesCurrentQuery = transactionMatchesCurrentQuery(
+                payload,
+                account?.name ?? null,
+                category?.name ?? null
+            );
+
+            if (matchesCurrentQuery) {
+                transactionsTotal.value += 1;
+
+                const isFirstPage = (currentTransactionsQuery.value.page ?? 1) === 1 && transactionsPage.value === 1;
+                if (isFirstPage) {
+                    const amountInBaseCurrency = signedAmountInBase == null
+                        ? undefined
+                        : Math.abs(signedAmountInBase);
+
+                    appendCreatedTransactionToState({
+                        id: transactionId,
+                        accountId: payload.accountId,
+                        categoryId: payload.categoryId,
+                        amount,
+                        amountInBaseCurrency,
+                        originalAmount: amount,
+                        originalCurrencyCode: account?.currencyCode ?? null,
+                        type: payload.type,
+                        occurredAt: payload.occurredAt,
+                        description: payload.description ?? null,
+                        isMandatory: payload.isMandatory,
+                        isTransfer: false,
+                        transferId: null,
+                        account: account ?? undefined,
+                        category,
+                    });
+                }
+            }
+
             return true;
         } catch (error) {
             console.error('Ошибка при добавлении транзакции:', error);
@@ -280,7 +417,7 @@ export const useFinanceStore = defineStore('finance', () => {
         if (!ensureWritableMode()) return false;
         try {
             await apiService.createTransfer(payload);
-            await refetchCurrentTransactions();
+            await refreshTransactionsAndBalances();
             return true;
         } catch (error) {
             console.error('Ошибка при создании перевода:', error);
@@ -292,7 +429,7 @@ export const useFinanceStore = defineStore('finance', () => {
         if (!ensureWritableMode()) return false;
         try {
             await apiService.updateTransfer(payload);
-            await refetchCurrentTransactions();
+            await refreshTransactionsAndBalances();
             return true;
         } catch (error) {
             console.error('Ошибка при обновлении перевода:', error);
@@ -309,7 +446,7 @@ export const useFinanceStore = defineStore('finance', () => {
         if (!ensureWritableMode()) return false;
         try {
             await apiService.updateTransaction(payload);
-            await refetchCurrentTransactions();
+            await refreshTransactionsAndBalances();
             return true;
         } catch (error) {
             console.error('Ошибка при обновлении транзакции:', error);
@@ -326,7 +463,7 @@ export const useFinanceStore = defineStore('finance', () => {
         if (!ensureWritableMode()) return false;
         try {
             await apiService.deleteTransaction(id);
-            await refetchCurrentTransactions();
+            await refreshTransactionsAndBalances();
             return true;
         } catch (error) {
             console.error('Ошибка при удалении транзакции:', error);
@@ -338,7 +475,7 @@ export const useFinanceStore = defineStore('finance', () => {
         if (!ensureWritableMode()) return false;
         try {
             await apiService.deleteTransfer(transferId);
-            await refetchCurrentTransactions();
+            await refreshTransactionsAndBalances();
             return true;
         } catch (error) {
             console.error('Ошибка при удалении перевода:', error);

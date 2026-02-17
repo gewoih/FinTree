@@ -108,7 +108,7 @@ const onboardingSteps = computed<OnboardingStep[]>(() => [
     description: 'Добавьте первую транзакцию чтобы завершить обучение.',
     completed: hasTransactions.value,
     actionLabel: 'Добавить транзакцию',
-    actionTo: '/expenses',
+    actionTo: '/transactions',
   },
 ]);
 
@@ -390,7 +390,7 @@ function retryDashboard() {
 function handleCategorySelect(category: CategoryLegendItem) {
   const range = getMonthRangeLocal(selectedMonth.value);
   void router.push({
-    name: 'expenses',
+    name: 'transactions',
     query: {
       categoryId: category.id,
       from: formatDateQuery(range.from),
@@ -401,7 +401,7 @@ function handleCategorySelect(category: CategoryLegendItem) {
 
 function handlePeakSelect(peak: PeakDayItem) {
   void router.push({
-    name: 'expenses',
+    name: 'transactions',
     query: {
       from: formatDateQuery(peak.date),
       to: formatDateQuery(peak.date),
@@ -415,7 +415,7 @@ function handlePeakSummarySelect() {
   const minDate = new Date(Math.min(...dates));
   const maxDate = new Date(Math.max(...dates));
   void router.push({
-    name: 'expenses',
+    name: 'transactions',
     query: {
       from: formatDateQuery(minDate),
       to: formatDateQuery(maxDate),

@@ -45,6 +45,28 @@ export const useAuthStore = defineStore('auth', () => {
 
     const isAuthenticated = computed(() => isSessionChecked.value && isLoggedIn.value);
 
+    async function hydrateCurrentUser(force = false): Promise<boolean> {
+        const userStore = useUserStore();
+        try {
+            await userStore.fetchCurrentUser(force);
+            const me = userStore.currentUser;
+            if (!me) throw new Error('User not loaded');
+            setAuthenticated(me.email);
+            return true;
+        } catch (err) {
+            console.error('Current user hydration failed:', err);
+            return false;
+        }
+    }
+
+    function clearSessionState() {
+        const userStore = useUserStore();
+        userStore.clearUserState();
+        isLoggedIn.value = false;
+        isSessionChecked.value = true;
+        userEmail.value = null;
+    }
+
     async function login(payload: LoginPayload): Promise<boolean> {
         isLoading.value = true;
         error.value = null;
@@ -55,6 +77,7 @@ export const useAuthStore = defineStore('auth', () => {
             });
             const { email } = response.data;
             setAuthenticated(email);
+            await hydrateCurrentUser(true);
 
             return true;
         } catch (err: unknown) {
@@ -76,6 +99,7 @@ export const useAuthStore = defineStore('auth', () => {
             });
             const { email } = response.data;
             setAuthenticated(email);
+            await hydrateCurrentUser(true);
 
             return true;
         } catch (err: unknown) {
@@ -97,6 +121,7 @@ export const useAuthStore = defineStore('auth', () => {
             });
             const { email } = response.data;
             setAuthenticated(email);
+            await hydrateCurrentUser(true);
 
             return true;
         } catch (err: unknown) {
@@ -109,11 +134,13 @@ export const useAuthStore = defineStore('auth', () => {
     }
 
     async function logout() {
+        const userStore = useUserStore();
         try {
             await axios.post('/api/auth/logout', null, { withCredentials: true });
         } catch (err) {
             console.error('Logout failed:', err);
         } finally {
+            userStore.clearUserState();
             isLoggedIn.value = false;
             isSessionChecked.value = true;
             userEmail.value = null;
@@ -125,21 +152,24 @@ export const useAuthStore = defineStore('auth', () => {
     }
 
     async function ensureSession(): Promise<boolean> {
-        if (isSessionChecked.value) return isLoggedIn.value;
+        const userStore = useUserStore();
+
+        if (isSessionChecked.value) {
+            if (!isLoggedIn.value) return false;
+            if (userStore.currentUser) {
+                userEmail.value = userStore.currentUser.email;
+                return true;
+            }
+        }
 
         isSessionChecked.value = true;
-        try {
-            const userStore = useUserStore();
-            await userStore.fetchCurrentUser();
-            const me = userStore.currentUser;
-            if (!me) throw new Error('User not loaded');
-            setAuthenticated(me.email);
+        const hasActiveSession = await hydrateCurrentUser(true);
+        if (hasActiveSession) {
             return true;
-        } catch {
-            isLoggedIn.value = false;
-            userEmail.value = null;
-            return false;
         }
+
+        clearSessionState();
+        return false;
     }
 
     function setAuthenticated(email: string | null) {

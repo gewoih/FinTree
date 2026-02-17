@@ -6,6 +6,7 @@ import InputNumber from 'primevue/inputnumber'
 import Message from 'primevue/message'
 import type { Account, AccountBalanceAdjustmentDto } from '../types'
 import { apiService } from '../services/api.service'
+import { useFinanceStore } from '../stores/finance'
 import { formatCurrency, formatDate } from '../utils/formatters'
 import FormField from "@/components/common/FormField.vue";
 import UiButton from "@/ui/UiButton.vue";
@@ -31,6 +32,7 @@ const emit = defineEmits<{
 }>()
 
 const toast = useToast()
+const financeStore = useFinanceStore()
 
 const adjustments = ref<AccountBalanceAdjustmentDto[]>([])
 const loading = ref(false)
@@ -38,13 +40,18 @@ const error = ref<string | null>(null)
 const newBalance = ref<number | null>(null)
 const saving = ref(false)
 
+const resolvedAccount = computed(() => {
+  if (!props.account) return null
+  return financeStore.accounts.find(account => account.id === props.account?.id) ?? props.account
+})
+
 const accountCurrency = computed(
-  () => props.account?.currency?.code ?? props.account?.currencyCode ?? 'RUB'
+  () => resolvedAccount.value?.currency?.code ?? resolvedAccount.value?.currencyCode ?? 'RUB'
 )
 
 const currentBalanceLabel = computed(() => {
-  if (!props.account) return '—'
-  return formatCurrency(props.account.balance ?? 0, accountCurrency.value)
+  if (!resolvedAccount.value) return '—'
+  return formatCurrency(resolvedAccount.value.balance ?? 0, accountCurrency.value)
 })
 
 const formattedAdjustments = computed(() =>
@@ -96,7 +103,10 @@ const submitAdjustment = async () => {
   saving.value = true
   try {
     await apiService.createAccountBalanceAdjustment(props.account.id, newBalance.value)
-    await loadAdjustments()
+    await Promise.all([
+      loadAdjustments(),
+      financeStore.fetchAccounts(true),
+    ])
     toast.add({
       severity: 'success',
       summary: 'Баланс обновлен',

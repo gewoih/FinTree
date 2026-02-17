@@ -54,6 +54,14 @@ export const useUserStore = defineStore('user', () => {
         return pendingUserRequest;
     }
 
+    function clearUserState() {
+        currentUser.value = null;
+        subscriptionPayments.value = [];
+        hasSubscriptionPaymentsLoaded.value = false;
+        areSubscriptionPaymentsLoading.value = false;
+        pendingUserRequest = null;
+    }
+
     async function saveProfileSettings(payload: UpdateUserProfilePayload) {
         if (isSaving.value) return false;
 
@@ -130,6 +138,7 @@ export const useUserStore = defineStore('user', () => {
         isSubscriptionProcessing,
         areSubscriptionPaymentsLoading,
         fetchCurrentUser,
+        clearUserState,
         fetchSubscriptionPayments,
         saveProfileSettings,
         simulateSubscriptionPayment,
