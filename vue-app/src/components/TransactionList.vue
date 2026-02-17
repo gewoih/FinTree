@@ -409,9 +409,8 @@ onBeforeUnmount(() => {
 })
 
 const canLoadTransactions = computed(() => {
-  // Wait for categories to load before fetching transactions
-  // This prevents race conditions where transactions load before category data is available
-  return !store.areCategoriesLoading && store.categories.length > 0
+  // Wait for per-user categories readiness before fetching transactions.
+  return store.areCategoriesReady
 })
 
 watch(
@@ -555,7 +554,10 @@ const handleRowClick = (txn: EnrichedTransaction) => {
                     color: txn.categoryColor ?? FALLBACK_CATEGORY_COLOR
                   }"
                 >
-                  <span class="txn-row__dot" :style="{ backgroundColor: txn.categoryColor ?? FALLBACK_CATEGORY_COLOR }" />
+                  <span
+                    class="txn-row__dot"
+                    :style="{ backgroundColor: txn.categoryColor ?? FALLBACK_CATEGORY_COLOR }"
+                  />
                 </span>
 
                 <div class="txn-row__info">

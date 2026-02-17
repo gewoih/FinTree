@@ -17,6 +17,7 @@ public sealed class User : IdentityUser<Guid>
 
     public string BaseCurrencyCode { get; private set; }
     public long? TelegramUserId { get; private set; }
+    public bool RegisteredViaTelegram { get; private set; }
     public Guid? MainAccountId { get; private set; }
     public DateTime? OnboardingSkippedAtUtc { get; private set; }
     public DateTime? SubscriptionActivatedAtUtc { get; private set; }
@@ -108,6 +109,11 @@ public sealed class User : IdentityUser<Guid>
             throw new InvalidOperationException("Telegram user id must be positive.");
 
         TelegramUserId = telegramUserId;
+    }
+
+    public void MarkRegisteredViaTelegram()
+    {
+        RegisteredViaTelegram = true;
     }
 
     public void UnlinkTelegramAccount()

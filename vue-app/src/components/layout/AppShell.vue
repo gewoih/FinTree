@@ -21,7 +21,11 @@ const sidebarCollapsed = ref(
 )
 const { initTheme } = useTheme()
 
-const userEmail = computed(() => authStore.userEmail ?? 'Аккаунт')
+const userDisplayName = computed(() => {
+  const name = userStore.currentUser?.name?.trim()
+  if (name) return name
+  return authStore.userEmail ?? 'Аккаунт'
+})
 
 const { isTablet } = useViewport()
 
@@ -208,7 +212,9 @@ onMounted(() => {
               <i class="pi pi-user" />
             </div>
             <div class="app-shell__user-info">
-              <div class="app-shell__user-email">{{ userEmail }}</div>
+              <div class="app-shell__user-email">
+                {{ userDisplayName }}
+              </div>
               <div
                 v-if="!isReadOnlyMode"
                 class="app-shell__user-status app-shell__user-status--active"
@@ -297,7 +303,9 @@ onMounted(() => {
               <i class="pi pi-user" />
             </div>
             <div class="app-shell__user-info">
-              <div class="app-shell__user-email">{{ userEmail }}</div>
+              <div class="app-shell__user-email">
+                {{ userDisplayName }}
+              </div>
               <div
                 v-if="!isReadOnlyMode"
                 class="app-shell__user-status app-shell__user-status--active"

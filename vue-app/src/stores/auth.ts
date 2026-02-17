@@ -1,7 +1,8 @@
-import { ref, computed } from 'vue';
+import { ref, computed, watch } from 'vue';
 import { defineStore } from 'pinia';
 import axios from 'axios';
 import { useUserStore } from './user.ts';
+import { useFinanceStore } from './finance.ts';
 
 interface AuthResponse {
     email: string;
@@ -37,6 +38,8 @@ function resolveAuthErrorMessage(err: unknown, fallback: string): string {
 }
 
 export const useAuthStore = defineStore('auth', () => {
+    const userStore = useUserStore();
+    const financeStore = useFinanceStore();
     const userEmail = ref<string | null>(null);
     const isLoading = ref(false);
     const error = ref<string | null>(null);
@@ -46,7 +49,6 @@ export const useAuthStore = defineStore('auth', () => {
     const isAuthenticated = computed(() => isSessionChecked.value && isLoggedIn.value);
 
     async function hydrateCurrentUser(force = false): Promise<boolean> {
-        const userStore = useUserStore();
         try {
             await userStore.fetchCurrentUser(force);
             const me = userStore.currentUser;
@@ -60,8 +62,8 @@ export const useAuthStore = defineStore('auth', () => {
     }
 
     function clearSessionState() {
-        const userStore = useUserStore();
         userStore.clearUserState();
+        financeStore.clearFinanceState();
         isLoggedIn.value = false;
         isSessionChecked.value = true;
         userEmail.value = null;
@@ -134,16 +136,12 @@ export const useAuthStore = defineStore('auth', () => {
     }
 
     async function logout() {
-        const userStore = useUserStore();
         try {
             await axios.post('/api/auth/logout', null, { withCredentials: true });
         } catch (err) {
             console.error('Logout failed:', err);
         } finally {
-            userStore.clearUserState();
-            isLoggedIn.value = false;
-            isSessionChecked.value = true;
-            userEmail.value = null;
+            clearSessionState();
         }
     }
 
@@ -152,8 +150,6 @@ export const useAuthStore = defineStore('auth', () => {
     }
 
     async function ensureSession(): Promise<boolean> {
-        const userStore = useUserStore();
-
         if (isSessionChecked.value) {
             if (!isLoggedIn.value) return false;
             if (userStore.currentUser) {
@@ -177,6 +173,15 @@ export const useAuthStore = defineStore('auth', () => {
         isSessionChecked.value = true;
         userEmail.value = email;
     }
+
+    watch(
+        () => userStore.currentUser?.id ?? null,
+        (nextUserId, previousUserId) => {
+            if (previousUserId && nextUserId && previousUserId !== nextUserId) {
+                financeStore.clearFinanceState();
+            }
+        }
+    );
 
     return {
         userEmail,

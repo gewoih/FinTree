@@ -5,6 +5,7 @@ public record struct MeDto(
     string Name,
     string? Email,
     long? TelegramUserId,
+    bool RegisteredViaTelegram,
     string BaseCurrencyCode,
     SubscriptionInfoDto Subscription,
     bool OnboardingCompleted,

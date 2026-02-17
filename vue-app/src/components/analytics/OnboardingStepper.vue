@@ -8,6 +8,7 @@ export interface OnboardingStep {
   title: string;
   description: string;
   completed: boolean;
+  optional?: boolean;
   actionLabel: string;
   actionTo: string;
 }
@@ -22,15 +23,36 @@ const emit = defineEmits<{
   'skip': [];
 }>();
 
-const currentStepIndex = computed(() => {
-  const idx = props.steps.findIndex(s => !s.completed);
-  return idx === -1 ? props.steps.length : idx;
+const requiredStepsCount = computed(() => props.steps.filter(step => !step.optional).length);
+
+function formatStepsCount(count: number): string {
+  const mod10 = count % 10;
+  const mod100 = count % 100;
+
+  if (mod10 === 1 && mod100 !== 11) return `${count} шаг`;
+  if (mod10 >= 2 && mod10 <= 4 && (mod100 < 12 || mod100 > 14)) return `${count} шага`;
+  return `${count} шагов`;
+}
+
+const subtitle = computed(
+  () => `Пройдите ${formatStepsCount(requiredStepsCount.value)}, чтобы завершить настройку. Шаги открываются по порядку.`
+);
+
+const currentRequiredStepKey = computed(() => {
+  const current = props.steps.find(step => !step.optional && !step.completed);
+  return current?.key ?? null;
 });
 
-function getStepStatus(index: number): 'completed' | 'current' | 'locked' {
-  if (props.steps[index]?.completed) return 'completed';
-  if (index === currentStepIndex.value) return 'current';
+function getStepStatus(step: OnboardingStep): 'completed' | 'current' | 'locked' | 'optional' {
+  if (step.completed) return 'completed';
+  if (step.optional) return 'optional';
+  if (step.key === currentRequiredStepKey.value) return 'current';
   return 'locked';
+}
+
+function shouldShowAction(step: OnboardingStep): boolean {
+  const status = getStepStatus(step);
+  return status === 'current' || status === 'optional';
 }
 </script>
 
@@ -42,10 +64,10 @@ function getStepStatus(index: number): 'completed' | 'current' | 'locked' {
   >
     <div class="onboarding-stepper__header">
       <h2 class="onboarding-stepper__title">
-        Быстрый старт
+        Настройка аккаунта
       </h2>
       <p class="onboarding-stepper__subtitle">
-        Три шага, чтобы начать управлять финансами.
+        {{ subtitle }}
       </p>
     </div>
 
@@ -54,16 +76,20 @@ function getStepStatus(index: number): 'completed' | 'current' | 'locked' {
         v-for="(step, index) in steps"
         :key="step.key"
         class="onboarding-step"
-        :class="[`onboarding-step--${getStepStatus(index)}`]"
+        :class="[`onboarding-step--${getStepStatus(step)}`]"
       >
         <div class="onboarding-step__badge">
           <i
-            v-if="getStepStatus(index) === 'completed'"
+            v-if="getStepStatus(step) === 'completed'"
             class="pi pi-check"
           />
           <i
-            v-else-if="getStepStatus(index) === 'locked'"
+            v-else-if="getStepStatus(step) === 'locked'"
             class="pi pi-lock"
+          />
+          <i
+            v-else-if="getStepStatus(step) === 'optional'"
+            class="pi pi-sliders-h"
           />
           <span v-else>{{ index + 1 }}</span>
         </div>
@@ -73,7 +99,7 @@ function getStepStatus(index: number): 'completed' | 'current' | 'locked' {
             {{ step.title }}
           </h3>
           <p
-            v-if="getStepStatus(index) === 'current'"
+            v-if="getStepStatus(step) === 'current' || getStepStatus(step) === 'optional'"
             class="onboarding-step__description"
           >
             {{ step.description }}
@@ -81,7 +107,7 @@ function getStepStatus(index: number): 'completed' | 'current' | 'locked' {
         </div>
 
         <UiButton
-          v-if="getStepStatus(index) === 'current'"
+          v-if="shouldShowAction(step)"
           :label="step.actionLabel"
           size="sm"
           :loading="loading"
@@ -95,7 +121,7 @@ function getStepStatus(index: number): 'completed' | 'current' | 'locked' {
       class="onboarding-stepper__skip"
       @click="emit('skip')"
     >
-      Пропустить обучение
+      Пропустить пока
     </button>
   </UiCard>
 </template>
@@ -155,6 +181,11 @@ function getStepStatus(index: number): 'completed' | 'current' | 'locked' {
   opacity: 0.45;
 }
 
+.onboarding-step--optional {
+  border-style: dashed;
+  opacity: 0.92;
+}
+
 .onboarding-step__badge {
   display: grid;
   place-items: center;
@@ -180,6 +211,11 @@ function getStepStatus(index: number): 'completed' | 'current' | 'locked' {
   background: color-mix(in srgb, var(--ft-surface-raised) 80%, transparent);
 }
 
+.onboarding-step--optional .onboarding-step__badge {
+  color: var(--ft-text-primary);
+  background: color-mix(in srgb, var(--ft-info-500) 35%, transparent);
+}
+
 .onboarding-step__content {
   min-width: 0;
 }
@@ -198,6 +234,10 @@ function getStepStatus(index: number): 'completed' | 'current' | 'locked' {
 
 .onboarding-step--locked .onboarding-step__title {
   color: var(--ft-text-secondary);
+}
+
+.onboarding-step--optional .onboarding-step__title {
+  color: var(--ft-text-primary);
 }
 
 .onboarding-step__description {

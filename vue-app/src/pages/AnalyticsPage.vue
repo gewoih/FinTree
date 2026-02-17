@@ -15,6 +15,7 @@ import { useUserStore } from '../stores/user';
 import { useFinanceStore } from '../stores/finance';
 import { useAnalytics } from '../composables/useAnalytics';
 import { apiService } from '../services/api.service';
+import { isCategoriesOnboardingVisited, markCategoriesOnboardingVisited } from '../utils/onboarding';
 import DatePicker from 'primevue/datepicker';
 import type {
   AnalyticsDashboardDto,
@@ -28,6 +29,7 @@ import type {
 } from '../types/analytics';
 import PageContainer from '../components/layout/PageContainer.vue';
 import { useChartColors } from '../composables/useChartColors';
+import UiSkeleton from '../ui/UiSkeleton.vue';
 
 type MonthPickerInstance = {
   show?: () => void;
@@ -69,50 +71,84 @@ const dashboard = ref<AnalyticsDashboardDto | null>(null);
 const dashboardLoading = ref(false);
 const dashboardError = ref<string | null>(null);
 const dashboardRequestId = ref(0);
+const onboardingHasAnyTransactions = ref(false);
+const onboardingTransactionsLoading = ref(false);
+const onboardingTransactionsRequestId = ref(0);
+const onboardingSyncedForUserId = ref<string | null>(null);
+const onboardingSyncInFlight = ref(false);
+const hasVisitedCategoriesStep = ref(false);
 
 const { colors: chartColors } = useChartColors();
 
 const baseCurrency = computed(() => userStore.baseCurrencyCode ?? 'RUB');
+const currentUserId = computed(() => userStore.currentUser?.id ?? null);
 
 const hasMainAccount = computed(() => financeStore.accounts.some(account => account.isMain));
 const isTelegramLinked = computed(() => Boolean(userStore.currentUser?.telegramUserId));
-const hasTransactions = computed(() => {
-  if (!dashboard.value) return false;
-  const hasCategories = (dashboard.value.categories?.items?.length ?? 0) > 0;
-  const hasSpending = (dashboard.value.spending?.days ?? []).some(item => item.amount > 0);
-  return hasCategories || hasSpending;
-});
+const hasTransactions = computed(() => onboardingHasAnyTransactions.value);
+const isTelegramRegisteredUser = computed(() => Boolean(userStore.currentUser?.registeredViaTelegram));
 
 const isFirstRun = computed(() => userStore.isFirstRun);
+const isAnalyticsReady = computed(() => financeStore.areAccountsReady && financeStore.areCategoriesReady);
+const isOnboardingDataReady = computed(() =>
+  isAnalyticsReady.value && !onboardingTransactionsLoading.value
+);
+const areBackendRequiredOnboardingStepsComplete = computed(() =>
+  hasMainAccount.value && isTelegramLinked.value && hasTransactions.value
+);
+const areLocalRequiredOnboardingStepsComplete = computed(() =>
+  hasVisitedCategoriesStep.value && areBackendRequiredOnboardingStepsComplete.value
+);
 
-const onboardingSteps = computed<OnboardingStep[]>(() => [
-  {
-    key: 'account',
-    title: 'Создайте счёт',
-    description: 'Добавьте Ваш первый счёт, чтобы начать отслеживать расходы.',
-    completed: hasMainAccount.value,
-    actionLabel: 'Создать счёт',
-    actionTo: '/accounts',
-  },
-  {
-    key: 'telegram',
-    title: 'Подключите Telegram',
-    description: 'Привяжите Ваш Telegram в настройках, чтобы записывать траты прямо через нашего бота.',
-    completed: isTelegramLinked.value,
-    actionLabel: 'Подключить',
-    actionTo: '/profile#telegram',
-  },
-  {
+const onboardingSteps = computed<OnboardingStep[]>(() => {
+  const steps: OnboardingStep[] = [
+    {
+      key: 'categories',
+      title: 'Проверьте категории',
+      description: 'Откройте категории и проверьте, что они вам подходят.',
+      completed: hasVisitedCategoriesStep.value,
+      actionLabel: 'Перейти в категории',
+      actionTo: '/categories',
+    },
+    {
+      key: 'account',
+      title: 'Добавьте первый счёт',
+      description: 'Создайте счёт, с которого начнёте вести учёт расходов и доходов.',
+      completed: hasMainAccount.value,
+      actionLabel: 'Перейти к счетам',
+      actionTo: '/accounts',
+    },
+  ];
+
+  if (!isTelegramRegisteredUser.value) {
+    steps.push({
+      key: 'telegram',
+      title: 'Привяжите Telegram',
+      description: 'Подключите Telegram в профиле, чтобы быстро добавлять операции через бота.',
+      completed: isTelegramLinked.value,
+      actionLabel: 'Открыть профиль',
+      actionTo: '/profile#telegram',
+    });
+  }
+
+  steps.push({
     key: 'transactions',
-    title: 'Создайте Вашу первую транзакцию',
-    description: 'Добавьте первую транзакцию чтобы завершить обучение.',
+    title: 'Добавьте первую операцию',
+    description: 'Создайте первую транзакцию, чтобы завершить обучение.',
     completed: hasTransactions.value,
-    actionLabel: 'Добавить транзакцию',
+    actionLabel: 'Открыть транзакции',
     actionTo: '/transactions',
-  },
-]);
+  });
+
+  return steps;
+});
 
 function handleStepClick(step: OnboardingStep) {
+  if (step.key === 'categories') {
+    markCategoriesOnboardingVisited(currentUserId.value);
+    hasVisitedCategoriesStep.value = true;
+  }
+
   trackEvent('onboarding_step_click', { step: step.key });
   void router.push(step.actionTo);
 }
@@ -384,6 +420,39 @@ async function loadDashboard(month: Date) {
 
 function retryDashboard() {
   void loadDashboard(normalizedSelectedMonth.value);
+}
+
+async function loadOnboardingTransactionsState() {
+  const requestUserId = userStore.currentUser?.id ?? null;
+  if (!requestUserId) {
+    onboardingHasAnyTransactions.value = false;
+    onboardingTransactionsLoading.value = false;
+    return;
+  }
+
+  const requestId = ++onboardingTransactionsRequestId.value;
+  onboardingTransactionsLoading.value = true;
+
+  try {
+    const response = await apiService.getTransactions({
+      page: 1,
+      size: 1,
+    });
+    if (requestId !== onboardingTransactionsRequestId.value) return;
+    if (requestUserId !== userStore.currentUser?.id) return;
+    onboardingHasAnyTransactions.value = response.total > 0;
+  } catch (error) {
+    if (requestId !== onboardingTransactionsRequestId.value) return;
+    if (requestUserId !== userStore.currentUser?.id) return;
+    console.error('Не удалось определить наличие транзакций для онбординга:', error);
+    onboardingHasAnyTransactions.value = false;
+  } finally {
+    const isLatestRequest = requestId === onboardingTransactionsRequestId.value;
+    const isSameUser = requestUserId === userStore.currentUser?.id;
+    if (isLatestRequest && isSameUser) {
+      onboardingTransactionsLoading.value = false;
+    }
+  }
 }
 
 // --- Navigation handlers ---
@@ -672,14 +741,47 @@ watch(selectedMonth, (value) => {
   void loadDashboard(normalizeMonth(value));
 });
 
+watch(
+  () => currentUserId.value,
+  (userId) => {
+    onboardingTransactionsRequestId.value += 1;
+    onboardingTransactionsLoading.value = false;
+    onboardingHasAnyTransactions.value = false;
+    onboardingSyncedForUserId.value = null;
+    hasVisitedCategoriesStep.value = isCategoriesOnboardingVisited(userId);
+  },
+  { immediate: true }
+);
+
+watch(
+  [() => currentUserId.value, isFirstRun, areLocalRequiredOnboardingStepsComplete],
+  async ([userId, firstRun, requiredComplete]) => {
+    if (!userId || !firstRun || !requiredComplete) return;
+    if (onboardingSyncedForUserId.value === userId || onboardingSyncInFlight.value) return;
+
+    onboardingSyncedForUserId.value = userId;
+    onboardingSyncInFlight.value = true;
+    try {
+      await userStore.fetchCurrentUser(true);
+    } catch (error) {
+      console.error('Не удалось синхронизировать статус онбординга:', error);
+    } finally {
+      onboardingSyncInFlight.value = false;
+    }
+  }
+);
+
 onMounted(async () => {
   // User is already loaded by router guard (authStore.ensureSession)
+  const shouldLoadOnboardingState = isFirstRun.value;
   await Promise.all([
     loadDashboard(normalizedSelectedMonth.value),
     financeStore.fetchAccounts(),
+    financeStore.fetchCategories(),
+    shouldLoadOnboardingState ? loadOnboardingTransactionsState() : Promise.resolve(),
   ]);
 
-  if (isFirstRun.value) {
+  if (shouldLoadOnboardingState) {
     trackEvent('onboarding_start');
   }
 });
@@ -689,7 +791,7 @@ onMounted(async () => {
   <PageContainer class="analytics-page">
     <PageHeader title="Главная">
       <template
-        v-if="!isFirstRun"
+        v-if="!isFirstRun && isAnalyticsReady"
         #actions
       >
         <div class="analytics-month-selector">
@@ -731,8 +833,26 @@ onMounted(async () => {
       </template>
     </PageHeader>
 
+    <div
+      v-if="isFirstRun && !isOnboardingDataReady"
+      class="analytics-onboarding-skeleton"
+    >
+      <UiSkeleton
+        height="64px"
+        width="100%"
+      />
+      <UiSkeleton
+        height="64px"
+        width="100%"
+      />
+      <UiSkeleton
+        height="64px"
+        width="100%"
+      />
+    </div>
+
     <OnboardingStepper
-      v-if="isFirstRun"
+      v-else-if="isFirstRun"
       :steps="onboardingSteps"
       :loading="dashboardLoading"
       @step-click="handleStepClick"
@@ -740,7 +860,19 @@ onMounted(async () => {
     />
 
     <div
-      v-if="!isFirstRun"
+      v-else-if="!isAnalyticsReady"
+      class="analytics-grid analytics-grid--skeleton"
+    >
+      <UiSkeleton
+        v-for="i in 6"
+        :key="i"
+        height="180px"
+        width="100%"
+      />
+    </div>
+
+    <div
+      v-else
       class="analytics-grid"
     >
       <!-- Section 1: Summary Strip -->
@@ -838,9 +970,22 @@ onMounted(async () => {
   gap: var(--ft-space-6);
 }
 
+.analytics-onboarding-skeleton {
+  display: grid;
+  gap: var(--ft-space-3);
+}
+
 .analytics-grid {
   display: grid;
   gap: var(--ft-space-4);
+}
+
+.analytics-grid--skeleton {
+  grid-template-columns: repeat(12, minmax(0, 1fr));
+}
+
+.analytics-grid--skeleton :deep(.ui-skeleton) {
+  grid-column: span 12;
 }
 
 .analytics-grid__item {

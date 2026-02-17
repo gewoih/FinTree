@@ -63,6 +63,11 @@ const loadingCurrentList = computed(() =>
     ? financeStore.areAccountsLoading
     : financeStore.areArchivedAccountsLoading
 )
+const isAccountsViewReady = computed(() =>
+  view.value === 'active'
+    ? financeStore.areAccountsReady
+    : financeStore.areArchivedAccountsReady
+)
 
 const filteredAccounts = computed(() => {
   let result = [...visibleAccounts.value]
@@ -307,7 +312,7 @@ onMounted(async () => {
       </UiCard>
 
       <div
-        v-if="loadingCurrentList && visibleAccounts.length === 0"
+        v-if="!isAccountsViewReady || (loadingCurrentList && visibleAccounts.length === 0)"
         class="accounts__skeleton"
       >
         <UiSkeleton

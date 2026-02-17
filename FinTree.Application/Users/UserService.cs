@@ -220,6 +220,7 @@ public sealed class UserService(IAppDbContext context, ICurrentUser currentUser)
             user.UserName ?? user.Email ?? string.Empty,
             user.Email,
             user.TelegramUserId,
+            user.RegisteredViaTelegram,
             user.BaseCurrencyCode,
             subscription,
             onboardingCompleted,

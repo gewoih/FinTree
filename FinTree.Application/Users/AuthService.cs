@@ -67,7 +67,16 @@ public sealed class AuthService(
 
         var user = await userManager.Users.FirstOrDefaultAsync(u => u.TelegramUserId == request.Id, ct);
         if (user != null)
+        {
+            // Backfill flag for older telegram-created users created before explicit registration marker existed.
+            if (user.RegisteredViaTelegram || !string.IsNullOrWhiteSpace(user.PasswordHash))
+                return await IssueTokensAsync(user, ct);
+            
+            user.MarkRegisteredViaTelegram();
+            await userManager.UpdateAsync(user);
+
             return await IssueTokensAsync(user, ct);
+        }
 
         var email = $"tg-{request.Id}@fin-tree.ru";
         var username = !string.IsNullOrWhiteSpace(request.Username)
@@ -76,6 +85,7 @@ public sealed class AuthService(
 
         var newUser = new User(username, email, "RUB");
         newUser.LinkTelegramAccount(request.Id);
+        newUser.MarkRegisteredViaTelegram();
         newUser.GrantTrialSubscription(DateTime.UtcNow);
 
         await using var transaction = await context.BeginTransactionAsync(ct);

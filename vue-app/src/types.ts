@@ -298,6 +298,7 @@ export interface CurrentUserDto {
     name: string;
     email: string | null;
     telegramUserId: number | null;
+    registeredViaTelegram: boolean;
     baseCurrencyCode: string;
     subscription: SubscriptionInfoDto;
     onboardingCompleted: boolean;

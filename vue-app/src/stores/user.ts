@@ -30,24 +30,33 @@ export const useUserStore = defineStore('user', () => {
      * Request deduplication: prevents duplicate /me calls
      */
     let pendingUserRequest: Promise<void> | null = null;
+    let userStateEpoch = 0;
 
     async function fetchCurrentUser(force = false) {
         if (!force && currentUser.value) return;
         if (pendingUserRequest) return pendingUserRequest;
 
+        const requestEpoch = userStateEpoch;
+
         pendingUserRequest = (async () => {
             isLoading.value = true;
             try {
                 const data = await apiService.getCurrentUser();
+                if (requestEpoch !== userStateEpoch) return;
                 currentUser.value = data;
             } catch (error) {
+                if (requestEpoch !== userStateEpoch) return;
                 console.error('Не удалось загрузить данные пользователя:', error);
                 currentUser.value = null;
                 subscriptionPayments.value = [];
                 hasSubscriptionPaymentsLoaded.value = false;
             } finally {
-                isLoading.value = false;
-                pendingUserRequest = null;
+                if (requestEpoch === userStateEpoch) {
+                    isLoading.value = false;
+                }
+                if (requestEpoch === userStateEpoch && pendingUserRequest) {
+                    pendingUserRequest = null;
+                }
             }
         })();
 
@@ -55,10 +64,12 @@ export const useUserStore = defineStore('user', () => {
     }
 
     function clearUserState() {
+        userStateEpoch += 1;
         currentUser.value = null;
         subscriptionPayments.value = [];
         hasSubscriptionPaymentsLoaded.value = false;
         areSubscriptionPaymentsLoading.value = false;
+        isLoading.value = false;
         pendingUserRequest = null;
     }
 

@@ -35,15 +35,25 @@ export const useFinanceStore = defineStore('finance', () => {
     const currencies = ref<Currency[]>([]);
     const areAccountsLoading = ref(false);
     const areArchivedAccountsLoading = ref(false);
-    const hasArchivedAccountsLoaded = ref(false);
     const areCategoriesLoading = ref(false);
     const areCurrenciesLoading = ref(false);
     const isTransactionsLoading = ref(false);
+    const accountsLoadedForUserId = ref<string | null>(null);
+    const archivedAccountsLoadedForUserId = ref<string | null>(null);
+    const categoriesLoadedForUserId = ref<string | null>(null);
+    const financeSessionEpoch = ref(0);
+
+    interface UserSessionSnapshot {
+        epoch: number;
+        userId: string;
+    }
+
+    const currentUserId = computed(() => userStore.currentUser?.id ?? null);
 
     /**
      * Request deduplication: prevents same query from firing twice on rapid clicks
      */
-    const pendingRequests = new Map<string, Promise<any>>();
+    const pendingRequests = new Map<string, Promise<unknown>>();
 
     async function fetchWithDedup<T>(key: string, fetcher: () => Promise<T>): Promise<T> {
         if (pendingRequests.has(key)) {
@@ -53,15 +63,20 @@ export const useFinanceStore = defineStore('finance', () => {
         pendingRequests.set(key, promise);
         return promise;
     }
-    const currentTransactionsQuery = ref<TransactionsQuery>({
-        accountId: null,
-        categoryId: null,
-        from: null,
-        to: null,
-        search: null,
-        page: 1,
-        size: PAGINATION_OPTIONS.defaultRows,
-    });
+
+    function createDefaultTransactionsQuery(): TransactionsQuery {
+        return {
+            accountId: null,
+            categoryId: null,
+            from: null,
+            to: null,
+            search: null,
+            page: 1,
+            size: PAGINATION_OPTIONS.defaultRows,
+        };
+    }
+
+    const currentTransactionsQuery = ref<TransactionsQuery>(createDefaultTransactionsQuery());
     const transactionsPage = ref(1);
     const transactionsPageSize = ref<number>(PAGINATION_OPTIONS.defaultRows);
     const transactionsTotal = ref(0);
@@ -76,11 +91,68 @@ export const useFinanceStore = defineStore('finance', () => {
      */
     const primaryAccount = computed(() => accounts.value.find(a => a.isMain) ?? null);
     const isReadOnlyMode = computed(() => userStore.currentUser?.subscription?.isReadOnlyMode ?? false);
+    const areAccountsReady = computed(() => {
+        const userId = currentUserId.value;
+        return Boolean(userId) && accountsLoadedForUserId.value === userId;
+    });
+    const areArchivedAccountsReady = computed(() => {
+        const userId = currentUserId.value;
+        return Boolean(userId) && archivedAccountsLoadedForUserId.value === userId;
+    });
+    const areCategoriesReady = computed(() => {
+        const userId = currentUserId.value;
+        return Boolean(userId) && categoriesLoadedForUserId.value === userId;
+    });
 
     function ensureWritableMode(): boolean {
         if (!isReadOnlyMode.value) return true;
         console.warn('Операция записи заблокирована: подписка неактивна.');
         return false;
+    }
+
+    function captureUserSession(): UserSessionSnapshot | null {
+        const userId = currentUserId.value;
+        if (!userId) return null;
+        return {
+            epoch: financeSessionEpoch.value,
+            userId,
+        };
+    }
+
+    function isUserSessionCurrent(snapshot: UserSessionSnapshot | null): snapshot is UserSessionSnapshot {
+        return snapshot != null &&
+            snapshot.epoch === financeSessionEpoch.value &&
+            snapshot.userId === currentUserId.value;
+    }
+
+    function withUserScopedDedupKey(key: string, userId: string | null = currentUserId.value): string {
+        return `${userId ?? 'anonymous'}:${key}`;
+    }
+
+    function resetTransactionsState() {
+        transactions.value = [];
+        currentTransactionsQuery.value = createDefaultTransactionsQuery();
+        transactionsPage.value = 1;
+        transactionsPageSize.value = PAGINATION_OPTIONS.defaultRows;
+        transactionsTotal.value = 0;
+        isTransactionsLoading.value = false;
+    }
+
+    function clearFinanceState() {
+        financeSessionEpoch.value += 1;
+        pendingRequests.clear();
+
+        accounts.value = [];
+        archivedAccounts.value = [];
+        categories.value = [];
+        areAccountsLoading.value = false;
+        areArchivedAccountsLoading.value = false;
+        areCategoriesLoading.value = false;
+        accountsLoadedForUserId.value = null;
+        archivedAccountsLoadedForUserId.value = null;
+        categoriesLoadedForUserId.value = null;
+
+        resetTransactionsState();
     }
 
     /**
@@ -144,35 +216,60 @@ export const useFinanceStore = defineStore('finance', () => {
      * @param force - Force refresh even if data exists
      */
     async function fetchAccounts(force = false) {
+        const snapshot = captureUserSession();
+        if (!snapshot) {
+            accounts.value = [];
+            accountsLoadedForUserId.value = null;
+            return;
+        }
+
         if (areAccountsLoading.value) return;
-        if (accounts.value.length && !force) return;
+        if (accountsLoadedForUserId.value === snapshot.userId && !force) return;
 
         areAccountsLoading.value = true;
         try {
             const data = await apiService.getAccounts({ archived: false });
+            if (!isUserSessionCurrent(snapshot)) return;
             accounts.value = mapAccounts(data, currencyByCode.value);
+            accountsLoadedForUserId.value = snapshot.userId;
         } catch (error) {
+            if (!isUserSessionCurrent(snapshot)) return;
             console.error('Ошибка загрузки счетов:', error);
             accounts.value = [];
+            accountsLoadedForUserId.value = snapshot.userId;
         } finally {
-            areAccountsLoading.value = false;
+            if (isUserSessionCurrent(snapshot)) {
+                areAccountsLoading.value = false;
+            }
         }
     }
 
     async function fetchArchivedAccounts(force = false) {
+        const snapshot = captureUserSession();
+        if (!snapshot) {
+            archivedAccounts.value = [];
+            archivedAccountsLoadedForUserId.value = null;
+            return;
+        }
+
         if (areArchivedAccountsLoading.value) return;
-        if (hasArchivedAccountsLoaded.value && !force) return;
+        if (archivedAccountsLoadedForUserId.value === snapshot.userId && !force) return;
 
         areArchivedAccountsLoading.value = true;
         try {
             const data = await apiService.getAccounts({ archived: true });
+            if (!isUserSessionCurrent(snapshot)) return;
             archivedAccounts.value = mapAccounts(data, currencyByCode.value);
-            hasArchivedAccountsLoaded.value = true;
+            archivedAccountsLoadedForUserId.value = snapshot.userId;
         } catch (error) {
+            if (!isUserSessionCurrent(snapshot)) return;
             console.error('Ошибка загрузки архивных счетов:', error);
             archivedAccounts.value = [];
+            archivedAccountsLoadedForUserId.value = snapshot.userId;
         } finally {
-            areArchivedAccountsLoading.value = false;
+            if (isUserSessionCurrent(snapshot)) {
+                areArchivedAccountsLoading.value = false;
+            }
         }
     }
 
@@ -181,18 +278,31 @@ export const useFinanceStore = defineStore('finance', () => {
      * @param force - Force refresh even if data exists
      */
     async function fetchCategories(force = false) {
+        const snapshot = captureUserSession();
+        if (!snapshot) {
+            categories.value = [];
+            categoriesLoadedForUserId.value = null;
+            return;
+        }
+
         if (areCategoriesLoading.value) return;
-        if (categories.value.length && !force) return;
+        if (categoriesLoadedForUserId.value === snapshot.userId && !force) return;
 
         areCategoriesLoading.value = true;
         try {
             const data = await apiService.getCategories();
+            if (!isUserSessionCurrent(snapshot)) return;
             categories.value = mapCategories(data);
+            categoriesLoadedForUserId.value = snapshot.userId;
         } catch (error) {
+            if (!isUserSessionCurrent(snapshot)) return;
             console.error('Ошибка загрузки категорий:', error);
             categories.value = [];
+            categoriesLoadedForUserId.value = snapshot.userId;
         } finally {
-            areCategoriesLoading.value = false;
+            if (isUserSessionCurrent(snapshot)) {
+                areCategoriesLoading.value = false;
+            }
         }
     }
 
@@ -305,18 +415,28 @@ export const useFinanceStore = defineStore('finance', () => {
     }
 
     async function fetchTransactions(query: TransactionsQuery = {}) {
+        const snapshot = captureUserSession();
+        if (!snapshot) {
+            resetTransactionsState();
+            return;
+        }
+
         const normalizedQuery = normalizeTransactionsQuery(query);
-        const queryKey = `transactions:${JSON.stringify(normalizedQuery)}`;
+        const queryKey = withUserScopedDedupKey(`transactions:${JSON.stringify(normalizedQuery)}`, snapshot.userId);
 
         return fetchWithDedup(queryKey, async () => {
+            if (!isUserSessionCurrent(snapshot)) return;
             isTransactionsLoading.value = true;
             currentTransactionsQuery.value = normalizedQuery;
 
             try {
                 const data = await apiService.getTransactions(normalizedQuery);
-                if (!hasArchivedAccountsLoaded.value) {
+                if (!isUserSessionCurrent(snapshot)) return;
+
+                if (archivedAccountsLoadedForUserId.value !== snapshot.userId) {
                     await fetchArchivedAccounts();
                 }
+                if (!isUserSessionCurrent(snapshot)) return;
 
                 const accountCatalog = [...accounts.value, ...archivedAccounts.value];
                 transactions.value = mapTransactions(data.items, accountCatalog, categories.value);
@@ -329,11 +449,14 @@ export const useFinanceStore = defineStore('finance', () => {
                     size: data.size,
                 };
             } catch (error) {
+                if (!isUserSessionCurrent(snapshot)) return;
                 console.error('Ошибка загрузки транзакций:', error);
                 transactions.value = [];
                 transactionsTotal.value = 0;
             } finally {
-                isTransactionsLoading.value = false;
+                if (isUserSessionCurrent(snapshot)) {
+                    isTransactionsLoading.value = false;
+                }
             }
         });
     }
@@ -356,8 +479,12 @@ export const useFinanceStore = defineStore('finance', () => {
      */
     async function addTransaction(payload: NewTransactionPayload) {
         if (!ensureWritableMode()) return false;
+        const snapshot = captureUserSession();
+        if (!snapshot) return false;
+
         try {
             const transactionId = await apiService.createTransaction(payload);
+            if (!isUserSessionCurrent(snapshot)) return false;
 
             const amount = Math.abs(Number(payload.amount));
             const isIncome = payload.type === TRANSACTION_TYPE.Income;
@@ -415,10 +542,14 @@ export const useFinanceStore = defineStore('finance', () => {
      */
     async function createTransfer(payload: CreateTransferPayload) {
         if (!ensureWritableMode()) return false;
+        const snapshot = captureUserSession();
+        if (!snapshot) return false;
+
         try {
             await apiService.createTransfer(payload);
+            if (!isUserSessionCurrent(snapshot)) return false;
             await refreshTransactionsAndBalances();
-            return true;
+            return isUserSessionCurrent(snapshot);
         } catch (error) {
             console.error('Ошибка при создании перевода:', error);
             return false;
@@ -427,10 +558,14 @@ export const useFinanceStore = defineStore('finance', () => {
 
     async function updateTransfer(payload: UpdateTransferPayload) {
         if (!ensureWritableMode()) return false;
+        const snapshot = captureUserSession();
+        if (!snapshot) return false;
+
         try {
             await apiService.updateTransfer(payload);
+            if (!isUserSessionCurrent(snapshot)) return false;
             await refreshTransactionsAndBalances();
-            return true;
+            return isUserSessionCurrent(snapshot);
         } catch (error) {
             console.error('Ошибка при обновлении перевода:', error);
             return false;
@@ -444,10 +579,14 @@ export const useFinanceStore = defineStore('finance', () => {
      */
     async function updateTransaction(payload: UpdateTransactionPayload) {
         if (!ensureWritableMode()) return false;
+        const snapshot = captureUserSession();
+        if (!snapshot) return false;
+
         try {
             await apiService.updateTransaction(payload);
+            if (!isUserSessionCurrent(snapshot)) return false;
             await refreshTransactionsAndBalances();
-            return true;
+            return isUserSessionCurrent(snapshot);
         } catch (error) {
             console.error('Ошибка при обновлении транзакции:', error);
             return false;
@@ -461,10 +600,14 @@ export const useFinanceStore = defineStore('finance', () => {
      */
     async function deleteTransaction(id: string) {
         if (!ensureWritableMode()) return false;
+        const snapshot = captureUserSession();
+        if (!snapshot) return false;
+
         try {
             await apiService.deleteTransaction(id);
+            if (!isUserSessionCurrent(snapshot)) return false;
             await refreshTransactionsAndBalances();
-            return true;
+            return isUserSessionCurrent(snapshot);
         } catch (error) {
             console.error('Ошибка при удалении транзакции:', error);
             return false;
@@ -473,10 +616,14 @@ export const useFinanceStore = defineStore('finance', () => {
 
     async function deleteTransfer(transferId: string) {
         if (!ensureWritableMode()) return false;
+        const snapshot = captureUserSession();
+        if (!snapshot) return false;
+
         try {
             await apiService.deleteTransfer(transferId);
+            if (!isUserSessionCurrent(snapshot)) return false;
             await refreshTransactionsAndBalances();
-            return true;
+            return isUserSessionCurrent(snapshot);
         } catch (error) {
             console.error('Ошибка при удалении перевода:', error);
             return false;
@@ -490,6 +637,9 @@ export const useFinanceStore = defineStore('finance', () => {
      */
     async function createAccount(payload: AccountFormPayload) {
         if (!ensureWritableMode()) return false;
+        const snapshot = captureUserSession();
+        if (!snapshot) return false;
+
         try {
             await apiService.createAccount({
                 currencyCode: payload.currencyCode,
@@ -498,9 +648,10 @@ export const useFinanceStore = defineStore('finance', () => {
                 initialBalance: payload.initialBalance ?? 0,
                 isLiquid: payload.isLiquid ?? null,
             });
+            if (!isUserSessionCurrent(snapshot)) return false;
 
             await fetchAccounts(true);
-            return true;
+            return isUserSessionCurrent(snapshot);
         } catch (error) {
             console.error('Не удалось создать счет', error);
             return false;
@@ -514,11 +665,15 @@ export const useFinanceStore = defineStore('finance', () => {
      */
     async function updateAccount(payload: UpdateAccountPayload) {
         if (!ensureWritableMode()) return false;
+        const snapshot = captureUserSession();
+        if (!snapshot) return false;
+
         try {
             await apiService.updateAccount(payload);
+            if (!isUserSessionCurrent(snapshot)) return false;
             await fetchAccounts(true);
             await fetchArchivedAccounts(true);
-            return true;
+            return isUserSessionCurrent(snapshot);
         } catch (error) {
             console.error('Не удалось обновить счет', error);
             return false;
@@ -527,6 +682,9 @@ export const useFinanceStore = defineStore('finance', () => {
 
     async function updateAccountLiquidity(accountId: string, isLiquid: boolean) {
         if (!ensureWritableMode()) return false;
+        const snapshot = captureUserSession();
+        if (!snapshot) return false;
+
         const previous = accounts.value.find(acc => acc.id === accountId)?.isLiquid;
         accounts.value = accounts.value.map(acc => (
             acc.id === accountId ? { ...acc, isLiquid } : acc
@@ -534,12 +692,15 @@ export const useFinanceStore = defineStore('finance', () => {
 
         try {
             await apiService.updateAccountLiquidity(accountId, isLiquid);
+            if (!isUserSessionCurrent(snapshot)) return false;
             return true;
         } catch (error) {
             console.error('Не удалось обновить ликвидность счета', error);
-            accounts.value = accounts.value.map(acc => (
-                acc.id === accountId ? { ...acc, isLiquid: previous ?? acc.isLiquid } : acc
-            ));
+            if (isUserSessionCurrent(snapshot)) {
+                accounts.value = accounts.value.map(acc => (
+                    acc.id === accountId ? { ...acc, isLiquid: previous ?? acc.isLiquid } : acc
+                ));
+            }
             return false;
         }
     }
@@ -551,8 +712,12 @@ export const useFinanceStore = defineStore('finance', () => {
      */
     async function setPrimaryAccount(accountId: string) {
         if (!ensureWritableMode()) return false;
+        const snapshot = captureUserSession();
+        if (!snapshot) return false;
+
         try {
             await apiService.setPrimaryAccount(accountId);
+            if (!isUserSessionCurrent(snapshot)) return false;
             accounts.value = accounts.value.map(acc => ({
                 ...acc,
                 isMain: acc.id === accountId,
@@ -572,9 +737,14 @@ export const useFinanceStore = defineStore('finance', () => {
 
     async function archiveAccount(accountId: string) {
         if (!ensureWritableMode()) return false;
+        const snapshot = captureUserSession();
+        if (!snapshot) return false;
+
         try {
             await apiService.archiveAccount(accountId);
+            if (!isUserSessionCurrent(snapshot)) return false;
             await Promise.all([fetchAccounts(true), fetchArchivedAccounts(true)]);
+            if (!isUserSessionCurrent(snapshot)) return false;
 
             if (currentTransactionsQuery.value.accountId === accountId) {
                 await fetchTransactions({
@@ -582,6 +752,7 @@ export const useFinanceStore = defineStore('finance', () => {
                     accountId: null,
                     page: 1,
                 });
+                if (!isUserSessionCurrent(snapshot)) return false;
             }
 
             return true;
@@ -593,10 +764,14 @@ export const useFinanceStore = defineStore('finance', () => {
 
     async function unarchiveAccount(accountId: string) {
         if (!ensureWritableMode()) return false;
+        const snapshot = captureUserSession();
+        if (!snapshot) return false;
+
         try {
             await apiService.unarchiveAccount(accountId);
+            if (!isUserSessionCurrent(snapshot)) return false;
             await Promise.all([fetchAccounts(true), fetchArchivedAccounts(true)]);
-            return true;
+            return isUserSessionCurrent(snapshot);
         } catch (error) {
             console.error('Не удалось разархивировать счет', error);
             return false;
@@ -605,15 +780,21 @@ export const useFinanceStore = defineStore('finance', () => {
 
     async function deleteAccount(accountId: string) {
         if (!ensureWritableMode()) return false;
+        const snapshot = captureUserSession();
+        if (!snapshot) return false;
+
         try {
             await apiService.deleteAccount(accountId);
+            if (!isUserSessionCurrent(snapshot)) return false;
             await Promise.all([fetchAccounts(true), fetchArchivedAccounts(true)]);
+            if (!isUserSessionCurrent(snapshot)) return false;
             if (currentTransactionsQuery.value.accountId === accountId) {
                 await fetchTransactions({
                     ...currentTransactionsQuery.value,
                     accountId: null,
                     page: 1,
                 });
+                if (!isUserSessionCurrent(snapshot)) return false;
             }
             return true;
         } catch (error) {
@@ -629,6 +810,9 @@ export const useFinanceStore = defineStore('finance', () => {
      */
     async function createCategory(payload: CategoryFormPayload) {
         if (!ensureWritableMode()) return false;
+        const snapshot = captureUserSession();
+        if (!snapshot) return false;
+
         try {
             await apiService.createCategory({
                 name: payload.name,
@@ -637,9 +821,10 @@ export const useFinanceStore = defineStore('finance', () => {
                 categoryType: payload.categoryType,
                 isMandatory: payload.isMandatory ?? false,
             });
+            if (!isUserSessionCurrent(snapshot)) return false;
 
             await fetchCategories(true);
-            return true;
+            return isUserSessionCurrent(snapshot);
         } catch (error) {
             console.error('Не удалось создать категорию', error);
             return false;
@@ -653,6 +838,9 @@ export const useFinanceStore = defineStore('finance', () => {
      */
     async function updateCategory(payload: CategoryFormPayload & { id: string }) {
         if (!ensureWritableMode()) return false;
+        const snapshot = captureUserSession();
+        if (!snapshot) return false;
+
         try {
             await apiService.updateCategory({
                 id: payload.id,
@@ -661,9 +849,10 @@ export const useFinanceStore = defineStore('finance', () => {
                 icon: payload.icon,
                 isMandatory: payload.isMandatory ?? false,
             });
+            if (!isUserSessionCurrent(snapshot)) return false;
 
             await fetchCategories(true);
-            return true;
+            return isUserSessionCurrent(snapshot);
         } catch (error) {
             console.error('Не удалось обновить категорию', error);
             return false;
@@ -677,10 +866,14 @@ export const useFinanceStore = defineStore('finance', () => {
      */
     async function deleteCategory(categoryId: string) {
         if (!ensureWritableMode()) return false;
+        const snapshot = captureUserSession();
+        if (!snapshot) return false;
+
         try {
             await apiService.deleteCategory(categoryId);
+            if (!isUserSessionCurrent(snapshot)) return false;
             await fetchCategories(true);
-            return true;
+            return isUserSessionCurrent(snapshot);
         } catch (error) {
             console.error('Не удалось удалить категорию', error);
             return false;
@@ -698,6 +891,12 @@ export const useFinanceStore = defineStore('finance', () => {
         areCategoriesLoading,
         areCurrenciesLoading,
         isTransactionsLoading,
+        areAccountsReady,
+        areArchivedAccountsReady,
+        areCategoriesReady,
+        accountsLoadedForUserId,
+        archivedAccountsLoadedForUserId,
+        categoriesLoadedForUserId,
         currentTransactionsQuery,
         transactionsPage,
         transactionsPageSize,
@@ -709,6 +908,7 @@ export const useFinanceStore = defineStore('finance', () => {
         fetchArchivedAccounts,
         fetchCategories,
         fetchCurrencies,
+        clearFinanceState,
         addTransaction,
         updateTransaction,
         deleteTransaction,

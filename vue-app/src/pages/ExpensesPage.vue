@@ -14,6 +14,7 @@ import { apiService } from '../services/api.service'
 import { useViewport } from '../composables/useViewport'
 import UiButton from '../ui/UiButton.vue'
 import UiSection from '../ui/UiSection.vue'
+import UiSkeleton from '../ui/UiSkeleton.vue'
 import PageContainer from '../components/layout/PageContainer.vue'
 import PageHeader from '../components/common/PageHeader.vue'
 
@@ -29,6 +30,7 @@ const isExporting = ref(false)
 const actionMenuRef = ref<{ toggle: (event: Event) => void } | null>(null)
 const { isMobile } = useViewport()
 const isReadOnlyMode = computed(() => userStore.isReadOnlyMode)
+const isFinanceReady = computed(() => financeStore.areAccountsReady && financeStore.areCategoriesReady)
 
 const actionMenuItems = computed<MenuItem[]>(() => [
   {
@@ -176,7 +178,18 @@ onMounted(async () => {
     </PageHeader>
 
     <UiSection class="transactions__content">
+      <div
+        v-if="!isFinanceReady"
+        class="transactions__skeleton"
+      >
+        <UiSkeleton
+          v-for="i in 6"
+          :key="i"
+          height="56px"
+        />
+      </div>
       <TransactionList
+        v-else
         :readonly="isReadOnlyMode"
         @add-transaction="openTransactionDialog"
         @edit-transaction="handleEditTransaction"
@@ -205,6 +218,11 @@ onMounted(async () => {
 
 .transactions__content {
   gap: var(--ft-space-6);
+}
+
+.transactions__skeleton {
+  display: grid;
+  gap: var(--ft-space-3);
 }
 
 .transactions__action-menu :deep(.p-menu) {
