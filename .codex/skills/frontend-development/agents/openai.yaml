@@ -1,0 +1,7 @@
+interface:
+  display_name: "Vue Frontend Development"
+  short_description: "Guardrails for Vue 3 + PrimeVue quality"
+  default_prompt: "Use $frontend-development to implement or refactor this Vue 3 + PrimeVue task with clean architecture, accessibility, and performance checks."
+
+policy:
+  allow_implicit_invocation: true
