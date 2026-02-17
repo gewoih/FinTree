@@ -10,7 +10,13 @@ public readonly record struct AnalyticsDashboardDto(
     IReadOnlyList<PeakDayDto> PeakDays,
     CategoryBreakdownDto Categories,
     SpendingBreakdownDto Spending,
-    ForecastDto Forecast);
+    ForecastDto Forecast,
+    AnalyticsReadinessDto Readiness);
+
+public readonly record struct AnalyticsReadinessDto(
+    bool HasForecastAndStabilityData,
+    int ObservedExpenseDays,
+    int RequiredExpenseDays);
 
 public readonly record struct FinancialHealthSummaryDto(
     decimal? MonthIncome,

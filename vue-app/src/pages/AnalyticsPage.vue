@@ -19,6 +19,7 @@ import { isCategoriesOnboardingVisited, markCategoriesOnboardingVisited } from '
 import DatePicker from 'primevue/datepicker';
 import type {
   AnalyticsDashboardDto,
+  AnalyticsReadinessDto,
   MonthlyExpenseDto,
 } from '../types';
 import type {
@@ -78,6 +79,12 @@ const onboardingSyncedForUserId = ref<string | null>(null);
 const onboardingSyncInFlight = ref(false);
 const hasVisitedCategoriesStep = ref(false);
 
+const DEFAULT_ANALYTICS_READINESS: AnalyticsReadinessDto = {
+  hasForecastAndStabilityData: false,
+  observedExpenseDays: 0,
+  requiredExpenseDays: 7,
+};
+
 const { colors: chartColors } = useChartColors();
 
 const baseCurrency = computed(() => userStore.baseCurrencyCode ?? 'RUB');
@@ -87,6 +94,13 @@ const hasMainAccount = computed(() => financeStore.accounts.some(account => acco
 const isTelegramLinked = computed(() => Boolean(userStore.currentUser?.telegramUserId));
 const hasTransactions = computed(() => onboardingHasAnyTransactions.value);
 const isTelegramRegisteredUser = computed(() => Boolean(userStore.currentUser?.registeredViaTelegram));
+const analyticsReadiness = computed<AnalyticsReadinessDto>(
+  () => dashboard.value?.readiness ?? DEFAULT_ANALYTICS_READINESS
+);
+const isForecastAndStabilityReady = computed(
+  () => analyticsReadiness.value.hasForecastAndStabilityData
+);
+const forecastReadinessMessage = 'Недостаточно данных, продолжайте добавлять транзакции';
 
 const isFirstRun = computed(() => userStore.isFirstRun);
 const isAnalyticsReady = computed(() => financeStore.areAccountsReady && financeStore.areCategoriesReady);
@@ -203,6 +217,10 @@ const summaryMetrics = computed(() => {
 // --- Health score cards ---
 const healthCards = computed(() => {
   const health = dashboard.value?.health;
+  const readiness = analyticsReadiness.value;
+  const stabilityTooltip = readiness.hasForecastAndStabilityData
+    ? 'Насколько стабильны ваши расходы. Чем ниже ниже индекс — тем лучше.'
+    : `Индекс появится после ${readiness.requiredExpenseDays} дней с расходами. Сейчас: ${readiness.observedExpenseDays}.`;
 
   const savingsAccent = resolveSavingsStatus(
     health?.savingsRate ?? null,
@@ -210,7 +228,9 @@ const healthCards = computed(() => {
     health?.monthTotal ?? null
   );
   const cushionAccent = resolveCushionStatus(health?.liquidMonthsStatus ?? null);
-  const stabilityAccent = resolveStabilityStatus(health?.stabilityIndex ?? null);
+  const stabilityAccent = readiness.hasForecastAndStabilityData
+    ? resolveStabilityStatus(health?.stabilityIndex ?? null)
+    : 'neutral';
   const discretionaryAccent = resolveDiscretionaryStatus(health?.discretionarySharePercent ?? null);
 
   return [
@@ -240,12 +260,16 @@ const healthCards = computed(() => {
       key: 'stability',
       title: 'Индекс стабильности',
       icon: 'pi pi-chart-line',
-      mainValue: health?.stabilityIndex == null ? '-' : health?.stabilityIndex.toString(),
-      mainLabel: '',
-      secondaryValue: resolveStabilityLabel(health?.stabilityIndex ?? null),
-      secondaryLabel: '',
+      mainValue: readiness.hasForecastAndStabilityData
+        ? (health?.stabilityIndex == null ? '-' : health.stabilityIndex.toString())
+        : 'Недостаточно данных',
+      mainLabel: readiness.hasForecastAndStabilityData ? '' : 'Продолжайте добавлять транзакции',
+      secondaryValue: readiness.hasForecastAndStabilityData
+        ? resolveStabilityLabel(health?.stabilityIndex ?? null)
+        : `${readiness.observedExpenseDays} из ${readiness.requiredExpenseDays}`,
+      secondaryLabel: readiness.hasForecastAndStabilityData ? '' : 'дней расходов',
       accent: stabilityAccent,
-      tooltip: 'Насколько стабильны ваши расходы. Чем ниже ниже индекс — тем лучше.',
+      tooltip: stabilityTooltip,
     },
     {
       key: 'discretionary',
@@ -958,6 +982,10 @@ onMounted(async () => {
         :forecast="forecastSummary"
         :chart-data="forecastChartData"
         :currency="baseCurrency"
+        :readiness-met="isForecastAndStabilityReady"
+        :readiness-message="forecastReadinessMessage"
+        :observed-expense-days="analyticsReadiness.observedExpenseDays"
+        :required-expense-days="analyticsReadiness.requiredExpenseDays"
         @retry="retryDashboard"
       />
     </div>

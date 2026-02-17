@@ -9,13 +9,22 @@ import Chart from 'primevue/chart';
 import type { ForecastSummary } from '@/types/analytics.ts';
 import { useChartColors } from '../../composables/useChartColors';
 
-const props = defineProps<{
+const props = withDefaults(defineProps<{
   loading: boolean;
   error: string | null;
   forecast: ForecastSummary | null;
   chartData: ChartData<'line', Array<number | null>, string> | null;
   currency: string;
-}>();
+  readinessMet?: boolean;
+  readinessMessage?: string;
+  observedExpenseDays?: number;
+  requiredExpenseDays?: number;
+}>(), {
+  readinessMet: true,
+  readinessMessage: 'Недостаточно данных, продолжайте добавлять транзакции',
+  observedExpenseDays: 0,
+  requiredExpenseDays: 7,
+});
 
 const emit = defineEmits<{
   (event: 'retry'): void;
@@ -25,6 +34,7 @@ const { colors, tooltipConfig } = useChartColors();
 
 const showEmpty = computed(
   () =>
+    props.readinessMet &&
     !props.loading &&
     !props.error &&
     (!props.forecast ||
@@ -129,7 +139,7 @@ const chartOptions = computed(() => ({
         </p>
       </div>
       <Tag
-        v-if="statusLabel"
+        v-if="readinessMet && statusLabel"
         :class="['forecast-chip', statusClass]"
       >
         {{ statusLabel }}
@@ -178,6 +188,26 @@ const chartOptions = computed(() => ({
             size="sm"
             @click="emit('retry')"
           />
+        </div>
+      </Message>
+    </div>
+
+    <div
+      v-else-if="!readinessMet"
+      class="forecast-card__message"
+    >
+      <Message
+        severity="info"
+        icon="pi pi-info-circle"
+        :closable="false"
+      >
+        <div class="forecast-card__message-body forecast-card__message-body--compact">
+          <p class="forecast-card__message-title">
+            {{ readinessMessage }}
+          </p>
+          <p class="forecast-card__message-text">
+            Нужны расходы минимум в {{ requiredExpenseDays }} днях. Сейчас: {{ observedExpenseDays }}.
+          </p>
         </div>
       </Message>
     </div>

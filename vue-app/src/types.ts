@@ -282,6 +282,12 @@ export interface ForecastDto {
     series: ForecastSeriesDto;
 }
 
+export interface AnalyticsReadinessDto {
+    hasForecastAndStabilityData: boolean;
+    observedExpenseDays: number;
+    requiredExpenseDays: number;
+}
+
 export interface AnalyticsDashboardDto {
     year: number;
     month: number;
@@ -291,6 +297,7 @@ export interface AnalyticsDashboardDto {
     categories: CategoryBreakdownDto;
     spending: SpendingBreakdownDto;
     forecast: ForecastDto;
+    readiness: AnalyticsReadinessDto;
 }
 
 export interface CurrentUserDto {

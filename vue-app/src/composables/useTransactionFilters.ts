@@ -24,14 +24,11 @@ export function useTransactionFilters<T extends Transaction>(
   const selectedCategory = ref<Category | null>(null);
   const selectedAccount = ref<Account | null>(null);
 
-  const getCurrentMonthRange = (): [Date, Date] => {
-    const now = new Date();
-    const start = new Date(now.getFullYear(), now.getMonth(), 1);
-    const end = new Date(now.getFullYear(), now.getMonth() + 1, 0);
-    return [start, end];
-  };
+  const dateRange = ref<Date[] | null>(null);
 
-  const dateRange = ref<Date[] | null>(getCurrentMonthRange());
+  const resetDateRange = () => {
+    dateRange.value = null;
+  };
 
   /**
    * Filters transactions based on all active filter criteria
@@ -99,7 +96,7 @@ export function useTransactionFilters<T extends Transaction>(
     searchText.value = '';
     selectedCategory.value = null;
     selectedAccount.value = null;
-    dateRange.value = getCurrentMonthRange();
+    resetDateRange();
   };
 
   return {
@@ -108,6 +105,7 @@ export function useTransactionFilters<T extends Transaction>(
     selectedAccount,
     dateRange,
     filteredTransactions,
+    resetDateRange,
     clearFilters
   };
 }

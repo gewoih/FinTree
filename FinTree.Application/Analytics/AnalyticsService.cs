@@ -38,6 +38,20 @@ public sealed class AnalyticsService(
         var categories = (await userService.GetUserCategoriesAsync(ct))
             .ToDictionary(c => c.Id, c => new CategoryMeta(c.Name, c.Color, c.IsMandatory));
 
+        const int requiredExpenseDays = 7;
+        var observedExpenseDays = await context.Transactions
+            .AsNoTracking()
+            .Where(t => t.Account.UserId == currentUserId &&
+                        !t.IsTransfer &&
+                        t.Type == TransactionType.Expense)
+            .Select(t => t.OccurredAt.Date)
+            .Distinct()
+            .CountAsync(ct);
+        var readiness = new AnalyticsReadinessDto(
+            observedExpenseDays >= requiredExpenseDays,
+            observedExpenseDays,
+            requiredExpenseDays);
+
         var transactions = await context.Transactions
             .Where(t => t.Account.UserId == currentUserId &&
                         !t.IsTransfer &&
@@ -244,7 +258,8 @@ public sealed class AnalyticsService(
             peaks.Days,
             new CategoryBreakdownDto(categoryItems, categoryDelta),
             spending,
-            forecast);
+            forecast,
+            readiness);
     }
 
     public async Task<List<NetWorthSnapshotDto>> GetNetWorthTrendAsync(int months = 12, CancellationToken ct = default)
@@ -272,13 +287,14 @@ public sealed class AnalyticsService(
             .ToListAsync(ct);
 
         if (accounts.Count == 0)
-            return BuildEmptyNetWorth(months);
+            return [];
 
         var accountCreatedAtById = accounts
             .ToDictionary(a => a.Id, a => NormalizeUtc(a.CreatedAt.UtcDateTime));
 
         var nowUtc = DateTime.UtcNow;
-        var startMonthUtc = new DateTime(nowUtc.Year, nowUtc.Month, 1, 0, 0, 0, DateTimeKind.Utc)
+        var currentMonthStartUtc = new DateTime(nowUtc.Year, nowUtc.Month, 1, 0, 0, 0, DateTimeKind.Utc);
+        var requestedStartMonthUtc = currentMonthStartUtc
             .AddMonths(-(months - 1));
 
         var distinctAccountCurrencies = accounts
@@ -297,6 +313,39 @@ public sealed class AnalyticsService(
             .Where(a => a.Account.UserId == currentUserId)
             .Select(a => new { a.AccountId, a.Amount, a.OccurredAt })
             .ToListAsync(ct);
+
+        var earliestDataUtc = accountCreatedAtById.Values.Min();
+        if (rawTransactions.Count > 0)
+        {
+            var firstTransactionUtc = rawTransactions.Min(t => NormalizeUtc(t.OccurredAt));
+            if (firstTransactionUtc < earliestDataUtc)
+                earliestDataUtc = firstTransactionUtc;
+        }
+
+        if (rawAdjustments.Count > 0)
+        {
+            var firstAdjustmentUtc = rawAdjustments.Min(a => NormalizeUtc(a.OccurredAt));
+            if (firstAdjustmentUtc < earliestDataUtc)
+                earliestDataUtc = firstAdjustmentUtc;
+        }
+
+        var earliestDataMonthUtc = new DateTime(
+            earliestDataUtc.Year,
+            earliestDataUtc.Month,
+            1,
+            0,
+            0,
+            0,
+            DateTimeKind.Utc);
+        var effectiveStartMonthUtc = earliestDataMonthUtc > requestedStartMonthUtc
+            ? earliestDataMonthUtc
+            : requestedStartMonthUtc;
+
+        if (effectiveStartMonthUtc > currentMonthStartUtc)
+            return [];
+
+        var monthsToBuild = ((currentMonthStartUtc.Year - effectiveStartMonthUtc.Year) * 12) +
+                            (currentMonthStartUtc.Month - effectiveStartMonthUtc.Month) + 1;
 
         var eventsByAccount = accounts.ToDictionary(a => a.Id, _ => new List<BalanceEvent>());
         foreach (var txn in rawTransactions)
@@ -347,7 +396,7 @@ public sealed class AnalyticsService(
             var events = eventsByAccount[account.Id];
             var idx = 0;
             var currentBalance = 0m;
-            while (idx < events.Count && events[idx].OccurredAt < startMonthUtc)
+            while (idx < events.Count && events[idx].OccurredAt < effectiveStartMonthUtc)
             {
                 currentBalance = ApplyBalanceEvent(currentBalance, events[idx]);
                 idx++;
@@ -357,10 +406,10 @@ public sealed class AnalyticsService(
             eventIndexByAccount[account.Id] = idx;
         }
 
-        var result = new List<NetWorthSnapshotDto>(months);
-        for (var i = 0; i < months; i++)
+        var result = new List<NetWorthSnapshotDto>(monthsToBuild);
+        for (var i = 0; i < monthsToBuild; i++)
         {
-            var boundary = startMonthUtc.AddMonths(i + 1);
+            var boundary = effectiveStartMonthUtc.AddMonths(i + 1);
             var rateAtUtc = boundary.AddTicks(-1);
 
             var rateByCurrency = new Dictionary<string, decimal>(StringComparer.OrdinalIgnoreCase);
@@ -404,7 +453,7 @@ public sealed class AnalyticsService(
                 netWorth += balance * rate;
             }
 
-            var monthDate = startMonthUtc.AddMonths(i);
+            var monthDate = effectiveStartMonthUtc.AddMonths(i);
             result.Add(new NetWorthSnapshotDto(
                 monthDate.Year,
                 monthDate.Month,
@@ -434,21 +483,6 @@ public sealed class AnalyticsService(
 
     private static bool IsOpeningBalanceAnchor(DateTime accountCreatedAtUtc, DateTime adjustmentOccurredAtUtc)
         => (adjustmentOccurredAtUtc - accountCreatedAtUtc).Duration() <= OpeningBalanceDetectionWindow;
-
-    private static List<NetWorthSnapshotDto> BuildEmptyNetWorth(int months)
-    {
-        if (months <= 0) return [];
-        var nowUtc = DateTime.UtcNow;
-        var startMonthUtc = new DateTime(nowUtc.Year, nowUtc.Month, 1, 0, 0, 0, DateTimeKind.Utc)
-            .AddMonths(-(months - 1));
-        var result = new List<NetWorthSnapshotDto>(months);
-        for (var i = 0; i < months; i++)
-        {
-            var monthDate = startMonthUtc.AddMonths(i);
-            result.Add(new NetWorthSnapshotDto(monthDate.Year, monthDate.Month, 0m));
-        }
-        return result;
-    }
 
     private static decimal? ComputeMedian(IReadOnlyList<decimal> values)
     {
@@ -808,19 +842,38 @@ public sealed class AnalyticsService(
                 dailyTotals[dayKey] = amountInBaseCurrency;
         }
 
-        var daysInMonth = DateTime.DaysInMonth(year, month);
+        var firstExpenseDate = dailyTotals.Count > 0 ? dailyTotals.Keys.Min() : (DateOnly?)null;
+        var monthStartDate = new DateOnly(year, month, 1);
+        var monthEndDate = new DateOnly(year, month, DateTime.DaysInMonth(year, month));
 
-        var days = new List<MonthlyExpensesDto>(daysInMonth);
-        for (var day = 1; day <= daysInMonth; day++)
+        var days = new List<MonthlyExpensesDto>(monthEndDate.Day);
+        if (firstExpenseDate.HasValue)
         {
-            var date = new DateOnly(year, month, day);
-            var amount = dailyTotals.TryGetValue(date, out var value) ? value : 0m;
-            days.Add(new MonthlyExpensesDto(year, month, day, null, Round2(amount)));
+            var dayRangeStart = firstExpenseDate.Value > monthStartDate
+                ? firstExpenseDate.Value
+                : monthStartDate;
+
+            for (var dateCursor = dayRangeStart;
+                 dateCursor.DayNumber <= monthEndDate.DayNumber;
+                 dateCursor = dateCursor.AddDays(1))
+            {
+                var amount = dailyTotals.TryGetValue(dateCursor, out var value) ? value : 0m;
+                days.Add(new MonthlyExpensesDto(
+                    dateCursor.Year,
+                    dateCursor.Month,
+                    dateCursor.Day,
+                    null,
+                    Round2(amount)));
+            }
         }
 
-        var weeksWindowStart = DateOnly.FromDateTime(monthStartUtc.AddMonths(-2));
+        var weeksWindowStartCandidate = DateOnly.FromDateTime(monthStartUtc.AddMonths(-2));
         var weeksWindowEndExclusive = DateOnly.FromDateTime(monthEndUtc);
         var weekTotals = new Dictionary<(int IsoYear, int IsoWeek), decimal>();
+
+        var weeksWindowStart = firstExpenseDate.HasValue && firstExpenseDate.Value > weeksWindowStartCandidate
+            ? firstExpenseDate.Value
+            : weeksWindowStartCandidate;
 
         var dayCursor = weeksWindowStart;
         while (dayCursor.DayNumber < weeksWindowEndExclusive.DayNumber)
@@ -864,13 +917,27 @@ public sealed class AnalyticsService(
                 monthTotals[monthKey] = dayTotal.Value;
         }
 
+        var monthsWindowStartDate = DateOnly.FromDateTime(monthStartUtc.AddMonths(-11));
         var months = new List<MonthlyExpensesDto>(12);
-        for (var offset = -11; offset <= 0; offset++)
+        if (firstExpenseDate.HasValue)
         {
-            var monthDate = monthStartUtc.AddMonths(offset);
-            var monthKey = (monthDate.Year, monthDate.Month);
-            var monthTotal = monthTotals.TryGetValue(monthKey, out var value) ? value : 0m;
-            months.Add(new MonthlyExpensesDto(monthDate.Year, monthDate.Month, null, null, Round2(monthTotal)));
+            var firstExpenseMonthStart = new DateOnly(firstExpenseDate.Value.Year, firstExpenseDate.Value.Month, 1);
+            var monthCursor = firstExpenseMonthStart > monthsWindowStartDate
+                ? firstExpenseMonthStart
+                : monthsWindowStartDate;
+
+            while (monthCursor.DayNumber <= monthStartDate.DayNumber)
+            {
+                var monthKey = (monthCursor.Year, monthCursor.Month);
+                var monthTotal = monthTotals.TryGetValue(monthKey, out var value) ? value : 0m;
+                months.Add(new MonthlyExpensesDto(
+                    monthCursor.Year,
+                    monthCursor.Month,
+                    null,
+                    null,
+                    Round2(monthTotal)));
+                monthCursor = monthCursor.AddMonths(1);
+            }
         }
 
         return new SpendingBreakdownDto(days, weeksResult, months);

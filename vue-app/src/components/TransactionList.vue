@@ -2,7 +2,7 @@
 import { computed, onBeforeUnmount, ref, watch } from 'vue'
 import Skeleton from 'primevue/skeleton'
 import Paginator from 'primevue/paginator'
-import { useRoute } from 'vue-router'
+import { useRoute, useRouter } from 'vue-router'
 import { useFinanceStore } from '../stores/finance'
 import { useUserStore } from '../stores/user'
 import { PAGINATION_OPTIONS } from '../constants'
@@ -67,6 +67,7 @@ const emit = defineEmits<{
 const store = useFinanceStore()
 const userStore = useUserStore()
 const route = useRoute()
+const router = useRouter()
 
 const baseCurrency = computed(() => userStore.baseCurrencyCode ?? store.primaryAccount?.currencyCode ?? 'RUB')
 
@@ -239,6 +240,7 @@ const {
   selectedCategory,
   selectedAccount,
   dateRange,
+  resetDateRange,
   clearFilters: clearFiltersComposable
 } = useTransactionFilters<EnrichedTransaction>(() => enrichedTransactions.value)
 
@@ -311,6 +313,12 @@ const formattedTotalAmount = computed(() => {
 
 const clearFilters = () => {
   clearFiltersComposable()
+  resetDateRange()
+  const nextQuery = { ...route.query }
+  delete nextQuery.categoryId
+  delete nextQuery.from
+  delete nextQuery.to
+  void router.replace({ query: nextQuery })
 }
 
 const normalizeDateOnly = (value: Date): string | null => {
@@ -362,19 +370,24 @@ const parseDateQuery = (value: string): Date | null => {
 
 const applyCategoryFromQuery = () => {
   const categoryId = typeof route.query.categoryId === 'string' ? route.query.categoryId : null
-  if (!categoryId) return
-  const match = store.categories.find(cat => cat.id === categoryId)
-  if (match) {
-    selectedCategory.value = match
+  if (!categoryId) {
+    selectedCategory.value = null
+    return
   }
+
+  const match = store.categories.find(cat => cat.id === categoryId)
+  selectedCategory.value = match ?? null
 }
 
 const applyDateRangeFromQuery = () => {
   const from = typeof route.query.from === 'string' ? parseDateQuery(route.query.from) : null
   const to = typeof route.query.to === 'string' ? parseDateQuery(route.query.to) : null
   if (from && to) {
-    dateRange.value = [from, to]
+    dateRange.value = from <= to ? [from, to] : [to, from]
+    return
   }
+
+  resetDateRange()
 }
 
 watch([() => route.query.categoryId, () => store.categories.length], applyCategoryFromQuery, {
