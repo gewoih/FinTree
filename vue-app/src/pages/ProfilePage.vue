@@ -276,15 +276,7 @@ async function handlePay(plan: SubscriptionPlan) {
 
 <template>
   <PageContainer class="profile-page">
-    <PageHeader
-      title="Настройки"
-      subtitle="Управляйте профилем и подпиской"
-      :breadcrumbs="[
-        { label: 'Главная', to: '/analytics' },
-        { label: 'Настройки' }
-      ]"
-    />
-
+    <PageHeader title="Настройки" />
     <div class="profile-tabs">
       <div
         class="profile-tabs__bar"

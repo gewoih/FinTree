@@ -1,7 +1,6 @@
 <script setup lang="ts">
 import { computed, onMounted, ref, watch } from 'vue';
 import { useRouter } from 'vue-router';
-import PageHeader from '../components/common/PageHeader.vue';
 import SummaryStrip from '../components/analytics/SummaryStrip.vue';
 import HealthScoreCard from '../components/analytics/HealthScoreCard.vue';
 import PeakDaysCard from '../components/analytics/PeakDaysCard.vue';
@@ -29,6 +28,7 @@ import type {
   ForecastSummary,
 } from '../types/analytics';
 import PageContainer from '../components/layout/PageContainer.vue';
+import PageHeader from '../components/common/PageHeader.vue';
 import { useChartColors } from '../composables/useChartColors';
 import UiSkeleton from '../ui/UiSkeleton.vue';
 

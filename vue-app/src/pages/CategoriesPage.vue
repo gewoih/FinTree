@@ -23,14 +23,7 @@ onMounted(() => {
 
 <template>
   <PageContainer class="categories">
-    <PageHeader
-      title="Категории"
-      subtitle="Настройте группировки для расходов и доходов, чтобы аналитика была точнее"
-      :breadcrumbs="[
-        { label: 'Главная', to: '/analytics' },
-        { label: 'Категории' }
-      ]"
-    >
+    <PageHeader title="Категории">
       <template #actions>
         <UiButton
           label="Новая категория"

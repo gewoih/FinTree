@@ -123,14 +123,7 @@ onMounted(async () => {
 
 <template>
   <PageContainer class="transactions">
-    <PageHeader
-      title="Транзакции"
-      subtitle="Все расходы и доходы в одном месте"
-      :breadcrumbs="[
-        { label: 'Главная', to: '/analytics' },
-        { label: 'Транзакции' }
-      ]"
-    >
+    <PageHeader title="Транзакции">
       <template #actions>
         <UiButton
           v-if="!isMobile"

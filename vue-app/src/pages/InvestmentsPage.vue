@@ -286,15 +286,7 @@ onMounted(async () => {
 
 <template>
   <PageContainer class="investments-page">
-    <PageHeader
-      title="Инвестиции"
-      subtitle="Контролируйте инвестиционные счета без лишней детализации"
-      :breadcrumbs="[
-        { label: 'Главная', to: '/analytics' },
-        { label: 'Инвестиции' }
-      ]"
-    />
-
+    <PageHeader title="Инвестиции" />
     <div class="investments-grid">
       <!-- Section 1: Summary Strip -->
       <SummaryStrip

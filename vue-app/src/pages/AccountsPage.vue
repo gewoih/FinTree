@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, onMounted, ref } from 'vue'
+import { computed, onMounted, ref, watch } from 'vue'
 import { useToast } from 'primevue/usetoast'
 import { useConfirm } from 'primevue/useconfirm'
 import { useFinanceStore } from '../stores/finance'
@@ -96,6 +96,7 @@ const filteredAccounts = computed(() => {
 })
 
 const hasActiveFilters = computed(() => searchText.value.trim().length > 0)
+const showAccountFilters = computed(() => visibleAccounts.value.length >= 5)
 
 const openModal = () => {
   if (isReadOnlyMode.value) return
@@ -205,6 +206,12 @@ const clearFilters = () => {
   sortBy.value = 'balance-desc'
 }
 
+watch(showAccountFilters, isVisible => {
+  if (!isVisible) {
+    clearFilters()
+  }
+}, { immediate: true })
+
 onMounted(async () => {
   // User is already loaded by AppShell on mount
   await Promise.all([
@@ -217,14 +224,7 @@ onMounted(async () => {
 
 <template>
   <PageContainer class="accounts">
-    <PageHeader
-      title="Счета"
-      subtitle="Управляйте банковскими счетами в одном месте"
-      :breadcrumbs="[
-        { label: 'Главная', to: '/analytics' },
-        { label: 'Счета' }
-      ]"
-    >
+    <PageHeader title="Счета">
       <template #actions>
         <UiButton
           label="Добавить счет"
@@ -270,7 +270,10 @@ onMounted(async () => {
           </button>
         </div>
 
-        <div class="accounts-controls">
+        <div
+          v-if="showAccountFilters"
+          class="accounts-controls"
+        >
           <div class="accounts-search">
             <i
               class="pi pi-search"
@@ -377,7 +380,7 @@ onMounted(async () => {
       </div>
 
       <div
-        v-if="filteredAccounts.length > 0 && hasActiveFilters"
+        v-if="showAccountFilters && filteredAccounts.length > 0 && hasActiveFilters"
         class="surface-panel accounts__results"
       >
         <p class="results-text">

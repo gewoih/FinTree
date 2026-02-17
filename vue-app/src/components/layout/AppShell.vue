@@ -102,11 +102,11 @@ onMounted(() => {
       <div class="app-shell__topnav-left">
         <UiButton
           v-if="!isTablet"
-          :icon="sidebarCollapsed ? 'pi pi-angle-right' : 'pi pi-angle-left'"
+          icon="pi pi-bars"
           variant="ghost"
           rounded
           class="app-shell__menu-toggle"
-          :aria-label="sidebarCollapsed ? 'Развернуть меню' : 'Свернуть меню'"
+          :aria-label="sidebarCollapsed ? 'Показать боковое меню' : 'Скрыть боковое меню'"
           :aria-expanded="!sidebarCollapsed"
           @click="toggleSidebar"
         />
