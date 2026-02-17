@@ -191,7 +191,7 @@ const summaryMetrics = computed(() => {
     },
     {
       key: 'balance',
-      label: 'Баланс',
+      label: 'Баланс месяца',
       value: formatSignedMoney(netCashflow),
       icon: 'pi pi-wallet',
       accent: balanceAccent,
