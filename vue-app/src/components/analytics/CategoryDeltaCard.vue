@@ -261,7 +261,6 @@ const formatPercent = (value: number | null) =>
 
 .delta-card__title {
   margin: 0;
-
   font-size: var(--ft-text-lg);
   font-weight: var(--ft-font-semibold);
   color: var(--ft-text-primary);
@@ -269,16 +268,19 @@ const formatPercent = (value: number | null) =>
 
 .delta-card__hint {
   cursor: pointer;
-  font-size: 1rem;
-  color: var(--ft-text-muted);
-  transition: color var(--ft-transition-fast);
+
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
 
   /* Ensure minimum touch target size */
   min-width: var(--ft-control-height);
   min-height: var(--ft-control-height);
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
+
+  font-size: 1rem;
+  color: var(--ft-text-muted);
+
+  transition: color var(--ft-transition-fast);
 }
 
 .delta-card__hint:hover {

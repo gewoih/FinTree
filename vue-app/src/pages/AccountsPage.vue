@@ -478,11 +478,14 @@ onMounted(async () => {
   display: flex;
   gap: var(--ft-space-2);
   align-items: center;
+
   min-height: 44px;
   padding: 0 var(--ft-space-3);
+
   background: var(--ft-surface-base);
   border: 1px solid var(--ft-border-default);
   border-radius: var(--ft-radius-md);
+
   transition:
     border-color var(--ft-transition-fast),
     box-shadow var(--ft-transition-fast);
@@ -496,9 +499,9 @@ onMounted(async () => {
 }
 
 .accounts-search i {
-  color: var(--ft-text-tertiary);
-  font-size: var(--ft-text-sm);
   flex-shrink: 0;
+  font-size: var(--ft-text-sm);
+  color: var(--ft-text-tertiary);
 }
 
 .accounts-sort {

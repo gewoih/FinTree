@@ -130,17 +130,20 @@ const valueClass = (accent: HealthAccent) => `health-score__main-value--${accent
 
 .health-score__hint {
   cursor: pointer;
-  margin-left: auto;
-  font-size: 1rem;
-  color: var(--ft-text-muted);
-  transition: color var(--ft-transition-fast);
+
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
 
   /* Ensure minimum touch target size */
   min-width: var(--ft-control-height);
   min-height: var(--ft-control-height);
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
+  margin-left: auto;
+
+  font-size: 1rem;
+  color: var(--ft-text-muted);
+
+  transition: color var(--ft-transition-fast);
 }
 
 .health-score__hint:hover {

@@ -238,8 +238,8 @@ const handleTypeUpdate = (value: unknown) => {
 .filter-input :deep(.ui-input:focus),
 .filter-input :deep(.ui-input:focus-visible) {
   border: none !important;
-  box-shadow: none !important;
   outline: none;
+  box-shadow: none !important;
 }
 
 .filter-option {

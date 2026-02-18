@@ -353,7 +353,9 @@ onMounted(() => {
   display: grid;
   grid-template:
     "topnav" auto "main" 1fr / minmax(0, 1fr);
+
   min-height: 100vh;
+
   background: var(--ft-bg-base);
 }
 
@@ -454,6 +456,7 @@ onMounted(() => {
   display: flex;
   gap: var(--ft-space-3);
   align-items: center;
+
   text-decoration: none;
 
   transition: all var(--ft-transition-fast);
@@ -481,8 +484,8 @@ onMounted(() => {
 .app-shell__logo-text {
   font-size: var(--ft-text-xl);
   font-weight: var(--ft-font-bold);
-  letter-spacing: -0.02em;
   color: var(--ft-text-primary);
+  letter-spacing: -0.02em;
 
   transition: color var(--ft-transition-fast);
 }
@@ -510,8 +513,8 @@ onMounted(() => {
 
   font-size: var(--ft-text-xl);
   font-weight: var(--ft-font-bold);
-  letter-spacing: -0.02em;
   color: var(--ft-text-primary);
+  letter-spacing: -0.02em;
 }
 
 .app-shell__drawer-header i {
@@ -547,8 +550,8 @@ onMounted(() => {
 
   position: absolute;
   top: 0;
-  left: var(--ft-space-4);
   right: var(--ft-space-4);
+  left: var(--ft-space-4);
 
   height: 1px;
 
@@ -573,9 +576,9 @@ onMounted(() => {
 
   font-size: var(--ft-text-base);
   font-weight: var(--ft-font-medium);
-  letter-spacing: -0.01em;
   color: var(--ft-text-secondary);
   text-decoration: none;
+  letter-spacing: -0.01em;
 
   background: transparent;
   border-radius: var(--ft-radius-lg);
@@ -587,21 +590,20 @@ onMounted(() => {
 }
 
 .app-shell__nav-link::before {
+  pointer-events: none;
   content: '';
 
   position: absolute;
   z-index: 0;
   inset: 0;
 
-  border-radius: inherit;
   opacity: 0;
-  pointer-events: none;
-
   background: linear-gradient(
     135deg,
     color-mix(in srgb, var(--ft-primary-500) 24%, transparent),
     color-mix(in srgb, var(--ft-primary-600) 18%, transparent)
   );
+  border-radius: inherit;
   box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--ft-primary-400) 35%, transparent);
 
   transition: opacity var(--ft-transition-fast);
@@ -610,9 +612,7 @@ onMounted(() => {
 .app-shell__nav-link i {
   position: relative;
   z-index: 1;
-
   font-size: 1.25rem;
-
   transition: all var(--ft-transition-fast);
 }
 
@@ -640,20 +640,20 @@ onMounted(() => {
 }
 
 .app-shell__nav-link:hover {
+  transform: translateX(2px);
   color: var(--ft-text-primary);
   background: color-mix(in srgb, var(--ft-primary-500) 12%, transparent);
-  transform: translateX(2px);
 }
 
 .app-shell__nav-link:hover i {
-  color: var(--ft-primary-400);
   transform: scale(1.08);
+  color: var(--ft-primary-400);
 }
 
 .app-shell__nav-link.router-link-active {
+  transform: translateX(0);
   font-weight: var(--ft-font-semibold);
   color: var(--ft-text-primary);
-  transform: translateX(0);
   box-shadow:
     0 2px 8px color-mix(in srgb, var(--ft-primary-500) 20%, transparent),
     0 0 0 1px color-mix(in srgb, var(--ft-primary-400) 25%, transparent);
@@ -664,8 +664,8 @@ onMounted(() => {
 }
 
 .app-shell__nav-link.router-link-active i {
-  color: var(--ft-primary-300);
   transform: scale(1.05);
+  color: var(--ft-primary-300);
 }
 
 .app-shell__nav-link--secondary {
@@ -687,24 +687,12 @@ onMounted(() => {
 .app-shell__main {
   overflow-x: hidden;
   grid-area: main;
+
   width: 100%;
   min-width: 0;
   padding: 0;
+
   outline: none;
-}
-
-@media (width >= 1024px) {
-  .app-shell {
-    grid-template-areas:
-      "topnav topnav"
-      "sidebar main";
-    grid-template-columns: 240px minmax(0, 1fr);
-    transition: grid-template-columns 0.2s ease;
-  }
-
-  .app-shell--collapsed {
-    grid-template-columns: 64px minmax(0, 1fr);
-  }
 }
 
 /* User Section */
@@ -751,11 +739,11 @@ onMounted(() => {
 }
 
 .app-shell__user-info {
+  overflow: hidden;
   display: flex;
   flex: 1;
   flex-direction: column;
   gap: var(--ft-space-1);
-  overflow: hidden;
 }
 
 .app-shell__user-email {
@@ -787,14 +775,18 @@ onMounted(() => {
 
 .app-shell__user-status-dot {
   display: block;
+
   width: 6px;
   height: 6px;
+
   background: currentcolor;
   border-radius: var(--ft-radius-full);
   box-shadow: 0 0 6px currentcolor;
 }
 
 .app-shell__logout-btn {
+  cursor: pointer;
+
   display: flex;
   gap: var(--ft-space-3);
   align-items: center;
@@ -809,7 +801,6 @@ onMounted(() => {
   font-weight: var(--ft-font-medium);
   color: var(--ft-text-secondary);
 
-  cursor: pointer;
   background: transparent;
   border: 1px solid var(--ft-border-default);
   border-radius: var(--ft-radius-lg);
@@ -820,10 +811,12 @@ onMounted(() => {
 }
 
 .app-shell__logout-btn:hover {
+  transform: translateY(-1px);
+
   color: var(--ft-danger-400);
+
   background: color-mix(in srgb, var(--ft-danger-500) 8%, transparent);
   border-color: color-mix(in srgb, var(--ft-danger-500) 25%, transparent);
-  transform: translateY(-1px);
   box-shadow: 0 2px 8px color-mix(in srgb, var(--ft-danger-500) 12%, transparent);
 }
 
@@ -837,6 +830,20 @@ onMounted(() => {
   flex: 1;
   flex-direction: column;
   height: 100%;
+}
+
+@media (width >= 1024px) {
+  .app-shell {
+    grid-template-areas:
+      "topnav topnav"
+      "sidebar main";
+    grid-template-columns: 240px minmax(0, 1fr);
+    transition: grid-template-columns 0.2s ease;
+  }
+
+  .app-shell--collapsed {
+    grid-template-columns: 64px minmax(0, 1fr);
+  }
 }
 
 @media (width >= 1024px) {

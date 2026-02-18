@@ -23,8 +23,8 @@ Done criteria:
 
 ### 4) Eliminate stylelint debt and enforce “no new warnings”
 
-- [ ] Resolve current `order/properties-order` warning debt (audit found 180 warnings).
-- [ ] Enforce rule: new changes must not add stylelint warnings.
+- [x] Resolve current `order/properties-order` warning debt (audit found 180 warnings).
+- [x] Enforce rule: new changes must not add stylelint warnings.
 
 Why:
 - Lint noise hides real regressions and accelerates style quality decay.

@@ -77,8 +77,10 @@ Forbidden:
 
 ## 5) Forms and Error States
 
+- Field wrappers (`UiInputText`, `UiInputNumber`, `UiSelect`, `UiDatePicker`) must expose `invalid` and optional `error` props as the validation API.
 - All fields must expose one consistent visual error state through wrapper contracts.
-- Do not rely on ad hoc local `p-invalid` styling hacks.
+- Feature `pages/` and `components/` must not set `p-invalid` directly; pass wrapper validation props instead.
+- Shared invalid-state visuals are defined in `vue-app/src/styles/prime-unstyled-shared.css`.
 - Label, hint, error, and focus behavior must be visually consistent across screens.
 
 ---
@@ -137,6 +139,8 @@ cd vue-app && npm run build
 ```
 
 And additionally:
+- If CSS/SCSS/Vue styles changed, run `cd vue-app && npm run lint:style:fix` before final lint.
+- `cd vue-app && npm run lint:style` must pass with zero warnings.
 - No new visual Prime internals rules in feature files.
 - No new hardcoded colors in feature layer.
 - No RU/EN mixing in end-user UI copy.

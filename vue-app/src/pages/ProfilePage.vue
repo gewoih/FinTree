@@ -857,9 +857,9 @@ async function handlePay(plan: SubscriptionPlan) {
 }
 
 .collapsible-header:focus-visible {
+  border-radius: var(--ft-radius-sm, var(--ft-radius-md));
   outline: 2px solid color-mix(in srgb, var(--ft-primary-500) 60%, transparent);
   outline-offset: 2px;
-  border-radius: var(--ft-radius-sm, var(--ft-radius-md));
 }
 
 .payment-count-badge {

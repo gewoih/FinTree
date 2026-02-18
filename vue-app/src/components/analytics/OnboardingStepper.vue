@@ -182,8 +182,8 @@ function shouldShowAction(step: OnboardingStep): boolean {
 }
 
 .onboarding-step--optional {
-  border-style: dashed;
   opacity: 0.92;
+  border-style: dashed;
 }
 
 .onboarding-step__badge {
@@ -228,8 +228,8 @@ function shouldShowAction(step: OnboardingStep): boolean {
 }
 
 .onboarding-step--completed .onboarding-step__title {
-  text-decoration: line-through;
   color: var(--ft-text-secondary);
+  text-decoration: line-through;
 }
 
 .onboarding-step--locked .onboarding-step__title {

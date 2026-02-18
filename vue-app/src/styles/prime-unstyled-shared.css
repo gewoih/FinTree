@@ -144,9 +144,10 @@
   .p-select,
   .p-datepicker,
   .p-inputtextarea {
+    align-items: center;
+
     width: 100%;
     min-height: var(--ft-control-height);
-    align-items: center;
 
     font-size: var(--ft-text-base);
     color: var(--ft-text-primary);
@@ -209,10 +210,10 @@
 
   .ui-select__label,
   .p-select-label {
+    overflow: hidden;
     display: flex;
     align-items: center;
 
-    overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
   }
@@ -223,13 +224,14 @@
   .p-datepicker-dropdown {
     display: inline-flex;
     align-items: center;
-    justify-content: center;
     align-self: stretch;
+    justify-content: center;
 
     min-width: calc(var(--ft-control-height) - 2px);
     padding: 0 var(--ft-space-3);
 
     color: var(--ft-text-secondary);
+
     background: transparent;
     border: 0;
     border-inline-start: 1px solid var(--ft-border-soft);
@@ -301,16 +303,21 @@
   .ui-select-button__button,
   .p-selectbutton .p-togglebutton {
     cursor: pointer;
+
     display: inline-flex;
     flex: 1;
     align-items: center;
     justify-content: center;
+
     min-height: var(--ft-control-height);
     padding: 0 var(--ft-space-3);
+
     color: var(--ft-text-secondary);
+
     background: var(--ft-surface-base);
     border: 1px solid var(--ft-border-default);
     border-radius: var(--ft-radius-lg);
+
     transition:
       border-color var(--ft-transition-fast),
       color var(--ft-transition-fast),
@@ -363,9 +370,9 @@
   .p-select-overlay,
   .ui-date-picker-overlay,
   .p-datepicker-panel {
+    isolation: isolate;
     overflow: hidden;
     opacity: 1;
-    isolation: isolate;
   }
 
   .ui-select-overlay,
@@ -375,12 +382,15 @@
 
   .ui-select__list-container,
   .p-select-list-container {
-    overflow: auto;
-    max-height: min(18rem, 45vh);
-    padding: var(--ft-space-2);
-    background: var(--ft-surface-raised);
     scrollbar-color: var(--ft-scrollbar-thumb) var(--ft-scrollbar-track);
     scrollbar-width: thin;
+
+    overflow: auto;
+
+    max-height: min(18rem, 45vh);
+    padding: var(--ft-space-2);
+
+    background: var(--ft-surface-raised);
   }
 
   :where(
@@ -456,8 +466,8 @@
   .ui-select__option,
   .p-select-option {
     cursor: pointer;
-    overflow: hidden;
 
+    overflow: hidden;
     display: flex;
     gap: var(--ft-space-2);
     align-items: center;
@@ -799,10 +809,12 @@
   .p-paginator .p-disabled,
   .p-paginator .p-disabled:hover {
     cursor: not-allowed;
+
     color: var(--ft-text-disabled);
+
+    opacity: 0.7;
     background: var(--ft-surface-base);
     border-color: var(--ft-border-soft);
-    opacity: 0.7;
   }
 
   .ui-chart__root,
@@ -963,10 +975,12 @@
   .ui-toast__root,
   .p-toast {
     z-index: var(--ft-z-toast);
-    width: min(420px, calc(100vw - (var(--ft-space-4) * 2)));
-    min-width: min(420px, calc(100vw - (var(--ft-space-4) * 2)));
+
     display: grid;
     gap: var(--ft-space-2);
+
+    width: min(420px, calc(100vw - (var(--ft-space-4) * 2)));
+    min-width: min(420px, calc(100vw - (var(--ft-space-4) * 2)));
   }
 
   .ui-toast__message,
@@ -1007,8 +1021,8 @@
   .ui-toast__message-icon,
   .p-toast .p-toast-message-icon {
     margin-top: 0.125rem;
-    color: var(--ft-text-secondary);
     font-size: 1rem;
+    color: var(--ft-text-secondary);
   }
 
   .ui-toast__message-text,
@@ -1029,8 +1043,8 @@
   .p-toast .p-toast-detail {
     margin: 0;
     font-size: var(--ft-text-sm);
-    color: var(--ft-text-secondary);
     line-height: var(--ft-leading-normal);
+    color: var(--ft-text-secondary);
   }
 
   .ui-toast__button-container,
@@ -1041,15 +1055,20 @@
   .ui-toast__close-button,
   .p-toast .p-toast-close-button {
     cursor: pointer;
+
     display: inline-flex;
     align-items: center;
     justify-content: center;
+
     width: 2rem;
     height: 2rem;
+
     color: var(--ft-text-secondary);
+
     background: transparent;
     border: 1px solid transparent;
     border-radius: var(--ft-radius-md);
+
     transition:
       color var(--ft-transition-fast),
       background-color var(--ft-transition-fast),
@@ -1089,6 +1108,7 @@
     inset: 0;
 
     margin: 0;
+
     opacity: 0;
   }
 
@@ -1101,6 +1121,7 @@
     height: 1.25rem;
 
     color: transparent;
+
     background: var(--ft-surface-base);
     border: 1px solid var(--ft-border-default);
     border-radius: var(--ft-radius-sm);
@@ -1132,10 +1153,12 @@
 
   .ui-toggle-switch__root,
   .p-toggleswitch {
+    cursor: pointer;
+
     position: relative;
+
     display: inline-flex;
     align-items: center;
-    cursor: pointer;
 
     width: 2.5rem;
     height: 1.4rem;
@@ -1146,17 +1169,20 @@
     cursor: pointer;
 
     position: absolute;
-    inset: 0;
     z-index: var(--ft-z-above);
+    inset: 0;
 
     margin: 0;
+
     opacity: 0;
   }
 
   .ui-toggle-switch__slider,
   .p-toggleswitch .p-toggleswitch-slider {
     pointer-events: none;
+
     position: relative;
+
     display: block;
 
     width: 2.5rem;
@@ -1171,6 +1197,7 @@
   .ui-toggle-switch__handle,
   .p-toggleswitch .p-toggleswitch-handle {
     pointer-events: none;
+
     position: absolute;
     top: 0.15rem;
     left: 0.15rem;

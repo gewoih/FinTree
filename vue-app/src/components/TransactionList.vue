@@ -660,9 +660,10 @@ const handleRowClick = (txn: EnrichedTransaction) => {
 .txn-groups {
   display: flex;
   flex-direction: column;
+
+  width: 100%;
   max-width: 960px;
   margin: 0 auto;
-  width: 100%;
 }
 
 .txn-group__header {
@@ -740,7 +741,6 @@ const handleRowClick = (txn: EnrichedTransaction) => {
   display: flex;
   gap: var(--ft-space-3);
   align-items: center;
-
   min-width: 0;
 }
 

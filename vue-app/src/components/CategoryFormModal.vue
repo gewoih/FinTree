@@ -447,6 +447,7 @@ const handleDelete = () => {
   gap: var(--ft-space-4);
   align-items: flex-start;
   justify-content: space-between;
+
   margin-bottom: var(--ft-space-5);
 }
 

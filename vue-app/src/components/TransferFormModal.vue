@@ -510,12 +510,14 @@ const handleDelete = () => {
 }
 
 .xfer-form {
+  overflow: hidden;
   display: flex;
   flex-direction: column;
   gap: var(--ft-space-5);
+
   padding: var(--ft-space-6, 1.5rem);
+
   background: var(--ft-surface-raised);
-  overflow: hidden;
 }
 
 /* --- Header --- */
@@ -568,7 +570,9 @@ const handleDelete = () => {
   display: flex;
   flex-direction: column;
   gap: var(--ft-space-3);
+
   padding: var(--ft-space-4);
+
   background: var(--ft-surface-base);
   border: 1px solid var(--ft-border-default);
   border-radius: var(--ft-radius-lg);
@@ -617,9 +621,11 @@ const handleDelete = () => {
 /* --- Arrow divider --- */
 .xfer-flow__divider {
   position: relative;
+
   display: flex;
   align-items: center;
   justify-content: center;
+
   height: 36px;
 }
 
@@ -630,12 +636,11 @@ const handleDelete = () => {
   top: 0;
   bottom: 0;
   left: 50%;
+  transform: translateX(-50%);
 
   width: 2px;
 
   background: var(--ft-border-soft);
-
-  transform: translateX(-50%);
 }
 
 .xfer-flow__arrow {
@@ -707,6 +712,7 @@ const handleDelete = () => {
   gap: var(--ft-space-2);
   align-items: center;
   justify-content: space-between;
+
   width: 100%;
 }
 

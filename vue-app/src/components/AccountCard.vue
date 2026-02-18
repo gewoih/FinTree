@@ -312,7 +312,6 @@ const toggleMenu = (event: Event) => {
   width: 44px;
   min-width: 44px;
   height: 44px;
-
   border-radius: var(--ft-radius-lg);
 }
 
@@ -346,6 +345,7 @@ const toggleMenu = (event: Event) => {
 
 .account-card__balance-main {
   margin: var(--ft-space-1) 0 0;
+
   font-size: clamp(1.1rem, 1.5vw, 1.4rem);
   font-weight: var(--ft-font-semibold);
   font-variant-numeric: tabular-nums;

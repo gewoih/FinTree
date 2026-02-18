@@ -89,6 +89,7 @@ const tabs = [
   position: absolute;
   top: 0;
   left: 50%;
+  transform: translateX(-50%);
 
   width: 0;
   height: 2px;
@@ -96,14 +97,12 @@ const tabs = [
   background: linear-gradient(90deg, var(--ft-primary-400), var(--ft-primary-500));
   border-radius: 0 0 2px 2px;
   box-shadow: 0 2px 8px color-mix(in srgb, var(--ft-primary-500) 50%, transparent);
-  transform: translateX(-50%);
 
   transition: width var(--ft-transition-base);
 }
 
 .bottom-tab-bar__item i {
   font-size: 1.3rem;
-
   transition: all var(--ft-transition-fast);
 }
 
@@ -130,8 +129,8 @@ const tabs = [
 }
 
 .bottom-tab-bar__item[aria-current='page'] i {
-  color: var(--ft-primary-400);
   transform: scale(1.05);
+  color: var(--ft-primary-400);
 }
 
 .bottom-tab-bar__item:focus-visible {
@@ -141,9 +140,11 @@ const tabs = [
 
 .bottom-tab-bar__label {
   overflow: hidden;
+
   max-width: 100%;
-  letter-spacing: -0.01em;
+
   text-overflow: ellipsis;
+  letter-spacing: -0.01em;
   white-space: nowrap;
 }
 

@@ -214,17 +214,20 @@ const iconAccentClass = (accent: MetricAccent) => `summary-strip__icon--${accent
 
 .summary-strip__hint {
   cursor: pointer;
-  font-size: 0.95rem;
-  color: var(--ft-text-muted);
-  text-transform: none;
-  transition: color var(--ft-transition-fast);
+
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
 
   /* Ensure minimum touch target size */
   min-width: var(--ft-control-height);
   min-height: var(--ft-control-height);
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
+
+  font-size: 0.95rem;
+  color: var(--ft-text-muted);
+  text-transform: none;
+
+  transition: color var(--ft-transition-fast);
 }
 
 .summary-strip__hint:hover {
@@ -262,15 +265,15 @@ const iconAccentClass = (accent: MetricAccent) => `summary-strip__icon--${accent
 }
 
 .summary-strip__secondary {
+  min-height: 1.25em; /* Maintain consistent height */
   margin: 0;
   font-size: var(--ft-text-sm);
   color: var(--ft-text-secondary);
-  min-height: 1.25em; /* Maintain consistent height */
 }
 
 .summary-strip__secondary--empty {
-  opacity: 0;
   pointer-events: none;
+  opacity: 0;
 }
 
 .summary-strip__error {

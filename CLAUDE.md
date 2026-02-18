@@ -101,7 +101,13 @@ Avoid:
 ### 5) Validation and Form Errors
 
 - Validation and error messages must be in Russian.
-- Field error visuals must go through one wrapper contract, not ad-hoc local hacks.
+- Field invalid states must go through wrapper props (`invalid`/`error`) in:
+  - `UiInputText`
+  - `UiInputNumber`
+  - `UiSelect`
+  - `UiDatePicker`
+- Feature `pages/` and `components/` must not set `p-invalid` directly.
+- Shared invalid visuals are owned by `src/styles/prime-unstyled-shared.css`.
 - Destructive actions require explicit confirmation.
 
 ---
@@ -120,6 +126,14 @@ Avoid:
 - Agent-facing documentation and instructions: English.
 - End-user app interface (labels, errors, hints, tooltips): Russian only.
 - Dates/numbers/currency formatting: `ru-RU`.
+
+---
+
+### 8) Stylelint Policy
+
+- `npm run lint:style` is a hard gate and must pass with zero warnings.
+- For CSS changes, run `npm run lint:style:fix` before the final `npm run lint:style`.
+- Avoid `stylelint-disable`; if unavoidable, keep it narrowly scoped and add an inline justification.
 
 ---
 
