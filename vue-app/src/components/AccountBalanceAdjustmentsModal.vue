@@ -4,8 +4,8 @@ import { useToast } from 'primevue/usetoast'
 import UiDialog from '@/ui/UiDialog.vue'
 import UiInputNumber from '@/ui/UiInputNumber.vue'
 import UiMessage from '@/ui/UiMessage.vue'
-import type { Account, AccountBalanceAdjustmentDto } from '../types'
-import { apiService } from '../services/api.service'
+import type { Account } from '../types'
+import { useAccountBalanceAdjustments } from '../composables/useAccountBalanceAdjustments'
 import { useFinanceStore } from '../stores/finance'
 import { formatCurrency, formatDate } from '../utils/formatters'
 import FormField from "@/components/common/FormField.vue";
@@ -33,12 +33,15 @@ const emit = defineEmits<{
 
 const toast = useToast()
 const financeStore = useFinanceStore()
-
-const adjustments = ref<AccountBalanceAdjustmentDto[]>([])
-const loading = ref(false)
-const error = ref<string | null>(null)
+const {
+  adjustments,
+  loading,
+  adjustmentsError: error,
+  saving,
+  loadAdjustments,
+  saveAdjustment
+} = useAccountBalanceAdjustments()
 const newBalance = ref<number | null>(null)
-const saving = ref(false)
 
 const resolvedAccount = computed(() => {
   if (!props.account) return null
@@ -62,22 +65,6 @@ const formattedAdjustments = computed(() =>
   }))
 )
 
-const loadAdjustments = async () => {
-  if (!props.account) return
-  loading.value = true
-  error.value = null
-  try {
-    const data = await apiService.getAccountBalanceAdjustments(props.account.id)
-    adjustments.value = data ?? []
-  } catch (err) {
-    console.error('Не удалось загрузить корректировки:', err)
-    error.value = 'Не удалось загрузить корректировки.'
-    adjustments.value = []
-  } finally {
-    loading.value = false
-  }
-}
-
 const submitAdjustment = async () => {
   if (props.readonly) {
     toast.add({
@@ -100,31 +87,28 @@ const submitAdjustment = async () => {
     return
   }
 
-  saving.value = true
-  try {
-    await apiService.createAccountBalanceAdjustment(props.account.id, newBalance.value)
-    await Promise.all([
-      loadAdjustments(),
-      financeStore.fetchAccounts(true),
-    ])
-    toast.add({
-      severity: 'success',
-      summary: 'Баланс обновлен',
-      detail: 'Корректировка сохранена.',
-      life: 2500,
-    })
-    newBalance.value = null
-  } catch (err) {
-    console.error('Не удалось сохранить корректировку:', err)
+  const success = await saveAdjustment(props.account.id, newBalance.value)
+  if (!success) {
     toast.add({
       severity: 'error',
       summary: 'Ошибка',
       detail: 'Не удалось сохранить корректировку.',
       life: 2500,
     })
-  } finally {
-    saving.value = false
+    return
   }
+
+  await Promise.all([
+    loadAdjustments(props.account.id),
+    financeStore.fetchAccounts(true),
+  ])
+  toast.add({
+    severity: 'success',
+    summary: 'Баланс обновлен',
+    detail: 'Корректировка сохранена.',
+    life: 2500,
+  })
+  newBalance.value = null
 }
 
 watch(
@@ -132,7 +116,7 @@ watch(
   visible => {
     if (visible) {
       newBalance.value = props.account?.balance ?? null
-      void loadAdjustments()
+      void loadAdjustments(props.account?.id)
     }
   }
 )
@@ -142,7 +126,7 @@ watch(
   () => {
     if (props.visible) {
       newBalance.value = props.account?.balance ?? null
-      void loadAdjustments()
+      void loadAdjustments(props.account?.id)
     }
   }
 )

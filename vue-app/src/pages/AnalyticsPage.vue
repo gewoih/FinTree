@@ -13,11 +13,10 @@ import type { OnboardingStep } from '../components/analytics/OnboardingStepper.v
 import { useUserStore } from '../stores/user';
 import { useFinanceStore } from '../stores/finance';
 import { useAnalytics } from '../composables/useAnalytics';
-import { apiService } from '../services/api.service';
+import { useAnalyticsDashboardData } from '../composables/useAnalyticsDashboardData';
 import { isCategoriesOnboardingVisited, markCategoriesOnboardingVisited } from '../utils/onboarding';
 import UiDatePicker from '@/ui/UiDatePicker.vue';
 import type {
-  AnalyticsDashboardDto,
   AnalyticsReadinessDto,
   MonthlyExpenseDto,
 } from '../types';
@@ -68,13 +67,16 @@ const categoryScopeOptions: Array<{ label: string; value: CategoryScope }> = [
 ];
 const selectedCategoryScope = ref<CategoryScope>('all');
 
-const dashboard = ref<AnalyticsDashboardDto | null>(null);
-const dashboardLoading = ref(false);
-const dashboardError = ref<string | null>(null);
-const dashboardRequestId = ref(0);
-const onboardingHasAnyTransactions = ref(false);
-const onboardingTransactionsLoading = ref(false);
-const onboardingTransactionsRequestId = ref(0);
+const {
+  dashboard,
+  dashboardLoading,
+  dashboardError,
+  loadDashboard,
+  onboardingHasAnyTransactions,
+  onboardingTransactionsLoading,
+  loadOnboardingTransactionsState,
+  resetOnboardingTransactionsState,
+} = useAnalyticsDashboardData(() => userStore.currentUser?.id ?? null);
 const onboardingSyncedForUserId = ref<string | null>(null);
 const onboardingSyncInFlight = ref(false);
 const hasVisitedCategoriesStep = ref(false);
@@ -355,15 +357,6 @@ function resolveStabilityLabel(index: number | null): string {
   return 'Частые всплески расходов, много крупных покупок';
 }
 
-function resolveErrorMessage(error: unknown, fallback: string): string {
-  if (typeof error === 'object' && error && 'userMessage' in error) {
-    const message = (error as { userMessage?: string }).userMessage;
-    if (typeof message === 'string' && message.trim().length) return message;
-  }
-  if (error instanceof Error && error.message) return error.message;
-  return fallback;
-}
-
 // --- CSS palette is provided by useChartColors composable ---
 
 // --- Date helpers ---
@@ -422,61 +415,8 @@ function getIsoWeekRange(year: number, week: number) {
   };
 }
 
-// --- API ---
-async function loadDashboard(month: Date) {
-  const requestId = ++dashboardRequestId.value;
-  dashboardLoading.value = true;
-  dashboardError.value = null;
-  try {
-    const year = month.getFullYear();
-    const apiMonth = month.getMonth() + 1;
-    const data = await apiService.getAnalyticsDashboard(year, apiMonth);
-    if (requestId !== dashboardRequestId.value) return;
-    dashboard.value = data;
-  } catch (error) {
-    if (requestId !== dashboardRequestId.value) return;
-    dashboardError.value = resolveErrorMessage(error, 'Не удалось загрузить аналитику.');
-    dashboard.value = null;
-  } finally {
-    if (requestId === dashboardRequestId.value) dashboardLoading.value = false;
-  }
-}
-
 function retryDashboard() {
   void loadDashboard(normalizedSelectedMonth.value);
-}
-
-async function loadOnboardingTransactionsState() {
-  const requestUserId = userStore.currentUser?.id ?? null;
-  if (!requestUserId) {
-    onboardingHasAnyTransactions.value = false;
-    onboardingTransactionsLoading.value = false;
-    return;
-  }
-
-  const requestId = ++onboardingTransactionsRequestId.value;
-  onboardingTransactionsLoading.value = true;
-
-  try {
-    const response = await apiService.getTransactions({
-      page: 1,
-      size: 1,
-    });
-    if (requestId !== onboardingTransactionsRequestId.value) return;
-    if (requestUserId !== userStore.currentUser?.id) return;
-    onboardingHasAnyTransactions.value = response.total > 0;
-  } catch (error) {
-    if (requestId !== onboardingTransactionsRequestId.value) return;
-    if (requestUserId !== userStore.currentUser?.id) return;
-    console.error('Не удалось определить наличие транзакций для онбординга:', error);
-    onboardingHasAnyTransactions.value = false;
-  } finally {
-    const isLatestRequest = requestId === onboardingTransactionsRequestId.value;
-    const isSameUser = requestUserId === userStore.currentUser?.id;
-    if (isLatestRequest && isSameUser) {
-      onboardingTransactionsLoading.value = false;
-    }
-  }
 }
 
 // --- Navigation handlers ---
@@ -768,9 +708,7 @@ watch(selectedMonth, (value) => {
 watch(
   () => currentUserId.value,
   (userId) => {
-    onboardingTransactionsRequestId.value += 1;
-    onboardingTransactionsLoading.value = false;
-    onboardingHasAnyTransactions.value = false;
+    resetOnboardingTransactionsState();
     onboardingSyncedForUserId.value = null;
     hasVisitedCategoriesStep.value = isCategoriesOnboardingVisited(userId);
   },

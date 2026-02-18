@@ -5,12 +5,9 @@ import UiMessage from '@/ui/UiMessage.vue';
 import type {
   AccountType,
   InvestmentAccountOverviewDto,
-  InvestmentsOverviewDto,
   Account,
   AccountDto,
-  NetWorthSnapshotDto
 } from '../types';
-import { apiService } from '../services/api.service';
 import { useFinanceStore } from '../stores/finance';
 import { useUserStore } from '../stores/user';
 import AccountFormModal from '../components/AccountFormModal.vue';
@@ -23,6 +20,7 @@ import SummaryStrip from '../components/analytics/SummaryStrip.vue';
 import { mapAccount } from '../utils/mappers';
 import { formatCurrency } from '../utils/formatters';
 import { useChartColors } from '../composables/useChartColors';
+import { useInvestmentsData } from '../composables/useInvestmentsData';
 import UiSkeleton from '../ui/UiSkeleton.vue';
 import EmptyState from '../components/common/EmptyState.vue';
 import PageContainer from '../components/layout/PageContainer.vue';
@@ -41,13 +39,17 @@ const toast = useToast();
 const financeStore = useFinanceStore();
 const userStore = useUserStore();
 const { colors: chartColors } = useChartColors();
-
-const overview = ref<InvestmentsOverviewDto | null>(null);
-const overviewLoading = ref(false);
-const overviewError = ref<string | null>(null);
-const netWorthSnapshots = ref<NetWorthSnapshotDto[]>([]);
-const netWorthLoading = ref(false);
-const netWorthError = ref<string | null>(null);
+const {
+  overview,
+  overviewLoading,
+  overviewError,
+  netWorthSnapshots,
+  netWorthLoading,
+  netWorthError,
+  loadOverview,
+  loadNetWorth,
+  refreshInvestmentsData,
+} = useInvestmentsData();
 
 const modalVisible = ref(false);
 const adjustmentsVisible = ref(false);
@@ -220,41 +222,6 @@ const handleLiquidityToggle = async (account: InvestmentAccount, value: boolean)
 const clearFilters = () => {
   searchText.value = '';
   selectedType.value = null;
-};
-
-const loadOverview = async () => {
-  overviewLoading.value = true;
-  overviewError.value = null;
-  try {
-    overview.value = await apiService.getInvestmentsOverview();
-  } catch (error) {
-    console.error('Не удалось загрузить инвестиции:', error);
-    overviewError.value = 'Не удалось загрузить данные по инвестициям.';
-    overview.value = null;
-  } finally {
-    overviewLoading.value = false;
-  }
-};
-
-const loadNetWorth = async (months = 12) => {
-  netWorthLoading.value = true;
-  netWorthError.value = null;
-  try {
-    netWorthSnapshots.value = await apiService.getNetWorthTrend(months);
-  } catch (error) {
-    console.error('Не удалось загрузить Net Worth:', error);
-    netWorthError.value = 'Не удалось загрузить динамику капитала.';
-    netWorthSnapshots.value = [];
-  } finally {
-    netWorthLoading.value = false;
-  }
-};
-
-const refreshInvestmentsData = async () => {
-  await Promise.all([
-    loadOverview(),
-    loadNetWorth(12),
-  ]);
 };
 
 // Balance adjustment only affects overview, not net worth trend

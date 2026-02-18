@@ -55,26 +55,7 @@ Done criteria:
 
 ---
 
-### 4) Add CI quality gates for frontend
-
-- [ ] Add a dedicated frontend CI job in GitHub Actions:
-  - `npm ci`
-  - `npm run type-check`
-  - `npm run lint`
-  - `npm run lint:style`
-  - `npm run lint:prime-imports`
-  - `npm run build`
-- [ ] Block merge/deploy when any step fails.
-
-Why:
-- Deployment currently does not enforce frontend integrity gates.
-
-Done criteria:
-- CI blocks deployment when frontend contract checks fail.
-
----
-
-### 5) Eliminate stylelint debt and enforce “no new warnings”
+### 4) Eliminate stylelint debt and enforce “no new warnings”
 
 - [ ] Resolve current `order/properties-order` warning debt (audit found 180 warnings).
 - [ ] Enforce rule: new changes must not add stylelint warnings.

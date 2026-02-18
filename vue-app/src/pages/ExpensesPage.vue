@@ -10,7 +10,7 @@ import type { Transaction, UpdateTransferPayload } from '../types'
 import TransactionList from '../components/TransactionList.vue'
 import TransactionForm from '../components/TransactionForm.vue'
 import TransferFormModal from '../components/TransferFormModal.vue'
-import { apiService } from '../services/api.service'
+import { useTransactionsExport } from '../composables/useTransactionsExport'
 import { useViewport } from '../composables/useViewport'
 import UiButton from '../ui/UiButton.vue'
 import UiSection from '../ui/UiSection.vue'
@@ -26,7 +26,10 @@ const transactionDialogVisible = ref(false)
 const editingTransaction = ref<Transaction | null>(null)
 const transferDialogVisible = ref(false)
 const editingTransfer = ref<UpdateTransferPayload | null>(null)
-const isExporting = ref(false)
+const {
+  isExporting,
+  exportTransactions: exportTransactionsFile
+} = useTransactionsExport()
 const actionMenuRef = ref<{ toggle: (event: Event) => void } | null>(null)
 const { isMobile } = useViewport()
 const isReadOnlyMode = computed(() => userStore.isReadOnlyMode)
@@ -81,9 +84,12 @@ const handleEditTransfer = (transfer: UpdateTransferPayload) => {
 
 const exportTransactions = async () => {
   if (isExporting.value) return
-  isExporting.value = true
+
   try {
-    const { blob, fileName } = await apiService.exportTransactions()
+    const exportedFile = await exportTransactionsFile()
+    if (!exportedFile) return
+
+    const { blob, fileName } = exportedFile
     const url = URL.createObjectURL(blob)
     const link = document.createElement('a')
     link.href = url
@@ -107,8 +113,6 @@ const exportTransactions = async () => {
       detail: 'Не удалось сформировать файл.',
       life: 2500
     })
-  } finally {
-    isExporting.value = false
   }
 }
 
