@@ -31,6 +31,39 @@ type AuthRedirectConfig = AxiosRequestConfig & {
     _retry?: boolean;
 };
 
+export interface AuthResponse {
+    email: string;
+    userId: string;
+}
+
+export interface LoginPayload {
+    email: string;
+    password: string;
+}
+
+export interface RegisterPayload {
+    email: string;
+    password: string;
+    passwordConfirmation: string;
+}
+
+export interface TelegramLoginPayload {
+    id: number;
+    auth_date: number;
+    hash: string;
+    first_name?: string;
+    last_name?: string;
+    username?: string;
+    photo_url?: string;
+}
+
+function createAuthFlowConfig(): AuthRedirectConfig {
+    return {
+        skipAuthRedirect: true,
+        skipAuthRefresh: true,
+    };
+}
+
 /**
  * Axios client instance configured for the FinTree API
  * Base URL is proxied through Vite to https://localhost:5001
@@ -141,6 +174,25 @@ function getUserFriendlyErrorMessage(error: AxiosError): string {
 }
 
 export const apiService = {
+    async login(payload: LoginPayload): Promise<AuthResponse> {
+        const response = await apiClient.post<AuthResponse>('/auth/login', payload, createAuthFlowConfig());
+        return response.data;
+    },
+
+    async register(payload: RegisterPayload): Promise<AuthResponse> {
+        const response = await apiClient.post<AuthResponse>('/auth/register', payload, createAuthFlowConfig());
+        return response.data;
+    },
+
+    async loginWithTelegram(payload: TelegramLoginPayload): Promise<AuthResponse> {
+        const response = await apiClient.post<AuthResponse>('/auth/telegram', payload, createAuthFlowConfig());
+        return response.data;
+    },
+
+    async logout(): Promise<void> {
+        await apiClient.post('/auth/logout', null, createAuthFlowConfig());
+    },
+
     // Получение списка валют
     async getCurrencies(): Promise<Currency[]> {
         const response = await apiClient.get<Currency[]>('/currencies');

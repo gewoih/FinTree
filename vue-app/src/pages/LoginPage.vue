@@ -133,12 +133,12 @@ const handleLogin = async () => {
             v-if="telegramLoaded === false && !telegramScript"
             class="auth__telegram-fallback"
           >
-            Виджет Telegram не загрузился. Используйте email-вход ниже.
+            Виджет Telegram не загрузился. Используйте Email-вход ниже.
           </p>
         </div>
 
         <div class="auth__divider">
-          <span>или через email</span>
+          <span>или через Email</span>
         </div>
 
         <form

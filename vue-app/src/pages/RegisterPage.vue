@@ -159,7 +159,7 @@ const handleRegister = async () => {
               class="auth__link-btn"
               @click="showEmailForm = true"
             >
-              Зарегистрируйтесь через email
+              Зарегистрируйтесь через Email
             </button>
           </p>
         </div>
@@ -174,7 +174,7 @@ const handleRegister = async () => {
             class="auth__email-toggle"
             @click="showEmailForm = true"
           >
-            Зарегистрироваться через email
+            Зарегистрироваться через Email
           </button>
         </div>
 

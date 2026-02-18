@@ -1,39 +1,39 @@
 import { ref, computed, watch } from 'vue';
 import { defineStore } from 'pinia';
-import axios from 'axios';
+import {
+    apiService,
+    type LoginPayload,
+    type RegisterPayload,
+    type TelegramLoginPayload
+} from '../services/api.service.ts';
 import { useUserStore } from './user.ts';
 import { useFinanceStore } from './finance.ts';
 
-interface AuthResponse {
-    email: string;
-    userId: string;
-}
-
-interface LoginPayload {
-    email: string;
-    password: string;
-}
-
-interface RegisterPayload {
-    email: string;
-    password: string;
-    passwordConfirmation: string;
-}
-
-interface TelegramLoginPayload {
-    id: number;
-    auth_date: number;
-    hash: string;
-    first_name?: string;
-    last_name?: string;
-    username?: string;
-    photo_url?: string;
+interface ApiErrorLike {
+    response?: {
+        data?: {
+            error?: string;
+            message?: string;
+        };
+    };
+    userMessage?: string;
 }
 
 function resolveAuthErrorMessage(err: unknown, fallback: string): string {
-    if (axios.isAxiosError<{ error?: string }>(err)) {
-        return err.response?.data?.error ?? fallback;
+    if (!err || typeof err !== 'object') {
+        return fallback;
     }
+
+    const apiError = err as ApiErrorLike;
+    const backendMessage = apiError.response?.data?.error ?? apiError.response?.data?.message;
+    if (typeof backendMessage === 'string' && backendMessage.trim()) {
+        return backendMessage;
+    }
+
+    if (typeof apiError.userMessage === 'string' && apiError.userMessage.trim()) {
+        return apiError.userMessage;
+    }
+
     return fallback;
 }
 
@@ -74,17 +74,14 @@ export const useAuthStore = defineStore('auth', () => {
         error.value = null;
 
         try {
-            const response = await axios.post<AuthResponse>('/api/auth/login', payload, {
-                withCredentials: true,
-            });
-            const { email } = response.data;
+            const { email } = await apiService.login(payload);
             setAuthenticated(email);
             await hydrateCurrentUser(true);
 
             return true;
         } catch (err: unknown) {
             console.error('Login failed:', err);
-            error.value = resolveAuthErrorMessage(err, 'Unable to sign in. Check your email and password.');
+            error.value = resolveAuthErrorMessage(err, 'Не удалось войти. Проверьте Email и пароль.');
             return false;
         } finally {
             isLoading.value = false;
@@ -96,17 +93,14 @@ export const useAuthStore = defineStore('auth', () => {
         error.value = null;
 
         try {
-            const response = await axios.post<AuthResponse>('/api/auth/register', payload, {
-                withCredentials: true,
-            });
-            const { email } = response.data;
+            const { email } = await apiService.register(payload);
             setAuthenticated(email);
             await hydrateCurrentUser(true);
 
             return true;
         } catch (err: unknown) {
             console.error('Registration failed:', err);
-            error.value = resolveAuthErrorMessage(err, 'Registration failed. Please try again.');
+            error.value = resolveAuthErrorMessage(err, 'Не удалось зарегистрироваться. Попробуйте еще раз.');
             return false;
         } finally {
             isLoading.value = false;
@@ -118,10 +112,7 @@ export const useAuthStore = defineStore('auth', () => {
         error.value = null;
 
         try {
-            const response = await axios.post<AuthResponse>('/api/auth/telegram', payload, {
-                withCredentials: true,
-            });
-            const { email } = response.data;
+            const { email } = await apiService.loginWithTelegram(payload);
             setAuthenticated(email);
             await hydrateCurrentUser(true);
 
@@ -137,7 +128,7 @@ export const useAuthStore = defineStore('auth', () => {
 
     async function logout() {
         try {
-            await axios.post('/api/auth/logout', null, { withCredentials: true });
+            await apiService.logout();
         } catch (err) {
             console.error('Logout failed:', err);
         } finally {
