@@ -15,6 +15,7 @@ cd vue-app && npm run type-check
 cd vue-app && npm run lint
 cd vue-app && npm run lint:style
 cd vue-app && npm run lint:prime-imports
+cd vue-app && npm run lint:api-boundaries
 cd vue-app && npm run build
 ```
 
@@ -38,10 +39,12 @@ cd vue-app && npm run build
 - `pages/` and feature `components/` — rendering and UI interactions, no direct API orchestration.
 - `ui/` — single entry point for visual PrimeVue components.
 - Never bind DTOs directly to templates; map to UI models first.
+- Data flow contract: `pages/components -> stores/composables -> services`.
 
 Forbidden:
 - Importing `apiService` in `pages/` or feature `components/`.
 - Splitting one async flow across multiple layers without clear ownership.
+- Skipping `npm run lint:api-boundaries` before completion.
 
 ---
 
@@ -129,6 +132,7 @@ cd vue-app && npm run type-check
 cd vue-app && npm run lint
 cd vue-app && npm run lint:style
 cd vue-app && npm run lint:prime-imports
+cd vue-app && npm run lint:api-boundaries
 cd vue-app && npm run build
 ```
 

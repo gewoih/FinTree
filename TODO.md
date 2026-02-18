@@ -7,26 +7,6 @@ Goal: remove systemic causes of UI bugs, inconsistency, and high maintenance cos
 
 ## P1 — Critical (Do First)
 
-### 1) Restore strict UI architecture boundaries
-
-- [ ] Remove direct `apiService` calls from `pages/` and feature `components/`.
-- [ ] Move data loading/mutations to `stores/` or `composables/` with one explicit state model: `loading | empty | error | success`.
-- [ ] Update pages to consume state/actions from stores/composables only.
-
-Why:
-- Data flows are currently split across layers, causing inconsistent UX states, retries, toasts, and error handling.
-
-Where found:
-- `vue-app/src/pages/AnalyticsPage.vue`
-- `vue-app/src/pages/InvestmentsPage.vue`
-- `vue-app/src/pages/ExpensesPage.vue`
-- `vue-app/src/components/AccountBalanceAdjustmentsModal.vue`
-
-Done criteria:
-- No direct `apiService` imports remain in `pages/` and feature `components/`.
-
----
-
 ### 2) Stop PrimeVue style leakage from feature layer
 
 - [ ] Remove visual Prime theming via `:deep(.p-...)` from `pages/` and feature `components/`.

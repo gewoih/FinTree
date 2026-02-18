@@ -12,7 +12,8 @@
     "lint:style": "stylelint \"src/**/*.{css,scss,vue}\"",
     "lint:style:fix": "stylelint \"src/**/*.{css,scss,vue}\" --fix",
     "type-check": "vue-tsc --noEmit",
-    "lint:prime-imports": "node scripts/check-prime-imports.mjs"
+    "lint:prime-imports": "node scripts/check-prime-imports.mjs",
+    "lint:api-boundaries": "node scripts/check-api-boundaries.mjs"
   },
   "dependencies": {
     "axios": "^1.12.2",
