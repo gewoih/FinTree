@@ -64,25 +64,25 @@ export const router = createRouter({
       path: '/accounts',
       name: 'accounts',
       component: () => import('../pages/AccountsPage.vue'),
-      meta: { title: 'Accounts', requiresAuth: true },
+      meta: { title: 'Счета', requiresAuth: true },
     },
     {
       path: '/investments',
       name: 'investments',
       component: () => import('../pages/InvestmentsPage.vue'),
-      meta: { title: 'Investments', requiresAuth: true },
+      meta: { title: 'Инвестиции', requiresAuth: true },
     },
     {
       path: '/categories',
       name: 'categories',
       component: () => import('../pages/CategoriesPage.vue'),
-      meta: { title: 'Categories', requiresAuth: true },
+      meta: { title: 'Категории', requiresAuth: true },
     },
     {
       path: '/transactions',
       name: 'transactions',
       component: () => import('../pages/ExpensesPage.vue'),
-      meta: { title: 'Transactions', requiresAuth: true },
+      meta: { title: 'Транзакции', requiresAuth: true },
     },
     {
       path: '/analytics',
@@ -94,7 +94,7 @@ export const router = createRouter({
       path: '/profile',
       name: 'profile',
       component: () => import('../pages/ProfilePage.vue'),
-      meta: { title: 'Profile', requiresAuth: true },
+      meta: { title: 'Профиль', requiresAuth: true },
     },
     {
       path: '/expenses',

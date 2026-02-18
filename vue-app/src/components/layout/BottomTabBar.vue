@@ -4,7 +4,7 @@ import { useRoute } from 'vue-router'
 const route = useRoute()
 
 const tabs = [
-  { label: 'Обзор', icon: 'pi-chart-line', to: '/analytics' },
+  { label: 'Главная', icon: 'pi-chart-line', to: '/analytics' },
   { label: 'Счета', icon: 'pi-wallet', to: '/accounts' },
   { label: 'Транзакции', icon: 'pi-list', to: '/transactions' },
   { label: 'Инвестиции', icon: 'pi-briefcase', to: '/investments' },

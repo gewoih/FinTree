@@ -14,6 +14,7 @@ import UiInputText from '../ui/UiInputText.vue'
 import UiSelect from '../ui/UiSelect.vue'
 import UiSkeleton from '../ui/UiSkeleton.vue'
 import UiSection from '../ui/UiSection.vue'
+import UiMessage from '../ui/UiMessage.vue'
 import EmptyState from '../components/common/EmptyState.vue'
 import PageContainer from '../components/layout/PageContainer.vue'
 import PageHeader from '../components/common/PageHeader.vue'
@@ -58,15 +59,24 @@ const visibleAccounts = computed(() =>
   view.value === 'active' ? activeBankAccounts.value : archivedBankAccounts.value
 )
 
-const loadingCurrentList = computed(() =>
+const currentAccountsState = computed(() =>
   view.value === 'active'
-    ? financeStore.areAccountsLoading
-    : financeStore.areArchivedAccountsLoading
+    ? financeStore.accountsState
+    : financeStore.archivedAccountsState
 )
-const isAccountsViewReady = computed(() =>
+const currentAccountsError = computed(() =>
   view.value === 'active'
-    ? financeStore.areAccountsReady
-    : financeStore.areArchivedAccountsReady
+    ? financeStore.accountsError
+    : financeStore.archivedAccountsError
+)
+const hasVisibleAccounts = computed(() => visibleAccounts.value.length > 0)
+const shouldShowAccountsSkeleton = computed(
+  () =>
+    (currentAccountsState.value === 'idle' || currentAccountsState.value === 'loading') &&
+    !hasVisibleAccounts.value
+)
+const shouldShowAccountsErrorState = computed(
+  () => currentAccountsState.value === 'error' && !hasVisibleAccounts.value
 )
 
 const filteredAccounts = computed(() => {
@@ -206,6 +216,15 @@ const clearFilters = () => {
   sortBy.value = 'balance-desc'
 }
 
+const retryCurrentView = async () => {
+  if (view.value === 'active') {
+    await financeStore.fetchAccounts(true)
+    return
+  }
+
+  await financeStore.fetchArchivedAccounts(true)
+}
+
 watch(showAccountFilters, isVisible => {
   if (!isVisible) {
     clearFilters()
@@ -315,7 +334,22 @@ onMounted(async () => {
       </UiCard>
 
       <div
-        v-if="!isAccountsViewReady || (loadingCurrentList && visibleAccounts.length === 0)"
+        v-if="currentAccountsState === 'error' && hasVisibleAccounts"
+        class="accounts__error accounts__error--inline"
+      >
+        <UiMessage severity="error">
+          {{ currentAccountsError || 'Не удалось загрузить список счетов.' }}
+        </UiMessage>
+        <UiButton
+          label="Повторить"
+          icon="pi pi-refresh"
+          variant="secondary"
+          @click="retryCurrentView"
+        />
+      </div>
+
+      <div
+        v-if="shouldShowAccountsSkeleton"
         class="accounts__skeleton"
       >
         <UiSkeleton
@@ -323,6 +357,21 @@ onMounted(async () => {
           :key="i"
           height="220px"
           class="account-skeleton"
+        />
+      </div>
+
+      <div
+        v-else-if="shouldShowAccountsErrorState"
+        class="accounts__error"
+      >
+        <UiMessage severity="error">
+          {{ currentAccountsError || 'Не удалось загрузить список счетов.' }}
+        </UiMessage>
+        <UiButton
+          label="Повторить"
+          icon="pi pi-refresh"
+          variant="secondary"
+          @click="retryCurrentView"
         />
       </div>
 
@@ -512,6 +561,16 @@ onMounted(async () => {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
   gap: var(--ft-space-4);
+}
+
+.accounts__error {
+  display: grid;
+  gap: var(--ft-space-3);
+  justify-items: start;
+}
+
+.accounts__error--inline {
+  margin-bottom: var(--ft-space-2);
 }
 
 .accounts-grid {

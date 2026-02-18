@@ -9,6 +9,18 @@
   gap: var(--ft-space-2);
 }
 
+.txn-list__error {
+  display: grid;
+  gap: var(--ft-space-3);
+  justify-items: start;
+}
+
+.txn-list__error--inline {
+  width: 100%;
+  max-width: 960px;
+  margin: 0 auto;
+}
+
 /* --- Groups --- */
 .txn-groups {
   display: flex;

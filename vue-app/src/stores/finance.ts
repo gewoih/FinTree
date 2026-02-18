@@ -25,6 +25,7 @@ import {
     mapTransactions,
     createCurrencyMap
 } from '../utils/mappers';
+import type { ViewState } from '../types/view-state';
 
 export const useFinanceStore = defineStore('finance', () => {
     const userStore = useUserStore();
@@ -38,6 +39,14 @@ export const useFinanceStore = defineStore('finance', () => {
     const areCategoriesLoading = ref(false);
     const areCurrenciesLoading = ref(false);
     const isTransactionsLoading = ref(false);
+    const accountsState = ref<ViewState>('idle');
+    const archivedAccountsState = ref<ViewState>('idle');
+    const categoriesState = ref<ViewState>('idle');
+    const transactionsState = ref<ViewState>('idle');
+    const accountsError = ref<string | null>(null);
+    const archivedAccountsError = ref<string | null>(null);
+    const categoriesError = ref<string | null>(null);
+    const transactionsError = ref<string | null>(null);
     const accountsLoadedForUserId = ref<string | null>(null);
     const archivedAccountsLoadedForUserId = ref<string | null>(null);
     const categoriesLoadedForUserId = ref<string | null>(null);
@@ -54,6 +63,21 @@ export const useFinanceStore = defineStore('finance', () => {
      * Request deduplication: prevents same query from firing twice on rapid clicks
      */
     const pendingRequests = new Map<string, Promise<unknown>>();
+
+    function resolveErrorMessage(error: unknown, fallback: string): string {
+        if (typeof error === 'object' && error && 'userMessage' in error) {
+            const message = (error as { userMessage?: string }).userMessage;
+            if (typeof message === 'string' && message.trim().length > 0) {
+                return message;
+            }
+        }
+
+        if (error instanceof Error && error.message.trim().length > 0) {
+            return error.message;
+        }
+
+        return fallback;
+    }
 
     async function fetchWithDedup<T>(key: string, fetcher: () => Promise<T>): Promise<T> {
         if (pendingRequests.has(key)) {
@@ -136,6 +160,8 @@ export const useFinanceStore = defineStore('finance', () => {
         transactionsPageSize.value = PAGINATION_OPTIONS.defaultRows;
         transactionsTotal.value = 0;
         isTransactionsLoading.value = false;
+        transactionsState.value = 'idle';
+        transactionsError.value = null;
     }
 
     function clearFinanceState() {
@@ -148,6 +174,12 @@ export const useFinanceStore = defineStore('finance', () => {
         areAccountsLoading.value = false;
         areArchivedAccountsLoading.value = false;
         areCategoriesLoading.value = false;
+        accountsState.value = 'idle';
+        archivedAccountsState.value = 'idle';
+        categoriesState.value = 'idle';
+        accountsError.value = null;
+        archivedAccountsError.value = null;
+        categoriesError.value = null;
         accountsLoadedForUserId.value = null;
         archivedAccountsLoadedForUserId.value = null;
         categoriesLoadedForUserId.value = null;
@@ -219,6 +251,8 @@ export const useFinanceStore = defineStore('finance', () => {
         const snapshot = captureUserSession();
         if (!snapshot) {
             accounts.value = [];
+            accountsState.value = 'idle';
+            accountsError.value = null;
             accountsLoadedForUserId.value = null;
             return;
         }
@@ -227,15 +261,19 @@ export const useFinanceStore = defineStore('finance', () => {
         if (accountsLoadedForUserId.value === snapshot.userId && !force) return;
 
         areAccountsLoading.value = true;
+        accountsState.value = 'loading';
+        accountsError.value = null;
         try {
             const data = await apiService.getAccounts({ archived: false });
             if (!isUserSessionCurrent(snapshot)) return;
             accounts.value = mapAccounts(data, currencyByCode.value);
+            accountsState.value = accounts.value.length > 0 ? 'success' : 'empty';
             accountsLoadedForUserId.value = snapshot.userId;
         } catch (error) {
             if (!isUserSessionCurrent(snapshot)) return;
             console.error('Ошибка загрузки счетов:', error);
-            accounts.value = [];
+            accountsState.value = 'error';
+            accountsError.value = resolveErrorMessage(error, 'Не удалось загрузить счета.');
             accountsLoadedForUserId.value = snapshot.userId;
         } finally {
             if (isUserSessionCurrent(snapshot)) {
@@ -248,6 +286,8 @@ export const useFinanceStore = defineStore('finance', () => {
         const snapshot = captureUserSession();
         if (!snapshot) {
             archivedAccounts.value = [];
+            archivedAccountsState.value = 'idle';
+            archivedAccountsError.value = null;
             archivedAccountsLoadedForUserId.value = null;
             return;
         }
@@ -256,15 +296,19 @@ export const useFinanceStore = defineStore('finance', () => {
         if (archivedAccountsLoadedForUserId.value === snapshot.userId && !force) return;
 
         areArchivedAccountsLoading.value = true;
+        archivedAccountsState.value = 'loading';
+        archivedAccountsError.value = null;
         try {
             const data = await apiService.getAccounts({ archived: true });
             if (!isUserSessionCurrent(snapshot)) return;
             archivedAccounts.value = mapAccounts(data, currencyByCode.value);
+            archivedAccountsState.value = archivedAccounts.value.length > 0 ? 'success' : 'empty';
             archivedAccountsLoadedForUserId.value = snapshot.userId;
         } catch (error) {
             if (!isUserSessionCurrent(snapshot)) return;
             console.error('Ошибка загрузки архивных счетов:', error);
-            archivedAccounts.value = [];
+            archivedAccountsState.value = 'error';
+            archivedAccountsError.value = resolveErrorMessage(error, 'Не удалось загрузить архивные счета.');
             archivedAccountsLoadedForUserId.value = snapshot.userId;
         } finally {
             if (isUserSessionCurrent(snapshot)) {
@@ -281,6 +325,8 @@ export const useFinanceStore = defineStore('finance', () => {
         const snapshot = captureUserSession();
         if (!snapshot) {
             categories.value = [];
+            categoriesState.value = 'idle';
+            categoriesError.value = null;
             categoriesLoadedForUserId.value = null;
             return;
         }
@@ -289,15 +335,19 @@ export const useFinanceStore = defineStore('finance', () => {
         if (categoriesLoadedForUserId.value === snapshot.userId && !force) return;
 
         areCategoriesLoading.value = true;
+        categoriesState.value = 'loading';
+        categoriesError.value = null;
         try {
             const data = await apiService.getCategories();
             if (!isUserSessionCurrent(snapshot)) return;
             categories.value = mapCategories(data);
+            categoriesState.value = categories.value.length > 0 ? 'success' : 'empty';
             categoriesLoadedForUserId.value = snapshot.userId;
         } catch (error) {
             if (!isUserSessionCurrent(snapshot)) return;
             console.error('Ошибка загрузки категорий:', error);
-            categories.value = [];
+            categoriesState.value = 'error';
+            categoriesError.value = resolveErrorMessage(error, 'Не удалось загрузить категории.');
             categoriesLoadedForUserId.value = snapshot.userId;
         } finally {
             if (isUserSessionCurrent(snapshot)) {
@@ -427,6 +477,8 @@ export const useFinanceStore = defineStore('finance', () => {
         return fetchWithDedup(queryKey, async () => {
             if (!isUserSessionCurrent(snapshot)) return;
             isTransactionsLoading.value = true;
+            transactionsState.value = 'loading';
+            transactionsError.value = null;
             currentTransactionsQuery.value = normalizedQuery;
 
             try {
@@ -443,6 +495,7 @@ export const useFinanceStore = defineStore('finance', () => {
                 transactionsPage.value = data.page;
                 transactionsPageSize.value = data.size;
                 transactionsTotal.value = data.total;
+                transactionsState.value = data.items.length > 0 ? 'success' : 'empty';
                 currentTransactionsQuery.value = {
                     ...normalizedQuery,
                     page: data.page,
@@ -451,8 +504,8 @@ export const useFinanceStore = defineStore('finance', () => {
             } catch (error) {
                 if (!isUserSessionCurrent(snapshot)) return;
                 console.error('Ошибка загрузки транзакций:', error);
-                transactions.value = [];
-                transactionsTotal.value = 0;
+                transactionsState.value = 'error';
+                transactionsError.value = resolveErrorMessage(error, 'Не удалось загрузить транзакции.');
             } finally {
                 if (isUserSessionCurrent(snapshot)) {
                     isTransactionsLoading.value = false;
@@ -891,6 +944,14 @@ export const useFinanceStore = defineStore('finance', () => {
         areCategoriesLoading,
         areCurrenciesLoading,
         isTransactionsLoading,
+        accountsState,
+        archivedAccountsState,
+        categoriesState,
+        transactionsState,
+        accountsError,
+        archivedAccountsError,
+        categoriesError,
+        transactionsError,
         areAccountsReady,
         areArchivedAccountsReady,
         areCategoriesReady,

@@ -1,1 +1,1 @@
-export type ViewState = 'loading' | 'empty' | 'error' | 'success';
+export type ViewState = 'idle' | 'loading' | 'empty' | 'error' | 'success';

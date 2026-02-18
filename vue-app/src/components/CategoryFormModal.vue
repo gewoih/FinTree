@@ -328,20 +328,21 @@ const handleDelete = () => {
                 <div
                   v-if="iconPickerOpen"
                   class="icon-grid"
-                  role="listbox"
+                  role="radiogroup"
+                  aria-label="Выбор иконки категории"
                   :aria-describedby="fieldAttrs['aria-describedby']"
                   :aria-invalid="fieldAttrs['aria-invalid']"
-                  :aria-activedescendant="icon ? `icon-${icon}` : undefined"
                 >
                   <button
                     v-for="option in CATEGORY_ICON_OPTIONS"
                     :id="`icon-${option.value}`"
                     :key="option.value"
                     type="button"
+                    role="radio"
                     class="icon-grid__item"
                     :class="{ 'is-selected': option.value === icon }"
                     :aria-label="option.label"
-                    :aria-pressed="option.value === icon"
+                    :aria-checked="option.value === icon"
                     :disabled="props.readonly"
                     @click="
                       () => {
@@ -496,7 +497,9 @@ const handleDelete = () => {
   border: none;
   border-radius: var(--ft-radius-md);
 
-  transition: color 0.15s, background-color 0.15s;
+  transition:
+    color var(--ft-transition-fast),
+    background-color var(--ft-transition-fast);
 }
 
 .category-dialog__close:hover {

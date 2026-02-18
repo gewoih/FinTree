@@ -207,6 +207,9 @@
   --ft-shadow-inner: inset 0 1px 2px rgb(255 255 255 / 4%);
   --ft-shadow-soft: var(--ft-shadow-md);
   --ft-shadow-card: var(--ft-shadow-md);
+  --ft-shadow-cta: 0 8px 20px color-mix(in srgb, var(--ft-success-500) 30%, transparent);
+  --ft-shadow-cta-hover: 0 12px 28px color-mix(in srgb, var(--ft-success-500) 40%, transparent);
+  --ft-shadow-cta-active: 0 6px 16px color-mix(in srgb, var(--ft-success-500) 30%, transparent);
 
   /* ━━━ TRANSITIONS ━━━ */
 
@@ -322,6 +325,9 @@
   --ft-shadow-xl: 0 20px 25px rgb(15 23 42 / 12%), 0 8px 10px rgb(15 23 42 / 8%);
   --ft-shadow-2xl: 0 25px 50px rgb(15 23 42 / 20%);
   --ft-shadow-inner: inset 0 2px 4px rgb(15 23 42 / 6%);
+  --ft-shadow-cta: 0 8px 20px color-mix(in srgb, var(--ft-success-500) 25%, transparent);
+  --ft-shadow-cta-hover: 0 12px 28px color-mix(in srgb, var(--ft-success-500) 35%, transparent);
+  --ft-shadow-cta-active: 0 6px 16px color-mix(in srgb, var(--ft-success-500) 25%, transparent);
   --ft-scrollbar-track: #E3EAF5;
   --ft-scrollbar-thumb: #9AA9C2;
   --ft-scrollbar-thumb-hover: #8092B2;

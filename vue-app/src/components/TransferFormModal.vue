@@ -419,7 +419,9 @@ const handleDelete = () => {
   border: none;
   border-radius: var(--ft-radius-md);
 
-  transition: color 0.15s, background-color 0.15s;
+  transition:
+    color var(--ft-transition-fast),
+    background-color var(--ft-transition-fast);
 }
 
 .xfer-form__close:hover {
