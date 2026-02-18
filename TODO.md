@@ -38,7 +38,7 @@ Done criteria:
 
 ### 6) Decompose oversized Vue files
 
-- [ ] Split files >800 lines into focused subcomponents/composables by responsibility.
+- [x] Split files >800 lines into focused subcomponents/composables by responsibility.
 
 Priority candidates:
 - `vue-app/src/pages/LandingPage.vue`

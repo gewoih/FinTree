@@ -15,6 +15,7 @@ import { useFinanceStore } from '../stores/finance';
 import { useAnalytics } from '../composables/useAnalytics';
 import { useAnalyticsDashboardData } from '../composables/useAnalyticsDashboardData';
 import { isCategoriesOnboardingVisited, markCategoriesOnboardingVisited } from '../utils/onboarding';
+import { CATEGORY_SCOPE_OPTIONS, DEFAULT_ANALYTICS_READINESS, GRANULARITY_OPTIONS } from '../constants/analytics-page';
 import UiDatePicker from '@/ui/UiDatePicker.vue';
 import type {
   AnalyticsReadinessDto,
@@ -26,24 +27,12 @@ import type {
   ExpenseGranularity,
   ForecastSummary,
 } from '../types/analytics';
+import type { MonthPickerInstance, PeakDayItem } from '../types/analytics-page';
 import PageContainer from '../components/layout/PageContainer.vue';
 import PageHeader from '../components/common/PageHeader.vue';
 import { useChartColors } from '../composables/useChartColors';
+import { useAnalyticsFormatting } from '../composables/useAnalyticsFormatting';
 import UiSkeleton from '../ui/UiSkeleton.vue';
-
-type MonthPickerInstance = {
-  show?: () => void;
-  hide?: () => void;
-};
-
-interface PeakDayItem {
-  label: string;
-  amount: number;
-  amountLabel: string;
-  date: Date;
-  shareLabel: string;
-}
-
 const userStore = useUserStore();
 const financeStore = useFinanceStore();
 const router = useRouter();
@@ -52,19 +41,9 @@ const { trackEvent } = useAnalytics();
 const now = new Date();
 const selectedMonth = ref<Date>(new Date(now.getFullYear(), now.getMonth(), 1));
 const monthPickerRef = ref<MonthPickerInstance | null>(null);
-
-const granularityOptions: Array<{ label: string; value: ExpenseGranularity }> = [
-  { label: 'День', value: 'days' },
-  { label: 'Неделя', value: 'weeks' },
-  { label: 'Месяц', value: 'months' },
-] ;
+const granularityOptions = GRANULARITY_OPTIONS;
 const selectedGranularity = ref<ExpenseGranularity>('days');
-
-const categoryScopeOptions: Array<{ label: string; value: CategoryScope }> = [
-  { label: 'Все', value: 'all' },
-  { label: 'Обязательные', value: 'mandatory' },
-  { label: 'Необязательные', value: 'discretionary' },
-];
+const categoryScopeOptions = CATEGORY_SCOPE_OPTIONS;
 const selectedCategoryScope = ref<CategoryScope>('all');
 
 const {
@@ -81,15 +60,28 @@ const onboardingSyncedForUserId = ref<string | null>(null);
 const onboardingSyncInFlight = ref(false);
 const hasVisitedCategoriesStep = ref(false);
 
-const DEFAULT_ANALYTICS_READINESS: AnalyticsReadinessDto = {
-  hasForecastAndStabilityData: false,
-  observedExpenseDays: 0,
-  requiredExpenseDays: 7,
-};
-
 const { colors: chartColors } = useChartColors();
 
 const baseCurrency = computed(() => userStore.baseCurrencyCode ?? 'RUB');
+const {
+  formatPercent,
+  formatPercentValue,
+  formatMoney,
+  formatSignedMoney,
+  resolveSavingsStatus,
+  resolveDiscretionaryStatus,
+  resolveStabilityStatus,
+  resolveCushionStatus,
+  resolveStabilityLabel,
+  normalizeMonth,
+  addLocalMonths,
+  getMonthRangeLocal,
+  formatMonthTitle,
+  formatDateQuery,
+  formatMonthLabel,
+  hexToRgb,
+  getIsoWeekRange
+} = useAnalyticsFormatting(baseCurrency);
 const currentUserId = computed(() => userStore.currentUser?.id ?? null);
 
 const hasMainAccount = computed(() => financeStore.accounts.some(account => account.isMain));
@@ -287,133 +279,7 @@ const healthCards = computed(() => {
   ];
 });
 
-// --- Format helpers ---
-function formatPercent(value: number | null, fractionDigits = 0): string {
-  if (value == null || Number.isNaN(value)) return '—';
-  return `${(value * 100).toFixed(fractionDigits)}%`;
-}
-
-function formatPercentValue(value: number | null, fractionDigits = 1): string {
-  if (value == null || Number.isNaN(value)) return '—';
-  return `${value.toFixed(fractionDigits)}%`;
-}
-
-function formatMoney(value: number | null, maximumFractionDigits = 0): string {
-  if (value == null || Number.isNaN(value)) return '—';
-  return value.toLocaleString('ru-RU', {
-    style: 'currency',
-    currency: baseCurrency.value,
-    maximumFractionDigits,
-  });
-}
-
-function formatSignedMoney(value: number | null): string {
-  if (value == null || Number.isNaN(value)) return '—';
-  const sign = value < 0 ? '−' : '+';
-  return `${sign} ${formatMoney(Math.abs(value))}`;
-}
-
-// --- Status resolvers ---
-function resolveSavingsStatus(
-  value: number | null,
-  monthIncome: number | null,
-  monthTotal: number | null
-): 'good' | 'average' | 'poor' | 'neutral' {
-  if (value == null || Number.isNaN(value)) {
-    if ((monthIncome ?? 0) <= 0 && (monthTotal ?? 0) > 0) return 'poor';
-    return 'neutral';
-  }
-  if (value >= 0.2) return 'good';
-  if (value >= 0.1) return 'average';
-  return 'poor';
-}
-
-function resolveDiscretionaryStatus(value: number | null): 'good' | 'average' | 'poor' | 'neutral' {
-  if (value == null || Number.isNaN(value)) return 'neutral';
-  if (value <= 25) return 'good';
-  if (value <= 45) return 'average';
-  return 'poor';
-}
-
-function resolveStabilityStatus(value: number | null): 'good' | 'average' | 'poor' | 'neutral' {
-  if (value == null || Number.isNaN(value)) return 'neutral';
-  if (value <= 1.0) return 'good';
-  if (value <= 2.0) return 'average';
-  return 'poor';
-}
-
-function resolveCushionStatus(status: string | null): 'good' | 'average' | 'poor' | 'neutral' {
-  if (!status) return 'neutral';
-  if (status === 'good') return 'good';
-  if (status === 'average') return 'average';
-  if (status === 'poor') return 'poor';
-  return 'neutral';
-}
-
-function resolveStabilityLabel(index: number | null): string {
-  if (index == null || Number.isNaN(index)) return '—';
-  if (index <= 1.0) return 'Ваши расходы стабильны';
-  if (index <= 2.0) return 'Редкие всплески расходов';
-  return 'Частые всплески расходов, много крупных покупок';
-}
-
 // --- CSS palette is provided by useChartColors composable ---
-
-// --- Date helpers ---
-function normalizeMonth(date: Date): Date {
-  return new Date(date.getFullYear(), date.getMonth(), 1);
-}
-
-function addLocalMonths(date: Date, months: number): Date {
-  return new Date(date.getFullYear(), date.getMonth() + months, 1);
-}
-
-function getMonthRangeLocal(date: Date) {
-  const start = new Date(date.getFullYear(), date.getMonth(), 1);
-  const end = new Date(date.getFullYear(), date.getMonth() + 1, 0);
-  return { from: start, to: end };
-}
-
-function formatMonthTitle(date: Date): string {
-  const label = new Intl.DateTimeFormat('ru-RU', { month: 'long', year: 'numeric' }).format(date);
-  const cleaned = label.replace(/\s*г\.$/i, '');
-  return cleaned.charAt(0).toUpperCase() + cleaned.slice(1);
-}
-
-function formatDateQuery(date: Date): string {
-  const year = date.getFullYear();
-  const month = `${date.getMonth() + 1}`.padStart(2, '0');
-  const day = `${date.getDate()}`.padStart(2, '0');
-  return `${year}-${month}-${day}`;
-}
-
-function formatMonthLabel(year: number, month: number): string {
-  const formatter = new Intl.DateTimeFormat('ru-RU', { month: 'short', year: 'numeric' });
-  return formatter.format(new Date(year, month - 1, 1));
-}
-
-function hexToRgb(hex: string): string {
-  const clean = hex.replace('#', '');
-  if (clean.length !== 6) return '107,130,219';
-  const r = parseInt(clean.substring(0, 2), 16);
-  const g = parseInt(clean.substring(2, 4), 16);
-  const b = parseInt(clean.substring(4, 6), 16);
-  return `${r},${g},${b}`;
-}
-
-function getIsoWeekRange(year: number, week: number) {
-  const simple = new Date(Date.UTC(year, 0, 1 + (week - 1) * 7));
-  const dayOfWeek = simple.getUTCDay();
-  const isoWeekStart = new Date(simple);
-  const diff = dayOfWeek <= 4 ? 1 - dayOfWeek : 8 - dayOfWeek;
-  isoWeekStart.setUTCDate(simple.getUTCDate() + diff);
-  const isoWeekEnd = new Date(isoWeekStart);
-  isoWeekEnd.setUTCDate(isoWeekStart.getUTCDate() + 6);
-  return {
-    start: new Date(isoWeekStart.getUTCFullYear(), isoWeekStart.getUTCMonth(), isoWeekStart.getUTCDate()),
-    end: new Date(isoWeekEnd.getUTCFullYear(), isoWeekEnd.getUTCMonth(), isoWeekEnd.getUTCDate()),
-  };
-}
 
 function retryDashboard() {
   void loadDashboard(normalizedSelectedMonth.value);
@@ -828,6 +694,7 @@ onMounted(async () => {
       <UiSkeleton
         v-for="i in 6"
         :key="i"
+        class="analytics-grid__skeleton-item"
         height="180px"
         width="100%"
       />
@@ -930,176 +797,4 @@ onMounted(async () => {
   </PageContainer>
 </template>
 
-<style scoped>
-.analytics-page {
-  display: grid;
-  gap: var(--ft-space-6);
-}
-
-.analytics-onboarding-skeleton {
-  display: grid;
-  gap: var(--ft-space-3);
-}
-
-.analytics-grid {
-  display: grid;
-  gap: var(--ft-space-4);
-}
-
-.analytics-grid--skeleton {
-  grid-template-columns: repeat(12, minmax(0, 1fr));
-}
-
-.analytics-grid--skeleton :deep(.ui-skeleton) {
-  grid-column: span 12;
-}
-
-.analytics-grid__item {
-  grid-column: span 12;
-  min-width: 0;
-}
-
-.analytics-month-selector {
-  display: inline-flex;
-  gap: 0.4rem;
-  align-items: center;
-
-  padding: 0.25rem 0.5rem;
-
-  background: color-mix(in srgb, var(--ft-surface-raised) 85%, transparent);
-  border: 1px solid color-mix(in srgb, var(--ft-border-subtle) 70%, transparent);
-  border-radius: 999px;
-}
-
-.analytics-month-selector button {
-  flex: 0 0 auto;
-}
-
-.analytics-month-selector__button {
-  cursor: pointer;
-
-  display: grid;
-  place-items: center;
-
-  width: 44px;
-  height: 44px;
-  padding: 0;
-
-  font-size: var(--ft-text-base);
-  color: var(--ft-text-secondary);
-
-  background: transparent;
-  border: none;
-  border-radius: 999px;
-
-  transition: color var(--ft-transition-fast), background-color var(--ft-transition-fast);
-}
-
-.analytics-month-selector__button:hover:not(:disabled) {
-  color: var(--ft-text-primary);
-  background: color-mix(in srgb, var(--ft-surface-base) 70%, transparent);
-}
-
-.analytics-month-selector__button:disabled {
-  cursor: default;
-  opacity: 0.4;
-}
-
-.analytics-month-selector__label {
-  cursor: pointer;
-
-  min-height: 44px;
-  padding: var(--ft-space-2) var(--ft-space-3);
-
-  font-size: var(--ft-text-sm);
-  font-weight: var(--ft-font-semibold);
-  color: var(--ft-text-primary);
-  white-space: nowrap;
-
-  background: transparent;
-  border: none;
-  border-radius: var(--ft-radius-md);
-}
-
-.analytics-month-selector__picker {
-  pointer-events: none;
-
-  position: absolute;
-
-  width: 0;
-  height: 0;
-
-  opacity: 0;
-}
-
-@media (width <= 640px) {
-  .analytics-month-selector {
-    justify-content: space-between;
-    width: 100%;
-  }
-
-  .analytics-month-selector__label {
-    flex: 1;
-    text-align: center;
-  }
-}
-
-@media (width >= 1024px) {
-  .analytics-grid {
-    grid-template-columns: repeat(12, minmax(0, 1fr));
-  }
-
-  .analytics-grid__item--span-12 {
-    grid-column: 1 / -1;
-  }
-
-  .analytics-grid__item--span-8 {
-    grid-column: span 8;
-  }
-
-  .analytics-grid__item--span-6 {
-    grid-column: span 6;
-  }
-
-  .analytics-grid__item--span-4 {
-    grid-column: span 4;
-  }
-
-  .analytics-grid__item--span-3 {
-    grid-column: span 3;
-  }
-
-}
-
-@media (width >= 641px) and (width <= 1023px) {
-  .analytics-grid {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
-
-  .analytics-grid__item--span-12 {
-    grid-column: 1 / -1;
-  }
-
-  .analytics-grid__item--span-6 {
-    grid-column: span 1;
-  }
-
-  .analytics-grid__item--span-3 {
-    grid-column: span 1;
-  }
-}
-
-@media (width <= 640px) {
-  .analytics-page {
-    gap: var(--ft-space-4);
-  }
-
-  .analytics-grid {
-    gap: var(--ft-space-3);
-  }
-
-  .analytics-grid__item {
-    grid-column: span 1;
-  }
-}
-</style>
+<style scoped src="../styles/pages/analytics-page.css"></style>

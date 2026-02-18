@@ -23,6 +23,17 @@ Ownership by file:
 Rule:
 - If a style is needed in 2+ places, it must not live in a feature component.
 
+### SFC Style Extraction Rule
+
+- When moving styles out of `.vue` files, place them in:
+  - `vue-app/src/styles/pages/` for routed page styles
+  - `vue-app/src/styles/components/` for feature/component styles
+- Keep component scoping by default via `<style scoped src="...">`.
+- Avoid converting extracted styles to unscoped/global unless the style is intentionally shared and documented.
+- If extracted styles require deep targeting:
+  - prefer explicit class hooks on wrapper/component roots, or
+  - keep the deep rule inside the original SFC block.
+
 ---
 
 ## 2) Tokens and Variables
@@ -112,6 +123,7 @@ Forbidden:
 - Minimum touch target: 44x44.
 - Visible `:focus-visible` is mandatory.
 - Do not communicate meaning with color alone.
+- Any layout/style refactor must include a horizontal-overflow sanity check (desktop + mobile).
 
 ---
 

@@ -46,6 +46,16 @@ Forbidden:
 - Splitting one async flow across multiple layers without clear ownership.
 - Skipping `npm run lint:api-boundaries` before completion.
 
+### 1.1) Component Size and Decomposition
+
+- Hard limit: no `pages/` or feature `components/` file may exceed `800` lines.
+- Soft target: keep files under `600` lines where possible.
+- Decomposition priority:
+  - Move orchestration/watchers/derived state to `composables/`.
+  - Move static content arrays/configs to `constants/` or typed modules.
+  - Keep page/component files focused on wiring + template.
+- Do not split by arbitrary chunks; split by responsibility boundaries (state, rendering blocks, formatting helpers).
+
 ---
 
 ### 2) PrimeVue Contract
@@ -73,6 +83,11 @@ Wrapper styling rules:
 - Do not hardcode colors/radius/shadows/spacing in feature layer.
 - Use `--ft-*` tokens only.
 - Do not use `.dark-mode` / `.light-mode` selectors inside feature components.
+- For extracted SFC styles:
+  - Prefer `<style scoped src="...">` with files under `src/styles/pages/` or `src/styles/components/`.
+  - If a style needs `:deep(...)`, either keep it in the `.vue` SFC block or replace with explicit class hooks.
+  - Do not switch page/component styles to global unscoped CSS as a shortcut.
+- After layout/style refactors, manually verify there is no new horizontal page scroll.
 
 Ownership by file:
 - `src/assets/design-tokens.css` — token source of truth
