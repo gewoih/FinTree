@@ -958,7 +958,7 @@
       color-mix(in srgb, var(--ft-surface-base) 90%, var(--ft-surface-raised))
     );
     border-right: 1px solid var(--ft-border-default);
-    box-shadow: 4px 0 24px rgb(0 0 0 / 15%);
+    box-shadow: var(--ft-effect-side-rail-shadow);
   }
 
   .app-shell__drawer-mobile .p-drawer-header {

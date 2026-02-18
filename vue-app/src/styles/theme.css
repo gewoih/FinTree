@@ -15,14 +15,14 @@
   --ft-surface-soft: var(--ft-surface-base);
   --ft-surface-muted: var(--ft-surface-raised);
   --ft-surface-elevated: var(--ft-surface-overlay);
-  --ft-glass: color-mix(in srgb, var(--ft-primary-500) 16%, transparent);
-  --ft-glass-border: color-mix(in srgb, var(--ft-primary-500) 38%, transparent);
+  --ft-glass: color-mix(in srgb, var(--ft-primary-500) 12%, transparent);
+  --ft-glass-border: color-mix(in srgb, var(--ft-primary-500) 26%, transparent);
   --ft-accent: var(--ft-primary-500);
   --ft-accent-light: var(--ft-primary-300);
-  --ft-accent-soft: color-mix(in srgb, var(--ft-primary-500) 20%, transparent);
+  --ft-accent-soft: color-mix(in srgb, var(--ft-primary-500) 14%, transparent);
   --ft-shadow-soft: var(--ft-shadow-md);
-  --ft-shadow-card: var(--ft-shadow-lg);
-  --ft-shadow-hero: var(--ft-shadow-2xl);
+  --ft-shadow-card: var(--ft-shadow-md);
+  --ft-shadow-hero: var(--ft-shadow-xl);
   --ft-radius-card: var(--ft-radius-2xl);
   --ft-radius-section: var(--ft-radius-xl);
 }
@@ -147,8 +147,8 @@
 
   background: linear-gradient(
     135deg,
-    color-mix(in srgb, var(--ft-primary-500) 18%, transparent),
-    color-mix(in srgb, var(--ft-success-400) 12%, transparent)
+    color-mix(in srgb, var(--ft-primary-500) 14%, transparent),
+    color-mix(in srgb, var(--ft-info-400) 8%, transparent)
   );
   border-radius: var(--ft-radius-section);
   box-shadow: var(--ft-shadow-hero);
@@ -261,7 +261,7 @@
 
   color: var(--ft-text-inverse);
 
-  background: linear-gradient(135deg, var(--ft-primary-500), var(--ft-primary-300));
+  background: linear-gradient(135deg, var(--ft-primary-600), var(--ft-primary-400));
   border-radius: var(--ft-radius-md);
 }
 
@@ -312,7 +312,7 @@
 
   color: var(--ft-accent);
 
-  background: color-mix(in srgb, var(--ft-primary-500) 18%, transparent);
+  background: color-mix(in srgb, var(--ft-primary-500) 14%, transparent);
   border-radius: var(--ft-radius-md);
 }
 
@@ -339,15 +339,15 @@
   color: var(--ft-text-muted);
   text-align: center;
 
-  border: 1px dashed color-mix(in srgb, var(--ft-primary-500) 24%, transparent);
+  border: 1px dashed color-mix(in srgb, var(--ft-primary-500) 20%, transparent);
   border-radius: var(--ft-radius-section);
 
   transition: border-color var(--ft-transition-fast), background-color var(--ft-transition-fast);
 }
 
 .ft-empty:hover {
-  background: color-mix(in srgb, var(--ft-primary-500) 8%, transparent);
-  border-color: color-mix(in srgb, var(--ft-primary-500) 36%, transparent);
+  background: color-mix(in srgb, var(--ft-primary-500) 6%, transparent);
+  border-color: color-mix(in srgb, var(--ft-primary-500) 30%, transparent);
 }
 
 .ft-empty i {
