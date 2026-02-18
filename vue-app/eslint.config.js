@@ -48,6 +48,33 @@ export default [
             ],
         },
     },
+    {
+        files: ["src/**/*.{ts,vue}"],
+        rules: {
+            "max-lines": [
+                "error",
+                {
+                    max: 500,
+                    skipBlankLines: true,
+                    skipComments: true,
+                },
+            ],
+        },
+    },
+    {
+        files: ["src/**/*.ts"],
+        rules: {
+            "max-lines-per-function": [
+                "error",
+                {
+                    max: 400,
+                    skipBlankLines: true,
+                    skipComments: true,
+                    IIFEs: true,
+                },
+            ],
+        },
+    },
 
     {
         ignores: ["dist", "node_modules"],
