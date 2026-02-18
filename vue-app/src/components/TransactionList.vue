@@ -234,6 +234,17 @@ const handleRowClick = (txn: EnrichedTransaction) => {
   }
   emit('edit-transaction', txn)
 }
+
+const resolveCategoryColor = (txn: EnrichedTransaction): string =>
+  txn.categoryColor?.trim() || FALLBACK_CATEGORY_COLOR
+
+const resolveCategoryIconStyle = (txn: EnrichedTransaction) => {
+  const color = resolveCategoryColor(txn)
+  return {
+    backgroundColor: `color-mix(in srgb, ${color} 15%, transparent)`,
+    color
+  }
+}
 </script>
 
 <template>
@@ -310,14 +321,11 @@ const handleRowClick = (txn: EnrichedTransaction) => {
                 <span
                   v-else
                   class="txn-row__icon"
-                  :style="{
-                    backgroundColor: (txn.categoryColor ?? FALLBACK_CATEGORY_COLOR) + '26',
-                    color: txn.categoryColor ?? FALLBACK_CATEGORY_COLOR
-                  }"
+                  :style="resolveCategoryIconStyle(txn)"
                 >
                   <span
                     class="txn-row__dot"
-                    :style="{ backgroundColor: txn.categoryColor ?? FALLBACK_CATEGORY_COLOR }"
+                    :style="{ backgroundColor: resolveCategoryColor(txn) }"
                   />
                 </span>
 

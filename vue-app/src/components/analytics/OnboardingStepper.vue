@@ -203,7 +203,7 @@ function shouldShowAction(step: OnboardingStep): boolean {
 
 .onboarding-step--completed .onboarding-step__badge {
   color: var(--ft-success-400);
-  background: rgb(16 185 129 / 20%);
+  background: color-mix(in srgb, var(--ft-success-500) 20%, transparent);
 }
 
 .onboarding-step--locked .onboarding-step__badge {

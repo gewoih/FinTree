@@ -13,17 +13,6 @@ Goal: remove systemic causes of UI bugs, inconsistency, and high maintenance cos
 
 ## P2 — Important Improvements (After P1)
 
-### 7) Restore strict design-token discipline
-
-- [ ] Remove hardcoded colors and fallback hex values from feature components.
-- [ ] Use `useChartColors`/token palette for charting.
-- [ ] Ban undefined-token fallbacks like `var(--unknown, ...)` in feature layer.
-
-Why:
-- This is a direct source of cross-screen/theme inconsistency.
-
----
-
 ### 8) Complete localization consistency (end-user UI Russian-only)
 
 - [ ] Align route titles and user-facing error messages with Russian UI policy.

@@ -218,7 +218,7 @@ const handleTypeUpdate = (value: unknown) => {
   border-color: var(--ft-border-strong);
   box-shadow:
     0 0 0 3px var(--ft-focus-ring),
-    0 1px 3px rgb(0 0 0 / 12%);
+    var(--ft-shadow-xs);
 }
 
 .filter-input i {

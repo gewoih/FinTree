@@ -4,6 +4,7 @@ import type { Plugin } from 'chart.js';
 import UiSkeleton from '@/ui/UiSkeleton.vue';
 import UiMessage from '@/ui/UiMessage.vue';
 import UiChart from '@/ui/UiChart.vue';
+import { useChartColors } from '@/composables/useChartColors';
 
 interface AllocationAccount {
   id: string;
@@ -17,18 +18,7 @@ const props = defineProps<{
   loading: boolean;
 }>();
 
-const palette = [
-  '#0ea5e9',
-  '#22c55e',
-  '#f97316',
-  '#eab308',
-  '#6366f1',
-  '#14b8a6',
-  '#ef4444',
-  '#a855f7',
-  '#84cc16',
-  '#3b82f6',
-];
+const { colors, tooltipConfig } = useChartColors();
 
 const segments = computed(() =>
   props.accounts
@@ -63,8 +53,7 @@ const centerTextPlugin = computed<Plugin<'doughnut'>>(() => ({
     const text = formattedTotal.value;
     const fontSize = Math.min(width, height) * 0.08;
     ctx.font = `bold ${fontSize}px sans-serif`;
-    ctx.fillStyle = getComputedStyle(document.documentElement)
-      .getPropertyValue('--ft-text-primary').trim() || '#1e293b';
+    ctx.fillStyle = colors.tooltipText;
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
     ctx.fillText(text, width / 2, height / 2);
@@ -81,10 +70,9 @@ const donutChartData = computed(() => {
     datasets: [
       {
         data: segments.value.map(item => item.value),
-        backgroundColor: segments.value.map((_, index) => palette[index % palette.length]),
+        backgroundColor: segments.value.map((_, index) => colors.palette[index % colors.palette.length]),
         borderWidth: 2,
-        borderColor: getComputedStyle(document.documentElement)
-          .getPropertyValue('--ft-surface-base').trim() || '#0b111a',
+        borderColor: colors.surface,
         hoverBorderWidth: 3,
         hoverOffset: 8,
       },
@@ -102,17 +90,7 @@ const chartOptions = computed(() => ({
       display: false,
     },
     tooltip: {
-      backgroundColor: getComputedStyle(document.documentElement)
-        .getPropertyValue('--ft-surface-raised').trim() || '#1e293b',
-      titleColor: getComputedStyle(document.documentElement)
-        .getPropertyValue('--ft-text-primary').trim() || '#f1f5f9',
-      bodyColor: getComputedStyle(document.documentElement)
-        .getPropertyValue('--ft-text-secondary').trim() || '#94a3b8',
-      borderColor: getComputedStyle(document.documentElement)
-        .getPropertyValue('--ft-border-subtle').trim() || '#334155',
-      borderWidth: 1,
-      cornerRadius: 10,
-      padding: 12,
+      ...tooltipConfig(),
       callbacks: {
         label(context: { parsed: number; label: string }) {
           const value = Number(context.parsed ?? 0);
@@ -134,7 +112,7 @@ const formattedLegend = computed(() =>
   segments.value.map((item, index) => ({
     id: item.id,
     name: item.name,
-    color: palette[index % palette.length],
+    color: colors.palette[index % colors.palette.length],
     value: item.value,
     share: totalValue.value > 0 ? (item.value / totalValue.value) * 100 : 0,
   }))

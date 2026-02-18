@@ -14,64 +14,77 @@ interface ChartColors {
   surface: string
 }
 
+const DEFAULT_PALETTE = [
+  'var(--ft-chart-1)',
+  'var(--ft-chart-2)',
+  'var(--ft-chart-3)',
+  'var(--ft-chart-4)',
+  'var(--ft-chart-5)',
+] as const
+
 function readToken(styles: CSSStyleDeclaration, token: string): string {
   return styles.getPropertyValue(token).trim()
 }
 
 function resolveColors(): ChartColors {
+  const defaults = getDefaults()
+
   if (typeof window === 'undefined') {
-    return getDefaults()
+    return defaults
   }
 
   const s = getComputedStyle(document.documentElement)
 
-  const text = readToken(s, '--ft-chart-text') || readToken(s, '--ft-text-secondary')
-  const grid = readToken(s, '--ft-chart-grid') || readToken(s, '--ft-border-subtle')
-  const tooltipBg = readToken(s, '--ft-chart-tooltip-bg') || readToken(s, '--ft-surface-raised')
-  const tooltipText = readToken(s, '--ft-chart-tooltip-text') || readToken(s, '--ft-text-primary')
-  const tooltipSecondary = readToken(s, '--ft-chart-tooltip-secondary') || readToken(s, '--ft-text-secondary')
-  const tooltipBorder = readToken(s, '--ft-chart-tooltip-border') || readToken(s, '--ft-border-default')
-  const risk = readToken(s, '--ft-chart-risk') || readToken(s, '--ft-orange-500')
-  const primary = readToken(s, '--ft-chart-1') || readToken(s, '--ft-primary-400')
-  const accent = readToken(s, '--ft-chart-2') || readToken(s, '--ft-info-400')
-  const surface = readToken(s, '--ft-surface-base')
+  const text = readToken(s, '--ft-chart-text') || readToken(s, '--ft-text-secondary') || defaults.text
+  const grid = readToken(s, '--ft-chart-grid') || readToken(s, '--ft-border-subtle') || defaults.grid
+  const tooltipBg = readToken(s, '--ft-chart-tooltip-bg') || readToken(s, '--ft-surface-raised') || defaults.tooltipBg
+  const tooltipText =
+    readToken(s, '--ft-chart-tooltip-text') || readToken(s, '--ft-text-primary') || defaults.tooltipText
+  const tooltipSecondary =
+    readToken(s, '--ft-chart-tooltip-secondary') || readToken(s, '--ft-text-secondary') || defaults.tooltipSecondary
+  const tooltipBorder =
+    readToken(s, '--ft-chart-tooltip-border') || readToken(s, '--ft-border-default') || defaults.tooltipBorder
+  const risk = readToken(s, '--ft-chart-risk') || readToken(s, '--ft-orange-500') || defaults.risk
+  const primary = readToken(s, '--ft-chart-1') || readToken(s, '--ft-primary-400') || defaults.primary
+  const accent = readToken(s, '--ft-chart-2') || readToken(s, '--ft-info-400') || defaults.accent
+  const surface = readToken(s, '--ft-surface-base') || defaults.surface
 
   const palette = [
     readToken(s, '--ft-chart-1') || primary,
     readToken(s, '--ft-chart-2') || accent,
-    readToken(s, '--ft-chart-3') || readToken(s, '--ft-success-400'),
-    readToken(s, '--ft-chart-4') || readToken(s, '--ft-orange-400'),
-    readToken(s, '--ft-chart-5') || readToken(s, '--ft-warning-400'),
+    readToken(s, '--ft-chart-3') || readToken(s, '--ft-success-400') || DEFAULT_PALETTE[2],
+    readToken(s, '--ft-chart-4') || readToken(s, '--ft-orange-400') || DEFAULT_PALETTE[3],
+    readToken(s, '--ft-chart-5') || readToken(s, '--ft-warning-400') || DEFAULT_PALETTE[4],
   ].filter(Boolean)
 
   return {
-    text: text || '#B1BCCF',
-    grid: grid || '#232D3F',
-    tooltipBg: tooltipBg || '#212A3C',
-    tooltipText: tooltipText || '#E6ECF6',
-    tooltipSecondary: tooltipSecondary || '#B1BCCF',
-    tooltipBorder: tooltipBorder || '#313E54',
-    palette: palette.length ? palette : getDefaults().palette,
-    risk: risk || '#F97316',
-    primary: primary || '#6B82DB',
-    accent: accent || '#38BDF8',
-    surface: surface || '#0C1017',
+    text,
+    grid,
+    tooltipBg,
+    tooltipText,
+    tooltipSecondary,
+    tooltipBorder,
+    palette: palette.length ? palette : defaults.palette,
+    risk,
+    primary,
+    accent,
+    surface,
   }
 }
 
 function getDefaults(): ChartColors {
   return {
-    text: '#B1BCCF',
-    grid: '#232D3F',
-    tooltipBg: '#212A3C',
-    tooltipText: '#E6ECF6',
-    tooltipSecondary: '#B1BCCF',
-    tooltipBorder: '#313E54',
-    palette: ['#6B82DB', '#38BDF8', '#4ADE80', '#FB923C', '#FBBF24'],
-    risk: '#F97316',
-    primary: '#6B82DB',
-    accent: '#38BDF8',
-    surface: '#0C1017',
+    text: 'var(--ft-chart-text)',
+    grid: 'var(--ft-chart-grid)',
+    tooltipBg: 'var(--ft-chart-tooltip-bg)',
+    tooltipText: 'var(--ft-chart-tooltip-text)',
+    tooltipSecondary: 'var(--ft-chart-tooltip-secondary)',
+    tooltipBorder: 'var(--ft-chart-tooltip-border)',
+    palette: [...DEFAULT_PALETTE],
+    risk: 'var(--ft-chart-risk)',
+    primary: 'var(--ft-chart-1)',
+    accent: 'var(--ft-chart-2)',
+    surface: 'var(--ft-surface-base)',
   }
 }
 

@@ -138,8 +138,8 @@ const hasActiveFilters = computed(() =>
   min-height: 44px;
   padding: 0 var(--ft-space-3);
 
-  background: var(--ft-surface-0, var(--ft-surface-base));
-  border: 1px solid var(--ft-border-default, var(--ft-border-soft));
+  background: var(--ft-surface-base);
+  border: 1px solid var(--ft-border-default);
   border-radius: var(--ft-radius-md);
 
   transition:
@@ -151,7 +151,7 @@ const hasActiveFilters = computed(() =>
   border-color: var(--ft-border-strong);
   box-shadow:
     0 0 0 3px var(--ft-focus-ring),
-    0 1px 3px rgb(0 0 0 / 12%);
+    var(--ft-shadow-xs);
 }
 
 .transaction-filters__search i {

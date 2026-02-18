@@ -199,15 +199,15 @@ const fieldAttrs = computed(() => ({
   font-weight: var(--ft-font-medium);
   color: var(--ft-danger-400);
 
-  background: rgb(239 68 68 / 15%);
-  border: 1px solid rgb(239 68 68 / 30%);
+  background: color-mix(in srgb, var(--ft-danger-500) 15%, transparent);
+  border: 1px solid color-mix(in srgb, var(--ft-danger-500) 30%, transparent);
   border-radius: var(--ft-radius-md);
 }
 
 .light-mode .form-field__error {
   color: var(--ft-danger-600);
-  background: rgb(239 68 68 / 10%);
-  border-color: rgb(239 68 68 / 20%);
+  background: color-mix(in srgb, var(--ft-danger-500) 10%, transparent);
+  border-color: color-mix(in srgb, var(--ft-danger-500) 20%, transparent);
 }
 
 .form-field__error i {

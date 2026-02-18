@@ -52,8 +52,8 @@
   backdrop-filter: blur(12px);
   border-bottom: 1px solid var(--ft-border-default);
   box-shadow:
-    0 2px 12px rgb(0 0 0 / 8%),
-    inset 0 -1px 0 rgb(255 255 255 / 3%);
+    var(--ft-shadow-sm),
+    inset 0 -1px 0 color-mix(in srgb, var(--ft-text-inverse) 3%, transparent);
 }
 
 .app-shell__readonly-banner {
@@ -366,7 +366,7 @@
   );
   border: 1px solid var(--ft-border-subtle);
   border-radius: var(--ft-radius-xl);
-  box-shadow: inset 0 1px 2px rgb(255 255 255 / 3%);
+  box-shadow: inset 0 1px 2px color-mix(in srgb, var(--ft-text-inverse) 3%, transparent);
 }
 
 .app-shell__user-avatar {

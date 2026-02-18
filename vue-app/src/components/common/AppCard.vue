@@ -92,7 +92,7 @@ const computedAttrs = computed(() => ({
 
 .app-card--ghost {
   background: transparent;
-  border-color: rgb(148 163 184 / 15%);
+  border-color: color-mix(in srgb, var(--ft-text-tertiary) 18%, transparent);
   box-shadow: none;
 }
 

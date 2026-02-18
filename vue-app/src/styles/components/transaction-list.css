@@ -34,7 +34,7 @@
   text-transform: uppercase;
   letter-spacing: 0.05em;
 
-  background: var(--ft-surface-base, var(--ft-bg));
+  background: var(--ft-surface-base);
   border-bottom: 1px solid var(--ft-border-soft);
 }
 

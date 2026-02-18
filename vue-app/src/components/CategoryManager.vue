@@ -289,7 +289,7 @@ defineExpose({
 
 .category-card:hover {
   transform: translateY(-1px);
-  background: color-mix(in srgb, var(--ft-surface-base) 90%, var(--ft-primary-500, #3b82f6) 10%);
+  background: color-mix(in srgb, var(--ft-surface-base) 90%, var(--ft-primary-500) 10%);
   border-color: var(--ft-border-default);
   box-shadow: var(--ft-shadow-sm);
 }
@@ -324,7 +324,7 @@ defineExpose({
 .color-dot {
   width: 14px;
   height: 14px;
-  border: 1px solid rgb(15 20 25 / 20%);
+  border: 1px solid color-mix(in srgb, var(--ft-text-primary) 14%, transparent);
   border-radius: 50%;
 }
 
@@ -352,9 +352,9 @@ defineExpose({
   padding: 0.15rem 0.45rem;
 
   font-size: 0.7rem;
-  color: var(--ft-primary-700, #1d4ed8) !important;
+  color: var(--ft-primary-700) !important;
 
-  background: color-mix(in srgb, var(--ft-primary-200, #dbeafe) 55%, transparent) !important;
+  background: color-mix(in srgb, var(--ft-primary-200) 55%, transparent) !important;
   border-radius: 999px;
 }
 

@@ -117,7 +117,7 @@
 }
 
 .hero-card__metric--clickable:hover {
-  border-color: color-mix(in srgb, var(--ft-border-strong, #94a3b8) 45%, transparent);
+  border-color: color-mix(in srgb, var(--ft-border-strong) 45%, transparent);
 }
 
 .hero-card__metric--clickable:focus-visible {
@@ -130,7 +130,7 @@
 }
 
 .hero-card__group {
-  --group-accent: color-mix(in srgb, var(--ft-border-strong, #94a3b8) 40%, transparent);
+  --group-accent: color-mix(in srgb, var(--ft-border-strong) 40%, transparent);
 }
 
 .hero-card__group--good {
@@ -337,7 +337,7 @@
 }
 
 .hero-card__peak-share:hover {
-  border-color: color-mix(in srgb, var(--ft-border-strong, #94a3b8) 45%, transparent);
+  border-color: color-mix(in srgb, var(--ft-border-strong) 45%, transparent);
 }
 
 .hero-card__peak-share:focus-visible {

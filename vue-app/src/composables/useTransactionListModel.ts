@@ -5,7 +5,7 @@ import { formatUtcDateOnly, getUtcDateOnlyKey } from '../utils/dateOnly'
 import type { Transaction } from '../types'
 import { TRANSACTION_TYPE } from '../types'
 
-export const FALLBACK_CATEGORY_COLOR = '#94a3b8'
+export const FALLBACK_CATEGORY_COLOR = 'var(--ft-text-tertiary)'
 
 export interface EnrichedTransaction extends Transaction {
   accountName?: string

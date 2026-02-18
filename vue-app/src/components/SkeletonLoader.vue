@@ -71,9 +71,9 @@ defineProps<{
 
   background: linear-gradient(
     90deg,
-    rgb(148 163 184 / 8%) 0%,
-    rgb(148 163 184 / 15%) 50%,
-    rgb(148 163 184 / 8%) 100%
+    color-mix(in srgb, var(--ft-text-tertiary) 8%, transparent) 0%,
+    color-mix(in srgb, var(--ft-text-tertiary) 15%, transparent) 50%,
+    color-mix(in srgb, var(--ft-text-tertiary) 8%, transparent) 100%
   );
   background-size: 200% 100%;
   border-radius: 8px;
@@ -115,7 +115,7 @@ defineProps<{
   display: flex;
   gap: 1rem;
   padding: 1rem 0;
-  border-bottom: 1px solid rgb(148 163 184 / 10%);
+  border-bottom: 1px solid color-mix(in srgb, var(--ft-text-tertiary) 10%, transparent);
 }
 
 .skeleton__cell {
@@ -123,9 +123,9 @@ defineProps<{
 
   background: linear-gradient(
     90deg,
-    rgb(148 163 184 / 8%) 0%,
-    rgb(148 163 184 / 15%) 50%,
-    rgb(148 163 184 / 8%) 100%
+    color-mix(in srgb, var(--ft-text-tertiary) 8%, transparent) 0%,
+    color-mix(in srgb, var(--ft-text-tertiary) 15%, transparent) 50%,
+    color-mix(in srgb, var(--ft-text-tertiary) 8%, transparent) 100%
   );
   background-size: 200% 100%;
   border-radius: 6px;

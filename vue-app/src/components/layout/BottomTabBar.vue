@@ -55,8 +55,8 @@ const tabs = [
   backdrop-filter: blur(12px);
   border-top: 1px solid var(--ft-border-default);
   box-shadow:
-    0 -4px 16px rgb(0 0 0 / 12%),
-    inset 0 1px 0 rgb(255 255 255 / 3%);
+    var(--ft-shadow-sm),
+    inset 0 1px 0 color-mix(in srgb, var(--ft-text-inverse) 3%, transparent);
 }
 
 .bottom-tab-bar__item {

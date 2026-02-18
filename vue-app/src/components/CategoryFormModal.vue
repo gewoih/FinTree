@@ -32,11 +32,23 @@ const emit = defineEmits<{
 const store = useFinanceStore();
 const confirm = useConfirm();
 const toast = useToast();
-const DEFAULT_COLOR = '#10b981';
+const DEFAULT_COLOR_TOKEN = '--ft-success-500';
 const HEX_COLOR_REGEX = /^#([0-9A-Fa-f]{6})$/;
 
+const resolveDefaultColor = (): string => {
+  if (typeof window === 'undefined') {
+    return '';
+  }
+
+  const resolved = getComputedStyle(document.documentElement)
+    .getPropertyValue(DEFAULT_COLOR_TOKEN)
+    .trim();
+
+  return HEX_COLOR_REGEX.test(resolved) ? resolved : '';
+};
+
 const name = ref('');
-const color = ref(DEFAULT_COLOR);
+const color = ref(resolveDefaultColor());
 const icon = ref('pi-tag');
 const iconPickerOpen = ref(false);
 const iconPickerRef = ref<HTMLElement | null>(null);
@@ -58,7 +70,7 @@ const canChooseType = computed(() => !isEditMode.value);
 
 const resetForm = () => {
   name.value = '';
-  color.value = DEFAULT_COLOR;
+  color.value = resolveDefaultColor();
   icon.value = 'pi-tag';
   iconPickerOpen.value = false;
   categoryType.value = props.defaultType ?? null;
@@ -365,7 +377,7 @@ const handleDelete = () => {
                   v-model="color"
                   maxlength="7"
                   class="w-full"
-                  placeholder="#10B981"
+                  placeholder="#RRGGBB"
                   :disabled="props.readonly"
                 />
               </div>
