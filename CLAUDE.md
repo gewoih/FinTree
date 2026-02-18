@@ -1,178 +1,45 @@
 # CLAUDE.md
 
-Short operational contract for this repository.
+Global AI agent contract for this repository.
 
 References:
-- `DESIGN.md` — visual system and style ownership
-- `TODO.md` — current stabilization backlog
+- `DESIGN.md` — authoritative frontend/UI-UX specification and frontend Definition of Done
+- `TODO.md` — stabilization backlog and known technical debt
 
 ---
 
-## Quick Commands
-
-```bash
-cd vue-app && npm run type-check
-cd vue-app && npm run lint
-cd vue-app && npm run lint:style
-cd vue-app && npm run lint:prime-imports
-cd vue-app && npm run lint:api-boundaries
-cd vue-app && npm run build
-```
-
----
-
-## Stack and Context
+## Project Context
 
 - Backend: .NET (Clean Architecture/DDD)
 - Frontend: Vue 3 + TypeScript + PrimeVue (unstyled)
 - Target audience: users with low financial literacy
-- UX baseline: clarity and predictability over cleverness
+- Product UX baseline: clarity and predictability over cleverness
 
 ---
 
-## Mandatory Frontend Contract
+## Source-of-Truth Contract
 
-### 1) Architecture Boundaries
-
-- `services/` — HTTP/API client only.
-- `stores/` and `composables/` — business state, orchestration, async flows.
-- `pages/` and feature `components/` — rendering and UI interactions, no direct API orchestration.
-- `ui/` — single entry point for visual PrimeVue components.
-- Never bind DTOs directly to templates; map to UI models first.
-- Data flow contract: `pages/components -> stores/composables -> services`.
-
-Forbidden:
-- Importing `apiService` in `pages/` or feature `components/`.
-- Splitting one async flow across multiple layers without clear ownership.
-- Skipping `npm run lint:api-boundaries` before completion.
-
-### 1.1) Component Size and Decomposition
-
-- Hard limit: no `pages/` or feature `components/` file may exceed `800` lines.
-- Soft target: keep files under `600` lines where possible.
-- Decomposition priority:
-  - Move orchestration/watchers/derived state to `composables/`.
-  - Move static content arrays/configs to `constants/` or typed modules.
-  - Keep page/component files focused on wiring + template.
-- Do not split by arbitrary chunks; split by responsibility boundaries (state, rendering blocks, formatting helpers).
+- This file owns global project context and repository-wide agent guardrails.
+- `DESIGN.md` owns frontend rules for `vue-app/**`, including:
+  - UI/UX behavior
+  - design system and styling constraints
+  - accessibility and responsive requirements
+  - localization UX rules
+  - frontend completion gates
+- If a frontend rule in this file conflicts with `DESIGN.md`, `DESIGN.md` takes precedence.
 
 ---
 
-### 2) PrimeVue Contract
+## Global Guardrails
 
-- PrimeVue is enabled in `unstyled` mode.
-- Direct imports of visual PrimeVue components are forbidden outside `src/ui/*`.
-- Allowed direct imports outside wrappers:
-  - `primevue/config`
-  - `primevue/toastservice`
-  - `primevue/confirmationservice`
-  - `primevue/tooltip`
-  - `primevue/usetoast`
-  - `primevue/useconfirm`
-  - type-only `primevue/menuitem`
-
-Wrapper styling rules:
-- Style wrapper roots via wrapper classes.
-- Use `:deep(.p-...)` only for internal Prime nodes, not for wrapper roots.
-- In feature files, `:deep(.p-...)` is allowed only for local layout constraints, not visual theming.
+- Keep changes scoped to the task. Avoid opportunistic refactors outside scope.
+- Do not introduce silent technical debt. If debt is unavoidable, add a concise item to `TODO.md` in the same task.
+- Do not claim completion without running required verification commands for the touched scope.
+- For any work under `vue-app/**`, use the canonical frontend checklist in `DESIGN.md` instead of duplicating command lists.
 
 ---
 
-### 3) Styling and Tokens
+## Completion Policy
 
-- Do not hardcode colors/radius/shadows/spacing in feature layer.
-- Use `--ft-*` tokens only.
-- Do not use `.dark-mode` / `.light-mode` selectors inside feature components.
-- For extracted SFC styles:
-  - Prefer `<style scoped src="...">` with files under `src/styles/pages/` or `src/styles/components/`.
-  - If a style needs `:deep(...)`, either keep it in the `.vue` SFC block or replace with explicit class hooks.
-  - Do not switch page/component styles to global unscoped CSS as a shortcut.
-- After layout/style refactors, manually verify there is no new horizontal page scroll.
-
-Ownership by file:
-- `src/assets/design-tokens.css` — token source of truth
-- `src/style.css` — reset/base/layout helpers
-- `src/styles/theme.css` — shared UI patterns
-- `src/styles/prime-unstyled-shared.css` — visual Prime wrapper contract
-- `src/styles/prime-overrides.css` — minimal legacy/compat layer
-
----
-
-### 4) Data States (Always Explicit)
-
-Every data-driven screen must have explicit states:
-- `loading`
-- `error` (with retry)
-- `empty`
-- `success`
-
-Avoid:
-- hidden intermediate states
-- side effects in computed values
-- duplicate or redundant requests
-
----
-
-### 5) Validation and Form Errors
-
-- Validation and error messages must be in Russian.
-- Field invalid states must go through wrapper props (`invalid`/`error`) in:
-  - `UiInputText`
-  - `UiInputNumber`
-  - `UiSelect`
-  - `UiDatePicker`
-- Feature `pages/` and `components/` must not set `p-invalid` directly.
-- Shared invalid visuals are owned by `src/styles/prime-unstyled-shared.css`.
-- Destructive actions require explicit confirmation.
-
----
-
-### 6) Accessibility Baseline
-
-- All interactive elements are keyboard accessible.
-- Visible `:focus-visible` is mandatory.
-- Minimum touch target: `44x44`.
-- Icon-only actions must have `aria-label`.
-
----
-
-### 7) Localization Rule
-
-- Agent-facing documentation and instructions: English.
-- End-user app interface (labels, errors, hints, tooltips): Russian only.
-- Dates/numbers/currency formatting: `ru-RU`.
-
----
-
-### 8) Stylelint Policy
-
-- `npm run lint:style` is a hard gate and must pass with zero warnings.
-- For CSS changes, run `npm run lint:style:fix` before the final `npm run lint:style`.
-- Avoid `stylelint-disable`; if unavoidable, keep it narrowly scoped and add an inline justification.
-
----
-
-## Quality Gate Before Completion
-
-Before claiming task completion, run and verify:
-
-```bash
-cd vue-app && npm run type-check
-cd vue-app && npm run lint
-cd vue-app && npm run lint:style
-cd vue-app && npm run lint:prime-imports
-cd vue-app && npm run lint:api-boundaries
-cd vue-app && npm run build
-```
-
-If any step fails, the task is not complete.
-
----
-
-## Anti-Patterns (Block by Default)
-
-- God components without decomposition
-- Duplicate local state with unclear source of truth
-- Visual Prime internals overrides from feature files
-- Mixed RU/EN language in end-user UI
-- New tech debt without recording it in `TODO.md`
+- A task is complete only when all required checks for its scope pass.
+- Frontend checks are defined once in `DESIGN.md` and must not be duplicated in other instruction files.
