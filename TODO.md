@@ -7,20 +7,6 @@ Goal: remove systemic causes of UI bugs, inconsistency, and high maintenance cos
 
 ## P1 — Critical (Do First)
 
-### 2) Stop PrimeVue style leakage from feature layer
-
-- [ ] Remove visual Prime theming via `:deep(.p-...)` from `pages/` and feature `components/`.
-- [ ] Keep `:deep(.p-...)` in feature files only for local layout constraints that cannot be expressed through wrapper API.
-- [ ] Move visual overrides (color, border, hover/focus, overlay look) into `styles/prime-unstyled-shared.css`.
-
-Why:
-- Prime styles are currently controlled from multiple places; changing one screen often breaks another.
-
-Done criteria:
-- Feature files do not own Prime visual theming.
-
----
-
 ### 3) Normalize field validation UI (single contract)
 
 - [ ] Add explicit invalid/error props in `UiInput*` / `UiSelect` / `UiDatePicker` wrappers.

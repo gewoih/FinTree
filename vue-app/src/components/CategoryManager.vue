@@ -236,12 +236,6 @@ defineExpose({
   margin: 0 auto;
 }
 
-.categories-toggle :deep(.p-button) {
-  min-height: 36px;
-  padding: 0 var(--ft-space-4);
-  font-size: var(--ft-text-sm);
-}
-
 .categories__skeleton {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));

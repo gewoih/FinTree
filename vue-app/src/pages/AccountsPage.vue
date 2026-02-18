@@ -501,21 +501,6 @@ onMounted(async () => {
   flex-shrink: 0;
 }
 
-.accounts-search :deep(.p-inputtext) {
-  flex: 1;
-  width: 100%;
-  padding: 0;
-  background: transparent;
-  border: none;
-  box-shadow: none !important;
-}
-
-.accounts-search :deep(.p-inputtext:focus) {
-  border: none !important;
-  box-shadow: none !important;
-  outline: none;
-}
-
 .accounts-sort {
   min-height: 44px;
 }

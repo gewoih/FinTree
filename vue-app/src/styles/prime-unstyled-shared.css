@@ -805,6 +805,130 @@
     padding: 0;
   }
 
+  /* Feature-level Prime visual overrides centralized from pages/components */
+  .accounts-search .p-inputtext,
+  .filter-input .p-inputtext,
+  .transaction-filters__search .p-inputtext {
+    flex: 1;
+
+    width: 100%;
+    padding: 0;
+    padding-left: 0;
+
+    background: transparent;
+    border: none;
+    box-shadow: none !important;
+  }
+
+  .accounts-search .p-inputtext:focus,
+  .filter-input .p-inputtext:focus,
+  .transaction-filters__search .p-inputtext:focus {
+    border: none !important;
+    outline: none;
+    box-shadow: none !important;
+  }
+
+  .txn-list__footer .p-paginator {
+    padding: var(--ft-space-2);
+    background: transparent;
+    border: none;
+  }
+
+  .categories-toggle .p-button {
+    min-height: 36px;
+    padding: 0 var(--ft-space-4);
+    font-size: var(--ft-text-sm);
+  }
+
+  .txn-dialog .p-dialog {
+    border-radius: var(--ft-radius-xl);
+  }
+
+  .txn-dialog .p-dialog-content {
+    border-radius: inherit;
+  }
+
+  .txn-form__type-control .p-togglebutton {
+    flex: 1;
+
+    min-height: var(--ft-control-height);
+
+    color: var(--ft-text-secondary);
+
+    background: transparent;
+    border: 1px solid transparent;
+    border-radius: var(--ft-radius-md);
+  }
+
+  .txn-form__type-control .p-togglebutton:focus-visible {
+    outline: none;
+  }
+
+  .txn-form__type-control .p-togglebutton.p-togglebutton-checked {
+    color: var(--ft-text-primary);
+    background: color-mix(in srgb, var(--ft-primary-500) 12%, var(--ft-surface-base));
+    border-color: color-mix(in srgb, var(--ft-primary-400) 36%, var(--ft-border-default));
+    box-shadow: none;
+  }
+
+  .txn-form__type-control .p-togglebutton:nth-of-type(1).p-togglebutton-checked {
+    color: var(--ft-text-primary);
+    background: color-mix(in srgb, var(--ft-danger-500) 16%, var(--ft-surface-base));
+    border-color: color-mix(in srgb, var(--ft-danger-400) 48%, var(--ft-border-default));
+  }
+
+  .txn-form__type-control .p-togglebutton:nth-of-type(2).p-togglebutton-checked {
+    color: var(--ft-text-primary);
+    background: color-mix(in srgb, var(--ft-success-500) 16%, var(--ft-surface-base));
+    border-color: color-mix(in srgb, var(--ft-success-400) 48%, var(--ft-border-default));
+  }
+
+  .txn-form__amount-input .ui-input-number__input:focus,
+  .txn-form__amount-input .ui-input-number__input:focus-visible,
+  .txn-form__amount-input .p-inputnumber-input.p-inputtext:focus,
+  .txn-form__amount-input .p-inputnumber-input.p-inputtext:focus-visible {
+    outline: none;
+    box-shadow: none;
+  }
+
+  .txn-form__amount-input .ui-input-number__input,
+  .txn-form__amount-input .p-inputnumber-input.p-inputtext {
+    width: 100%;
+    min-width: 0;
+    padding: 0;
+
+    font-family: var(--ft-font-mono);
+    font-size: var(--ft-text-3xl);
+    font-weight: var(--ft-font-semibold);
+    text-align: center;
+
+    background: transparent;
+    border: none;
+    box-shadow: none;
+  }
+
+  .app-shell__drawer-mobile .p-drawer {
+    width: 300px;
+    background: linear-gradient(
+      180deg,
+      var(--ft-surface-raised),
+      color-mix(in srgb, var(--ft-surface-base) 90%, var(--ft-surface-raised))
+    );
+    border-right: 1px solid var(--ft-border-default);
+    box-shadow: 4px 0 24px rgb(0 0 0 / 15%);
+  }
+
+  .app-shell__drawer-mobile .p-drawer-header {
+    padding: var(--ft-space-6) var(--ft-space-5) var(--ft-space-4);
+    border-bottom: 1px solid var(--ft-border-subtle);
+  }
+
+  .app-shell__drawer-mobile .p-drawer-content {
+    display: flex;
+    flex-direction: column;
+    padding: var(--ft-space-4) var(--ft-space-5);
+  }
+
   .ui-toast__root,
   .p-toast {
     z-index: var(--ft-z-toast);

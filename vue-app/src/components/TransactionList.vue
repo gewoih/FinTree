@@ -852,13 +852,6 @@ const handleRowClick = (txn: EnrichedTransaction) => {
   color: var(--ft-text-primary);
 }
 
-/* --- Paginator overrides --- */
-.txn-list__footer :deep(.p-paginator) {
-  padding: var(--ft-space-2);
-  background: transparent;
-  border: none;
-}
-
 @media (width <= 640px) {
   .txn-row {
     min-height: 56px;

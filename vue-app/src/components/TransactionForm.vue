@@ -870,7 +870,6 @@ const handleDelete = () => {
 
 .txn-dialog :deep(.p-dialog) {
   overflow: hidden;
-  border-radius: var(--ft-radius-xl);
 }
 
 .txn-dialog :deep(.p-dialog-header) {
@@ -954,41 +953,6 @@ const handleDelete = () => {
   box-shadow: 0 0 0 2px var(--ft-focus-ring);
 }
 
-.txn-form__type-control :deep(.p-togglebutton) {
-  flex: 1;
-
-  min-height: var(--ft-control-height);
-
-  color: var(--ft-text-secondary);
-
-  background: transparent;
-  border: 1px solid transparent;
-  border-radius: var(--ft-radius-md);
-}
-
-.txn-form__type-control :deep(.p-togglebutton:focus-visible) {
-  outline: none;
-}
-
-.txn-form__type-control :deep(.p-togglebutton.p-togglebutton-checked) {
-  color: var(--ft-text-primary);
-  background: color-mix(in srgb, var(--ft-primary-500) 12%, var(--ft-surface-base));
-  border-color: color-mix(in srgb, var(--ft-primary-400) 36%, var(--ft-border-default));
-  box-shadow: none;
-}
-
-.txn-form__type-control :deep(.p-togglebutton:nth-of-type(1).p-togglebutton-checked) {
-  color: var(--ft-text-primary);
-  background: color-mix(in srgb, var(--ft-danger-500) 16%, var(--ft-surface-base));
-  border-color: color-mix(in srgb, var(--ft-danger-400) 48%, var(--ft-border-default));
-}
-
-.txn-form__type-control :deep(.p-togglebutton:nth-of-type(2).p-togglebutton-checked) {
-  color: var(--ft-text-primary);
-  background: color-mix(in srgb, var(--ft-success-500) 16%, var(--ft-surface-base));
-  border-color: color-mix(in srgb, var(--ft-success-400) 48%, var(--ft-border-default));
-}
-
 .txn-form__section {
   display: flex;
   flex-direction: column;
@@ -1056,30 +1020,6 @@ const handleDelete = () => {
 
 .txn-form__amount-input:focus-within {
   outline: none;
-  box-shadow: none;
-}
-
-.txn-form__amount-input :deep(.ui-input-number__input:focus),
-.txn-form__amount-input :deep(.ui-input-number__input:focus-visible),
-.txn-form__amount-input :deep(.p-inputnumber-input.p-inputtext:focus),
-.txn-form__amount-input :deep(.p-inputnumber-input.p-inputtext:focus-visible) {
-  outline: none;
-  box-shadow: none;
-}
-
-.txn-form__amount-input :deep(.ui-input-number__input),
-.txn-form__amount-input :deep(.p-inputnumber-input.p-inputtext) {
-  width: 100%;
-  min-width: 0;
-  padding: 0;
-
-  font-family: var(--ft-font-mono);
-  font-size: var(--ft-text-3xl);
-  font-weight: var(--ft-font-semibold);
-  text-align: center;
-
-  background: transparent;
-  border: none;
   box-shadow: none;
 }
 
@@ -1314,7 +1254,6 @@ const handleDelete = () => {
 
   .txn-dialog :deep(.p-dialog-content) {
     max-height: 92vh;
-    border-radius: inherit;
   }
 
   .txn-form {

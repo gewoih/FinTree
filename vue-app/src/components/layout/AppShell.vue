@@ -503,28 +503,6 @@ onMounted(() => {
   display: none;
 }
 
-.app-shell__drawer-mobile :deep(.p-drawer) {
-  width: 300px;
-  background: linear-gradient(
-    180deg,
-    var(--ft-surface-raised),
-    color-mix(in srgb, var(--ft-surface-base) 90%, var(--ft-surface-raised))
-  );
-  border-right: 1px solid var(--ft-border-default);
-  box-shadow: 4px 0 24px rgb(0 0 0 / 15%);
-}
-
-.app-shell__drawer-mobile :deep(.p-drawer-header) {
-  padding: var(--ft-space-6) var(--ft-space-5) var(--ft-space-4);
-  border-bottom: 1px solid var(--ft-border-subtle);
-}
-
-.app-shell__drawer-mobile :deep(.p-drawer-content) {
-  display: flex;
-  flex-direction: column;
-  padding: var(--ft-space-4) var(--ft-space-5);
-}
-
 .app-shell__drawer-header {
   display: flex;
   gap: var(--ft-space-3);
