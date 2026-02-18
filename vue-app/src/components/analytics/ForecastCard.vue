@@ -1,11 +1,11 @@
 <script setup lang="ts">
 import { computed } from 'vue';
 import type { ChartData, TooltipItem } from 'chart.js';
-import Tag from 'primevue/tag';
-import Skeleton from 'primevue/skeleton';
-import Message from 'primevue/message';
+import UiBadge from '@/ui/UiBadge.vue';
+import UiSkeleton from '@/ui/UiSkeleton.vue';
+import UiMessage from '@/ui/UiMessage.vue';
 import UiButton from '../../ui/UiButton.vue';
-import Chart from 'primevue/chart';
+import UiChart from '@/ui/UiChart.vue';
 import type { ForecastSummary } from '@/types/analytics.ts';
 import { useChartColors } from '../../composables/useChartColors';
 
@@ -138,12 +138,12 @@ const chartOptions = computed(() => ({
           Оценка расходов до конца месяца
         </p>
       </div>
-      <Tag
+      <UiBadge
         v-if="readinessMet && statusLabel"
         :class="['forecast-chip', statusClass]"
       >
         {{ statusLabel }}
-      </Tag>
+      </UiBadge>
     </div>
 
     <div
@@ -151,7 +151,7 @@ const chartOptions = computed(() => ({
       class="forecast-card__loading"
     >
       <div class="forecast-card__loading-chips">
-        <Skeleton
+        <UiSkeleton
           v-for="i in 3"
           :key="i"
           width="120px"
@@ -159,7 +159,7 @@ const chartOptions = computed(() => ({
           border-radius="999px"
         />
       </div>
-      <Skeleton
+      <UiSkeleton
         width="100%"
         height="300px"
         border-radius="16px"
@@ -170,7 +170,7 @@ const chartOptions = computed(() => ({
       v-else-if="error"
       class="forecast-card__message"
     >
-      <Message
+      <UiMessage
         severity="error"
         icon="pi pi-exclamation-triangle"
         :closable="false"
@@ -189,14 +189,14 @@ const chartOptions = computed(() => ({
             @click="emit('retry')"
           />
         </div>
-      </Message>
+      </UiMessage>
     </div>
 
     <div
       v-else-if="!readinessMet"
       class="forecast-card__message"
     >
-      <Message
+      <UiMessage
         severity="info"
         icon="pi pi-info-circle"
         :closable="false"
@@ -209,14 +209,14 @@ const chartOptions = computed(() => ({
             Нужны расходы минимум в {{ requiredExpenseDays }} днях. Сейчас: {{ observedExpenseDays }}.
           </p>
         </div>
-      </Message>
+      </UiMessage>
     </div>
 
     <div
       v-else-if="showEmpty"
       class="forecast-card__message"
     >
-      <Message
+      <UiMessage
         severity="info"
         icon="pi pi-inbox"
         :closable="false"
@@ -229,7 +229,7 @@ const chartOptions = computed(() => ({
             Нужны ежедневные расходы за текущий месяц.
           </p>
         </div>
-      </Message>
+      </UiMessage>
     </div>
 
     <template v-else>
@@ -265,7 +265,7 @@ const chartOptions = computed(() => ({
         aria-label="График прогноза расходов"
       >
         <div class="forecast-card__chart-container">
-          <Chart
+          <UiChart
             v-if="chartData"
             type="line"
             :data="chartData"

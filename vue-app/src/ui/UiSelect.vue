@@ -1,6 +1,9 @@
 <script setup lang="ts">
 import { computed, useAttrs } from 'vue';
 import Select from 'primevue/select';
+import type { SelectPassThroughOptions } from 'primevue/select';
+import { resolvePrimeUnstyled } from '../config/primevue-unstyled-flags';
+import { mergePt } from './prime/pt';
 
 const props = defineProps<{
   modelValue?: unknown;
@@ -11,6 +14,9 @@ const props = defineProps<{
   disabled?: boolean;
   panelClass?: unknown;
   overlayClass?: unknown;
+  appendTo?: string | HTMLElement;
+  unstyled?: boolean;
+  pt?: SelectPassThroughOptions;
 }>();
 
 const emit = defineEmits<{
@@ -18,8 +24,29 @@ const emit = defineEmits<{
 }>();
 
 const attrs = useAttrs();
+const isUnstyled = computed(() => resolvePrimeUnstyled('uiSelect', props.unstyled));
 const mergedPanelClass = computed(() => ['ui-select-overlay', props.panelClass]);
 const mergedOverlayClass = computed(() => ['ui-select-overlay', props.overlayClass]);
+
+const mergedPt = computed(() =>
+  mergePt(
+    {
+      root: {
+        class: 'ui-select__root',
+      },
+      label: {
+        class: 'ui-select__label',
+      },
+      dropdown: {
+        class: 'ui-select__dropdown',
+      },
+      overlay: {
+        class: 'ui-select-overlay',
+      },
+    } as SelectPassThroughOptions,
+    props.pt
+  )
+);
 </script>
 
 <template>
@@ -34,6 +61,9 @@ const mergedOverlayClass = computed(() => ['ui-select-overlay', props.overlayCla
     :disabled="props.disabled"
     :panel-class="mergedPanelClass"
     :overlay-class="mergedOverlayClass"
+    :append-to="props.appendTo ?? 'body'"
+    :unstyled="isUnstyled"
+    :pt="mergedPt"
     @update:model-value="val => emit('update:modelValue', val)"
   >
     <template

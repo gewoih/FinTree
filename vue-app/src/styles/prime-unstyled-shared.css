@@ -1,0 +1,378 @@
+@layer overrides {
+  .p-component {
+    font-family: var(--ft-font-base);
+    color: var(--ft-text-primary);
+  }
+
+  /* Overlay structure for unstyled mode */
+  .p-overlay-mask,
+  .p-component-overlay,
+  .ui-dialog__mask,
+  .ui-drawer__mask {
+    position: fixed;
+    inset: 0;
+    background: var(--ft-bg-overlay);
+    backdrop-filter: blur(2px);
+  }
+
+  .p-dialog-mask,
+  .ui-dialog__mask {
+    z-index: var(--ft-z-modal);
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    padding: var(--ft-space-4);
+  }
+
+  .p-drawer-mask,
+  .ui-drawer__mask {
+    z-index: var(--ft-z-drawer);
+  }
+
+  .p-dialog,
+  .ui-dialog__root,
+  .p-confirm-dialog,
+  .ui-confirm-dialog__root {
+    overflow: hidden;
+
+    max-width: calc(100vw - (var(--ft-space-4) * 2));
+    max-height: calc(100vh - (var(--ft-space-4) * 2));
+
+    color: var(--ft-text-primary);
+
+    background: var(--ft-surface-raised);
+    border: 1px solid var(--ft-border-default);
+    border-radius: var(--ft-radius-lg);
+    box-shadow: var(--ft-shadow-lg);
+  }
+
+  .p-button {
+    cursor: pointer;
+
+    display: inline-flex;
+    gap: var(--ft-space-2);
+    align-items: center;
+    justify-content: center;
+
+    min-height: var(--ft-button-height-sm);
+    padding: 0 var(--ft-space-4);
+
+    font-size: var(--ft-text-sm);
+    font-weight: var(--ft-font-semibold);
+    color: var(--ft-text-inverse);
+
+    background: var(--ft-primary-500);
+    border: 1px solid var(--ft-primary-500);
+    border-radius: var(--ft-radius-lg);
+
+    transition:
+      transform var(--ft-transition-fast),
+      box-shadow var(--ft-transition-fast),
+      background-color var(--ft-transition-fast),
+      border-color var(--ft-transition-fast),
+      color var(--ft-transition-fast);
+  }
+
+  .p-button:not(:disabled):hover {
+    background: var(--ft-primary-600);
+    border-color: var(--ft-primary-600);
+  }
+
+  .p-button.p-button-secondary,
+  .p-button.p-button-outlined {
+    color: var(--ft-text-primary);
+    background: transparent;
+    border-color: var(--ft-border-default);
+  }
+
+  .p-button.p-button-text,
+  .p-button.p-button-link {
+    color: var(--ft-text-primary);
+    background: transparent;
+    border-color: transparent;
+  }
+
+  .p-button.p-button-danger {
+    color: var(--ft-text-inverse);
+    background: var(--ft-danger-500);
+    border-color: var(--ft-danger-500);
+  }
+
+  .p-button.p-button-danger:not(:disabled):hover {
+    background: var(--ft-danger-600);
+    border-color: var(--ft-danger-600);
+  }
+
+  .p-button.p-button-success {
+    color: var(--ft-text-inverse);
+    background: var(--ft-success-500);
+    border-color: var(--ft-success-500);
+  }
+
+  .p-button:disabled {
+    cursor: not-allowed;
+    opacity: 0.65;
+  }
+
+  .ui-button:focus-visible,
+  .p-button:focus-visible,
+  .ui-input:focus-visible,
+  .p-inputtext:focus-visible,
+  .ui-input-number__root:focus-within,
+  .p-inputnumber-input:focus-visible,
+  .ui-select__root:focus-within,
+  .p-select:focus-within,
+  .ui-date-picker__root:focus-within,
+  .p-datepicker:focus-within,
+  .ui-select-button__button:focus-visible,
+  .p-selectbutton .p-button:focus-visible,
+  .ui-checkbox__root:has(.ui-checkbox__input:focus-visible) .ui-checkbox__box,
+  .p-checkbox:has(.p-checkbox-input:focus-visible) .p-checkbox-box,
+  .ui-toggle-switch__root:has(.ui-toggle-switch__input:focus-visible) .ui-toggle-switch__slider,
+  .p-toggleswitch:has(input:focus-visible) .p-toggleswitch-slider {
+    outline: 3px solid var(--ft-focus-ring);
+    outline-offset: 3px;
+  }
+
+  .ui-input,
+  .ui-input-number__root,
+  .ui-select__root,
+  .ui-date-picker__root,
+  .p-inputtext,
+  .p-inputnumber-input,
+  .p-select,
+  .p-datepicker,
+  .p-datepicker-input,
+  .p-inputtextarea {
+    width: 100%;
+    min-height: var(--ft-control-height);
+
+    font-size: var(--ft-text-base);
+    color: var(--ft-text-primary);
+
+    background: var(--ft-surface-base);
+    border: 1px solid var(--ft-border-default);
+    border-radius: var(--ft-radius-lg);
+  }
+
+  .ui-input-number__input,
+  .ui-select__label,
+  .ui-date-picker__input {
+    width: 100%;
+    color: var(--ft-text-primary);
+    background: transparent;
+    border: 0;
+  }
+
+  .ui-select__dropdown,
+  .ui-date-picker__dropdown {
+    border-inline-start: 1px solid var(--ft-border-soft);
+  }
+
+  .p-inputtext::placeholder,
+  .p-inputtextarea::placeholder,
+  .p-inputnumber-input::placeholder {
+    color: var(--ft-text-secondary);
+    opacity: 0.8;
+  }
+
+  .p-inputtext:disabled,
+  .p-inputnumber-input:disabled,
+  .p-select.p-disabled,
+  .p-datepicker.p-disabled {
+    cursor: not-allowed;
+    opacity: 0.6;
+  }
+
+  .ui-select-overlay,
+  .p-select-overlay,
+  .ui-date-picker-overlay,
+  .p-datepicker-panel,
+  .ui-menu__root,
+  .p-menu,
+  .ui-toast__message,
+  .p-toast-message,
+  .ui-message__root,
+  .p-message,
+  .ui-paginator__root,
+  .p-paginator {
+    color: var(--ft-text-primary);
+
+    background: var(--ft-surface-raised);
+    border: 1px solid var(--ft-border-default);
+    border-radius: var(--ft-radius-lg);
+    box-shadow: var(--ft-shadow-md);
+  }
+
+  .ui-select-overlay,
+  .p-select-overlay,
+  .ui-date-picker-overlay,
+  .p-datepicker-panel {
+    position: absolute;
+    z-index: var(--ft-z-popover);
+  }
+
+  .ui-menu__list,
+  .p-menu .p-menu-list,
+  .ui-menu__item,
+  .p-menu .p-menu-item,
+  .ui-menu__item-content,
+  .p-menu .p-menuitem-content {
+    margin: 0;
+    padding: 0;
+    list-style: none;
+    background: transparent;
+  }
+
+  .ui-menu__item-link,
+  .p-menu .p-menuitem-link {
+    display: flex;
+    gap: var(--ft-space-2);
+    align-items: center;
+
+    padding: var(--ft-space-2) var(--ft-space-3);
+
+    color: var(--ft-text-primary);
+
+    border-radius: var(--ft-radius-md);
+  }
+
+  .ui-menu__item-link:hover,
+  .ui-menu__item-content:hover,
+  .p-menu .p-menuitem-link:hover,
+  .p-menu .p-menuitem-content:hover {
+    background: color-mix(in srgb, var(--ft-primary-500) 12%, transparent);
+  }
+
+  .ui-dialog__content,
+  .p-dialog .p-dialog-content,
+  .ui-confirm-dialog__content,
+  .p-confirm-dialog .p-dialog-content {
+    overflow: auto;
+    background: var(--ft-surface-raised);
+  }
+
+  .ui-dialog__footer,
+  .ui-confirm-dialog__footer,
+  .p-dialog .p-dialog-footer,
+  .p-confirm-dialog .p-dialog-footer {
+    display: flex;
+    gap: var(--ft-space-2);
+    justify-content: flex-end;
+  }
+
+  .p-message {
+    padding: var(--ft-space-3);
+  }
+
+  .p-message.p-message-error {
+    border-color: color-mix(in srgb, var(--ft-danger-500) 35%, transparent);
+  }
+
+  .p-message.p-message-info {
+    border-color: color-mix(in srgb, var(--ft-info-500) 35%, transparent);
+  }
+
+  .p-tag {
+    display: inline-flex;
+    gap: var(--ft-space-1);
+    align-items: center;
+
+    padding: var(--ft-space-1) var(--ft-space-3);
+
+    font-size: var(--ft-text-xs);
+    font-weight: var(--ft-font-medium);
+
+    border-radius: var(--ft-radius-full);
+  }
+
+  .p-paginator {
+    display: flex;
+    gap: var(--ft-space-2);
+    align-items: center;
+    justify-content: center;
+
+    padding: var(--ft-space-3) var(--ft-space-4);
+  }
+
+  .p-chart {
+    width: 100%;
+  }
+
+  .ui-drawer__root,
+  .p-drawer {
+    color: var(--ft-text-primary);
+    background: var(--ft-surface-raised);
+    border-inline-end: 1px solid var(--ft-border-default);
+    box-shadow: var(--ft-shadow-lg);
+  }
+
+  .ui-drawer__content,
+  .p-drawer .p-drawer-content {
+    padding: 0;
+  }
+
+  .ui-toast__root,
+  .p-toast {
+    z-index: var(--ft-z-toast);
+    min-width: min(420px, calc(100vw - (var(--ft-space-4) * 2)));
+  }
+
+  .ui-toast__message,
+  .p-toast .p-toast-message {
+    overflow: hidden;
+  }
+
+  .p-checkbox .p-checkbox-box {
+    display: grid;
+    place-items: center;
+
+    width: 1.25rem;
+    height: 1.25rem;
+
+    border: 1px solid var(--ft-border-default);
+    border-radius: var(--ft-radius-sm);
+  }
+
+  .p-checkbox.p-checkbox-checked .p-checkbox-box {
+    color: var(--ft-text-inverse);
+    background: var(--ft-primary-500);
+    border-color: var(--ft-primary-500);
+  }
+
+  .p-toggleswitch .p-toggleswitch-slider {
+    position: relative;
+
+    width: 2.5rem;
+    height: 1.4rem;
+
+    background: var(--ft-border-default);
+    border-radius: var(--ft-radius-full);
+
+    transition: background-color var(--ft-transition-fast);
+  }
+
+  .p-toggleswitch .p-toggleswitch-handle {
+    position: absolute;
+    top: 0.15rem;
+    left: 0.15rem;
+
+    width: 1.1rem;
+    height: 1.1rem;
+
+    background: var(--ft-surface-overlay);
+    border-radius: var(--ft-radius-full);
+
+    transition: transform var(--ft-transition-fast);
+  }
+
+  .p-toggleswitch.p-toggleswitch-checked .p-toggleswitch-slider {
+    background: var(--ft-primary-500);
+  }
+
+  .p-toggleswitch.p-toggleswitch-checked .p-toggleswitch-handle {
+    transform: translateX(1.1rem);
+  }
+}

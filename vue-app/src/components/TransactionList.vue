@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed, onBeforeUnmount, ref, watch } from 'vue'
-import Skeleton from 'primevue/skeleton'
-import Paginator from 'primevue/paginator'
+import UiSkeleton from '@/ui/UiSkeleton.vue'
+import UiPaginator from '@/ui/UiPaginator.vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useFinanceStore } from '../stores/finance'
 import { useUserStore } from '../stores/user'
@@ -513,7 +513,7 @@ const handleRowClick = (txn: EnrichedTransaction) => {
       v-if="transactionsLoading"
       class="txn-list__skeleton"
     >
-      <Skeleton
+      <UiSkeleton
         v-for="i in 6"
         :key="i"
         height="64px"
@@ -632,7 +632,7 @@ const handleRowClick = (txn: EnrichedTransaction) => {
         <span class="txn-list__total">
           Итого: <strong>{{ formattedTotalAmount }}</strong>
         </span>
-        <Paginator
+        <UiPaginator
           :rows="paginationRows"
           :first="paginationFirst"
           :total-records="totalRecords"

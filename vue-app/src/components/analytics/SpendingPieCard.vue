@@ -1,11 +1,11 @@
 <script setup lang="ts">
 import { computed } from 'vue';
 import type { ChartData, Plugin } from 'chart.js';
-import Skeleton from 'primevue/skeleton';
-import Message from 'primevue/message';
 import UiButton from '../../ui/UiButton.vue';
 import UiSelect from '../../ui/UiSelect.vue';
-import Chart from 'primevue/chart';
+import UiSkeleton from '@/ui/UiSkeleton.vue';
+import UiMessage from '@/ui/UiMessage.vue';
+import UiChart from '@/ui/UiChart.vue';
 import type { CategoryLegendItem, CategoryScope } from '../../types/analytics';
 import { useChartColors } from '../../composables/useChartColors';
 
@@ -138,13 +138,13 @@ const chartOptions = computed(() => ({
       v-if="loading"
       class="donut-card__loading"
     >
-      <Skeleton
+      <UiSkeleton
         width="220px"
         height="220px"
         border-radius="999px"
       />
       <div class="donut-card__loading-legend">
-        <Skeleton
+        <UiSkeleton
           v-for="i in 4"
           :key="i"
           height="18px"
@@ -157,7 +157,7 @@ const chartOptions = computed(() => ({
       v-else-if="error"
       class="donut-card__message"
     >
-      <Message
+      <UiMessage
         severity="error"
         icon="pi pi-exclamation-triangle"
         :closable="false"
@@ -176,14 +176,14 @@ const chartOptions = computed(() => ({
             @click="emit('retry')"
           />
         </div>
-      </Message>
+      </UiMessage>
     </div>
 
     <div
       v-else-if="showEmpty"
       class="donut-card__message"
     >
-      <Message
+      <UiMessage
         severity="info"
         icon="pi pi-inbox"
         :closable="false"
@@ -196,7 +196,7 @@ const chartOptions = computed(() => ({
             Добавьте расходы, чтобы увидеть распределение.
           </p>
         </div>
-      </Message>
+      </UiMessage>
     </div>
 
     <div
@@ -208,7 +208,7 @@ const chartOptions = computed(() => ({
         role="img"
         aria-label="Круговая диаграмма расходов по категориям"
       >
-        <Chart
+        <UiChart
           v-if="donutChartData"
           type="doughnut"
           :data="donutChartData"

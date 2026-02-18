@@ -1,7 +1,13 @@
 <script setup lang="ts">
-import { useAttrs } from 'vue';
+import { computed, useAttrs } from 'vue';
 import InputNumber from 'primevue/inputnumber';
-import type { InputNumberBlurEvent, InputNumberInputEvent } from 'primevue/inputnumber';
+import type {
+  InputNumberBlurEvent,
+  InputNumberInputEvent,
+  InputNumberPassThroughOptions,
+} from 'primevue/inputnumber';
+import { resolvePrimeUnstyled } from '../config/primevue-unstyled-flags';
+import { mergePt } from './prime/pt';
 
 const props = defineProps<{
   modelValue?: number | null;
@@ -12,6 +18,8 @@ const props = defineProps<{
   maxFractionDigits?: number;
   min?: number;
   max?: number;
+  unstyled?: boolean;
+  pt?: InputNumberPassThroughOptions;
 }>();
 
 const emit = defineEmits<{
@@ -22,6 +30,21 @@ const emit = defineEmits<{
 }>();
 
 const attrs = useAttrs();
+const isUnstyled = computed(() => resolvePrimeUnstyled('uiInputNumber', props.unstyled));
+
+const mergedPt = computed(() =>
+  mergePt(
+    {
+      root: {
+        class: 'ui-input-number__root',
+      },
+      pcInputText: {
+        class: 'ui-input-number__input',
+      },
+    } as InputNumberPassThroughOptions,
+    props.pt
+  )
+);
 
 const handleUpdateModelValue = (value: number | null | undefined) => {
   emit('update:modelValue', value ?? null);
@@ -52,6 +75,8 @@ const handleBlur = (event: InputNumberBlurEvent) => {
     :max-fraction-digits="props.maxFractionDigits"
     :min="props.min"
     :max="props.max"
+    :unstyled="isUnstyled"
+    :pt="mergedPt"
     @update:model-value="handleUpdateModelValue"
     @input="handleInput"
     @focus="handleFocus"

@@ -2,7 +2,7 @@
 import { computed, onMounted, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { useToast } from 'primevue/usetoast'
-import Menu from 'primevue/menu'
+import UiMenu from '@/ui/UiMenu.vue'
 import type { MenuItem } from 'primevue/menuitem'
 import { useFinanceStore } from '../stores/finance'
 import { useUserStore } from '../stores/user'
@@ -162,7 +162,7 @@ onMounted(async () => {
           aria-label="Дополнительные действия"
           @click="toggleActionMenu"
         />
-        <Menu
+        <UiMenu
           ref="actionMenuRef"
           :model="actionMenuItems"
           popup

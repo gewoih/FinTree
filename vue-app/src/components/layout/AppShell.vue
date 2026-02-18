@@ -5,7 +5,7 @@ import { useAuthStore } from '@/stores/auth.ts'
 import { useUserStore } from '@/stores/user.ts'
 import { useTheme } from '@/composables/useTheme.ts'
 import { useViewport } from '@/composables/useViewport.ts'
-import Drawer from 'primevue/drawer'
+import UiDrawer from '@/ui/UiDrawer.vue'
 import ThemeToggle from '../common/ThemeToggle.vue'
 import UiButton from '../../ui/UiButton.vue'
 import BottomTabBar from './BottomTabBar.vue'
@@ -157,7 +157,7 @@ onMounted(() => {
     </div>
 
     <!-- Mobile Drawer (hidden on desktop) -->
-    <Drawer
+    <UiDrawer
       v-if="isDrawerVisible"
       v-model:visible="sidebarVisible"
       position="left"
@@ -241,7 +241,7 @@ onMounted(() => {
           </button>
         </div>
       </div>
-    </Drawer>
+    </UiDrawer>
 
     <!-- Desktop Sidebar -->
     <aside

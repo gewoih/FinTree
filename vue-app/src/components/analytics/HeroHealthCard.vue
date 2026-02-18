@@ -1,8 +1,8 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue';
-import Card from 'primevue/card';
-import Skeleton from 'primevue/skeleton';
-import Message from 'primevue/message';
+import UiCard from '@/ui/UiCard.vue';
+import UiSkeleton from '@/ui/UiSkeleton.vue';
+import UiMessage from '@/ui/UiMessage.vue';
 import UiButton from '../../ui/UiButton.vue';
 
 type MetricAccent = 'good' | 'average' | 'poor' | 'neutral' | 'income' | 'expense';
@@ -92,8 +92,8 @@ const hasMorePeaks = computed(() => props.peaks.length > 3);
 </script>
 
 <template>
-  <Card class="hero-card">
-    <template #content>
+  <UiCard class="hero-card">
+    <template #default>
       <div class="hero-card__header">
         <div>
           <h2 class="hero-card__title">
@@ -108,13 +108,13 @@ const hasMorePeaks = computed(() => props.peaks.length > 3);
         role="status"
         aria-live="polite"
       >
-        <Skeleton
+        <UiSkeleton
           width="128px"
           height="128px"
           border-radius="999px"
         />
         <div class="hero-card__loading-metrics">
-          <Skeleton
+          <UiSkeleton
             v-for="index in 4"
             :key="index"
             height="72px"
@@ -128,7 +128,7 @@ const hasMorePeaks = computed(() => props.peaks.length > 3);
         v-else-if="error"
         class="hero-card__message"
       >
-        <Message
+        <UiMessage
           severity="error"
           icon="pi pi-exclamation-triangle"
           :closable="false"
@@ -147,14 +147,14 @@ const hasMorePeaks = computed(() => props.peaks.length > 3);
               @click="emit('retry')"
             />
           </div>
-        </Message>
+        </UiMessage>
       </div>
 
       <div
         v-else-if="showEmpty"
         class="hero-card__message"
       >
-        <Message
+        <UiMessage
           severity="info"
           icon="pi pi-inbox"
           :closable="false"
@@ -167,7 +167,7 @@ const hasMorePeaks = computed(() => props.peaks.length > 3);
               Добавьте несколько транзакций, чтобы увидеть метрики.
             </p>
           </div>
-        </Message>
+        </UiMessage>
       </div>
 
       <div
@@ -299,7 +299,7 @@ const hasMorePeaks = computed(() => props.peaks.length > 3);
         </div>
       </div>
     </template>
-  </Card>
+  </UiCard>
 </template>
 
 <style scoped>

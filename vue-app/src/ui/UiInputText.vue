@@ -1,12 +1,17 @@
 <script setup lang="ts">
-import { useAttrs } from 'vue';
+import { computed, useAttrs } from 'vue';
 import InputText from 'primevue/inputtext';
+import type { InputTextPassThroughOptions } from 'primevue/inputtext';
+import { resolvePrimeUnstyled } from '../config/primevue-unstyled-flags';
+import { mergePt } from './prime/pt';
 
 const props = defineProps<{
   modelValue?: string | null;
   placeholder?: string;
   disabled?: boolean;
   type?: string;
+  unstyled?: boolean;
+  pt?: InputTextPassThroughOptions;
 }>();
 
 const emit = defineEmits<{
@@ -14,6 +19,18 @@ const emit = defineEmits<{
 }>();
 
 const attrs = useAttrs();
+const isUnstyled = computed(() => resolvePrimeUnstyled('uiInputText', props.unstyled));
+
+const mergedPt = computed(() =>
+  mergePt(
+    {
+      root: {
+        class: 'ui-input__root',
+      },
+    } as InputTextPassThroughOptions,
+    props.pt
+  )
+);
 
 const handleUpdateModelValue = (value: string | null | undefined) => {
   emit('update:modelValue', value ?? '');
@@ -28,6 +45,8 @@ const handleUpdateModelValue = (value: string | null | undefined) => {
     :placeholder="props.placeholder"
     :disabled="props.disabled"
     :type="props.type"
+    :unstyled="isUnstyled"
+    :pt="mergedPt"
     @update:model-value="handleUpdateModelValue"
   />
 </template>

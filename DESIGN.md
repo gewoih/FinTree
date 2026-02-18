@@ -23,8 +23,35 @@ All tokens use `--ft-*` prefix, defined in `vue-app/src/assets/design-tokens.css
 **Token files**:
 - `design-tokens.css` — primitive + semantic tokens (colors, spacing, typography, shadows, z-index)
 - `styles/theme.css` — component-level aliases and shared UI classes (`@layer components`)
+- `styles/prime-unstyled-shared.css` — shared baseline styles for PrimeVue unstyled primitives (`@layer overrides`)
 - `styles/prime-overrides.css` — single source of truth for PrimeVue overrides (`@layer overrides`)
 - `style.css` — base resets, layout helpers (`@layer base`)
+
+### PrimeVue Unstyled Contract
+
+- PrimeVue is configured in unstyled mode in `vue-app/src/main.ts`.
+- Visual PrimeVue components must be consumed only through `vue-app/src/ui/*` wrappers.
+- Direct imports are allowed only for service/runtime hooks: `primevue/config`, `primevue/toastservice`, `primevue/confirmationservice`, `primevue/tooltip`, `primevue/usetoast`, `primevue/useconfirm`, plus type-only `primevue/menuitem`.
+- Wrapper-level unstyled toggles are controlled by env flags:
+  - `VITE_PRIME_UNSTYLED_ENABLED`
+  - `VITE_PRIME_UNSTYLED_UI_INPUT_TEXT`
+  - `VITE_PRIME_UNSTYLED_UI_INPUT_NUMBER`
+  - `VITE_PRIME_UNSTYLED_UI_SELECT`
+  - `VITE_PRIME_UNSTYLED_UI_DATE_PICKER`
+  - `VITE_PRIME_UNSTYLED_UI_SELECT_BUTTON`
+  - `VITE_PRIME_UNSTYLED_UI_CHECKBOX`
+  - `VITE_PRIME_UNSTYLED_UI_TOGGLE_SWITCH`
+  - `VITE_PRIME_UNSTYLED_UI_DIALOG`
+  - `VITE_PRIME_UNSTYLED_UI_MENU`
+  - `VITE_PRIME_UNSTYLED_UI_MESSAGE`
+  - `VITE_PRIME_UNSTYLED_UI_SKELETON`
+  - `VITE_PRIME_UNSTYLED_UI_TAG`
+  - `VITE_PRIME_UNSTYLED_UI_PAGINATOR`
+  - `VITE_PRIME_UNSTYLED_UI_CARD`
+  - `VITE_PRIME_UNSTYLED_UI_CHART`
+  - `VITE_PRIME_UNSTYLED_UI_DRAWER`
+  - `VITE_PRIME_UNSTYLED_UI_TOAST`
+  - `VITE_PRIME_UNSTYLED_UI_CONFIRM_DIALOG`
 
 ### Typography
 

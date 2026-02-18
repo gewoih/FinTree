@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue'
-import ToggleSwitch from 'primevue/toggleswitch'
-import Menu from 'primevue/menu'
+import UiToggleSwitch from '@/ui/UiToggleSwitch.vue'
+import UiMenu from '@/ui/UiMenu.vue'
 import StatusBadge from './common/StatusBadge.vue'
 import type { MenuItem } from 'primevue/menuitem'
 import type { Account } from '../types'
@@ -124,7 +124,7 @@ const toggleMenu = (event: Event) => {
           :aria-label="`Действия для счета ${account.name}`"
           @click.stop="toggleMenu"
         />
-        <Menu
+        <UiMenu
           ref="menuRef"
           :model="menuItems"
           :popup="true"
@@ -194,7 +194,7 @@ const toggleMenu = (event: Event) => {
             class="liquidity-control"
             @click.stop
           >
-            <ToggleSwitch
+            <UiToggleSwitch
               v-model="liquidityModel"
               :disabled="isLiquidityLoading"
             />

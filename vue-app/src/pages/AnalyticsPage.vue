@@ -15,7 +15,7 @@ import { useFinanceStore } from '../stores/finance';
 import { useAnalytics } from '../composables/useAnalytics';
 import { apiService } from '../services/api.service';
 import { isCategoriesOnboardingVisited, markCategoriesOnboardingVisited } from '../utils/onboarding';
-import DatePicker from 'primevue/datepicker';
+import UiDatePicker from '@/ui/UiDatePicker.vue';
 import type {
   AnalyticsDashboardDto,
   AnalyticsReadinessDto,
@@ -843,7 +843,7 @@ onMounted(async () => {
           >
             <i class="pi pi-chevron-right" />
           </button>
-          <DatePicker
+          <UiDatePicker
             ref="monthPickerRef"
             :model-value="selectedMonth"
             view="month"

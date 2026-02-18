@@ -11,10 +11,10 @@
     "lint:fix": "eslint \"src/**/*.{ts,tsx,js,vue}\" --fix",
     "lint:style": "stylelint \"src/**/*.{css,scss,vue}\"",
     "lint:style:fix": "stylelint \"src/**/*.{css,scss,vue}\" --fix",
-    "type-check": "vue-tsc --noEmit"
+    "type-check": "vue-tsc --noEmit",
+    "lint:prime-imports": "node scripts/check-prime-imports.mjs"
   },
   "dependencies": {
-    "@primeuix/themes": "^1.2.5",
     "axios": "^1.12.2",
     "chart.js": "^4.5.1",
     "pinia": "^3.0.3",

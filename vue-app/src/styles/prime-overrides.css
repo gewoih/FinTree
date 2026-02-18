@@ -4,13 +4,6 @@
    ═══════════════════════════════════════════════════════════════ */
 
 @layer overrides {
-  :root {
-    --p-card-background: var(--ft-surface-soft);
-    --p-card-border-color: var(--ft-border-soft);
-    --p-card-border-radius: var(--ft-radius-xl);
-    --p-card-shadow: var(--ft-shadow-sm);
-  }
-
   /* ━━━ Card ━━━ */
   .p-card {
     overflow: hidden;

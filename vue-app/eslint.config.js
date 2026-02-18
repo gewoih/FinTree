@@ -23,6 +23,33 @@ export default [
     },
 
     {
+        files: ["src/**/*.{ts,vue}"],
+        ignores: ["src/ui/**"],
+        rules: {
+            "no-restricted-imports": [
+                "error",
+                {
+                    patterns: [
+                        {
+                            group: [
+                                "primevue/*",
+                                "!primevue/config",
+                                "!primevue/toastservice",
+                                "!primevue/confirmationservice",
+                                "!primevue/tooltip",
+                                "!primevue/usetoast",
+                                "!primevue/useconfirm",
+                                "!primevue/menuitem",
+                            ],
+                            message: "Import PrimeVue visual components via src/ui wrappers.",
+                        },
+                    ],
+                },
+            ],
+        },
+    },
+
+    {
         ignores: ["dist", "node_modules"],
     },
 ];

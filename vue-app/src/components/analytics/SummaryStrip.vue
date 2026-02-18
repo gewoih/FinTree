@@ -1,6 +1,6 @@
 <script setup lang="ts">
-import Skeleton from 'primevue/skeleton';
-import Message from 'primevue/message';
+import UiSkeleton from '@/ui/UiSkeleton.vue';
+import UiMessage from '@/ui/UiMessage.vue';
 import UiButton from '../../ui/UiButton.vue';
 
 type MetricAccent = 'income' | 'expense' | 'good' | 'poor' | 'neutral';
@@ -37,17 +37,17 @@ const iconAccentClass = (accent: MetricAccent) => `summary-strip__icon--${accent
         :key="i"
         class="summary-strip__item summary-strip__item--skeleton"
       >
-        <Skeleton
+        <UiSkeleton
           width="40px"
           height="40px"
           border-radius="12px"
         />
         <div class="summary-strip__skeleton-text">
-          <Skeleton
+          <UiSkeleton
             width="80px"
             height="14px"
           />
-          <Skeleton
+          <UiSkeleton
             width="120px"
             height="28px"
           />
@@ -57,7 +57,7 @@ const iconAccentClass = (accent: MetricAccent) => `summary-strip__icon--${accent
 
     <template v-else-if="error">
       <div class="summary-strip__error">
-        <Message
+        <UiMessage
           severity="error"
           icon="pi pi-exclamation-triangle"
           :closable="false"
@@ -73,7 +73,7 @@ const iconAccentClass = (accent: MetricAccent) => `summary-strip__icon--${accent
               @click="emit('retry')"
             />
           </div>
-        </Message>
+        </UiMessage>
       </div>
     </template>
 

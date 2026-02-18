@@ -2,7 +2,7 @@
 import { computed, reactive, ref, watch } from 'vue';
 import { useConfirm } from 'primevue/useconfirm';
 import { useToast } from 'primevue/usetoast';
-import Dialog from 'primevue/dialog';
+import UiDialog from '../ui/UiDialog.vue';
 import UiButton from '../ui/UiButton.vue';
 import UiDatePicker from '../ui/UiDatePicker.vue';
 import UiInputNumber from '../ui/UiInputNumber.vue';
@@ -529,7 +529,7 @@ const handleDelete = () => {
 </script>
 
 <template>
-  <Dialog
+  <UiDialog
     :visible="props.visible"
     :modal="true"
     class="txn-dialog"
@@ -859,7 +859,7 @@ const handleDelete = () => {
         </div>
       </footer>
     </form>
-  </Dialog>
+  </UiDialog>
 </template>
 
 <style scoped>

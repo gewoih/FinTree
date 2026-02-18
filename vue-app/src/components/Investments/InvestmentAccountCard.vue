@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue';
-import Menu from 'primevue/menu';
+import UiMenu from '@/ui/UiMenu.vue';
 import type { AccountType, Currency, InvestmentAccountOverviewDto } from '../../types';
 import { getAccountTypeInfo, getCurrencyFlag } from '../../utils/accountHelpers';
 import { formatCurrency, formatDate } from '../../utils/formatters';
@@ -22,7 +22,7 @@ const emit = defineEmits<{
   (e: 'updateLiquidity', value: boolean): void;
 }>();
 
-const menuRef = ref<InstanceType<typeof Menu> | null>(null);
+const menuRef = ref<{ toggle: (event: Event) => void } | null>(null);
 
 const accountTypeInfo = computed(() => getAccountTypeInfo(props.account.type as AccountType));
 const currencyFlag = computed(() => getCurrencyFlag(props.account.currencyCode));
@@ -104,7 +104,7 @@ const toggleMenu = (event: Event) => {
       >
         <i class="pi pi-ellipsis-v" />
       </button>
-      <Menu
+      <UiMenu
         ref="menuRef"
         :model="menuItems"
         :popup="true"

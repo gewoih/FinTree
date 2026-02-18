@@ -1,9 +1,9 @@
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue'
 import { useToast } from 'primevue/usetoast'
-import Dialog from 'primevue/dialog'
-import InputNumber from 'primevue/inputnumber'
-import Message from 'primevue/message'
+import UiDialog from '@/ui/UiDialog.vue'
+import UiInputNumber from '@/ui/UiInputNumber.vue'
+import UiMessage from '@/ui/UiMessage.vue'
 import type { Account, AccountBalanceAdjustmentDto } from '../types'
 import { apiService } from '../services/api.service'
 import { useFinanceStore } from '../stores/finance'
@@ -149,7 +149,7 @@ watch(
 </script>
 
 <template>
-  <Dialog
+  <UiDialog
     :visible="props.visible"
     :closable="false"
     modal
@@ -161,7 +161,9 @@ watch(
   >
     <div class="adjustments-modal">
       <header class="adjustments-modal__header">
-        <h2 class="adjustments-modal__title">Корректировка баланса</h2>
+        <h2 class="adjustments-modal__title">
+          Корректировка баланса
+        </h2>
         <button
           type="button"
           class="adjustments-modal__close"
@@ -185,7 +187,7 @@ watch(
         required
       >
         <template #default="{ fieldAttrs }">
-          <InputNumber
+          <UiInputNumber
             v-model="newBalance"
             :input-id="fieldAttrs.id"
             :min-fraction-digits="2"
@@ -230,13 +232,13 @@ watch(
           v-else-if="error"
           class="adjustments-modal__error"
         >
-          <Message
+          <UiMessage
             severity="error"
             icon="pi pi-exclamation-triangle"
             :closable="false"
           >
             {{ error }}
-          </Message>
+          </UiMessage>
         </div>
 
         <EmptyState
@@ -267,7 +269,7 @@ watch(
         </ul>
       </section>
     </div>
-  </Dialog>
+  </UiDialog>
 </template>
 
 <style scoped>

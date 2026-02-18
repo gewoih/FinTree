@@ -1,10 +1,10 @@
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue';
-import Dialog from 'primevue/dialog';
-import Select from 'primevue/select';
-import InputNumber from 'primevue/inputnumber';
-import InputText from 'primevue/inputtext';
-import DatePicker from 'primevue/datepicker';
+import UiDialog from '../ui/UiDialog.vue';
+import UiSelect from '../ui/UiSelect.vue';
+import UiInputNumber from '../ui/UiInputNumber.vue';
+import UiInputText from '../ui/UiInputText.vue';
+import UiDatePicker from '../ui/UiDatePicker.vue';
 import { useConfirm } from 'primevue/useconfirm';
 import UiButton from '../ui/UiButton.vue';
 import { useToast } from 'primevue/usetoast';
@@ -277,7 +277,7 @@ const handleDelete = () => {
 </script>
 
 <template>
-  <Dialog
+  <UiDialog
     :visible="props.visible"
     modal
     class="transfer-dialog"
@@ -312,7 +312,7 @@ const handleDelete = () => {
         <!-- From block -->
         <div class="xfer-flow__block">
           <span class="xfer-flow__label">Откуда</span>
-          <Select
+          <UiSelect
             id="from-account"
             v-model="fromAccount"
             :options="store.accounts"
@@ -333,9 +333,9 @@ const handleDelete = () => {
                 </span>
               </div>
             </template>
-          </Select>
+          </UiSelect>
           <div class="xfer-flow__amount-row">
-            <InputNumber
+            <UiInputNumber
               id="from-amount"
               v-model="fromAmount"
               mode="decimal"
@@ -360,7 +360,7 @@ const handleDelete = () => {
         <!-- To block -->
         <div class="xfer-flow__block">
           <span class="xfer-flow__label">Куда</span>
-          <Select
+          <UiSelect
             id="to-account"
             v-model="toAccount"
             :options="store.accounts.filter(acc => acc.id !== fromAccount?.id)"
@@ -380,12 +380,12 @@ const handleDelete = () => {
                 </span>
               </div>
             </template>
-          </Select>
+          </UiSelect>
           <div
             v-if="!isSameCurrency"
             class="xfer-flow__amount-row"
           >
-            <InputNumber
+            <UiInputNumber
               id="to-amount"
               v-model="toAmount"
               mode="decimal"
@@ -418,7 +418,7 @@ const handleDelete = () => {
         <div class="xfer-form__field">
           <label for="fee-amount">Комиссия</label>
           <div class="xfer-flow__amount-row">
-            <InputNumber
+            <UiInputNumber
               id="fee-amount"
               v-model="feeAmount"
               mode="decimal"
@@ -434,7 +434,7 @@ const handleDelete = () => {
 
         <div class="xfer-form__field">
           <label for="transfer-date">Дата</label>
-          <DatePicker
+          <UiDatePicker
             id="transfer-date"
             v-model="date"
             date-format="dd.mm.yy"
@@ -450,7 +450,7 @@ const handleDelete = () => {
       <!-- Description -->
       <div class="xfer-form__field xfer-form__field--full">
         <label for="transfer-description">Заметка</label>
-        <InputText
+        <UiInputText
           id="transfer-description"
           v-model="description"
           placeholder="Например: перевод между счетами"
@@ -491,7 +491,7 @@ const handleDelete = () => {
         </div>
       </footer>
     </form>
-  </Dialog>
+  </UiDialog>
 </template>
 
 <style scoped>

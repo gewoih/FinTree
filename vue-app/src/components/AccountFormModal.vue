@@ -1,10 +1,10 @@
 <script setup lang="ts">
 import { computed, onMounted, ref, watch } from 'vue'
-import Dialog from 'primevue/dialog'
-import InputNumber from 'primevue/inputnumber'
-import InputText from 'primevue/inputtext'
-import Select from 'primevue/select'
-import ToggleSwitch from 'primevue/toggleswitch'
+import UiDialog from '../ui/UiDialog.vue'
+import UiInputNumber from '../ui/UiInputNumber.vue'
+import UiInputText from '../ui/UiInputText.vue'
+import UiSelect from '../ui/UiSelect.vue'
+import UiToggleSwitch from '../ui/UiToggleSwitch.vue'
 import { useFinanceStore } from '../stores/finance'
 import { useFormModal } from '../composables/useFormModal'
 import type { Account, AccountType } from '../types'
@@ -186,7 +186,7 @@ const handleSubmit = async () => {
 </script>
 
 <template>
-  <Dialog
+  <UiDialog
     :visible="props.visible"
     :closable="false"
     modal
@@ -198,7 +198,9 @@ const handleSubmit = async () => {
   >
     <div class="account-form__container">
       <header class="account-form__header">
-        <h2 class="account-form__title">{{ dialogTitle }}</h2>
+        <h2 class="account-form__title">
+          {{ dialogTitle }}
+        </h2>
         <button
           type="button"
           class="account-form__close"
@@ -209,154 +211,154 @@ const handleSubmit = async () => {
         </button>
       </header>
 
-    <form
-      class="form-layout"
-      novalidate
-      @submit.prevent="handleSubmit"
-    >
-      <FormField
-        label="Название счёта"
-        :error="nameError"
-        required
+      <form
+        class="form-layout"
+        novalidate
+        @submit.prevent="handleSubmit"
       >
-        <template #default="{ fieldAttrs }">
-          <InputText
-            v-bind="fieldAttrs"
-            v-model="name"
-            class="w-full"
-            placeholder="Например, «Основная карта»"
-            autocomplete="off"
-            :autofocus="props.visible"
-          />
-        </template>
-      </FormField>
-
-      <FormField label="Тип счёта">
-        <template #default="{ fieldAttrs }">
-          <Select
-            v-if="hasMultipleTypes"
-            v-model="selectedType"
-            :options="typeOptions"
-            option-label="label"
-            option-value="value"
-            class="w-full"
-            :disabled="isEditing"
-            :input-id="fieldAttrs.id"
-            :aria-describedby="fieldAttrs['aria-describedby']"
-          >
-            <template #value="slotProps">
-              <div
-                v-if="slotProps.value != null"
-                class="type-option"
-              >
-                <i
-                  :class="'pi ' + getAccountTypeInfo(slotProps.value).icon"
-                  aria-hidden="true"
-                />
-                <span>{{ getAccountTypeInfo(slotProps.value).label }}</span>
-              </div>
-            </template>
-            <template #option="slotProps">
-              <div class="type-option">
-                <i
-                  :class="'pi ' + slotProps.option.icon"
-                  aria-hidden="true"
-                />
-                <span>{{ slotProps.option.label }}</span>
-              </div>
-            </template>
-          </Select>
-          <div
-            v-else
-            class="static-field"
-          >
-            <i
-              :class="'pi ' + currentTypeInfo.icon"
-              aria-hidden="true"
-            />
-            <span>{{ currentTypeInfo.label }}</span>
-          </div>
-        </template>
-        <template #hint>
-          {{ hasMultipleTypes ? 'Тип счёта определяет, как он будет отображаться и учитываться в аналитике.' : 'На этой странице доступны только банковские счета.' }}
-        </template>
-      </FormField>
-
-      <FormField
-        label="Валюта"
-        :error="currencyError"
-        required
-      >
-        <template #default="{ fieldAttrs }">
-          <Select
-            v-model="selectedCurrencyCode"
-            :options="currencyOptions"
-            option-label="label"
-            option-value="value"
-            placeholder="Выберите валюту"
-            class="w-full"
-            :disabled="isEditing || store.areCurrenciesLoading || !currencyOptions.length"
-            :input-id="fieldAttrs.id"
-            :aria-describedby="fieldAttrs['aria-describedby']"
-            :aria-invalid="fieldAttrs['aria-invalid']"
-          />
-        </template>
-        <template #hint>
-          <span>{{ currencyHint }}</span>
-        </template>
-      </FormField>
-
-      <FormField
-        v-if="!isEditing"
-        label="Начальный остаток"
-      >
-        <template #default="{ fieldAttrs }">
-          <InputNumber
-            v-model="initialBalance"
-            :input-id="fieldAttrs.id"
-            :min-fraction-digits="2"
-            :max-fraction-digits="2"
-            :use-grouping="true"
-            class="w-full"
-            placeholder="0.00"
-          />
-        </template>
-        <template #hint>
-          Можно оставить пустым и скорректировать позже.
-        </template>
-      </FormField>
-
-      <FormField
-        v-if="!isEditing"
-        label="Доступность средств"
-      >
-        <template #default="{ fieldAttrs }">
-          <div class="liquidity-toggle">
-            <ToggleSwitch
-              v-bind="fieldAttrs"
-              v-model="isLiquid"
-            />
-            <span>{{ isLiquid ? 'Быстрый доступ' : 'Долгосрочный' }}</span>
-          </div>
-        </template>
-        <template #hint>
-          Можно ли быстро снять деньги без потерь. Счета с быстрым доступом учитываются в финансовой подушке.
-        </template>
-      </FormField>
-
-      <div class="actions">
-        <UiButton
-          type="submit"
-          :icon="submitIcon"
-          :loading="isSubmitting"
-          :disabled="!isFormReady || isSubmitting"
+        <FormField
+          label="Название счёта"
+          :error="nameError"
+          required
         >
-          {{ submitLabel }}
-        </UiButton>
-      </div>
-    </form>
+          <template #default="{ fieldAttrs }">
+            <UiInputText
+              v-bind="fieldAttrs"
+              v-model="name"
+              class="w-full"
+              placeholder="Например, «Основная карта»"
+              autocomplete="off"
+              :autofocus="props.visible"
+            />
+          </template>
+        </FormField>
+
+        <FormField label="Тип счёта">
+          <template #default="{ fieldAttrs }">
+            <UiSelect
+              v-if="hasMultipleTypes"
+              v-model="selectedType"
+              :options="typeOptions"
+              option-label="label"
+              option-value="value"
+              class="w-full"
+              :disabled="isEditing"
+              :input-id="fieldAttrs.id"
+              :aria-describedby="fieldAttrs['aria-describedby']"
+            >
+              <template #value="slotProps">
+                <div
+                  v-if="slotProps.value != null"
+                  class="type-option"
+                >
+                  <i
+                    :class="'pi ' + getAccountTypeInfo(slotProps.value).icon"
+                    aria-hidden="true"
+                  />
+                  <span>{{ getAccountTypeInfo(slotProps.value).label }}</span>
+                </div>
+              </template>
+              <template #option="slotProps">
+                <div class="type-option">
+                  <i
+                    :class="'pi ' + slotProps.option.icon"
+                    aria-hidden="true"
+                  />
+                  <span>{{ slotProps.option.label }}</span>
+                </div>
+              </template>
+            </UiSelect>
+            <div
+              v-else
+              class="static-field"
+            >
+              <i
+                :class="'pi ' + currentTypeInfo.icon"
+                aria-hidden="true"
+              />
+              <span>{{ currentTypeInfo.label }}</span>
+            </div>
+          </template>
+          <template #hint>
+            {{ hasMultipleTypes ? 'Тип счёта определяет, как он будет отображаться и учитываться в аналитике.' : 'На этой странице доступны только банковские счета.' }}
+          </template>
+        </FormField>
+
+        <FormField
+          label="Валюта"
+          :error="currencyError"
+          required
+        >
+          <template #default="{ fieldAttrs }">
+            <UiSelect
+              v-model="selectedCurrencyCode"
+              :options="currencyOptions"
+              option-label="label"
+              option-value="value"
+              placeholder="Выберите валюту"
+              class="w-full"
+              :disabled="isEditing || store.areCurrenciesLoading || !currencyOptions.length"
+              :input-id="fieldAttrs.id"
+              :aria-describedby="fieldAttrs['aria-describedby']"
+              :aria-invalid="fieldAttrs['aria-invalid']"
+            />
+          </template>
+          <template #hint>
+            <span>{{ currencyHint }}</span>
+          </template>
+        </FormField>
+
+        <FormField
+          v-if="!isEditing"
+          label="Начальный остаток"
+        >
+          <template #default="{ fieldAttrs }">
+            <UiInputNumber
+              v-model="initialBalance"
+              :input-id="fieldAttrs.id"
+              :min-fraction-digits="2"
+              :max-fraction-digits="2"
+              :use-grouping="true"
+              class="w-full"
+              placeholder="0.00"
+            />
+          </template>
+          <template #hint>
+            Можно оставить пустым и скорректировать позже.
+          </template>
+        </FormField>
+
+        <FormField
+          v-if="!isEditing"
+          label="Доступность средств"
+        >
+          <template #default="{ fieldAttrs }">
+            <div class="liquidity-toggle">
+              <UiToggleSwitch
+                v-bind="fieldAttrs"
+                v-model="isLiquid"
+              />
+              <span>{{ isLiquid ? 'Быстрый доступ' : 'Долгосрочный' }}</span>
+            </div>
+          </template>
+          <template #hint>
+            Можно ли быстро снять деньги без потерь. Счета с быстрым доступом учитываются в финансовой подушке.
+          </template>
+        </FormField>
+
+        <div class="actions">
+          <UiButton
+            type="submit"
+            :icon="submitIcon"
+            :loading="isSubmitting"
+            :disabled="!isFormReady || isSubmitting"
+          >
+            {{ submitLabel }}
+          </UiButton>
+        </div>
+      </form>
     </div>
-  </Dialog>
+  </UiDialog>
 </template>
 
 <style scoped>

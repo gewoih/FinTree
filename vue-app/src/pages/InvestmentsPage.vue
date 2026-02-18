@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed, onMounted, ref, watch } from 'vue';
 import { useToast } from 'primevue/usetoast';
-import Message from 'primevue/message';
+import UiMessage from '@/ui/UiMessage.vue';
 import type {
   AccountType,
   InvestmentAccountOverviewDto,
@@ -354,13 +354,13 @@ onMounted(async () => {
           v-else-if="overviewError && accounts.length === 0"
           class="investments-accounts__message"
         >
-          <Message
+          <UiMessage
             severity="error"
             icon="pi pi-exclamation-triangle"
             :closable="false"
           >
             {{ overviewError }}
-          </Message>
+          </UiMessage>
         </div>
 
         <EmptyState

@@ -535,8 +535,8 @@ async function handlePay(plan: SubscriptionPlan) {
           </button>
 
           <div
-            id="payment-history-content"
             v-show="isPaymentHistoryOpen"
+            id="payment-history-content"
             class="payment-history-body"
           >
             <div

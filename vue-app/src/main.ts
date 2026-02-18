@@ -1,6 +1,7 @@
 import './assets/design-tokens.css';
 import './style.css';
 import './styles/theme.css';
+import './styles/prime-unstyled-shared.css';
 import './styles/prime-overrides.css';
 import { createApp } from 'vue';
 import { createPinia } from 'pinia';
@@ -8,8 +9,6 @@ import App from './App.vue';
 import router from './router';
 
 import PrimeVue from 'primevue/config';
-import { definePreset } from '@primeuix/themes';
-import Aura from '@primeuix/themes/aura';
 import "primeicons/primeicons.css";
 import ToastService from 'primevue/toastservice';
 import ConfirmationService from 'primevue/confirmationservice';
@@ -41,24 +40,6 @@ const applyInitialThemeClass = () => {
 
 applyInitialThemeClass();
 
-const FinTreePreset = definePreset(Aura, {
-    semantic: {
-        primary: {
-            50: '#F0F4FF',
-            100: '#DDE6FF',
-            200: '#BAC9FF',
-            300: '#8BA4F0',
-            400: '#6B82DB',
-            500: '#4F63B8',
-            600: '#3F509E',
-            700: '#334085',
-            800: '#27316B',
-            900: '#1C2352',
-            950: '#111538',
-        },
-    },
-});
-
 const ruLocale = {
     dayNames: ['воскресенье', 'понедельник', 'вторник', 'среда', 'четверг', 'пятница', 'суббота'],
     dayNamesShort: ['вс', 'пн', 'вт', 'ср', 'чт', 'пт', 'сб'],
@@ -86,16 +67,7 @@ app.use(router);
 
 app.use(PrimeVue, {
     locale: ruLocale,
-    theme: {
-        preset: FinTreePreset,
-        options: {
-            darkModeSelector: '.dark-mode',
-            cssLayer: {
-                name: 'primevue',
-                order: 'reset, tokens, base, components, primevue, overrides'
-            }
-        }
-    }
+    unstyled: true,
 });
 
 app.directive('tooltip', Tooltip);

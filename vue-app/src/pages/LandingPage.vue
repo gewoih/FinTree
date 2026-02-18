@@ -184,7 +184,10 @@ const scrollToSection = (sectionId: string) => {
           to="/"
           class="landing__brand"
         >
-          <i class="pi pi-chart-bar" aria-hidden="true" />
+          <i
+            class="pi pi-chart-bar"
+            aria-hidden="true"
+          />
           <span>FinTree</span>
         </router-link>
 
@@ -230,15 +233,24 @@ const scrollToSection = (sectionId: string) => {
 
             <div class="landing__trust">
               <div class="landing__trust-item">
-                <i class="pi pi-lock" aria-hidden="true" />
+                <i
+                  class="pi pi-lock"
+                  aria-hidden="true"
+                />
                 <span>Данные под защитой</span>
               </div>
               <div class="landing__trust-item">
-                <i class="pi pi-times-circle" aria-hidden="true" />
+                <i
+                  class="pi pi-times-circle"
+                  aria-hidden="true"
+                />
                 <span>Без банковской карты</span>
               </div>
               <div class="landing__trust-item">
-                <i class="pi pi-check-circle" aria-hidden="true" />
+                <i
+                  class="pi pi-check-circle"
+                  aria-hidden="true"
+                />
                 <span>Простая запись расходов</span>
               </div>
             </div>
@@ -338,14 +350,20 @@ const scrollToSection = (sectionId: string) => {
                 class="landing__problem-icon"
                 :style="{ background: problem.bg, color: problem.color }"
               >
-                <i :class="['pi', problem.icon]" aria-hidden="true" />
+                <i
+                  :class="['pi', problem.icon]"
+                  aria-hidden="true"
+                />
               </div>
               <p>{{ problem.text }}</p>
             </UiCard>
           </div>
 
           <div class="landing__solution-bridge">
-            <i class="pi pi-arrow-down" aria-hidden="true" />
+            <i
+              class="pi pi-arrow-down"
+              aria-hidden="true"
+            />
             <p><strong>FinTree снимает эту рутину.</strong> 10 секунд на запись в Telegram, а в кабинете уже готовые выводы по расходам.</p>
           </div>
         </div>
@@ -371,7 +389,10 @@ const scrollToSection = (sectionId: string) => {
               class="landing__feature-card"
             >
               <div class="landing__feature-icon">
-                <i :class="['pi', feature.icon]" aria-hidden="true" />
+                <i
+                  :class="['pi', feature.icon]"
+                  aria-hidden="true"
+                />
               </div>
               <h3>{{ feature.title }}</h3>
               <p>{{ feature.description }}</p>
@@ -500,7 +521,10 @@ const scrollToSection = (sectionId: string) => {
                 @click="toggleFaq(index)"
               >
                 <span>{{ item.question }}</span>
-                <i :class="['pi', expandedIndex === index ? 'pi-chevron-up' : 'pi-chevron-down']" aria-hidden="true" />
+                <i
+                  :class="['pi', expandedIndex === index ? 'pi-chevron-up' : 'pi-chevron-down']"
+                  aria-hidden="true"
+                />
               </button>
               <transition name="faq">
                 <p
@@ -524,7 +548,10 @@ const scrollToSection = (sectionId: string) => {
             to="/"
             class="landing__brand"
           >
-            <i class="pi pi-chart-bar" aria-hidden="true" />
+            <i
+              class="pi pi-chart-bar"
+              aria-hidden="true"
+            />
             <span>FinTree</span>
           </router-link>
           <p>Финансовый помощник для тех, кто хочет тратить осознанно.</p>
