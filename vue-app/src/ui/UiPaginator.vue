@@ -41,9 +41,15 @@ const mergedPt = computed(() =>
   mergePt(
     {
       root: { class: 'ui-paginator__root' },
+      content: { class: 'ui-paginator__content' },
       pages: { class: 'ui-paginator__pages' },
-      pageButton: { class: 'ui-paginator__page-button' },
-      rowsPerPageDropdown: { class: 'ui-paginator__rows' },
+      page: { class: 'ui-paginator__page-button' },
+      first: { class: 'ui-paginator__nav ui-paginator__nav--first' },
+      prev: { class: 'ui-paginator__nav ui-paginator__nav--prev' },
+      next: { class: 'ui-paginator__nav ui-paginator__nav--next' },
+      last: { class: 'ui-paginator__nav ui-paginator__nav--last' },
+      current: { class: 'ui-paginator__current' },
+      pcRowPerPageDropdown: { class: 'ui-paginator__rows' },
     } as Record<string, unknown>,
     props.pt
   )

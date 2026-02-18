@@ -24,7 +24,7 @@ const props = withDefaults(
     pt: undefined,
     appendTo: 'body',
     autoZIndex: true,
-    baseZIndex: 1050,
+    baseZIndex: 0,
   }
 );
 

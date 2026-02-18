@@ -45,7 +45,7 @@ const tabs = [
   align-items: stretch;
 
   height: var(--ft-bottom-bar-height);
-  padding-bottom: env(safe-area-inset-bottom, 0px);
+  padding-bottom: env(safe-area-inset-bottom, 0);
 
   background: linear-gradient(
     180deg,

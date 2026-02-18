@@ -29,8 +29,14 @@ const mergedPt = computed(() =>
     {
       root: { class: 'ui-toast__root' },
       message: { class: 'ui-toast__message' },
+      messageContent: { class: 'ui-toast__message-content' },
+      messageIcon: { class: 'ui-toast__message-icon' },
+      messageText: { class: 'ui-toast__message-text' },
       summary: { class: 'ui-toast__summary' },
       detail: { class: 'ui-toast__detail' },
+      buttonContainer: { class: 'ui-toast__button-container' },
+      closeButton: { class: 'ui-toast__close-button' },
+      closeIcon: { class: 'ui-toast__close-icon' },
     } as Record<string, unknown>,
     props.pt
   )

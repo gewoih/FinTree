@@ -25,7 +25,7 @@ const mergedPt = computed(() =>
   mergePt(
     {
       root: {
-        class: 'ui-input__root',
+        class: 'ui-input__root p-inputtext',
       },
     } as InputTextPassThroughOptions,
     props.pt

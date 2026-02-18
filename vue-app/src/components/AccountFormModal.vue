@@ -410,6 +410,10 @@ const handleSubmit = async () => {
   gap: var(--ft-space-4);
 }
 
+.form-layout :deep(.ui-input),
+.form-layout :deep(.ui-input-number__root),
+.form-layout :deep(.ui-input-number__input),
+.form-layout :deep(.ui-select__root),
 .form-layout :deep(.p-inputtext),
 .form-layout :deep(.p-inputnumber),
 .form-layout :deep(.p-inputnumber-input),
@@ -417,6 +421,7 @@ const handleSubmit = async () => {
   width: 100%;
 }
 
+.form-layout :deep(.ui-select__label),
 .form-layout :deep(.p-select-label) {
   overflow: hidden;
   text-overflow: ellipsis;

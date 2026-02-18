@@ -249,8 +249,7 @@ function shouldShowAction(step: OnboardingStep): boolean {
 .onboarding-stepper__skip {
   cursor: pointer;
 
-  align-self: center;
-  justify-self: center;
+  place-self: center;
 
   padding: var(--ft-space-2) var(--ft-space-3);
 

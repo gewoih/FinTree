@@ -1059,12 +1059,15 @@ const handleDelete = () => {
   box-shadow: none;
 }
 
+.txn-form__amount-input :deep(.ui-input-number__input:focus),
+.txn-form__amount-input :deep(.ui-input-number__input:focus-visible),
 .txn-form__amount-input :deep(.p-inputnumber-input.p-inputtext:focus),
 .txn-form__amount-input :deep(.p-inputnumber-input.p-inputtext:focus-visible) {
   outline: none;
   box-shadow: none;
 }
 
+.txn-form__amount-input :deep(.ui-input-number__input),
 .txn-form__amount-input :deep(.p-inputnumber-input.p-inputtext) {
   width: 100%;
   min-width: 0;
@@ -1196,31 +1199,7 @@ const handleDelete = () => {
 }
 
 .txn-form__date-picker {
-  overflow: hidden;
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) auto;
-
   width: 100%;
-
-  border-radius: var(--ft-radius-lg);
-}
-
-.txn-form__date-picker :deep(.p-datepicker-input),
-.txn-form__date-picker :deep(.p-datepicker input.p-inputtext) {
-  width: 100%;
-  min-width: 0;
-  border-radius: 0;
-}
-
-.txn-form__date-picker :deep(.p-datepicker-dropdown) {
-  width: var(--ft-control-height);
-  min-width: var(--ft-control-height);
-  border-radius: 0;
-}
-
-.txn-form__date-picker :deep(.p-datepicker-input:focus-visible),
-.txn-form__date-picker :deep(.p-datepicker-dropdown:focus-visible) {
-  outline: none;
 }
 
 .txn-form__option-line {

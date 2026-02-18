@@ -505,8 +505,7 @@ const handleDelete = () => {
 }
 
 .transfer-dialog :deep(.p-dialog-content) {
-  overflow-x: hidden;
-  overflow-y: auto;
+  overflow: hidden auto;
   padding: 0;
 }
 
@@ -590,11 +589,13 @@ const handleDelete = () => {
   min-width: 0;
 }
 
+.xfer-flow__amount-row :deep(.ui-input-number__root),
 .xfer-flow__amount-row :deep(.p-inputnumber) {
   flex: 1;
   min-width: 0;
 }
 
+.xfer-flow__amount-row :deep(.ui-input-number__input),
 .xfer-flow__amount-row :deep(.p-inputnumber-input) {
   width: 100%;
   min-width: 0;

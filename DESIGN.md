@@ -30,6 +30,13 @@ All tokens use `--ft-*` prefix, defined in `vue-app/src/assets/design-tokens.css
 ### PrimeVue Unstyled Contract
 
 - PrimeVue is configured in unstyled mode in `vue-app/src/main.ts`.
+- PrimeVue runtime z-index contract is fixed in bootstrap:
+  - `modal: 1040`
+  - `overlay: 1050`
+  - `menu: 1050`
+  - `tooltip: 1070`
+- Wrapper `baseZIndex` defaults:
+  - `UiDialog`, `UiDrawer`, `UiDatePicker`, `UiMenu` use `0` by default and rely on global PrimeVue z-index contract.
 - Visual PrimeVue components must be consumed only through `vue-app/src/ui/*` wrappers.
 - Direct imports are allowed only for service/runtime hooks: `primevue/config`, `primevue/toastservice`, `primevue/confirmationservice`, `primevue/tooltip`, `primevue/usetoast`, `primevue/useconfirm`, plus type-only `primevue/menuitem`.
 - Wrapper-level unstyled toggles are controlled by env flags:
@@ -52,6 +59,25 @@ All tokens use `--ft-*` prefix, defined in `vue-app/src/assets/design-tokens.css
   - `VITE_PRIME_UNSTYLED_UI_DRAWER`
   - `VITE_PRIME_UNSTYLED_UI_TOAST`
   - `VITE_PRIME_UNSTYLED_UI_CONFIRM_DIALOG`
+
+### PrimeVue Styling Ownership Matrix
+
+| Wrapper | PT sections owned by wrapper | CSS owner |
+|---|---|---|
+| `UiInputText` | `root` | `styles/prime-unstyled-shared.css` |
+| `UiInputNumber` | `root`, `pcInputText.root` | `styles/prime-unstyled-shared.css` |
+| `UiSelect` | `root`, `label`, `dropdown`, `overlay`, `listContainer`, `list`, `option`, `optionLabel`, `emptyMessage` | `styles/prime-unstyled-shared.css` |
+| `UiDatePicker` | `root`, `pcInputText.root`, `dropdown`, `panel`, `calendarContainer`, `calendar`, `header`, `title`, `weekDayCell`, `weekDay`, `dayCell`, `day`, `buttonbar` | `styles/prime-unstyled-shared.css` |
+| `UiSelectButton` | `root`, `pcToggleButton.root` | `styles/prime-unstyled-shared.css` |
+| `UiToggleSwitch` | `root`, `input`, `slider`, `handle` | `styles/prime-unstyled-shared.css` |
+| `UiToastHost` | `root`, `message`, `messageContent`, `messageIcon`, `messageText`, `summary`, `detail`, `buttonContainer`, `closeButton`, `closeIcon` | `styles/prime-unstyled-shared.css` |
+| `UiPaginator` | `root`, `content`, `pages`, `page`, `first`, `prev`, `next`, `last`, `current`, `pcRowPerPageDropdown` | `styles/prime-unstyled-shared.css` |
+
+### `:deep(.p-*)` Usage Rules
+
+- In feature components/pages, `:deep(.p-*)` is allowed only for local layout constraints that cannot be expressed through wrapper API.
+- Visual theming for Prime primitives (colors, borders, hover/focus, overlay surfaces, menu/list/calendar internals, toast, paginator, switches) is owned centrally by `styles/prime-unstyled-shared.css`.
+- `styles/prime-overrides.css` is a legacy compatibility layer and must not own overlay/form-control behavior.
 
 ### Typography
 

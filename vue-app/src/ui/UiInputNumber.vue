@@ -36,10 +36,12 @@ const mergedPt = computed(() =>
   mergePt(
     {
       root: {
-        class: 'ui-input-number__root',
+        class: 'ui-input-number__root p-inputnumber p-component p-inputwrapper',
       },
       pcInputText: {
-        class: 'ui-input-number__input',
+        root: {
+          class: 'ui-input-number__input p-inputnumber-input p-inputtext',
+        },
       },
     } as InputNumberPassThroughOptions,
     props.pt

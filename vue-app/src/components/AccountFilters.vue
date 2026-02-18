@@ -225,6 +225,7 @@ const handleTypeUpdate = (value: unknown) => {
   color: var(--ft-text-secondary);
 }
 
+.filter-input :deep(.ui-input),
 .filter-input :deep(.p-inputtext) {
   flex: 1;
 
@@ -235,6 +236,8 @@ const handleTypeUpdate = (value: unknown) => {
   box-shadow: none !important;
 }
 
+.filter-input :deep(.ui-input:focus),
+.filter-input :deep(.ui-input:focus-visible),
 .filter-input :deep(.p-inputtext:focus) {
   border: none !important;
   box-shadow: none !important;

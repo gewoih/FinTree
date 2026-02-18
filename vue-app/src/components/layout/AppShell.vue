@@ -398,7 +398,6 @@ onMounted(() => {
     color-mix(in srgb, var(--ft-surface-raised) 95%, var(--ft-surface-base))
   );
   backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
   border-bottom: 1px solid var(--ft-border-default);
   box-shadow:
     0 2px 12px rgb(0 0 0 / 8%),

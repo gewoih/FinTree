@@ -32,16 +32,31 @@ const mergedPt = computed(() =>
   mergePt(
     {
       root: {
-        class: 'ui-select__root',
+        class: 'ui-select__root p-select p-component p-inputwrapper',
       },
       label: {
-        class: 'ui-select__label',
+        class: 'ui-select__label p-select-label',
       },
       dropdown: {
-        class: 'ui-select__dropdown',
+        class: 'ui-select__dropdown p-select-dropdown',
       },
       overlay: {
-        class: 'ui-select-overlay',
+        class: 'ui-select-overlay p-select-overlay p-component',
+      },
+      listContainer: {
+        class: 'ui-select__list-container p-select-list-container',
+      },
+      list: {
+        class: 'ui-select__list p-select-list',
+      },
+      option: {
+        class: 'ui-select__option p-select-option',
+      },
+      optionLabel: {
+        class: 'ui-select__option-label p-select-option-label',
+      },
+      emptyMessage: {
+        class: 'ui-select__empty-message p-select-empty-message',
       },
     } as SelectPassThroughOptions,
     props.pt

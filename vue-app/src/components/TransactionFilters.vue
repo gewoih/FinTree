@@ -160,6 +160,7 @@ const hasActiveFilters = computed(() =>
   flex-shrink: 0;
 }
 
+.transaction-filters__search :deep(.ui-input),
 .transaction-filters__search :deep(.p-inputtext) {
   flex: 1;
   background: transparent;
@@ -168,6 +169,8 @@ const hasActiveFilters = computed(() =>
   padding-left: 0;
 }
 
+.transaction-filters__search :deep(.ui-input:focus),
+.transaction-filters__search :deep(.ui-input:focus-visible),
 .transaction-filters__search :deep(.p-inputtext:focus) {
   border: none !important;
   box-shadow: none !important;

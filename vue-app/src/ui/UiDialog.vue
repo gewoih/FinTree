@@ -19,7 +19,7 @@ const props = withDefaults(
     unstyled: undefined,
     pt: undefined,
     autoZIndex: true,
-    baseZIndex: 1040,
+    baseZIndex: 0,
     appendTo: 'body',
   }
 );

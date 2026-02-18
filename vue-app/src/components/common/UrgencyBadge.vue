@@ -118,6 +118,7 @@ withDefaults(defineProps<Props>(), {
     opacity: 1;
     transform: scale(1);
   }
+
   50% {
     opacity: 0.85;
     transform: scale(1.02);

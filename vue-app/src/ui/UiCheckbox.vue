@@ -33,10 +33,10 @@ const isUnstyled = computed(() => resolvePrimeUnstyled('uiCheckbox', props.unsty
 const mergedPt = computed(() =>
   mergePt(
     {
-      root: { class: 'ui-checkbox__root' },
-      box: { class: 'ui-checkbox__box' },
-      input: { class: 'ui-checkbox__input' },
-      icon: { class: 'ui-checkbox__icon' },
+      root: { class: 'ui-checkbox__root p-checkbox p-component' },
+      box: { class: 'ui-checkbox__box p-checkbox-box' },
+      input: { class: 'ui-checkbox__input p-checkbox-input' },
+      icon: { class: 'ui-checkbox__icon p-checkbox-icon' },
     } as Record<string, unknown>,
     props.pt
   )

@@ -18,7 +18,7 @@ const props = withDefaults(
     unstyled: undefined,
     pt: undefined,
     autoZIndex: true,
-    baseZIndex: 1030,
+    baseZIndex: 0,
   }
 );
 

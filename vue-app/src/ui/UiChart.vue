@@ -31,7 +31,7 @@ const isUnstyled = computed(() => resolvePrimeUnstyled('uiChart', props.unstyled
 const mergedPt = computed(() =>
   mergePt(
     {
-      root: { class: 'ui-chart__root' },
+      root: { class: 'ui-chart__root p-chart' },
       canvas: { class: 'ui-chart__canvas' },
     } as Record<string, unknown>,
     props.pt

@@ -31,10 +31,10 @@ const isUnstyled = computed(() => resolvePrimeUnstyled('uiToggleSwitch', props.u
 const mergedPt = computed(() =>
   mergePt(
     {
-      root: { class: 'ui-toggle-switch__root' },
-      slider: { class: 'ui-toggle-switch__slider' },
-      handle: { class: 'ui-toggle-switch__handle' },
-      input: { class: 'ui-toggle-switch__input' },
+      root: { class: 'ui-toggle-switch__root p-toggleswitch p-component' },
+      slider: { class: 'ui-toggle-switch__slider p-toggleswitch-slider' },
+      handle: { class: 'ui-toggle-switch__handle p-toggleswitch-handle' },
+      input: { class: 'ui-toggle-switch__input p-toggleswitch-input' },
     } as Record<string, unknown>,
     props.pt
   )

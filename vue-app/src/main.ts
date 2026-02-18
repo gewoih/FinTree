@@ -68,6 +68,12 @@ app.use(router);
 app.use(PrimeVue, {
     locale: ruLocale,
     unstyled: true,
+    zIndex: {
+        modal: 1040,
+        overlay: 1050,
+        menu: 1050,
+        tooltip: 1070,
+    },
 });
 
 app.directive('tooltip', Tooltip);

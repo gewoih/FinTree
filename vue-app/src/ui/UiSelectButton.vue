@@ -31,8 +31,10 @@ const mergedPt = computed(() =>
       root: {
         class: 'ui-select-button__root',
       },
-      button: {
-        class: 'ui-select-button__button',
+      pcToggleButton: {
+        root: {
+          class: 'ui-select-button__button p-togglebutton p-component',
+        },
       },
     } as SelectButtonPassThroughOptions,
     props.pt
