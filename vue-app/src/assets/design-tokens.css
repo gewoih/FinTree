@@ -9,114 +9,114 @@
 :root {
   /* ━━━ COLOR PALETTE ━━━ */
 
-  /* Primary (Muted Slate-Blue - Trust & Clarity) */
-  --ft-primary-50:  #F0F4FF;
-  --ft-primary-100: #DDE6FF;
-  --ft-primary-200: #BAC9FF;
-  --ft-primary-300: #8BA4F0;
-  --ft-primary-400: #6B82DB;
-  --ft-primary-500: #4F63B8;  /* Primary brand color */
-  --ft-primary-600: #3F509E;  /* Hover state */
-  --ft-primary-700: #334085;
-  --ft-primary-800: #27316B;
-  --ft-primary-900: #1C2352;
-  --ft-primary-950: #111538;
+  /* Primary (Mature Navy - Trust & Clarity) */
+  --ft-primary-50:  #F2F6FC;
+  --ft-primary-100: #E3EAF5;
+  --ft-primary-200: #C9D7E8;
+  --ft-primary-300: #9FB8D4;
+  --ft-primary-400: #6E8DB8;
+  --ft-primary-500: #4F6F98;  /* Primary brand color */
+  --ft-primary-600: #405A7D;  /* Hover state */
+  --ft-primary-700: #324763;
+  --ft-primary-800: #27384E;
+  --ft-primary-900: #1D2A3D;
+  --ft-primary-950: #131D2B;
 
-  /* Success (Green - Positive growth) */
-  --ft-success-50: #F0FDF4;
-  --ft-success-100: #DCFCE7;
-  --ft-success-200: #BBF7D0;
-  --ft-success-300: #86EFAC;
-  --ft-success-400: #4ADE80;
-  --ft-success-500: #22C55E;  /* Success primary */
-  --ft-success-600: #16A34A;
-  --ft-success-700: #15803D;
-  --ft-success-800: #166534;
-  --ft-success-900: #14532D;
+  /* Success (Muted Emerald - Positive growth) */
+  --ft-success-50: #EFF8F3;
+  --ft-success-100: #D9EEDF;
+  --ft-success-200: #B7DEC7;
+  --ft-success-300: #8DC8A8;
+  --ft-success-400: #63B286;
+  --ft-success-500: #3A966D;  /* Success primary */
+  --ft-success-600: #2F7B59;
+  --ft-success-700: #256247;
+  --ft-success-800: #1D4B37;
+  --ft-success-900: #163A2B;
 
-  /* Warning (Amber) */
-  --ft-warning-50: #FFFBEB;
-  --ft-warning-100: #FEF3C7;
-  --ft-warning-200: #FDE68A;
-  --ft-warning-300: #FCD34D;
-  --ft-warning-400: #FBBF24;
-  --ft-warning-500: #F59E0B;  /* Warning primary */
-  --ft-warning-600: #D97706;
-  --ft-warning-700: #B45309;
-  --ft-warning-800: #92400E;
-  --ft-warning-900: #78350F;
+  /* Warning (Burnished Amber) */
+  --ft-warning-50: #FCF7EA;
+  --ft-warning-100: #F2E7C7;
+  --ft-warning-200: #E3D094;
+  --ft-warning-300: #D2B866;
+  --ft-warning-400: #C7A246;
+  --ft-warning-500: #BC8F30;  /* Warning primary */
+  --ft-warning-600: #9D7527;
+  --ft-warning-700: #7E5D1F;
+  --ft-warning-800: #604618;
+  --ft-warning-900: #483412;
 
-  /* Danger (Red) */
-  --ft-danger-50: #FEF2F2;
-  --ft-danger-100: #FEE2E2;
-  --ft-danger-200: #FECACA;
-  --ft-danger-300: #FCA5A5;
-  --ft-danger-400: #F87171;
-  --ft-danger-500: #EF4444;  /* Danger primary */
-  --ft-danger-600: #DC2626;
-  --ft-danger-700: #B91C1C;
-  --ft-danger-800: #991B1B;
-  --ft-danger-900: #7F1D1D;
+  /* Danger (Muted Coral) */
+  --ft-danger-50: #FBEFEE;
+  --ft-danger-100: #F2D8D5;
+  --ft-danger-200: #E5B3AE;
+  --ft-danger-300: #D68E86;
+  --ft-danger-400: #C9766D;
+  --ft-danger-500: #BC655C;  /* Danger primary */
+  --ft-danger-600: #9E524A;
+  --ft-danger-700: #80423B;
+  --ft-danger-800: #64332E;
+  --ft-danger-900: #4D2723;
 
-  /* Info (Sky Blue) */
-  --ft-info-50: #F0F9FF;
-  --ft-info-100: #E0F2FE;
-  --ft-info-200: #BAE6FD;
-  --ft-info-300: #7DD3FC;
-  --ft-info-400: #38BDF8;
-  --ft-info-500: #0EA5E9;
-  --ft-info-600: #0284C7;
-  --ft-info-700: #0369A1;
-  --ft-info-800: #075985;
-  --ft-info-900: #0C4A6E;
+  /* Info (Slate Teal) */
+  --ft-info-50: #EEF6F9;
+  --ft-info-100: #D8EAF0;
+  --ft-info-200: #B5D6E1;
+  --ft-info-300: #8EBECC;
+  --ft-info-400: #68A6B9;
+  --ft-info-500: #488FA7;
+  --ft-info-600: #3A748A;
+  --ft-info-700: #2E5C6E;
+  --ft-info-800: #244754;
+  --ft-info-900: #1B353F;
 
   /* Orange (Risk / Elevated Warning) */
-  --ft-orange-50: #FFF7ED;
-  --ft-orange-100: #FFEDD5;
-  --ft-orange-200: #FED7AA;
-  --ft-orange-300: #FDBA74;
-  --ft-orange-400: #FB923C;
-  --ft-orange-500: #F97316;
-  --ft-orange-600: #EA580C;
-  --ft-orange-700: #C2410C;
-  --ft-orange-800: #9A3412;
-  --ft-orange-900: #7C2D12;
+  --ft-orange-50: #FBF3EC;
+  --ft-orange-100: #F2E1CF;
+  --ft-orange-200: #E2C3A0;
+  --ft-orange-300: #D0A271;
+  --ft-orange-400: #C58C55;
+  --ft-orange-500: #B97A43;
+  --ft-orange-600: #996338;
+  --ft-orange-700: #7A4F2D;
+  --ft-orange-800: #5D3C22;
+  --ft-orange-900: #462D1A;
 
-  /* Neutrals (Gray) */
-  --ft-gray-50: #F9FAFB;
-  --ft-gray-100: #F3F4F6;
-  --ft-gray-200: #E5E7EB;
-  --ft-gray-300: #D1D5DB;
-  --ft-gray-400: #9CA3AF;
-  --ft-gray-500: #6B7280;
-  --ft-gray-600: #4B5563;
-  --ft-gray-700: #374151;
-  --ft-gray-800: #1F2937;
-  --ft-gray-900: #111827;
-  --ft-gray-950: #0B1220;
+  /* Neutrals (Slate) */
+  --ft-gray-50: #F7F9FC;
+  --ft-gray-100: #EDF1F7;
+  --ft-gray-200: #DCE3EE;
+  --ft-gray-300: #C3CDDD;
+  --ft-gray-400: #98A7BE;
+  --ft-gray-500: #7486A1;
+  --ft-gray-600: #5A6C86;
+  --ft-gray-700: #45536A;
+  --ft-gray-800: #313C4E;
+  --ft-gray-900: #202837;
+  --ft-gray-950: #131A26;
 
   /* ━━━ SEMANTIC TOKENS - DARK THEME (DEFAULT) ━━━ */
 
   /* Backgrounds */
-  --ft-bg-base: #0C1017;
-  --ft-bg-subtle: #111620;
-  --ft-bg-muted: #161C28;
-  --ft-bg-elevated: #1E2636;
-  --ft-bg-overlay: rgb(8 12 20 / 72%);
+  --ft-bg-base: #0A111A;
+  --ft-bg-subtle: #0E1723;
+  --ft-bg-muted: #122033;
+  --ft-bg-elevated: #172740;
+  --ft-bg-overlay: rgb(6 10 16 / 74%);
 
   /* Surfaces */
-  --ft-surface-base: #181F2C;
-  --ft-surface-raised: #212A3C;
-  --ft-surface-overlay: #2A354A;
-  --ft-surface-soft: #151B26;
+  --ft-surface-base: #132033;
+  --ft-surface-raised: #1A2A41;
+  --ft-surface-overlay: #223551;
+  --ft-surface-soft: #101A2B;
   --ft-surface-muted: var(--ft-surface-overlay);
 
   /* Text */
-  --ft-text-primary: #E6ECF6;
-  --ft-text-secondary: #B1BCCF;
-  --ft-text-tertiary: #8A97AD;
-  --ft-text-disabled: #5A6577;
-  --ft-text-inverse: #F8FAFF;
+  --ft-text-primary: #E9EEF7;
+  --ft-text-secondary: #B8C2D3;
+  --ft-text-tertiary: #93A1B6;
+  --ft-text-disabled: #657389;
+  --ft-text-inverse: #F7FAFF;
   --ft-text-link: var(--ft-primary-300);
   --ft-text-link-hover: var(--ft-primary-200);
   --ft-text: var(--ft-text-primary);
@@ -124,21 +124,74 @@
   --ft-heading: var(--ft-text-primary);
 
   /* Borders */
-  --ft-border-subtle: #232D3F;
-  --ft-border-default: #313E54;
-  --ft-border-strong: #3F4F6A;
-  --ft-border-soft: #1E2838;
+  --ft-border-subtle: #263A54;
+  --ft-border-default: #334760;
+  --ft-border-strong: #416086;
+  --ft-border-soft: #1F3148;
   --ft-border-inverse: rgb(230 236 246 / 12%);
 
   /* Interactive */
   --ft-interactive-default: var(--ft-primary-500);
   --ft-interactive-hover: var(--ft-primary-400);
   --ft-interactive-active: var(--ft-primary-300);
-  --ft-interactive-disabled: #223047;
+  --ft-interactive-disabled: #24364F;
 
   /* Focus */
-  --ft-focus-ring: rgb(107 130 219 / 28%);
-  --ft-focus-ring-offset: #0C1017;
+  --ft-focus-ring: #8EA7E8;
+  --ft-focus-ring-offset: #0A111A;
+
+  /* Component semantic tokens */
+  --ft-auth-brand-color: var(--ft-primary-200);
+  --ft-app-card-ghost-border-color: color-mix(in srgb, var(--ft-text-tertiary) 18%, transparent);
+  --ft-form-field-error-text: var(--ft-danger-400);
+  --ft-form-field-error-bg: color-mix(in srgb, var(--ft-danger-500) 15%, transparent);
+  --ft-form-field-error-border: color-mix(in srgb, var(--ft-danger-500) 30%, transparent);
+  --ft-form-field-label-error-color: var(--ft-danger-400);
+  --ft-empty-state-icon-wrapper-bg: linear-gradient(
+    135deg,
+    color-mix(in srgb, var(--ft-primary-500) 22%, transparent) 0%,
+    color-mix(in srgb, var(--ft-success-400) 20%, transparent) 100%
+  );
+  --ft-status-badge-success-text: var(--ft-success-400);
+  --ft-status-badge-success-bg: color-mix(in srgb, var(--ft-success-500) 15%, transparent);
+  --ft-status-badge-success-border: color-mix(in srgb, var(--ft-success-500) 30%, transparent);
+  --ft-status-badge-warning-text: var(--ft-warning-400);
+  --ft-status-badge-warning-bg: color-mix(in srgb, var(--ft-warning-500) 15%, transparent);
+  --ft-status-badge-warning-border: color-mix(in srgb, var(--ft-warning-500) 30%, transparent);
+  --ft-status-badge-danger-text: var(--ft-danger-400);
+  --ft-status-badge-danger-bg: color-mix(in srgb, var(--ft-danger-500) 15%, transparent);
+  --ft-status-badge-danger-border: color-mix(in srgb, var(--ft-danger-500) 30%, transparent);
+  --ft-status-badge-info-text: var(--ft-info-400);
+  --ft-status-badge-info-bg: color-mix(in srgb, var(--ft-info-500) 18%, transparent);
+  --ft-status-badge-info-border: color-mix(in srgb, var(--ft-info-500) 32%, transparent);
+  --ft-status-badge-secondary-text: var(--ft-gray-400);
+  --ft-status-badge-secondary-bg: color-mix(in srgb, var(--ft-gray-500) 15%, transparent);
+  --ft-status-badge-secondary-border: color-mix(in srgb, var(--ft-gray-500) 30%, transparent);
+  --ft-urgency-urgent-text: var(--ft-danger-400);
+  --ft-urgency-urgent-bg: linear-gradient(
+    135deg,
+    color-mix(in srgb, var(--ft-danger-500) 18%, transparent),
+    color-mix(in srgb, var(--ft-danger-600) 22%, transparent)
+  );
+  --ft-urgency-urgent-border: color-mix(in srgb, var(--ft-danger-500) 40%, transparent);
+  --ft-urgency-urgent-shadow: 0 2px 12px color-mix(in srgb, var(--ft-danger-500) 20%, transparent);
+  --ft-urgency-hot-text: var(--ft-warning-400);
+  --ft-urgency-hot-bg: linear-gradient(
+    135deg,
+    color-mix(in srgb, var(--ft-orange-500) 18%, transparent),
+    color-mix(in srgb, var(--ft-warning-500) 22%, transparent)
+  );
+  --ft-urgency-hot-border: color-mix(in srgb, var(--ft-orange-500) 40%, transparent);
+  --ft-urgency-hot-shadow: 0 2px 12px color-mix(in srgb, var(--ft-orange-500) 20%, transparent);
+  --ft-urgency-warning-text: var(--ft-warning-400);
+  --ft-urgency-warning-bg: color-mix(in srgb, var(--ft-warning-500) 18%, transparent);
+  --ft-urgency-warning-border: color-mix(in srgb, var(--ft-warning-500) 35%, transparent);
+  --ft-kpi-trend-up-bg: color-mix(in srgb, var(--ft-success-500) 15%, transparent);
+  --ft-kpi-trend-down-bg: color-mix(in srgb, var(--ft-danger-500) 15%, transparent);
+  --ft-testimonial-avatar-text: var(--ft-primary-50);
+  --ft-testimonial-highlight-text: var(--ft-success-400);
+  --ft-testimonial-highlight-bg: color-mix(in srgb, var(--ft-success-500) 18%, transparent);
+  --ft-testimonial-highlight-border: color-mix(in srgb, var(--ft-success-500) 35%, transparent);
 
   /* ━━━ TYPOGRAPHY ━━━ */
 
@@ -207,6 +260,9 @@
   --ft-shadow-inner: inset 0 1px 2px rgb(255 255 255 / 4%);
   --ft-shadow-soft: var(--ft-shadow-md);
   --ft-shadow-card: var(--ft-shadow-md);
+  --ft-shadow-cta: 0 8px 20px color-mix(in srgb, var(--ft-success-500) 30%, transparent);
+  --ft-shadow-cta-hover: 0 12px 28px color-mix(in srgb, var(--ft-success-500) 40%, transparent);
+  --ft-shadow-cta-active: 0 6px 16px color-mix(in srgb, var(--ft-success-500) 30%, transparent);
 
   /* ━━━ TRANSITIONS ━━━ */
 
@@ -265,6 +321,16 @@
   --ft-chart-tooltip-secondary: var(--ft-text-secondary);
   --ft-chart-tooltip-border: var(--ft-border-default);
 
+  /* ━━━ EFFECTS ━━━ */
+
+  --ft-effect-primary-glow-sm: 0 2px 8px color-mix(in srgb, var(--ft-primary-500) 22%, transparent);
+  --ft-effect-primary-glow-md: 0 8px 20px color-mix(in srgb, var(--ft-primary-500) 30%, transparent);
+  --ft-effect-danger-glow-sm: 0 2px 8px color-mix(in srgb, var(--ft-danger-500) 20%, transparent);
+  --ft-effect-side-rail-shadow: 4px 0 24px color-mix(in srgb, var(--ft-bg-base) 48%, transparent);
+  --ft-skeleton-shimmer-start: color-mix(in srgb, var(--ft-text-secondary) 8%, transparent);
+  --ft-skeleton-shimmer-mid: color-mix(in srgb, var(--ft-text-secondary) 18%, transparent);
+  --ft-skeleton-shimmer-end: color-mix(in srgb, var(--ft-text-secondary) 8%, transparent);
+
   /* ━━━ COMPONENT SIZES ━━━ */
 
   --ft-control-height: 2.75rem;    /* 44px — min interactive height */
@@ -287,34 +353,34 @@
 .light-mode {
   /* ━━━ SEMANTIC TOKENS - LIGHT THEME ━━━ */
 
-  --ft-bg-base: #EEF2F8;
-  --ft-bg-subtle: #E7EDF6;
-  --ft-bg-muted: #DFE7F2;
-  --ft-bg-elevated: #F4F7FC;
-  --ft-bg-overlay: rgb(15 23 42 / 30%);
-  --ft-surface-base: #F7F9FE;
-  --ft-surface-raised: #EEF3FB;
-  --ft-surface-overlay: #E8EEF9;
-  --ft-surface-soft: #F1F5FC;
+  --ft-bg-base: #F2F5FA;
+  --ft-bg-subtle: #EAF0F8;
+  --ft-bg-muted: #E2EAF4;
+  --ft-bg-elevated: #F7FAFE;
+  --ft-bg-overlay: rgb(16 26 42 / 28%);
+  --ft-surface-base: #FCFDFF;
+  --ft-surface-raised: #F2F6FC;
+  --ft-surface-overlay: #E7EEF8;
+  --ft-surface-soft: #F7FAFE;
   --ft-surface-muted: var(--ft-surface-overlay);
-  --ft-text-primary: #1B2433;
-  --ft-text-secondary: #56637A;
-  --ft-text-tertiary: #6D7A90;
-  --ft-text-disabled: #97A3B7;
+  --ft-text-primary: #1F2A3B;
+  --ft-text-secondary: #495A70;
+  --ft-text-tertiary: #66798F;
+  --ft-text-disabled: #93A3B8;
   --ft-text-inverse: #F8FAFF;
   --ft-text-link: var(--ft-primary-600);
   --ft-text-link-hover: var(--ft-primary-700);
-  --ft-border-subtle: #D5DEEB;
-  --ft-border-default: #C3CFDF;
-  --ft-border-strong: #A9B8CC;
-  --ft-border-soft: #E4EBF5;
+  --ft-border-subtle: #D2DDEA;
+  --ft-border-default: #C0CEDD;
+  --ft-border-strong: #A7B7CB;
+  --ft-border-soft: #E1E9F3;
   --ft-border-inverse: rgb(17 24 39 / 12%);
   --ft-interactive-default: var(--ft-primary-500);
   --ft-interactive-hover: var(--ft-primary-600);
   --ft-interactive-active: var(--ft-primary-700);
-  --ft-interactive-disabled: #E5E7EB;
-  --ft-focus-ring: rgb(79 99 184 / 18%);
-  --ft-focus-ring-offset: #F7F9FE;
+  --ft-interactive-disabled: #E2E8F1;
+  --ft-focus-ring: #4767AF;
+  --ft-focus-ring-offset: #FCFDFF;
   --ft-shadow-xs: 0 1px 2px rgb(15 23 42 / 5%);
   --ft-shadow-sm: 0 1px 3px rgb(15 23 42 / 8%), 0 1px 2px rgb(15 23 42 / 6%);
   --ft-shadow-md: 0 4px 6px rgb(15 23 42 / 12%), 0 2px 4px rgb(15 23 42 / 8%);
@@ -322,10 +388,64 @@
   --ft-shadow-xl: 0 20px 25px rgb(15 23 42 / 12%), 0 8px 10px rgb(15 23 42 / 8%);
   --ft-shadow-2xl: 0 25px 50px rgb(15 23 42 / 20%);
   --ft-shadow-inner: inset 0 2px 4px rgb(15 23 42 / 6%);
-  --ft-scrollbar-track: #E3EAF5;
-  --ft-scrollbar-thumb: #9AA9C2;
-  --ft-scrollbar-thumb-hover: #8092B2;
-  --ft-scrollbar-thumb-active: #6F84A8;
+  --ft-shadow-cta: 0 8px 20px color-mix(in srgb, var(--ft-success-500) 25%, transparent);
+  --ft-shadow-cta-hover: 0 12px 28px color-mix(in srgb, var(--ft-success-500) 35%, transparent);
+  --ft-shadow-cta-active: 0 6px 16px color-mix(in srgb, var(--ft-success-500) 25%, transparent);
+  --ft-scrollbar-track: #E7EDF6;
+  --ft-scrollbar-thumb: #A1AFC4;
+  --ft-scrollbar-thumb-hover: #8A9CB7;
+  --ft-scrollbar-thumb-active: #788CA9;
+  --ft-auth-brand-color: var(--ft-primary-700);
+  --ft-app-card-ghost-border-color: transparent;
+  --ft-form-field-error-text: var(--ft-danger-600);
+  --ft-form-field-error-bg: color-mix(in srgb, var(--ft-danger-500) 10%, transparent);
+  --ft-form-field-error-border: color-mix(in srgb, var(--ft-danger-500) 20%, transparent);
+  --ft-form-field-label-error-color: var(--ft-danger-600);
+  --ft-empty-state-icon-wrapper-bg: linear-gradient(
+    135deg,
+    color-mix(in srgb, var(--ft-primary-500) 14%, transparent) 0%,
+    color-mix(in srgb, var(--ft-success-400) 14%, transparent) 100%
+  );
+  --ft-status-badge-success-text: var(--ft-success-700);
+  --ft-status-badge-success-bg: color-mix(in srgb, var(--ft-success-500) 10%, transparent);
+  --ft-status-badge-success-border: color-mix(in srgb, var(--ft-success-500) 20%, transparent);
+  --ft-status-badge-warning-text: var(--ft-warning-700);
+  --ft-status-badge-warning-bg: color-mix(in srgb, var(--ft-warning-500) 10%, transparent);
+  --ft-status-badge-warning-border: color-mix(in srgb, var(--ft-warning-500) 20%, transparent);
+  --ft-status-badge-danger-text: var(--ft-danger-700);
+  --ft-status-badge-danger-bg: color-mix(in srgb, var(--ft-danger-500) 10%, transparent);
+  --ft-status-badge-danger-border: color-mix(in srgb, var(--ft-danger-500) 20%, transparent);
+  --ft-status-badge-info-text: var(--ft-info-700);
+  --ft-status-badge-info-bg: color-mix(in srgb, var(--ft-info-500) 12%, transparent);
+  --ft-status-badge-info-border: color-mix(in srgb, var(--ft-info-500) 22%, transparent);
+  --ft-status-badge-secondary-text: var(--ft-gray-700);
+  --ft-status-badge-secondary-bg: color-mix(in srgb, var(--ft-gray-500) 10%, transparent);
+  --ft-status-badge-secondary-border: color-mix(in srgb, var(--ft-gray-500) 20%, transparent);
+  --ft-urgency-urgent-text: var(--ft-danger-700);
+  --ft-urgency-urgent-bg: linear-gradient(
+    135deg,
+    color-mix(in srgb, var(--ft-danger-500) 12%, transparent),
+    color-mix(in srgb, var(--ft-danger-600) 16%, transparent)
+  );
+  --ft-urgency-urgent-border: color-mix(in srgb, var(--ft-danger-500) 30%, transparent);
+  --ft-urgency-urgent-shadow: 0 2px 8px color-mix(in srgb, var(--ft-danger-500) 12%, transparent);
+  --ft-urgency-hot-text: var(--ft-warning-700);
+  --ft-urgency-hot-bg: linear-gradient(
+    135deg,
+    color-mix(in srgb, var(--ft-orange-500) 12%, transparent),
+    color-mix(in srgb, var(--ft-warning-500) 16%, transparent)
+  );
+  --ft-urgency-hot-border: color-mix(in srgb, var(--ft-orange-500) 30%, transparent);
+  --ft-urgency-hot-shadow: 0 2px 8px color-mix(in srgb, var(--ft-orange-500) 12%, transparent);
+  --ft-urgency-warning-text: var(--ft-warning-700);
+  --ft-urgency-warning-bg: color-mix(in srgb, var(--ft-warning-500) 12%, transparent);
+  --ft-urgency-warning-border: color-mix(in srgb, var(--ft-warning-500) 25%, transparent);
+  --ft-kpi-trend-up-bg: color-mix(in srgb, var(--ft-success-500) 10%, transparent);
+  --ft-kpi-trend-down-bg: color-mix(in srgb, var(--ft-danger-500) 10%, transparent);
+  --ft-testimonial-avatar-text: var(--ft-primary-100);
+  --ft-testimonial-highlight-text: var(--ft-success-700);
+  --ft-testimonial-highlight-bg: color-mix(in srgb, var(--ft-success-500) 12%, transparent);
+  --ft-testimonial-highlight-border: color-mix(in srgb, var(--ft-success-500) 25%, transparent);
 }
 
 /* High contrast mode support */

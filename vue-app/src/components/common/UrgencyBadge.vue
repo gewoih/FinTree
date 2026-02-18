@@ -51,60 +51,23 @@ withDefaults(defineProps<Props>(), {
 
 /* Variants */
 .urgency-badge--urgent {
-  color: var(--ft-danger-400);
-  background: linear-gradient(
-    135deg,
-    color-mix(in srgb, var(--ft-danger-500) 18%, transparent),
-    color-mix(in srgb, var(--ft-danger-600) 22%, transparent)
-  );
-  border-color: color-mix(in srgb, var(--ft-danger-500) 40%, transparent);
-  box-shadow: 0 2px 12px color-mix(in srgb, var(--ft-danger-500) 20%, transparent);
+  color: var(--ft-urgency-urgent-text);
+  background: var(--ft-urgency-urgent-bg);
+  border-color: var(--ft-urgency-urgent-border);
+  box-shadow: var(--ft-urgency-urgent-shadow);
 }
 
 .urgency-badge--hot {
-  color: var(--ft-warning-400);
-  background: linear-gradient(
-    135deg,
-    color-mix(in srgb, var(--ft-orange-500) 18%, transparent),
-    color-mix(in srgb, var(--ft-warning-500) 22%, transparent)
-  );
-  border-color: color-mix(in srgb, var(--ft-orange-500) 40%, transparent);
-  box-shadow: 0 2px 12px color-mix(in srgb, var(--ft-orange-500) 20%, transparent);
+  color: var(--ft-urgency-hot-text);
+  background: var(--ft-urgency-hot-bg);
+  border-color: var(--ft-urgency-hot-border);
+  box-shadow: var(--ft-urgency-hot-shadow);
 }
 
 .urgency-badge--warning {
-  color: var(--ft-warning-400);
-  background: color-mix(in srgb, var(--ft-warning-500) 18%, transparent);
-  border-color: color-mix(in srgb, var(--ft-warning-500) 35%, transparent);
-}
-
-/* Light mode */
-.light-mode .urgency-badge--urgent {
-  color: var(--ft-danger-700);
-  background: linear-gradient(
-    135deg,
-    color-mix(in srgb, var(--ft-danger-500) 12%, transparent),
-    color-mix(in srgb, var(--ft-danger-600) 16%, transparent)
-  );
-  border-color: color-mix(in srgb, var(--ft-danger-500) 30%, transparent);
-  box-shadow: 0 2px 8px color-mix(in srgb, var(--ft-danger-500) 12%, transparent);
-}
-
-.light-mode .urgency-badge--hot {
-  color: var(--ft-warning-700);
-  background: linear-gradient(
-    135deg,
-    color-mix(in srgb, var(--ft-orange-500) 12%, transparent),
-    color-mix(in srgb, var(--ft-warning-500) 16%, transparent)
-  );
-  border-color: color-mix(in srgb, var(--ft-orange-500) 30%, transparent);
-  box-shadow: 0 2px 8px color-mix(in srgb, var(--ft-orange-500) 12%, transparent);
-}
-
-.light-mode .urgency-badge--warning {
-  color: var(--ft-warning-700);
-  background: color-mix(in srgb, var(--ft-warning-500) 12%, transparent);
-  border-color: color-mix(in srgb, var(--ft-warning-500) 25%, transparent);
+  color: var(--ft-urgency-warning-text);
+  background: var(--ft-urgency-warning-bg);
+  border-color: var(--ft-urgency-warning-border);
 }
 
 /* Pulse animation */

@@ -197,17 +197,11 @@ const fieldAttrs = computed(() => ({
 
   font-size: var(--ft-text-sm);
   font-weight: var(--ft-font-medium);
-  color: var(--ft-danger-400);
+  color: var(--ft-form-field-error-text);
 
-  background: color-mix(in srgb, var(--ft-danger-500) 15%, transparent);
-  border: 1px solid color-mix(in srgb, var(--ft-danger-500) 30%, transparent);
+  background: var(--ft-form-field-error-bg);
+  border: 1px solid var(--ft-form-field-error-border);
   border-radius: var(--ft-radius-md);
-}
-
-.light-mode .form-field__error {
-  color: var(--ft-danger-600);
-  background: color-mix(in srgb, var(--ft-danger-500) 10%, transparent);
-  border-color: color-mix(in srgb, var(--ft-danger-500) 20%, transparent);
 }
 
 .form-field__error i {
@@ -221,11 +215,7 @@ const fieldAttrs = computed(() => ({
 
 /* Error state adjustments */
 .form-field--error .form-field__label {
-  color: var(--ft-danger-400);
-}
-
-.light-mode .form-field--error .form-field__label {
-  color: var(--ft-danger-600);
+  color: var(--ft-form-field-label-error-color);
 }
 
 /* Screen reader only class */

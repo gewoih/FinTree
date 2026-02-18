@@ -426,7 +426,7 @@ const formatPercent = (value: number | null) =>
 .delta-item__bar {
   height: 100%;
   border-radius: 999px;
-  transition: width 0.4s ease;
+  transition: width var(--ft-transition-slow);
 }
 
 .delta-item__bar--up {

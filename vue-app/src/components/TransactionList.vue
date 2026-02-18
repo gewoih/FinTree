@@ -17,6 +17,8 @@ import { formatCurrency } from '../utils/formatters'
 import { getUtcDateOnlyKey, toUtcDateOnlyIso } from '../utils/dateOnly'
 import type { Transaction, TransactionsQuery, UpdateTransferPayload } from '../types'
 import UiCard from '../ui/UiCard.vue'
+import UiButton from '../ui/UiButton.vue'
+import UiMessage from '../ui/UiMessage.vue'
 import EmptyState from './common/EmptyState.vue'
 
 const props = withDefaults(defineProps<{
@@ -39,6 +41,8 @@ const router = useRouter()
 const baseCurrency = computed(() => userStore.baseCurrencyCode ?? store.primaryAccount?.currencyCode ?? 'RUB')
 
 const transactionsLoading = computed(() => store.isTransactionsLoading)
+const transactionsState = computed(() => store.transactionsState)
+const transactionsError = computed(() => store.transactionsError)
 const debouncedSearchText = ref('')
 let searchDebounceTimer: ReturnType<typeof setTimeout> | null = null
 let filterDebounceTimer: ReturnType<typeof setTimeout> | null = null
@@ -201,6 +205,21 @@ watch(
 const isEmptyState = computed(
   () => !transactionsLoading.value && sortedTransactions.value.length === 0
 )
+const hasTransactionsInView = computed(() => sortedTransactions.value.length > 0)
+const shouldShowTransactionsSkeleton = computed(
+  () =>
+    (transactionsState.value === 'idle' || transactionsState.value === 'loading') &&
+    !hasTransactionsInView.value
+)
+const shouldShowTransactionsErrorState = computed(
+  () => transactionsState.value === 'error' && !hasTransactionsInView.value
+)
+const showTransactionsErrorInline = computed(
+  () => transactionsState.value === 'error' && hasTransactionsInView.value
+)
+const transactionsErrorText = computed(
+  () => transactionsError.value || 'Не удалось загрузить транзакции.'
+)
 
 const paginationRows = computed(() => store.transactionsPageSize || PAGINATION_OPTIONS.defaultRows)
 const paginationFirst = computed(() => Math.max(0, (store.transactionsPage - 1) * paginationRows.value))
@@ -211,6 +230,10 @@ const handlePage = (event: { page: number; rows: number }) => {
     page: event.page + 1,
     size: event.rows
   })
+}
+
+const retryTransactions = () => {
+  fetchFilteredTransactions({ page: 1 })
 }
 
 const handleRowClick = (txn: EnrichedTransaction) => {
@@ -269,13 +292,28 @@ const resolveCategoryIconStyle = (txn: EnrichedTransaction) => {
     </UiCard>
 
     <div
-      v-if="transactionsLoading"
+      v-if="shouldShowTransactionsSkeleton"
       class="txn-list__skeleton"
     >
       <UiSkeleton
         v-for="i in 6"
         :key="i"
         height="64px"
+      />
+    </div>
+
+    <div
+      v-else-if="shouldShowTransactionsErrorState"
+      class="txn-list__error"
+    >
+      <UiMessage severity="error">
+        {{ transactionsErrorText }}
+      </UiMessage>
+      <UiButton
+        label="Повторить"
+        icon="pi pi-refresh"
+        variant="secondary"
+        @click="retryTransactions"
       />
     </div>
 
@@ -290,6 +328,21 @@ const resolveCategoryIconStyle = (txn: EnrichedTransaction) => {
     />
 
     <template v-else>
+      <div
+        v-if="showTransactionsErrorInline"
+        class="txn-list__error txn-list__error--inline"
+      >
+        <UiMessage severity="error">
+          {{ transactionsErrorText }} Показаны последние доступные данные.
+        </UiMessage>
+        <UiButton
+          label="Повторить"
+          icon="pi pi-refresh"
+          variant="secondary"
+          @click="retryTransactions"
+        />
+      </div>
+
       <div class="txn-groups">
         <section
           v-for="group in groupedTransactions"

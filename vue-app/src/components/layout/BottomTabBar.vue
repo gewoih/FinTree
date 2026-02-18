@@ -4,7 +4,7 @@ import { useRoute } from 'vue-router'
 const route = useRoute()
 
 const tabs = [
-  { label: 'Обзор', icon: 'pi-chart-line', to: '/analytics' },
+  { label: 'Главная', icon: 'pi-chart-line', to: '/analytics' },
   { label: 'Счета', icon: 'pi-wallet', to: '/accounts' },
   { label: 'Транзакции', icon: 'pi-list', to: '/transactions' },
   { label: 'Инвестиции', icon: 'pi-briefcase', to: '/investments' },
@@ -80,7 +80,7 @@ const tabs = [
   transition:
     color var(--ft-transition-fast),
     background-color var(--ft-transition-fast),
-    transform 0.18s cubic-bezier(0.22, 1, 0.36, 1);
+    transform var(--ft-transition-fast);
 }
 
 .bottom-tab-bar__item::before {

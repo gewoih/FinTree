@@ -92,7 +92,7 @@ const computedAttrs = computed(() => ({
 
 .app-card--ghost {
   background: transparent;
-  border-color: color-mix(in srgb, var(--ft-text-tertiary) 18%, transparent);
+  border-color: var(--ft-app-card-ghost-border-color);
   box-shadow: none;
 }
 
@@ -146,9 +146,5 @@ const computedAttrs = computed(() => ({
 .app-card:focus-within {
   border-color: var(--ft-primary-500);
   box-shadow: 0 0 0 3px var(--ft-focus-ring);
-}
-
-.light-mode .app-card--ghost {
-  border-color: transparent;
 }
 </style>
