@@ -7,12 +7,15 @@ import type {
   InputNumberPassThroughOptions,
 } from 'primevue/inputnumber';
 import { resolvePrimeUnstyled } from '../config/primevue-unstyled-flags';
-import { mergePt } from './prime/pt';
+import { resolveFieldInvalidState } from './prime/field-state';
+import { mergeClassNames, mergePt } from './prime/pt';
 
 const props = defineProps<{
   modelValue?: number | null;
   disabled?: boolean;
   placeholder?: string;
+  invalid?: boolean;
+  error?: string | null;
   mode?: 'decimal' | 'currency';
   minFractionDigits?: number;
   maxFractionDigits?: number;
@@ -31,12 +34,22 @@ const emit = defineEmits<{
 
 const attrs = useAttrs();
 const isUnstyled = computed(() => resolvePrimeUnstyled('uiInputNumber', props.unstyled));
+const isInvalid = computed(() =>
+  resolveFieldInvalidState({
+    invalid: props.invalid,
+    error: props.error,
+    attrs,
+  })
+);
 
 const mergedPt = computed(() =>
   mergePt(
     {
       root: {
-        class: 'ui-input-number__root p-inputnumber p-component p-inputwrapper',
+        class: mergeClassNames(
+          'ui-input-number__root p-inputnumber p-component p-inputwrapper',
+          isInvalid.value ? 'ui-field--invalid' : undefined
+        ),
       },
       pcInputText: {
         root: {
@@ -77,6 +90,8 @@ const handleBlur = (event: InputNumberBlurEvent) => {
     :max-fraction-digits="props.maxFractionDigits"
     :min="props.min"
     :max="props.max"
+    :invalid="isInvalid"
+    :aria-invalid="isInvalid ? 'true' : undefined"
     :unstyled="isUnstyled"
     :pt="mergedPt"
     @update:model-value="handleUpdateModelValue"

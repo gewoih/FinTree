@@ -265,6 +265,31 @@
     opacity: 0.6;
   }
 
+  .ui-input.ui-field--invalid,
+  .ui-input-number__root.ui-field--invalid,
+  .ui-select__root.ui-field--invalid,
+  .ui-date-picker__root.ui-field--invalid,
+  .p-inputtext.p-invalid,
+  .p-inputnumber.p-invalid,
+  .p-select.p-invalid,
+  .p-datepicker.p-invalid,
+  .p-inputtext[aria-invalid='true'],
+  .p-inputnumber[aria-invalid='true'],
+  .p-select[aria-invalid='true'],
+  .p-datepicker[aria-invalid='true'] {
+    border-color: var(--ft-danger-500);
+    box-shadow: 0 0 0 1px color-mix(in srgb, var(--ft-danger-500) 18%, transparent);
+  }
+
+  .ui-select__root.ui-field--invalid .ui-select__dropdown,
+  .ui-date-picker__root.ui-field--invalid .ui-date-picker__dropdown,
+  .p-select.p-invalid .p-select-dropdown,
+  .p-select[aria-invalid='true'] .p-select-dropdown,
+  .p-datepicker.p-invalid .p-datepicker-dropdown,
+  .p-datepicker[aria-invalid='true'] .p-datepicker-dropdown {
+    border-inline-start-color: color-mix(in srgb, var(--ft-danger-500) 42%, var(--ft-border-soft));
+  }
+
   .ui-select-button__root,
   .p-selectbutton {
     display: inline-flex;
@@ -881,6 +906,12 @@
     color: var(--ft-text-primary);
     background: color-mix(in srgb, var(--ft-success-500) 16%, var(--ft-surface-base));
     border-color: color-mix(in srgb, var(--ft-success-400) 48%, var(--ft-border-default));
+  }
+
+  .txn-form__amount-shell:has(.ui-input-number__root.ui-field--invalid),
+  .txn-form__amount-shell:has(.p-inputnumber.p-invalid),
+  .txn-form__amount-shell:has(.p-inputnumber[aria-invalid='true']) {
+    border-color: var(--ft-danger-500);
   }
 
   .txn-form__amount-input .ui-input-number__input:focus,

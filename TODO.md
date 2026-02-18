@@ -9,9 +9,9 @@ Goal: remove systemic causes of UI bugs, inconsistency, and high maintenance cos
 
 ### 3) Normalize field validation UI (single contract)
 
-- [ ] Add explicit invalid/error props in `UiInput*` / `UiSelect` / `UiDatePicker` wrappers.
-- [ ] Centralize field error visuals in shared wrapper style layers.
-- [ ] Remove ad hoc dependence on `p-invalid` in feature components.
+- [x] Add explicit invalid/error props in `UiInput*` / `UiSelect` / `UiDatePicker` wrappers.
+- [x] Centralize field error visuals in shared wrapper style layers.
+- [x] Remove ad hoc dependence on `p-invalid` in feature components.
 
 Why:
 - `p-invalid` is used, but there is no guaranteed centralized unstyled error-state styling contract.

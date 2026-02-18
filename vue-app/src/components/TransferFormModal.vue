@@ -344,7 +344,7 @@ const handleDelete = () => {
               :min="VALIDATION_RULES.minAmount"
               placeholder="0.00"
               :disabled="props.readonly"
-              :class="{ 'p-invalid': !isFromAmountValid && fromAmount !== null }"
+              :invalid="!isFromAmountValid && fromAmount !== null"
             />
             <span class="xfer-flow__currency">{{ fromCurrencySymbol || fromCurrency }}</span>
           </div>
@@ -394,7 +394,7 @@ const handleDelete = () => {
               :min="VALIDATION_RULES.minAmount"
               placeholder="0.00"
               :disabled="props.readonly"
-              :class="{ 'p-invalid': !isToAmountValid && toAmount !== null }"
+              :invalid="!isToAmountValid && toAmount !== null"
             />
             <span class="xfer-flow__currency">{{ toCurrencySymbol || toCurrency }}</span>
           </div>

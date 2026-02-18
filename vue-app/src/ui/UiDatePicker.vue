@@ -3,7 +3,8 @@ import { computed, useAttrs } from 'vue';
 import DatePicker from 'primevue/datepicker';
 import type { DatePickerPassThroughOptions } from 'primevue/datepicker';
 import { resolvePrimeUnstyled } from '../config/primevue-unstyled-flags';
-import { mergePt } from './prime/pt';
+import { resolveFieldInvalidState } from './prime/field-state';
+import { mergeClassNames, mergePt } from './prime/pt';
 
 const props = withDefaults(
   defineProps<{
@@ -18,6 +19,8 @@ const props = withDefaults(
     appendTo?: string | HTMLElement;
     autoZIndex?: boolean;
     baseZIndex?: number;
+    invalid?: boolean;
+    error?: string | null;
     unstyled?: boolean;
     pt?: DatePickerPassThroughOptions;
   }>(),
@@ -33,6 +36,8 @@ const props = withDefaults(
     appendTo: undefined,
     autoZIndex: true,
     baseZIndex: 0,
+    invalid: false,
+    error: null,
     unstyled: undefined,
     pt: undefined,
   }
@@ -44,13 +49,23 @@ const emit = defineEmits<{
 
 const attrs = useAttrs();
 const isUnstyled = computed(() => resolvePrimeUnstyled('uiDatePicker', props.unstyled));
+const isInvalid = computed(() =>
+  resolveFieldInvalidState({
+    invalid: props.invalid,
+    error: props.error,
+    attrs,
+  })
+);
 const mergedPanelClass = computed(() => ['ui-date-picker-overlay', props.panelClass]);
 
 const mergedPt = computed(() =>
   mergePt(
     {
       root: {
-        class: 'ui-date-picker__root p-datepicker p-component p-inputwrapper',
+        class: mergeClassNames(
+          'ui-date-picker__root p-datepicker p-component p-inputwrapper',
+          isInvalid.value ? 'ui-field--invalid' : undefined
+        ),
       },
       pcInputText: {
         root: {
@@ -112,6 +127,8 @@ const mergedPt = computed(() =>
     :auto-z-index="props.autoZIndex"
     :base-z-index="props.baseZIndex"
     :select-other-months="true"
+    :invalid="isInvalid"
+    :aria-invalid="isInvalid ? 'true' : undefined"
     :unstyled="isUnstyled"
     :pt="mergedPt"
     @update:model-value="val => emit('update:modelValue', val as Date[] | Date | null)"

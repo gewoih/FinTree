@@ -3,7 +3,8 @@ import { computed, useAttrs } from 'vue';
 import Select from 'primevue/select';
 import type { SelectPassThroughOptions } from 'primevue/select';
 import { resolvePrimeUnstyled } from '../config/primevue-unstyled-flags';
-import { mergePt } from './prime/pt';
+import { resolveFieldInvalidState } from './prime/field-state';
+import { mergeClassNames, mergePt } from './prime/pt';
 
 const props = defineProps<{
   modelValue?: unknown;
@@ -15,6 +16,8 @@ const props = defineProps<{
   panelClass?: unknown;
   overlayClass?: unknown;
   appendTo?: string | HTMLElement;
+  invalid?: boolean;
+  error?: string | null;
   unstyled?: boolean;
   pt?: SelectPassThroughOptions;
 }>();
@@ -25,6 +28,13 @@ const emit = defineEmits<{
 
 const attrs = useAttrs();
 const isUnstyled = computed(() => resolvePrimeUnstyled('uiSelect', props.unstyled));
+const isInvalid = computed(() =>
+  resolveFieldInvalidState({
+    invalid: props.invalid,
+    error: props.error,
+    attrs,
+  })
+);
 const mergedPanelClass = computed(() => ['ui-select-overlay', props.panelClass]);
 const mergedOverlayClass = computed(() => ['ui-select-overlay', props.overlayClass]);
 
@@ -32,7 +42,10 @@ const mergedPt = computed(() =>
   mergePt(
     {
       root: {
-        class: 'ui-select__root p-select p-component p-inputwrapper',
+        class: mergeClassNames(
+          'ui-select__root p-select p-component p-inputwrapper',
+          isInvalid.value ? 'ui-field--invalid' : undefined
+        ),
       },
       label: {
         class: 'ui-select__label p-select-label',
@@ -77,6 +90,8 @@ const mergedPt = computed(() =>
     :panel-class="mergedPanelClass"
     :overlay-class="mergedOverlayClass"
     :append-to="props.appendTo ?? 'body'"
+    :invalid="isInvalid"
+    :aria-invalid="isInvalid ? 'true' : undefined"
     :unstyled="isUnstyled"
     :pt="mergedPt"
     @update:model-value="val => emit('update:modelValue', val)"

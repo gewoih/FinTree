@@ -588,7 +588,6 @@ const handleDelete = () => {
 
         <div
           class="txn-form__amount-shell"
-          :class="{ 'is-invalid': !!amountError }"
         >
           <UiInputNumber
             id="amount"
@@ -603,7 +602,7 @@ const handleDelete = () => {
             required
             :disabled="props.readonly"
             class="txn-form__amount-input"
-            :class="{ 'p-invalid': !!amountError }"
+            :invalid="Boolean(amountError)"
             @input="handleAmountInput"
             @blur="markTouched('amount')"
           />
@@ -637,7 +636,7 @@ const handleDelete = () => {
             required
             :disabled="props.readonly"
             class="w-full"
-            :class="{ 'p-invalid': !!categoryError }"
+            :invalid="Boolean(categoryError)"
             @change="markTouched('category')"
             @blur="markTouched('category')"
           >
@@ -677,7 +676,7 @@ const handleDelete = () => {
             required
             :disabled="props.readonly"
             class="w-full"
-            :class="{ 'p-invalid': !!accountError }"
+            :invalid="Boolean(accountError)"
             @change="markTouched('account')"
             @blur="markTouched('account')"
           >
@@ -722,7 +721,7 @@ const handleDelete = () => {
             required
             :disabled="props.readonly"
             class="w-full txn-form__date-picker"
-            :class="{ 'p-invalid': !!dateError }"
+            :invalid="Boolean(dateError)"
             @update:model-value="markTouched('date')"
             @blur="markTouched('date')"
           />
@@ -1001,10 +1000,6 @@ const handleDelete = () => {
 .txn-form__amount-shell:focus-within {
   border-color: var(--ft-border-strong);
   box-shadow: 0 0 0 3px var(--ft-focus-ring);
-}
-
-.txn-form__amount-shell.is-invalid {
-  border-color: var(--ft-danger-500);
 }
 
 .txn-form__amount-input {
