@@ -7,52 +7,11 @@ Goal: remove systemic causes of UI bugs, inconsistency, and high maintenance cos
 
 ## P1 — Critical (Do First)
 
-### 3) Normalize field validation UI (single contract)
-
-- [x] Add explicit invalid/error props in `UiInput*` / `UiSelect` / `UiDatePicker` wrappers.
-- [x] Centralize field error visuals in shared wrapper style layers.
-- [x] Remove ad hoc dependence on `p-invalid` in feature components.
-
-Why:
-- `p-invalid` is used, but there is no guaranteed centralized unstyled error-state styling contract.
-
-Done criteria:
-- All field error states render consistently without local hacks.
-
----
-
-### 4) Eliminate stylelint debt and enforce “no new warnings”
-
-- [x] Resolve current `order/properties-order` warning debt (audit found 180 warnings).
-- [x] Enforce rule: new changes must not add stylelint warnings.
-
-Why:
-- Lint noise hides real regressions and accelerates style quality decay.
-
-Done criteria:
-- `npm run lint:style` has no new warnings relative to baseline.
+### No tasks
 
 ---
 
 ## P2 — Important Improvements (After P1)
-
-### 6) Decompose oversized Vue files
-
-- [x] Split files >800 lines into focused subcomponents/composables by responsibility.
-
-Priority candidates:
-- `vue-app/src/pages/LandingPage.vue`
-- `vue-app/src/components/TransactionForm.vue`
-- `vue-app/src/pages/AnalyticsPage.vue`
-- `vue-app/src/components/layout/AppShell.vue`
-- `vue-app/src/components/TransactionList.vue`
-- `vue-app/src/components/analytics/HeroHealthCard.vue`
-- `vue-app/src/components/TransferFormModal.vue`
-
-Why:
-- God components increase regression risk and make both human and AI edits unstable.
-
----
 
 ### 7) Restore strict design-token discipline
 
