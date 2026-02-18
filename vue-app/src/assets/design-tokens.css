@@ -140,6 +140,59 @@
   --ft-focus-ring: rgb(107 130 219 / 28%);
   --ft-focus-ring-offset: #0C1017;
 
+  /* Component semantic tokens */
+  --ft-auth-brand-color: var(--ft-primary-200);
+  --ft-app-card-ghost-border-color: color-mix(in srgb, var(--ft-text-tertiary) 18%, transparent);
+  --ft-form-field-error-text: var(--ft-danger-400);
+  --ft-form-field-error-bg: color-mix(in srgb, var(--ft-danger-500) 15%, transparent);
+  --ft-form-field-error-border: color-mix(in srgb, var(--ft-danger-500) 30%, transparent);
+  --ft-form-field-label-error-color: var(--ft-danger-400);
+  --ft-empty-state-icon-wrapper-bg: linear-gradient(
+    135deg,
+    color-mix(in srgb, var(--ft-primary-500) 22%, transparent) 0%,
+    color-mix(in srgb, var(--ft-success-400) 20%, transparent) 100%
+  );
+  --ft-status-badge-success-text: var(--ft-success-400);
+  --ft-status-badge-success-bg: color-mix(in srgb, var(--ft-success-500) 15%, transparent);
+  --ft-status-badge-success-border: color-mix(in srgb, var(--ft-success-500) 30%, transparent);
+  --ft-status-badge-warning-text: var(--ft-warning-400);
+  --ft-status-badge-warning-bg: color-mix(in srgb, var(--ft-warning-500) 15%, transparent);
+  --ft-status-badge-warning-border: color-mix(in srgb, var(--ft-warning-500) 30%, transparent);
+  --ft-status-badge-danger-text: var(--ft-danger-400);
+  --ft-status-badge-danger-bg: color-mix(in srgb, var(--ft-danger-500) 15%, transparent);
+  --ft-status-badge-danger-border: color-mix(in srgb, var(--ft-danger-500) 30%, transparent);
+  --ft-status-badge-info-text: var(--ft-info-400);
+  --ft-status-badge-info-bg: color-mix(in srgb, var(--ft-info-500) 18%, transparent);
+  --ft-status-badge-info-border: color-mix(in srgb, var(--ft-info-500) 32%, transparent);
+  --ft-status-badge-secondary-text: var(--ft-gray-400);
+  --ft-status-badge-secondary-bg: color-mix(in srgb, var(--ft-gray-500) 15%, transparent);
+  --ft-status-badge-secondary-border: color-mix(in srgb, var(--ft-gray-500) 30%, transparent);
+  --ft-urgency-urgent-text: var(--ft-danger-400);
+  --ft-urgency-urgent-bg: linear-gradient(
+    135deg,
+    color-mix(in srgb, var(--ft-danger-500) 18%, transparent),
+    color-mix(in srgb, var(--ft-danger-600) 22%, transparent)
+  );
+  --ft-urgency-urgent-border: color-mix(in srgb, var(--ft-danger-500) 40%, transparent);
+  --ft-urgency-urgent-shadow: 0 2px 12px color-mix(in srgb, var(--ft-danger-500) 20%, transparent);
+  --ft-urgency-hot-text: var(--ft-warning-400);
+  --ft-urgency-hot-bg: linear-gradient(
+    135deg,
+    color-mix(in srgb, var(--ft-orange-500) 18%, transparent),
+    color-mix(in srgb, var(--ft-warning-500) 22%, transparent)
+  );
+  --ft-urgency-hot-border: color-mix(in srgb, var(--ft-orange-500) 40%, transparent);
+  --ft-urgency-hot-shadow: 0 2px 12px color-mix(in srgb, var(--ft-orange-500) 20%, transparent);
+  --ft-urgency-warning-text: var(--ft-warning-400);
+  --ft-urgency-warning-bg: color-mix(in srgb, var(--ft-warning-500) 18%, transparent);
+  --ft-urgency-warning-border: color-mix(in srgb, var(--ft-warning-500) 35%, transparent);
+  --ft-kpi-trend-up-bg: color-mix(in srgb, var(--ft-success-500) 15%, transparent);
+  --ft-kpi-trend-down-bg: color-mix(in srgb, var(--ft-danger-500) 15%, transparent);
+  --ft-testimonial-avatar-text: var(--ft-primary-50);
+  --ft-testimonial-highlight-text: var(--ft-success-400);
+  --ft-testimonial-highlight-bg: color-mix(in srgb, var(--ft-success-500) 18%, transparent);
+  --ft-testimonial-highlight-border: color-mix(in srgb, var(--ft-success-500) 35%, transparent);
+
   /* ━━━ TYPOGRAPHY ━━━ */
 
   --ft-font-base: 'Inter', 'Helvetica Neue', 'Arial', sans-serif;
@@ -332,6 +385,57 @@
   --ft-scrollbar-thumb: #9AA9C2;
   --ft-scrollbar-thumb-hover: #8092B2;
   --ft-scrollbar-thumb-active: #6F84A8;
+  --ft-auth-brand-color: var(--ft-primary-700);
+  --ft-app-card-ghost-border-color: transparent;
+  --ft-form-field-error-text: var(--ft-danger-600);
+  --ft-form-field-error-bg: color-mix(in srgb, var(--ft-danger-500) 10%, transparent);
+  --ft-form-field-error-border: color-mix(in srgb, var(--ft-danger-500) 20%, transparent);
+  --ft-form-field-label-error-color: var(--ft-danger-600);
+  --ft-empty-state-icon-wrapper-bg: linear-gradient(
+    135deg,
+    color-mix(in srgb, var(--ft-primary-500) 14%, transparent) 0%,
+    color-mix(in srgb, var(--ft-success-400) 14%, transparent) 100%
+  );
+  --ft-status-badge-success-text: var(--ft-success-700);
+  --ft-status-badge-success-bg: color-mix(in srgb, var(--ft-success-500) 10%, transparent);
+  --ft-status-badge-success-border: color-mix(in srgb, var(--ft-success-500) 20%, transparent);
+  --ft-status-badge-warning-text: var(--ft-warning-700);
+  --ft-status-badge-warning-bg: color-mix(in srgb, var(--ft-warning-500) 10%, transparent);
+  --ft-status-badge-warning-border: color-mix(in srgb, var(--ft-warning-500) 20%, transparent);
+  --ft-status-badge-danger-text: var(--ft-danger-700);
+  --ft-status-badge-danger-bg: color-mix(in srgb, var(--ft-danger-500) 10%, transparent);
+  --ft-status-badge-danger-border: color-mix(in srgb, var(--ft-danger-500) 20%, transparent);
+  --ft-status-badge-info-text: var(--ft-info-700);
+  --ft-status-badge-info-bg: color-mix(in srgb, var(--ft-info-500) 12%, transparent);
+  --ft-status-badge-info-border: color-mix(in srgb, var(--ft-info-500) 22%, transparent);
+  --ft-status-badge-secondary-text: var(--ft-gray-700);
+  --ft-status-badge-secondary-bg: color-mix(in srgb, var(--ft-gray-500) 10%, transparent);
+  --ft-status-badge-secondary-border: color-mix(in srgb, var(--ft-gray-500) 20%, transparent);
+  --ft-urgency-urgent-text: var(--ft-danger-700);
+  --ft-urgency-urgent-bg: linear-gradient(
+    135deg,
+    color-mix(in srgb, var(--ft-danger-500) 12%, transparent),
+    color-mix(in srgb, var(--ft-danger-600) 16%, transparent)
+  );
+  --ft-urgency-urgent-border: color-mix(in srgb, var(--ft-danger-500) 30%, transparent);
+  --ft-urgency-urgent-shadow: 0 2px 8px color-mix(in srgb, var(--ft-danger-500) 12%, transparent);
+  --ft-urgency-hot-text: var(--ft-warning-700);
+  --ft-urgency-hot-bg: linear-gradient(
+    135deg,
+    color-mix(in srgb, var(--ft-orange-500) 12%, transparent),
+    color-mix(in srgb, var(--ft-warning-500) 16%, transparent)
+  );
+  --ft-urgency-hot-border: color-mix(in srgb, var(--ft-orange-500) 30%, transparent);
+  --ft-urgency-hot-shadow: 0 2px 8px color-mix(in srgb, var(--ft-orange-500) 12%, transparent);
+  --ft-urgency-warning-text: var(--ft-warning-700);
+  --ft-urgency-warning-bg: color-mix(in srgb, var(--ft-warning-500) 12%, transparent);
+  --ft-urgency-warning-border: color-mix(in srgb, var(--ft-warning-500) 25%, transparent);
+  --ft-kpi-trend-up-bg: color-mix(in srgb, var(--ft-success-500) 10%, transparent);
+  --ft-kpi-trend-down-bg: color-mix(in srgb, var(--ft-danger-500) 10%, transparent);
+  --ft-testimonial-avatar-text: var(--ft-primary-100);
+  --ft-testimonial-highlight-text: var(--ft-success-700);
+  --ft-testimonial-highlight-bg: color-mix(in srgb, var(--ft-success-500) 12%, transparent);
+  --ft-testimonial-highlight-border: color-mix(in srgb, var(--ft-success-500) 25%, transparent);
 }
 
 /* High contrast mode support */

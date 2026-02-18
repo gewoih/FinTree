@@ -64,64 +64,33 @@ withDefaults(defineProps<Props>(), {
 
 /* Severities — dark theme (default) */
 .status-badge--success {
-  color: var(--ft-success-400);
-  background: color-mix(in srgb, var(--ft-success-500) 15%, transparent);
-  border-color: color-mix(in srgb, var(--ft-success-500) 30%, transparent);
+  color: var(--ft-status-badge-success-text);
+  background: var(--ft-status-badge-success-bg);
+  border-color: var(--ft-status-badge-success-border);
 }
 
 .status-badge--warning {
-  color: var(--ft-warning-400);
-  background: color-mix(in srgb, var(--ft-warning-500) 15%, transparent);
-  border-color: color-mix(in srgb, var(--ft-warning-500) 30%, transparent);
+  color: var(--ft-status-badge-warning-text);
+  background: var(--ft-status-badge-warning-bg);
+  border-color: var(--ft-status-badge-warning-border);
 }
 
 .status-badge--danger {
-  color: var(--ft-danger-400);
-  background: color-mix(in srgb, var(--ft-danger-500) 15%, transparent);
-  border-color: color-mix(in srgb, var(--ft-danger-500) 30%, transparent);
+  color: var(--ft-status-badge-danger-text);
+  background: var(--ft-status-badge-danger-bg);
+  border-color: var(--ft-status-badge-danger-border);
 }
 
 .status-badge--info {
-  color: var(--ft-info-400);
-  background: color-mix(in srgb, var(--ft-info-500) 18%, transparent);
-  border-color: color-mix(in srgb, var(--ft-info-500) 32%, transparent);
+  color: var(--ft-status-badge-info-text);
+  background: var(--ft-status-badge-info-bg);
+  border-color: var(--ft-status-badge-info-border);
 }
 
 .status-badge--secondary {
-  color: var(--ft-gray-400);
-  background: color-mix(in srgb, var(--ft-gray-500) 15%, transparent);
-  border-color: color-mix(in srgb, var(--ft-gray-500) 30%, transparent);
-}
-
-/* Light mode overrides */
-.light-mode .status-badge--success {
-  color: var(--ft-success-700);
-  background: color-mix(in srgb, var(--ft-success-500) 10%, transparent);
-  border-color: color-mix(in srgb, var(--ft-success-500) 20%, transparent);
-}
-
-.light-mode .status-badge--warning {
-  color: var(--ft-warning-700);
-  background: color-mix(in srgb, var(--ft-warning-500) 10%, transparent);
-  border-color: color-mix(in srgb, var(--ft-warning-500) 20%, transparent);
-}
-
-.light-mode .status-badge--danger {
-  color: var(--ft-danger-700);
-  background: color-mix(in srgb, var(--ft-danger-500) 10%, transparent);
-  border-color: color-mix(in srgb, var(--ft-danger-500) 20%, transparent);
-}
-
-.light-mode .status-badge--info {
-  color: var(--ft-info-700);
-  background: color-mix(in srgb, var(--ft-info-500) 12%, transparent);
-  border-color: color-mix(in srgb, var(--ft-info-500) 22%, transparent);
-}
-
-.light-mode .status-badge--secondary {
-  color: var(--ft-gray-700);
-  background: color-mix(in srgb, var(--ft-gray-500) 10%, transparent);
-  border-color: color-mix(in srgb, var(--ft-gray-500) 20%, transparent);
+  color: var(--ft-status-badge-secondary-text);
+  background: var(--ft-status-badge-secondary-bg);
+  border-color: var(--ft-status-badge-secondary-border);
 }
 
 /* Icon */

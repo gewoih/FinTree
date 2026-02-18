@@ -259,14 +259,10 @@ const handleLogin = async () => {
 
   font-family: var(--ft-font-display);
   font-weight: var(--ft-font-semibold);
-  color: var(--ft-primary-200);
+  color: var(--ft-auth-brand-color);
   text-decoration: none;
   text-transform: uppercase;
   letter-spacing: 0.08em;
-}
-
-.light-mode .auth__brand {
-  color: var(--ft-primary-700);
 }
 
 .auth__title {

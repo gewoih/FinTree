@@ -158,20 +158,12 @@ const trendClass = computed(() => {
 
 .kpi-card__trend--up {
   color: var(--ft-success-400);
-  background: color-mix(in srgb, var(--ft-success-500) 15%, transparent);
-}
-
-.light-mode .kpi-card__trend--up {
-  background: color-mix(in srgb, var(--ft-success-500) 10%, transparent);
+  background: var(--ft-kpi-trend-up-bg);
 }
 
 .kpi-card__trend--down {
   color: var(--ft-danger-400);
-  background: color-mix(in srgb, var(--ft-danger-500) 15%, transparent);
-}
-
-.light-mode .kpi-card__trend--down {
-  background: color-mix(in srgb, var(--ft-danger-500) 10%, transparent);
+  background: var(--ft-kpi-trend-down-bg);
 }
 
 .kpi-card__trend--neutral {

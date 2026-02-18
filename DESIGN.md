@@ -232,6 +232,7 @@ Before completion, run:
 cd vue-app && npm run type-check
 cd vue-app && npm run lint
 cd vue-app && npm run lint:style
+cd vue-app && npm run lint:design-contract
 cd vue-app && npm run lint:prime-imports
 cd vue-app && npm run lint:api-boundaries
 cd vue-app && npm run build

@@ -80,7 +80,7 @@ const tabs = [
   transition:
     color var(--ft-transition-fast),
     background-color var(--ft-transition-fast),
-    transform 0.18s cubic-bezier(0.22, 1, 0.36, 1);
+    transform var(--ft-transition-fast);
 }
 
 .bottom-tab-bar__item::before {

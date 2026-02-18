@@ -78,11 +78,7 @@ const emit = defineEmits<{
   height: 80px;
   margin-bottom: var(--ft-space-8);
 
-  background: linear-gradient(
-    135deg,
-    color-mix(in srgb, var(--ft-primary-500) 22%, transparent) 0%,
-    color-mix(in srgb, var(--ft-success-400) 20%, transparent) 100%
-  );
+  background: var(--ft-empty-state-icon-wrapper-bg);
   border: 1px solid var(--ft-border-default);
   border-radius: var(--ft-radius-xl);
 }
@@ -110,14 +106,5 @@ const emit = defineEmits<{
 
 .empty-state__action {
   min-width: 180px;
-}
-
-/* Light mode adjustments */
-.light-mode .empty-state__icon-wrapper {
-  background: linear-gradient(
-    135deg,
-    color-mix(in srgb, var(--ft-primary-500) 14%, transparent) 0%,
-    color-mix(in srgb, var(--ft-success-400) 14%, transparent) 100%
-  );
 }
 </style>

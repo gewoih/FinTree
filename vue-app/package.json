@@ -12,6 +12,7 @@
     "lint:style": "stylelint \"src/**/*.{css,scss,vue}\" --max-warnings=0",
     "lint:style:fix": "stylelint \"src/**/*.{css,scss,vue}\" --fix",
     "type-check": "vue-tsc --noEmit",
+    "lint:design-contract": "node scripts/check-design-contract.mjs",
     "lint:prime-imports": "node scripts/check-prime-imports.mjs",
     "lint:api-boundaries": "node scripts/check-api-boundaries.mjs"
   },
