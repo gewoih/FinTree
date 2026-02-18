@@ -2,7 +2,6 @@
 import { computed, ref, useAttrs } from 'vue';
 import Menu from 'primevue/menu';
 import type { MenuItem } from 'primevue/menuitem';
-import { resolvePrimeUnstyled } from '../config/primevue-unstyled-flags';
 import { mergePt } from './prime/pt';
 
 defineOptions({ inheritAttrs: false });
@@ -30,7 +29,6 @@ const props = withDefaults(
 
 const attrs = useAttrs();
 const menuRef = ref<InstanceType<typeof Menu> | null>(null);
-const isUnstyled = computed(() => resolvePrimeUnstyled('uiMenu', props.unstyled));
 
 const mergedPt = computed(() =>
   mergePt(
@@ -74,7 +72,7 @@ defineExpose({
     :append-to="props.appendTo"
     :auto-z-index="props.autoZIndex"
     :base-z-index="props.baseZIndex"
-    :unstyled="isUnstyled"
+    :unstyled="props.unstyled ?? true"
     :pt="mergedPt"
   >
     <template

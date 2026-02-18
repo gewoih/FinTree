@@ -2,7 +2,6 @@
 import { computed, useAttrs } from 'vue';
 import InputText from 'primevue/inputtext';
 import type { InputTextPassThroughOptions } from 'primevue/inputtext';
-import { resolvePrimeUnstyled } from '../config/primevue-unstyled-flags';
 import { mergePt } from './prime/pt';
 import { resolveFieldInvalidState } from './prime/field-state';
 
@@ -22,7 +21,6 @@ const emit = defineEmits<{
 }>();
 
 const attrs = useAttrs();
-const isUnstyled = computed(() => resolvePrimeUnstyled('uiInputText', props.unstyled));
 const isInvalid = computed(() =>
   resolveFieldInvalidState({
     invalid: props.invalid,
@@ -57,7 +55,7 @@ const handleUpdateModelValue = (value: string | null | undefined) => {
     :type="props.type"
     :invalid="isInvalid"
     :aria-invalid="isInvalid ? 'true' : undefined"
-    :unstyled="isUnstyled"
+    :unstyled="props.unstyled ?? true"
     :pt="mergedPt"
     @update:model-value="handleUpdateModelValue"
   />

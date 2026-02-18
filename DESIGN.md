@@ -86,7 +86,7 @@ Rules:
 
 - All visual PrimeVue components are consumed via `vue-app/src/ui/*` wrappers only.
 - PrimeVue runtime config lives in `vue-app/src/main.ts`.
-- Unstyled feature flags live in `vue-app/src/config/primevue-unstyled-flags.ts`.
+- Unstyled mode is always on in wrapper contracts; wrappers may still override via local `unstyled` prop for targeted tests.
 
 Direct imports outside wrappers are allowed only for:
 - `primevue/config`

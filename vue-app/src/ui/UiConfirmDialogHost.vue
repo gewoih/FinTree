@@ -1,7 +1,6 @@
 <script setup lang="ts">
 import { computed, useAttrs } from 'vue';
 import ConfirmDialog from 'primevue/confirmdialog';
-import { resolvePrimeUnstyled } from '../config/primevue-unstyled-flags';
 import { mergePt } from './prime/pt';
 
 defineOptions({ inheritAttrs: false });
@@ -18,7 +17,6 @@ const props = withDefaults(
 );
 
 const attrs = useAttrs();
-const isUnstyled = computed(() => resolvePrimeUnstyled('uiConfirmDialog', props.unstyled));
 
 const mergedPt = computed(() =>
   mergePt(
@@ -37,7 +35,7 @@ const mergedPt = computed(() =>
   <ConfirmDialog
     v-bind="attrs"
     class="ui-confirm-dialog"
-    :unstyled="isUnstyled"
+    :unstyled="props.unstyled ?? true"
     :pt="mergedPt"
   />
 </template>

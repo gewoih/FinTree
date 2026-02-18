@@ -2,7 +2,6 @@
 import { computed } from 'vue';
 import Skeleton from 'primevue/skeleton';
 import type { SkeletonPassThroughOptions } from 'primevue/skeleton';
-import { resolvePrimeUnstyled } from '../config/primevue-unstyled-flags';
 import { mergePt } from './prime/pt';
 
 const props = defineProps<{
@@ -13,7 +12,6 @@ const props = defineProps<{
   pt?: SkeletonPassThroughOptions;
 }>();
 
-const isUnstyled = computed(() => resolvePrimeUnstyled('uiSkeleton', props.unstyled));
 
 const mergedPt = computed(() =>
   mergePt(
@@ -35,7 +33,7 @@ const mergedPt = computed(() =>
     :height="props.height"
     :width="props.width"
     :border-radius="props.borderRadius"
-    :unstyled="isUnstyled"
+    :unstyled="props.unstyled ?? true"
     :pt="mergedPt"
   />
 </template>

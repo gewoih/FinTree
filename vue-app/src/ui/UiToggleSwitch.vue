@@ -1,7 +1,6 @@
 <script setup lang="ts">
 import { computed, useAttrs } from 'vue';
 import ToggleSwitch from 'primevue/toggleswitch';
-import { resolvePrimeUnstyled } from '../config/primevue-unstyled-flags';
 import { mergePt } from './prime/pt';
 
 const props = withDefaults(
@@ -26,7 +25,6 @@ const emit = defineEmits<{
 }>();
 
 const attrs = useAttrs();
-const isUnstyled = computed(() => resolvePrimeUnstyled('uiToggleSwitch', props.unstyled));
 
 const mergedPt = computed(() =>
   mergePt(
@@ -52,7 +50,7 @@ const handleUpdateModelValue = (value: unknown) => {
     :model-value="props.modelValue"
     :disabled="props.disabled"
     :input-id="props.inputId"
-    :unstyled="isUnstyled"
+    :unstyled="props.unstyled ?? true"
     :pt="mergedPt"
     @update:model-value="handleUpdateModelValue"
   />

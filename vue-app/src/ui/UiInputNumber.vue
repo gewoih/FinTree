@@ -6,7 +6,6 @@ import type {
   InputNumberInputEvent,
   InputNumberPassThroughOptions,
 } from 'primevue/inputnumber';
-import { resolvePrimeUnstyled } from '../config/primevue-unstyled-flags';
 import { resolveFieldInvalidState } from './prime/field-state';
 import { mergeClassNames, mergePt } from './prime/pt';
 
@@ -33,7 +32,6 @@ const emit = defineEmits<{
 }>();
 
 const attrs = useAttrs();
-const isUnstyled = computed(() => resolvePrimeUnstyled('uiInputNumber', props.unstyled));
 const isInvalid = computed(() =>
   resolveFieldInvalidState({
     invalid: props.invalid,
@@ -92,7 +90,7 @@ const handleBlur = (event: InputNumberBlurEvent) => {
     :max="props.max"
     :invalid="isInvalid"
     :aria-invalid="isInvalid ? 'true' : undefined"
-    :unstyled="isUnstyled"
+    :unstyled="props.unstyled ?? true"
     :pt="mergedPt"
     @update:model-value="handleUpdateModelValue"
     @input="handleInput"

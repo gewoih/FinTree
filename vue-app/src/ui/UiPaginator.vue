@@ -2,7 +2,6 @@
 import { computed, useAttrs } from 'vue';
 import Paginator from 'primevue/paginator';
 import type { PageState } from 'primevue/paginator';
-import { resolvePrimeUnstyled } from '../config/primevue-unstyled-flags';
 import { mergePt } from './prime/pt';
 
 defineOptions({ inheritAttrs: false });
@@ -35,7 +34,6 @@ const emit = defineEmits<{
 }>();
 
 const attrs = useAttrs();
-const isUnstyled = computed(() => resolvePrimeUnstyled('uiPaginator', props.unstyled));
 
 const mergedPt = computed(() =>
   mergePt(
@@ -65,7 +63,7 @@ const mergedPt = computed(() =>
     :total-records="props.totalRecords"
     :rows-per-page-options="props.rowsPerPageOptions"
     :template="props.template"
-    :unstyled="isUnstyled"
+    :unstyled="props.unstyled ?? true"
     :pt="mergedPt"
     @page="event => emit('page', event)"
     @update:first="value => emit('update:first', value)"

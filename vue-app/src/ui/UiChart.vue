@@ -1,7 +1,6 @@
 <script setup lang="ts">
 import { computed, useAttrs } from 'vue';
 import Chart from 'primevue/chart';
-import { resolvePrimeUnstyled } from '../config/primevue-unstyled-flags';
 import { mergePt } from './prime/pt';
 
 defineOptions({ inheritAttrs: false });
@@ -26,7 +25,6 @@ const props = withDefaults(
 );
 
 const attrs = useAttrs();
-const isUnstyled = computed(() => resolvePrimeUnstyled('uiChart', props.unstyled));
 
 const mergedPt = computed(() =>
   mergePt(
@@ -47,7 +45,7 @@ const mergedPt = computed(() =>
     :data="props.data"
     :options="props.options"
     :plugins="props.plugins"
-    :unstyled="isUnstyled"
+    :unstyled="props.unstyled ?? true"
     :pt="mergedPt"
   />
 </template>

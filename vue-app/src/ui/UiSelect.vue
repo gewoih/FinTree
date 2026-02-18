@@ -2,7 +2,6 @@
 import { computed, useAttrs } from 'vue';
 import Select from 'primevue/select';
 import type { SelectPassThroughOptions } from 'primevue/select';
-import { resolvePrimeUnstyled } from '../config/primevue-unstyled-flags';
 import { resolveFieldInvalidState } from './prime/field-state';
 import { mergeClassNames, mergePt } from './prime/pt';
 
@@ -27,7 +26,6 @@ const emit = defineEmits<{
 }>();
 
 const attrs = useAttrs();
-const isUnstyled = computed(() => resolvePrimeUnstyled('uiSelect', props.unstyled));
 const isInvalid = computed(() =>
   resolveFieldInvalidState({
     invalid: props.invalid,
@@ -92,7 +90,7 @@ const mergedPt = computed(() =>
     :append-to="props.appendTo ?? 'body'"
     :invalid="isInvalid"
     :aria-invalid="isInvalid ? 'true' : undefined"
-    :unstyled="isUnstyled"
+    :unstyled="props.unstyled ?? true"
     :pt="mergedPt"
     @update:model-value="val => emit('update:modelValue', val)"
   >

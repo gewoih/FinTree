@@ -2,7 +2,6 @@
 import { computed, useAttrs } from 'vue';
 import SelectButton from 'primevue/selectbutton';
 import type { SelectButtonPassThroughOptions } from 'primevue/selectbutton';
-import { resolvePrimeUnstyled } from '../config/primevue-unstyled-flags';
 import { mergePt } from './prime/pt';
 
 const props = defineProps<{
@@ -23,7 +22,6 @@ const emit = defineEmits<{
 }>();
 
 const attrs = useAttrs();
-const isUnstyled = computed(() => resolvePrimeUnstyled('uiSelectButton', props.unstyled));
 
 const mergedPt = computed(() =>
   mergePt(
@@ -53,7 +51,7 @@ const mergedPt = computed(() =>
     :disabled="props.disabled"
     :allow-empty="props.allowEmpty"
     :multiple="props.multiple"
-    :unstyled="isUnstyled"
+    :unstyled="props.unstyled ?? true"
     :pt="mergedPt"
     @update:model-value="value => emit('update:modelValue', value)"
     @change="event => emit('change', event)"

@@ -1,7 +1,6 @@
 <script setup lang="ts">
 import { computed, useAttrs } from 'vue';
 import Dialog from 'primevue/dialog';
-import { resolvePrimeUnstyled } from '../config/primevue-unstyled-flags';
 import { mergePt } from './prime/pt';
 
 defineOptions({ inheritAttrs: false });
@@ -29,7 +28,6 @@ const emit = defineEmits<{
 }>();
 
 const attrs = useAttrs();
-const isUnstyled = computed(() => resolvePrimeUnstyled('uiDialog', props.unstyled));
 
 const mergedPt = computed(() =>
   mergePt(
@@ -50,7 +48,7 @@ const mergedPt = computed(() =>
     v-bind="attrs"
     class="ui-dialog"
     :visible="props.visible"
-    :unstyled="isUnstyled"
+    :unstyled="props.unstyled ?? true"
     :auto-z-index="props.autoZIndex"
     :base-z-index="props.baseZIndex"
     :append-to="props.appendTo"

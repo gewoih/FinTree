@@ -1,7 +1,6 @@
 <script setup lang="ts">
 import { computed, useAttrs } from 'vue';
 import Drawer from 'primevue/drawer';
-import { resolvePrimeUnstyled } from '../config/primevue-unstyled-flags';
 import { mergePt } from './prime/pt';
 
 defineOptions({ inheritAttrs: false });
@@ -27,7 +26,6 @@ const emit = defineEmits<{
 }>();
 
 const attrs = useAttrs();
-const isUnstyled = computed(() => resolvePrimeUnstyled('uiDrawer', props.unstyled));
 
 const mergedPt = computed(() =>
   mergePt(
@@ -47,7 +45,7 @@ const mergedPt = computed(() =>
     v-bind="attrs"
     class="ui-drawer"
     :visible="props.visible"
-    :unstyled="isUnstyled"
+    :unstyled="props.unstyled ?? true"
     :auto-z-index="props.autoZIndex"
     :base-z-index="props.baseZIndex"
     :pt="mergedPt"

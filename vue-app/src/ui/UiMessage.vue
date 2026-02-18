@@ -1,7 +1,6 @@
 <script setup lang="ts">
 import { computed, useAttrs } from 'vue';
 import Message from 'primevue/message';
-import { resolvePrimeUnstyled } from '../config/primevue-unstyled-flags';
 import { mergePt } from './prime/pt';
 
 defineOptions({ inheritAttrs: false });
@@ -28,7 +27,6 @@ const props = withDefaults(
 );
 
 const attrs = useAttrs();
-const isUnstyled = computed(() => resolvePrimeUnstyled('uiMessage', props.unstyled));
 
 const mergedPt = computed(() =>
   mergePt(
@@ -53,7 +51,7 @@ const mergedPt = computed(() =>
     :closable="props.closable"
     :life="props.life"
     :sticky="props.sticky"
-    :unstyled="isUnstyled"
+    :unstyled="props.unstyled ?? true"
     :pt="mergedPt"
   >
     <slot />

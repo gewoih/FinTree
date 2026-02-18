@@ -2,7 +2,6 @@
 import { computed, useAttrs } from 'vue';
 import Tag from 'primevue/tag';
 import type { TagPassThroughOptions } from 'primevue/tag';
-import { resolvePrimeUnstyled } from '../config/primevue-unstyled-flags';
 import { mergePt } from './prime/pt';
 
 const props = withDefaults(
@@ -24,7 +23,6 @@ const props = withDefaults(
 );
 
 const attrs = useAttrs();
-const isUnstyled = computed(() => resolvePrimeUnstyled('uiTag', props.unstyled));
 const resolvedLabel = computed(() => props.label || props.value || '');
 
 const mergedPt = computed(() =>
@@ -48,7 +46,7 @@ const mergedPt = computed(() =>
     :severity="props.severity"
     :value="resolvedLabel"
     :style="props.color ? { '--ui-badge-color': props.color } : undefined"
-    :unstyled="isUnstyled"
+    :unstyled="props.unstyled ?? true"
     :pt="mergedPt"
     v-bind="attrs"
   >

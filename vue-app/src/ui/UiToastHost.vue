@@ -1,7 +1,6 @@
 <script setup lang="ts">
 import { computed, useAttrs } from 'vue';
 import Toast from 'primevue/toast';
-import { resolvePrimeUnstyled } from '../config/primevue-unstyled-flags';
 import { mergePt } from './prime/pt';
 
 defineOptions({ inheritAttrs: false });
@@ -22,7 +21,6 @@ const props = withDefaults(
 );
 
 const attrs = useAttrs();
-const isUnstyled = computed(() => resolvePrimeUnstyled('uiToast', props.unstyled));
 
 const mergedPt = computed(() =>
   mergePt(
@@ -49,7 +47,7 @@ const mergedPt = computed(() =>
     class="ui-toast"
     :auto-z-index="props.autoZIndex"
     :base-z-index="props.baseZIndex"
-    :unstyled="isUnstyled"
+    :unstyled="props.unstyled ?? true"
     :pt="mergedPt"
   />
 </template>
