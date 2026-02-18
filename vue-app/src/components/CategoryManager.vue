@@ -1,8 +1,8 @@
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue'
-import Skeleton from 'primevue/skeleton'
-import SelectButton from 'primevue/selectbutton'
-import Tag from 'primevue/tag'
+import UiSkeleton from '@/ui/UiSkeleton.vue'
+import UiSelectButton from '@/ui/UiSelectButton.vue'
+import UiBadge from '@/ui/UiBadge.vue'
 import { useFinanceStore } from '../stores/finance'
 import CategoryFormModal from './CategoryFormModal.vue'
 import type { Category, CategoryType } from '../types'
@@ -92,7 +92,7 @@ defineExpose({
 
     <div class="categories-manager__body">
       <div class="categories-manager__controls">
-        <SelectButton
+        <UiSelectButton
           v-model="selectedCategoryType"
           class="categories-toggle"
           :options="categoryTypeOptions"
@@ -107,7 +107,7 @@ defineExpose({
         role="status"
         aria-live="polite"
       >
-        <Skeleton
+        <UiSkeleton
           v-for="i in 3"
           :key="i"
           height="120px"
@@ -153,13 +153,13 @@ defineExpose({
                   />
                   <span class="category-name">
                     {{ category.name }}
-                    <Tag
+                    <UiBadge
                       v-if="category.isMandatory"
                       severity="info"
                       class="category-mandatory"
                     >
                       Обязательная
-                    </Tag>
+                    </UiBadge>
                   </span>
                 </div>
                 <i
@@ -236,12 +236,6 @@ defineExpose({
   margin: 0 auto;
 }
 
-.categories-toggle :deep(.p-button) {
-  min-height: 36px;
-  padding: 0 var(--ft-space-4);
-  font-size: var(--ft-text-sm);
-}
-
 .categories__skeleton {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
@@ -295,7 +289,7 @@ defineExpose({
 
 .category-card:hover {
   transform: translateY(-1px);
-  background: color-mix(in srgb, var(--ft-surface-base) 90%, var(--ft-primary-500, #3b82f6) 10%);
+  background: color-mix(in srgb, var(--ft-surface-base) 90%, var(--ft-primary-500) 10%);
   border-color: var(--ft-border-default);
   box-shadow: var(--ft-shadow-sm);
 }
@@ -330,7 +324,7 @@ defineExpose({
 .color-dot {
   width: 14px;
   height: 14px;
-  border: 1px solid rgb(15 20 25 / 20%);
+  border: 1px solid color-mix(in srgb, var(--ft-text-primary) 14%, transparent);
   border-radius: 50%;
 }
 
@@ -358,9 +352,9 @@ defineExpose({
   padding: 0.15rem 0.45rem;
 
   font-size: 0.7rem;
-  color: var(--ft-primary-700, #1d4ed8) !important;
+  color: var(--ft-primary-700) !important;
 
-  background: color-mix(in srgb, var(--ft-primary-200, #dbeafe) 55%, transparent) !important;
+  background: color-mix(in srgb, var(--ft-primary-200) 55%, transparent) !important;
   border-radius: 999px;
 }
 

@@ -1,6 +1,8 @@
 <script setup lang="ts">
-import { useAttrs } from 'vue';
+import { computed, useAttrs } from 'vue';
 import SelectButton from 'primevue/selectbutton';
+import type { SelectButtonPassThroughOptions } from 'primevue/selectbutton';
+import { mergePt } from './prime/pt';
 
 const props = defineProps<{
   modelValue?: unknown;
@@ -10,6 +12,8 @@ const props = defineProps<{
   disabled?: boolean;
   allowEmpty?: boolean;
   multiple?: boolean;
+  unstyled?: boolean;
+  pt?: SelectButtonPassThroughOptions;
 }>();
 
 const emit = defineEmits<{
@@ -18,6 +22,22 @@ const emit = defineEmits<{
 }>();
 
 const attrs = useAttrs();
+
+const mergedPt = computed(() =>
+  mergePt(
+    {
+      root: {
+        class: 'ui-select-button__root',
+      },
+      pcToggleButton: {
+        root: {
+          class: 'ui-select-button__button p-togglebutton p-component',
+        },
+      },
+    } as SelectButtonPassThroughOptions,
+    props.pt
+  )
+);
 </script>
 
 <template>
@@ -31,6 +51,8 @@ const attrs = useAttrs();
     :disabled="props.disabled"
     :allow-empty="props.allowEmpty"
     :multiple="props.multiple"
+    :unstyled="props.unstyled ?? true"
+    :pt="mergedPt"
     @update:model-value="value => emit('update:modelValue', value)"
     @change="event => emit('change', event)"
   >

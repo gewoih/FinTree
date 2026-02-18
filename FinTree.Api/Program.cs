@@ -236,7 +236,9 @@ builder.Services.AddScoped<DatabaseInitializer>();
 
 if (!string.IsNullOrWhiteSpace(telegramToken))
     builder.Services.AddHostedService<TelegramBotHostedService>();
-builder.Services.AddHostedService<FxLoader>();
+
+if (!builder.Environment.IsDevelopment())
+    builder.Services.AddHostedService<FxLoader>();
 
 var app = builder.Build();
 if (app.Environment.IsDevelopment())

@@ -159,7 +159,7 @@ const handleRegister = async () => {
               class="auth__link-btn"
               @click="showEmailForm = true"
             >
-              Зарегистрируйтесь через email
+              Зарегистрируйтесь через Email
             </button>
           </p>
         </div>
@@ -174,7 +174,7 @@ const handleRegister = async () => {
             class="auth__email-toggle"
             @click="showEmailForm = true"
           >
-            Зарегистрироваться через email
+            Зарегистрироваться через Email
           </button>
         </div>
 
@@ -288,11 +288,12 @@ const handleRegister = async () => {
 .auth__center {
   display: flex;
   flex-direction: column;
-  align-items: center;
   gap: var(--ft-space-4);
+  align-items: center;
 
   width: 100%;
   max-width: 420px;
+
   text-align: center;
 }
 
@@ -304,9 +305,9 @@ const handleRegister = async () => {
   font-family: var(--ft-font-display);
   font-weight: var(--ft-font-semibold);
   color: var(--ft-primary-200);
+  text-decoration: none;
   text-transform: uppercase;
   letter-spacing: 0.08em;
-  text-decoration: none;
 }
 
 .light-mode .auth__brand {
@@ -334,6 +335,7 @@ const handleRegister = async () => {
   flex-direction: column;
   gap: var(--ft-space-3);
   align-items: center;
+
   text-align: center;
 }
 
@@ -357,15 +359,16 @@ const handleRegister = async () => {
 }
 
 .auth__link-btn {
+  cursor: pointer;
+
   padding: 0;
 
   font-size: inherit;
   color: var(--ft-primary-400);
+  text-decoration: underline;
 
   background: none;
   border: none;
-  cursor: pointer;
-  text-decoration: underline;
 }
 
 .auth__link-btn:hover {
@@ -405,7 +408,10 @@ const handleRegister = async () => {
 }
 
 .auth__email-toggle {
+  cursor: pointer;
+
   display: block;
+
   width: 100%;
   padding: var(--ft-space-3);
 
@@ -417,7 +423,6 @@ const handleRegister = async () => {
   background: none;
   border: 1px solid var(--ft-border-subtle);
   border-radius: var(--ft-radius-md);
-  cursor: pointer;
 
   transition:
     color var(--ft-transition-fast),
@@ -458,6 +463,8 @@ const handleRegister = async () => {
 }
 
 .auth__eye {
+  cursor: pointer;
+
   position: absolute;
   top: 50%;
   right: var(--ft-space-3);
@@ -473,7 +480,6 @@ const handleRegister = async () => {
 
   background: none;
   border: none;
-  cursor: pointer;
 
   transition: color var(--ft-transition-fast);
 }

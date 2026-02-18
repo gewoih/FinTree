@@ -1,12 +1,19 @@
 <script setup lang="ts">
-import { useAttrs } from 'vue';
+import { computed, useAttrs } from 'vue';
 import InputText from 'primevue/inputtext';
+import type { InputTextPassThroughOptions } from 'primevue/inputtext';
+import { mergePt } from './prime/pt';
+import { resolveFieldInvalidState } from './prime/field-state';
 
 const props = defineProps<{
   modelValue?: string | null;
   placeholder?: string;
   disabled?: boolean;
   type?: string;
+  invalid?: boolean;
+  error?: string | null;
+  unstyled?: boolean;
+  pt?: InputTextPassThroughOptions;
 }>();
 
 const emit = defineEmits<{
@@ -14,6 +21,24 @@ const emit = defineEmits<{
 }>();
 
 const attrs = useAttrs();
+const isInvalid = computed(() =>
+  resolveFieldInvalidState({
+    invalid: props.invalid,
+    error: props.error,
+    attrs,
+  })
+);
+
+const mergedPt = computed(() =>
+  mergePt(
+    {
+      root: {
+        class: 'ui-input__root p-inputtext',
+      },
+    } as InputTextPassThroughOptions,
+    props.pt
+  )
+);
 
 const handleUpdateModelValue = (value: string | null | undefined) => {
   emit('update:modelValue', value ?? '');
@@ -23,11 +48,15 @@ const handleUpdateModelValue = (value: string | null | undefined) => {
 <template>
   <InputText
     v-bind="attrs"
-    class="ui-input"
+    :class="['ui-input', { 'ui-field--invalid': isInvalid }]"
     :model-value="props.modelValue"
     :placeholder="props.placeholder"
     :disabled="props.disabled"
     :type="props.type"
+    :invalid="isInvalid"
+    :aria-invalid="isInvalid ? 'true' : undefined"
+    :unstyled="props.unstyled ?? true"
+    :pt="mergedPt"
     @update:model-value="handleUpdateModelValue"
   />
 </template>

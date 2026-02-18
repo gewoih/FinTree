@@ -69,6 +69,40 @@
     font-family: inherit;
   }
 
+  /* Global scrollbar styling */
+  * {
+    scrollbar-color: var(--ft-scrollbar-thumb) var(--ft-scrollbar-track);
+    scrollbar-width: thin;
+  }
+
+  *::-webkit-scrollbar {
+    width: var(--ft-scrollbar-size);
+    height: var(--ft-scrollbar-size);
+  }
+
+  *::-webkit-scrollbar-track {
+    background: var(--ft-scrollbar-track);
+    border-radius: var(--ft-radius-full);
+  }
+
+  *::-webkit-scrollbar-thumb {
+    background: var(--ft-scrollbar-thumb);
+    border: 2px solid var(--ft-scrollbar-track);
+    border-radius: var(--ft-radius-full);
+  }
+
+  *::-webkit-scrollbar-thumb:hover {
+    background: var(--ft-scrollbar-thumb-hover);
+  }
+
+  *::-webkit-scrollbar-thumb:active {
+    background: var(--ft-scrollbar-thumb-active);
+  }
+
+  *::-webkit-scrollbar-corner {
+    background: transparent;
+  }
+
   /* Layout helpers */
   .page {
     display: flex;
@@ -189,6 +223,17 @@
     border-radius: var(--ft-radius-xl);
   }
 
+  .ft-glass {
+    background: var(--ft-glass);
+    backdrop-filter: blur(18px);
+    border: 1px solid var(--ft-glass-border);
+  }
+
+  ::selection {
+    color: var(--ft-text-primary);
+    background-color: color-mix(in srgb, var(--ft-primary-500) 35%, transparent);
+  }
+
   @media (width <= 768px) {
     .card-grid {
       gap: var(--ft-space-4);
@@ -223,16 +268,5 @@
       width: 100%;
       margin-left: 0;
     }
-  }
-
-  .ft-glass {
-    background: var(--ft-glass);
-    backdrop-filter: blur(18px);
-    border: 1px solid var(--ft-glass-border);
-  }
-
-  ::selection {
-    color: var(--ft-text-primary);
-    background-color: color-mix(in srgb, var(--ft-primary-500) 35%, transparent);
   }
 }

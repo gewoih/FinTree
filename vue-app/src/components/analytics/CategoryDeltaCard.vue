@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed } from 'vue';
-import Skeleton from 'primevue/skeleton';
-import Message from 'primevue/message';
+import UiSkeleton from '@/ui/UiSkeleton.vue';
+import UiMessage from '@/ui/UiMessage.vue';
 import UiButton from '../../ui/UiButton.vue';
 
 interface CategoryDeltaItem {
@@ -90,7 +90,7 @@ const formatPercent = (value: number | null) =>
       v-if="loading"
       class="delta-card__loading"
     >
-      <Skeleton
+      <UiSkeleton
         v-for="i in 4"
         :key="i"
         height="36px"
@@ -102,7 +102,7 @@ const formatPercent = (value: number | null) =>
       v-else-if="error"
       class="delta-card__message"
     >
-      <Message
+      <UiMessage
         severity="error"
         icon="pi pi-exclamation-triangle"
         :closable="false"
@@ -121,14 +121,14 @@ const formatPercent = (value: number | null) =>
             @click="emit('retry')"
           />
         </div>
-      </Message>
+      </UiMessage>
     </div>
 
     <div
       v-else-if="showEmpty"
       class="delta-card__message"
     >
-      <Message
+      <UiMessage
         severity="info"
         icon="pi pi-inbox"
         :closable="false"
@@ -141,7 +141,7 @@ const formatPercent = (value: number | null) =>
             Нужен предыдущий период расходов, чтобы увидеть изменения.
           </p>
         </div>
-      </Message>
+      </UiMessage>
     </div>
 
     <div
@@ -261,7 +261,6 @@ const formatPercent = (value: number | null) =>
 
 .delta-card__title {
   margin: 0;
-
   font-size: var(--ft-text-lg);
   font-weight: var(--ft-font-semibold);
   color: var(--ft-text-primary);
@@ -269,16 +268,19 @@ const formatPercent = (value: number | null) =>
 
 .delta-card__hint {
   cursor: pointer;
-  font-size: 1rem;
-  color: var(--ft-text-muted);
-  transition: color var(--ft-transition-fast);
+
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
 
   /* Ensure minimum touch target size */
   min-width: var(--ft-control-height);
   min-height: var(--ft-control-height);
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
+
+  font-size: 1rem;
+  color: var(--ft-text-muted);
+
+  transition: color var(--ft-transition-fast);
 }
 
 .delta-card__hint:hover {

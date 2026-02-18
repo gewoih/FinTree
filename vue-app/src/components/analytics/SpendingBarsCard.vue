@@ -1,11 +1,11 @@
 <script setup lang="ts">
 import { computed } from 'vue';
 import type { ChartData, ChartDataset, TooltipItem } from 'chart.js';
-import Skeleton from 'primevue/skeleton';
-import Message from 'primevue/message';
 import UiButton from '../../ui/UiButton.vue';
 import UiSelect from '../../ui/UiSelect.vue';
-import Chart from 'primevue/chart';
+import UiSkeleton from '@/ui/UiSkeleton.vue';
+import UiMessage from '@/ui/UiMessage.vue';
+import UiChart from '@/ui/UiChart.vue';
 import type { ExpenseGranularity } from '@/types/analytics.ts';
 import { useChartColors } from '@/composables/useChartColors.ts';
 
@@ -150,7 +150,7 @@ const chartOptions = computed(() => ({
       role="status"
       aria-live="polite"
     >
-      <Skeleton
+      <UiSkeleton
         width="100%"
         height="280px"
         border-radius="16px"
@@ -161,7 +161,7 @@ const chartOptions = computed(() => ({
       v-else-if="error"
       class="bars-card__message"
     >
-      <Message
+      <UiMessage
         severity="error"
         icon="pi pi-exclamation-triangle"
         :closable="false"
@@ -180,14 +180,14 @@ const chartOptions = computed(() => ({
             @click="emit('retry')"
           />
         </div>
-      </Message>
+      </UiMessage>
     </div>
 
     <div
       v-else-if="empty"
       class="bars-card__message"
     >
-      <Message
+      <UiMessage
         severity="info"
         icon="pi pi-inbox"
         :closable="false"
@@ -200,7 +200,7 @@ const chartOptions = computed(() => ({
             Добавьте операции, чтобы увидеть динамику расходов.
           </p>
         </div>
-      </Message>
+      </UiMessage>
     </div>
 
     <div
@@ -210,7 +210,7 @@ const chartOptions = computed(() => ({
       aria-label="Столбчатая диаграмма расходов по дням"
     >
       <div class="bars-card__chart-container">
-        <Chart
+        <UiChart
           v-if="styledChartData"
           type="bar"
           :data="styledChartData"
@@ -250,7 +250,6 @@ const chartOptions = computed(() => ({
 
 .bars-card__title {
   margin: 0;
-
   font-size: var(--ft-text-lg);
   font-weight: var(--ft-font-semibold);
   color: var(--ft-text-primary);
@@ -258,16 +257,19 @@ const chartOptions = computed(() => ({
 
 .bars-card__hint {
   cursor: pointer;
-  font-size: 1rem;
-  color: var(--ft-text-muted);
-  transition: color var(--ft-transition-fast);
+
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
 
   /* Ensure minimum touch target size */
   min-width: var(--ft-control-height);
   min-height: var(--ft-control-height);
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
+
+  font-size: 1rem;
+  color: var(--ft-text-muted);
+
+  transition: color var(--ft-transition-fast);
 }
 
 .bars-card__hint:hover {
@@ -313,8 +315,8 @@ const chartOptions = computed(() => ({
 }
 
 .bars-card__chart {
-  width: 100%;
   aspect-ratio: 16 / 9;
+  width: 100%;
   max-height: 400px;
   padding: var(--ft-space-2) 0;
 }

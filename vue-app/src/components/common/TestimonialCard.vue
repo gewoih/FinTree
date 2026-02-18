@@ -118,6 +118,7 @@ const getInitials = (name: string): string => {
 
 .testimonial-card__quote {
   margin: 0;
+
   font-size: var(--ft-text-base);
   font-style: italic;
   line-height: 1.6;

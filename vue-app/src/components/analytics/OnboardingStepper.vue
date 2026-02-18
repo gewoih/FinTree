@@ -182,8 +182,8 @@ function shouldShowAction(step: OnboardingStep): boolean {
 }
 
 .onboarding-step--optional {
-  border-style: dashed;
   opacity: 0.92;
+  border-style: dashed;
 }
 
 .onboarding-step__badge {
@@ -203,7 +203,7 @@ function shouldShowAction(step: OnboardingStep): boolean {
 
 .onboarding-step--completed .onboarding-step__badge {
   color: var(--ft-success-400);
-  background: rgb(16 185 129 / 20%);
+  background: color-mix(in srgb, var(--ft-success-500) 20%, transparent);
 }
 
 .onboarding-step--locked .onboarding-step__badge {
@@ -228,8 +228,8 @@ function shouldShowAction(step: OnboardingStep): boolean {
 }
 
 .onboarding-step--completed .onboarding-step__title {
-  text-decoration: line-through;
   color: var(--ft-text-secondary);
+  text-decoration: line-through;
 }
 
 .onboarding-step--locked .onboarding-step__title {
@@ -249,8 +249,7 @@ function shouldShowAction(step: OnboardingStep): boolean {
 .onboarding-stepper__skip {
   cursor: pointer;
 
-  align-self: center;
-  justify-self: center;
+  place-self: center;
 
   padding: var(--ft-space-2) var(--ft-space-3);
 

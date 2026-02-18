@@ -1,9 +1,9 @@
 <script setup lang="ts">
 import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue';
-import Dialog from 'primevue/dialog';
-import InputText from 'primevue/inputtext';
-import SelectButton from 'primevue/selectbutton';
-import Checkbox from 'primevue/checkbox';
+import UiDialog from '../ui/UiDialog.vue';
+import UiInputText from '../ui/UiInputText.vue';
+import UiSelectButton from '../ui/UiSelectButton.vue';
+import UiCheckbox from '../ui/UiCheckbox.vue';
 import { useConfirm } from 'primevue/useconfirm';
 import { useToast } from 'primevue/usetoast';
 import type { Category, CategoryType } from '../types';
@@ -32,11 +32,23 @@ const emit = defineEmits<{
 const store = useFinanceStore();
 const confirm = useConfirm();
 const toast = useToast();
-const DEFAULT_COLOR = '#10b981';
+const DEFAULT_COLOR_TOKEN = '--ft-success-500';
 const HEX_COLOR_REGEX = /^#([0-9A-Fa-f]{6})$/;
 
+const resolveDefaultColor = (): string => {
+  if (typeof window === 'undefined') {
+    return '';
+  }
+
+  const resolved = getComputedStyle(document.documentElement)
+    .getPropertyValue(DEFAULT_COLOR_TOKEN)
+    .trim();
+
+  return HEX_COLOR_REGEX.test(resolved) ? resolved : '';
+};
+
 const name = ref('');
-const color = ref(DEFAULT_COLOR);
+const color = ref(resolveDefaultColor());
 const icon = ref('pi-tag');
 const iconPickerOpen = ref(false);
 const iconPickerRef = ref<HTMLElement | null>(null);
@@ -58,7 +70,7 @@ const canChooseType = computed(() => !isEditMode.value);
 
 const resetForm = () => {
   name.value = '';
-  color.value = DEFAULT_COLOR;
+  color.value = resolveDefaultColor();
   icon.value = 'pi-tag';
   iconPickerOpen.value = false;
   categoryType.value = props.defaultType ?? null;
@@ -218,7 +230,7 @@ const handleDelete = () => {
 </script>
 
 <template>
-  <Dialog
+  <UiDialog
     :visible="props.visible"
     :closable="false"
     modal
@@ -247,191 +259,188 @@ const handleDelete = () => {
         </button>
       </header>
 
-    <form
-      class="category-form"
-      novalidate
-      @submit.prevent="handleSubmit"
-    >
-      <div class="category-form__grid">
-        <FormField
-          label="Название"
-          :error="nameError"
-          required
-        >
-          <template #default="{ fieldAttrs }">
-            <InputText
-              v-bind="fieldAttrs"
-              v-model="name"
-              placeholder="Например, «Транспорт»"
-              class="w-full"
-              autocomplete="off"
-              :disabled="props.readonly"
-              :autofocus="props.visible"
-            />
-          </template>
-        </FormField>
-
-        <FormField
-          v-if="canChooseType"
-          label="Тип"
-          :error="typeError"
-          required
-        >
-          <template #default="{ fieldAttrs }">
-            <SelectButton
-              v-model="categoryType"
-              :options="categoryTypeOptions"
-              option-label="label"
-              option-value="value"
-              :allow-empty="false"
-              class="w-full"
-              :disabled="props.readonly"
-              :aria-describedby="fieldAttrs['aria-describedby']"
-              :aria-invalid="fieldAttrs['aria-invalid']"
-              :pt="{
-                button: { class: 'category-form__type-button' },
-              }"
-            />
-          </template>
-        </FormField>
-      </div>
-
-      <div class="category-form__grid category-form__grid--two">
-        <FormField
-          label="Иконка"
-          hint="Иконка используется в списках и аналитике."
-        >
-          <template #default="{ fieldAttrs }">
-            <div
-              ref="iconPickerRef"
-              class="icon-picker"
-            >
-              <button
-                type="button"
-                class="icon-picker__trigger"
-                :aria-expanded="iconPickerOpen"
+      <form
+        class="category-form"
+        novalidate
+        @submit.prevent="handleSubmit"
+      >
+        <div class="category-form__grid">
+          <FormField
+            label="Название"
+            :error="nameError"
+            required
+          >
+            <template #default="{ fieldAttrs }">
+              <UiInputText
+                v-bind="fieldAttrs"
+                v-model="name"
+                placeholder="Например, «Транспорт»"
+                class="w-full"
+                autocomplete="off"
                 :disabled="props.readonly"
-                @click="toggleIconPicker"
-              >
-                <i :class="['pi', icon]" />
-                <span>Выбрать иконку</span>
-              </button>
-              <div
-                v-if="iconPickerOpen"
-                class="icon-grid"
-                role="listbox"
+                :autofocus="props.visible"
+              />
+            </template>
+          </FormField>
+
+          <FormField
+            v-if="canChooseType"
+            label="Тип"
+            :error="typeError"
+            required
+          >
+            <template #default="{ fieldAttrs }">
+              <UiSelectButton
+                v-model="categoryType"
+                :options="categoryTypeOptions"
+                option-label="label"
+                option-value="value"
+                :allow-empty="false"
+                class="w-full"
+                :disabled="props.readonly"
                 :aria-describedby="fieldAttrs['aria-describedby']"
                 :aria-invalid="fieldAttrs['aria-invalid']"
-                :aria-activedescendant="icon ? `icon-${icon}` : undefined"
+              />
+            </template>
+          </FormField>
+        </div>
+
+        <div class="category-form__grid category-form__grid--two">
+          <FormField
+            label="Иконка"
+            hint="Иконка используется в списках и аналитике."
+          >
+            <template #default="{ fieldAttrs }">
+              <div
+                ref="iconPickerRef"
+                class="icon-picker"
               >
                 <button
-                  v-for="option in CATEGORY_ICON_OPTIONS"
-                  :id="`icon-${option.value}`"
-                  :key="option.value"
                   type="button"
-                  class="icon-grid__item"
-                  :class="{ 'is-selected': option.value === icon }"
-                  :aria-label="option.label"
-                  :aria-pressed="option.value === icon"
+                  class="icon-picker__trigger"
+                  :aria-expanded="iconPickerOpen"
                   :disabled="props.readonly"
-                  @click="
-                    () => {
-                      icon = option.value;
-                      closeIconPicker();
-                    }
-                  "
+                  @click="toggleIconPicker"
                 >
-                  <i :class="['pi', option.value]" />
+                  <i :class="['pi', icon]" />
+                  <span>Выбрать иконку</span>
                 </button>
+                <div
+                  v-if="iconPickerOpen"
+                  class="icon-grid"
+                  role="listbox"
+                  :aria-describedby="fieldAttrs['aria-describedby']"
+                  :aria-invalid="fieldAttrs['aria-invalid']"
+                  :aria-activedescendant="icon ? `icon-${icon}` : undefined"
+                >
+                  <button
+                    v-for="option in CATEGORY_ICON_OPTIONS"
+                    :id="`icon-${option.value}`"
+                    :key="option.value"
+                    type="button"
+                    class="icon-grid__item"
+                    :class="{ 'is-selected': option.value === icon }"
+                    :aria-label="option.label"
+                    :aria-pressed="option.value === icon"
+                    :disabled="props.readonly"
+                    @click="
+                      () => {
+                        icon = option.value;
+                        closeIconPicker();
+                      }
+                    "
+                  >
+                    <i :class="['pi', option.value]" />
+                  </button>
+                </div>
               </div>
-            </div>
-          </template>
-        </FormField>
+            </template>
+          </FormField>
+
+          <FormField
+            label="Цвет"
+            :error="colorError"
+            hint="Цвет категории в легендах и тегах."
+          >
+            <template #default="{ fieldAttrs }">
+              <div class="color-picker">
+                <input
+                  :id="fieldAttrs.id"
+                  v-model="color"
+                  type="color"
+                  class="color-picker__swatch"
+                  :disabled="props.readonly"
+                  :aria-describedby="fieldAttrs['aria-describedby']"
+                  :aria-invalid="fieldAttrs['aria-invalid']"
+                >
+                <UiInputText
+                  v-model="color"
+                  maxlength="7"
+                  class="w-full"
+                  placeholder="#RRGGBB"
+                  :disabled="props.readonly"
+                />
+              </div>
+            </template>
+          </FormField>
+        </div>
 
         <FormField
-          label="Цвет"
-          :error="colorError"
-          hint="Цвет категории в легендах и тегах."
+          v-if="isExpenseCategory"
+          label="Учет в аналитике"
+          hint="Влияет на метрики устойчивости."
         >
-          <template #default="{ fieldAttrs }">
-            <div class="color-picker">
-              <input
-                :id="fieldAttrs.id"
-                v-model="color"
-                type="color"
-                class="color-picker__swatch"
-                :disabled="props.readonly"
-                :aria-describedby="fieldAttrs['aria-describedby']"
-                :aria-invalid="fieldAttrs['aria-invalid']"
-              >
-              <InputText
-                v-model="color"
-                maxlength="7"
-                class="w-full"
-                placeholder="#10B981"
+          <template #default>
+            <label class="mandatory-toggle">
+              <UiCheckbox
+                v-model="isMandatory"
+                binary
                 :disabled="props.readonly"
               />
-            </div>
+              <span>Обязательная категория</span>
+            </label>
           </template>
         </FormField>
-      </div>
 
-      <FormField
-        v-if="isExpenseCategory"
-        label="Учет в аналитике"
-        hint="Влияет на метрики устойчивости."
-      >
-        <template #default>
-          <label class="mandatory-toggle">
-            <Checkbox
-              v-model="isMandatory"
-              binary
-              :disabled="props.readonly"
-            />
-            <span>Обязательная категория</span>
-          </label>
-        </template>
-      </FormField>
-
-      <div
-        v-if="isEditMode"
-        class="category-form__danger"
-      >
-        <div>
-          <p class="category-form__danger-title">
-            Удалить категорию
-          </p>
-          <p class="category-form__danger-hint">
-            Транзакции перейдут в «Без категории».
-          </p>
-        </div>
-        <UiButton
-          type="button"
-          variant="danger"
-          icon="pi pi-trash"
-          class="category-form__danger-button"
-          :loading="isDeleting"
-          :disabled="props.readonly || isSubmitting || isDeleting"
-          aria-label="Удалить категорию"
-          @click="handleDelete"
-        />
-      </div>
-
-      <div class="category-form__footer">
-        <div class="actions">
+        <div
+          v-if="isEditMode"
+          class="category-form__danger"
+        >
+          <div>
+            <p class="category-form__danger-title">
+              Удалить категорию
+            </p>
+            <p class="category-form__danger-hint">
+              Транзакции перейдут в «Без категории».
+            </p>
+          </div>
           <UiButton
-            type="submit"
-            icon="pi pi-check"
-            :loading="isSubmitting"
+            type="button"
+            variant="danger"
+            icon="pi pi-trash"
+            class="category-form__danger-button"
+            :loading="isDeleting"
             :disabled="props.readonly || isSubmitting || isDeleting"
-          >
-            {{ props.category ? 'Сохранить' : 'Создать' }}
-          </UiButton>
+            aria-label="Удалить категорию"
+            @click="handleDelete"
+          />
         </div>
-      </div>
-    </form>
+
+        <div class="category-form__footer">
+          <div class="actions">
+            <UiButton
+              type="submit"
+              icon="pi pi-check"
+              :loading="isSubmitting"
+              :disabled="props.readonly || isSubmitting || isDeleting"
+            >
+              {{ props.category ? 'Сохранить' : 'Создать' }}
+            </UiButton>
+          </div>
+        </div>
+      </form>
     </div>
-  </Dialog>
+  </UiDialog>
 </template>
 
 <style scoped>
@@ -450,6 +459,7 @@ const handleDelete = () => {
   gap: var(--ft-space-4);
   align-items: flex-start;
   justify-content: space-between;
+
   margin-bottom: var(--ft-space-5);
 }
 

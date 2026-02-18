@@ -478,11 +478,14 @@ onMounted(async () => {
   display: flex;
   gap: var(--ft-space-2);
   align-items: center;
+
   min-height: 44px;
   padding: 0 var(--ft-space-3);
+
   background: var(--ft-surface-base);
   border: 1px solid var(--ft-border-default);
   border-radius: var(--ft-radius-md);
+
   transition:
     border-color var(--ft-transition-fast),
     box-shadow var(--ft-transition-fast);
@@ -492,28 +495,13 @@ onMounted(async () => {
   border-color: var(--ft-border-strong);
   box-shadow:
     0 0 0 3px var(--ft-focus-ring),
-    0 1px 3px rgb(0 0 0 / 12%);
+    var(--ft-shadow-xs);
 }
 
 .accounts-search i {
-  color: var(--ft-text-tertiary);
-  font-size: var(--ft-text-sm);
   flex-shrink: 0;
-}
-
-.accounts-search :deep(.p-inputtext) {
-  flex: 1;
-  width: 100%;
-  padding: 0;
-  background: transparent;
-  border: none;
-  box-shadow: none !important;
-}
-
-.accounts-search :deep(.p-inputtext:focus) {
-  border: none !important;
-  box-shadow: none !important;
-  outline: none;
+  font-size: var(--ft-text-sm);
+  color: var(--ft-text-tertiary);
 }
 
 .accounts-sort {

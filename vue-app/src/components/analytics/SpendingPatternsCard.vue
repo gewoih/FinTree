@@ -1,8 +1,8 @@
 <script setup lang="ts">
 import { computed } from 'vue';
-import Card from 'primevue/card';
-import Skeleton from 'primevue/skeleton';
-import Message from 'primevue/message';
+import UiCard from '@/ui/UiCard.vue';
+import UiSkeleton from '@/ui/UiSkeleton.vue';
+import UiMessage from '@/ui/UiMessage.vue';
 import UiButton from '../../ui/UiButton.vue';
 
 interface PeakDayItem {
@@ -45,8 +45,8 @@ const spikeLabel = computed(() => (props.spikeCount == null ? '—' : props.spik
 </script>
 
 <template>
-  <Card class="analytics-card">
-    <template #title>
+  <UiCard class="analytics-card">
+    <template #header>
       <div class="card-head">
         <div>
           <h3>Пиковые дни</h3>
@@ -55,12 +55,12 @@ const spikeLabel = computed(() => (props.spikeCount == null ? '—' : props.spik
       </div>
     </template>
 
-    <template #content>
+    <template #default>
       <div
         v-if="loading"
         class="card-loading"
       >
-        <Skeleton
+        <UiSkeleton
           v-for="index in 4"
           :key="index"
           height="24px"
@@ -72,7 +72,7 @@ const spikeLabel = computed(() => (props.spikeCount == null ? '—' : props.spik
         v-else-if="error"
         class="card-message"
       >
-        <Message
+        <UiMessage
           severity="error"
           icon="pi pi-exclamation-triangle"
           :closable="false"
@@ -91,14 +91,14 @@ const spikeLabel = computed(() => (props.spikeCount == null ? '—' : props.spik
               @click="emit('retry')"
             />
           </div>
-        </Message>
+        </UiMessage>
       </div>
 
       <div
         v-else-if="showEmpty"
         class="card-message"
       >
-        <Message
+        <UiMessage
           severity="info"
           icon="pi pi-inbox"
           :closable="false"
@@ -111,7 +111,7 @@ const spikeLabel = computed(() => (props.spikeCount == null ? '—' : props.spik
               Добавьте ежедневные траты, чтобы увидеть пиковые дни.
             </p>
           </div>
-        </Message>
+        </UiMessage>
       </div>
 
       <div
@@ -140,7 +140,7 @@ const spikeLabel = computed(() => (props.spikeCount == null ? '—' : props.spik
         </ul>
       </div>
     </template>
-  </Card>
+  </UiCard>
 </template>
 
 <style scoped>

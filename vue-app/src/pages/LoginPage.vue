@@ -133,12 +133,12 @@ const handleLogin = async () => {
             v-if="telegramLoaded === false && !telegramScript"
             class="auth__telegram-fallback"
           >
-            Виджет Telegram не загрузился. Используйте email-вход ниже.
+            Виджет Telegram не загрузился. Используйте Email-вход ниже.
           </p>
         </div>
 
         <div class="auth__divider">
-          <span>или через email</span>
+          <span>или через Email</span>
         </div>
 
         <form
@@ -243,11 +243,12 @@ const handleLogin = async () => {
 .auth__center {
   display: flex;
   flex-direction: column;
-  align-items: center;
   gap: var(--ft-space-4);
+  align-items: center;
 
   width: 100%;
   max-width: 420px;
+
   text-align: center;
 }
 
@@ -259,9 +260,9 @@ const handleLogin = async () => {
   font-family: var(--ft-font-display);
   font-weight: var(--ft-font-semibold);
   color: var(--ft-primary-200);
+  text-decoration: none;
   text-transform: uppercase;
   letter-spacing: 0.08em;
-  text-decoration: none;
 }
 
 .light-mode .auth__brand {
@@ -289,6 +290,7 @@ const handleLogin = async () => {
   flex-direction: column;
   gap: var(--ft-space-3);
   align-items: center;
+
   text-align: center;
 }
 
@@ -372,6 +374,8 @@ const handleLogin = async () => {
 }
 
 .auth__eye {
+  cursor: pointer;
+
   position: absolute;
   top: 50%;
   right: var(--ft-space-3);
@@ -387,7 +391,6 @@ const handleLogin = async () => {
 
   background: none;
   border: none;
-  cursor: pointer;
 
   transition: color var(--ft-transition-fast);
 }
@@ -398,9 +401,11 @@ const handleLogin = async () => {
 
 .auth__forgot-link {
   align-self: flex-end;
+
   font-size: var(--ft-text-xs);
   color: var(--ft-text-secondary);
   text-decoration: none;
+
   transition: color var(--ft-transition-fast);
 }
 

@@ -109,6 +109,7 @@
   --ft-surface-raised: #212A3C;
   --ft-surface-overlay: #2A354A;
   --ft-surface-soft: #151B26;
+  --ft-surface-muted: var(--ft-surface-overlay);
 
   /* Text */
   --ft-text-primary: #E6ECF6;
@@ -118,6 +119,9 @@
   --ft-text-inverse: #F8FAFF;
   --ft-text-link: var(--ft-primary-300);
   --ft-text-link-hover: var(--ft-primary-200);
+  --ft-text: var(--ft-text-primary);
+  --ft-text-muted: var(--ft-text-secondary);
+  --ft-heading: var(--ft-text-primary);
 
   /* Borders */
   --ft-border-subtle: #232D3F;
@@ -201,6 +205,8 @@
   --ft-shadow-xl: 0 12px 36px rgb(0 0 0 / 35%);
   --ft-shadow-2xl: 0 20px 48px rgb(0 0 0 / 40%);
   --ft-shadow-inner: inset 0 1px 2px rgb(255 255 255 / 4%);
+  --ft-shadow-soft: var(--ft-shadow-md);
+  --ft-shadow-card: var(--ft-shadow-md);
 
   /* ━━━ TRANSITIONS ━━━ */
 
@@ -268,38 +274,47 @@
   --ft-button-height-sm: 2.75rem;  /* 44px */
   --ft-button-height-md: 3rem;    /* 48px */
   --ft-button-height-lg: 3.25rem;  /* 52px */
+
+  /* ━━━ SCROLLBARS ━━━ */
+
+  --ft-scrollbar-size: 10px;
+  --ft-scrollbar-track: color-mix(in srgb, var(--ft-surface-base) 58%, var(--ft-bg-base));
+  --ft-scrollbar-thumb: color-mix(in srgb, var(--ft-primary-300) 35%, var(--ft-surface-overlay));
+  --ft-scrollbar-thumb-hover: color-mix(in srgb, var(--ft-primary-300) 48%, var(--ft-surface-overlay));
+  --ft-scrollbar-thumb-active: color-mix(in srgb, var(--ft-primary-300) 58%, var(--ft-surface-overlay));
 }
 
 .light-mode {
   /* ━━━ SEMANTIC TOKENS - LIGHT THEME ━━━ */
 
-  --ft-bg-base: #F8F9FC;
-  --ft-bg-subtle: #F3F4F8;
-  --ft-bg-muted: #ECEEF4;
-  --ft-bg-elevated: #FFF;
-  --ft-bg-overlay: rgb(15 23 42 / 35%);
-  --ft-surface-base: #FFF;
-  --ft-surface-raised: #F5F6FA;
-  --ft-surface-overlay: #FFF;
-  --ft-surface-soft: #FAFAFC;
-  --ft-text-primary: #111827;
-  --ft-text-secondary: #4B5563;
-  --ft-text-tertiary: #6B7280;
-  --ft-text-disabled: #9CA3AF;
+  --ft-bg-base: #EEF2F8;
+  --ft-bg-subtle: #E7EDF6;
+  --ft-bg-muted: #DFE7F2;
+  --ft-bg-elevated: #F4F7FC;
+  --ft-bg-overlay: rgb(15 23 42 / 30%);
+  --ft-surface-base: #F7F9FE;
+  --ft-surface-raised: #EEF3FB;
+  --ft-surface-overlay: #E8EEF9;
+  --ft-surface-soft: #F1F5FC;
+  --ft-surface-muted: var(--ft-surface-overlay);
+  --ft-text-primary: #1B2433;
+  --ft-text-secondary: #56637A;
+  --ft-text-tertiary: #6D7A90;
+  --ft-text-disabled: #97A3B7;
   --ft-text-inverse: #F8FAFF;
   --ft-text-link: var(--ft-primary-600);
   --ft-text-link-hover: var(--ft-primary-700);
-  --ft-border-subtle: #DCDFE8;
-  --ft-border-default: #C8CDD8;
-  --ft-border-strong: #B7C0CE;
-  --ft-border-soft: #ECEFF4;
+  --ft-border-subtle: #D5DEEB;
+  --ft-border-default: #C3CFDF;
+  --ft-border-strong: #A9B8CC;
+  --ft-border-soft: #E4EBF5;
   --ft-border-inverse: rgb(17 24 39 / 12%);
   --ft-interactive-default: var(--ft-primary-500);
   --ft-interactive-hover: var(--ft-primary-600);
   --ft-interactive-active: var(--ft-primary-700);
   --ft-interactive-disabled: #E5E7EB;
-  --ft-focus-ring: rgb(79 99 184 / 22%);
-  --ft-focus-ring-offset: #FFF;
+  --ft-focus-ring: rgb(79 99 184 / 18%);
+  --ft-focus-ring-offset: #F7F9FE;
   --ft-shadow-xs: 0 1px 2px rgb(15 23 42 / 5%);
   --ft-shadow-sm: 0 1px 3px rgb(15 23 42 / 8%), 0 1px 2px rgb(15 23 42 / 6%);
   --ft-shadow-md: 0 4px 6px rgb(15 23 42 / 12%), 0 2px 4px rgb(15 23 42 / 8%);
@@ -307,6 +322,10 @@
   --ft-shadow-xl: 0 20px 25px rgb(15 23 42 / 12%), 0 8px 10px rgb(15 23 42 / 8%);
   --ft-shadow-2xl: 0 25px 50px rgb(15 23 42 / 20%);
   --ft-shadow-inner: inset 0 2px 4px rgb(15 23 42 / 6%);
+  --ft-scrollbar-track: #E3EAF5;
+  --ft-scrollbar-thumb: #9AA9C2;
+  --ft-scrollbar-thumb-hover: #8092B2;
+  --ft-scrollbar-thumb-active: #6F84A8;
 }
 
 /* High contrast mode support */

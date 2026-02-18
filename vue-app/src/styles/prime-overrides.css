@@ -4,13 +4,6 @@
    ═══════════════════════════════════════════════════════════════ */
 
 @layer overrides {
-  :root {
-    --p-card-background: var(--ft-surface-soft);
-    --p-card-border-color: var(--ft-border-soft);
-    --p-card-border-radius: var(--ft-radius-xl);
-    --p-card-shadow: var(--ft-shadow-sm);
-  }
-
   /* ━━━ Card ━━━ */
   .p-card {
     overflow: hidden;
@@ -46,112 +39,6 @@
   .p-card .p-card-content {
     font-size: var(--ft-text-sm);
     color: var(--ft-text);
-  }
-
-  /* ━━━ Input Fields Base Styles ━━━ */
-  .p-inputtext,
-  .p-select,
-  .p-dropdown,
-  .p-multiselect,
-  .p-datepicker,
-  .p-calendar,
-  .p-inputnumber,
-  .p-inputtextarea,
-  .p-autocomplete-input,
-  .p-password-input {
-    font-family: var(--ft-font-base);
-    color: var(--ft-text-primary);
-
-    background-color: var(--ft-surface-base);
-    border-color: var(--ft-border-default);
-
-    transition:
-      border-color var(--ft-transition-fast),
-      box-shadow var(--ft-transition-fast),
-      background-color var(--ft-transition-fast);
-  }
-
-
-  /* ━━━ Hover States ━━━ */
-  .p-inputtext:hover:not(:disabled),
-  .p-select:hover:not(:disabled),
-  .p-dropdown:hover:not(:disabled),
-  .p-datepicker:hover:not(:disabled),
-  .p-calendar:hover:not(:disabled),
-  .p-inputnumber:hover:not(:disabled),
-  .p-inputtextarea:hover:not(:disabled),
-  .p-multiselect:hover:not(:disabled) {
-    border-color: var(--ft-border-default);
-  }
-
-  /* ━━━ Focus States ━━━ */
-  .p-inputtext:focus,
-  .p-select:focus-within,
-  .p-dropdown:focus-within,
-  .p-datepicker:focus-within,
-  .p-calendar:focus-within,
-  .p-inputnumber:focus-within,
-  .p-inputtextarea:focus,
-  .p-multiselect:focus-within {
-    border-color: var(--ft-border-strong);
-    outline: none;
-    box-shadow:
-      0 0 0 3px var(--ft-focus-ring),
-      0 1px 3px rgb(0 0 0 / 12%);
-  }
-
-  /* Composite controls: keep one visible focus layer on the control root. */
-  .p-datepicker:focus-within .p-datepicker-input:focus,
-  .p-datepicker:focus-within .p-datepicker-input:focus-visible,
-  .p-inputnumber:focus-within .p-inputnumber-input:focus,
-  .p-inputnumber:focus-within .p-inputnumber-input:focus-visible {
-    outline: none;
-    box-shadow: none;
-  }
-
-  /* ━━━ Placeholders ━━━ */
-  .p-inputtext::placeholder,
-  .p-inputtextarea::placeholder {
-    color: var(--ft-text-secondary);
-    opacity: 0.8;
-  }
-
-  /* ━━━ Component Sizing ━━━ */
-  .p-dropdown,
-  .p-select,
-  .p-datepicker,
-  .p-calendar,
-  .p-inputnumber,
-  .p-multiselect {
-    min-height: var(--ft-control-height);
-    border-radius: var(--ft-radius-lg);
-  }
-
-  /* Composite controls: clip inner edges to prevent sharp/double corners. */
-  .p-select,
-  .p-datepicker,
-  .p-inputnumber,
-  .p-multiselect {
-    overflow: hidden;
-  }
-
-  .p-select .p-select-label,
-  .p-select .p-select-dropdown,
-  .p-datepicker .p-datepicker-input,
-  .p-datepicker .p-datepicker-dropdown,
-  .p-inputnumber .p-inputnumber-input,
-  .p-multiselect .p-multiselect-label,
-  .p-multiselect .p-multiselect-dropdown {
-    background: transparent;
-    border: 0;
-    border-radius: 0;
-    box-shadow: none;
-  }
-
-  .p-select .p-select-dropdown,
-  .p-datepicker .p-datepicker-dropdown,
-  .p-multiselect .p-multiselect-dropdown {
-    border-inline-start: 1px solid var(--ft-border-soft);
   }
 
   /* ━━━ Buttons ━━━ */
@@ -250,72 +137,6 @@
     }
   }
 
-  /* ━━━ Dialogs ━━━ */
-  .p-dialog {
-    overflow: hidden;
-    border: 1px solid var(--ft-border-default);
-    border-radius: var(--ft-radius-xl);
-    box-shadow: var(--ft-shadow-lg);
-  }
-
-  .p-dialog .p-dialog-header {
-    display: none;
-  }
-
-  .p-dialog .p-dialog-content {
-    overflow: hidden auto;
-    padding: 0;
-    background: var(--ft-surface-raised);
-    border-radius: inherit;
-  }
-
-  /* ━━━ Dropdowns and Panels ━━━ */
-  .p-datepicker-panel,
-  .p-select-overlay,
-  .p-select-panel,
-  .p-dropdown-panel,
-  .p-multiselect-overlay,
-  .p-multiselect-panel,
-  .ui-select-overlay,
-  .ui-date-picker-overlay {
-    overflow: hidden;
-
-    background: var(--ft-surface-raised);
-    border: 1px solid var(--ft-border-default);
-    border-radius: var(--ft-radius-xl);
-    box-shadow: var(--ft-shadow-md);
-  }
-
-  .p-datepicker-panel .p-datepicker-header,
-  .ui-date-picker-overlay .p-datepicker-header {
-    padding: var(--ft-space-2) var(--ft-space-3);
-  }
-
-  .p-datepicker-panel .p-datepicker-title,
-  .ui-date-picker-overlay .p-datepicker-title {
-    gap: var(--ft-space-3);
-    font-size: var(--ft-text-lg);
-  }
-
-  .p-datepicker-panel .p-datepicker-calendar th,
-  .ui-date-picker-overlay .p-datepicker-calendar th {
-    padding: var(--ft-space-1);
-    font-size: var(--ft-text-sm);
-    font-weight: var(--ft-font-medium);
-  }
-
-  .p-datepicker-panel .p-datepicker-calendar td,
-  .ui-date-picker-overlay .p-datepicker-calendar td {
-    padding: var(--ft-space-1);
-  }
-
-  .p-datepicker-panel .p-datepicker-calendar td > span,
-  .ui-date-picker-overlay .p-datepicker-calendar td > span {
-    width: 2.25rem;
-    height: 2.25rem;
-    font-size: var(--ft-text-base);
-  }
-
   /* ━━━ DataTable ━━━ */
   .p-datatable {
     overflow: hidden;
@@ -377,36 +198,6 @@
     border-bottom: 1px solid var(--ft-border-default);
   }
 
-  .p-paginator {
-    padding: var(--ft-space-3) var(--ft-space-4);
-    border-top: 1px solid var(--ft-border-default);
-  }
-
-  /* ━━━ SelectButton ━━━ */
-  .p-selectbutton .p-button {
-    color: var(--ft-text-secondary);
-    background: var(--ft-surface-raised);
-    border-color: var(--ft-border-subtle);
-  }
-
-  .p-selectbutton .p-button:hover {
-    color: var(--ft-text-primary);
-    background: var(--ft-surface-overlay);
-    border-color: var(--ft-border-default);
-  }
-
-  .p-selectbutton .p-button.p-highlight,
-  .p-selectbutton .p-button.p-highlight:hover {
-    color: var(--ft-text-inverse);
-    background: var(--ft-primary-500);
-    border-color: var(--ft-primary-500);
-  }
-
-  /* ━━━ DatePicker Calendar Cells ━━━ */
-  .p-datepicker .p-datepicker-calendar table td > span {
-    border-radius: var(--ft-radius-md);
-  }
-
   /* ━━━ Fallback Focus (non-Prime interactive elements) ━━━ */
   a[href]:focus-visible,
   button:not(.p-component):focus-visible,
@@ -425,16 +216,6 @@
   .ft-card:hover {
     transform: translateY(-2px);
     box-shadow: var(--ft-shadow-soft);
-  }
-
-  /* Compact DatePicker overlay on desktop while preserving mobile adaptability. */
-  @media (width > 640px) {
-    .p-datepicker-panel,
-    .ui-date-picker-overlay {
-      width: min(320px, calc(100vw - (var(--ft-space-6) * 2))) !important;
-      min-width: min(320px, calc(100vw - (var(--ft-space-6) * 2))) !important;
-      max-width: min(320px, calc(100vw - (var(--ft-space-6) * 2)));
-    }
   }
 
   @media (width <= 640px) {

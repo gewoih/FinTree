@@ -1,17 +1,27 @@
 <script setup lang="ts">
-import { useAttrs } from 'vue';
+import { computed, useAttrs } from 'vue';
 import InputNumber from 'primevue/inputnumber';
-import type { InputNumberBlurEvent, InputNumberInputEvent } from 'primevue/inputnumber';
+import type {
+  InputNumberBlurEvent,
+  InputNumberInputEvent,
+  InputNumberPassThroughOptions,
+} from 'primevue/inputnumber';
+import { resolveFieldInvalidState } from './prime/field-state';
+import { mergeClassNames, mergePt } from './prime/pt';
 
 const props = defineProps<{
   modelValue?: number | null;
   disabled?: boolean;
   placeholder?: string;
+  invalid?: boolean;
+  error?: string | null;
   mode?: 'decimal' | 'currency';
   minFractionDigits?: number;
   maxFractionDigits?: number;
   min?: number;
   max?: number;
+  unstyled?: boolean;
+  pt?: InputNumberPassThroughOptions;
 }>();
 
 const emit = defineEmits<{
@@ -22,6 +32,32 @@ const emit = defineEmits<{
 }>();
 
 const attrs = useAttrs();
+const isInvalid = computed(() =>
+  resolveFieldInvalidState({
+    invalid: props.invalid,
+    error: props.error,
+    attrs,
+  })
+);
+
+const mergedPt = computed(() =>
+  mergePt(
+    {
+      root: {
+        class: mergeClassNames(
+          'ui-input-number__root p-inputnumber p-component p-inputwrapper',
+          isInvalid.value ? 'ui-field--invalid' : undefined
+        ),
+      },
+      pcInputText: {
+        root: {
+          class: 'ui-input-number__input p-inputnumber-input p-inputtext',
+        },
+      },
+    } as InputNumberPassThroughOptions,
+    props.pt
+  )
+);
 
 const handleUpdateModelValue = (value: number | null | undefined) => {
   emit('update:modelValue', value ?? null);
@@ -52,6 +88,10 @@ const handleBlur = (event: InputNumberBlurEvent) => {
     :max-fraction-digits="props.maxFractionDigits"
     :min="props.min"
     :max="props.max"
+    :invalid="isInvalid"
+    :aria-invalid="isInvalid ? 'true' : undefined"
+    :unstyled="props.unstyled ?? true"
+    :pt="mergedPt"
     @update:model-value="handleUpdateModelValue"
     @input="handleInput"
     @focus="handleFocus"

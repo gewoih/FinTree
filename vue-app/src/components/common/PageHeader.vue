@@ -44,6 +44,7 @@ defineProps<Props>()
 
 .page-title-bar__title {
   margin: 0;
+
   font-size: var(--ft-text-2xl);
   font-weight: var(--ft-font-bold);
   line-height: var(--ft-leading-tight);

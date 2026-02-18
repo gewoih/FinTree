@@ -218,14 +218,14 @@ const handleTypeUpdate = (value: unknown) => {
   border-color: var(--ft-border-strong);
   box-shadow:
     0 0 0 3px var(--ft-focus-ring),
-    0 1px 3px rgb(0 0 0 / 12%);
+    var(--ft-shadow-xs);
 }
 
 .filter-input i {
   color: var(--ft-text-secondary);
 }
 
-.filter-input :deep(.p-inputtext) {
+.filter-input :deep(.ui-input) {
   flex: 1;
 
   padding: 0;
@@ -235,10 +235,11 @@ const handleTypeUpdate = (value: unknown) => {
   box-shadow: none !important;
 }
 
-.filter-input :deep(.p-inputtext:focus) {
+.filter-input :deep(.ui-input:focus),
+.filter-input :deep(.ui-input:focus-visible) {
   border: none !important;
-  box-shadow: none !important;
   outline: none;
+  box-shadow: none !important;
 }
 
 .filter-option {

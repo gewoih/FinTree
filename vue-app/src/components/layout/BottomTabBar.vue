@@ -45,7 +45,7 @@ const tabs = [
   align-items: stretch;
 
   height: var(--ft-bottom-bar-height);
-  padding-bottom: env(safe-area-inset-bottom, 0px);
+  padding-bottom: env(safe-area-inset-bottom, 0);
 
   background: linear-gradient(
     180deg,
@@ -55,8 +55,8 @@ const tabs = [
   backdrop-filter: blur(12px);
   border-top: 1px solid var(--ft-border-default);
   box-shadow:
-    0 -4px 16px rgb(0 0 0 / 12%),
-    inset 0 1px 0 rgb(255 255 255 / 3%);
+    var(--ft-shadow-sm),
+    inset 0 1px 0 color-mix(in srgb, var(--ft-text-inverse) 3%, transparent);
 }
 
 .bottom-tab-bar__item {
@@ -89,6 +89,7 @@ const tabs = [
   position: absolute;
   top: 0;
   left: 50%;
+  transform: translateX(-50%);
 
   width: 0;
   height: 2px;
@@ -96,14 +97,12 @@ const tabs = [
   background: linear-gradient(90deg, var(--ft-primary-400), var(--ft-primary-500));
   border-radius: 0 0 2px 2px;
   box-shadow: 0 2px 8px color-mix(in srgb, var(--ft-primary-500) 50%, transparent);
-  transform: translateX(-50%);
 
   transition: width var(--ft-transition-base);
 }
 
 .bottom-tab-bar__item i {
   font-size: 1.3rem;
-
   transition: all var(--ft-transition-fast);
 }
 
@@ -130,8 +129,8 @@ const tabs = [
 }
 
 .bottom-tab-bar__item[aria-current='page'] i {
-  color: var(--ft-primary-400);
   transform: scale(1.05);
+  color: var(--ft-primary-400);
 }
 
 .bottom-tab-bar__item:focus-visible {
@@ -141,9 +140,11 @@ const tabs = [
 
 .bottom-tab-bar__label {
   overflow: hidden;
+
   max-width: 100%;
-  letter-spacing: -0.01em;
+
   text-overflow: ellipsis;
+  letter-spacing: -0.01em;
   white-space: nowrap;
 }
 

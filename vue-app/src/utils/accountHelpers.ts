@@ -18,35 +18,35 @@ export function getAccountTypeInfo(type: AccountType): AccountTypeInfo {
       return {
         label: 'Банковский счет',
         icon: 'pi-building',
-        color: '#2563EB', // Primary blue
+        color: 'var(--ft-primary-500)',
         description: 'Дебетовые карты и банковские счета'
       }
     case 2: // Crypto
       return {
         label: 'Криптовалютный счет',
         icon: 'pi-bitcoin',
-        color: '#F59E0B', // Warning/Orange
+        color: 'var(--ft-warning-500)',
         description: 'Криптовалютные кошельки и биржи'
       }
     case 3: // Brokerage
       return {
         label: 'Брокерский счет',
         icon: 'pi-chart-line',
-        color: '#8B5CF6', // Violet
+        color: 'var(--ft-chart-1)',
         description: 'Брокерские счета и инвестиционные портфели'
       }
     case 4: // Deposit
       return {
         label: 'Вклад',
         icon: 'pi-lock',
-        color: '#0EA5E9', // Sky
+        color: 'var(--ft-info-500)',
         description: 'Депозиты и накопительные счета'
       }
     default:
       return {
         label: 'Неизвестный тип',
         icon: 'pi-question-circle',
-        color: '#6B7280', // Gray
+        color: 'var(--ft-text-tertiary)',
         description: ''
       }
   }

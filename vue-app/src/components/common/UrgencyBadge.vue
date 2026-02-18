@@ -54,28 +54,28 @@ withDefaults(defineProps<Props>(), {
   color: var(--ft-danger-400);
   background: linear-gradient(
     135deg,
-    rgb(239 68 68 / 18%),
-    rgb(220 38 38 / 22%)
+    color-mix(in srgb, var(--ft-danger-500) 18%, transparent),
+    color-mix(in srgb, var(--ft-danger-600) 22%, transparent)
   );
-  border-color: rgb(239 68 68 / 40%);
-  box-shadow: 0 2px 12px rgb(239 68 68 / 20%);
+  border-color: color-mix(in srgb, var(--ft-danger-500) 40%, transparent);
+  box-shadow: 0 2px 12px color-mix(in srgb, var(--ft-danger-500) 20%, transparent);
 }
 
 .urgency-badge--hot {
   color: var(--ft-warning-400);
   background: linear-gradient(
     135deg,
-    rgb(249 115 22 / 18%),
-    rgb(245 158 11 / 22%)
+    color-mix(in srgb, var(--ft-orange-500) 18%, transparent),
+    color-mix(in srgb, var(--ft-warning-500) 22%, transparent)
   );
-  border-color: rgb(249 115 22 / 40%);
-  box-shadow: 0 2px 12px rgb(249 115 22 / 20%);
+  border-color: color-mix(in srgb, var(--ft-orange-500) 40%, transparent);
+  box-shadow: 0 2px 12px color-mix(in srgb, var(--ft-orange-500) 20%, transparent);
 }
 
 .urgency-badge--warning {
   color: var(--ft-warning-400);
-  background: rgb(245 158 11 / 18%);
-  border-color: rgb(245 158 11 / 35%);
+  background: color-mix(in srgb, var(--ft-warning-500) 18%, transparent);
+  border-color: color-mix(in srgb, var(--ft-warning-500) 35%, transparent);
 }
 
 /* Light mode */
@@ -83,28 +83,28 @@ withDefaults(defineProps<Props>(), {
   color: var(--ft-danger-700);
   background: linear-gradient(
     135deg,
-    rgb(239 68 68 / 12%),
-    rgb(220 38 38 / 16%)
+    color-mix(in srgb, var(--ft-danger-500) 12%, transparent),
+    color-mix(in srgb, var(--ft-danger-600) 16%, transparent)
   );
-  border-color: rgb(239 68 68 / 30%);
-  box-shadow: 0 2px 8px rgb(239 68 68 / 12%);
+  border-color: color-mix(in srgb, var(--ft-danger-500) 30%, transparent);
+  box-shadow: 0 2px 8px color-mix(in srgb, var(--ft-danger-500) 12%, transparent);
 }
 
 .light-mode .urgency-badge--hot {
   color: var(--ft-warning-700);
   background: linear-gradient(
     135deg,
-    rgb(249 115 22 / 12%),
-    rgb(245 158 11 / 16%)
+    color-mix(in srgb, var(--ft-orange-500) 12%, transparent),
+    color-mix(in srgb, var(--ft-warning-500) 16%, transparent)
   );
-  border-color: rgb(249 115 22 / 30%);
-  box-shadow: 0 2px 8px rgb(249 115 22 / 12%);
+  border-color: color-mix(in srgb, var(--ft-orange-500) 30%, transparent);
+  box-shadow: 0 2px 8px color-mix(in srgb, var(--ft-orange-500) 12%, transparent);
 }
 
 .light-mode .urgency-badge--warning {
   color: var(--ft-warning-700);
-  background: rgb(245 158 11 / 12%);
-  border-color: rgb(245 158 11 / 25%);
+  background: color-mix(in srgb, var(--ft-warning-500) 12%, transparent);
+  border-color: color-mix(in srgb, var(--ft-warning-500) 25%, transparent);
 }
 
 /* Pulse animation */
@@ -115,12 +115,13 @@ withDefaults(defineProps<Props>(), {
 @keyframes urgency-pulse {
   0%,
   100% {
-    opacity: 1;
     transform: scale(1);
+    opacity: 1;
   }
+
   50% {
-    opacity: 0.85;
     transform: scale(1.02);
+    opacity: 0.85;
   }
 }
 
