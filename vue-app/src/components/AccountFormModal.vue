@@ -1,10 +1,8 @@
 <script setup lang="ts">
 import { computed, onMounted, ref, watch } from 'vue'
 import UiDialog from '../ui/UiDialog.vue'
-import UiInputNumber from '../ui/UiInputNumber.vue'
 import UiInputText from '../ui/UiInputText.vue'
 import UiSelect from '../ui/UiSelect.vue'
-import UiToggleSwitch from '../ui/UiToggleSwitch.vue'
 import { useFinanceStore } from '../stores/finance'
 import { useFormModal } from '../composables/useFormModal'
 import type { Account, AccountType } from '../types'
@@ -36,8 +34,6 @@ const resolveSelectedType = (): AccountType => props.allowedTypes[0] ?? DEFAULT_
 const name = ref('')
 const selectedCurrencyCode = ref<string | null>(null)
 const attemptedSubmit = ref(false)
-const initialBalance = ref<number | null>(null)
-const isLiquid = ref(true)
 const selectedType = ref<AccountType>(resolveSelectedType())
 
 const hasMultipleTypes = computed(() => props.allowedTypes.length > 1)
@@ -110,17 +106,14 @@ function setDefaultCurrency() {
 
 function resetForm() {
   attemptedSubmit.value = false
-  initialBalance.value = null
 
   if (props.account) {
     name.value = props.account.name
     selectedCurrencyCode.value = props.account.currencyCode
-    isLiquid.value = props.account.isLiquid ?? true
     return
   }
 
   name.value = ''
-  isLiquid.value = true
   selectedType.value = resolveSelectedType()
   setDefaultCurrency()
 }
@@ -159,8 +152,6 @@ const { isSubmitting, handleSubmit: handleFormSubmit, showWarning } = useFormMod
       name: name.value.trim(),
       type: selectedType.value,
       currencyCode: currencyCodeForSubmit.value,
-      initialBalance: initialBalance.value,
-      isLiquid: isLiquid.value,
     })
   },
   {
@@ -280,7 +271,7 @@ const handleSubmit = async () => {
             </div>
           </template>
           <template #hint>
-            {{ hasMultipleTypes ? 'Тип счёта определяет, как он будет отображаться и учитываться в аналитике.' : 'На этой странице доступны только банковские счета.' }}
+            {{ hasMultipleTypes ? 'Тип счёта определяет аналитику и ликвидность по умолчанию: банковские счета — ликвидные, инвестиционные — неликвидные. Изменить можно после создания.' : 'На этой странице доступны только банковские счета.' }}
           </template>
         </FormField>
 
@@ -305,44 +296,6 @@ const handleSubmit = async () => {
           </template>
           <template #hint>
             <span>{{ currencyHint }}</span>
-          </template>
-        </FormField>
-
-        <FormField
-          v-if="!isEditing"
-          label="Начальный остаток"
-        >
-          <template #default="{ fieldAttrs }">
-            <UiInputNumber
-              v-model="initialBalance"
-              :input-id="fieldAttrs.id"
-              :min-fraction-digits="2"
-              :max-fraction-digits="2"
-              :use-grouping="true"
-              class="w-full"
-              placeholder="0.00"
-            />
-          </template>
-          <template #hint>
-            Можно оставить пустым и скорректировать позже.
-          </template>
-        </FormField>
-
-        <FormField
-          v-if="!isEditing"
-          label="Доступность средств"
-        >
-          <template #default="{ fieldAttrs }">
-            <div class="liquidity-toggle">
-              <UiToggleSwitch
-                v-bind="fieldAttrs"
-                v-model="isLiquid"
-              />
-              <span>{{ isLiquid ? 'Быстрый доступ' : 'Долгосрочный' }}</span>
-            </div>
-          </template>
-          <template #hint>
-            Можно ли быстро снять деньги без потерь. Счета с быстрым доступом учитываются в финансовой подушке.
           </template>
         </FormField>
 
@@ -478,15 +431,6 @@ const handleSubmit = async () => {
 
 .type-option i {
   color: var(--ft-text-muted);
-}
-
-.liquidity-toggle {
-  display: flex;
-  gap: var(--ft-space-3);
-  align-items: center;
-
-  font-size: var(--ft-text-sm);
-  color: var(--ft-text-secondary);
 }
 
 @media (width <= 640px) {

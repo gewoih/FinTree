@@ -37,7 +37,6 @@ export function createFinanceAccountActions(context: FinanceAccountActionsContex
                 currencyCode: payload.currencyCode,
                 type: payload.type,
                 name: payload.name,
-                initialBalance: payload.initialBalance ?? 0,
                 isLiquid: payload.isLiquid ?? null,
             });
             if (!context.isUserSessionCurrent(snapshot)) return false;
