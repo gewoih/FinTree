@@ -70,8 +70,17 @@ const mergedPt = computed(() =>
           class: 'ui-date-picker__input p-datepicker-input p-inputtext',
         },
       },
+      clearIcon: {
+        class: 'ui-date-picker__clear-icon p-datepicker-clear-icon',
+      },
       dropdown: {
         class: 'ui-date-picker__dropdown p-datepicker-dropdown',
+      },
+      inputIconContainer: {
+        class: 'ui-date-picker__input-icon-container p-datepicker-input-icon-container',
+      },
+      inputIcon: {
+        class: 'ui-date-picker__input-icon p-datepicker-input-icon',
       },
       panel: {
         class: 'ui-date-picker-overlay p-datepicker-panel p-component',
@@ -85,8 +94,23 @@ const mergedPt = computed(() =>
       header: {
         class: 'ui-date-picker__header p-datepicker-header',
       },
+      pcPrevButton: {
+        class: 'ui-date-picker__nav-button p-datepicker-prev-button',
+      },
       title: {
         class: 'ui-date-picker__title p-datepicker-title',
+      },
+      selectMonth: {
+        class: 'ui-date-picker__select-month p-datepicker-select-month',
+      },
+      selectYear: {
+        class: 'ui-date-picker__select-year p-datepicker-select-year',
+      },
+      pcNextButton: {
+        class: 'ui-date-picker__nav-button p-datepicker-next-button',
+      },
+      dayView: {
+        class: 'ui-date-picker__day-view p-datepicker-day-view',
       },
       weekDayCell: {
         class: 'ui-date-picker__week-day-cell p-datepicker-weekday-cell',
@@ -100,8 +124,26 @@ const mergedPt = computed(() =>
       day: {
         class: 'ui-date-picker__day p-datepicker-day',
       },
+      monthView: {
+        class: 'ui-date-picker__month-view p-datepicker-month-view',
+      },
+      month: {
+        class: 'ui-date-picker__month p-datepicker-month',
+      },
+      yearView: {
+        class: 'ui-date-picker__year-view p-datepicker-year-view',
+      },
+      year: {
+        class: 'ui-date-picker__year p-datepicker-year',
+      },
       buttonbar: {
         class: 'ui-date-picker__buttonbar p-datepicker-buttonbar',
+      },
+      pcTodayButton: {
+        class: 'ui-date-picker__today-button p-datepicker-today-button',
+      },
+      pcClearButton: {
+        class: 'ui-date-picker__clear-button p-datepicker-clear-button',
       },
     } as DatePickerPassThroughOptions,
     props.pt
