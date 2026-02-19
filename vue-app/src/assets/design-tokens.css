@@ -22,17 +22,17 @@
   --ft-primary-900: #1D2A3D;
   --ft-primary-950: #131D2B;
 
-  /* Success (Muted Emerald - Positive growth) */
-  --ft-success-50: #EFF8F3;
-  --ft-success-100: #D9EEDF;
-  --ft-success-200: #B7DEC7;
-  --ft-success-300: #8DC8A8;
-  --ft-success-400: #63B286;
-  --ft-success-500: #3A966D;  /* Success primary */
-  --ft-success-600: #2F7B59;
-  --ft-success-700: #256247;
-  --ft-success-800: #1D4B37;
-  --ft-success-900: #163A2B;
+  /* Success (Higher-contrast green) */
+  --ft-success-50: #F1FDF5;
+  --ft-success-100: #DDFBE8;
+  --ft-success-200: #BBF5D0;
+  --ft-success-300: #86EBAE;
+  --ft-success-400: #52DC8D;
+  --ft-success-500: #2FC470;  /* Success primary */
+  --ft-success-600: #22A95F;
+  --ft-success-700: #187644;
+  --ft-success-800: #145E36;
+  --ft-success-900: #114B2B;
 
   /* Warning (Burnished Amber) */
   --ft-warning-50: #FCF7EA;
@@ -46,17 +46,17 @@
   --ft-warning-800: #604618;
   --ft-warning-900: #483412;
 
-  /* Danger (Muted Coral) */
-  --ft-danger-50: #FBEFEE;
-  --ft-danger-100: #F2D8D5;
-  --ft-danger-200: #E5B3AE;
-  --ft-danger-300: #D68E86;
-  --ft-danger-400: #C9766D;
-  --ft-danger-500: #BC655C;  /* Danger primary */
-  --ft-danger-600: #9E524A;
-  --ft-danger-700: #80423B;
-  --ft-danger-800: #64332E;
-  --ft-danger-900: #4D2723;
+  /* Danger (Higher-contrast red) */
+  --ft-danger-50: #FFF3F2;
+  --ft-danger-100: #FFE0DE;
+  --ft-danger-200: #FFC1BC;
+  --ft-danger-300: #FF9B93;
+  --ft-danger-400: #FF756C;
+  --ft-danger-500: #E8564D;  /* Danger primary */
+  --ft-danger-600: #C94139;
+  --ft-danger-700: #A1342F;
+  --ft-danger-800: #7F2A26;
+  --ft-danger-900: #64211E;
 
   /* Info (Slate Teal) */
   --ft-info-50: #EEF6F9;
@@ -98,36 +98,37 @@
   /* ━━━ SEMANTIC TOKENS - DARK THEME (DEFAULT) ━━━ */
 
   /* Backgrounds */
-  --ft-bg-base: #0A111A;
-  --ft-bg-subtle: #0E1723;
-  --ft-bg-muted: #122033;
-  --ft-bg-elevated: #172740;
-  --ft-bg-overlay: rgb(6 10 16 / 74%);
+  --ft-bg-base: #060C18;
+  --ft-bg-subtle: #0B1526;
+  --ft-bg-muted: #10203A;
+  --ft-bg-elevated: #18304D;
+  --ft-bg-overlay: rgb(5 10 18 / 78%);
 
   /* Surfaces */
-  --ft-surface-base: #132033;
-  --ft-surface-raised: #1A2A41;
-  --ft-surface-overlay: #223551;
-  --ft-surface-soft: #101A2B;
+  --ft-surface-base: #0E1D34;
+  --ft-surface-raised: #132744;
+  --ft-surface-overlay: #1C3356;
+  --ft-surface-soft: #0C182D;
   --ft-surface-muted: var(--ft-surface-overlay);
 
   /* Text */
-  --ft-text-primary: #E9EEF7;
-  --ft-text-secondary: #B8C2D3;
-  --ft-text-tertiary: #93A1B6;
-  --ft-text-disabled: #657389;
+  --ft-text-primary: #E8F0FF;
+  --ft-text-secondary: #C2D0E8;
+  --ft-text-tertiary: #9CB0CF;
+  --ft-text-disabled: #7084A3;
   --ft-text-inverse: #F7FAFF;
   --ft-text-link: var(--ft-primary-300);
   --ft-text-link-hover: var(--ft-primary-200);
   --ft-text: var(--ft-text-primary);
   --ft-text-muted: var(--ft-text-secondary);
   --ft-heading: var(--ft-text-primary);
+  --ft-accent-primary: var(--ft-primary-400);
 
   /* Borders */
-  --ft-border-subtle: #263A54;
-  --ft-border-default: #334760;
-  --ft-border-strong: #416086;
-  --ft-border-soft: #1F3148;
+  --ft-border-subtle: #274362;
+  --ft-border-default: #335476;
+  --ft-border-strong: #4873A1;
+  --ft-border-soft: #1F3857;
   --ft-border-inverse: rgb(230 236 246 / 12%);
 
   /* Interactive */
@@ -137,8 +138,8 @@
   --ft-interactive-disabled: #24364F;
 
   /* Focus */
-  --ft-focus-ring: #8EA7E8;
-  --ft-focus-ring-offset: #0A111A;
+  --ft-focus-ring: #8DBAFF;
+  --ft-focus-ring-offset: #060C18;
 
   /* Component semantic tokens */
   --ft-auth-brand-color: var(--ft-primary-200);
@@ -186,8 +187,8 @@
   --ft-urgency-warning-text: var(--ft-warning-400);
   --ft-urgency-warning-bg: color-mix(in srgb, var(--ft-warning-500) 18%, transparent);
   --ft-urgency-warning-border: color-mix(in srgb, var(--ft-warning-500) 35%, transparent);
-  --ft-kpi-trend-up-bg: color-mix(in srgb, var(--ft-success-500) 15%, transparent);
-  --ft-kpi-trend-down-bg: color-mix(in srgb, var(--ft-danger-500) 15%, transparent);
+  --ft-kpi-trend-up-bg: color-mix(in srgb, var(--ft-success-500) 20%, transparent);
+  --ft-kpi-trend-down-bg: color-mix(in srgb, var(--ft-danger-500) 20%, transparent);
   --ft-testimonial-avatar-text: var(--ft-primary-50);
   --ft-testimonial-highlight-text: var(--ft-success-400);
   --ft-testimonial-highlight-bg: color-mix(in srgb, var(--ft-success-500) 18%, transparent);
@@ -308,14 +309,19 @@
 
   /* ━━━ CHART PALETTE ━━━ */
 
-  --ft-chart-1: var(--ft-primary-400);
-  --ft-chart-2: var(--ft-info-400);
-  --ft-chart-3: var(--ft-success-400);
-  --ft-chart-4: var(--ft-orange-400);
-  --ft-chart-5: var(--ft-warning-400);
-  --ft-chart-risk: var(--ft-orange-500);
-  --ft-chart-grid: var(--ft-border-subtle);
-  --ft-chart-text: var(--ft-text-secondary);
+  --ft-chart-1: #7DA6E8;
+  --ft-chart-2: #66C2D9;
+  --ft-chart-3: #5BD490;
+  --ft-chart-4: #F2B766;
+  --ft-chart-5: #C1A3FF;
+  --ft-chart-risk: #FFB454;
+  --ft-chart-expense: #FFB454;
+  --ft-chart-actual: #66C2D9;
+  --ft-chart-forecast: #7DA6E8;
+  --ft-chart-optimistic: #5BD490;
+  --ft-chart-baseline: #90A5C2;
+  --ft-chart-grid: color-mix(in srgb, var(--ft-border-default) 36%, transparent);
+  --ft-chart-text: color-mix(in srgb, var(--ft-text-secondary) 70%, var(--ft-text-primary));
   --ft-chart-tooltip-bg: var(--ft-surface-raised);
   --ft-chart-tooltip-text: var(--ft-text-primary);
   --ft-chart-tooltip-secondary: var(--ft-text-secondary);
@@ -323,9 +329,9 @@
 
   /* ━━━ EFFECTS ━━━ */
 
-  --ft-effect-primary-glow-sm: 0 2px 8px color-mix(in srgb, var(--ft-primary-500) 22%, transparent);
-  --ft-effect-primary-glow-md: 0 8px 20px color-mix(in srgb, var(--ft-primary-500) 30%, transparent);
-  --ft-effect-danger-glow-sm: 0 2px 8px color-mix(in srgb, var(--ft-danger-500) 20%, transparent);
+  --ft-effect-primary-glow-sm: 0 2px 6px color-mix(in srgb, var(--ft-primary-500) 12%, transparent);
+  --ft-effect-primary-glow-md: 0 6px 14px color-mix(in srgb, var(--ft-primary-500) 18%, transparent);
+  --ft-effect-danger-glow-sm: 0 2px 6px color-mix(in srgb, var(--ft-danger-500) 14%, transparent);
   --ft-effect-side-rail-shadow: 4px 0 24px color-mix(in srgb, var(--ft-bg-base) 48%, transparent);
   --ft-skeleton-shimmer-start: color-mix(in srgb, var(--ft-text-secondary) 8%, transparent);
   --ft-skeleton-shimmer-mid: color-mix(in srgb, var(--ft-text-secondary) 18%, transparent);
@@ -440,8 +446,8 @@
   --ft-urgency-warning-text: var(--ft-warning-700);
   --ft-urgency-warning-bg: color-mix(in srgb, var(--ft-warning-500) 12%, transparent);
   --ft-urgency-warning-border: color-mix(in srgb, var(--ft-warning-500) 25%, transparent);
-  --ft-kpi-trend-up-bg: color-mix(in srgb, var(--ft-success-500) 10%, transparent);
-  --ft-kpi-trend-down-bg: color-mix(in srgb, var(--ft-danger-500) 10%, transparent);
+  --ft-kpi-trend-up-bg: color-mix(in srgb, var(--ft-success-500) 14%, transparent);
+  --ft-kpi-trend-down-bg: color-mix(in srgb, var(--ft-danger-500) 14%, transparent);
   --ft-testimonial-avatar-text: var(--ft-primary-100);
   --ft-testimonial-highlight-text: var(--ft-success-700);
   --ft-testimonial-highlight-bg: color-mix(in srgb, var(--ft-success-500) 12%, transparent);

@@ -128,32 +128,45 @@
 }
 
 .forecast-chip--accent {
-  border-color: color-mix(in srgb, var(--ft-info-400) 30%, var(--ft-border-subtle));
+  border-color: color-mix(in srgb, var(--ft-chart-actual) 30%, var(--ft-border-subtle));
 }
 
 .forecast-chip--accent .forecast-chip__value {
-  color: var(--ft-info-400);
+  color: var(--ft-chart-actual);
 }
 
 .forecast-chip--primary {
-  border-color: color-mix(in srgb, var(--ft-primary-400) 30%, var(--ft-border-subtle));
+  border-color: color-mix(in srgb, var(--ft-chart-forecast) 30%, var(--ft-border-subtle));
 }
 
 .forecast-chip--primary .forecast-chip__value {
-  color: var(--ft-primary-400);
+  color: var(--ft-chart-forecast);
+}
+
+.forecast-chip--muted {
+  border-color: color-mix(in srgb, var(--ft-chart-optimistic) 30%, var(--ft-border-subtle));
+}
+
+.forecast-chip--muted .forecast-chip__value {
+  color: var(--ft-chart-optimistic);
 }
 
 .forecast-chip--warning {
-  border-color: color-mix(in srgb, var(--ft-warning-400) 30%, var(--ft-border-subtle));
+  border-color: color-mix(in srgb, var(--ft-chart-risk) 30%, var(--ft-border-subtle));
 }
 
 .forecast-chip--warning .forecast-chip__value {
-  color: var(--ft-warning-400);
+  color: var(--ft-chart-risk);
 }
 
 .forecast-chip--outline {
-  background: transparent;
+  background: color-mix(in srgb, var(--ft-chart-baseline) 8%, transparent);
+  border-color: color-mix(in srgb, var(--ft-chart-baseline) 34%, var(--ft-border-subtle));
   border-style: dashed;
+}
+
+.forecast-chip--outline .forecast-chip__value {
+  color: var(--ft-chart-baseline);
 }
 
 .forecast-chip--good {
@@ -245,19 +258,19 @@
 }
 
 .forecast-legend__line--actual {
-  background: var(--ft-info-400);
+  background: var(--ft-chart-actual);
 }
 
 .forecast-legend__line--forecast {
   height: 0;
-  background: var(--ft-primary-400);
-  border-top: 2px dashed var(--ft-primary-400);
+  background: var(--ft-chart-forecast);
+  border-top: 2px dashed var(--ft-chart-forecast);
 }
 
 .forecast-legend__line--optimistic {
   height: 0;
-  background: var(--ft-info-400);
-  border-top: 2px dashed var(--ft-info-400);
+  background: var(--ft-chart-optimistic);
+  border-top: 2px dashed var(--ft-chart-optimistic);
 }
 
 .forecast-legend__line--risk {
@@ -268,8 +281,8 @@
 
 .forecast-legend__line--baseline {
   height: 0;
-  background: var(--ft-border-subtle);
-  border-top: 2px dashed var(--ft-border-subtle);
+  background: var(--ft-chart-baseline);
+  border-top: 2px dashed var(--ft-chart-baseline);
 }
 
 @media (width <= 640px) {

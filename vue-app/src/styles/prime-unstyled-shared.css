@@ -252,8 +252,8 @@
   .p-inputtextarea::placeholder,
   .p-inputnumber-input::placeholder,
   .p-datepicker-input::placeholder {
-    color: var(--ft-text-secondary);
-    opacity: 0.8;
+    color: var(--ft-text-tertiary);
+    opacity: 1;
   }
 
   .ui-input:disabled,

@@ -81,14 +81,22 @@ const chartOptions = computed(() => ({
   maintainAspectRatio: false,
   scales: {
     x: {
-      grid: { color: colors.grid },
-      ticks: { color: colors.text, font: { size: 12 } },
+      grid: {
+        display: false,
+      },
+      ticks: {
+        color: colors.text,
+        font: { size: 12 },
+        autoSkip: true,
+        maxTicksLimit: 14,
+      },
     },
     y: {
       grid: { color: colors.grid, drawBorder: false },
       ticks: {
         color: colors.text,
         font: { size: 12 },
+        maxTicksLimit: 8,
         callback(value: number | string) {
           const numeric = typeof value === 'string' ? Number(value) : value;
           return numeric.toLocaleString('ru-RU', {
