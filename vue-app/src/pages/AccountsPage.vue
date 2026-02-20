@@ -11,7 +11,6 @@ import type { Account } from '../types'
 import UiButton from '../ui/UiButton.vue'
 import UiCard from '../ui/UiCard.vue'
 import UiInputText from '../ui/UiInputText.vue'
-import UiSelect from '../ui/UiSelect.vue'
 import UiSkeleton from '../ui/UiSkeleton.vue'
 import UiSection from '../ui/UiSection.vue'
 import UiMessage from '../ui/UiMessage.vue'
@@ -88,36 +87,36 @@ const filteredAccounts = computed(() => {
     )
   }
 
-  // Find the primary account in the filtered list
-  const primaryAccount = financeStore.primaryAccount;
-  let primaryAccountIndex = -1;
+  const primaryAccount = financeStore.primaryAccount; // Type: Account | null
+  let accountsToProcess = [...result]; // Create a mutable copy for manipulation
+  let isPrimaryAccountPresent = false;
 
   if (primaryAccount) {
-    primaryAccountIndex = result.findIndex(account => account.id === primaryAccount.id);
+    const primaryAccountInFilteredIndex = accountsToProcess.findIndex(account => account.id === primaryAccount.id);
+    if (primaryAccountInFilteredIndex !== -1) {
+      isPrimaryAccountPresent = true;
+      // Remove primary from the list to sort
+      accountsToProcess = accountsToProcess.toSpliced(primaryAccountInFilteredIndex, 1);
+    }
   }
 
-  // 2. Apply sorting to the rest of the accounts
-  // If primary account is found, remove it before sorting and add it back later
-  let accountsToSort = result;
-  if (primaryAccountIndex !== -1) {
-    accountsToSort = result.toSpliced(primaryAccountIndex, 1);
-  }
-
+  // 2. Apply sorting to the rest of the accounts (accountsToProcess)
   if (sortBy.value === 'name-asc') {
-    accountsToSort.sort((a, b) => a.name.localeCompare(b.name, 'ru'))
+    accountsToProcess.sort((a, b) => a.name.localeCompare(b.name, 'ru'))
   } else if (sortBy.value === 'balance-asc') {
-    accountsToSort.sort((a, b) => (a.balanceInBaseCurrency ?? 0) - (b.balanceInBaseCurrency ?? 0))
+    accountsToProcess.sort((a, b) => (a.balanceInBaseCurrency ?? 0) - (b.balanceInBaseCurrency ?? 0))
   } else {
     // Default or 'balance-desc'
-    accountsToSort.sort((a, b) => (b.balanceInBaseCurrency ?? 0) - (a.balanceInBaseCurrency ?? 0))
+    accountsToProcess.sort((a, b) => (b.balanceInBaseCurrency ?? 0) - (a.balanceInBaseCurrency ?? 0))
   }
 
-  // 3. Prepend the primary account if it was found
-  if (primaryAccountIndex !== -1) {
-    return [primaryAccount, ...accountsToSort];
+  // 3. Prepend the primary account if it exists and was originally in the filtered list
+  if (primaryAccount && isPrimaryAccountPresent) {
+    // primaryAccount is definitely Account here due to the 'if (primaryAccount)' check
+    return [primaryAccount, ...accountsToProcess];
   }
 
-  return accountsToSort
+  return accountsToProcess
 })
 
 const hasActiveFilters = computed(() => searchText.value.trim().length > 0)
@@ -319,13 +318,8 @@ onMounted(async () => {
               aria-label="Поиск счета"
             />
           </div>
-
-
-
-
         </div>
-
-              </UiCard>
+      </UiCard>
 
       <div
         v-if="currentAccountsState === 'error' && hasVisibleAccounts"
