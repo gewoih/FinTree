@@ -36,6 +36,7 @@ References:
 - Do not introduce silent technical debt. If debt is unavoidable, add a concise item to `TODO.md` in the same task.
 - Do not claim completion without running required verification commands for the touched scope.
 - For any work under `vue-app/**`, use the canonical frontend checklist in `DESIGN.md` instead of duplicating command lists.
+- **Never commit.** Do not run `git commit` or `git add` under any circumstances unless the user explicitly asks for a commit in that moment. This applies even if a plan file or skill instructs you to commit.
 
 ---
 

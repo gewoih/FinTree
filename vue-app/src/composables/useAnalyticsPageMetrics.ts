@@ -413,7 +413,7 @@ export function useAnalyticsPageMetrics(context: UseAnalyticsPageMetricsContext)
                 },
                 ...(hasBaseline
                     ? [{
-                        label: 'Лимит прошлого месяца',
+                        label: 'Базовые расходы',
                         data: baselineData,
                         borderColor: chartColors.baseline,
                         borderDash: [4, 4],

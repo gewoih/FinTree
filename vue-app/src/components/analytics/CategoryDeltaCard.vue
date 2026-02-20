@@ -81,9 +81,6 @@ const formatPercent = (value: number | null) =>
           class="pi pi-question-circle delta-card__hint"
         />
       </div>
-      <p class="delta-card__subtitle">
-        Сравнение с прошлым месяцем ({{ periodLabel }})
-      </p>
     </div>
 
     <div
@@ -289,12 +286,6 @@ const formatPercent = (value: number | null) =>
 
 .delta-card__hint:active {
   color: var(--ft-accent-primary);
-}
-
-.delta-card__subtitle {
-  margin: 0;
-  font-size: var(--ft-text-sm);
-  color: var(--ft-text-secondary);
 }
 
 .delta-card__loading {
