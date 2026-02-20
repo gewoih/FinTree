@@ -63,8 +63,8 @@
     font-weight: var(--ft-font-semibold);
     color: var(--ft-text-inverse);
 
-    background: var(--ft-primary-500);
-    border: 1px solid var(--ft-primary-500);
+    background: var(--ft-primary-400);
+    border: 1px solid var(--ft-primary-400);
     border-radius: var(--ft-radius-lg);
 
     transition:
@@ -372,8 +372,8 @@
   .p-selectbutton .p-togglebutton.p-togglebutton-checked,
   .p-selectbutton .p-togglebutton[data-p-checked='true'] {
     color: var(--ft-text-inverse);
-    background: var(--ft-primary-500);
-    border-color: var(--ft-primary-500);
+    background: var(--ft-primary-400);
+    border-color: var(--ft-primary-400);
   }
 
   .ui-select-button__button.p-disabled,
@@ -588,14 +588,14 @@
   .ui-select__option:hover,
   .p-select-option.p-focus,
   .p-select-option:hover {
-    background: color-mix(in srgb, var(--ft-primary-500) 14%, transparent);
+    background: color-mix(in srgb, var(--ft-primary-400) 14%, transparent);
     border-color: color-mix(in srgb, var(--ft-primary-400) 38%, transparent);
   }
 
   .ui-select__option[data-p-selected='true'],
   .p-select-option.p-select-option-selected {
     font-weight: var(--ft-font-medium);
-    background: color-mix(in srgb, var(--ft-primary-500) 24%, transparent);
+    background: color-mix(in srgb, var(--ft-primary-400) 24%, transparent);
     border-color: color-mix(in srgb, var(--ft-primary-400) 45%, transparent);
     box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--ft-primary-300) 45%, transparent);
   }
@@ -709,7 +709,7 @@
   .p-datepicker-prev-button:not(:disabled):hover,
   .p-datepicker-next-button:not(:disabled):hover {
     color: var(--ft-text-primary);
-    background: color-mix(in srgb, var(--ft-primary-500) 16%, transparent);
+    background: color-mix(in srgb, var(--ft-primary-400) 16%, transparent);
     border-color: color-mix(in srgb, var(--ft-primary-400) 40%, transparent);
   }
 
@@ -788,7 +788,7 @@
   .ui-date-picker__calendar td > span:not([data-p-disabled='true']):hover,
   .p-datepicker-day:not(.p-disabled):hover,
   .p-datepicker-calendar td > span:not(.p-disabled):hover {
-    background: color-mix(in srgb, var(--ft-primary-500) 14%, transparent);
+    background: color-mix(in srgb, var(--ft-primary-400) 14%, transparent);
     border-color: color-mix(in srgb, var(--ft-primary-400) 36%, transparent);
   }
 
@@ -799,10 +799,10 @@
     color: var(--ft-text-inverse);
     background: linear-gradient(
       135deg,
-      color-mix(in srgb, var(--ft-primary-500) 90%, var(--ft-primary-400)) 0%,
+      color-mix(in srgb, var(--ft-primary-400) 90%, var(--ft-primary-400)) 0%,
       var(--ft-primary-600) 100%
     );
-    border-color: color-mix(in srgb, var(--ft-primary-200) 40%, var(--ft-primary-500));
+    border-color: color-mix(in srgb, var(--ft-primary-200) 40%, var(--ft-primary-400));
     box-shadow: 0 4px 12px color-mix(in srgb, var(--ft-primary-600) 40%, transparent);
   }
 
@@ -857,7 +857,7 @@
   .ui-date-picker__year:not(.p-disabled):hover,
   .p-datepicker-month:not(.p-disabled):hover,
   .p-datepicker-year:not(.p-disabled):hover {
-    background: color-mix(in srgb, var(--ft-primary-500) 14%, transparent);
+    background: color-mix(in srgb, var(--ft-primary-400) 14%, transparent);
     border-color: color-mix(in srgb, var(--ft-primary-400) 36%, transparent);
   }
 
@@ -866,8 +866,8 @@
   .p-datepicker-month.p-datepicker-month-selected,
   .p-datepicker-year.p-datepicker-year-selected {
     color: var(--ft-text-inverse);
-    background: var(--ft-primary-500);
-    border-color: color-mix(in srgb, var(--ft-primary-300) 45%, var(--ft-primary-500));
+    background: var(--ft-primary-400);
+    border-color: color-mix(in srgb, var(--ft-primary-300) 45%, var(--ft-primary-400));
   }
 
   .ui-date-picker__buttonbar,
@@ -896,7 +896,7 @@
 
   .ui-date-picker__buttonbar .p-button:not(:disabled):hover,
   .p-datepicker-buttonbar .p-button:not(:disabled):hover {
-    background: color-mix(in srgb, var(--ft-primary-500) 14%, transparent);
+    background: color-mix(in srgb, var(--ft-primary-400) 14%, transparent);
     border-color: color-mix(in srgb, var(--ft-primary-400) 42%, transparent);
   }
 
@@ -904,7 +904,7 @@
   .ui-menu__item-content:hover,
   .p-menu .p-menuitem-link:hover,
   .p-menu .p-menuitem-content:hover {
-    background: color-mix(in srgb, var(--ft-primary-500) 12%, transparent);
+    background: color-mix(in srgb, var(--ft-primary-400) 12%, transparent);
   }
 
   .ui-dialog__content,
@@ -1049,8 +1049,8 @@
   .ui-paginator__page-button.p-paginator-page-selected,
   .p-paginator-page.p-paginator-page-selected {
     color: var(--ft-text-inverse);
-    background: var(--ft-primary-500);
-    border-color: var(--ft-primary-500);
+    background: var(--ft-primary-400);
+    border-color: var(--ft-primary-400);
   }
 
   .ui-paginator__current,
@@ -1162,7 +1162,7 @@
 
   .txn-form__type-control .p-togglebutton.p-togglebutton-checked {
     color: var(--ft-text-primary);
-    background: color-mix(in srgb, var(--ft-primary-500) 12%, var(--ft-surface-base));
+    background: color-mix(in srgb, var(--ft-primary-400) 12%, var(--ft-surface-base));
     border-color: color-mix(in srgb, var(--ft-primary-400) 36%, var(--ft-border-default));
     box-shadow: none;
   }
@@ -1400,8 +1400,8 @@
   .ui-checkbox__root[data-p-checked='true'] .ui-checkbox__box,
   .p-checkbox.p-checkbox-checked .p-checkbox-box {
     color: var(--ft-text-inverse);
-    background: var(--ft-primary-500);
-    border-color: var(--ft-primary-500);
+    background: var(--ft-primary-400);
+    border-color: var(--ft-primary-400);
   }
 
   .ui-checkbox__root[data-p-disabled='true'],
@@ -1472,7 +1472,7 @@
 
   .ui-toggle-switch__root[data-p-checked='true'] .ui-toggle-switch__slider,
   .p-toggleswitch.p-toggleswitch-checked .p-toggleswitch-slider {
-    background: var(--ft-primary-500);
+    background: var(--ft-primary-400);
   }
 
   .ui-toggle-switch__root[data-p-checked='true'] .ui-toggle-switch__handle,

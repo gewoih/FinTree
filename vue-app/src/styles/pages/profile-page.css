@@ -46,7 +46,7 @@
 
 .profile-tab.is-active {
   color: var(--ft-text-inverse);
-  background: color-mix(in srgb, var(--ft-primary-500) 75%, transparent);
+  background: color-mix(in srgb, var(--ft-primary-400) 75%, transparent);
   box-shadow: var(--ft-shadow-md);
 }
 
@@ -55,7 +55,7 @@
 }
 
 .profile-tab:focus-visible {
-  outline: 2px solid color-mix(in srgb, var(--ft-primary-500) 60%, transparent);
+  outline: 2px solid color-mix(in srgb, var(--ft-primary-400) 60%, transparent);
   outline-offset: 2px;
 }
 
@@ -99,7 +99,7 @@
   color: var(--ft-text-inverse);
   letter-spacing: 0.04em;
 
-  background: linear-gradient(135deg, var(--ft-primary-500), var(--ft-primary-800));
+  background: linear-gradient(135deg, var(--ft-primary-400), var(--ft-primary-700));
   border-radius: var(--ft-radius-full);
 }
 
@@ -260,7 +260,7 @@
 
 .collapsible-header:focus-visible {
   border-radius: var(--ft-radius-sm, var(--ft-radius-md));
-  outline: 2px solid color-mix(in srgb, var(--ft-primary-500) 60%, transparent);
+  outline: 2px solid color-mix(in srgb, var(--ft-primary-400) 60%, transparent);
   outline-offset: 2px;
 }
 
@@ -277,7 +277,7 @@
   font-weight: var(--ft-font-semibold);
   color: var(--ft-text-inverse);
 
-  background: color-mix(in srgb, var(--ft-primary-500) 80%, transparent);
+  background: color-mix(in srgb, var(--ft-primary-400) 80%, transparent);
   border-radius: var(--ft-radius-lg);
 }
 

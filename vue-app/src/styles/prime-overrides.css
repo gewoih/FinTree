@@ -179,19 +179,19 @@
   }
 
   .p-datatable .p-datatable-tbody > tr:nth-child(even) {
-    background: color-mix(in srgb, var(--ft-primary-500) 12%, transparent);
+    background: color-mix(in srgb, var(--ft-primary-400) 12%, transparent);
   }
 
   .light-mode .p-datatable .p-datatable-tbody > tr:nth-child(even) {
-    background: color-mix(in srgb, var(--ft-primary-500) 6%, transparent);
+    background: color-mix(in srgb, var(--ft-primary-400) 6%, transparent);
   }
 
   .p-datatable .p-datatable-tbody > tr:hover {
-    background: color-mix(in srgb, var(--ft-primary-500) 18%, transparent);
+    background: color-mix(in srgb, var(--ft-primary-400) 18%, transparent);
   }
 
   .light-mode .p-datatable .p-datatable-tbody > tr:hover {
-    background: color-mix(in srgb, var(--ft-primary-500) 10%, transparent);
+    background: color-mix(in srgb, var(--ft-primary-400) 10%, transparent);
   }
 
   .p-datatable .p-datatable-tbody > tr > td {
