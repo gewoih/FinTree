@@ -137,9 +137,6 @@ const formatMoney = (value: number) =>
         >
           Распределение по счетам
         </h3>
-        <p class="allocation-card__subtitle">
-          Пропорции инвестиционного портфеля
-        </p>
       </div>
     </div>
 
@@ -216,7 +213,7 @@ const formatMoney = (value: number) =>
 
   background: var(--ft-surface-base);
   border: 1px solid var(--ft-border-subtle);
-  border-radius: var(--ft-radius-2xl);
+  border-radius: var(--ft-radius-xl);
   box-shadow: var(--ft-shadow-sm);
 }
 
@@ -235,12 +232,6 @@ const formatMoney = (value: number) =>
   font-size: var(--ft-text-lg);
   font-weight: var(--ft-font-semibold);
   color: var(--ft-text-primary);
-}
-
-.allocation-card__subtitle {
-  margin: var(--ft-space-1) 0 0;
-  font-size: var(--ft-text-sm);
-  color: var(--ft-text-secondary);
 }
 
 .allocation-card__loading {
@@ -314,7 +305,7 @@ const formatMoney = (value: number) =>
   flex-shrink: 0;
   width: 12px;
   height: 12px;
-  border-radius: 50%;
+  border-radius: var(--ft-radius-full);
 }
 
 .allocation-card__meta {

@@ -1,17 +1,10 @@
 <script setup lang="ts">
 import { computed, onMounted, ref } from 'vue'
-import { useRouter } from 'vue-router'
-import { useToast } from 'primevue/usetoast'
-import UiMenu from '@/ui/UiMenu.vue'
-import type { MenuItem } from 'primevue/menuitem'
 import { useFinanceStore } from '../stores/finance'
 import { useUserStore } from '../stores/user'
 import type { Transaction, UpdateTransferPayload } from '../types'
 import TransactionList from '../components/TransactionList.vue'
 import TransactionForm from '../components/TransactionForm.vue'
-import TransferFormModal from '../components/TransferFormModal.vue'
-import { useTransactionsExport } from '../composables/useTransactionsExport'
-import { useViewport } from '../composables/useViewport'
 import UiButton from '../ui/UiButton.vue'
 import UiSection from '../ui/UiSection.vue'
 import UiSkeleton from '../ui/UiSkeleton.vue'
@@ -20,100 +13,31 @@ import PageHeader from '../components/common/PageHeader.vue'
 
 const financeStore = useFinanceStore()
 const userStore = useUserStore()
-const toast = useToast()
-const router = useRouter()
 const transactionDialogVisible = ref(false)
 const editingTransaction = ref<Transaction | null>(null)
-const transferDialogVisible = ref(false)
 const editingTransfer = ref<UpdateTransferPayload | null>(null)
-const {
-  isExporting,
-  exportTransactions: exportTransactionsFile
-} = useTransactionsExport()
-const actionMenuRef = ref<{ toggle: (event: Event) => void } | null>(null)
-const { isMobile } = useViewport()
 const isReadOnlyMode = computed(() => userStore.isReadOnlyMode)
 const isFinanceReady = computed(() => financeStore.areAccountsReady && financeStore.areCategoriesReady)
-
-const actionMenuItems = computed<MenuItem[]>(() => [
-  {
-    label: 'Перевод',
-    icon: 'pi pi-arrow-right-arrow-left',
-    disabled: isReadOnlyMode.value,
-    command: () => openTransferDialog()
-  },
-  {
-    label: 'Категории',
-    icon: 'pi pi-tags',
-    command: () => router.push('/profile#categories')
-  },
-  {
-    label: 'Экспорт',
-    icon: 'pi pi-download',
-    command: () => exportTransactions()
-  }
-])
-
-const toggleActionMenu = (event: Event) => {
-  actionMenuRef.value?.toggle(event)
-}
 
 const openTransactionDialog = () => {
   if (isReadOnlyMode.value) return
   editingTransaction.value = null
-  transactionDialogVisible.value = true
-}
-
-const openTransferDialog = () => {
-  if (isReadOnlyMode.value) return
   editingTransfer.value = null
-  transferDialogVisible.value = true
+  transactionDialogVisible.value = true
 }
 
 const handleEditTransaction = (transaction: Transaction) => {
   if (isReadOnlyMode.value) return
   editingTransaction.value = transaction
+  editingTransfer.value = null
   transactionDialogVisible.value = true
 }
 
 const handleEditTransfer = (transfer: UpdateTransferPayload) => {
   if (isReadOnlyMode.value) return
   editingTransfer.value = transfer
-  transferDialogVisible.value = true
-}
-
-const exportTransactions = async () => {
-  if (isExporting.value) return
-
-  try {
-    const exportedFile = await exportTransactionsFile()
-    if (!exportedFile) return
-
-    const { blob, fileName } = exportedFile
-    const url = URL.createObjectURL(blob)
-    const link = document.createElement('a')
-    link.href = url
-    link.download = fileName
-    document.body.appendChild(link)
-    link.click()
-    link.remove()
-    URL.revokeObjectURL(url)
-
-    toast.add({
-      severity: 'success',
-      summary: 'Экспорт завершен',
-      detail: 'Файл с транзакциями сохранен.',
-      life: 2500
-    })
-  } catch (error) {
-    console.error('Не удалось экспортировать транзакции:', error)
-    toast.add({
-      severity: 'error',
-      summary: 'Ошибка экспорта',
-      detail: 'Не удалось сформировать файл.',
-      life: 2500
-    })
-  }
+  editingTransaction.value = null
+  transactionDialogVisible.value = true
 }
 
 onMounted(async () => {
@@ -130,47 +54,11 @@ onMounted(async () => {
     <PageHeader title="Транзакции">
       <template #actions>
         <UiButton
-          v-if="!isMobile"
-          label="Экспорт"
-          icon="pi pi-download"
-          variant="secondary"
-          :loading="isExporting"
-          @click="exportTransactions"
-        />
-        <UiButton
-          v-if="!isMobile"
-          label="Категории"
-          icon="pi pi-tags"
-          variant="secondary"
-          @click="router.push('/profile#categories')"
-        />
-        <UiButton
-          v-if="!isMobile"
-          label="Перевод"
-          icon="pi pi-arrow-right-arrow-left"
-          variant="secondary"
-          :disabled="isReadOnlyMode"
-          @click="openTransferDialog"
-        />
-        <UiButton
-          label="Добавить транзакцию"
+          label="Добавить"
           icon="pi pi-plus"
           variant="primary"
           :disabled="isReadOnlyMode"
           @click="openTransactionDialog"
-        />
-        <UiButton
-          v-if="isMobile"
-          icon="pi pi-ellipsis-h"
-          variant="ghost"
-          aria-label="Дополнительные действия"
-          @click="toggleActionMenu"
-        />
-        <UiMenu
-          ref="actionMenuRef"
-          :model="actionMenuItems"
-          popup
-          class="transactions__action-menu"
         />
       </template>
     </PageHeader>
@@ -198,11 +86,6 @@ onMounted(async () => {
     <TransactionForm
       v-model:visible="transactionDialogVisible"
       :transaction="editingTransaction"
-      :readonly="isReadOnlyMode"
-    />
-
-    <TransferFormModal
-      v-model:visible="transferDialogVisible"
       :transfer="editingTransfer"
       :readonly="isReadOnlyMode"
     />
@@ -221,9 +104,5 @@ onMounted(async () => {
 .transactions__skeleton {
   display: grid;
   gap: var(--ft-space-3);
-}
-
-.transactions__action-menu :deep(.p-menu) {
-  min-width: 200px;
 }
 </style>

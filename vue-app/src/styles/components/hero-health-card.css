@@ -6,7 +6,7 @@
 
   background: var(--ft-surface-base);
   border: 1px solid var(--ft-border-subtle);
-  border-radius: var(--ft-radius-2xl);
+  border-radius: var(--ft-radius-xl);
   box-shadow: var(--ft-shadow-sm);
 }
 
@@ -166,7 +166,7 @@
   height: 12px;
 
   background: var(--group-accent);
-  border-radius: 999px;
+  border-radius: var(--ft-radius-full);
   box-shadow: 0 0 0 6px color-mix(in srgb, var(--group-accent) 14%, transparent);
 }
 
@@ -237,7 +237,7 @@
 
   background: color-mix(in srgb, var(--ft-surface-base) 75%, transparent);
   border: 1px solid var(--ft-border-subtle);
-  border-radius: 999px;
+  border-radius: var(--ft-radius-full);
 }
 
 .hero-card__metric-value--good,

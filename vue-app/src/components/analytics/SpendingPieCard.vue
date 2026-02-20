@@ -120,9 +120,6 @@ const chartOptions = computed(() => ({
             class="pi pi-question-circle donut-card__hint"
           />
         </div>
-        <p class="donut-card__subtitle">
-          Распределение за выбранный месяц
-        </p>
       </div>
       <UiSelect
         :model-value="scope"
@@ -265,7 +262,7 @@ const chartOptions = computed(() => ({
 
   background: var(--ft-surface-base);
   border: 1px solid var(--ft-border-subtle);
-  border-radius: var(--ft-radius-2xl);
+  border-radius: var(--ft-radius-xl);
   box-shadow: var(--ft-shadow-sm);
 }
 
@@ -312,12 +309,6 @@ const chartOptions = computed(() => ({
 
 .donut-card__hint:active {
   color: var(--ft-accent-primary);
-}
-
-.donut-card__subtitle {
-  margin: var(--ft-space-1) 0 0;
-  font-size: var(--ft-text-sm);
-  color: var(--ft-text-secondary);
 }
 
 .donut-card__loading {
@@ -420,7 +411,7 @@ const chartOptions = computed(() => ({
   flex-shrink: 0;
   width: 12px;
   height: 12px;
-  border-radius: 50%;
+  border-radius: var(--ft-radius-full);
 }
 
 .donut-card__legend-body {

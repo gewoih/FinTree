@@ -113,7 +113,7 @@ const showEmptyState = computed(() => !props.loading && (!props.hasData || !prop
     color-mix(in srgb, var(--ft-primary-500) 12%, transparent)
   );
   border: 1px solid color-mix(in srgb, var(--ft-success-500) 35%, transparent);
-  border-radius: var(--ft-radius-2xl);
+  border-radius: var(--ft-radius-xl);
   box-shadow: var(--ft-shadow-card);
 }
 

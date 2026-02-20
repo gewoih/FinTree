@@ -48,6 +48,7 @@ const fieldAttrs = computed(() => ({
           aria-label="обязательное поле"
         >*</span>
       </label>
+      <slot name="label-after" />
       <button
         v-if="hint && !error && !labelSrOnly"
         type="button"
@@ -132,7 +133,7 @@ const fieldAttrs = computed(() => ({
 
   background: transparent;
   border: 1px solid var(--ft-border-subtle);
-  border-radius: 50%;
+  border-radius: var(--ft-radius-full);
 }
 
 /* Expand touch target to 44x44 while keeping visual size compact */
@@ -186,6 +187,32 @@ const fieldAttrs = computed(() => ({
 .form-field__info:focus-visible + .form-field__hint {
   transform: translateY(-50%);
   opacity: 1;
+}
+
+.form-field__tooltip-icon {
+  cursor: pointer;
+
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+
+  /* Ensure minimum touch target size */
+  min-width: var(--ft-control-height);
+  min-height: var(--ft-control-height);
+
+  font-size: 0.95rem;
+  color: var(--ft-text-muted);
+  text-transform: none;
+
+  transition: color var(--ft-transition-fast);
+}
+
+.form-field__tooltip-icon:hover {
+  color: var(--ft-text-secondary);
+}
+
+.form-field__tooltip-icon:active {
+  color: var(--ft-accent-primary);
 }
 
 .form-field__error {

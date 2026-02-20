@@ -3,8 +3,8 @@ import { computed, ref } from 'vue';
 import type { MenuItem } from 'primevue/menuitem';
 import UiMenu from '@/ui/UiMenu.vue';
 import type { AccountType, Currency, InvestmentAccountOverviewDto } from '../../types';
-import { getAccountTypeInfo, getCurrencyFlag } from '../../utils/accountHelpers';
-import { formatCurrency, formatDate } from '../../utils/formatters';
+import { getAccountTypeInfo } from '../../utils/accountHelpers';
+import { formatCurrency } from '../../utils/formatters';
 
 interface InvestmentAccount extends InvestmentAccountOverviewDto {
   type: AccountType;
@@ -33,12 +33,12 @@ const emit = defineEmits<{
   (e: 'updateLiquidity', value: boolean): void;
   (e: 'archive'): void;
   (e: 'unarchive'): void;
+  (e: 'rename'): void;
 }>();
 
 const menuRef = ref<{ toggle: (event: Event) => void } | null>(null);
 
 const accountTypeInfo = computed(() => getAccountTypeInfo(props.account.type as AccountType));
-const currencyFlag = computed(() => getCurrencyFlag(props.account.currencyCode));
 const currencyCode = computed(() => props.account.currency?.code || props.account.currencyCode);
 
 const balanceInBase = computed(() => Number(props.account.balanceInBaseCurrency ?? 0));
@@ -68,11 +68,6 @@ const returnClass = computed(() => {
   return 'investment-card__return--neutral';
 });
 
-const lastUpdatedLabel = computed(() => {
-  if (!props.account.lastAdjustedAt) return 'Нет корректировок';
-  return `Обновлено ${formatDate(props.account.lastAdjustedAt)}`;
-});
-
 const menuItems = computed<MenuItem[]>(() => {
   if (props.interactionLocked) return [];
 
@@ -93,6 +88,12 @@ const menuItems = computed<MenuItem[]>(() => {
       icon: 'pi pi-sliders-h',
       disabled: props.isArchiveLoading,
       command: () => emit('open'),
+    },
+    {
+      label: 'Переименовать счет',
+      icon: 'pi pi-pencil',
+      disabled: props.isArchiveLoading,
+      command: () => emit('rename'),
     },
     {
       label: props.account.isLiquid ? 'Сделать неликвидным' : 'Сделать ликвидным',
@@ -132,15 +133,22 @@ const toggleMenu = (event: Event) => {
 
       <div class="investment-card__title">
         <h3>{{ account.name }}</h3>
-        <div class="investment-card__title-meta">
-          <p>{{ accountTypeInfo.label }}</p>
-          <span
-            v-if="readonly"
-            class="investment-card__archived-pill"
-          >
-            В архиве
-          </span>
-        </div>
+        <p class="investment-card__account-type">
+          {{ accountTypeInfo.label }}
+        </p>
+        <span
+          v-tooltip.bottom="'Ликвидный — деньги можно вывести без существенных потерь. Неликвидный — вывод может занять время или снизить доходность.'"
+          class="investment-card__liquidity-status"
+          :class="{ 'investment-card__liquidity-status--liquid': account.isLiquid }"
+        >
+          {{ account.isLiquid ? 'Ликвидный' : 'Неликвидный' }}
+        </span>
+        <span
+          v-if="readonly"
+          class="investment-card__archived-pill"
+        >
+          В архиве
+        </span>
       </div>
 
       <button
@@ -179,23 +187,6 @@ const toggleMenu = (event: Event) => {
         {{ returnLabel }}
       </span>
     </div>
-
-    <footer class="investment-card__footer">
-      <span class="investment-card__meta-line">
-        <template v-if="currencyFlag">{{ currencyFlag }}&nbsp;</template>{{ currencyCode }}
-        <span class="investment-card__separator">&middot;</span>
-        <span
-          v-tooltip.bottom="'Ликвидный — деньги можно вывести без существенных потерь. Неликвидный — вывод может занять время или снизить доходность.'"
-          class="investment-card__liquidity-badge"
-          :class="{ 'investment-card__liquidity-badge--liquid': account.isLiquid }"
-        >
-          {{ account.isLiquid ? 'Ликвидный' : 'Неликвидный' }}
-        </span>
-      </span>
-      <span class="investment-card__updated">
-        {{ lastUpdatedLabel }}
-      </span>
-    </footer>
   </article>
 </template>
 
@@ -209,7 +200,7 @@ const toggleMenu = (event: Event) => {
 
   background: var(--ft-surface-base);
   border: 1px solid var(--ft-border-subtle);
-  border-radius: var(--ft-radius-2xl);
+  border-radius: var(--ft-radius-xl);
   box-shadow: var(--ft-shadow-sm);
 
   transition: transform var(--ft-transition-fast), box-shadow var(--ft-transition-fast), border-color var(--ft-transition-fast);
@@ -267,29 +258,40 @@ const toggleMenu = (event: Event) => {
   white-space: nowrap;
 }
 
+.investment-card__account-type {
+  margin: var(--ft-space-1) 0 0; /* Add margin to separate from h3 */
+  font-size: var(--ft-text-sm);
+  color: var(--ft-text-secondary);
+}
+
 .investment-card__title p {
   margin: 0;
   font-size: var(--ft-text-sm);
   color: var(--ft-text-secondary);
 }
 
-.investment-card__title-meta {
-  display: inline-flex;
-  gap: var(--ft-space-2);
-  align-items: center;
-  margin-top: 2px;
+.investment-card__account-type {
+  margin: var(--ft-space-1) 0 0; /* Add margin to separate from h3 */
+  font-size: var(--ft-text-sm);
+  color: var(--ft-text-secondary);
 }
 
-.investment-card__archived-pill {
-  padding: 2px 8px;
+.investment-card__liquidity-status {
+  margin-top: var(--ft-space-1); /* Add margin to separate from account type */
+  display: inline-block; /* To allow margin-top to work */
+  padding: 1px 6px;
 
   font-size: var(--ft-text-xs);
   font-weight: var(--ft-font-medium);
-  color: var(--ft-warning-400);
+  color: var(--ft-text-muted);
 
-  background: color-mix(in srgb, var(--ft-warning-500) 16%, transparent);
-  border: 1px solid color-mix(in srgb, var(--ft-warning-500) 34%, transparent);
+  background: color-mix(in srgb, var(--ft-text-muted) 12%, transparent);
   border-radius: var(--ft-radius-full);
+}
+
+.investment-card__liquidity-status--liquid {
+  color: var(--ft-success-500);
+  background: color-mix(in srgb, var(--ft-success-400) 15%, transparent);
 }
 
 .investment-card__menu-trigger {
@@ -370,34 +372,9 @@ const toggleMenu = (event: Event) => {
   color: var(--ft-text-muted);
 }
 
-.investment-card__footer {
-  display: flex;
-  flex-direction: column;
-  gap: var(--ft-space-1);
-
-  padding-top: var(--ft-space-3);
-
-  border-top: 1px solid var(--ft-border-subtle);
-}
-
-.investment-card__meta-line {
-  display: inline-flex;
-  flex-wrap: wrap;
-  gap: var(--ft-space-1);
-  align-items: center;
-
-  font-size: var(--ft-text-sm);
-  color: var(--ft-text-secondary);
-}
-
-.investment-card__separator {
-  margin: 0 2px;
-  color: var(--ft-text-muted);
-}
-
-.investment-card__liquidity-badge {
-  cursor: help;
-
+.investment-card__liquidity-status {
+  margin-top: var(--ft-space-1); /* Add margin to separate from account type */
+  display: inline-block; /* To allow margin-top to work */
   padding: 1px 6px;
 
   font-size: var(--ft-text-xs);
@@ -408,13 +385,9 @@ const toggleMenu = (event: Event) => {
   border-radius: var(--ft-radius-full);
 }
 
-.investment-card__liquidity-badge--liquid {
+.investment-card__liquidity-status--liquid {
   color: var(--ft-success-500);
   background: color-mix(in srgb, var(--ft-success-400) 15%, transparent);
 }
 
-.investment-card__updated {
-  font-size: var(--ft-text-xs);
-  color: var(--ft-text-muted);
-}
 </style>

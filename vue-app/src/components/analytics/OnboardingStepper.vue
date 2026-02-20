@@ -198,7 +198,7 @@ function shouldShowAction(step: OnboardingStep): boolean {
   color: var(--ft-text-inverse);
 
   background: color-mix(in srgb, var(--ft-primary-500) 55%, transparent);
-  border-radius: 999px;
+  border-radius: var(--ft-radius-full);
 }
 
 .onboarding-step--completed .onboarding-step__badge {

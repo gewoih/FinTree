@@ -166,7 +166,7 @@
 
   background: var(--ft-surface-raised);
   border: 2px solid var(--ft-border-default);
-  border-radius: 50%;
+  border-radius: var(--ft-radius-full);
 }
 
 /* --- Rate badge --- */

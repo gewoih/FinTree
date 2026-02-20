@@ -130,9 +130,6 @@ const chartOptions = computed(() => ({
             class="pi pi-question-circle bars-card__hint"
           />
         </div>
-        <p class="bars-card__subtitle">
-          Как менялись расходы по выбранной детализации
-        </p>
       </div>
       <UiSelect
         :model-value="granularity"
@@ -231,7 +228,7 @@ const chartOptions = computed(() => ({
 
   background: var(--ft-surface-base);
   border: 1px solid var(--ft-border-subtle);
-  border-radius: var(--ft-radius-2xl);
+  border-radius: var(--ft-radius-xl);
   box-shadow: var(--ft-shadow-sm);
 }
 
@@ -278,12 +275,6 @@ const chartOptions = computed(() => ({
 
 .bars-card__hint:active {
   color: var(--ft-accent-primary);
-}
-
-.bars-card__subtitle {
-  margin: var(--ft-space-1) 0 0;
-  font-size: var(--ft-text-sm);
-  color: var(--ft-text-secondary);
 }
 
 .bars-card__loading {
@@ -348,10 +339,6 @@ const chartOptions = computed(() => ({
   .bars-card__head {
     flex-direction: column;
     align-items: stretch;
-  }
-
-  .bars-card__subtitle {
-    font-size: var(--ft-text-xs);
   }
 
   .bars-card__select {

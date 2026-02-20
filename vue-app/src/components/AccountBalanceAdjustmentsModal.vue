@@ -3,15 +3,14 @@ import { computed, ref, watch } from 'vue'
 import { useToast } from 'primevue/usetoast'
 import UiDialog from '@/ui/UiDialog.vue'
 import UiInputNumber from '@/ui/UiInputNumber.vue'
-import UiMessage from '@/ui/UiMessage.vue'
+
 import type { Account } from '../types'
 import { useAccountBalanceAdjustments } from '../composables/useAccountBalanceAdjustments'
 import { useFinanceStore } from '../stores/finance'
-import { formatCurrency, formatDate } from '../utils/formatters'
+
 import FormField from "@/components/common/FormField.vue";
 import UiButton from "@/ui/UiButton.vue";
-import UiSkeleton from "@/ui/UiSkeleton.vue";
-import EmptyState from "@/components/common/EmptyState.vue";
+
 
 type BalanceAdjustableAccount = {
   id: string
@@ -34,11 +33,7 @@ const emit = defineEmits<{
 const toast = useToast()
 const financeStore = useFinanceStore()
 const {
-  adjustments,
-  loading,
-  adjustmentsError: error,
   saving,
-  loadAdjustments,
   saveAdjustment
 } = useAccountBalanceAdjustments()
 const newBalance = ref<number | null>(null)
@@ -52,18 +47,9 @@ const accountCurrency = computed(
   () => resolvedAccount.value?.currency?.code ?? resolvedAccount.value?.currencyCode ?? 'RUB'
 )
 
-const currentBalanceLabel = computed(() => {
-  if (!resolvedAccount.value) return '—'
-  return formatCurrency(resolvedAccount.value.balance ?? 0, accountCurrency.value)
-})
 
-const formattedAdjustments = computed(() =>
-  adjustments.value.map(adj => ({
-    ...adj,
-    dateLabel: formatDate(adj.occurredAt),
-    amountLabel: formatCurrency(Number(adj.amount ?? 0), accountCurrency.value),
-  }))
-)
+
+
 
 const submitAdjustment = async () => {
   if (props.readonly) {
@@ -98,10 +84,7 @@ const submitAdjustment = async () => {
     return
   }
 
-  await Promise.all([
-    loadAdjustments(props.account.id),
-    financeStore.fetchAccounts(true),
-  ])
+  await financeStore.fetchAccounts(true)
   toast.add({
     severity: 'success',
     summary: 'Баланс обновлен',
@@ -116,17 +99,6 @@ watch(
   visible => {
     if (visible) {
       newBalance.value = props.account?.balance ?? null
-      void loadAdjustments(props.account?.id)
-    }
-  }
-)
-
-watch(
-  () => props.account?.id,
-  () => {
-    if (props.visible) {
-      newBalance.value = props.account?.balance ?? null
-      void loadAdjustments(props.account?.id)
     }
   }
 )
@@ -146,7 +118,7 @@ watch(
     <div class="adjustments-modal">
       <header class="adjustments-modal__header">
         <h2 class="adjustments-modal__title">
-          Корректировка баланса
+          Изменение баланса для '{{ props.account?.name ?? 'Счета' }}'
         </h2>
         <button
           type="button"
@@ -157,17 +129,10 @@ watch(
           <i class="pi pi-times" />
         </button>
       </header>
-      <div class="adjustments-account">
-        <h4>{{ props.account?.name ?? 'Счет' }}</h4>
-        <p>Текущий баланс: <strong>{{ currentBalanceLabel }}</strong></p>
-      </div>
 
-      <p class="adjustments-note">
-        Укажите фактический баланс на текущий момент. Транзакции и история операций не изменяются.
-      </p>
 
       <FormField
-        label="Фактический баланс"
+        label="Текущий баланс"
         required
       >
         <template #default="{ fieldAttrs }">
@@ -181,8 +146,11 @@ watch(
             placeholder="Введите сумму"
           />
         </template>
-        <template #hint>
-          Баланс указывается в валюте счёта ({{ accountCurrency }}).
+        <template #label-after>
+          <i
+            v-tooltip.top="`Укажите актуальный баланс вашего счета для синхронизации (${accountCurrency})`"
+            class="pi pi-question-circle form-field__tooltip-icon"
+          />
         </template>
       </FormField>
 
@@ -197,61 +165,6 @@ watch(
           Сохранить
         </UiButton>
       </div>
-
-      <section class="adjustments-history">
-        <h5>История корректировок</h5>
-
-        <div
-          v-if="loading"
-          class="adjustments-modal__skeleton"
-        >
-          <UiSkeleton
-            v-for="i in 3"
-            :key="i"
-            height="44px"
-          />
-        </div>
-
-        <div
-          v-else-if="error"
-          class="adjustments-modal__error"
-        >
-          <UiMessage
-            severity="error"
-            icon="pi pi-exclamation-triangle"
-            :closable="false"
-          >
-            {{ error }}
-          </UiMessage>
-        </div>
-
-        <EmptyState
-          v-else-if="formattedAdjustments.length === 0"
-          icon="pi pi-history"
-          title="Нет корректировок"
-          description="Добавьте первую корректировку, чтобы зафиксировать актуальный баланс."
-        />
-
-        <ul
-          v-else
-          class="adjustments-list"
-        >
-          <li
-            v-for="adjustment in formattedAdjustments"
-            :key="adjustment.id"
-            class="adjustments-list__item"
-          >
-            <div>
-              <div class="adjustments-list__amount">
-                {{ adjustment.amountLabel }}
-              </div>
-              <div class="adjustments-list__date">
-                {{ adjustment.dateLabel }}
-              </div>
-            </div>
-          </li>
-        </ul>
-      </section>
     </div>
   </UiDialog>
 </template>

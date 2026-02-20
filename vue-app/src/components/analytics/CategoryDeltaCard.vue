@@ -81,9 +81,6 @@ const formatPercent = (value: number | null) =>
           class="pi pi-question-circle delta-card__hint"
         />
       </div>
-      <p class="delta-card__subtitle">
-        Сравнение с прошлым месяцем ({{ periodLabel }})
-      </p>
     </div>
 
     <div
@@ -244,7 +241,7 @@ const formatPercent = (value: number | null) =>
 
   background: var(--ft-surface-base);
   border: 1px solid var(--ft-border-subtle);
-  border-radius: var(--ft-radius-2xl);
+  border-radius: var(--ft-radius-xl);
   box-shadow: var(--ft-shadow-sm);
 }
 
@@ -289,12 +286,6 @@ const formatPercent = (value: number | null) =>
 
 .delta-card__hint:active {
   color: var(--ft-accent-primary);
-}
-
-.delta-card__subtitle {
-  margin: 0;
-  font-size: var(--ft-text-sm);
-  color: var(--ft-text-secondary);
 }
 
 .delta-card__loading {
@@ -378,7 +369,7 @@ const formatPercent = (value: number | null) =>
   flex-shrink: 0;
   width: 8px;
   height: 8px;
-  border-radius: 999px;
+  border-radius: var(--ft-radius-full);
 }
 
 .delta-item__name {
@@ -420,12 +411,12 @@ const formatPercent = (value: number | null) =>
   overflow: hidden;
   height: 4px;
   background: color-mix(in srgb, var(--ft-surface-raised) 70%, transparent);
-  border-radius: 999px;
+  border-radius: var(--ft-radius-full);
 }
 
 .delta-item__bar {
   height: 100%;
-  border-radius: 999px;
+  border-radius: var(--ft-radius-full);
   transition: width var(--ft-transition-slow);
 }
 

@@ -1,13 +1,12 @@
 <script setup lang="ts">
 import { computed } from 'vue';
-import type { ChartData, TooltipItem } from 'chart.js';
-import UiBadge from '@/ui/UiBadge.vue';
+import type { ChartData, TooltipItem, Plugin } from 'chart.js';
 import UiSkeleton from '@/ui/UiSkeleton.vue';
 import UiMessage from '@/ui/UiMessage.vue';
 import UiButton from '../../ui/UiButton.vue';
 import UiChart from '@/ui/UiChart.vue';
 import type { ForecastSummary } from '@/types/analytics.ts';
-import { useChartColors } from '../../composables/useChartColors';
+import { useChartColors } from '@/composables/useChartColors.ts';
 
 const props = withDefaults(defineProps<{
   loading: boolean;
@@ -55,27 +54,43 @@ const fmt = (value: number | null | undefined) => {
 const formattedForecast = computed(() => fmt(props.forecast?.forecastTotal));
 const formattedOptimistic = computed(() => fmt(props.forecast?.optimisticTotal));
 const formattedRisk = computed(() => fmt(props.forecast?.riskTotal));
-const formattedCurrent = computed(() => fmt(props.forecast?.currentSpent));
 const formattedLimit = computed(() => fmt(props.forecast?.baselineLimit));
 const hasBaseline = computed(() => props.forecast?.baselineLimit != null);
 
-const statusLabel = computed(() => {
+const heroClass = computed(() => {
   switch (props.forecast?.status) {
-    case 'good': return 'Ниже лимита';
-    case 'average': return 'Близко к лимиту';
-    case 'poor': return 'Превышает лимит';
+    case 'average': return 'forecast-hero--average';
+    case 'poor': return 'forecast-hero--poor';
     default: return null;
   }
 });
 
-const statusClass = computed(() => {
-  switch (props.forecast?.status) {
-    case 'good': return 'forecast-chip--good';
-    case 'average': return 'forecast-chip--average';
-    case 'poor': return 'forecast-chip--poor';
-    default: return null;
-  }
-});
+const baselineLabelPlugin = computed<Plugin<'line'>>(() => ({
+  id: 'baselineLabel',
+  afterDraw(chart) {
+    if (!hasBaseline.value) return;
+
+    const datasetIndex = chart.data.datasets.findIndex(
+      ds => ds.label === 'Базовые расходы'
+    );
+    if (datasetIndex === -1) return;
+
+    const meta = chart.getDatasetMeta(datasetIndex);
+    if (!meta.visible || !meta.data.length) return;
+
+    const lastPoint = meta.data[meta.data.length - 1];
+    const { x, y } = lastPoint?.getProps(['x', 'y'], true) as { x: number; y: number };
+
+    const { ctx } = chart;
+    ctx.save();
+    ctx.font = `600 11px sans-serif`;
+    ctx.fillStyle = colors.baseline;
+    ctx.textAlign = 'right';
+    ctx.textBaseline = 'bottom';
+    ctx.fillText(formattedLimit.value, x, y - 4);
+    ctx.restore();
+  },
+}));
 
 const chartOptions = computed(() => ({
   maintainAspectRatio: false,
@@ -132,47 +147,67 @@ const chartOptions = computed(() => ({
 <template>
   <div class="forecast-card">
     <div class="forecast-card__head">
-      <div>
-        <div class="forecast-card__title-row">
-          <h3 class="forecast-card__title">
-            Прогноз расходов
-          </h3>
-          <i
-            v-tooltip.top="'Оценка расходов до конца месяца на основе текущего темпа трат. Три сценария: оптимистичный, базовый и рисковый.'"
-            class="pi pi-question-circle forecast-card__hint"
-          />
-        </div>
-        <p class="forecast-card__subtitle">
-          Оценка расходов до конца месяца
-        </p>
-      </div>
-      <UiBadge
-        v-if="readinessMet && statusLabel"
-        :class="['forecast-chip', statusClass]"
-      >
-        {{ statusLabel }}
-      </UiBadge>
-    </div>
-
-    <div
-      v-if="loading"
-      class="forecast-card__loading"
-    >
-      <div class="forecast-card__loading-chips">
-        <UiSkeleton
-          v-for="i in 3"
-          :key="i"
-          width="120px"
-          height="32px"
-          border-radius="999px"
+      <div class="forecast-card__title-row">
+        <h3 class="forecast-card__title">
+          Прогноз расходов
+        </h3>
+        <i
+          v-tooltip.top="'Оценка расходов до конца месяца на основе текущего темпа трат. Три сценария: оптимистичный, базовый и рисковый.'"
+          class="pi pi-question-circle forecast-card__hint"
         />
       </div>
-      <UiSkeleton
-        width="100%"
-        height="300px"
-        border-radius="16px"
-      />
+
+      <div
+        v-if="loading"
+        class="forecast-card__loading-kpi"
+      >
+        <UiSkeleton
+          width="200px"
+          height="20px"
+        />
+        <UiSkeleton
+          width="260px"
+          height="44px"
+        />
+        <div class="forecast-card__loading-secondary">
+          <UiSkeleton
+            width="110px"
+            height="36px"
+          />
+          <UiSkeleton
+            width="110px"
+            height="36px"
+          />
+        </div>
+      </div>
+
+      <div
+        v-else-if="!error && readinessMet && !showEmpty"
+        class="forecast-kpi"
+      >
+        <div :class="['forecast-hero', heroClass]">
+          <span class="forecast-hero__label">Прогноз до конца месяца</span>
+          <span class="forecast-hero__value">{{ formattedForecast }}</span>
+        </div>
+        <div class="forecast-secondary">
+          <div class="forecast-stat forecast-stat--optimistic">
+            <span class="forecast-stat__label">Оптимистичный</span>
+            <span class="forecast-stat__value">{{ formattedOptimistic }}</span>
+          </div>
+          <div class="forecast-stat forecast-stat--risk">
+            <span class="forecast-stat__label">Риск</span>
+            <span class="forecast-stat__value">{{ formattedRisk }}</span>
+          </div>
+        </div>
+      </div>
     </div>
+
+    <UiSkeleton
+      v-if="loading"
+      width="100%"
+      height="300px"
+      border-radius="16px"
+    />
 
     <div
       v-else-if="error"
@@ -241,32 +276,6 @@ const chartOptions = computed(() => ({
     </div>
 
     <template v-else>
-      <div class="forecast-card__chips">
-        <div class="forecast-chip forecast-chip--accent">
-          <span class="forecast-chip__label">Потрачено</span>
-          <span class="forecast-chip__value">{{ formattedCurrent }}</span>
-        </div>
-        <div class="forecast-chip forecast-chip--primary">
-          <span class="forecast-chip__label">Прогноз</span>
-          <span class="forecast-chip__value">{{ formattedForecast }}</span>
-        </div>
-        <div class="forecast-chip forecast-chip--muted">
-          <span class="forecast-chip__label">Оптимист.</span>
-          <span class="forecast-chip__value">{{ formattedOptimistic }}</span>
-        </div>
-        <div class="forecast-chip forecast-chip--warning">
-          <span class="forecast-chip__label">Риск</span>
-          <span class="forecast-chip__value">{{ formattedRisk }}</span>
-        </div>
-        <div
-          v-if="hasBaseline"
-          class="forecast-chip forecast-chip--outline"
-        >
-          <span class="forecast-chip__label">Базовые расходы</span>
-          <span class="forecast-chip__value">{{ formattedLimit }}</span>
-        </div>
-      </div>
-
       <div
         class="forecast-card__chart"
         role="img"
@@ -278,6 +287,7 @@ const chartOptions = computed(() => ({
             type="line"
             :data="chartData"
             :options="chartOptions"
+            :plugins="hasBaseline ? [baselineLabelPlugin] : []"
           />
         </div>
       </div>

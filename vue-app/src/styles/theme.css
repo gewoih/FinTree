@@ -1,8 +1,8 @@
 @layer components {
 :root {
-  --ft-primary: var(--ft-primary-500);
-  --ft-primary-hover: var(--ft-primary-600);
-  --ft-primary-light: var(--ft-primary-400);
+  --ft-primary: var(--ft-primary-400);
+  --ft-primary-hover: var(--ft-primary-500);
+  --ft-primary-light: var(--ft-primary-300);
   --ft-secondary: var(--ft-info-500);
   --ft-success: var(--ft-success-500);
   --ft-warning: var(--ft-warning-500);
@@ -15,15 +15,15 @@
   --ft-surface-soft: var(--ft-surface-base);
   --ft-surface-muted: var(--ft-surface-raised);
   --ft-surface-elevated: var(--ft-surface-overlay);
-  --ft-glass: color-mix(in srgb, var(--ft-primary-500) 8%, transparent);
-  --ft-glass-border: color-mix(in srgb, var(--ft-primary-500) 18%, transparent);
-  --ft-accent: var(--ft-primary-500);
-  --ft-accent-light: var(--ft-primary-300);
-  --ft-accent-soft: color-mix(in srgb, var(--ft-primary-500) 10%, transparent);
+  --ft-glass: color-mix(in srgb, var(--ft-primary-400) 8%, transparent);
+  --ft-glass-border: color-mix(in srgb, var(--ft-primary-400) 18%, transparent);
+  --ft-accent: var(--ft-primary-400);
+  --ft-accent-light: var(--ft-primary-200);
+  --ft-accent-soft: color-mix(in srgb, var(--ft-primary-400) 10%, transparent);
   --ft-shadow-soft: var(--ft-shadow-md);
   --ft-shadow-card: var(--ft-shadow-md);
   --ft-shadow-hero: var(--ft-shadow-xl);
-  --ft-radius-card: var(--ft-radius-2xl);
+  --ft-radius-card: var(--ft-radius-xl);
   --ft-radius-section: var(--ft-radius-xl);
 }
 
@@ -86,7 +86,7 @@
 
   opacity: 0.7;
   background: currentcolor;
-  border-radius: 999px;
+  border-radius: var(--ft-radius-full);
 }
 
 .ft-display {
@@ -128,7 +128,7 @@
   color: var(--ft-accent);
 
   background: var(--ft-accent-soft);
-  border-radius: 999px;
+  border-radius: var(--ft-radius-full);
 }
 
 .ft-hero {
