@@ -132,7 +132,7 @@ const fieldAttrs = computed(() => ({
 
   background: transparent;
   border: 1px solid var(--ft-border-subtle);
-  border-radius: 50%;
+  border-radius: var(--ft-radius-full);
 }
 
 /* Expand touch target to 44x44 while keeping visual size compact */

@@ -254,7 +254,7 @@
   display: inline-block;
   width: 20px;
   height: 2px;
-  border-radius: 999px;
+  border-radius: var(--ft-radius-full);
 }
 
 .forecast-legend__line--actual {

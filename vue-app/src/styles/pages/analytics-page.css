@@ -37,7 +37,7 @@
 
   background: color-mix(in srgb, var(--ft-surface-raised) 85%, transparent);
   border: 1px solid color-mix(in srgb, var(--ft-border-subtle) 70%, transparent);
-  border-radius: 999px;
+  border-radius: var(--ft-radius-full);
 }
 
 .analytics-month-selector button {
@@ -59,7 +59,7 @@
 
   background: transparent;
   border: none;
-  border-radius: 999px;
+  border-radius: var(--ft-radius-full);
 
   transition: color var(--ft-transition-fast), background-color var(--ft-transition-fast);
 }

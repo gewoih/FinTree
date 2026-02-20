@@ -130,7 +130,7 @@
   display: block;
   width: 10px;
   height: 10px;
-  border-radius: 50%;
+  border-radius: var(--ft-radius-full);
 }
 
 .txn-row__info {

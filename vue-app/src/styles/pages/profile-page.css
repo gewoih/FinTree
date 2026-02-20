@@ -100,7 +100,7 @@
   letter-spacing: 0.04em;
 
   background: linear-gradient(135deg, var(--ft-primary-500), var(--ft-primary-800));
-  border-radius: 50%;
+  border-radius: var(--ft-radius-full);
 }
 
 .profile-identity__info {
@@ -278,7 +278,7 @@
   color: var(--ft-text-inverse);
 
   background: color-mix(in srgb, var(--ft-primary-500) 80%, transparent);
-  border-radius: 11px;
+  border-radius: var(--ft-radius-lg);
 }
 
 .collapsible-chevron {

@@ -243,7 +243,7 @@
 
   background: transparent;
   border: 1px solid color-mix(in srgb, var(--ft-danger-500) 40%, transparent);
-  border-radius: 999px;
+  border-radius: var(--ft-radius-full);
   box-shadow: none;
 }
 

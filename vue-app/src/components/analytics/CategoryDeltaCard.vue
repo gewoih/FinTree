@@ -378,7 +378,7 @@ const formatPercent = (value: number | null) =>
   flex-shrink: 0;
   width: 8px;
   height: 8px;
-  border-radius: 999px;
+  border-radius: var(--ft-radius-full);
 }
 
 .delta-item__name {
@@ -420,12 +420,12 @@ const formatPercent = (value: number | null) =>
   overflow: hidden;
   height: 4px;
   background: color-mix(in srgb, var(--ft-surface-raised) 70%, transparent);
-  border-radius: 999px;
+  border-radius: var(--ft-radius-full);
 }
 
 .delta-item__bar {
   height: 100%;
-  border-radius: 999px;
+  border-radius: var(--ft-radius-full);
   transition: width var(--ft-transition-slow);
 }
 

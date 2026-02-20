@@ -103,7 +103,7 @@ withDefaults(defineProps<Props>(), {
   width: 6px;
   height: 6px;
   background: currentcolor;
-  border-radius: 50%;
+  border-radius: var(--ft-radius-full);
 }
 
 .status-badge__label {

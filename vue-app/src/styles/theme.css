@@ -86,7 +86,7 @@
 
   opacity: 0.7;
   background: currentcolor;
-  border-radius: 999px;
+  border-radius: var(--ft-radius-full);
 }
 
 .ft-display {
@@ -128,7 +128,7 @@
   color: var(--ft-accent);
 
   background: var(--ft-accent-soft);
-  border-radius: 999px;
+  border-radius: var(--ft-radius-full);
 }
 
 .ft-hero {

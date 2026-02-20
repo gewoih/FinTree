@@ -76,7 +76,7 @@ defineProps<{
     color-mix(in srgb, var(--ft-text-tertiary) 8%, transparent) 100%
   );
   background-size: 200% 100%;
-  border-radius: 8px;
+  border-radius: var(--ft-radius-lg);
 
   animation: shimmer 1.5s ease-in-out infinite;
 }
@@ -128,7 +128,7 @@ defineProps<{
     color-mix(in srgb, var(--ft-text-tertiary) 8%, transparent) 100%
   );
   background-size: 200% 100%;
-  border-radius: 6px;
+  border-radius: var(--ft-radius-md);
 
   animation: shimmer 1.5s ease-in-out infinite;
 }

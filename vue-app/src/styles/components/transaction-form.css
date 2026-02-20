@@ -289,7 +289,7 @@
 .txn-form__cat-dot {
   width: var(--ft-space-3);
   height: var(--ft-space-3);
-  border-radius: 50%;
+  border-radius: var(--ft-radius-full);
 }
 
 .txn-form__option-currency {

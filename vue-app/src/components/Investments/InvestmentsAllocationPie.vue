@@ -314,7 +314,7 @@ const formatMoney = (value: number) =>
   flex-shrink: 0;
   width: 12px;
   height: 12px;
-  border-radius: 50%;
+  border-radius: var(--ft-radius-full);
 }
 
 .allocation-card__meta {

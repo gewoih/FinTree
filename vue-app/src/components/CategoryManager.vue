@@ -325,7 +325,7 @@ defineExpose({
   width: 14px;
   height: 14px;
   border: 1px solid color-mix(in srgb, var(--ft-text-primary) 14%, transparent);
-  border-radius: 50%;
+  border-radius: var(--ft-radius-full);
 }
 
 .category-icon {
@@ -355,7 +355,7 @@ defineExpose({
   color: var(--ft-primary-700) !important;
 
   background: color-mix(in srgb, var(--ft-primary-200) 55%, transparent) !important;
-  border-radius: 999px;
+  border-radius: var(--ft-radius-full);
 }
 
 @media (width <= 640px) {

@@ -420,7 +420,7 @@ const chartOptions = computed(() => ({
   flex-shrink: 0;
   width: 12px;
   height: 12px;
-  border-radius: 50%;
+  border-radius: var(--ft-radius-full);
 }
 
 .donut-card__legend-body {
