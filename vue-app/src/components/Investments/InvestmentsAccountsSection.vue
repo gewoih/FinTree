@@ -1,12 +1,12 @@
 <script setup lang="ts">
 import type { Account, AccountType } from '../../types';
 import type { ViewState } from '../../types/view-state';
-import AccountFilters from '../AccountFilters.vue';
 import InvestmentAccountCard from './InvestmentAccountCard.vue';
 import UiButton from '@/ui/UiButton.vue';
 import UiMessage from '@/ui/UiMessage.vue';
 import UiSkeleton from '@/ui/UiSkeleton.vue';
 import EmptyState from '@/components/common/EmptyState.vue';
+import ListToolbar from '@/components/common/ListToolbar.vue';
 
 type InvestmentsView = 'active' | 'archived';
 
@@ -31,9 +31,8 @@ defineProps<{
   filteredAccounts: InvestmentAccount[];
   view: InvestmentsView;
   isReadOnlyMode: boolean;
-  showFilters: boolean;
+  showSearch: boolean;
   searchText: string;
-  selectedType: AccountType | null;
   hasVisibleAccounts: boolean;
   hasAnyInvestmentAccounts: boolean;
   hasActiveFilters: boolean;
@@ -50,7 +49,6 @@ defineProps<{
 const emit = defineEmits<{
   (e: 'update:view', value: InvestmentsView): void;
   (e: 'update:searchText', value: string): void;
-  (e: 'update:selectedType', value: AccountType | null): void;
   (e: 'openModal'): void;
   (e: 'clearFilters'): void;
   (e: 'retryCurrentView'): void;
@@ -81,43 +79,15 @@ const setView = (value: InvestmentsView) => {
       />
     </div>
 
-    <div
-      class="investments-accounts__tabs"
-      role="tablist"
-      aria-label="Фильтр инвестиционных счетов по статусу"
-    >
-      <button
-        class="investments-accounts__tab"
-        :class="{ 'is-active': view === 'active' }"
-        type="button"
-        role="tab"
-        :aria-selected="view === 'active'"
-        @click="setView('active')"
-      >
-        <span>Активные</span>
-        <strong>{{ activeAccounts.length }}</strong>
-      </button>
-      <button
-        class="investments-accounts__tab"
-        :class="{ 'is-active': view === 'archived' }"
-        type="button"
-        role="tab"
-        :aria-selected="view === 'archived'"
-        @click="setView('archived')"
-      >
-        <span>Архив</span>
-        <strong>{{ archivedAccounts.length }}</strong>
-      </button>
-    </div>
-
-    <AccountFilters
-      v-if="showFilters"
+    <ListToolbar
+      :model-value="view"
       :search-text="searchText"
-      :selected-type="selectedType"
-      :available-types="[3, 2, 4]"
-      @update:search-text="emit('update:searchText', $event ?? '')"
-      @update:selected-type="emit('update:selectedType', ($event as AccountType | null) ?? null)"
-      @clear-filters="emit('clearFilters')"
+      :active-count="activeAccounts.length"
+      :archived-count="archivedAccounts.length"
+      :show-search="showSearch"
+      search-placeholder="Название, валюта..."
+      @update:model-value="emit('update:view', $event)"
+      @update:search-text="emit('update:searchText', $event)"
     />
 
     <div
@@ -253,50 +223,6 @@ const setView = (value: InvestmentsView) => {
   color: var(--ft-text-primary);
 }
 
-.investments-accounts__tabs {
-  display: inline-flex;
-  gap: var(--ft-space-2);
-
-  width: fit-content;
-  padding: var(--ft-space-1);
-
-  background: var(--ft-surface-base);
-  border: 1px solid var(--ft-border-default);
-  border-radius: var(--ft-radius-lg);
-}
-
-.investments-accounts__tab {
-  cursor: pointer;
-
-  display: inline-flex;
-  gap: var(--ft-space-2);
-  align-items: center;
-
-  min-height: 44px;
-  padding: var(--ft-space-2) var(--ft-space-3);
-
-  font-weight: var(--ft-font-medium);
-  color: var(--ft-text-secondary);
-
-  background: transparent;
-  border: none;
-  border-radius: var(--ft-radius-md);
-}
-
-.investments-accounts__tab strong {
-  font-size: var(--ft-text-sm);
-}
-
-.investments-accounts__tab.is-active {
-  color: var(--ft-text-primary);
-  background: color-mix(in srgb, var(--ft-primary-500) 18%, transparent);
-}
-
-.investments-accounts__tab:focus-visible {
-  outline: 2px solid var(--ft-primary-500);
-  outline-offset: 1px;
-}
-
 .investments-accounts__skeleton {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
@@ -323,16 +249,6 @@ const setView = (value: InvestmentsView) => {
   .investments-accounts__header {
     flex-direction: column;
     align-items: stretch;
-  }
-
-  .investments-accounts__tabs {
-    justify-content: space-between;
-    width: 100%;
-  }
-
-  .investments-accounts__tab {
-    flex: 1;
-    justify-content: center;
   }
 
   .investments-accounts__grid,

@@ -6,7 +6,7 @@ import UiMessage from '@/ui/UiMessage.vue';
 import UiButton from '../../ui/UiButton.vue';
 import UiChart from '@/ui/UiChart.vue';
 import type { ForecastSummary } from '@/types/analytics.ts';
-import { useChartColors } from '../../composables/useChartColors';
+import { useChartColors } from '@/composables/useChartColors.ts';
 
 const props = withDefaults(defineProps<{
   loading: boolean;
@@ -79,7 +79,7 @@ const baselineLabelPlugin = computed<Plugin<'line'>>(() => ({
     if (!meta.visible || !meta.data.length) return;
 
     const lastPoint = meta.data[meta.data.length - 1];
-    const { x, y } = lastPoint.getProps(['x', 'y'], true) as { x: number; y: number };
+    const { x, y } = lastPoint?.getProps(['x', 'y'], true) as { x: number; y: number };
 
     const { ctx } = chart;
     ctx.save();

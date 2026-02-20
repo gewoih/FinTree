@@ -9,17 +9,15 @@ import AccountCard from '../components/AccountCard.vue'
 import AccountBalanceAdjustmentsModal from '../components/AccountBalanceAdjustmentsModal.vue'
 import type { Account } from '../types'
 import UiButton from '../ui/UiButton.vue'
-import UiCard from '../ui/UiCard.vue'
-import UiInputText from '../ui/UiInputText.vue'
 import UiSkeleton from '../ui/UiSkeleton.vue'
 import UiSection from '../ui/UiSection.vue'
 import UiMessage from '../ui/UiMessage.vue'
 import EmptyState from '../components/common/EmptyState.vue'
 import PageContainer from '../components/layout/PageContainer.vue'
 import PageHeader from '../components/common/PageHeader.vue'
+import ListToolbar from '../components/common/ListToolbar.vue'
 
 type AccountsView = 'active' | 'archived'
-type AccountsSort = 'balance-desc' | 'balance-asc' | 'name-asc'
 
 const financeStore = useFinanceStore()
 const userStore = useUserStore()
@@ -37,7 +35,6 @@ const selectedAccount = ref<Account | null>(null)
 
 const view = ref<AccountsView>('active')
 const searchText = ref('')
-const sortBy = ref<AccountsSort>('balance-desc')
 const isReadOnlyMode = computed(() => userStore.isReadOnlyMode)
 
 
@@ -100,15 +97,8 @@ const filteredAccounts = computed(() => {
     }
   }
 
-  // 2. Apply sorting to the rest of the accounts (accountsToProcess)
-  if (sortBy.value === 'name-asc') {
-    accountsToProcess.sort((a, b) => a.name.localeCompare(b.name, 'ru'))
-  } else if (sortBy.value === 'balance-asc') {
-    accountsToProcess.sort((a, b) => (a.balanceInBaseCurrency ?? 0) - (b.balanceInBaseCurrency ?? 0))
-  } else {
-    // Default or 'balance-desc'
-    accountsToProcess.sort((a, b) => (b.balanceInBaseCurrency ?? 0) - (a.balanceInBaseCurrency ?? 0))
-  }
+  // 2. Default sorting by balance desc
+  accountsToProcess.sort((a, b) => (b.balanceInBaseCurrency ?? 0) - (a.balanceInBaseCurrency ?? 0))
 
   // 3. Prepend the primary account if it exists and was originally in the filtered list
   if (primaryAccount && isPrimaryAccountPresent) {
@@ -120,7 +110,7 @@ const filteredAccounts = computed(() => {
 })
 
 const hasActiveFilters = computed(() => searchText.value.trim().length > 0)
-const showAccountFilters = computed(() => visibleAccounts.value.length >= 5)
+const showSearch = computed(() => visibleAccounts.value.length >= 5)
 
 const openModal = () => {
   if (isReadOnlyMode.value) return
@@ -238,7 +228,7 @@ const retryCurrentView = async () => {
   await financeStore.fetchArchivedAccounts(true)
 }
 
-watch(showAccountFilters, isVisible => {
+watch(showSearch, isVisible => {
   if (!isVisible) {
     clearFilters()
   }
@@ -268,58 +258,16 @@ onMounted(async () => {
     </PageHeader>
 
     <UiSection class="accounts__content">
-      <UiCard
-        class="accounts-toolbar"
-        variant="muted"
-        padding="md"
-      >
-        <div
-          class="accounts-tabs"
-          role="tablist"
-          aria-label="Фильтр счетов по статусу"
-        >
-          <button
-            class="accounts-tab"
-            :class="{ 'is-active': view === 'active' }"
-            type="button"
-            role="tab"
-            :aria-selected="view === 'active'"
-            @click="view = 'active'"
-          >
-            <span>Активные</span>
-            <strong>{{ activeBankAccounts.length }}</strong>
-          </button>
-          <button
-            class="accounts-tab"
-            :class="{ 'is-active': view === 'archived' }"
-            type="button"
-            role="tab"
-            :aria-selected="view === 'archived'"
-            @click="view = 'archived'"
-          >
-            <span>Архив</span>
-            <strong>{{ archivedBankAccounts.length }}</strong>
-          </button>
-        </div>
-
-        <div
-          v-if="showAccountFilters"
-          class="accounts-controls"
-        >
-          <div class="accounts-search">
-            <i
-              class="pi pi-search"
-              aria-hidden="true"
-            />
-            <UiInputText
-              v-model="searchText"
-              placeholder="Поиск по названию или валюте..."
-              autocomplete="off"
-              aria-label="Поиск счета"
-            />
-          </div>
-        </div>
-      </UiCard>
+      <ListToolbar
+        :model-value="view"
+        :search-text="searchText"
+        :active-count="activeBankAccounts.length"
+        :archived-count="archivedBankAccounts.length"
+        :show-search="showSearch"
+        search-placeholder="Поиск по названию или валюте..."
+        @update:model-value="view = $event"
+        @update:search-text="searchText = $event"
+      />
 
       <div
         v-if="currentAccountsState === 'error' && hasVisibleAccounts"
@@ -414,19 +362,6 @@ onMounted(async () => {
           @open="openAdjustments(account)"
           @update-liquidity="handleLiquidityToggle(account, $event)"
         />
-      </div>
-
-      <div
-        v-if="showAccountFilters && filteredAccounts.length > 0 && hasActiveFilters"
-        class="surface-panel accounts__results"
-      >
-        <p class="results-text">
-          <i
-            class="pi pi-info-circle"
-            aria-hidden="true"
-          />
-          Показано счетов: <strong>{{ filteredAccounts.length }}</strong> из <strong>{{ visibleAccounts.length }}</strong>
-        </p>
       </div>
     </UiSection>
 

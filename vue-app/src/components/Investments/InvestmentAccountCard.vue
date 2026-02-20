@@ -187,7 +187,6 @@ const toggleMenu = (event: Event) => {
         {{ returnLabel }}
       </span>
     </div>
-
   </article>
 </template>
 

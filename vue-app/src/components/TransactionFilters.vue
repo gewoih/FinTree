@@ -91,7 +91,10 @@ const controlsVisible = computed(() => !isMobile.value || isOpen.value);
       :class="{ 'is-active': isOpen }"
       @click="isOpen = !isOpen"
     >
-      <i class="pi pi-sliders-h" aria-hidden="true" />
+      <i
+        class="pi pi-sliders-h"
+        aria-hidden="true"
+      />
       <span>Фильтры</span>
       <span
         v-if="activeFilterCount > 0"
