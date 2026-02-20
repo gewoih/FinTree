@@ -78,6 +78,7 @@ const shouldShowAccountsErrorState = computed(
 const filteredAccounts = computed(() => {
   let result = [...visibleAccounts.value]
 
+  // 1. Apply search text filter
   if (searchText.value.trim()) {
     const query = searchText.value.toLowerCase().trim()
     result = result.filter(account =>
@@ -87,18 +88,36 @@ const filteredAccounts = computed(() => {
     )
   }
 
+  // Find the primary account in the filtered list
+  const primaryAccount = financeStore.primaryAccount;
+  let primaryAccountIndex = -1;
+
+  if (primaryAccount) {
+    primaryAccountIndex = result.findIndex(account => account.id === primaryAccount.id);
+  }
+
+  // 2. Apply sorting to the rest of the accounts
+  // If primary account is found, remove it before sorting and add it back later
+  let accountsToSort = result;
+  if (primaryAccountIndex !== -1) {
+    accountsToSort = result.toSpliced(primaryAccountIndex, 1);
+  }
+
   if (sortBy.value === 'name-asc') {
-    result.sort((a, b) => a.name.localeCompare(b.name, 'ru'))
-    return result
+    accountsToSort.sort((a, b) => a.name.localeCompare(b.name, 'ru'))
+  } else if (sortBy.value === 'balance-asc') {
+    accountsToSort.sort((a, b) => (a.balanceInBaseCurrency ?? 0) - (b.balanceInBaseCurrency ?? 0))
+  } else {
+    // Default or 'balance-desc'
+    accountsToSort.sort((a, b) => (b.balanceInBaseCurrency ?? 0) - (a.balanceInBaseCurrency ?? 0))
   }
 
-  if (sortBy.value === 'balance-asc') {
-    result.sort((a, b) => (a.balanceInBaseCurrency ?? 0) - (b.balanceInBaseCurrency ?? 0))
-    return result
+  // 3. Prepend the primary account if it was found
+  if (primaryAccountIndex !== -1) {
+    return [primaryAccount, ...accountsToSort];
   }
 
-  result.sort((a, b) => (b.balanceInBaseCurrency ?? 0) - (a.balanceInBaseCurrency ?? 0))
-  return result
+  return accountsToSort
 })
 
 const hasActiveFilters = computed(() => searchText.value.trim().length > 0)
