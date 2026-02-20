@@ -1,41 +1,47 @@
 <script setup lang="ts">
 import { computed, onMounted, ref, watch } from 'vue';
 import { useToast } from 'primevue/usetoast';
-import UiMessage from '@/ui/UiMessage.vue';
+import { useConfirm } from 'primevue/useconfirm';
 import type {
   AccountType,
   InvestmentAccountOverviewDto,
   Account,
-  AccountDto,
 } from '../types';
 import { useFinanceStore } from '../stores/finance';
 import { useUserStore } from '../stores/user';
 import AccountFormModal from '../components/AccountFormModal.vue';
-import AccountFilters from '../components/AccountFilters.vue';
 import AccountBalanceAdjustmentsModal from '../components/AccountBalanceAdjustmentsModal.vue';
-import InvestmentAccountCard from '../components/Investments/InvestmentAccountCard.vue';
+import InvestmentsAccountsSection from '../components/Investments/InvestmentsAccountsSection.vue';
 import InvestmentsAllocationPie from '../components/Investments/InvestmentsAllocationPie.vue';
 import NetWorthLineCard from '../components/analytics/NetWorthLineCard.vue';
 import SummaryStrip from '../components/analytics/SummaryStrip.vue';
-import { mapAccount } from '../utils/mappers';
 import { formatCurrency } from '../utils/formatters';
 import { useChartColors } from '../composables/useChartColors';
 import { useInvestmentsData } from '../composables/useInvestmentsData';
-import UiSkeleton from '../ui/UiSkeleton.vue';
-import EmptyState from '../components/common/EmptyState.vue';
 import PageContainer from '../components/layout/PageContainer.vue';
 import PageHeader from '../components/common/PageHeader.vue';
-import UiButton from "@/ui/UiButton.vue";
 
-interface InvestmentAccount extends Omit<InvestmentAccountOverviewDto, 'type'> {
+type InvestmentsView = 'active' | 'archived';
+
+interface InvestmentAccount {
+  id: string;
+  name: string;
+  currencyCode: string;
   type: AccountType;
-  currency?: Account['currency'];
+  isLiquid: boolean;
+  isArchived: boolean;
+  isMain: boolean;
   balance: number;
   balanceInBaseCurrency: number;
-  isMain: boolean;
+  lastAdjustedAt: string | null;
+  returnPercent: number | null;
+  currency?: Account['currency'];
 }
 
+const INVESTMENT_ACCOUNT_TYPES: AccountType[] = [3, 2, 4];
+
 const toast = useToast();
+const confirm = useConfirm();
 const financeStore = useFinanceStore();
 const userStore = useUserStore();
 const { colors: chartColors } = useChartColors();
@@ -55,45 +61,112 @@ const modalVisible = ref(false);
 const adjustmentsVisible = ref(false);
 const selectedAccount = ref<InvestmentAccount | null>(null);
 const pendingLiquidityId = ref<string | null>(null);
+const pendingArchiveId = ref<string | null>(null);
+const pendingUnarchiveId = ref<string | null>(null);
 
+const view = ref<InvestmentsView>('active');
 const searchText = ref('');
 const selectedType = ref<AccountType | null>(null);
 
+const isReadOnlyMode = computed(() => userStore.isReadOnlyMode);
 const baseCurrency = computed(() => userStore.baseCurrencyCode ?? 'RUB');
 
-const accounts = computed<InvestmentAccount[]>(() => {
-  if (!overview.value) return [];
-  const currencyMap = financeStore.currencyByCode;
-  return overview.value.accounts.map(item => {
-    const mapped = mapAccount({ ...item, isMain: false, isArchived: false } as AccountDto, currencyMap);
-    return {
-      ...item,
-      ...mapped,
-      type: mapped.type,
-      returnPercent: item.returnPercent,
-      lastAdjustedAt: item.lastAdjustedAt,
-      isMain: false,
-    };
-  });
+const overviewById = computed(() => {
+  const map = new Map<string, InvestmentAccountOverviewDto>();
+  for (const item of overview.value?.accounts ?? []) {
+    map.set(item.id, item);
+  }
+  return map;
 });
 
-const periodShortLabel = computed(() => {
-  if (!overview.value) return 'за 6 мес.';
-  const from = new Date(overview.value.periodFrom);
-  const to = new Date(overview.value.periodTo);
-  const diffMonths = (to.getFullYear() - from.getFullYear()) * 12 + (to.getMonth() - from.getMonth());
-  const months = Math.max(1, diffMonths);
-  return `за ${months} мес.`;
+const mapInvestmentAccount = (
+  account: Account,
+  overviewItem?: InvestmentAccountOverviewDto
+): InvestmentAccount => ({
+  id: account.id,
+  name: account.name,
+  currencyCode: account.currencyCode,
+  type: account.type,
+  isLiquid: account.isLiquid,
+  isArchived: account.isArchived,
+  isMain: account.isMain,
+  balance: Number(account.balance ?? 0),
+  balanceInBaseCurrency: Number(account.balanceInBaseCurrency ?? account.balance ?? 0),
+  lastAdjustedAt: overviewItem?.lastAdjustedAt ?? null,
+  returnPercent: overviewItem?.returnPercent ?? null,
+  currency: account.currency,
 });
+
+const activeAccounts = computed<InvestmentAccount[]>(() =>
+  (financeStore.accounts ?? [])
+    .filter(account => INVESTMENT_ACCOUNT_TYPES.includes(account.type))
+    .map(account => mapInvestmentAccount(account, overviewById.value.get(account.id)))
+);
+
+const archivedAccounts = computed<InvestmentAccount[]>(() =>
+  (financeStore.archivedAccounts ?? [])
+    .filter(account => INVESTMENT_ACCOUNT_TYPES.includes(account.type))
+    .map(account => mapInvestmentAccount(account, overviewById.value.get(account.id)))
+);
+
+const visibleAccounts = computed(() =>
+  view.value === 'active' ? activeAccounts.value : archivedAccounts.value
+);
+
+const currentAccountsState = computed(() =>
+  view.value === 'active'
+    ? financeStore.accountsState
+    : financeStore.archivedAccountsState
+);
+
+const currentAccountsError = computed(() =>
+  view.value === 'active'
+    ? financeStore.accountsError ?? overviewError.value
+    : financeStore.archivedAccountsError
+);
+
+const hasVisibleAccounts = computed(() => visibleAccounts.value.length > 0);
+
+const shouldShowAccountsSkeleton = computed(() => {
+  if (hasVisibleAccounts.value) return false;
+
+  const isAccountStateLoading =
+    currentAccountsState.value === 'idle' || currentAccountsState.value === 'loading';
+
+  if (view.value === 'active') {
+    return isAccountStateLoading || overviewLoading.value;
+  }
+
+  return isAccountStateLoading;
+});
+
+const shouldShowAccountsErrorState = computed(() => {
+  if (hasVisibleAccounts.value) return false;
+
+  if (view.value === 'active') {
+    return currentAccountsState.value === 'error' || Boolean(overviewError.value);
+  }
+
+  return currentAccountsState.value === 'error';
+});
+
+const hasAnyInvestmentAccounts = computed(() =>
+  activeAccounts.value.length + archivedAccounts.value.length > 0
+);
 
 const totalValue = computed(() =>
-  accounts.value.reduce((sum, item) => sum + (item.balanceInBaseCurrency ?? 0), 0)
-);
-const liquidValue = computed(() =>
-  accounts.value.filter(item => item.isLiquid).reduce((sum, item) => sum + (item.balanceInBaseCurrency ?? 0), 0)
+  activeAccounts.value.reduce((sum, item) => sum + (item.balanceInBaseCurrency ?? 0), 0)
 );
 
-const totalReturnPercent = computed(() => overview.value?.totalReturnPercent ?? null);
+const liquidValue = computed(() =>
+  activeAccounts.value
+    .filter(item => item.isLiquid)
+    .reduce((sum, item) => sum + (item.balanceInBaseCurrency ?? 0), 0)
+);
+
+const totalReturnPercent = computed(() =>
+  activeAccounts.value.length > 0 ? overview.value?.totalReturnPercent ?? null : null
+);
 
 const summaryMetrics = computed(() => {
   const returnValue = totalReturnPercent.value;
@@ -109,15 +182,15 @@ const summaryMetrics = computed(() => {
       value: formatCurrency(totalValue.value, baseCurrency.value),
       icon: 'pi pi-wallet',
       accent: 'neutral' as const,
-      tooltip: 'Общая стоимость всех инвестиционных счетов в базовой валюте',
+      tooltip: 'Общая стоимость активных инвестиционных счетов в базовой валюте',
     },
     {
       key: 'liquid',
-      label: 'Быстрый доступ',
+      label: 'Ликвидная часть',
       value: formatCurrency(liquidValue.value, baseCurrency.value),
       icon: 'pi pi-bolt',
       accent: (liquidValue.value > 0 ? 'good' : 'neutral') as 'good' | 'neutral',
-      tooltip: 'Сумма средств на счетах, которые можно быстро вывести без потерь. Учитывается в финансовой подушке.',
+      tooltip: 'Сумма средств на ликвидных активных счетах: их можно вывести без существенных потерь.',
     },
     {
       key: 'return',
@@ -125,7 +198,7 @@ const summaryMetrics = computed(() => {
       value: returnLabel,
       icon: 'pi pi-chart-line',
       accent: returnAccent,
-      tooltip: 'Общая доходность портфеля за период',
+      tooltip: 'Общая доходность активной части портфеля за период',
     },
   ];
 });
@@ -159,7 +232,7 @@ const netWorthChartData = computed(() => {
 });
 
 const filteredAccounts = computed(() => {
-  let result = accounts.value;
+  let result = [...visibleAccounts.value];
 
   if (searchText.value.trim()) {
     const query = searchText.value.trim().toLowerCase();
@@ -181,32 +254,37 @@ const hasActiveFilters = computed(() =>
   searchText.value.length > 0 || selectedType.value !== null
 );
 
-const showFilters = computed(() => accounts.value.length > 5);
+const showFilters = computed(() => visibleAccounts.value.length >= 5);
 
 const openModal = () => {
+  if (isReadOnlyMode.value) return;
   modalVisible.value = true;
 };
 
 const openAdjustments = (account: InvestmentAccount) => {
+  if (view.value === 'archived' || isReadOnlyMode.value) return;
   selectedAccount.value = account;
   adjustmentsVisible.value = true;
 };
 
 const handleLiquidityToggle = async (account: InvestmentAccount, value: boolean) => {
+  if (isReadOnlyMode.value || view.value === 'archived') return;
   if (pendingLiquidityId.value) return;
+
   pendingLiquidityId.value = account.id;
   const previous = account.isLiquid;
-  if (overview.value) {
-    const target = overview.value.accounts.find(item => item.id === account.id);
-    if (target) target.isLiquid = value;
+  const overviewAccount = overview.value?.accounts.find(item => item.id === account.id);
+  if (overviewAccount) {
+    overviewAccount.isLiquid = value;
   }
+
   try {
     const success = await financeStore.updateAccountLiquidity(account.id, value);
     if (!success) {
-      if (overview.value) {
-        const target = overview.value.accounts.find(item => item.id === account.id);
-        if (target) target.isLiquid = previous;
+      if (overviewAccount) {
+        overviewAccount.isLiquid = previous;
       }
+
       toast.add({
         severity: 'error',
         summary: 'Не удалось обновить',
@@ -219,27 +297,114 @@ const handleLiquidityToggle = async (account: InvestmentAccount, value: boolean)
   }
 };
 
+const handleArchiveAccount = (account: InvestmentAccount) => {
+  if (isReadOnlyMode.value || pendingArchiveId.value || view.value === 'archived') return;
+
+  confirm.require({
+    message: `Архивировать счет "${account.name}"? Он будет исключен из активных метрик, но история сохранится.`,
+    header: 'Архивация счета',
+    icon: 'pi pi-inbox',
+    rejectLabel: 'Отмена',
+    acceptLabel: 'Архивировать',
+    accept: async () => {
+      pendingArchiveId.value = account.id;
+      try {
+        const success = await financeStore.archiveAccount(account.id);
+        if (success) {
+          await refreshInvestmentsData();
+        }
+
+        toast.add({
+          severity: success ? 'success' : 'error',
+          summary: success ? 'Счет архивирован' : 'Ошибка архивации',
+          detail: success
+            ? 'Счет перемещен в архив и исключен из активных метрик.'
+            : 'Не удалось архивировать счет. Попробуйте позже.',
+          life: 3000,
+        });
+      } finally {
+        pendingArchiveId.value = null;
+      }
+    },
+  });
+};
+
+const handleUnarchiveAccount = async (account: InvestmentAccount) => {
+  if (isReadOnlyMode.value || pendingUnarchiveId.value) return;
+
+  pendingUnarchiveId.value = account.id;
+  try {
+    const success = await financeStore.unarchiveAccount(account.id);
+    if (success) {
+      await refreshInvestmentsData();
+    }
+
+    toast.add({
+      severity: success ? 'success' : 'error',
+      summary: success ? 'Счет разархивирован' : 'Ошибка',
+      detail: success
+        ? 'Счет снова участвует в активной части портфеля.'
+        : 'Не удалось разархивировать счет.',
+      life: 3000,
+    });
+  } finally {
+    pendingUnarchiveId.value = null;
+  }
+};
+
 const clearFilters = () => {
   searchText.value = '';
   selectedType.value = null;
 };
 
-// Balance adjustment only affects overview, not net worth trend
+const retryCurrentView = async () => {
+  if (view.value === 'active') {
+    await Promise.all([
+      financeStore.fetchAccounts(true),
+      refreshInvestmentsData(),
+    ]);
+    return;
+  }
+
+  await financeStore.fetchArchivedAccounts(true);
+};
+
+watch(showFilters, isVisible => {
+  if (!isVisible) {
+    clearFilters();
+  }
+}, { immediate: true });
+
+watch(
+  () => view.value,
+  () => {
+    clearFilters();
+  }
+);
+
+// Balance adjustment affects active account cards and summary metrics
 watch(
   () => adjustmentsVisible.value,
   (visible, prev) => {
     if (prev && !visible) {
-      void loadOverview();
+      void Promise.all([
+        financeStore.fetchAccounts(true),
+        loadOverview(),
+      ]);
     }
   }
 );
 
-// Account creation/editing affects both overview and net worth
+// Account creation/editing may affect active/archived lists and all investment charts
 watch(
   () => modalVisible.value,
   (visible, prev) => {
     if (prev && !visible) {
-      void refreshInvestmentsData();
+      void Promise.all([
+        financeStore.fetchAccounts(true),
+        financeStore.fetchArchivedAccounts(true),
+        refreshInvestmentsData(),
+      ]);
     }
   }
 );
@@ -247,7 +412,11 @@ watch(
 onMounted(async () => {
   // User is already loaded by AppShell on mount
   await financeStore.fetchCurrencies();
-  await refreshInvestmentsData();
+  await Promise.all([
+    financeStore.fetchAccounts(),
+    financeStore.fetchArchivedAccounts(),
+    refreshInvestmentsData(),
+  ]);
 });
 </script>
 
@@ -255,7 +424,6 @@ onMounted(async () => {
   <PageContainer class="investments-page">
     <PageHeader title="Инвестиции" />
     <div class="investments-grid">
-      <!-- Section 1: Summary Strip -->
       <SummaryStrip
         class="investments-grid__item investments-grid__item--span-12"
         :loading="overviewLoading"
@@ -264,17 +432,16 @@ onMounted(async () => {
         @retry="refreshInvestmentsData"
       />
 
-      <!-- Section 2: Charts row -->
       <InvestmentsAllocationPie
-        v-if="accounts.length > 0"
+        v-if="activeAccounts.length > 0"
         class="investments-grid__item investments-grid__item--span-6"
-        :accounts="accounts"
+        :accounts="activeAccounts"
         :base-currency-code="baseCurrency"
         :loading="overviewLoading"
       />
 
       <NetWorthLineCard
-        v-if="accounts.length > 0"
+        v-if="activeAccounts.length > 0"
         class="investments-grid__item investments-grid__item--span-6"
         :loading="netWorthLoading"
         :error="netWorthError"
@@ -284,88 +451,38 @@ onMounted(async () => {
         @retry="loadNetWorth(12)"
       />
 
-      <!-- Section 3: Account Cards -->
-      <div class="investments-grid__item investments-grid__item--span-12 investments-accounts">
-        <div class="investments-accounts__header">
-          <h2 class="investments-accounts__title">
-            Счета
-          </h2>
-          <UiButton
-            label="Добавить счет"
-            icon="pi pi-plus"
-            size="sm"
-            @click="openModal"
-          />
-        </div>
-
-        <AccountFilters
-          v-if="showFilters"
-          v-model:search-text="searchText"
-          v-model:selected-type="selectedType"
-          :available-types="[3, 2, 4]"
-          @clear-filters="clearFilters"
-        />
-
-        <div
-          v-if="overviewLoading && accounts.length === 0"
-          class="investments-accounts__skeleton"
-        >
-          <UiSkeleton
-            v-for="i in 4"
-            :key="i"
-            height="180px"
-          />
-        </div>
-
-        <div
-          v-else-if="overviewError && accounts.length === 0"
-          class="investments-accounts__message"
-        >
-          <UiMessage
-            severity="error"
-            icon="pi pi-exclamation-triangle"
-            :closable="false"
-          >
-            {{ overviewError }}
-          </UiMessage>
-        </div>
-
-        <EmptyState
-          v-else-if="accounts.length === 0"
-          icon="pi pi-briefcase"
-          title="Нет инвестиционных счетов"
-          description="Добавьте брокерский счет, вклад или криптовалютный аккаунт, чтобы следить за доходностью."
-          action-label="Добавить счет"
-          action-icon="pi pi-plus"
-          @action="openModal"
-        />
-
-        <EmptyState
-          v-else-if="filteredAccounts.length === 0 && hasActiveFilters"
-          icon="pi pi-filter-slash"
-          title="Ничего не найдено"
-          description="По выбранным фильтрам нет счетов. Попробуйте изменить параметры."
-          action-label="Сбросить фильтры"
-          action-icon="pi pi-refresh"
-          @action="clearFilters"
-        />
-
-        <div
-          v-else
-          class="investments-accounts__grid"
-        >
-          <InvestmentAccountCard
-            v-for="account in filteredAccounts"
-            :key="account.id"
-            :account="account"
-            :base-currency-code="baseCurrency"
-            :period-label="periodShortLabel"
-            :is-liquidity-loading="pendingLiquidityId === account.id"
-            @open="openAdjustments(account)"
-            @update-liquidity="handleLiquidityToggle(account, $event)"
-          />
-        </div>
-      </div>
+      <InvestmentsAccountsSection
+        class="investments-grid__item investments-grid__item--span-12"
+        :active-accounts="activeAccounts"
+        :archived-accounts="archivedAccounts"
+        :filtered-accounts="filteredAccounts"
+        :view="view"
+        :is-read-only-mode="isReadOnlyMode"
+        :show-filters="showFilters"
+        :search-text="searchText"
+        :selected-type="selectedType"
+        :has-visible-accounts="hasVisibleAccounts"
+        :has-any-investment-accounts="hasAnyInvestmentAccounts"
+        :has-active-filters="hasActiveFilters"
+        :should-show-accounts-skeleton="shouldShowAccountsSkeleton"
+        :should-show-accounts-error-state="shouldShowAccountsErrorState"
+        :current-accounts-state="currentAccountsState"
+        :current-accounts-error="currentAccountsError"
+        :pending-liquidity-id="pendingLiquidityId"
+        :pending-archive-id="pendingArchiveId"
+        :pending-unarchive-id="pendingUnarchiveId"
+        :base-currency="baseCurrency"
+        @update:view="view = $event"
+        @update:search-text="searchText = $event"
+        @update:selected-type="selectedType = $event"
+        @open-modal="openModal"
+        @clear-filters="clearFilters"
+        @retry-current-view="retryCurrentView"
+        @open-adjustments="openAdjustments"
+        @update-liquidity="handleLiquidityToggle($event.account, $event.value)"
+        @archive-account="handleArchiveAccount"
+        @unarchive-account="handleUnarchiveAccount"
+      />
     </div>
 
     <AccountFormModal
@@ -375,101 +492,9 @@ onMounted(async () => {
     <AccountBalanceAdjustmentsModal
       v-model:visible="adjustmentsVisible"
       :account="selectedAccount"
+      :readonly="isReadOnlyMode"
     />
   </PageContainer>
 </template>
 
-<style scoped>
-.investments-page {
-  display: grid;
-  gap: var(--ft-space-6);
-}
-
-.investments-grid {
-  display: grid;
-  gap: var(--ft-space-4);
-}
-
-.investments-grid__item {
-  grid-column: span 12;
-}
-
-.investments-accounts {
-  display: flex;
-  flex-direction: column;
-  gap: var(--ft-space-4);
-}
-
-.investments-accounts__header {
-  display: flex;
-  gap: var(--ft-space-4);
-  align-items: center;
-  justify-content: space-between;
-}
-
-.investments-accounts__title {
-  margin: 0;
-  font-size: var(--ft-text-xl);
-  font-weight: var(--ft-font-semibold);
-  color: var(--ft-text-primary);
-}
-
-.investments-accounts__skeleton {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
-  gap: var(--ft-space-4);
-}
-
-.investments-accounts__grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
-  gap: var(--ft-space-4);
-}
-
-.investments-accounts__message {
-  padding: var(--ft-space-2);
-}
-
-@media (width >= 1024px) {
-  .investments-grid {
-    grid-template-columns: repeat(12, minmax(0, 1fr));
-  }
-
-  .investments-grid__item--span-12 {
-    grid-column: 1 / -1;
-  }
-
-  .investments-grid__item--span-6 {
-    grid-column: span 6;
-  }
-}
-
-@media (width >= 641px) and (width <= 1023px) {
-  .investments-grid {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
-
-  .investments-grid__item--span-12 {
-    grid-column: 1 / -1;
-  }
-
-  .investments-grid__item--span-6 {
-    grid-column: span 1;
-  }
-}
-
-@media (width <= 640px) {
-  .investments-page {
-    gap: var(--ft-space-4);
-  }
-
-  .investments-grid {
-    gap: var(--ft-space-3);
-  }
-
-  .investments-accounts__header {
-    flex-direction: column;
-    align-items: stretch;
-  }
-}
-</style>
+<style scoped src="../styles/pages/investments-page.css"></style>

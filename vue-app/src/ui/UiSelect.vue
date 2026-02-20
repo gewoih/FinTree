@@ -48,11 +48,28 @@ const mergedPt = computed(() =>
       label: {
         class: 'ui-select__label p-select-label',
       },
+      clearIcon: {
+        class: 'ui-select__clear-icon p-select-clear-icon',
+      },
       dropdown: {
         class: 'ui-select__dropdown p-select-dropdown',
       },
+      loadingicon: {
+        class: 'ui-select__loading-icon p-select-loading-icon',
+      },
+      dropdownIcon: {
+        class: 'ui-select__dropdown-icon p-select-dropdown-icon',
+      },
       overlay: {
         class: 'ui-select-overlay p-select-overlay p-component',
+      },
+      header: {
+        class: 'ui-select__header p-select-header',
+      },
+      pcFilter: {
+        root: {
+          class: 'ui-select__filter p-select-filter',
+        },
       },
       listContainer: {
         class: 'ui-select__list-container p-select-list-container',
@@ -60,11 +77,23 @@ const mergedPt = computed(() =>
       list: {
         class: 'ui-select__list p-select-list',
       },
+      optionGroup: {
+        class: 'ui-select__option-group p-select-option-group',
+      },
+      optionGroupLabel: {
+        class: 'ui-select__option-group-label p-select-option-group-label',
+      },
       option: {
         class: 'ui-select__option p-select-option',
       },
       optionLabel: {
         class: 'ui-select__option-label p-select-option-label',
+      },
+      optionCheckIcon: {
+        class: 'ui-select__option-check-icon p-select-option-check-icon',
+      },
+      optionBlankIcon: {
+        class: 'ui-select__option-blank-icon p-select-option-blank-icon',
       },
       emptyMessage: {
         class: 'ui-select__empty-message p-select-empty-message',

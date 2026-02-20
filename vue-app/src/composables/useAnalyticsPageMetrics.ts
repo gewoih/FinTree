@@ -10,6 +10,7 @@ import type {
 import type { PeakDayItem } from '../types/analytics-page';
 import type { useAnalyticsFormatting } from './useAnalyticsFormatting';
 import type { useChartColors } from './useChartColors';
+import { resolveCategoryColor } from '../utils/chartColorGuards';
 
 interface UseAnalyticsPageMetricsContext {
     analyticsReadiness: ComputedRef<AnalyticsReadinessDto>;
@@ -201,16 +202,30 @@ export function useAnalyticsPageMetrics(context: UseAnalyticsPageMetricsContext)
     const categoryLegend = computed<CategoryLegendItem[]>(() => {
         const items = dashboard.value?.categories.items ?? [];
         if (!items.length) return [];
-        return items.map((item, index) => ({
-            id: item.id,
-            name: item.name,
-            amount: Number(item.amount ?? 0),
-            mandatoryAmount: Number(item.mandatoryAmount ?? 0),
-            discretionaryAmount: Number(item.discretionaryAmount ?? 0),
-            percent: Number(item.percent ?? 0),
-            color: item.color?.trim() ?? chartColors.palette[index % chartColors.palette.length],
-            isMandatory: item.isMandatory ?? false,
-        }));
+        const usedColors: string[] = [];
+
+        return items.map((item, index) => {
+            const resolvedColor = resolveCategoryColor({
+                sourceColor: item.color?.trim(),
+                index,
+                usedColors,
+                palette: chartColors.palette,
+                surfaceColor: chartColors.surface,
+            });
+
+            usedColors.push(resolvedColor);
+
+            return {
+                id: item.id,
+                name: item.name,
+                amount: Number(item.amount ?? 0),
+                mandatoryAmount: Number(item.mandatoryAmount ?? 0),
+                discretionaryAmount: Number(item.discretionaryAmount ?? 0),
+                percent: Number(item.percent ?? 0),
+                color: resolvedColor,
+                isMandatory: item.isMandatory ?? false,
+            };
+        });
     });
 
     const filteredCategoryLegend = computed<CategoryLegendItem[]>(() => {
@@ -328,8 +343,8 @@ export function useAnalyticsPageMetrics(context: UseAnalyticsPageMetricsContext)
             datasets: [
                 {
                     data: data.map((item) => Number(item.amount ?? 0)),
-                    backgroundColor: `rgba(${hexToRgb(chartColors.accent)}, 0.65)`,
-                    borderColor: chartColors.accent,
+                    backgroundColor: `rgba(${hexToRgb(chartColors.expense)}, 0.65)`,
+                    borderColor: chartColors.expense,
                     borderRadius: 8,
                     maxBarThickness: 48,
                 },
@@ -356,22 +371,22 @@ export function useAnalyticsPageMetrics(context: UseAnalyticsPageMetricsContext)
                 {
                     label: 'Факт',
                     data: series.actual,
-                    borderColor: chartColors.accent,
-                    backgroundColor: `rgba(${hexToRgb(chartColors.accent)}, 0.18)`,
+                    borderColor: chartColors.actual,
+                    backgroundColor: `rgba(${hexToRgb(chartColors.actual)}, 0.14)`,
                     fill: true,
                     borderWidth: 2,
                     tension: 0.35,
                     pointRadius: 3,
-                    pointBackgroundColor: chartColors.accent,
+                    pointBackgroundColor: chartColors.actual,
                     pointBorderColor: chartColors.surface,
                     spanGaps: false,
                 },
                 {
                     label: 'Оптимистичный',
                     data: series.optimistic,
-                    borderColor: chartColors.accent,
-                    borderDash: [3, 5],
-                    borderWidth: 1.5,
+                    borderColor: chartColors.optimistic,
+                    borderDash: [4, 6],
+                    borderWidth: 1.75,
                     pointRadius: 0,
                     fill: false,
                     tension: 0.2,
@@ -379,7 +394,7 @@ export function useAnalyticsPageMetrics(context: UseAnalyticsPageMetricsContext)
                 {
                     label: 'Базовый',
                     data: series.forecast,
-                    borderColor: chartColors.primary,
+                    borderColor: chartColors.forecast,
                     borderDash: [8, 6],
                     borderWidth: 2,
                     pointRadius: 0,
@@ -400,9 +415,9 @@ export function useAnalyticsPageMetrics(context: UseAnalyticsPageMetricsContext)
                     ? [{
                         label: 'Лимит прошлого месяца',
                         data: baselineData,
-                        borderColor: chartColors.grid,
+                        borderColor: chartColors.baseline,
                         borderDash: [4, 4],
-                        borderWidth: 1.5,
+                        borderWidth: 1.25,
                         pointRadius: 0,
                         fill: false,
                         tension: 0,

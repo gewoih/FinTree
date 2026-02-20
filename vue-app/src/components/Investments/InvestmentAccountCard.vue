@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue';
+import type { MenuItem } from 'primevue/menuitem';
 import UiMenu from '@/ui/UiMenu.vue';
 import type { AccountType, Currency, InvestmentAccountOverviewDto } from '../../types';
 import { getAccountTypeInfo, getCurrencyFlag } from '../../utils/accountHelpers';
@@ -10,16 +11,28 @@ interface InvestmentAccount extends InvestmentAccountOverviewDto {
   currency?: Currency | null;
 }
 
-const props = defineProps<{
-  account: InvestmentAccount;
-  baseCurrencyCode: string;
-  periodLabel: string;
-  isLiquidityLoading?: boolean;
-}>();
+const props = withDefaults(
+  defineProps<{
+    account: InvestmentAccount;
+    baseCurrencyCode: string;
+    readonly?: boolean;
+    interactionLocked?: boolean;
+    isLiquidityLoading?: boolean;
+    isArchiveLoading?: boolean;
+  }>(),
+  {
+    readonly: false,
+    interactionLocked: false,
+    isLiquidityLoading: false,
+    isArchiveLoading: false,
+  }
+);
 
 const emit = defineEmits<{
   (e: 'open'): void;
   (e: 'updateLiquidity', value: boolean): void;
+  (e: 'archive'): void;
+  (e: 'unarchive'): void;
 }>();
 
 const menuRef = ref<{ toggle: (event: Event) => void } | null>(null);
@@ -39,7 +52,7 @@ const formattedOriginalBalance = computed(() =>
 );
 
 const showOriginalCurrency = computed(() =>
-  currencyCode.value !== props.baseCurrencyCode
+  currencyCode.value.toUpperCase() !== props.baseCurrencyCode.toUpperCase()
 );
 
 const returnLabel = computed(() => {
@@ -60,19 +73,41 @@ const lastUpdatedLabel = computed(() => {
   return `Обновлено ${formatDate(props.account.lastAdjustedAt)}`;
 });
 
-const menuItems = computed(() => [
-  {
-    label: 'Корректировать баланс',
-    icon: 'pi pi-sliders-h',
-    command: () => emit('open'),
-  },
-  {
-    label: props.account.isLiquid ? 'Сделать долгосрочным' : 'Быстрый доступ',
-    icon: props.account.isLiquid ? 'pi pi-lock' : 'pi pi-bolt',
-    disabled: props.isLiquidityLoading,
-    command: () => emit('updateLiquidity', !props.account.isLiquid),
-  },
-]);
+const menuItems = computed<MenuItem[]>(() => {
+  if (props.interactionLocked) return [];
+
+  if (props.readonly) {
+    return [
+      {
+        label: 'Разархивировать',
+        icon: 'pi pi-box',
+        disabled: props.isArchiveLoading,
+        command: () => emit('unarchive'),
+      },
+    ];
+  }
+
+  return [
+    {
+      label: 'Корректировать баланс',
+      icon: 'pi pi-sliders-h',
+      disabled: props.isArchiveLoading,
+      command: () => emit('open'),
+    },
+    {
+      label: props.account.isLiquid ? 'Сделать неликвидным' : 'Сделать ликвидным',
+      icon: props.account.isLiquid ? 'pi pi-lock' : 'pi pi-unlock',
+      disabled: props.isLiquidityLoading || props.isArchiveLoading,
+      command: () => emit('updateLiquidity', !props.account.isLiquid),
+    },
+    {
+      label: 'Архивировать',
+      icon: 'pi pi-inbox',
+      disabled: props.isArchiveLoading,
+      command: () => emit('archive'),
+    },
+  ];
+});
 
 const toggleMenu = (event: Event) => {
   menuRef.value?.toggle(event);
@@ -80,7 +115,10 @@ const toggleMenu = (event: Event) => {
 </script>
 
 <template>
-  <article class="investment-card">
+  <article
+    class="investment-card"
+    :class="{ 'investment-card--readonly': readonly }"
+  >
     <header class="investment-card__header">
       <div
         class="investment-card__icon"
@@ -94,12 +132,22 @@ const toggleMenu = (event: Event) => {
 
       <div class="investment-card__title">
         <h3>{{ account.name }}</h3>
-        <p>{{ accountTypeInfo.label }}</p>
+        <div class="investment-card__title-meta">
+          <p>{{ accountTypeInfo.label }}</p>
+          <span
+            v-if="readonly"
+            class="investment-card__archived-pill"
+          >
+            В архиве
+          </span>
+        </div>
       </div>
 
       <button
+        v-if="menuItems.length > 0"
         class="investment-card__menu-trigger"
-        aria-label="Действия"
+        :disabled="isArchiveLoading"
+        :aria-label="`Действия для счета ${account.name}`"
         @click.stop="toggleMenu"
       >
         <i class="pi pi-ellipsis-v" />
@@ -137,11 +185,11 @@ const toggleMenu = (event: Event) => {
         <template v-if="currencyFlag">{{ currencyFlag }}&nbsp;</template>{{ currencyCode }}
         <span class="investment-card__separator">&middot;</span>
         <span
-          v-tooltip.bottom="'Можно ли быстро вывести деньги без потерь'"
+          v-tooltip.bottom="'Ликвидный — деньги можно вывести без существенных потерь. Неликвидный — вывод может занять время или снизить доходность.'"
           class="investment-card__liquidity-badge"
           :class="{ 'investment-card__liquidity-badge--liquid': account.isLiquid }"
         >
-          {{ account.isLiquid ? 'Быстрый доступ' : 'Долгосрочный' }}
+          {{ account.isLiquid ? 'Ликвидный' : 'Неликвидный' }}
         </span>
       </span>
       <span class="investment-card__updated">
@@ -171,6 +219,12 @@ const toggleMenu = (event: Event) => {
   transform: translateY(-2px);
   border-color: var(--ft-border-default);
   box-shadow: var(--ft-shadow-md);
+}
+
+.investment-card--readonly:hover {
+  transform: none;
+  border-color: var(--ft-border-subtle);
+  box-shadow: var(--ft-shadow-sm);
 }
 
 .investment-card__header {
@@ -214,9 +268,28 @@ const toggleMenu = (event: Event) => {
 }
 
 .investment-card__title p {
-  margin: 2px 0 0;
+  margin: 0;
   font-size: var(--ft-text-sm);
   color: var(--ft-text-secondary);
+}
+
+.investment-card__title-meta {
+  display: inline-flex;
+  gap: var(--ft-space-2);
+  align-items: center;
+  margin-top: 2px;
+}
+
+.investment-card__archived-pill {
+  padding: 2px 8px;
+
+  font-size: var(--ft-text-xs);
+  font-weight: var(--ft-font-medium);
+  color: var(--ft-warning-400);
+
+  background: color-mix(in srgb, var(--ft-warning-500) 16%, transparent);
+  border: 1px solid color-mix(in srgb, var(--ft-warning-500) 34%, transparent);
+  border-radius: var(--ft-radius-full);
 }
 
 .investment-card__menu-trigger {
@@ -241,6 +314,11 @@ const toggleMenu = (event: Event) => {
 .investment-card__menu-trigger:hover {
   color: var(--ft-text-primary);
   background: color-mix(in srgb, var(--ft-surface-raised) 80%, transparent);
+}
+
+.investment-card__menu-trigger:disabled {
+  cursor: wait;
+  opacity: 0.65;
 }
 
 .investment-card__body {

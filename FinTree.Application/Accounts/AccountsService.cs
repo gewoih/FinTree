@@ -237,8 +237,6 @@ public sealed class AccountsService(
         var overviewAccounts = new List<InvestmentAccountOverviewDto>(accounts.Count);
         decimal totalValueInBase = 0m;
         decimal liquidValueInBase = 0m;
-        decimal weightedReturnSum = 0m;
-        decimal weightedReturnBase = 0m;
 
         foreach (var account in accounts)
         {
@@ -309,13 +307,14 @@ public sealed class AccountsService(
             totalValueInBase += balanceInBase;
             if (account.IsLiquid)
                 liquidValueInBase += balanceInBase;
-
-            if (returnPercent.HasValue)
-            {
-                weightedReturnSum += returnPercent.Value * balanceInBase;
-                weightedReturnBase += balanceInBase;
-            }
         }
+
+        var weightedAccounts = overviewAccounts
+            .Where(a => a.ReturnPercent.HasValue && a.BalanceInBaseCurrency > 0m)
+            .ToList();
+
+        var weightedReturnBase = weightedAccounts.Sum(a => a.BalanceInBaseCurrency);
+        var weightedReturnSum = weightedAccounts.Sum(a => a.ReturnPercent!.Value * a.BalanceInBaseCurrency);
 
         var totalReturnPercent = weightedReturnBase > 0m
             ? Math.Round(weightedReturnSum / weightedReturnBase, 4, MidpointRounding.AwayFromZero)
@@ -338,12 +337,6 @@ public sealed class AccountsService(
             throw new UnauthorizedAccessException();
         
         var account = user.AddAccount(command.CurrencyCode, command.Type, command.Name, command.IsLiquid);
-        if (command.InitialBalance != 0m)
-        {
-            var adjustmentOccurredAt = NormalizeUtc(account.CreatedAt.UtcDateTime);
-            var adjustment = new AccountBalanceAdjustment(account, command.InitialBalance, adjustmentOccurredAt);
-            await context.AccountBalanceAdjustments.AddAsync(adjustment, ct);
-        }
         await context.SaveChangesAsync(ct);
         
         return account.Id;

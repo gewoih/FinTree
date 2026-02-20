@@ -66,7 +66,7 @@ const liquidityModel = computed({
   set: (value: boolean) => emit('updateLiquidity', value),
 })
 
-const liquidityLabel = computed(() => (props.account.isLiquid ? 'Быстрый доступ' : 'Долгосрочный'))
+const liquidityLabel = computed(() => (props.account.isLiquid ? 'Ликвидный' : 'Неликвидный'))
 
 const menuItems = computed<MenuItem[]>(() => {
   if (props.readonly || props.interactionLocked) return []
@@ -183,10 +183,10 @@ const toggleMenu = (event: Event) => {
       </div>
       <div class="meta-row">
         <dt
-          v-tooltip.bottom="'Можно ли быстро снять деньги без потерь. Быстрый доступ — наличные, карта. Долгосрочный — вклад, инвестиции.'"
+          v-tooltip.bottom="'Ликвидный — деньги можно использовать без существенных потерь. Неликвидный — вывод может занять время или снизить доходность.'"
           style="cursor: help"
         >
-          Доступность
+          Ликвидность
         </dt>
         <dd>
           <div

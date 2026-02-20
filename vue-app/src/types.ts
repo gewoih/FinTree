@@ -141,7 +141,6 @@ export interface CreateAccountPayload {
     currencyCode: string;
     type: AccountType;
     name: string;
-    initialBalance?: number | null;
     isLiquid?: boolean | null;
 }
 
@@ -149,7 +148,6 @@ export interface AccountFormPayload {
     name: string;
     type: AccountType;
     currencyCode: string;
-    initialBalance?: number | null;
     isLiquid?: boolean | null;
 }
 
