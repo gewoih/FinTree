@@ -41,11 +41,7 @@ const searchText = ref('')
 const sortBy = ref<AccountsSort>('balance-desc')
 const isReadOnlyMode = computed(() => userStore.isReadOnlyMode)
 
-const sortOptions: Array<{ label: string; value: AccountsSort }> = [
-  { label: 'По балансу (убыв.)', value: 'balance-desc' },
-  { label: 'По балансу (возр.)', value: 'balance-asc' },
-  { label: 'По названию', value: 'name-asc' },
-]
+
 
 const activeBankAccounts = computed(() =>
   (financeStore.accounts ?? []).filter(account => account.type === 0)
@@ -213,7 +209,6 @@ const handleUnarchiveAccount = async (account: Account) => {
 
 const clearFilters = () => {
   searchText.value = ''
-  sortBy.value = 'balance-desc'
 }
 
 const retryCurrentView = async () => {
@@ -306,32 +301,12 @@ onMounted(async () => {
             />
           </div>
 
-          <UiSelect
-            v-model="sortBy"
-            class="accounts-sort"
-            :options="sortOptions"
-            option-label="label"
-            option-value="value"
-            placeholder="Сортировка"
-            aria-label="Сортировка счетов"
-          />
 
-          <UiButton
-            variant="ghost"
-            :disabled="!hasActiveFilters"
-            @click="clearFilters"
-          >
-            Сбросить
-          </UiButton>
+
+
         </div>
 
-        <p
-          v-if="view === 'active'"
-          class="accounts-toolbar__hint"
-        >
-          {{ isReadOnlyMode ? 'В режиме просмотра изменение счетов недоступно.' : 'Корректировка баланса доступна по кнопке внутри карточки счета.' }}
-        </p>
-      </UiCard>
+              </UiCard>
 
       <div
         v-if="currentAccountsState === 'error' && hasVisibleAccounts"
