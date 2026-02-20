@@ -278,7 +278,7 @@ const resolveCategoryIconStyle = (txn: EnrichedTransaction) => {
     <UiCard
       class="txn-list__filters"
       variant="muted"
-      padding="lg"
+      padding="sm"
     >
       <TransactionFilters
         v-model:search-text="searchText"
