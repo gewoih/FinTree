@@ -74,7 +74,7 @@ const menuItems = computed<MenuItem[]>(() => {
       command: () => emit('open'),
     },
     {
-      label: 'Редактировать',
+      label: 'Переименовать',
       icon: 'pi pi-pencil',
       command: () => emit('edit')
     },

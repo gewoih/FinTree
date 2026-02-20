@@ -5,8 +5,7 @@ import UiInputText from '../ui/UiInputText.vue'
 import UiSelect from '../ui/UiSelect.vue'
 import { useFinanceStore } from '../stores/finance'
 import { useFormModal } from '../composables/useFormModal'
-import type { Account, AccountType } from '../types'
-import { getAccountTypeInfo } from '../utils/accountHelpers'
+import type { Account } from '../types'
 import UiButton from '../ui/UiButton.vue'
 import FormField from './common/FormField.vue'
 
@@ -14,11 +13,11 @@ const props = withDefaults(
   defineProps<{
     visible: boolean
     account?: Account | null
-    allowedTypes?: AccountType[]
+
   }>(),
   {
     account: null,
-    allowedTypes: () => [0],
+
   },
 )
 
@@ -27,25 +26,16 @@ const emit = defineEmits<{
 }>()
 
 const store = useFinanceStore()
-const DEFAULT_ACCOUNT_TYPE: AccountType = 0
 
-const resolveSelectedType = (): AccountType => props.allowedTypes[0] ?? DEFAULT_ACCOUNT_TYPE
+
+
 
 const name = ref('')
 const selectedCurrencyCode = ref<string | null>(null)
 const attemptedSubmit = ref(false)
-const selectedType = ref<AccountType>(resolveSelectedType())
 
-const hasMultipleTypes = computed(() => props.allowedTypes.length > 1)
 
-const typeOptions = computed(() =>
-  props.allowedTypes.map(type => {
-    const info = getAccountTypeInfo(type)
-    return { label: info.label, value: type, icon: info.icon }
-  })
-)
 
-const currentTypeInfo = computed(() => getAccountTypeInfo(selectedType.value))
 
 const availableCurrencies = computed(() => store.currencies)
 
@@ -69,7 +59,7 @@ const currencyCodeForSubmit = computed(
 
 const isEditing = computed(() => Boolean(props.account))
 const editingAccountId = computed(() => props.account?.id ?? null)
-const dialogTitle = computed(() => (isEditing.value ? 'Редактировать счёт' : 'Добавить счёт'))
+const dialogTitle = computed(() => (isEditing.value ? 'Переименование счета' : 'Добавить счёт'))
 const submitLabel = computed(() => (isEditing.value ? 'Сохранить' : 'Создать'))
 const submitIcon = computed(() => (isEditing.value ? 'pi pi-check' : 'pi pi-plus'))
 
@@ -114,8 +104,7 @@ function resetForm() {
   }
 
   name.value = ''
-  selectedType.value = resolveSelectedType()
-  setDefaultCurrency()
+    setDefaultCurrency()
 }
 
 watch(
@@ -150,7 +139,7 @@ const { isSubmitting, handleSubmit: handleFormSubmit, showWarning } = useFormMod
 
     return await store.createAccount({
       name: name.value.trim(),
-      type: selectedType.value,
+      type: 0, // Hardcode to default account type (0)
       currencyCode: currencyCodeForSubmit.value,
     })
   },
@@ -224,58 +213,10 @@ const handleSubmit = async () => {
           </template>
         </FormField>
 
-        <FormField label="Тип счёта">
-          <template #default="{ fieldAttrs }">
-            <UiSelect
-              v-if="hasMultipleTypes"
-              v-model="selectedType"
-              :options="typeOptions"
-              option-label="label"
-              option-value="value"
-              class="w-full"
-              :disabled="isEditing"
-              :input-id="fieldAttrs.id"
-              :aria-describedby="fieldAttrs['aria-describedby']"
-            >
-              <template #value="slotProps">
-                <div
-                  v-if="slotProps.value != null"
-                  class="type-option"
-                >
-                  <i
-                    :class="'pi ' + getAccountTypeInfo(slotProps.value).icon"
-                    aria-hidden="true"
-                  />
-                  <span>{{ getAccountTypeInfo(slotProps.value).label }}</span>
-                </div>
-              </template>
-              <template #option="slotProps">
-                <div class="type-option">
-                  <i
-                    :class="'pi ' + slotProps.option.icon"
-                    aria-hidden="true"
-                  />
-                  <span>{{ slotProps.option.label }}</span>
-                </div>
-              </template>
-            </UiSelect>
-            <div
-              v-else
-              class="static-field"
-            >
-              <i
-                :class="'pi ' + currentTypeInfo.icon"
-                aria-hidden="true"
-              />
-              <span>{{ currentTypeInfo.label }}</span>
-            </div>
-          </template>
-          <template #hint>
-            {{ hasMultipleTypes ? 'Тип счёта определяет аналитику и ликвидность по умолчанию: банковские счета — ликвидные, инвестиционные — неликвидные. Изменить можно после создания.' : 'На этой странице доступны только банковские счета.' }}
-          </template>
-        </FormField>
+
 
         <FormField
+          v-if="!isEditing"
           label="Валюта"
           :error="currencyError"
           required
