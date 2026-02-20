@@ -209,7 +209,7 @@ const toggleMenu = (event: Event) => {
 
   background: var(--ft-surface-base);
   border: 1px solid var(--ft-border-subtle);
-  border-radius: var(--ft-radius-2xl);
+  border-radius: var(--ft-radius-xl);
   box-shadow: var(--ft-shadow-sm);
 
   transition: transform var(--ft-transition-fast), box-shadow var(--ft-transition-fast), border-color var(--ft-transition-fast);

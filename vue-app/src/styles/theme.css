@@ -23,7 +23,7 @@
   --ft-shadow-soft: var(--ft-shadow-md);
   --ft-shadow-card: var(--ft-shadow-md);
   --ft-shadow-hero: var(--ft-shadow-xl);
-  --ft-radius-card: var(--ft-radius-2xl);
+  --ft-radius-card: var(--ft-radius-xl);
   --ft-radius-section: var(--ft-radius-xl);
 }
 
