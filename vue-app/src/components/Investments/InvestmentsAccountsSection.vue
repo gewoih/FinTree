@@ -58,6 +58,7 @@ const emit = defineEmits<{
   (e: 'updateLiquidity', payload: { account: InvestmentAccount; value: boolean }): void;
   (e: 'archiveAccount', account: InvestmentAccount): void;
   (e: 'unarchiveAccount', account: InvestmentAccount): void;
+  (e: 'renameAccount', account: InvestmentAccount): void;
 }>();
 
 const setView = (value: InvestmentsView) => {
@@ -108,12 +109,6 @@ const setView = (value: InvestmentsView) => {
         <strong>{{ archivedAccounts.length }}</strong>
       </button>
     </div>
-
-    <p class="investments-accounts__hint">
-      {{ view === 'active'
-        ? 'Метрики и графики рассчитываются только по активным инвестиционным счетам.'
-        : 'Архивные счета исключены из метрик и доступны только для просмотра и разархивации.' }}
-    </p>
 
     <AccountFilters
       v-if="showFilters"
@@ -231,6 +226,7 @@ const setView = (value: InvestmentsView) => {
         @update-liquidity="emit('updateLiquidity', { account, value: $event })"
         @archive="emit('archiveAccount', account)"
         @unarchive="emit('unarchiveAccount', account)"
+        @rename="emit('renameAccount', account)"
       />
     </div>
   </div>
@@ -299,12 +295,6 @@ const setView = (value: InvestmentsView) => {
 .investments-accounts__tab:focus-visible {
   outline: 2px solid var(--ft-primary-500);
   outline-offset: 1px;
-}
-
-.investments-accounts__hint {
-  margin: 0;
-  font-size: var(--ft-text-sm);
-  color: var(--ft-text-secondary);
 }
 
 .investments-accounts__skeleton {

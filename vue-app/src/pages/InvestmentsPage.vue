@@ -60,6 +60,7 @@ const {
 const modalVisible = ref(false);
 const adjustmentsVisible = ref(false);
 const selectedAccount = ref<InvestmentAccount | null>(null);
+const editingAccount = ref<Account | null>(null);
 const pendingLiquidityId = ref<string | null>(null);
 const pendingArchiveId = ref<string | null>(null);
 const pendingUnarchiveId = ref<string | null>(null);
@@ -258,6 +259,17 @@ const showFilters = computed(() => visibleAccounts.value.length >= 5);
 
 const openModal = () => {
   if (isReadOnlyMode.value) return;
+  editingAccount.value = null;
+  modalVisible.value = true;
+};
+
+const handleEditAccount = (account: InvestmentAccount) => {
+  if (isReadOnlyMode.value) return;
+  const rawAccount =
+    [...(financeStore.accounts ?? []), ...(financeStore.archivedAccounts ?? [])].find(
+      a => a.id === account.id,
+    ) ?? null;
+  editingAccount.value = rawAccount;
   modalVisible.value = true;
 };
 
@@ -400,6 +412,7 @@ watch(
   () => modalVisible.value,
   (visible, prev) => {
     if (prev && !visible) {
+      editingAccount.value = null;
       void Promise.all([
         financeStore.fetchAccounts(true),
         financeStore.fetchArchivedAccounts(true),
@@ -482,11 +495,13 @@ onMounted(async () => {
         @update-liquidity="handleLiquidityToggle($event.account, $event.value)"
         @archive-account="handleArchiveAccount"
         @unarchive-account="handleUnarchiveAccount"
+        @rename-account="handleEditAccount"
       />
     </div>
 
     <AccountFormModal
       v-model:visible="modalVisible"
+      :account="editingAccount"
       :allowed-types="[3, 2, 4]"
     />
     <AccountBalanceAdjustmentsModal
