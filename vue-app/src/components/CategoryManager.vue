@@ -226,6 +226,12 @@ defineExpose({
   justify-content: flex-start;
 }
 
+.categories-toggle :deep(.p-button) {
+  min-height: 36px;
+  padding: 0 var(--ft-space-4);
+  font-size: var(--ft-text-sm);
+}
+
 .categories-manager__body {
   display: flex;
   flex-direction: column;

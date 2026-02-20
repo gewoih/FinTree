@@ -263,7 +263,8 @@ const controlsVisible = computed(() => !isMobile.value || isOpen.value);
   color: var(--ft-text-tertiary);
 }
 
-.transaction-filters__search :deep(.ui-input) {
+.transaction-filters__search :deep(.ui-input),
+.transaction-filters__search :deep(.p-inputtext) {
   flex: 1;
 
   padding-left: 0;
@@ -274,7 +275,9 @@ const controlsVisible = computed(() => !isMobile.value || isOpen.value);
 }
 
 .transaction-filters__search :deep(.ui-input:focus),
-.transaction-filters__search :deep(.ui-input:focus-visible) {
+.transaction-filters__search :deep(.ui-input:focus-visible),
+.transaction-filters__search :deep(.p-inputtext:focus),
+.transaction-filters__search :deep(.p-inputtext:focus-visible) {
   border: none !important;
   outline: none;
   box-shadow: none !important;

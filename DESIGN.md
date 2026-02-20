@@ -31,8 +31,7 @@ Ownership by file:
 - `vue-app/src/assets/design-tokens.css` — all `--ft-*` tokens
 - `vue-app/src/style.css` — reset, base typography, layout helpers
 - `vue-app/src/styles/theme.css` — shared component patterns
-- `vue-app/src/styles/prime-unstyled-shared.css` — Prime wrapper visual contract
-- `vue-app/src/styles/prime-overrides.css` — minimal compatibility layer
+- `vue-app/src/styles/prime-unstyled-shared.css` — complete PrimeVue visual contract (unstyled wrappers + compatibility overrides)
 
 Rules:
 - If a style is needed in 2+ places, it must not live in a feature component.
