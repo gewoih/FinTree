@@ -250,8 +250,6 @@ const hasActiveFilters = computed(() =>
   searchText.value.length > 0
 );
 
-const showSearch = computed(() => visibleAccounts.value.length >= 5);
-
 const openModal = () => {
   if (isReadOnlyMode.value) return;
   editingAccount.value = null;
@@ -375,12 +373,6 @@ const retryCurrentView = async () => {
   await financeStore.fetchArchivedAccounts(true);
 };
 
-watch(showSearch, isVisible => {
-  if (!isVisible) {
-    clearFilters();
-  }
-}, { immediate: true });
-
 watch(
   () => view.value,
   () => {
@@ -465,7 +457,6 @@ onMounted(async () => {
         :filtered-accounts="filteredAccounts"
         :view="view"
         :is-read-only-mode="isReadOnlyMode"
-        :show-search="showSearch"
         :search-text="searchText"
         :has-visible-accounts="hasVisibleAccounts"
         :has-any-investment-accounts="hasAnyInvestmentAccounts"

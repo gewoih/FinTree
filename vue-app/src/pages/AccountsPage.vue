@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, onMounted, ref, watch } from 'vue'
+import { computed, onMounted, ref } from 'vue'
 import { useToast } from 'primevue/usetoast'
 import { useConfirm } from 'primevue/useconfirm'
 import { useFinanceStore } from '../stores/finance'
@@ -110,7 +110,6 @@ const filteredAccounts = computed(() => {
 })
 
 const hasActiveFilters = computed(() => searchText.value.trim().length > 0)
-const showSearch = computed(() => visibleAccounts.value.length >= 5)
 
 const openModal = () => {
   if (isReadOnlyMode.value) return
@@ -228,12 +227,6 @@ const retryCurrentView = async () => {
   await financeStore.fetchArchivedAccounts(true)
 }
 
-watch(showSearch, isVisible => {
-  if (!isVisible) {
-    clearFilters()
-  }
-}, { immediate: true })
-
 onMounted(async () => {
   // User is already loaded by AppShell on mount
   await Promise.all([
@@ -263,7 +256,6 @@ onMounted(async () => {
         :search-text="searchText"
         :active-count="activeBankAccounts.length"
         :archived-count="archivedBankAccounts.length"
-        :show-search="showSearch"
         search-placeholder="Поиск по названию или валюте..."
         @update:model-value="view = $event"
         @update:search-text="searchText = $event"

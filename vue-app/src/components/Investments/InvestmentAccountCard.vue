@@ -133,22 +133,22 @@ const toggleMenu = (event: Event) => {
 
       <div class="investment-card__title">
         <h3>{{ account.name }}</h3>
-        <div class="investment-card__title-meta">
-          <p>{{ accountTypeInfo.label }}</p>
-          <span
-            v-tooltip.bottom="'Ликвидный — деньги можно вывести без существенных потерь. Неликвидный — вывод может занять время или снизить доходность.'"
-            class="investment-card__liquidity-badge"
-            :class="{ 'investment-card__liquidity-badge--liquid': account.isLiquid }"
-          >
-            {{ account.isLiquid ? 'Ликвидный' : 'Неликвидный' }}
-          </span>
-          <span
-            v-if="readonly"
-            class="investment-card__archived-pill"
-          >
-            В архиве
-          </span>
-        </div>
+        <p class="investment-card__account-type">
+          {{ accountTypeInfo.label }}
+        </p>
+        <span
+          v-tooltip.bottom="'Ликвидный — деньги можно вывести без существенных потерь. Неликвидный — вывод может занять время или снизить доходность.'"
+          class="investment-card__liquidity-status"
+          :class="{ 'investment-card__liquidity-status--liquid': account.isLiquid }"
+        >
+          {{ account.isLiquid ? 'Ликвидный' : 'Неликвидный' }}
+        </span>
+        <span
+          v-if="readonly"
+          class="investment-card__archived-pill"
+        >
+          В архиве
+        </span>
       </div>
 
       <button
@@ -258,29 +258,40 @@ const toggleMenu = (event: Event) => {
   white-space: nowrap;
 }
 
+.investment-card__account-type {
+  margin: var(--ft-space-1) 0 0; /* Add margin to separate from h3 */
+  font-size: var(--ft-text-sm);
+  color: var(--ft-text-secondary);
+}
+
 .investment-card__title p {
   margin: 0;
   font-size: var(--ft-text-sm);
   color: var(--ft-text-secondary);
 }
 
-.investment-card__title-meta {
-  display: inline-flex;
-  gap: var(--ft-space-2);
-  align-items: center;
-  margin-top: 2px;
+.investment-card__account-type {
+  margin: var(--ft-space-1) 0 0; /* Add margin to separate from h3 */
+  font-size: var(--ft-text-sm);
+  color: var(--ft-text-secondary);
 }
 
-.investment-card__archived-pill {
-  padding: 2px 8px;
+.investment-card__liquidity-status {
+  margin-top: var(--ft-space-1); /* Add margin to separate from account type */
+  display: inline-block; /* To allow margin-top to work */
+  padding: 1px 6px;
 
   font-size: var(--ft-text-xs);
   font-weight: var(--ft-font-medium);
-  color: var(--ft-warning-400);
+  color: var(--ft-text-muted);
 
-  background: color-mix(in srgb, var(--ft-warning-500) 16%, transparent);
-  border: 1px solid color-mix(in srgb, var(--ft-warning-500) 34%, transparent);
+  background: color-mix(in srgb, var(--ft-text-muted) 12%, transparent);
   border-radius: var(--ft-radius-full);
+}
+
+.investment-card__liquidity-status--liquid {
+  color: var(--ft-success-500);
+  background: color-mix(in srgb, var(--ft-success-400) 15%, transparent);
 }
 
 .investment-card__menu-trigger {
@@ -361,9 +372,9 @@ const toggleMenu = (event: Event) => {
   color: var(--ft-text-muted);
 }
 
-.investment-card__liquidity-badge {
-  cursor: help;
-
+.investment-card__liquidity-status {
+  margin-top: var(--ft-space-1); /* Add margin to separate from account type */
+  display: inline-block; /* To allow margin-top to work */
   padding: 1px 6px;
 
   font-size: var(--ft-text-xs);
@@ -374,7 +385,7 @@ const toggleMenu = (event: Event) => {
   border-radius: var(--ft-radius-full);
 }
 
-.investment-card__liquidity-badge--liquid {
+.investment-card__liquidity-status--liquid {
   color: var(--ft-success-500);
   background: color-mix(in srgb, var(--ft-success-400) 15%, transparent);
 }

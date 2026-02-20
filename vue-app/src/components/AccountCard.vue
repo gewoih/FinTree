@@ -65,36 +65,42 @@ const liquidityModel = computed({
 const liquidityLabel = computed(() => (props.account.isLiquid ? 'Ликвидный' : 'Неликвидный'))
 
 const menuItems = computed<MenuItem[]>(() => {
-  if (props.readonly || props.interactionLocked) return []
+  if (props.interactionLocked) return []
 
-  const items: MenuItem[] = [
-    {
-      label: 'Корректировать баланс',
-      icon: 'pi pi-sliders-h',
-      command: () => emit('open'),
-    },
-    {
-      label: 'Переименовать',
-      icon: 'pi pi-pencil',
-      command: () => emit('edit')
-    },
-  ]
+  const items: MenuItem[] = []
 
-  if (!props.account.isMain) {
-    items.push({
-      label: 'Сделать основным',
-      icon: 'pi pi-star',
-      command: () => emit('setPrimary'),
-    })
+  // Only add these items if not in readonly mode (i.e., not viewing archived accounts)
+  if (!props.readonly) {
+    items.push(
+      {
+        label: 'Корректировать баланс',
+        icon: 'pi pi-sliders-h',
+        command: () => emit('open'),
+      },
+      {
+        label: 'Переименовать',
+        icon: 'pi pi-pencil',
+        command: () => emit('edit')
+      },
+    )
+
+    if (!props.account.isMain) {
+      items.push({
+        label: 'Сделать основным',
+        icon: 'pi pi-star',
+        command: () => emit('setPrimary'),
+      })
+    }
   }
 
+  // Unarchive should be available if the account is archived, regardless of readonly status
   if (props.account.isArchived) {
     items.push({
       label: 'Разархивировать',
       icon: 'pi pi-box',
       command: () => emit('unarchive'),
     })
-  } else {
+  } else if (!props.readonly) { // Archive should only be available if not archived and not in readonly mode
     items.push({
       label: 'Архивировать',
       icon: 'pi pi-inbox',

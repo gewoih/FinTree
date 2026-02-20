@@ -31,7 +31,6 @@ defineProps<{
   filteredAccounts: InvestmentAccount[];
   view: InvestmentsView;
   isReadOnlyMode: boolean;
-  showSearch: boolean;
   searchText: string;
   hasVisibleAccounts: boolean;
   hasAnyInvestmentAccounts: boolean;
@@ -84,7 +83,6 @@ const setView = (value: InvestmentsView) => {
       :search-text="searchText"
       :active-count="activeAccounts.length"
       :archived-count="archivedAccounts.length"
-      :show-search="showSearch"
       search-placeholder="Название, валюта..."
       @update:model-value="emit('update:view', $event)"
       @update:search-text="emit('update:searchText', $event)"

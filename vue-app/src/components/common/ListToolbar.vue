@@ -7,7 +7,6 @@ defineProps<{
   activeCount: number
   archivedCount: number
   searchPlaceholder?: string
-  showSearch?: boolean
 }>()
 
 const emit = defineEmits<{
@@ -51,10 +50,7 @@ const handleSearchUpdate = (value: string | null | undefined) => {
       </button>
     </div>
 
-    <div
-      v-if="showSearch !== false"
-      class="list-toolbar__search"
-    >
+    <div class="list-toolbar__search">
       <i
         class="pi pi-search"
         aria-hidden="true"
@@ -130,7 +126,7 @@ const handleSearchUpdate = (value: string | null | undefined) => {
 
   min-width: 200px;
   min-height: 36px;
-  padding: 0 var(--ft-space-2);
+  padding: var(--ft-space-1);
 
   background: var(--ft-surface-base);
   border: 1px solid var(--ft-border-default);
