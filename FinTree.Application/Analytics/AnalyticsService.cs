@@ -572,10 +572,8 @@ public sealed class AnalyticsService(
         CancellationToken ct)
     {
         var liquidAssets = await GetLiquidAssetsAtAsync(baseCurrencyCode, monthEndUtc, ct);
-        var monthlyExpense180d = await GetMonthlyExpenseForLast180DaysAsync(
-            baseCurrencyCode,
-            monthEndUtc,
-            ct);
+        var dailyRate = await GetAverageDailyExpenseAsync(baseCurrencyCode, monthEndUtc, ct);
+        var monthlyExpense180d = dailyRate * 30.44m;
 
         var liquidMonths = monthlyExpense180d > 0m
             ? Math.Round(liquidAssets / monthlyExpense180d, 2, MidpointRounding.AwayFromZero)
@@ -585,21 +583,24 @@ public sealed class AnalyticsService(
         return (liquidAssets, liquidMonths, status);
     }
 
-    private async Task<decimal> GetMonthlyExpenseForLast180DaysAsync(
+    private async Task<decimal> GetAverageDailyExpenseAsync(
         string baseCurrencyCode,
-        DateTime monthEndUtc,
+        DateTime windowEnd,
         CancellationToken ct)
     {
-        var windowStartUtc = monthEndUtc.AddDays(-180);
-        var windowEndUtc = monthEndUtc;
+        var windowStartUtc = windowEnd.AddDays(-180);
 
         var earliestTrackedAtRaw = await context.Transactions
             .AsNoTracking()
             .Where(t => t.Account.UserId == currentUserService.Id &&
                         !t.IsTransfer &&
-                        t.OccurredAt < windowEndUtc)
+                        t.OccurredAt < windowEnd)
             .Select(t => (DateTime?)t.OccurredAt)
             .MinAsync(ct);
+
+        // No transactions exist at all — the expense query below will also be empty.
+        if (!earliestTrackedAtRaw.HasValue)
+            return 0m;
 
         var rawExpenses = await context.Transactions
             .AsNoTracking()
@@ -607,43 +608,40 @@ public sealed class AnalyticsService(
                         !t.IsTransfer &&
                         t.Type == TransactionType.Expense &&
                         t.OccurredAt >= windowStartUtc &&
-                        t.OccurredAt < windowEndUtc)
+                        t.OccurredAt < windowEnd)
             .Select(t => new { t.Money, t.OccurredAt })
             .ToListAsync(ct);
 
-        var normalizedExpenses = rawExpenses.Select(expense => new
+        var normalizedExpenses = rawExpenses.Select(e => new
         {
-            expense.Money,
-            OccurredUtc = NormalizeUtc(expense.OccurredAt)
+            e.Money,
+            OccurredUtc = NormalizeUtc(e.OccurredAt)
         }).ToList();
 
+        if (normalizedExpenses.Count == 0)
+            return 0m;
+
         var rateByCurrencyAndDay = await currencyConverter.GetCrossRatesAsync(
-            normalizedExpenses.Select(expense => (expense.Money.CurrencyCode, expense.OccurredUtc)),
+            normalizedExpenses.Select(e => (e.Money.CurrencyCode, e.OccurredUtc)),
             baseCurrencyCode,
             ct);
 
-        var totalExpense180d = 0m;
+        var totalExpense = 0m;
         foreach (var expense in normalizedExpenses)
         {
             ct.ThrowIfCancellationRequested();
-
             var rateKey = (NormalizeCurrencyCode(expense.Money.CurrencyCode), expense.OccurredUtc.Date);
-            var amountInBaseCurrency = expense.Money.Amount * rateByCurrencyAndDay[rateKey];
-            totalExpense180d += amountInBaseCurrency;
+            totalExpense += expense.Money.Amount * rateByCurrencyAndDay[rateKey];
         }
-
-        if (!earliestTrackedAtRaw.HasValue)
-            return 0m;
 
         var earliestTrackedAtUtc = NormalizeUtc(earliestTrackedAtRaw.Value);
         var effectiveStartUtc = earliestTrackedAtUtc > windowStartUtc ? earliestTrackedAtUtc : windowStartUtc;
-        var observedDays = (decimal)(windowEndUtc - effectiveStartUtc).TotalDays;
-        if (observedDays <= 0m)
+        var calendarDays = (decimal)(windowEnd - effectiveStartUtc).TotalDays;
+
+        if (calendarDays <= 0m)
             return 0m;
 
-        // Convert average daily spend for the observed window to a monthly burn estimate.
-        var monthlyExpense = totalExpense180d / observedDays * 30m;
-        return Round2(monthlyExpense);
+        return totalExpense / calendarDays;
     }
 
     private async Task<decimal> GetLiquidAssetsAtAsync(string baseCurrencyCode, DateTime atUtc, CancellationToken ct)
@@ -1072,13 +1070,9 @@ public sealed class AnalyticsService(
             daysInMonth,
             observedDays,
             observedCumulative);
-        var totalHistorical = forecastDailyTotals.Values.Sum();
-        var effectiveStart = forecastDailyTotals.Count > 0
-            ? forecastDailyTotals.Keys.Min().ToDateTime(TimeOnly.MinValue, DateTimeKind.Utc)
-            : forecastEnd;
-        var historicalDayCount = (forecastEnd - effectiveStart).Days + 1;
-        var baselineLimit = historicalDayCount > 0 && totalHistorical > 0
-            ? Round2(totalHistorical / historicalDayCount * daysInMonth)
+        var baselineDailyRate = await GetAverageDailyExpenseAsync(baseCurrencyCode, forecastEnd.AddDays(1), ct);
+        var baselineLimit = baselineDailyRate > 0m
+            ? Round2(baselineDailyRate * daysInMonth)
             : (decimal?)null;
 
         string? status = null;

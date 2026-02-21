@@ -6,7 +6,7 @@
 - [ ] `FT-TODO-011` Fix non-clickable tooltips in analytics on mobile
   **Acceptance criteria:** tooltips are fully interactive and accessible on mobile devices without gesture conflicts.
 
-- [ ] `FT-TODO-015` Unify base expense calculation across forecast and liquidity metrics  
+- [x] `FT-TODO-015` Unify base expense calculation across forecast and liquidity metrics
   **Acceptance criteria:** a single shared calculation logic is used for baseline expense in both forecast and liquidity features.
 
 ---
