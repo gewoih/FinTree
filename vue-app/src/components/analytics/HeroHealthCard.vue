@@ -159,13 +159,15 @@ const {
                       {{ metric.meta }}
                     </p>
                   </div>
-                  <span
-                    v-tooltip.top="metric.tooltip"
+                  <button
+                    v-tooltip="{ value: metric.tooltip, event: 'click' }"
+                    type="button"
                     class="hero-card__metric-icon"
                     :class="metricIconClass(metric.accent)"
+                    aria-label="Подсказка"
                   >
                     <i :class="metric.icon" />
-                  </span>
+                  </button>
                 </div>
               </div>
             </article>

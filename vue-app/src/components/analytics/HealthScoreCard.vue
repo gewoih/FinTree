@@ -28,10 +28,14 @@ const valueClass = (accent: HealthAccent) => `health-score__main-value--${accent
       <p class="health-score__title">
         {{ title }}
       </p>
-      <i
-        v-tooltip.top="tooltip"
-        class="pi pi-question-circle health-score__hint"
-      />
+      <button
+        v-tooltip="{ value: tooltip, event: 'click' }"
+        type="button"
+        class="health-score__hint"
+        aria-label="Подсказка"
+      >
+        <i class="pi pi-question-circle" />
+      </button>
     </div>
 
     <div class="health-score__body">
@@ -139,9 +143,13 @@ const valueClass = (accent: HealthAccent) => `health-score__main-value--${accent
   min-width: var(--ft-control-height);
   min-height: var(--ft-control-height);
   margin-left: auto;
+  padding: 0;
 
   font-size: 1rem;
   color: var(--ft-text-muted);
+
+  background: none;
+  border: none;
 
   transition: color var(--ft-transition-fast);
 }

@@ -76,10 +76,14 @@ const formatPercent = (value: number | null) =>
         <h3 class="delta-card__title">
           Изменения по категориям
         </h3>
-        <i
-          v-tooltip.top="'Какие категории расходов выросли или снизились по сравнению с прошлым месяцем. Помогает увидеть тренды.'"
-          class="pi pi-question-circle delta-card__hint"
-        />
+        <button
+          v-tooltip="{ value: 'Какие категории расходов выросли или снизились по сравнению с прошлым месяцем. Помогает увидеть тренды.', event: 'click' }"
+          type="button"
+          class="delta-card__hint"
+          aria-label="Подсказка"
+        >
+          <i class="pi pi-question-circle" />
+        </button>
       </div>
     </div>
 
@@ -273,9 +277,13 @@ const formatPercent = (value: number | null) =>
   /* Ensure minimum touch target size */
   min-width: var(--ft-control-height);
   min-height: var(--ft-control-height);
+  padding: 0;
 
   font-size: 1rem;
   color: var(--ft-text-muted);
+
+  background: none;
+  border: none;
 
   transition: color var(--ft-transition-fast);
 }

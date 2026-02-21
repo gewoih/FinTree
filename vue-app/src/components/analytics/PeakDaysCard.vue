@@ -62,10 +62,14 @@ const shareAccent = computed(() => {
           <i class="pi pi-bolt" />
           Пиковые дни
         </h3>
-        <i
-          v-tooltip.top="'Дни, когда расходы значительно превысили среднедневной уровень. Помогает выявить крупные разовые траты.'"
-          class="pi pi-question-circle peak-days__hint"
-        />
+        <button
+          v-tooltip="{ value: 'Дни, когда расходы значительно превысили среднедневной уровень. Помогает выявить крупные разовые траты.', event: 'click' }"
+          type="button"
+          class="peak-days__hint"
+          aria-label="Подсказка"
+        >
+          <i class="pi pi-question-circle" />
+        </button>
       </div>
     </div>
 
@@ -213,9 +217,13 @@ const shareAccent = computed(() => {
   /* Ensure minimum touch target size */
   min-width: var(--ft-control-height);
   min-height: var(--ft-control-height);
+  padding: 0;
 
   font-size: 1rem;
   color: var(--ft-text-muted);
+
+  background: none;
+  border: none;
 
   transition: color var(--ft-transition-fast);
 }

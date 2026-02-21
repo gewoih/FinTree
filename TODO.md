@@ -1,31 +1,44 @@
-# FinTree — Актуальный TODO
+## Analytics
 
-_Обновлено: 2026-02-19_
+- [ ] `FT-TODO-009` Rebuild category icons considering income/expense context  
+  **Acceptance criteria:** two curated icon sets are used (income and expense) with fallback support for legacy values.
 
-## Как читать этот файл
+- [ ] `FT-TODO-011` Fix non-clickable tooltips in analytics on mobile
+  **Acceptance criteria:** tooltips are fully interactive and accessible on mobile devices without gesture conflicts.
 
-- `P0` — критично, влияет на корректность данных и базовые сценарии пользователя.
-- `P1` — важно, влияет на предсказуемость и качество продуктового UX.
-- `P2` — улучшения UX/UI, не блокирующие базовую корректность.
-- Для задач в этом файле новые автотесты не планируются; проверка выполняется вручную.
-
----
-
-## P0 — Критичные задачи
+- [ ] `FT-TODO-015` Unify base expense calculation across forecast and liquidity metrics  
+  **Acceptance criteria:** a single shared calculation logic is used for baseline expense in both forecast and liquidity features.
 
 ---
 
-## P1 — Важные продуктовые задачи
+## Navigation & Layout
 
-- [ ] `FT-TODO-009` Пересобрать иконки категорий с учетом контекста доходов/расходов.  
-  **Критерий приемки:** используются 2 curated-набора иконок (для доходов и для расходов) с фолбэком для старых значений.
+- [ ] `FT-TODO-012` Hide sidebar menu in mobile layout  
+  **Acceptance criteria:** sidebar is collapsed by default and accessible via a dedicated mobile navigation trigger.
 
-- [ ] `FT-TODO-023` **(Design System)** Заменить цветовую палитру и семантические токены.
-  **Критерий приемки:** Вся старая цветовая система в `design-tokens.css` заменена на новую премиум-палитру (Onyx, Jet Black, Light Olive). Все семантические токены (`--ft-bg-base`, `--ft-text-primary` и т.д.) переключены на новую палитру. Несовместимая светлая тема (`.light-mode`) удалена.
+- [ ] `FT-TODO-013` Align top navigation and bottom navigation (mobile) styling with sidebar 
+  **Acceptance criteria:** gradient is removed and navigation elements share a unified visual system with sidebar tokens.
 
 ---
 
-## P2 — Улучшения UX/UI
+## Charts & Visual System
 
-- [ ] `FT-TODO-010` Сильно сократить и перекомпоновать лендинг.  
-  **Критерий приемки:** лендинг построен по компактной структуре «hero + ключевые секции» без перегруза текстом.
+- [ ] `FT-TODO-014` Remove chart color overrides (`chartColorGuards.ts`)  
+  **Acceptance criteria:** no runtime color guards override chart palette behavior.
+
+- [ ] `FT-TODO-016` Set default chart color to base olive token  
+  **Acceptance criteria:** charts use base olive color as primary default unless explicitly overridden.
+
+---
+
+## Modals & Interaction Patterns
+
+- [ ] `FT-TODO-017` Redesign confirmation modal (`confirm.require`) and extract dedicated component  
+  **Acceptance criteria:** reusable confirmation component exists with consistent API, styling, and accessibility behavior.
+
+---
+
+## Marketing
+
+- [ ] `FT-TODO-010` Reduce and restructure landing page content  
+  **Acceptance criteria:** landing page follows compact structure (hero + key sections) without excessive text density.
