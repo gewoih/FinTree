@@ -90,8 +90,8 @@
 
 .app-shell__menu-toggle {
   margin-left: calc(var(--ft-space-2) * -1);
-  transition: all var(--ft-transition-fast);
   border-radius: var(--ft-radius-lg);
+  transition: all var(--ft-transition-fast);
 }
 
 .app-shell__menu-toggle:hover {

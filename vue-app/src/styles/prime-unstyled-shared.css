@@ -1386,20 +1386,6 @@
     cursor: not-allowed;
   }
 
-  @media (width <= 480px) {
-    .ui-select-overlay,
-    .p-select-overlay {
-      max-width: calc(100vw - (var(--ft-space-4) * 2));
-    }
-
-    .ui-date-picker-overlay,
-    .p-datepicker-panel {
-      width: calc(100vw - (var(--ft-space-4) * 2));
-      min-width: calc(100vw - (var(--ft-space-4) * 2));
-      max-width: calc(100vw - (var(--ft-space-4) * 2));
-    }
-  }
-
   /* ━━━ Card ━━━ */
   .p-card {
     overflow: hidden;
@@ -1477,16 +1463,6 @@
     background-size: 200% 100%;
     border-radius: var(--ft-radius-lg);
     animation: app-skeleton-loading 1.5s ease-in-out infinite;
-  }
-
-  @keyframes app-skeleton-loading {
-    0% {
-      background-position: 200% 0;
-    }
-
-    100% {
-      background-position: -200% 0;
-    }
   }
 
   /* ━━━ DataTable ━━━ */
@@ -1570,6 +1546,20 @@
     box-shadow: var(--ft-shadow-soft);
   }
 
+  @media (width <= 480px) {
+    .ui-select-overlay,
+    .p-select-overlay {
+      max-width: calc(100vw - (var(--ft-space-4) * 2));
+    }
+
+    .ui-date-picker-overlay,
+    .p-datepicker-panel {
+      width: calc(100vw - (var(--ft-space-4) * 2));
+      min-width: calc(100vw - (var(--ft-space-4) * 2));
+      max-width: calc(100vw - (var(--ft-space-4) * 2));
+    }
+  }
+
   @media (width <= 640px) {
     .p-dialog {
       width: 100vw !important;
@@ -1582,6 +1572,16 @@
 
     .p-dialog .p-dialog-footer {
       padding: var(--ft-space-3) var(--ft-space-4) var(--ft-space-4);
+    }
+  }
+
+  @keyframes app-skeleton-loading {
+    0% {
+      background-position: 200% 0;
+    }
+
+    100% {
+      background-position: -200% 0;
     }
   }
 }
