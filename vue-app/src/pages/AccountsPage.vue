@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed, onMounted, ref } from 'vue'
 import { useToast } from 'primevue/usetoast'
-import { useConfirm } from 'primevue/useconfirm'
+import { useConfirmDialog } from '../composables/useConfirmDialog'
 import { useFinanceStore } from '../stores/finance'
 import { useUserStore } from '../stores/user'
 import AccountFormModal from '../components/AccountFormModal.vue'
@@ -22,7 +22,7 @@ type AccountsView = 'active' | 'archived'
 const financeStore = useFinanceStore()
 const userStore = useUserStore()
 const toast = useToast()
-const confirm = useConfirm()
+const { confirmAction } = useConfirmDialog()
 
 const modalVisible = ref(false)
 const editingAccount = ref<Account | null>(null)
@@ -170,13 +170,12 @@ const handleArchiveAccount = (account: Account) => {
   if (isReadOnlyMode.value) return
   if (pendingArchiveId.value) return
 
-  confirm.require({
+  confirmAction({
     message: `Архивировать счет "${account.name}"? Счет будет скрыт из активных операций, но история сохранится.`,
     header: 'Архивация счета',
     icon: 'pi pi-inbox',
-    rejectLabel: 'Отмена',
     acceptLabel: 'Архивировать',
-    accept: async () => {
+    onAccept: async () => {
       pendingArchiveId.value = account.id
       try {
         const success = await financeStore.archiveAccount(account.id)

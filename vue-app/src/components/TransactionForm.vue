@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed, ref, watch, watchEffect } from 'vue';
-import { useConfirm } from 'primevue/useconfirm';
 import { useToast } from 'primevue/usetoast';
+import { useConfirmDialog } from '../composables/useConfirmDialog';
 import UiDialog from '../ui/UiDialog.vue';
 import UiButton from '../ui/UiButton.vue';
 import UiDatePicker from '../ui/UiDatePicker.vue';
@@ -23,7 +23,7 @@ import { useTransactionFormState } from '../composables/useTransactionFormState'
 import { useTransferFormState } from '../composables/useTransferFormState';
 import { toUtcDateOnlyIso } from '../utils/dateOnly';
 
-const confirm = useConfirm();
+const { confirmDanger } = useConfirmDialog();
 const toast = useToast();
 
 const props = defineProps<{
@@ -315,14 +315,11 @@ const handleDelete = () => {
   }
 
   if (isTransferMode.value && props.transfer) {
-    confirm.require({
+    confirmDanger({
       message: 'Удалить этот перевод? Все связанные транзакции будут удалены.',
       header: 'Подтверждение удаления',
-      icon: 'pi pi-exclamation-triangle',
-      rejectLabel: 'Отмена',
       acceptLabel: 'Удалить',
-      acceptClass: 'p-button-danger',
-      accept: async () => {
+      onAccept: async () => {
         isXferDeleting.value = true;
         const success = await store.deleteTransfer(props.transfer!.transferId);
         isXferDeleting.value = false;
@@ -348,14 +345,11 @@ const handleDelete = () => {
     return;
   }
 
-  confirm.require({
+  confirmDanger({
     message: 'Удалить эту транзакцию? Её можно будет восстановить только вручную.',
     header: 'Подтверждение удаления',
-    icon: 'pi pi-exclamation-triangle',
-    rejectLabel: 'Отмена',
     acceptLabel: 'Удалить',
-    acceptClass: 'p-button-danger',
-    accept: async () => {
+    onAccept: async () => {
       isTxnDeleting.value = true;
       const success = await store.deleteTransaction(props.transaction!.id);
       isTxnDeleting.value = false;

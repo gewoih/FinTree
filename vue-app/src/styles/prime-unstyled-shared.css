@@ -952,12 +952,10 @@
   }
 
   /* ━━━ Confirm Dialog ━━━ */
-  .p-confirm-dialog,
   .ui-confirm-dialog__root {
     width: min(420px, calc(100vw - (var(--ft-space-4) * 2)));
   }
 
-  .p-confirm-dialog .p-dialog-header,
   .ui-confirm-dialog__header {
     display: flex;
     align-items: center;
@@ -967,14 +965,12 @@
     border-bottom: 1px solid var(--ft-border-soft);
   }
 
-  .p-confirm-dialog .p-dialog-title,
   .ui-confirm-dialog__title {
     font-size: var(--ft-text-base);
     font-weight: var(--ft-font-semibold);
     color: var(--ft-heading);
   }
 
-  .p-confirm-dialog .p-dialog-close-button,
   .ui-confirm-dialog__close-button {
     cursor: pointer;
 
@@ -999,14 +995,12 @@
       border-color var(--ft-transition-fast);
   }
 
-  .p-confirm-dialog .p-dialog-close-button:hover,
   .ui-confirm-dialog__close-button:hover {
     color: var(--ft-text-primary);
     background: var(--ft-surface-overlay);
     border-color: var(--ft-border-default);
   }
 
-  .p-confirm-dialog .p-dialog-content,
   .ui-confirm-dialog__content {
     display: flex;
     gap: var(--ft-space-3);
@@ -1014,7 +1008,6 @@
     padding: var(--ft-space-5);
   }
 
-  .p-confirm-dialog .p-confirm-dialog-icon,
   .ui-confirm-dialog__icon {
     flex-shrink: 0;
     margin-top: 0.125rem;
@@ -1022,14 +1015,12 @@
     color: var(--ft-text-secondary);
   }
 
-  .p-confirm-dialog .p-confirm-dialog-message,
   .ui-confirm-dialog__message {
     font-size: var(--ft-text-sm);
     line-height: var(--ft-leading-normal);
     color: var(--ft-text-secondary);
   }
 
-  .p-confirm-dialog .p-dialog-footer,
   .ui-confirm-dialog__footer {
     display: flex;
     gap: var(--ft-space-2);
@@ -1516,21 +1507,9 @@
     transition: transform var(--ft-transition-fast), box-shadow var(--ft-transition-fast);
   }
 
-  .p-button:not(.p-button-secondary, .p-button-outlined, .p-button-text, .p-button-link, .p-button-danger):hover:not(:disabled) {
-    transform: translateY(-1px);
-    box-shadow: var(--ft-effect-primary-glow-md);
-  }
-
-  .p-button.p-button-secondary:hover:not(:disabled),
-  .p-button.p-button-outlined:hover:not(:disabled),
-  .p-button.p-button-text:hover:not(:disabled) {
+  .p-button:not(.p-button-link):hover:not(:disabled) {
     transform: translateY(-1px);
     box-shadow: var(--ft-shadow-md);
-  }
-
-  .p-button.p-button-danger:hover:not(:disabled) {
-    transform: translateY(-1px);
-    box-shadow: var(--ft-effect-danger-glow-sm);
   }
 
   .p-button:not(.p-button-link):active:not(:disabled) {

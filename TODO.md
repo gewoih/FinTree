@@ -39,7 +39,7 @@
 
 ## Modals & Interaction Patterns
 
-- [ ] `FT-TODO-017` Redesign confirmation modal (`confirm.require`) and extract dedicated component  
+- [x] `FT-TODO-017` Redesign confirmation modal (`confirm.require`) and extract dedicated component  
   **Acceptance criteria:** reusable confirmation component exists with consistent API, styling, and accessibility behavior.
 
 ---

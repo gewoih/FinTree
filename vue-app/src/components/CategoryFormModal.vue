@@ -4,8 +4,8 @@ import UiDialog from '../ui/UiDialog.vue';
 import UiInputText from '../ui/UiInputText.vue';
 import UiSelectButton from '../ui/UiSelectButton.vue';
 import UiCheckbox from '../ui/UiCheckbox.vue';
-import { useConfirm } from 'primevue/useconfirm';
 import { useToast } from 'primevue/usetoast';
+import { useConfirmDialog } from '../composables/useConfirmDialog';
 import type { Category, CategoryType } from '../types';
 import { CATEGORY_TYPE } from '../types';
 import { useFinanceStore } from '../stores/finance';
@@ -30,7 +30,7 @@ const emit = defineEmits<{
 }>();
 
 const store = useFinanceStore();
-const confirm = useConfirm();
+const { confirmDanger } = useConfirmDialog();
 const toast = useToast();
 const DEFAULT_COLOR_TOKEN = '--ft-success-500';
 const HEX_COLOR_REGEX = /^#([0-9A-Fa-f]{6})$/;
@@ -203,14 +203,11 @@ const handleSubmit = async () => {
 const handleDelete = () => {
   if (props.readonly || !props.category || isDeleting.value) return;
 
-  confirm.require({
+  confirmDanger({
     message: `Удалить категорию "${props.category.name}"? Все транзакции будут перенесены в «Без категории».`,
     header: 'Удаление категории',
     acceptLabel: 'Удалить',
-    rejectLabel: 'Отмена',
-    icon: 'pi pi-exclamation-triangle',
-    acceptClass: 'p-button-danger',
-    accept: async () => {
+    onAccept: async () => {
       isDeleting.value = true;
       const success = await store.deleteCategory(props.category!.id);
       isDeleting.value = false;
