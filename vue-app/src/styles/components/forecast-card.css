@@ -211,7 +211,7 @@
 }
 
 .forecast-legend__line--actual {
-  background: var(--ft-chart-actual);
+  background: var(--ft-chart-1);
 }
 
 .forecast-legend__line--forecast {
