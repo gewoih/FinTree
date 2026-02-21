@@ -47,12 +47,7 @@ const tabs = [
   height: var(--ft-bottom-bar-height);
   padding-bottom: env(safe-area-inset-bottom, 0);
 
-  background: linear-gradient(
-    180deg,
-    color-mix(in srgb, var(--ft-surface-base) 95%, transparent),
-    color-mix(in srgb, var(--ft-surface-raised) 98%, transparent)
-  );
-  backdrop-filter: blur(12px);
+  background: var(--ft-surface-raised);
   border-top: 1px solid var(--ft-border-default);
   box-shadow:
     var(--ft-shadow-sm),

@@ -10,7 +10,7 @@ export function useAppShellState() {
   const userStore = useUserStore()
   const router = useRouter()
   const route = useRoute()
-  const { isTablet } = useViewport()
+  const { isTablet, isMobile } = useViewport()
   const { initTheme } = useTheme()
 
   const getInitialSidebarCollapsed = () =>
@@ -25,7 +25,7 @@ export function useAppShellState() {
     return authStore.userEmail ?? 'Аккаунт'
   })
 
-  const isDrawerVisible = computed(() => isTablet.value)
+  const isDrawerVisible = computed(() => isTablet.value && !isMobile.value)
   const isDesktop = computed(() => !isTablet.value)
 
   const isReadOnlyMode = computed(() => userStore.isReadOnlyMode)
@@ -82,6 +82,7 @@ export function useAppShellState() {
   return {
     route,
     isTablet,
+    isMobile,
     sidebarVisible,
     sidebarCollapsed,
     userDisplayName,

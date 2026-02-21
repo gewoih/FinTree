@@ -13,11 +13,17 @@
 
 ## Navigation & Layout
 
-- [ ] `FT-TODO-012` Hide sidebar menu in mobile layout  
+- [x] `FT-TODO-012` Hide sidebar menu in mobile layout
   **Acceptance criteria:** sidebar is collapsed by default and accessible via a dedicated mobile navigation trigger.
 
-- [ ] `FT-TODO-013` Align top navigation and bottom navigation (mobile) styling with sidebar 
+- [x] `FT-TODO-013` Align top navigation and bottom navigation (mobile) styling with sidebar
   **Acceptance criteria:** gradient is removed and navigation elements share a unified visual system with sidebar tokens.
+
+- [ ] `FT-TODO-019` Fix tablet sidebar drawer styling
+  **Acceptance criteria:** the drawer close button is positioned correctly within the header (not floating outside it); drawer header, nav links, user card, and logout button match the design system tokens and spacing used in the desktop sidebar.
+
+- [ ] `FT-TODO-018` Strengthen bottom tab bar visual separation in light mode
+  **Acceptance criteria:** bottom tab bar is visually distinct from the page background in light mode without relying solely on `border-top` and `box-shadow` (e.g. via a slightly more distinct `--ft-surface-*` token or a stronger border).
 
 ---
 

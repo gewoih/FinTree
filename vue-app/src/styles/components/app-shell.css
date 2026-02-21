@@ -44,12 +44,7 @@
   min-height: var(--ft-app-shell-nav-height);
   padding: var(--ft-space-3) var(--ft-space-8);
 
-  background: linear-gradient(
-    180deg,
-    color-mix(in srgb, var(--ft-surface-base) 98%, var(--ft-bg-base)),
-    color-mix(in srgb, var(--ft-surface-raised) 95%, var(--ft-surface-base))
-  );
-  backdrop-filter: blur(12px);
+  background: var(--ft-surface-base);
   border-bottom: 1px solid var(--ft-border-default);
   box-shadow:
     var(--ft-shadow-sm),
