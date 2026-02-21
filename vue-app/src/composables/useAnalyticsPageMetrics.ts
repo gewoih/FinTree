@@ -335,8 +335,7 @@ export function useAnalyticsPageMetrics(context: UseAnalyticsPageMetricsContext)
             datasets: [
                 {
                     data: data.map((item) => Number(item.amount ?? 0)),
-                    backgroundColor: `rgba(${hexToRgb(chartColors.expense)}, 0.65)`,
-                    borderColor: chartColors.expense,
+                    backgroundColor: chartColors.expense,
                     borderRadius: 8,
                     maxBarThickness: 48,
                 },
