@@ -29,10 +29,10 @@
 
 ## Charts & Visual System
 
-- [ ] `FT-TODO-014` Remove chart color overrides (`chartColorGuards.ts`)  
+- [x] `FT-TODO-014` Remove chart color overrides (`chartColorGuards.ts`)  
   **Acceptance criteria:** no runtime color guards override chart palette behavior.
 
-- [ ] `FT-TODO-016` Set default chart color to base olive token  
+- [x] `FT-TODO-016` Set default chart color to base olive token  
   **Acceptance criteria:** charts use base olive color as primary default unless explicitly overridden.
 
 ---
