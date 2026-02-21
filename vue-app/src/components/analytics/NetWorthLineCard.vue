@@ -81,7 +81,6 @@ const chartOptions = computed(() => ({
     <div class="networth-card__head">
       <div>
         <h3>Изменение капитала</h3>
-        <p>Net Worth за последние 12 месяцев</p>
       </div>
     </div>
 
@@ -186,11 +185,6 @@ const chartOptions = computed(() => ({
   font-size: var(--ft-text-xl);
   font-weight: var(--ft-font-semibold);
   color: var(--ft-text-primary);
-}
-
-.networth-card__head p {
-  margin: var(--ft-space-2) 0 0;
-  color: var(--ft-text-secondary);
 }
 
 .networth-card__loading {

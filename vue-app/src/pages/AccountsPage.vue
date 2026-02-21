@@ -256,7 +256,7 @@ onMounted(async () => {
         :search-text="searchText"
         :active-count="activeBankAccounts.length"
         :archived-count="archivedBankAccounts.length"
-        search-placeholder="Поиск по названию или валюте..."
+        search-placeholder="Поиск"
         @update:model-value="view = $event"
         @update:search-text="searchText = $event"
       />

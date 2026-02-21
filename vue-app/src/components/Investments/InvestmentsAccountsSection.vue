@@ -83,7 +83,7 @@ const setView = (value: InvestmentsView) => {
       :search-text="searchText"
       :active-count="activeAccounts.length"
       :archived-count="archivedAccounts.length"
-      search-placeholder="Название, валюта..."
+      search-placeholder="Поиск"
       @update:model-value="emit('update:view', $event)"
       @update:search-text="emit('update:searchText', $event)"
     />

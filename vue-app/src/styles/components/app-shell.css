@@ -96,6 +96,7 @@
 .app-shell__menu-toggle {
   margin-left: calc(var(--ft-space-2) * -1);
   transition: all var(--ft-transition-fast);
+  border-radius: var(--ft-radius-lg);
 }
 
 .app-shell__menu-toggle:hover {
