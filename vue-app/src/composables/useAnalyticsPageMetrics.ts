@@ -10,7 +10,6 @@ import type {
 import type { PeakDayItem } from '../types/analytics-page';
 import type { useAnalyticsFormatting } from './useAnalyticsFormatting';
 import type { useChartColors } from './useChartColors';
-import { resolveCategoryColor } from '../utils/chartColorGuards';
 
 interface UseAnalyticsPageMetricsContext {
     analyticsReadiness: ComputedRef<AnalyticsReadinessDto>;
@@ -202,18 +201,11 @@ export function useAnalyticsPageMetrics(context: UseAnalyticsPageMetricsContext)
     const categoryLegend = computed<CategoryLegendItem[]>(() => {
         const items = dashboard.value?.categories.items ?? [];
         if (!items.length) return [];
-        const usedColors: string[] = [];
 
         return items.map((item, index) => {
-            const resolvedColor = resolveCategoryColor({
-                sourceColor: item.color?.trim(),
-                index,
-                usedColors,
-                palette: chartColors.palette,
-                surfaceColor: chartColors.surface,
-            });
-
-            usedColors.push(resolvedColor);
+            const resolvedColor = item.color?.trim()
+                || chartColors.palette[index % chartColors.palette.length]
+                || chartColors.primary;
 
             return {
                 id: item.id,
