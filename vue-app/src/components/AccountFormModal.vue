@@ -5,7 +5,8 @@ import UiInputText from '../ui/UiInputText.vue'
 import UiSelect from '../ui/UiSelect.vue'
 import { useFinanceStore } from '../stores/finance'
 import { useFormModal } from '../composables/useFormModal'
-import type { Account } from '../types'
+import type { Account, AccountType } from '../types'
+import { getAccountTypeInfo } from '../utils/accountHelpers'
 import UiButton from '../ui/UiButton.vue'
 import FormField from './common/FormField.vue'
 
@@ -13,11 +14,11 @@ const props = withDefaults(
   defineProps<{
     visible: boolean
     account?: Account | null
-
+    allowedTypes?: AccountType[]
   }>(),
   {
     account: null,
-
+    allowedTypes: () => [0],
   },
 )
 
@@ -32,7 +33,17 @@ const store = useFinanceStore()
 
 const name = ref('')
 const selectedCurrencyCode = ref<string | null>(null)
+const selectedType = ref<AccountType>(props.allowedTypes[0] ?? 0)
 const attemptedSubmit = ref(false)
+
+const showTypeSelector = computed(() => !props.account && props.allowedTypes.length > 1)
+
+const typeOptions = computed(() =>
+  props.allowedTypes.map(type => {
+    const info = getAccountTypeInfo(type)
+    return { label: info.label, value: type, icon: info.icon }
+  })
+)
 
 
 
@@ -96,6 +107,7 @@ function setDefaultCurrency() {
 
 function resetForm() {
   attemptedSubmit.value = false
+  selectedType.value = props.allowedTypes[0] ?? 0
 
   if (props.account) {
     name.value = props.account.name
@@ -104,7 +116,7 @@ function resetForm() {
   }
 
   name.value = ''
-    setDefaultCurrency()
+  setDefaultCurrency()
 }
 
 watch(
@@ -139,7 +151,7 @@ const { isSubmitting, handleSubmit: handleFormSubmit, showWarning } = useFormMod
 
     return await store.createAccount({
       name: name.value.trim(),
-      type: 0, // Hardcode to default account type (0)
+      type: selectedType.value,
       currencyCode: currencyCodeForSubmit.value,
     })
   },
@@ -214,6 +226,31 @@ const handleSubmit = async () => {
         </FormField>
 
 
+
+        <FormField
+          v-if="showTypeSelector"
+          label="Тип счета"
+          required
+        >
+          <template #default="{ fieldAttrs }">
+            <UiSelect
+              v-model="selectedType"
+              :options="typeOptions"
+              option-label="label"
+              option-value="value"
+              class="w-full"
+              :input-id="fieldAttrs.id"
+              :aria-describedby="fieldAttrs['aria-describedby']"
+            >
+              <template #option="{ option }">
+                <span class="type-option">
+                  <i :class="`pi ${option.icon}`" />
+                  {{ option.label }}
+                </span>
+              </template>
+            </UiSelect>
+          </template>
+        </FormField>
 
         <FormField
           v-if="!isEditing"
