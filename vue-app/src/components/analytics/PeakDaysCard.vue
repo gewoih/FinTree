@@ -48,8 +48,8 @@ const showEmpty = computed(() => !props.loading && !props.error && props.peaks.l
 const shareAccent = computed(() => {
   const share = props.summary.shareValue;
   if (share == null) return 'neutral';
-  if (share <= 30) return 'good';
-  if (share <= 50) return 'average';
+  if (share <= 10) return 'good';
+  if (share <= 25) return 'average';
   return 'poor';
 });
 </script>
