@@ -233,7 +233,7 @@ const controlsVisible = computed(() => !isMobile.value || isOpen.value);
   display: grid;
   grid-template-columns: minmax(200px, 1fr) minmax(150px, 200px) minmax(150px, 200px) minmax(150px, 200px) auto;
   gap: var(--ft-space-3);
-  align-items: center;
+  align-items: stretch;
 }
 
 .transaction-filters__search {

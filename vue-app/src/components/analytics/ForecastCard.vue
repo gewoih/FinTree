@@ -190,7 +190,7 @@ const chartOptions = computed(() => ({
         class="forecast-kpi"
       >
         <div :class="['forecast-hero', heroClass]">
-          <span class="forecast-hero__label">Прогноз до конца месяца</span>
+          <span class="forecast-hero__label">Реалистичный сценарий</span>
           <span class="forecast-hero__value">{{ formattedForecast }}</span>
         </div>
         <div class="forecast-secondary">

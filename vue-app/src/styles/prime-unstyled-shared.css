@@ -534,11 +534,8 @@
   .ui-select__list,
   .p-select-list {
     display: grid;
-    gap: var(--ft-space-1);
-
     margin: 0;
     padding: 0;
-
     list-style: none;
   }
 
@@ -694,8 +691,8 @@
 
     color: var(--ft-text-secondary);
 
-    background: color-mix(in srgb, var(--ft-surface-base) 85%, transparent);
-    border: 1px solid var(--ft-border-soft);
+    background: transparent;
+    border: 1px solid transparent;
     border-radius: var(--ft-radius-md);
     box-shadow: none;
 
@@ -882,8 +879,10 @@
     border-top: 1px solid var(--ft-border-soft);
   }
 
-  .ui-date-picker__buttonbar .p-button,
-  .p-datepicker-buttonbar .p-button {
+  .ui-date-picker__buttonbar .ui-date-picker__today-button,
+  .ui-date-picker__buttonbar .ui-date-picker__clear-button,
+  .p-datepicker-buttonbar .p-datepicker-today-button,
+  .p-datepicker-buttonbar .p-datepicker-clear-button {
     min-height: 2rem;
     padding: 0 var(--ft-space-3);
 
@@ -892,10 +891,13 @@
 
     background: color-mix(in srgb, var(--ft-surface-base) 84%, transparent);
     border: 1px solid var(--ft-border-default);
+    border-radius: var(--ft-radius-md);
   }
 
-  .ui-date-picker__buttonbar .p-button:not(:disabled):hover,
-  .p-datepicker-buttonbar .p-button:not(:disabled):hover {
+  .ui-date-picker__buttonbar .ui-date-picker__today-button:not(:disabled):hover,
+  .ui-date-picker__buttonbar .ui-date-picker__clear-button:not(:disabled):hover,
+  .p-datepicker-buttonbar .p-datepicker-today-button:not(:disabled):hover,
+  .p-datepicker-buttonbar .p-datepicker-clear-button:not(:disabled):hover {
     background: color-mix(in srgb, var(--ft-primary-400) 14%, transparent);
     border-color: color-mix(in srgb, var(--ft-primary-400) 42%, transparent);
   }
@@ -958,10 +960,12 @@
 
   .ui-confirm-dialog__header {
     display: flex;
+    gap: var(--ft-space-2);
     align-items: center;
     justify-content: space-between;
-    gap: var(--ft-space-2);
+
     padding: var(--ft-space-4) var(--ft-space-5);
+
     border-bottom: 1px solid var(--ft-border-soft);
   }
 
@@ -974,9 +978,8 @@
   .ui-confirm-dialog__close-button {
     cursor: pointer;
 
-    flex-shrink: 0;
-
     display: inline-flex;
+    flex-shrink: 0;
     align-items: center;
     justify-content: center;
 
@@ -1025,7 +1028,9 @@
     display: flex;
     gap: var(--ft-space-2);
     justify-content: flex-end;
+
     padding: var(--ft-space-3) var(--ft-space-5) var(--ft-space-4);
+
     border-top: 1px solid var(--ft-border-soft);
   }
 

@@ -68,7 +68,7 @@ export function useAnalyticsFormatting(baseCurrency: MaybeRef<string>) {
     if (index == null || Number.isNaN(index)) return '—'
     if (index <= 1.0) return 'Ваши расходы стабильны'
     if (index <= 2.0) return 'Редкие всплески расходов'
-    return 'Частые всплески расходов, много крупных покупок'
+    return 'Частые всплески расходов'
   }
 
   const normalizeMonth = (date: Date): Date => {
