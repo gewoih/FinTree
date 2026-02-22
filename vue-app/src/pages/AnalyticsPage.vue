@@ -1,5 +1,7 @@
 <script setup lang="ts">
+import { ref } from 'vue';
 import CategoryDeltaCard from '../components/analytics/CategoryDeltaCard.vue';
+import EvolutionTab from '@/components/analytics/EvolutionTab.vue';
 import ForecastCard from '../components/analytics/ForecastCard.vue';
 import HealthScoreCard from '../components/analytics/HealthScoreCard.vue';
 import OnboardingStepper from '../components/analytics/OnboardingStepper.vue';
@@ -12,6 +14,8 @@ import PageContainer from '../components/layout/PageContainer.vue';
 import { useAnalyticsPage } from '../composables/useAnalyticsPage';
 import UiDatePicker from '@/ui/UiDatePicker.vue';
 import UiSkeleton from '../ui/UiSkeleton.vue';
+
+const activeTab = ref<'current' | 'evolution'>('current');
 
 const {
   analyticsReadiness,
@@ -102,10 +106,32 @@ const {
       </template>
     </PageHeader>
 
-    <div
-      v-if="isFirstRun && !isOnboardingDataReady"
-      class="analytics-onboarding-skeleton"
-    >
+    <div class="analytics-page__tabs" role="tablist">
+      <button
+        role="tab"
+        :aria-selected="activeTab === 'current'"
+        class="analytics-page__tab"
+        :class="{ 'analytics-page__tab--active': activeTab === 'current' }"
+        @click="activeTab = 'current'"
+      >
+        Сейчас
+      </button>
+      <button
+        role="tab"
+        :aria-selected="activeTab === 'evolution'"
+        class="analytics-page__tab"
+        :class="{ 'analytics-page__tab--active': activeTab === 'evolution' }"
+        @click="activeTab = 'evolution'"
+      >
+        Динамика
+      </button>
+    </div>
+
+    <div v-show="activeTab === 'current'">
+      <div
+        v-if="isFirstRun && !isOnboardingDataReady"
+        class="analytics-onboarding-skeleton"
+      >
       <UiSkeleton
         height="64px"
         width="100%"
@@ -235,6 +261,9 @@ const {
         @retry="retryDashboard"
       />
     </div>
+    </div>
+
+    <EvolutionTab v-show="activeTab === 'evolution'" />
   </PageContainer>
 </template>
 

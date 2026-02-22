@@ -1,5 +1,18 @@
 ## Analytics
 
+- [ ] `FT-TODO-024` Avoid repeated per-month projection of allTransactions in GetEvolutionAsync
+  **Acceptance criteria:** `allTransactions` is projected into its tuple form once before the monthly loop and reused, instead of being re-projected on every iteration via `.Select(...)` inside `ComputeNetWorthAt`'s call site.
+
+- [ ] `FT-TODO-025` GetEvolutionAsync makes N async calls to CurrencyConverter inside the month loop (one per month). Pre-fetch all needed rates before the loop (similar to GetNetWorthTrendAsync pattern) to reduce to O(1) currency service calls.
+
+- [ ] `FT-TODO-026` ComputeBalanceAt in GetEvolutionAsync duplicates balance reconstruction logic that also exists in GetNetWorthTrendAsync (ApplyBalanceEvent). Consider extracting a shared private helper to eliminate the maintenance risk of formula divergence.
+
+- [ ] `FT-TODO-027` useEvolutionTab monthOverMonthDelta suppresses delta when prev === 0. This guard is correct for percentage change but wrong for absolute delta. Review before shipping Evolution UI — for now delta is informational only.
+
+- [ ] `FT-TODO-028` useEvolutionTab previousMonthValue does not align correctly with currentMonthValue when trailing months have hasData=false (e.g. current in-progress month). Both should be computed from the same filtered+reversed iteration to avoid off-by-one delta.
+
+- [ ] 'FT-TODO-MONEY' explore the opportunity to uncomment throwing exception in Money.ctr() if amount is negative or zero. Is Money should handle negative amounts?
+
 - [ ] `FT-TODO-009` Rebuild category icons considering income/expense context  
   **Acceptance criteria:** two curated icon sets are used (income and expense) with fallback support for legacy values.
 
@@ -47,6 +60,16 @@
 
 - [ ] `FT-TODO-021` Style PrimeVue DatePicker (calendar) component to match design system
   **Acceptance criteria:** navigation prev/next buttons use design system icon-button styling (no raw gray background); month/year header buttons match surface tokens; day cells have correct hover and selected states using `--ft-primary-*` tokens; "Today" and "Clear" footer buttons use the standard secondary button style; day-of-week labels use `--ft-text-muted`; calendar panel border and shadow match other overlay surfaces.
+
+---
+
+## CSS / Styling Technical Debt
+
+- [ ] `FT-TODO-023` Define visual style for UiBadge `secondary` severity
+  **Acceptance criteria:** `severity="secondary"` renders with a distinct background, color, and border using `--ft-*` tokens. Currently has no CSS rule — visually unstyled/inherited.
+
+- [ ] `FT-TODO-022` Fix pre-existing stylelint errors in extracted CSS files
+  **Acceptance criteria:** `npm run lint:style` passes with 0 warnings. Currently failing: `src/styles/components/app-shell.css` (3 errors — `:deep` in plain CSS) and `src/styles/components/transaction-list.css` (1 error — `:deep` in plain CSS). Fix by moving `:deep()` rules into the owning `.vue` component's scoped block.
 
 ---
 

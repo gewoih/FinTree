@@ -1137,6 +1137,288 @@ public sealed class AnalyticsService(
         return Round2(projectedDaily.Value * daysInMonth);
     }
 
+    public async Task<List<EvolutionMonthDto>> GetEvolutionAsync(int months, CancellationToken ct = default)
+    {
+        var currentUserId = currentUserService.Id;
+        var baseCurrencyCode = await context.Users
+            .Where(u => u.Id == currentUserId)
+            .Select(u => u.BaseCurrencyCode)
+            .SingleAsync(ct);
+
+        var now = DateTime.UtcNow;
+        var windowMonths = months > 0 ? months : 120;
+        var windowStart = new DateTime(now.Year, now.Month, 1, 0, 0, 0, DateTimeKind.Utc)
+            .AddMonths(-(windowMonths - 1));
+
+        // Load accounts and adjustments for net worth calculation
+        var accounts = await context.Accounts
+            .AsNoTracking()
+            .Where(a => a.UserId == currentUserId && !a.IsArchived)
+            .Select(a => new { a.Id, a.CurrencyCode, a.IsLiquid, a.CreatedAt })
+            .ToListAsync(ct);
+
+        var allAdjustments = await context.AccountBalanceAdjustments
+            .AsNoTracking()
+            .Where(a => a.Account.UserId == currentUserId)
+            .Select(a => new { a.AccountId, a.Amount, a.OccurredAt })
+            .ToListAsync(ct);
+
+        // Single query: all transactions for the user's non-archived accounts.
+        // Window/transfer filtering is applied in memory below for spending metrics.
+        var allTransactions = await context.Transactions
+            .AsNoTracking()
+            .Where(t => t.Account.UserId == currentUserId && !t.Account.IsArchived)
+            .Select(t => new
+            {
+                t.AccountId,
+                t.Money,
+                t.OccurredAt,
+                t.Type,
+                t.IsTransfer,
+                t.IsMandatory
+            })
+            .ToListAsync(ct);
+
+        // In-memory filter for spending/income metrics
+        var windowTransactions = allTransactions
+            .Where(t => !t.IsTransfer && t.OccurredAt >= windowStart)
+            .ToList();
+
+        var result = new List<EvolutionMonthDto>(windowMonths);
+
+        for (var i = 0; i < windowMonths; i++)
+        {
+            var monthStart = windowStart.AddMonths(i);
+            var monthEnd = monthStart.AddMonths(1);
+            if (monthStart > now) break;
+
+            var monthExpenses = windowTransactions
+                .Where(t => t.Type == TransactionType.Expense &&
+                            t.OccurredAt >= monthStart && t.OccurredAt < monthEnd)
+                .ToList();
+
+            var monthIncomeTransactions = windowTransactions
+                .Where(t => t.Type == TransactionType.Income &&
+                            t.OccurredAt >= monthStart && t.OccurredAt < monthEnd)
+                .ToList();
+
+            if (monthExpenses.Count == 0 && monthIncomeTransactions.Count == 0)
+            {
+                result.Add(new EvolutionMonthDto(monthStart.Year, monthStart.Month, false,
+                    null, null, null, null, null, null, null));
+                continue;
+            }
+
+            // Build currency+day pairs for this month's transactions to fetch cross rates
+            var currencyDayPairs = monthExpenses
+                .Select(t => (t.Money.CurrencyCode, NormalizeUtc(t.OccurredAt)))
+                .Concat(monthIncomeTransactions.Select(t => (t.Money.CurrencyCode, NormalizeUtc(t.OccurredAt))))
+                .Distinct()
+                .ToList();
+
+            var rateByCurrencyAndDay = await currencyConverter.GetCrossRatesAsync(
+                currencyDayPairs,
+                baseCurrencyCode,
+                ct);
+
+            decimal ConvertAmount(string currencyCode, decimal amount, DateTime occurredAt)
+            {
+                var rateKey = (NormalizeCurrencyCode(currencyCode), NormalizeUtc(occurredAt).Date);
+                return rateByCurrencyAndDay.TryGetValue(rateKey, out var rate)
+                    ? amount * rate
+                    : amount;
+            }
+
+            var monthIncome = monthIncomeTransactions.Sum(t =>
+                ConvertAmount(t.Money.CurrencyCode, t.Money.Amount, t.OccurredAt));
+
+            var dailyTotals = monthExpenses
+                .GroupBy(t => NormalizeUtc(t.OccurredAt).Date)
+                .ToDictionary(
+                    g => g.Key,
+                    g => g.Sum(t => ConvertAmount(t.Money.CurrencyCode, t.Money.Amount, t.OccurredAt)));
+
+            var dailyDiscretionary = monthExpenses
+                .Where(t => !t.IsMandatory)
+                .GroupBy(t => NormalizeUtc(t.OccurredAt).Date)
+                .ToDictionary(
+                    g => g.Key,
+                    g => g.Sum(t => ConvertAmount(t.Money.CurrencyCode, t.Money.Amount, t.OccurredAt)));
+
+            var monthTotal = dailyTotals.Values.Sum();
+            var discretionaryTotal = dailyDiscretionary.Values.Sum();
+            var observedDays = dailyTotals.Count;
+
+            var meanDaily = observedDays > 0 ? Round2(monthTotal / observedDays) : 0m;
+            var savingsRate = monthIncome > 0
+                ? Round2((monthIncome - monthTotal) / monthIncome)
+                : (decimal?)null;
+            var discretionaryPercent = monthTotal > 0
+                ? Round2(discretionaryTotal / monthTotal * 100)
+                : 0m;
+
+            decimal? stabilityIndex = null;
+            if (observedDays >= 4)
+            {
+                var dailyValues = dailyTotals.Values.ToList();
+                var median = ComputeMedian(dailyValues);
+                if (median is > 0m)
+                {
+                    var q1 = ComputeQuantile(dailyValues, 0.25d);
+                    var q3 = ComputeQuantile(dailyValues, 0.75d);
+                    if (q1.HasValue && q3.HasValue)
+                        stabilityIndex = Round2((q3.Value - q1.Value) / median.Value);
+                }
+            }
+
+            decimal? peakDayRatio = null;
+            if (dailyDiscretionary.Count >= 1)
+            {
+                var discValues = dailyDiscretionary.Values.Where(v => v > 0m).ToList();
+                if (discValues.Count > 0)
+                {
+                    var discMedian = ComputeMedian(discValues) ?? 0m;
+                    var threshold = ComputePeakThreshold(discValues, discMedian);
+                    var peakCount = discValues.Count(v => v >= threshold);
+                    var daysInMonth = DateTime.DaysInMonth(monthStart.Year, monthStart.Month);
+                    peakDayRatio = Round2((decimal)peakCount / daysInMonth * 100);
+                }
+            }
+
+            var netWorth = await ComputeNetWorthAt(
+                monthEnd,
+                accounts.Select(a => (a.Id, a.CurrencyCode, a.IsLiquid, a.CreatedAt.UtcDateTime)).ToList(),
+                allTransactions.Select(t => (t.AccountId, t.Money, NormalizeUtc(t.OccurredAt), t.Type)).ToList(),
+                allAdjustments.Select(a => (a.AccountId, a.Amount, NormalizeUtc(a.OccurredAt))).ToList(),
+                baseCurrencyCode,
+                ct);
+
+            decimal? liquidMonths = null;
+            if (meanDaily > 0m)
+            {
+                var liquidAssets = 0m;
+                foreach (var account in accounts.Where(a => a.IsLiquid))
+                {
+                    var balance = ComputeBalanceAt(
+                        account.CreatedAt.UtcDateTime,
+                        monthEnd,
+                        allTransactions
+                            .Where(t => t.AccountId == account.Id)
+                            .Select(t => (t.Money, NormalizeUtc(t.OccurredAt), t.Type))
+                            .ToList(),
+                        allAdjustments
+                            .Where(a => a.AccountId == account.Id)
+                            .Select(a => (a.Amount, NormalizeUtc(a.OccurredAt)))
+                            .ToList());
+
+                    var rateAtUtc = monthEnd.AddTicks(-1);
+                    var converted = await currencyConverter.ConvertAsync(
+                        new Money(account.CurrencyCode, balance),
+                        baseCurrencyCode,
+                        rateAtUtc,
+                        ct);
+                    liquidAssets += converted.Amount;
+                }
+
+                liquidMonths = Round2(liquidAssets / (meanDaily * 30.44m));
+            }
+
+            result.Add(new EvolutionMonthDto(
+                monthStart.Year, monthStart.Month, true,
+                savingsRate, stabilityIndex, discretionaryPercent,
+                netWorth, liquidMonths, meanDaily, peakDayRatio));
+        }
+
+        return result;
+    }
+
+    private async Task<decimal> ComputeNetWorthAt(
+        DateTime asOf,
+        List<(Guid Id, string CurrencyCode, bool IsLiquid, DateTime CreatedAt)> accounts,
+        List<(Guid AccountId, Money Money, DateTime OccurredAt, TransactionType Type)> allTransactions,
+        List<(Guid AccountId, decimal Amount, DateTime OccurredAt)> allAdjustments,
+        string baseCurrencyCode,
+        CancellationToken ct)
+    {
+        var total = 0m;
+        var rateAtUtc = asOf.AddTicks(-1);
+
+        foreach (var account in accounts)
+        {
+            var txns = allTransactions
+                .Where(t => t.AccountId == account.Id)
+                .Select(t => (t.Money, t.OccurredAt, t.Type))
+                .ToList();
+
+            var adjs = allAdjustments
+                .Where(a => a.AccountId == account.Id)
+                .Select(a => (a.Amount, a.OccurredAt))
+                .ToList();
+
+            var balance = ComputeBalanceAt(
+                account.CreatedAt,
+                asOf,
+                txns,
+                adjs);
+
+            var converted = await currencyConverter.ConvertAsync(
+                new Money(account.CurrencyCode, balance),
+                baseCurrencyCode,
+                rateAtUtc,
+                ct);
+            total += converted.Amount;
+        }
+
+        return Round2(total);
+    }
+
+    private static decimal ComputeBalanceAt(
+        DateTime accountCreatedAt,
+        DateTime asOf,
+        List<(Money Money, DateTime OccurredAt, TransactionType Type)> transactions,
+        List<(decimal Amount, DateTime OccurredAt)> adjustments)
+    {
+        var accountCreatedAtUtc = accountCreatedAt.Kind == DateTimeKind.Utc
+            ? accountCreatedAt
+            : DateTime.SpecifyKind(accountCreatedAt, DateTimeKind.Utc);
+
+        // Sort and detect opening-balance anchor (single adjustment within 5 s of account creation)
+        var sortedAdjs = adjustments
+            .Where(a => a.OccurredAt < asOf)
+            .OrderBy(a => a.OccurredAt)
+            .ToList();
+
+        var sortedTxns = transactions
+            .Where(t => t.OccurredAt < asOf)
+            .OrderBy(t => t.OccurredAt)
+            .ToList();
+
+        if (sortedAdjs.Count == 1 &&
+            IsOpeningBalanceAnchor(accountCreatedAtUtc, sortedAdjs[0].OccurredAt))
+        {
+            // Single opening-balance adjustment: treat it as the absolute balance anchor at time zero
+            var opening = sortedAdjs[0].Amount;
+            var delta = sortedTxns
+                .Sum(t => t.Type == TransactionType.Income ? t.Money.Amount : -t.Money.Amount);
+            return opening + delta;
+        }
+
+        if (sortedAdjs.Count > 0)
+        {
+            // Multiple adjustments: use the latest one before asOf as the absolute anchor,
+            // then add transaction deltas that occurred after that anchor.
+            var latestAdj = sortedAdjs[^1];
+            var delta = sortedTxns
+                .Where(t => t.OccurredAt > latestAdj.OccurredAt)
+                .Sum(t => t.Type == TransactionType.Income ? t.Money.Amount : -t.Money.Amount);
+            return latestAdj.Amount + delta;
+        }
+
+        // No adjustments: sum all transaction deltas
+        return sortedTxns
+            .Sum(t => t.Type == TransactionType.Income ? t.Money.Amount : -t.Money.Amount);
+    }
+
     private static void ValidateYearMonth(int year, int month)
     {
         if (year is < 2000 or > 2100)

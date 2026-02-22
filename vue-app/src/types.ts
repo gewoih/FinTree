@@ -349,6 +349,19 @@ export interface NetWorthSnapshotDto {
     netWorth: number;
 }
 
+export interface EvolutionMonthDto {
+    year: number
+    month: number
+    hasData: boolean
+    savingsRate: number | null
+    stabilityIndex: number | null
+    discretionaryPercent: number | null
+    netWorth: number | null
+    liquidMonths: number | null
+    meanDaily: number | null
+    peakDayRatio: number | null
+}
+
 export interface AccountBalanceAdjustmentDto {
     id: string;
     accountId: string;

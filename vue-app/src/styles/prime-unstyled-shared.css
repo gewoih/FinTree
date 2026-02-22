@@ -1046,43 +1046,6 @@
     border-color: color-mix(in srgb, var(--ft-info-500) 35%, transparent);
   }
 
-  .p-tag {
-    display: inline-flex;
-    gap: var(--ft-space-1);
-    align-items: center;
-
-    padding: var(--ft-space-1) var(--ft-space-3);
-
-    font-size: var(--ft-text-xs);
-    font-weight: var(--ft-font-medium);
-
-    border-radius: var(--ft-radius-full);
-  }
-
-  .p-tag-success {
-    color: var(--ft-success-600);
-    background: color-mix(in srgb, var(--ft-success-500) 16%, transparent);
-    border: 1px solid color-mix(in srgb, var(--ft-success-500) 32%, transparent);
-  }
-
-  .p-tag-danger {
-    color: var(--ft-danger-600);
-    background: color-mix(in srgb, var(--ft-danger-500) 16%, transparent);
-    border: 1px solid color-mix(in srgb, var(--ft-danger-500) 32%, transparent);
-  }
-
-  .p-tag-info {
-    color: var(--ft-info-600);
-    background: color-mix(in srgb, var(--ft-info-500) 16%, transparent);
-    border: 1px solid color-mix(in srgb, var(--ft-info-500) 32%, transparent);
-  }
-
-  .p-tag-warning {
-    color: var(--ft-warning-600);
-    background: color-mix(in srgb, var(--ft-warning-500) 16%, transparent);
-    border: 1px solid color-mix(in srgb, var(--ft-warning-500) 32%, transparent);
-  }
-
   .ui-paginator__root,
   .p-paginator {
     display: flex;
