@@ -151,10 +151,14 @@ const chartOptions = computed(() => ({
         <h3 class="forecast-card__title">
           Прогноз расходов
         </h3>
-        <i
-          v-tooltip.top="'Оценка расходов до конца месяца на основе текущего темпа трат. Три сценария: оптимистичный, базовый и рисковый.'"
-          class="pi pi-question-circle forecast-card__hint"
-        />
+        <button
+          v-tooltip="{ value: 'Оценка расходов до конца месяца на основе текущего темпа трат. Три сценария: оптимистичный, базовый и рисковый.', event: 'click' }"
+          type="button"
+          class="forecast-card__hint"
+          aria-label="Подсказка"
+        >
+          <i class="pi pi-question-circle" />
+        </button>
       </div>
 
       <div
@@ -186,7 +190,7 @@ const chartOptions = computed(() => ({
         class="forecast-kpi"
       >
         <div :class="['forecast-hero', heroClass]">
-          <span class="forecast-hero__label">Прогноз до конца месяца</span>
+          <span class="forecast-hero__label">Реалистичный сценарий</span>
           <span class="forecast-hero__value">{{ formattedForecast }}</span>
         </div>
         <div class="forecast-secondary">

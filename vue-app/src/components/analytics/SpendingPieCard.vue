@@ -115,10 +115,14 @@ const chartOptions = computed(() => ({
           <h3 class="donut-card__title">
             Расходы по категориям
           </h3>
-          <i
-            v-tooltip.top="'Показывает, на что уходят деньги. Кликните на категорию, чтобы увидеть транзакции.'"
-            class="pi pi-question-circle donut-card__hint"
-          />
+          <button
+            v-tooltip="{ value: 'Показывает, на что уходят деньги. Кликните на категорию, чтобы увидеть транзакции.', event: 'click' }"
+            type="button"
+            class="donut-card__hint"
+            aria-label="Подсказка"
+          >
+            <i class="pi pi-question-circle" />
+          </button>
         </div>
       </div>
       <UiSelect
@@ -296,9 +300,13 @@ const chartOptions = computed(() => ({
   /* Ensure minimum touch target size */
   min-width: var(--ft-control-height);
   min-height: var(--ft-control-height);
+  padding: 0;
 
   font-size: 1rem;
   color: var(--ft-text-muted);
+
+  background: none;
+  border: none;
 
   transition: color var(--ft-transition-fast);
 }

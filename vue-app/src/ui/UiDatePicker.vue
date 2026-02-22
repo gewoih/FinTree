@@ -95,7 +95,7 @@ const mergedPt = computed(() =>
         class: 'ui-date-picker__header p-datepicker-header',
       },
       pcPrevButton: {
-        class: 'ui-date-picker__nav-button p-datepicker-prev-button',
+        root: { class: 'ui-date-picker__nav-button p-datepicker-prev-button' },
       },
       title: {
         class: 'ui-date-picker__title p-datepicker-title',
@@ -107,7 +107,7 @@ const mergedPt = computed(() =>
         class: 'ui-date-picker__select-year p-datepicker-select-year',
       },
       pcNextButton: {
-        class: 'ui-date-picker__nav-button p-datepicker-next-button',
+        root: { class: 'ui-date-picker__nav-button p-datepicker-next-button' },
       },
       dayView: {
         class: 'ui-date-picker__day-view p-datepicker-day-view',
@@ -140,10 +140,10 @@ const mergedPt = computed(() =>
         class: 'ui-date-picker__buttonbar p-datepicker-buttonbar',
       },
       pcTodayButton: {
-        class: 'ui-date-picker__today-button p-datepicker-today-button',
+        root: { class: 'ui-date-picker__today-button p-datepicker-today-button' },
       },
       pcClearButton: {
-        class: 'ui-date-picker__clear-button p-datepicker-clear-button',
+        root: { class: 'ui-date-picker__clear-button p-datepicker-clear-button' },
       },
     } as DatePickerPassThroughOptions,
     props.pt

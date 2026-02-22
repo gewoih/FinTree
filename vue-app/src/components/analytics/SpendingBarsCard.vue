@@ -125,10 +125,14 @@ const chartOptions = computed(() => ({
           <h3 class="bars-card__title">
             Динамика расходов
           </h3>
-          <i
-            v-tooltip.top="'Как менялись расходы день за днём, по неделям или месяцам. Пунктирная линия — среднее значение.'"
-            class="pi pi-question-circle bars-card__hint"
-          />
+          <button
+            v-tooltip="{ value: 'Как менялись расходы день за днём, по неделям или месяцам. Пунктирная линия — среднее значение.', event: 'click' }"
+            type="button"
+            class="bars-card__hint"
+            aria-label="Подсказка"
+          >
+            <i class="pi pi-question-circle" />
+          </button>
         </div>
       </div>
       <UiSelect
@@ -262,9 +266,13 @@ const chartOptions = computed(() => ({
   /* Ensure minimum touch target size */
   min-width: var(--ft-control-height);
   min-height: var(--ft-control-height);
+  padding: 0;
 
   font-size: 1rem;
   color: var(--ft-text-muted);
+
+  background: none;
+  border: none;
 
   transition: color var(--ft-transition-fast);
 }

@@ -39,9 +39,13 @@
   /* Ensure minimum touch target size */
   min-width: var(--ft-control-height);
   min-height: var(--ft-control-height);
+  padding: 0;
 
   font-size: 1rem;
   color: var(--ft-text-muted);
+
+  background: none;
+  border: none;
 
   transition: color var(--ft-transition-fast);
 }
@@ -207,7 +211,7 @@
 }
 
 .forecast-legend__line--actual {
-  background: var(--ft-chart-actual);
+  background: var(--ft-chart-1);
 }
 
 .forecast-legend__line--forecast {

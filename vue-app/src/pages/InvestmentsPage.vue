@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed, onMounted, ref, watch } from 'vue';
 import { useToast } from 'primevue/usetoast';
-import { useConfirm } from 'primevue/useconfirm';
+import { useConfirmDialog } from '../composables/useConfirmDialog';
 import type {
   AccountType,
   InvestmentAccountOverviewDto,
@@ -41,7 +41,7 @@ interface InvestmentAccount {
 const INVESTMENT_ACCOUNT_TYPES: AccountType[] = [3, 2, 4];
 
 const toast = useToast();
-const confirm = useConfirm();
+const { confirmAction } = useConfirmDialog();
 const financeStore = useFinanceStore();
 const userStore = useUserStore();
 const { colors: chartColors } = useChartColors();
@@ -305,13 +305,12 @@ const handleLiquidityToggle = async (account: InvestmentAccount, value: boolean)
 const handleArchiveAccount = (account: InvestmentAccount) => {
   if (isReadOnlyMode.value || pendingArchiveId.value || view.value === 'archived') return;
 
-  confirm.require({
+  confirmAction({
     message: `Архивировать счет "${account.name}"? Он будет исключен из активных метрик, но история сохранится.`,
     header: 'Архивация счета',
     icon: 'pi pi-inbox',
-    rejectLabel: 'Отмена',
     acceptLabel: 'Архивировать',
-    accept: async () => {
+    onAccept: async () => {
       pendingArchiveId.value = account.id;
       try {
         const success = await financeStore.archiveAccount(account.id);

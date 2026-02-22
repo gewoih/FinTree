@@ -140,11 +140,15 @@ router.beforeEach(async to => {
   return true;
 });
 
-router.afterEach(to => {
-  if (to.meta?.title) {
-    document.title = `FinTree · ${to.meta.title}`;
-  } else {
-    document.title = 'FinTree';
+router.afterEach((to, from) => {
+  const title = to.meta?.title ? `FinTree · ${to.meta.title}` : "FinTree";
+  document.title = title;
+
+  if (typeof window !== "undefined" && window.ym) {
+    window.ym(106951626, "hit", to.fullPath, {
+      referer: from.fullPath,
+      title
+    });
   }
 });
 

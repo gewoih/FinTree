@@ -277,8 +277,9 @@ const toggleMenu = (event: Event) => {
 }
 
 .investment-card__liquidity-status {
-  margin-top: var(--ft-space-1); /* Add margin to separate from account type */
   display: inline-block; /* To allow margin-top to work */
+
+  margin-top: var(--ft-space-1); /* Add margin to separate from account type */
   padding: 1px 6px;
 
   font-size: var(--ft-text-xs);
@@ -373,8 +374,9 @@ const toggleMenu = (event: Event) => {
 }
 
 .investment-card__liquidity-status {
-  margin-top: var(--ft-space-1); /* Add margin to separate from account type */
   display: inline-block; /* To allow margin-top to work */
+
+  margin-top: var(--ft-space-1); /* Add margin to separate from account type */
   padding: 1px 6px;
 
   font-size: var(--ft-text-xs);

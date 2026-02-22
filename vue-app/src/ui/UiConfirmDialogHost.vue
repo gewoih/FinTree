@@ -22,9 +22,15 @@ const mergedPt = computed(() =>
   mergePt(
     {
       root: { class: 'ui-confirm-dialog__root' },
+      header: { class: 'ui-confirm-dialog__header' },
+      title: { class: 'ui-confirm-dialog__title' },
+      pcCloseButton: { root: { class: 'ui-confirm-dialog__close-button' } },
       content: { class: 'ui-confirm-dialog__content' },
-      footer: { class: 'ui-confirm-dialog__footer' },
+      icon: { class: 'ui-confirm-dialog__icon' },
       message: { class: 'ui-confirm-dialog__message' },
+      footer: { class: 'ui-confirm-dialog__footer' },
+      pcRejectButton: { root: { class: 'p-button' } },
+      pcAcceptButton: { root: { class: 'p-button' } },
     } as Record<string, unknown>,
     props.pt
   )

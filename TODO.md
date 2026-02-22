@@ -1,31 +1,56 @@
-# FinTree — Актуальный TODO
+## Analytics
 
-_Обновлено: 2026-02-19_
+- [ ] `FT-TODO-009` Rebuild category icons considering income/expense context  
+  **Acceptance criteria:** two curated icon sets are used (income and expense) with fallback support for legacy values.
 
-## Как читать этот файл
+- [ ] `FT-TODO-011` Fix non-clickable tooltips in analytics on mobile
+  **Acceptance criteria:** tooltips are fully interactive and accessible on mobile devices without gesture conflicts.
 
-- `P0` — критично, влияет на корректность данных и базовые сценарии пользователя.
-- `P1` — важно, влияет на предсказуемость и качество продуктового UX.
-- `P2` — улучшения UX/UI, не блокирующие базовую корректность.
-- Для задач в этом файле новые автотесты не планируются; проверка выполняется вручную.
-
----
-
-## P0 — Критичные задачи
+- [x] `FT-TODO-015` Unify base expense calculation across forecast and liquidity metrics
+  **Acceptance criteria:** a single shared calculation logic is used for baseline expense in both forecast and liquidity features.
 
 ---
 
-## P1 — Важные продуктовые задачи
+## Navigation & Layout
 
-- [ ] `FT-TODO-009` Пересобрать иконки категорий с учетом контекста доходов/расходов.  
-  **Критерий приемки:** используются 2 curated-набора иконок (для доходов и для расходов) с фолбэком для старых значений.
+- [x] `FT-TODO-012` Hide sidebar menu in mobile layout
+  **Acceptance criteria:** sidebar is collapsed by default and accessible via a dedicated mobile navigation trigger.
 
-- [ ] `FT-TODO-023` **(Design System)** Заменить цветовую палитру и семантические токены.
-  **Критерий приемки:** Вся старая цветовая система в `design-tokens.css` заменена на новую премиум-палитру (Onyx, Jet Black, Light Olive). Все семантические токены (`--ft-bg-base`, `--ft-text-primary` и т.д.) переключены на новую палитру. Несовместимая светлая тема (`.light-mode`) удалена.
+- [x] `FT-TODO-013` Align top navigation and bottom navigation (mobile) styling with sidebar
+  **Acceptance criteria:** gradient is removed and navigation elements share a unified visual system with sidebar tokens.
+
+- [ ] `FT-TODO-019` Fix tablet sidebar drawer styling
+  **Acceptance criteria:** the drawer close button is positioned correctly within the header (not floating outside it); drawer header, nav links, user card, and logout button match the design system tokens and spacing used in the desktop sidebar.
+
+- [ ] `FT-TODO-018` Strengthen bottom tab bar visual separation in light mode
+  **Acceptance criteria:** bottom tab bar is visually distinct from the page background in light mode without relying solely on `border-top` and `box-shadow` (e.g. via a slightly more distinct `--ft-surface-*` token or a stronger border).
 
 ---
 
-## P2 — Улучшения UX/UI
+## Charts & Visual System
 
-- [ ] `FT-TODO-010` Сильно сократить и перекомпоновать лендинг.  
-  **Критерий приемки:** лендинг построен по компактной структуре «hero + ключевые секции» без перегруза текстом.
+- [x] `FT-TODO-014` Remove chart color overrides (`chartColorGuards.ts`)  
+  **Acceptance criteria:** no runtime color guards override chart palette behavior.
+
+- [x] `FT-TODO-016` Set default chart color to base olive token  
+  **Acceptance criteria:** charts use base olive color as primary default unless explicitly overridden.
+
+---
+
+## Modals & Interaction Patterns
+
+- [x] `FT-TODO-017` Redesign confirmation modal (`confirm.require`) and extract dedicated component
+  **Acceptance criteria:** reusable confirmation component exists with consistent API, styling, and accessibility behavior.
+
+- [ ] `FT-TODO-020` Style PrimeVue Select (dropdown) component to match design system
+  **Acceptance criteria:** dropdown panel background uses `--ft-surface-*` tokens; option items have correct hover, selected, and focused states using `--ft-primary-*` tokens; item spacing matches design density; scrollbar is styled consistently; panel border and shadow match other overlay surfaces.
+
+- [ ] `FT-TODO-021` Style PrimeVue DatePicker (calendar) component to match design system
+  **Acceptance criteria:** navigation prev/next buttons use design system icon-button styling (no raw gray background); month/year header buttons match surface tokens; day cells have correct hover and selected states using `--ft-primary-*` tokens; "Today" and "Clear" footer buttons use the standard secondary button style; day-of-week labels use `--ft-text-muted`; calendar panel border and shadow match other overlay surfaces.
+
+---
+
+## Marketing
+
+- [ ] `FT-TODO-010` Reduce and restructure landing page content  
+  **Acceptance criteria:** landing page follows compact structure (hero + key sections) without excessive text density.

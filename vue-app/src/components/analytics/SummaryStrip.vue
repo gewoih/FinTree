@@ -92,10 +92,14 @@ const iconAccentClass = (accent: MetricAccent) => `summary-strip__icon--${accent
         <div class="summary-strip__text">
           <p class="summary-strip__label">
             {{ metric.label }}
-            <i
-              v-tooltip.top="metric.tooltip"
-              class="pi pi-question-circle summary-strip__hint"
-            />
+            <button
+              v-tooltip="{ value: metric.tooltip, event: 'click' }"
+              type="button"
+              class="summary-strip__hint"
+              aria-label="Подсказка"
+            >
+              <i class="pi pi-question-circle" />
+            </button>
           </p>
           <p
             class="summary-strip__value"
@@ -222,10 +226,14 @@ const iconAccentClass = (accent: MetricAccent) => `summary-strip__icon--${accent
   /* Ensure minimum touch target size */
   min-width: var(--ft-control-height);
   min-height: var(--ft-control-height);
+  padding: 0;
 
   font-size: 0.95rem;
   color: var(--ft-text-muted);
   text-transform: none;
+
+  background: none;
+  border: none;
 
   transition: color var(--ft-transition-fast);
 }

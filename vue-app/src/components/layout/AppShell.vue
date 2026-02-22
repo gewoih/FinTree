@@ -8,6 +8,7 @@ import { useAppShellState } from '@/composables/useAppShellState.ts'
 const {
   route,
   isTablet,
+  isMobile,
   sidebarVisible,
   sidebarCollapsed,
   userDisplayName,
@@ -46,7 +47,7 @@ const {
           @click="toggleSidebar"
         />
         <UiButton
-          v-if="isTablet"
+          v-if="isTablet && !isMobile"
           icon="pi pi-bars"
           variant="ghost"
           rounded

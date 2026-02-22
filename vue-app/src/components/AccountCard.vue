@@ -286,8 +286,8 @@ const toggleMenu = (event: Event) => {
 .account-card__current-balance {
   display: flex;
   flex-direction: column;
-  justify-content: flex-start;
   gap: var(--ft-space-1);
+  justify-content: flex-start;
 }
 
 .account-card__current-balance-main {
@@ -308,10 +308,12 @@ const toggleMenu = (event: Event) => {
 
 .account-card__footer-compact {
   display: flex;
-  justify-content: space-between;
   align-items: center;
+  justify-content: space-between;
+
   margin-top: auto;
   padding-top: var(--ft-space-2);
+
   border-top: 1px solid var(--ft-border-soft);
 }
 
@@ -325,6 +327,7 @@ const toggleMenu = (event: Event) => {
   display: flex;
   gap: var(--ft-space-2);
   align-items: center;
+
   font-size: var(--ft-text-sm);
   color: var(--ft-text-muted);
 }
