@@ -121,8 +121,8 @@ const mergedPt = computed(() =>
   align-items: center;
   justify-content: center;
 
-  min-width: 2.25rem;
-  height: 2.25rem;
+  min-width: var(--ft-control-height);
+  height: var(--ft-control-height);
   padding: 0 var(--ft-space-2);
 
   color: var(--ft-text-secondary);

@@ -121,8 +121,8 @@ const mergedPt = computed(() =>
 
 :global(.ui-toast__message-icon),
 :global(.p-toast .p-toast-message-icon) {
-  margin-top: 0.125rem;
-  font-size: 1rem;
+  margin-top: 0.125rem; /* sub-pixel nudge, no token exists at this scale */
+  font-size: var(--ft-text-base);
   color: var(--ft-text-secondary);
 }
 

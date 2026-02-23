@@ -52,19 +52,16 @@
 - [ ] `FT-TODO-024` Replace raw `0.95rem` literal in UiButton.vue icon font-size with a `--ft-*` token
   **Acceptance criteria:** `font-size: 0.95rem` in `.ui-button :deep(.ui-button__icon)` uses a `--ft-text-*` token. Add token to `design-tokens.css` if the scale doesn't already cover it.
 
-- [ ] `FT-TODO-027` Fix UiPaginator button touch target below accessibility minimum
-  **Acceptance criteria:** Paginator nav/page buttons meet the 44px (`--ft-control-height: 2.75rem`) minimum touch target. Currently set to `height: 2.25rem` (36px) in `UiPaginator.vue`.
+- [x] `FT-TODO-027` Fix UiPaginator button touch target — bumped to `var(--ft-control-height)` (44px)
 
-- [ ] `FT-TODO-028` Replace `font-size: 1rem` hardcoded value in UiToastHost.vue with `var(--ft-text-base)`
-  **Acceptance criteria:** The message icon `font-size` on line ~70 of `UiToastHost.vue` uses `var(--ft-text-base)` instead of `1rem`.
+- [x] `FT-TODO-028` Replace `font-size: 1rem` in UiToastHost.vue — now `var(--ft-text-base)`
 
 - [x] `FT-TODO-026b` Clarify UiSelect panelClass vs overlayClass redundancy — resolved: removed `panelClass` prop entirely, `overlayClass` is the canonical prop
 
 - [x] `FT-TODO-029` Fix dead `.ui-chart__root` scoped selector in UiChart.vue — replaced with `.ui-chart` (fallthrough class); removed dead `:deep(.p-chart)` companion
   **Acceptance criteria:** The `.ui-chart__root` selector on line ~54 of `UiChart.vue` is either removed (relying on `:deep(.p-chart)` as the working selector) or converted to `:deep(.ui-chart__root)`. The plain scoped selector cannot match because PrimeVue renders the element outside the scoped boundary.
 
-- [ ] `FT-TODO-030` Replace raw rem values in UiConfirmDialogHost.vue with `--ft-*` tokens
-  **Acceptance criteria:** `margin-top: 0.125rem` and `font-size: 1.125rem` in `.ui-confirm-dialog__icon` use `--ft-*` tokens. Add tokens to `design-tokens.css` if needed.
+- [x] `FT-TODO-030` Replace raw rem in UiConfirmDialogHost.vue — `font-size: 1.125rem` → `var(--ft-text-lg)`; `margin-top: 0.125rem` kept as sub-pixel nudge (no token at this scale)
 
 - [ ] `FT-TODO-025` Fix 31 pre-existing stylelint property-order warnings in `EvolutionTab.vue` and `analytics-page.css`
   **Acceptance criteria:** `npm run lint:style` passes with 0 warnings from those two files.

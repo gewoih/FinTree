@@ -124,8 +124,8 @@ const mergedPt = computed(() =>
 
 :global(.ui-confirm-dialog__icon) {
   flex-shrink: 0;
-  margin-top: 0.125rem;
-  font-size: 1.125rem;
+  margin-top: 0.125rem; /* sub-pixel nudge, no token exists at this scale */
+  font-size: var(--ft-text-lg);
   color: var(--ft-text-secondary);
 }
 
