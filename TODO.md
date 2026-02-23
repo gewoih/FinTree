@@ -19,18 +19,9 @@
 - [ ] `FT-TODO-011` Fix non-clickable tooltips in analytics on mobile
   **Acceptance criteria:** tooltips are fully interactive and accessible on mobile devices without gesture conflicts.
 
-- [x] `FT-TODO-015` Unify base expense calculation across forecast and liquidity metrics
-  **Acceptance criteria:** a single shared calculation logic is used for baseline expense in both forecast and liquidity features.
-
 ---
 
 ## Navigation & Layout
-
-- [x] `FT-TODO-012` Hide sidebar menu in mobile layout
-  **Acceptance criteria:** sidebar is collapsed by default and accessible via a dedicated mobile navigation trigger.
-
-- [x] `FT-TODO-013` Align top navigation and bottom navigation (mobile) styling with sidebar
-  **Acceptance criteria:** gradient is removed and navigation elements share a unified visual system with sidebar tokens.
 
 - [ ] `FT-TODO-019` Fix tablet sidebar drawer styling
   **Acceptance criteria:** the drawer close button is positioned correctly within the header (not floating outside it); drawer header, nav links, user card, and logout button match the design system tokens and spacing used in the desktop sidebar.
@@ -40,20 +31,7 @@
 
 ---
 
-## Charts & Visual System
-
-- [x] `FT-TODO-014` Remove chart color overrides (`chartColorGuards.ts`)  
-  **Acceptance criteria:** no runtime color guards override chart palette behavior.
-
-- [x] `FT-TODO-016` Set default chart color to base olive token  
-  **Acceptance criteria:** charts use base olive color as primary default unless explicitly overridden.
-
----
-
 ## Modals & Interaction Patterns
-
-- [x] `FT-TODO-017` Redesign confirmation modal (`confirm.require`) and extract dedicated component
-  **Acceptance criteria:** reusable confirmation component exists with consistent API, styling, and accessibility behavior.
 
 - [ ] `FT-TODO-020` Style PrimeVue Select (dropdown) component to match design system
   **Acceptance criteria:** dropdown panel background uses `--ft-surface-*` tokens; option items have correct hover, selected, and focused states using `--ft-primary-*` tokens; item spacing matches design density; scrollbar is styled consistently; panel border and shadow match other overlay surfaces.
