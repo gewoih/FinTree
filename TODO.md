@@ -58,8 +58,7 @@
 - [ ] `FT-TODO-028` Replace `font-size: 1rem` hardcoded value in UiToastHost.vue with `var(--ft-text-base)`
   **Acceptance criteria:** The message icon `font-size` on line ~70 of `UiToastHost.vue` uses `var(--ft-text-base)` instead of `1rem`.
 
-- [ ] `FT-TODO-026` Clarify UiSelect panelClass vs overlayClass redundancy
-  **Acceptance criteria:** `UiSelect.vue` applies `ui-select-overlay` to only the prop PrimeVue currently uses (`overlayClass`). Remove the redundant `panelClass` binding or document which prop is canonical for the installed PrimeVue version.
+- [x] `FT-TODO-026b` Clarify UiSelect panelClass vs overlayClass redundancy — resolved: removed `panelClass` prop entirely, `overlayClass` is the canonical prop
 
 - [x] `FT-TODO-029` Fix dead `.ui-chart__root` scoped selector in UiChart.vue — replaced with `.ui-chart` (fallthrough class); removed dead `:deep(.p-chart)` companion
   **Acceptance criteria:** The `.ui-chart__root` selector on line ~54 of `UiChart.vue` is either removed (relying on `:deep(.p-chart)` as the working selector) or converted to `:deep(.ui-chart__root)`. The plain scoped selector cannot match because PrimeVue renders the element outside the scoped boundary.
