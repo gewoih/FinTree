@@ -42,13 +42,13 @@ const mergedPt = computed(() =>
 
 <template>
   <Tag
+    v-bind="attrs"
     class="ui-badge"
     :severity="props.severity"
     :value="resolvedLabel"
     :style="props.color ? { '--ui-badge-color': props.color } : undefined"
     :unstyled="props.unstyled ?? true"
     :pt="mergedPt"
-    v-bind="attrs"
   >
     <slot />
   </Tag>

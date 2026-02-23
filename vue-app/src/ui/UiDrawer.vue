@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { computed, useAttrs } from 'vue';
 import Drawer from 'primevue/drawer';
+import type { DrawerPassThroughOptions } from 'primevue/drawer';
 import { mergePt } from './prime/pt';
 
 defineOptions({ inheritAttrs: false });
@@ -9,7 +10,7 @@ const props = withDefaults(
   defineProps<{
     visible: boolean;
     unstyled?: boolean;
-    pt?: Record<string, unknown>;
+    pt?: DrawerPassThroughOptions;
     autoZIndex?: boolean;
     baseZIndex?: number;
   }>(),
@@ -34,7 +35,7 @@ const mergedPt = computed(() =>
       header: { class: 'ui-drawer__header' },
       content: { class: 'ui-drawer__content' },
       mask: { class: 'ui-drawer__mask' },
-    } as Record<string, unknown>,
+    } as DrawerPassThroughOptions,
     props.pt
   )
 );

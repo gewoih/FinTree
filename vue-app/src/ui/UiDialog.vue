@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { computed, useAttrs } from 'vue';
 import Dialog from 'primevue/dialog';
+import type { DialogPassThroughOptions } from 'primevue/dialog';
 import { mergePt } from './prime/pt';
 
 defineOptions({ inheritAttrs: false });
@@ -9,7 +10,7 @@ const props = withDefaults(
   defineProps<{
     visible: boolean;
     unstyled?: boolean;
-    pt?: Record<string, unknown>;
+    pt?: DialogPassThroughOptions;
     autoZIndex?: boolean;
     baseZIndex?: number;
     appendTo?: string | HTMLElement;
@@ -37,7 +38,7 @@ const mergedPt = computed(() =>
       header: { class: 'ui-dialog__header' },
       footer: { class: 'ui-dialog__footer' },
       mask: { class: 'ui-dialog__mask' },
-    } as Record<string, unknown>,
+    } as DialogPassThroughOptions,
     props.pt
   )
 );

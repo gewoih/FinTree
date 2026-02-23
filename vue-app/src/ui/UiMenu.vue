@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { computed, ref, useAttrs } from 'vue';
 import Menu from 'primevue/menu';
+import type { MenuPassThroughOptions } from 'primevue/menu';
 import type { MenuItem } from 'primevue/menuitem';
 import { mergePt } from './prime/pt';
 
@@ -11,7 +12,7 @@ const props = withDefaults(
     model?: MenuItem[];
     popup?: boolean;
     unstyled?: boolean;
-    pt?: Record<string, unknown>;
+    pt?: MenuPassThroughOptions;
     appendTo?: string | HTMLElement;
     autoZIndex?: boolean;
     baseZIndex?: number;
@@ -38,7 +39,7 @@ const mergedPt = computed(() =>
       item: { class: 'ui-menu__item' },
       itemContent: { class: 'ui-menu__item-content' },
       itemLink: { class: 'ui-menu__item-link' },
-    } as Record<string, unknown>,
+    } as MenuPassThroughOptions,
     props.pt
   )
 );

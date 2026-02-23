@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { computed, useAttrs } from 'vue';
 import Chart from 'primevue/chart';
+import type { ChartPassThroughOptions } from 'primevue/chart';
 import { mergePt } from './prime/pt';
 
 defineOptions({ inheritAttrs: false });
@@ -12,7 +13,7 @@ const props = withDefaults(
     options?: object;
     plugins?: object[];
     unstyled?: boolean;
-    pt?: Record<string, unknown>;
+    pt?: ChartPassThroughOptions;
   }>(),
   {
     type: 'line',
@@ -31,7 +32,7 @@ const mergedPt = computed(() =>
     {
       root: { class: 'ui-chart__root p-chart' },
       canvas: { class: 'ui-chart__canvas' },
-    } as Record<string, unknown>,
+    } as ChartPassThroughOptions,
     props.pt
   )
 );
@@ -51,8 +52,8 @@ const mergedPt = computed(() =>
 </template>
 
 <style scoped>
-.ui-chart__root,
-:deep(.p-chart) {
+/* Root styles on .ui-chart (fallthrough class); :deep(.p-chart) would be dead on root */
+.ui-chart {
   position: relative;
   width: 100%;
 }

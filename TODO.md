@@ -61,7 +61,7 @@
 - [ ] `FT-TODO-026` Clarify UiSelect panelClass vs overlayClass redundancy
   **Acceptance criteria:** `UiSelect.vue` applies `ui-select-overlay` to only the prop PrimeVue currently uses (`overlayClass`). Remove the redundant `panelClass` binding or document which prop is canonical for the installed PrimeVue version.
 
-- [ ] `FT-TODO-029` Fix dead `.ui-chart__root` scoped selector in UiChart.vue
+- [x] `FT-TODO-029` Fix dead `.ui-chart__root` scoped selector in UiChart.vue — replaced with `.ui-chart` (fallthrough class); removed dead `:deep(.p-chart)` companion
   **Acceptance criteria:** The `.ui-chart__root` selector on line ~54 of `UiChart.vue` is either removed (relying on `:deep(.p-chart)` as the working selector) or converted to `:deep(.ui-chart__root)`. The plain scoped selector cannot match because PrimeVue renders the element outside the scoped boundary.
 
 - [ ] `FT-TODO-030` Replace raw rem values in UiConfirmDialogHost.vue with `--ft-*` tokens

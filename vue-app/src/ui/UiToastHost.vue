@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { computed, useAttrs } from 'vue';
 import Toast from 'primevue/toast';
+import type { ToastPassThroughOptions } from 'primevue/toast';
 import { mergePt } from './prime/pt';
 
 defineOptions({ inheritAttrs: false });
@@ -8,7 +9,7 @@ defineOptions({ inheritAttrs: false });
 const props = withDefaults(
   defineProps<{
     unstyled?: boolean;
-    pt?: Record<string, unknown>;
+    pt?: ToastPassThroughOptions;
     autoZIndex?: boolean;
     baseZIndex?: number;
   }>(),
@@ -35,7 +36,7 @@ const mergedPt = computed(() =>
       buttonContainer: { class: 'ui-toast__button-container' },
       closeButton: { class: 'ui-toast__close-button' },
       closeIcon: { class: 'ui-toast__close-icon' },
-    } as Record<string, unknown>,
+    } as ToastPassThroughOptions,
     props.pt
   )
 );

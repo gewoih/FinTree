@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { computed, useAttrs } from 'vue';
 import ConfirmDialog from 'primevue/confirmdialog';
+import type { ConfirmDialogPassThroughOptions } from 'primevue/confirmdialog';
 import { mergePt } from './prime/pt';
 
 defineOptions({ inheritAttrs: false });
@@ -8,7 +9,7 @@ defineOptions({ inheritAttrs: false });
 const props = withDefaults(
   defineProps<{
     unstyled?: boolean;
-    pt?: Record<string, unknown>;
+    pt?: ConfirmDialogPassThroughOptions;
   }>(),
   {
     unstyled: undefined,
@@ -29,9 +30,9 @@ const mergedPt = computed(() =>
       icon: { class: 'ui-confirm-dialog__icon' },
       message: { class: 'ui-confirm-dialog__message' },
       footer: { class: 'ui-confirm-dialog__footer' },
-      pcRejectButton: { root: { class: 'p-button' } },
-      pcAcceptButton: { root: { class: 'p-button' } },
-    } as Record<string, unknown>,
+      pcRejectButton: { root: { class: 'ui-confirm-dialog__button ui-confirm-dialog__button--reject' } },
+      pcAcceptButton: { root: { class: 'ui-confirm-dialog__button ui-confirm-dialog__button--accept' } },
+    } as ConfirmDialogPassThroughOptions,
     props.pt
   )
 );
@@ -142,5 +143,54 @@ const mergedPt = computed(() =>
   padding: var(--ft-space-3) var(--ft-space-5) var(--ft-space-4);
 
   border-top: 1px solid var(--ft-border-soft);
+}
+
+:global(.ui-confirm-dialog__button) {
+  cursor: pointer;
+
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+
+  height: var(--ft-control-height);
+  padding: 0 var(--ft-space-4);
+
+  font-size: var(--ft-text-base);
+  font-weight: var(--ft-font-medium);
+
+  border: 1px solid transparent;
+  border-radius: var(--ft-radius-lg);
+
+  transition:
+    background-color var(--ft-transition-fast),
+    border-color var(--ft-transition-fast),
+    color var(--ft-transition-fast);
+}
+
+:global(.ui-confirm-dialog__button--reject) {
+  color: var(--ft-text-primary);
+  background: var(--ft-surface-overlay);
+  border-color: var(--ft-border-default);
+}
+
+:global(.ui-confirm-dialog__button--reject:hover:not(:disabled)) {
+  background: color-mix(in srgb, var(--ft-surface-overlay) 80%, var(--ft-surface-raised));
+  border-color: var(--ft-border-strong);
+}
+
+:global(.ui-confirm-dialog__button--accept) {
+  color: var(--ft-text-inverse);
+  background: var(--ft-danger-500);
+  border-color: var(--ft-danger-500);
+}
+
+:global(.ui-confirm-dialog__button--accept:hover:not(:disabled)) {
+  background: color-mix(in srgb, var(--ft-danger-500) 85%, black);
+  border-color: color-mix(in srgb, var(--ft-danger-500) 85%, black);
+}
+
+:global(.ui-confirm-dialog__button:disabled) {
+  cursor: not-allowed;
+  opacity: 0.6;
 }
 </style>

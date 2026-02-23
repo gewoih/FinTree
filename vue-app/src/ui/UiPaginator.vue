@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed, useAttrs } from 'vue';
 import Paginator from 'primevue/paginator';
-import type { PageState } from 'primevue/paginator';
+import type { PageState, PaginatorPassThroughOptions } from 'primevue/paginator';
 import { mergePt } from './prime/pt';
 
 defineOptions({ inheritAttrs: false });
@@ -14,7 +14,7 @@ const props = withDefaults(
     rowsPerPageOptions?: number[];
     template?: string;
     unstyled?: boolean;
-    pt?: Record<string, unknown>;
+    pt?: PaginatorPassThroughOptions;
   }>(),
   {
     first: 0,
@@ -47,8 +47,8 @@ const mergedPt = computed(() =>
       next: { class: 'ui-paginator__nav ui-paginator__nav--next' },
       last: { class: 'ui-paginator__nav ui-paginator__nav--last' },
       current: { class: 'ui-paginator__current' },
-      pcRowPerPageDropdown: { class: 'ui-paginator__rows' },
-    } as Record<string, unknown>,
+      pcRowPerPageDropdown: { root: { class: 'ui-paginator__rows' } },
+    } as PaginatorPassThroughOptions,
     props.pt
   )
 );
@@ -72,10 +72,19 @@ const mergedPt = computed(() =>
 </template>
 
 <style scoped>
-/* Paginator is inline — :deep() for PrimeVue children */
+/*
+ * NOTE: .ui-paginator__root lands on the same DOM element as .ui-paginator via
+ * PT + Vue fallthrough. Root-level layout and visual styles live on .ui-paginator.
+ */
+.ui-paginator {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--ft-space-2);
+  align-items: center;
+  justify-content: center;
 
-.ui-paginator,
-:deep(.p-paginator) {
+  padding: var(--ft-space-2) var(--ft-space-3);
+
   color: var(--ft-text-primary);
 
   background: linear-gradient(
@@ -90,19 +99,7 @@ const mergedPt = computed(() =>
     0 2px 8px color-mix(in srgb, var(--ft-bg-base) 32%, transparent);
 }
 
-.ui-paginator :deep(.ui-paginator__root),
-.ui-paginator :deep(.p-paginator) {
-  display: flex;
-  flex-wrap: wrap;
-  gap: var(--ft-space-2);
-  align-items: center;
-  justify-content: center;
-
-  padding: var(--ft-space-2) var(--ft-space-3);
-}
-
-.ui-paginator :deep(.ui-paginator__content),
-.ui-paginator :deep(.p-paginator-content) {
+.ui-paginator :deep(.ui-paginator__content) {
   display: flex;
   flex-wrap: wrap;
   gap: var(--ft-space-1);
@@ -110,20 +107,14 @@ const mergedPt = computed(() =>
   justify-content: center;
 }
 
-.ui-paginator :deep(.ui-paginator__pages),
-.ui-paginator :deep(.p-paginator-pages) {
+.ui-paginator :deep(.ui-paginator__pages) {
   display: inline-flex;
   gap: var(--ft-space-1);
   align-items: center;
 }
 
 .ui-paginator :deep(.ui-paginator__nav),
-.ui-paginator :deep(.ui-paginator__page-button),
-.ui-paginator :deep(.p-paginator-first),
-.ui-paginator :deep(.p-paginator-prev),
-.ui-paginator :deep(.p-paginator-next),
-.ui-paginator :deep(.p-paginator-last),
-.ui-paginator :deep(.p-paginator-page) {
+.ui-paginator :deep(.ui-paginator__page-button) {
   cursor: pointer;
 
   display: inline-flex;
@@ -147,38 +138,30 @@ const mergedPt = computed(() =>
 }
 
 .ui-paginator :deep(.ui-paginator__nav:hover),
-.ui-paginator :deep(.ui-paginator__page-button:hover),
-.ui-paginator :deep(.p-paginator-first:hover),
-.ui-paginator :deep(.p-paginator-prev:hover),
-.ui-paginator :deep(.p-paginator-next:hover),
-.ui-paginator :deep(.p-paginator-last:hover),
-.ui-paginator :deep(.p-paginator-page:hover) {
+.ui-paginator :deep(.ui-paginator__page-button:hover) {
   color: var(--ft-text-primary);
   background: var(--ft-surface-overlay);
   border-color: var(--ft-border-strong);
 }
 
-.ui-paginator :deep(.ui-paginator__page-button.p-paginator-page-selected),
-.ui-paginator :deep(.p-paginator-page.p-paginator-page-selected) {
+.ui-paginator :deep(.ui-paginator__page-button[data-p-selected='true']) {
   color: var(--ft-text-inverse);
   background: var(--ft-primary-400);
   border-color: var(--ft-primary-400);
 }
 
-.ui-paginator :deep(.ui-paginator__current),
-.ui-paginator :deep(.p-paginator-current) {
+.ui-paginator :deep(.ui-paginator__current) {
   font-size: var(--ft-text-sm);
   color: var(--ft-text-secondary);
 }
 
-.ui-paginator :deep(.ui-paginator__rows),
-.ui-paginator :deep(.p-paginator-rpp-dropdown) {
+.ui-paginator :deep(.ui-paginator__rows) {
   min-width: 5.25rem;
   margin-inline-start: var(--ft-space-1);
 }
 
-.ui-paginator :deep(.p-disabled),
-.ui-paginator :deep(.p-disabled:hover) {
+.ui-paginator :deep([data-p-disabled='true']),
+.ui-paginator :deep([data-p-disabled='true']:hover) {
   cursor: not-allowed;
 
   color: var(--ft-text-disabled);
