@@ -115,14 +115,13 @@ const mergedPt = computed(() =>
   border-color: var(--ft-border-strong);
 }
 
-:deep(.ui-select-button__button.p-togglebutton-checked),
 :deep(.ui-select-button__button[data-p-checked='true']) {
   color: var(--ft-text-inverse);
   background: var(--ft-primary-400);
   border-color: var(--ft-primary-400);
 }
 
-:deep(.ui-select-button__button.p-disabled) {
+:deep(.ui-select-button__button[data-p-disabled='true']) {
   cursor: not-allowed;
   opacity: 0.65;
 }
