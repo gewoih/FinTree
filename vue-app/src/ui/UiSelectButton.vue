@@ -76,14 +76,61 @@ const mergedPt = computed(() =>
   border-radius: var(--ft-radius-lg);
 }
 
-.ui-select-button :deep(.p-selectbutton) {
+:deep(.ui-select-button__root) {
   overflow: hidden;
+  display: inline-flex;
+  flex-wrap: wrap;
+  gap: var(--ft-space-1);
+
   width: 100%;
+
   border-radius: inherit;
 }
 
-.ui-select-button :deep(.p-togglebutton) {
+:deep(.ui-select-button__button) {
+  cursor: pointer;
+
+  display: inline-flex;
+  flex: 1;
+  align-items: center;
+  justify-content: center;
+
+  min-height: var(--ft-control-height);
+  padding: 0 var(--ft-space-3);
+
+  color: var(--ft-text-secondary);
+
+  background: var(--ft-surface-base);
+  border: 1px solid var(--ft-border-default);
   border-radius: 0;
   box-shadow: none;
+
+  transition:
+    border-color var(--ft-transition-fast),
+    color var(--ft-transition-fast),
+    background-color var(--ft-transition-fast);
+}
+
+:deep(.ui-select-button__button:hover) {
+  color: var(--ft-text-primary);
+  background: var(--ft-surface-overlay);
+  border-color: var(--ft-border-strong);
+}
+
+:deep(.ui-select-button__button.p-togglebutton-checked),
+:deep(.ui-select-button__button[data-p-checked='true']) {
+  color: var(--ft-text-inverse);
+  background: var(--ft-primary-400);
+  border-color: var(--ft-primary-400);
+}
+
+:deep(.ui-select-button__button.p-disabled) {
+  cursor: not-allowed;
+  opacity: 0.65;
+}
+
+:deep(.ui-select-button__button:focus-visible) {
+  outline: 3px solid var(--ft-focus-ring);
+  outline-offset: 3px;
 }
 </style>

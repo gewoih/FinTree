@@ -234,6 +234,16 @@
     background-color: color-mix(in srgb, var(--ft-primary-500) 35%, transparent);
   }
 
+  /* ━━━ Fallback focus ring for non-PrimeVue interactive elements ━━━ */
+  a[href]:focus-visible,
+  button:not(.p-component):focus-visible,
+  [role='button']:not(.p-component):focus-visible,
+  [tabindex]:not([tabindex='-1'], .p-component):focus-visible {
+    border-radius: var(--ft-radius-md);
+    outline: 3px solid var(--ft-focus-ring);
+    outline-offset: 3px;
+  }
+
   @media (width <= 768px) {
     .card-grid {
       gap: var(--ft-space-4);

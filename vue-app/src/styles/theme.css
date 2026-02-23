@@ -38,6 +38,13 @@
   border: 1px solid var(--ft-border-soft);
   border-radius: var(--ft-radius-card);
   box-shadow: var(--ft-shadow-card);
+
+  transition: transform var(--ft-transition-fast), box-shadow var(--ft-transition-fast);
+}
+
+.ft-card:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--ft-shadow-soft);
 }
 
 .ft-card--muted {
@@ -368,6 +375,42 @@
   margin: 0;
   font-size: var(--ft-text-sm);
   color: var(--ft-text-muted);
+}
+
+/* ━━━ PrimeVue global font reset ━━━ */
+.p-component {
+  font-family: var(--ft-font-base);
+  color: var(--ft-text-primary);
+}
+
+/* ━━━ Tooltip (teleported, no owning component file) ━━━ */
+[role='tooltip'],
+.p-tooltip {
+  pointer-events: none;
+  position: absolute;
+  z-index: var(--ft-z-tooltip);
+  max-width: min(320px, calc(100vw - (var(--ft-space-4) * 2)));
+}
+
+[role='tooltip'] > [data-pc-section='arrow'],
+[role='tooltip'] > .p-tooltip-arrow,
+[role='tooltip'] > div:first-child {
+  display: none;
+}
+
+[role='tooltip'] > [data-pc-section='text'],
+[role='tooltip'] > .p-tooltip-text,
+[role='tooltip'] > div:last-child {
+  padding: var(--ft-space-2) var(--ft-space-3);
+
+  font-size: var(--ft-text-sm);
+  line-height: var(--ft-leading-normal);
+  color: var(--ft-text-primary);
+
+  background: var(--ft-surface-raised);
+  border: 1px solid var(--ft-border-default);
+  border-radius: var(--ft-radius-md);
+  box-shadow: var(--ft-shadow-md);
 }
 
 @media (width <= 768px) {

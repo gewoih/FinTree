@@ -107,7 +107,72 @@ const handleBlur = (event: InputNumberBlurEvent) => {
   border-radius: var(--ft-radius-lg);
 }
 
-.ui-input-number :deep(.p-inputnumber-input) {
+/* Root container */
+:deep(.ui-input-number__root) {
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+
+  width: 100%;
+  min-height: var(--ft-control-height);
+
+  font-size: var(--ft-text-base);
+  color: var(--ft-text-primary);
+
+  background: var(--ft-surface-base);
+  border: 1px solid var(--ft-border-default);
+  border-radius: var(--ft-radius-lg);
+
+  transition:
+    border-color var(--ft-transition-fast),
+    background-color var(--ft-transition-fast),
+    box-shadow var(--ft-transition-fast);
+}
+
+/* Focus ring */
+:deep(.ui-input-number__root:focus-within) {
+  outline: 3px solid var(--ft-focus-ring);
+  outline-offset: 3px;
+}
+
+/* Hover state */
+:deep(.ui-input-number__root:not(.p-disabled):hover) {
+  background: color-mix(in srgb, var(--ft-surface-overlay) 72%, var(--ft-surface-base));
+  border-color: var(--ft-border-strong);
+}
+
+/* Invalid state */
+:deep(.ui-input-number__root.ui-field--invalid) {
+  border-color: var(--ft-danger-500);
+  box-shadow: 0 0 0 1px color-mix(in srgb, var(--ft-danger-500) 18%, transparent);
+}
+
+/* Inner input element */
+:deep(.ui-input-number__input) {
+  width: 100%;
+  min-height: calc(var(--ft-control-height) - 2px);
+  padding: 0 var(--ft-space-4);
+
+  font-size: var(--ft-text-base);
+  font-variant-numeric: tabular-nums;
+  line-height: var(--ft-leading-tight);
+  color: var(--ft-text-primary);
+
+  background: transparent;
+  border: 0;
   border-radius: 0;
+  outline: 0;
+}
+
+/* Placeholder */
+:deep(.ui-input-number__input::placeholder) {
+  color: var(--ft-text-tertiary);
+  opacity: 1;
+}
+
+/* Disabled state */
+:deep(.ui-input-number__input:disabled) {
+  cursor: not-allowed;
+  opacity: 0.6;
 }
 </style>

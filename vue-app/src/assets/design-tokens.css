@@ -356,6 +356,10 @@
   --ft-scrollbar-thumb:        color-mix(in srgb, var(--ft-primary-400) 30%, var(--ft-surface-overlay));
   --ft-scrollbar-thumb-hover:  color-mix(in srgb, var(--ft-primary-400) 44%, var(--ft-surface-overlay));
   --ft-scrollbar-thumb-active: color-mix(in srgb, var(--ft-primary-400) 58%, var(--ft-surface-overlay));
+
+  /* Table row theming */
+  --ft-table-row-alt-bg:   color-mix(in srgb, var(--ft-primary-400) 12%, transparent);
+  --ft-table-row-hover-bg: color-mix(in srgb, var(--ft-primary-400) 18%, transparent);
 }
 
 .light-mode {
@@ -471,6 +475,10 @@
   --ft-testimonial-highlight-text:   var(--ft-success-700);
   --ft-testimonial-highlight-bg:     color-mix(in srgb, var(--ft-success-500) 12%, transparent);
   --ft-testimonial-highlight-border: color-mix(in srgb, var(--ft-success-500) 25%, transparent);
+
+  /* Table row theming */
+  --ft-table-row-alt-bg:   color-mix(in srgb, var(--ft-primary-400) 6%, transparent);
+  --ft-table-row-hover-bg: color-mix(in srgb, var(--ft-primary-400) 10%, transparent);
 }
 
 /* High contrast mode support */

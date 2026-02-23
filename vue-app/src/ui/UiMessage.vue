@@ -57,3 +57,33 @@ const mergedPt = computed(() =>
     <slot />
   </Message>
 </template>
+
+<style scoped>
+:deep(.ui-message__root),
+:deep(.p-message) {
+  color: var(--ft-text-primary);
+
+  background: linear-gradient(
+    180deg,
+    color-mix(in srgb, var(--ft-surface-overlay) 92%, transparent) 0%,
+    var(--ft-surface-raised) 100%
+  );
+  border: 1px solid color-mix(in srgb, var(--ft-border-default) 88%, var(--ft-border-strong));
+  border-radius: var(--ft-radius-lg);
+  box-shadow:
+    0 18px 32px color-mix(in srgb, var(--ft-bg-base) 60%, transparent),
+    0 2px 8px color-mix(in srgb, var(--ft-bg-base) 32%, transparent);
+}
+
+:deep(.p-message) {
+  padding: var(--ft-space-3);
+}
+
+:deep(.p-message.p-message-error) {
+  border-color: color-mix(in srgb, var(--ft-danger-500) 35%, transparent);
+}
+
+:deep(.p-message.p-message-info) {
+  border-color: color-mix(in srgb, var(--ft-info-500) 35%, transparent);
+}
+</style>

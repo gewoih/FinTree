@@ -49,3 +49,17 @@ const mergedPt = computed(() =>
     :pt="mergedPt"
   />
 </template>
+
+<style scoped>
+.ui-chart__root,
+:deep(.p-chart) {
+  position: relative;
+  width: 100%;
+}
+
+:deep(.ui-chart__canvas) {
+  display: block;
+  width: 100%;
+  max-width: 100%;
+}
+</style>

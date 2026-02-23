@@ -100,3 +100,70 @@ defineExpose({
     </template>
   </Menu>
 </template>
+
+<style scoped>
+:global(.ui-menu__root) {
+  color: var(--ft-text-primary);
+
+  background: linear-gradient(
+    180deg,
+    color-mix(in srgb, var(--ft-surface-overlay) 92%, transparent) 0%,
+    var(--ft-surface-raised) 100%
+  );
+  border: 1px solid color-mix(in srgb, var(--ft-border-default) 88%, var(--ft-border-strong));
+  border-radius: var(--ft-radius-lg);
+  box-shadow:
+    0 18px 32px color-mix(in srgb, var(--ft-bg-base) 60%, transparent),
+    0 2px 8px color-mix(in srgb, var(--ft-bg-base) 32%, transparent);
+}
+
+:global(.ui-menu__list)::-webkit-scrollbar {
+  width: var(--ft-scrollbar-size);
+  height: var(--ft-scrollbar-size);
+}
+
+:global(.ui-menu__list)::-webkit-scrollbar-track {
+  background: var(--ft-scrollbar-track);
+  border-radius: var(--ft-radius-full);
+}
+
+:global(.ui-menu__list)::-webkit-scrollbar-thumb {
+  background: var(--ft-scrollbar-thumb);
+  border: 2px solid var(--ft-scrollbar-track);
+  border-radius: var(--ft-radius-full);
+}
+
+:global(.ui-menu__list)::-webkit-scrollbar-thumb:hover {
+  background: var(--ft-scrollbar-thumb-hover);
+}
+
+:global(.ui-menu__list)::-webkit-scrollbar-thumb:active {
+  background: var(--ft-scrollbar-thumb-active);
+}
+
+:global(.ui-menu__list),
+:global(.ui-menu__item),
+:global(.ui-menu__item-content) {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  background: transparent;
+}
+
+:global(.ui-menu__item-link) {
+  display: flex;
+  gap: var(--ft-space-2);
+  align-items: center;
+
+  padding: var(--ft-space-2) var(--ft-space-3);
+
+  color: var(--ft-text-primary);
+
+  border-radius: var(--ft-radius-md);
+}
+
+:global(.ui-menu__item-link:hover),
+:global(.ui-menu__item-content:hover) {
+  background: color-mix(in srgb, var(--ft-primary-400) 12%, transparent);
+}
+</style>

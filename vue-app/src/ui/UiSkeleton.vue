@@ -42,4 +42,27 @@ const mergedPt = computed(() =>
 .ui-skeleton {
   border-radius: var(--ft-radius-lg);
 }
+
+:deep(.ui-skeleton__root),
+:deep(.p-skeleton) {
+  background-image: linear-gradient(
+    90deg,
+    var(--ft-skeleton-shimmer-start) 0%,
+    var(--ft-skeleton-shimmer-mid) 50%,
+    var(--ft-skeleton-shimmer-end) 100%
+  );
+  background-size: 200% 100%;
+  border-radius: var(--ft-radius-lg);
+  animation: ui-skeleton-loading 1.5s ease-in-out infinite;
+}
+
+@keyframes ui-skeleton-loading {
+  0% {
+    background-position: 200% 0;
+  }
+
+  100% {
+    background-position: -200% 0;
+  }
+}
 </style>

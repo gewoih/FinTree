@@ -68,3 +68,28 @@ const mergedPt = computed(() =>
     </template>
   </Drawer>
 </template>
+
+<style scoped>
+:global(.ui-drawer__mask),
+:global(.p-drawer-mask) {
+  position: fixed;
+  z-index: var(--ft-z-drawer);
+  inset: 0;
+
+  background: var(--ft-bg-overlay);
+  backdrop-filter: blur(2px);
+}
+
+:global(.ui-drawer__root),
+:global(.p-drawer) {
+  color: var(--ft-text-primary);
+  background: var(--ft-surface-raised);
+  border-inline-end: 1px solid var(--ft-border-default);
+  box-shadow: var(--ft-shadow-lg);
+}
+
+:global(.ui-drawer__content),
+:global(.p-drawer .p-drawer-content) {
+  padding: 0;
+}
+</style>
