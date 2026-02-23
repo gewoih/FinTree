@@ -147,19 +147,13 @@ const mergedPt = computed(() =>
 <style scoped>
 /* ── Root trigger (not teleported) ── */
 
+/*
+ * NOTE: .ui-select__root and data-v-xxx land on the same DOM element via
+ * PrimeVue PT + Vue fallthrough, so :deep(.ui-select__root) would compile
+ * to [data-v-xxx] .ui-select__root (descendant combinator) and never match.
+ * All root-element styles live here on .ui-select instead.
+ */
 .ui-select {
-  overflow: hidden;
-  width: 100%;
-  min-height: var(--ft-control-height);
-  border-radius: var(--ft-radius-lg);
-}
-
-.ui-select:focus-within {
-  outline: 3px solid var(--ft-focus-ring);
-  outline-offset: 3px;
-}
-
-:deep(.ui-select__root) {
   overflow: hidden;
   display: flex;
   align-items: center;
@@ -178,6 +172,11 @@ const mergedPt = computed(() =>
     border-color var(--ft-transition-fast),
     background-color var(--ft-transition-fast),
     box-shadow var(--ft-transition-fast);
+}
+
+.ui-select:focus-within {
+  outline: 3px solid var(--ft-focus-ring);
+  outline-offset: 3px;
 }
 
 :deep(.ui-select__label) {
@@ -226,30 +225,30 @@ const mergedPt = computed(() =>
   transition: transform var(--ft-transition-fast);
 }
 
-:deep(.ui-select__root:not(.p-disabled):hover .ui-select__dropdown) {
+.ui-select:not(.p-disabled):hover :deep(.ui-select__dropdown) {
   color: var(--ft-text-primary);
   background: color-mix(in srgb, var(--ft-surface-overlay) 65%, transparent);
 }
 
-:deep(.ui-select__root.p-select-open .ui-select__dropdown svg) {
+.ui-select.p-select-open :deep(.ui-select__dropdown svg) {
   transform: rotate(180deg);
 }
 
-:deep(.ui-select__root.ui-field--invalid) {
+.ui-select.ui-field--invalid {
   border-color: var(--ft-danger-500);
   box-shadow: 0 0 0 1px color-mix(in srgb, var(--ft-danger-500) 18%, transparent);
 }
 
-:deep(.ui-select__root.ui-field--invalid .ui-select__dropdown) {
+.ui-select.ui-field--invalid :deep(.ui-select__dropdown) {
   border-inline-start-color: color-mix(in srgb, var(--ft-danger-500) 42%, var(--ft-border-soft));
 }
 
-:deep(.ui-select__root:not(.p-disabled):hover) {
+.ui-select:not(.p-disabled):hover {
   background: color-mix(in srgb, var(--ft-surface-overlay) 72%, var(--ft-surface-base));
   border-color: var(--ft-border-strong);
 }
 
-:deep(.ui-select__root.p-select-open) {
+.ui-select.p-select-open {
   border-color: var(--ft-border-strong);
   box-shadow:
     0 0 0 1px color-mix(in srgb, var(--ft-primary-300) 38%, transparent),
@@ -260,6 +259,7 @@ const mergedPt = computed(() =>
 
 :global(.ui-select-overlay) {
   isolation: isolate;
+  z-index: var(--ft-z-dropdown);
 
   overflow: hidden;
 

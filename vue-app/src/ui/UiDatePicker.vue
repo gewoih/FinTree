@@ -177,15 +177,14 @@ const mergedPt = computed(() =>
 
 <style scoped>
 /* ── Root trigger wrapper ── */
-.ui-date-picker {
-  overflow: hidden;
-  width: 100%;
-  min-height: var(--ft-control-height);
-  border-radius: var(--ft-radius-lg);
-}
 
-:deep(.ui-date-picker__root),
-:deep(.p-datepicker) {
+/*
+ * NOTE: .ui-date-picker__root and data-v-xxx land on the same DOM element via
+ * PrimeVue PT + Vue fallthrough, so :deep(.ui-date-picker__root) would compile
+ * to [data-v-xxx] .ui-date-picker__root (descendant combinator) and never match.
+ * All root-element styles live here on .ui-date-picker instead.
+ */
+.ui-date-picker {
   overflow: hidden;
   display: flex;
   align-items: center;
@@ -206,36 +205,29 @@ const mergedPt = computed(() =>
     box-shadow var(--ft-transition-fast);
 }
 
-:deep(.ui-date-picker__root:focus-within),
-:deep(.p-datepicker:focus-within) {
+.ui-date-picker:focus-within {
   outline: 3px solid var(--ft-focus-ring);
   outline-offset: 3px;
 }
 
-:deep(.ui-date-picker__root:not(.p-disabled):hover),
-:deep(.p-datepicker:not(.p-disabled):hover) {
+.ui-date-picker:not(.p-disabled):hover {
   background: color-mix(in srgb, var(--ft-surface-overlay) 72%, var(--ft-surface-base));
   border-color: var(--ft-border-strong);
 }
 
-:deep(.ui-date-picker__root.p-inputwrapper-focus),
-:deep(.p-datepicker.p-inputwrapper-focus) {
+.ui-date-picker.p-inputwrapper-focus {
   border-color: var(--ft-border-strong);
   box-shadow:
     0 0 0 1px color-mix(in srgb, var(--ft-primary-300) 38%, transparent),
     var(--ft-shadow-sm);
 }
 
-:deep(.ui-date-picker__root.ui-field--invalid),
-:deep(.p-datepicker.p-invalid),
-:deep(.p-datepicker[aria-invalid='true']) {
+.ui-date-picker.ui-field--invalid {
   border-color: var(--ft-danger-500);
   box-shadow: 0 0 0 1px color-mix(in srgb, var(--ft-danger-500) 18%, transparent);
 }
 
-:deep(.ui-date-picker__root.ui-field--invalid .ui-date-picker__dropdown),
-:deep(.p-datepicker.p-invalid .p-datepicker-dropdown),
-:deep(.p-datepicker[aria-invalid='true'] .p-datepicker-dropdown) {
+.ui-date-picker.ui-field--invalid :deep(.ui-date-picker__dropdown) {
   border-inline-start-color: color-mix(in srgb, var(--ft-danger-500) 42%, var(--ft-border-soft));
 }
 
@@ -298,8 +290,7 @@ const mergedPt = computed(() =>
   transition: transform var(--ft-transition-fast);
 }
 
-:deep(.ui-date-picker__root:not(.p-disabled):hover .ui-date-picker__dropdown),
-:deep(.p-datepicker:not(.p-disabled):hover .p-datepicker-dropdown) {
+.ui-date-picker:not(.p-disabled):hover :deep(.ui-date-picker__dropdown) {
   color: var(--ft-text-primary);
   background: color-mix(in srgb, var(--ft-surface-overlay) 65%, transparent);
 }
@@ -308,6 +299,7 @@ const mergedPt = computed(() =>
 :global(.ui-date-picker-overlay),
 :global(.p-datepicker-panel) {
   isolation: isolate;
+  z-index: var(--ft-z-dropdown);
 
   overflow: hidden;
 
