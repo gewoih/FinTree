@@ -12,7 +12,6 @@ const props = defineProps<{
   optionValue?: string;
   placeholder?: string;
   disabled?: boolean;
-  panelClass?: unknown;
   overlayClass?: unknown;
   appendTo?: string | HTMLElement;
   invalid?: boolean;
@@ -33,7 +32,6 @@ const isInvalid = computed(() =>
     attrs,
   })
 );
-const mergedPanelClass = computed(() => ['ui-select-overlay', props.panelClass]);
 const mergedOverlayClass = computed(() => ['ui-select-overlay', props.overlayClass]);
 
 const mergedPt = computed(() =>
@@ -114,7 +112,6 @@ const mergedPt = computed(() =>
     :option-value="props.optionValue"
     :placeholder="props.placeholder"
     :disabled="props.disabled"
-    :panel-class="mergedPanelClass"
     :overlay-class="mergedOverlayClass"
     :append-to="props.appendTo ?? 'body'"
     :invalid="isInvalid"

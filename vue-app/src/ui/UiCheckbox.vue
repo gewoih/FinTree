@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { computed, useAttrs } from 'vue';
 import Checkbox from 'primevue/checkbox';
+import type { CheckboxPassThroughOptions } from 'primevue/checkbox';
 import { mergePt } from './prime/pt';
 
 const props = withDefaults(
@@ -10,7 +11,7 @@ const props = withDefaults(
     binary?: boolean;
     inputId?: string;
     unstyled?: boolean;
-    pt?: Record<string, unknown>;
+    pt?: CheckboxPassThroughOptions;
   }>(),
   {
     modelValue: null,
@@ -35,7 +36,7 @@ const mergedPt = computed(() =>
       box: { class: 'ui-checkbox__box p-checkbox-box' },
       input: { class: 'ui-checkbox__input p-checkbox-input' },
       icon: { class: 'ui-checkbox__icon p-checkbox-icon' },
-    } as Record<string, unknown>,
+    } as CheckboxPassThroughOptions,
     props.pt
   )
 );
@@ -60,14 +61,13 @@ const handleUpdateModelValue = (value: unknown) => {
 </template>
 
 <style scoped>
+/*
+ * NOTE: .ui-checkbox__root and data-v-xxx land on the same DOM element via
+ * PrimeVue PT + Vue fallthrough, so :deep(.ui-checkbox__root) would compile
+ * to [data-v-xxx] .ui-checkbox__root (descendant combinator) and never match.
+ * Root-element styles and state selectors live on .ui-checkbox instead.
+ */
 .ui-checkbox {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-}
-
-:deep(.ui-checkbox__root),
-:deep(.p-checkbox) {
   position: relative;
 
   display: inline-flex;
@@ -78,8 +78,7 @@ const handleUpdateModelValue = (value: unknown) => {
   height: 1.25rem;
 }
 
-:deep(.ui-checkbox__input),
-:deep(.p-checkbox .p-checkbox-input) {
+:deep(.ui-checkbox__input) {
   cursor: pointer;
 
   position: absolute;
@@ -90,8 +89,7 @@ const handleUpdateModelValue = (value: unknown) => {
   opacity: 0;
 }
 
-:deep(.ui-checkbox__box),
-:deep(.p-checkbox .p-checkbox-box) {
+:deep(.ui-checkbox__box) {
   display: grid;
   place-items: center;
 
@@ -110,27 +108,23 @@ const handleUpdateModelValue = (value: unknown) => {
     color var(--ft-transition-fast);
 }
 
-:deep(.ui-checkbox__icon),
-:deep(.p-checkbox .p-checkbox-icon) {
+:deep(.ui-checkbox__icon) {
   width: 0.85rem;
   height: 0.85rem;
 }
 
-:deep(.ui-checkbox__root[data-p-checked='true'] .ui-checkbox__box),
-:deep(.p-checkbox.p-checkbox-checked .p-checkbox-box) {
+.ui-checkbox[data-p-checked='true'] :deep(.ui-checkbox__box) {
   color: var(--ft-text-inverse);
   background: var(--ft-primary-400);
   border-color: var(--ft-primary-400);
 }
 
-:deep(.ui-checkbox__root[data-p-disabled='true']),
-:deep(.p-checkbox.p-disabled) {
+.ui-checkbox[data-p-disabled='true'] {
   cursor: not-allowed;
   opacity: 0.6;
 }
 
-:deep(.ui-checkbox__root:has(.ui-checkbox__input:focus-visible) .ui-checkbox__box),
-:deep(.p-checkbox:has(.p-checkbox-input:focus-visible) .p-checkbox-box) {
+:deep(.ui-checkbox__input:focus-visible ~ .ui-checkbox__box) {
   outline: 3px solid var(--ft-focus-ring);
   outline-offset: 3px;
 }

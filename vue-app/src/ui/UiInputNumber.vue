@@ -7,7 +7,7 @@ import type {
   InputNumberPassThroughOptions,
 } from 'primevue/inputnumber';
 import { resolveFieldInvalidState } from './prime/field-state';
-import { mergeClassNames, mergePt } from './prime/pt';
+import { mergePt } from './prime/pt';
 
 const props = defineProps<{
   modelValue?: number | null;
@@ -44,10 +44,7 @@ const mergedPt = computed(() =>
   mergePt(
     {
       root: {
-        class: mergeClassNames(
-          'ui-input-number__root p-inputnumber p-component p-inputwrapper',
-          isInvalid.value ? 'ui-field--invalid' : undefined
-        ),
+        class: 'ui-input-number__root p-inputnumber p-component p-inputwrapper',
       },
       pcInputText: {
         root: {
@@ -79,7 +76,7 @@ const handleBlur = (event: InputNumberBlurEvent) => {
 <template>
   <InputNumber
     v-bind="attrs"
-    class="ui-input-number"
+    :class="['ui-input-number', { 'ui-field--invalid': isInvalid }]"
     :model-value="props.modelValue"
     :disabled="props.disabled"
     :placeholder="props.placeholder"
@@ -100,15 +97,8 @@ const handleBlur = (event: InputNumberBlurEvent) => {
 </template>
 
 <style scoped>
+/* Root container — all root styles on the fallthrough class, NOT :deep() */
 .ui-input-number {
-  overflow: hidden;
-  width: 100%;
-  min-height: var(--ft-control-height);
-  border-radius: var(--ft-radius-lg);
-}
-
-/* Root container */
-:deep(.ui-input-number__root) {
   overflow: hidden;
   display: flex;
   align-items: center;
@@ -130,24 +120,24 @@ const handleBlur = (event: InputNumberBlurEvent) => {
 }
 
 /* Focus ring */
-:deep(.ui-input-number__root:focus-within) {
+.ui-input-number:focus-within {
   outline: 3px solid var(--ft-focus-ring);
   outline-offset: 3px;
 }
 
 /* Hover state */
-:deep(.ui-input-number__root:not(.p-disabled):hover) {
+.ui-input-number:not(.p-disabled):hover {
   background: color-mix(in srgb, var(--ft-surface-overlay) 72%, var(--ft-surface-base));
   border-color: var(--ft-border-strong);
 }
 
 /* Invalid state */
-:deep(.ui-input-number__root.ui-field--invalid) {
+.ui-input-number.ui-field--invalid {
   border-color: var(--ft-danger-500);
   box-shadow: 0 0 0 1px color-mix(in srgb, var(--ft-danger-500) 18%, transparent);
 }
 
-/* Inner input element */
+/* Inner input element — :deep() correct (child element) */
 :deep(.ui-input-number__input) {
   width: 100%;
   min-height: calc(var(--ft-control-height) - 2px);

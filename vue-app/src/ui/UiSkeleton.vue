@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed } from 'vue';
+import { computed, useAttrs } from 'vue';
 import Skeleton from 'primevue/skeleton';
 import type { SkeletonPassThroughOptions } from 'primevue/skeleton';
 import { mergePt } from './prime/pt';
@@ -12,6 +12,7 @@ const props = defineProps<{
   pt?: SkeletonPassThroughOptions;
 }>();
 
+const attrs = useAttrs();
 
 const mergedPt = computed(() =>
   mergePt(
@@ -27,6 +28,7 @@ const mergedPt = computed(() =>
 
 <template>
   <Skeleton
+    v-bind="attrs"
     class="ui-skeleton"
     role="status"
     aria-busy="true"
@@ -40,11 +42,6 @@ const mergedPt = computed(() =>
 
 <style scoped>
 .ui-skeleton {
-  border-radius: var(--ft-radius-lg);
-}
-
-:deep(.ui-skeleton__root),
-:deep(.p-skeleton) {
   background-image: linear-gradient(
     90deg,
     var(--ft-skeleton-shimmer-start) 0%,

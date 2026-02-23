@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { computed, useAttrs } from 'vue';
 import ToggleSwitch from 'primevue/toggleswitch';
+import type { ToggleSwitchPassThroughOptions } from 'primevue/toggleswitch';
 import { mergePt } from './prime/pt';
 
 const props = withDefaults(
@@ -9,7 +10,7 @@ const props = withDefaults(
     disabled?: boolean;
     inputId?: string;
     unstyled?: boolean;
-    pt?: Record<string, unknown>;
+    pt?: ToggleSwitchPassThroughOptions;
   }>(),
   {
     modelValue: false,
@@ -33,7 +34,7 @@ const mergedPt = computed(() =>
       slider: { class: 'ui-toggle-switch__slider p-toggleswitch-slider' },
       handle: { class: 'ui-toggle-switch__handle p-toggleswitch-handle' },
       input: { class: 'ui-toggle-switch__input p-toggleswitch-input' },
-    } as Record<string, unknown>,
+    } as ToggleSwitchPassThroughOptions,
     props.pt
   )
 );
@@ -57,14 +58,12 @@ const handleUpdateModelValue = (value: unknown) => {
 </template>
 
 <style scoped>
+/*
+ * NOTE: .ui-toggle-switch__root and data-v-xxx land on the same DOM element via
+ * PrimeVue PT + Vue fallthrough. Root-element styles and state selectors live
+ * on .ui-toggle-switch instead.
+ */
 .ui-toggle-switch {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-}
-
-:deep(.ui-toggle-switch__root),
-:deep(.p-toggleswitch) {
   cursor: pointer;
 
   position: relative;
@@ -76,8 +75,7 @@ const handleUpdateModelValue = (value: unknown) => {
   height: 1.4rem;
 }
 
-:deep(.ui-toggle-switch__input),
-:deep(.p-toggleswitch .p-toggleswitch-input) {
+:deep(.ui-toggle-switch__input) {
   cursor: pointer;
 
   position: absolute;
@@ -89,8 +87,7 @@ const handleUpdateModelValue = (value: unknown) => {
   opacity: 0;
 }
 
-:deep(.ui-toggle-switch__slider),
-:deep(.p-toggleswitch .p-toggleswitch-slider) {
+:deep(.ui-toggle-switch__slider) {
   pointer-events: none;
 
   position: relative;
@@ -106,8 +103,7 @@ const handleUpdateModelValue = (value: unknown) => {
   transition: background-color var(--ft-transition-fast);
 }
 
-:deep(.ui-toggle-switch__handle),
-:deep(.p-toggleswitch .p-toggleswitch-handle) {
+:deep(.ui-toggle-switch__handle) {
   pointer-events: none;
 
   position: absolute;
@@ -123,29 +119,20 @@ const handleUpdateModelValue = (value: unknown) => {
   transition: transform var(--ft-transition-fast);
 }
 
-:deep(.ui-toggle-switch__root[data-p-checked='true'] .ui-toggle-switch__slider),
-:deep(.p-toggleswitch.p-toggleswitch-checked .p-toggleswitch-slider) {
+.ui-toggle-switch[data-p-checked='true'] :deep(.ui-toggle-switch__slider) {
   background: var(--ft-primary-400);
 }
 
-:deep(.ui-toggle-switch__root[data-p-checked='true'] .ui-toggle-switch__handle),
-:deep(.p-toggleswitch.p-toggleswitch-checked .p-toggleswitch-handle) {
+.ui-toggle-switch[data-p-checked='true'] :deep(.ui-toggle-switch__handle) {
   transform: translateX(1.1rem);
 }
 
-:deep(.ui-toggle-switch__root[data-p-disabled='true']),
-:deep(.p-toggleswitch.p-disabled) {
+.ui-toggle-switch[data-p-disabled='true'] {
   cursor: not-allowed;
   opacity: 0.6;
 }
 
-:deep(.ui-toggle-switch__root[data-p-disabled='true'] .ui-toggle-switch__input),
-:deep(.p-toggleswitch.p-disabled .p-toggleswitch-input) {
-  cursor: not-allowed;
-}
-
-:deep(.ui-toggle-switch__root:has(.ui-toggle-switch__input:focus-visible) .ui-toggle-switch__slider),
-:deep(.p-toggleswitch:has(input:focus-visible) .p-toggleswitch-slider) {
+:deep(.ui-toggle-switch__input:focus-visible ~ .ui-toggle-switch__slider) {
   outline: 3px solid var(--ft-focus-ring);
   outline-offset: 3px;
 }

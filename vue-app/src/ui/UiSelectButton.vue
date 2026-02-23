@@ -69,22 +69,20 @@ const mergedPt = computed(() =>
 </template>
 
 <style scoped>
+/*
+ * NOTE: .ui-select-button__root lands on the same DOM element as .ui-select-button
+ * via PT + Vue fallthrough. Layout styles live on .ui-select-button directly.
+ */
 .ui-select-button {
-  overflow: hidden;
-  width: 100%;
-  min-height: var(--ft-control-height);
-  border-radius: var(--ft-radius-lg);
-}
-
-:deep(.ui-select-button__root) {
   overflow: hidden;
   display: inline-flex;
   flex-wrap: wrap;
   gap: var(--ft-space-1);
 
   width: 100%;
+  min-height: var(--ft-control-height);
 
-  border-radius: inherit;
+  border-radius: var(--ft-radius-lg);
 }
 
 :deep(.ui-select-button__button) {

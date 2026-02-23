@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { computed, useAttrs } from 'vue';
 import Message from 'primevue/message';
+import type { MessagePassThroughOptions } from 'primevue/message';
 import { mergePt } from './prime/pt';
 
 defineOptions({ inheritAttrs: false });
@@ -13,7 +14,7 @@ const props = withDefaults(
     life?: number;
     sticky?: boolean;
     unstyled?: boolean;
-    pt?: Record<string, unknown>;
+    pt?: MessagePassThroughOptions;
   }>(),
   {
     severity: 'info',
@@ -36,7 +37,7 @@ const mergedPt = computed(() =>
       text: { class: 'ui-message__text' },
       icon: { class: 'ui-message__icon' },
       closeButton: { class: 'ui-message__close' },
-    } as Record<string, unknown>,
+    } as MessagePassThroughOptions,
     props.pt
   )
 );
@@ -59,8 +60,14 @@ const mergedPt = computed(() =>
 </template>
 
 <style scoped>
-:deep(.ui-message__root),
-:deep(.p-message) {
+/*
+ * NOTE: .ui-message__root lands on the same DOM element as .ui-message via
+ * PT + Vue fallthrough. All root-element styles live on .ui-message directly.
+ * Severity variants use data-p-severity attribute (PrimeVue v4 unstyled mode).
+ */
+.ui-message {
+  padding: var(--ft-space-3);
+
   color: var(--ft-text-primary);
 
   background: linear-gradient(
@@ -75,15 +82,11 @@ const mergedPt = computed(() =>
     0 2px 8px color-mix(in srgb, var(--ft-bg-base) 32%, transparent);
 }
 
-:deep(.p-message) {
-  padding: var(--ft-space-3);
-}
-
-:deep(.p-message.p-message-error) {
+.ui-message[data-p-severity='error'] {
   border-color: color-mix(in srgb, var(--ft-danger-500) 35%, transparent);
 }
 
-:deep(.p-message.p-message-info) {
+.ui-message[data-p-severity='info'] {
   border-color: color-mix(in srgb, var(--ft-info-500) 35%, transparent);
 }
 </style>
