@@ -33,11 +33,9 @@
 
 ## Modals & Interaction Patterns
 
-- [ ] `FT-TODO-020` Style PrimeVue Select (dropdown) component to match design system
-  **Acceptance criteria:** dropdown panel background uses `--ft-surface-*` tokens; option items have correct hover, selected, and focused states using `--ft-primary-*` tokens; item spacing matches design density; scrollbar is styled consistently; panel border and shadow match other overlay surfaces.
+- [x] `FT-TODO-020` Style PrimeVue Select (dropdown) — complete; all acceptance criteria met in UiSelect.vue
 
-- [ ] `FT-TODO-021` Style PrimeVue DatePicker (calendar) component to match design system
-  **Acceptance criteria:** navigation prev/next buttons use design system icon-button styling (no raw gray background); month/year header buttons match surface tokens; day cells have correct hover and selected states using `--ft-primary-*` tokens; "Today" and "Clear" footer buttons use the standard secondary button style; day-of-week labels use `--ft-text-muted`; calendar panel border and shadow match other overlay surfaces.
+- [x] `FT-TODO-021` Style PrimeVue DatePicker (calendar) — complete; all acceptance criteria met in UiDatePicker.vue
 
 ---
 
