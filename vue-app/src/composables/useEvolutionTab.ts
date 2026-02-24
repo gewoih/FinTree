@@ -3,6 +3,7 @@ import { apiService } from '@/services/api.service'
 import { useUserStore } from '@/stores/user'
 import type { ViewState } from '@/types/view-state'
 import type { EvolutionMonthDto } from '@/types'
+import { resolveLatestDeltaPoint } from '@/composables/evolutionDeltaPoint'
 import {
   EVOLUTION_GROUPS,
   EVOLUTION_KPI_META,
@@ -143,25 +144,14 @@ export function useEvolutionTab() {
   })
 
   function resolveLatestPoint(kpi: EvolutionKpi) {
-    for (let index = data.value.length - 1; index >= 0; index -= 1) {
-      const month = data.value.at(index)
-      if (!month) continue
+    const point = resolveLatestDeltaPoint(data.value, month => extractKpiValue(month, kpi))
+    if (!point) return null
 
-      const value = extractKpiValue(month, kpi)
-      if (value == null) continue
-
-      const prevMonthKey = toPreviousCalendarMonth(month.year, month.month)
-      const previousMonth = monthMap.value.get(toMonthKey(prevMonthKey.year, prevMonthKey.month))
-      const previousValue = extractKpiValue(previousMonth, kpi)
-
-      return {
-        month,
-        value,
-        delta: previousValue == null ? null : value - previousValue,
-      }
+    return {
+      month: point.currentMonth,
+      value: point.currentValue,
+      delta: point.delta,
     }
-
-    return null
   }
 
   function resolveMonthDelta(month: EvolutionMonthDto, kpi: EvolutionKpi): number | null {
