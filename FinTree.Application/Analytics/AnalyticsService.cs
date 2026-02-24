@@ -32,7 +32,7 @@ public sealed class AnalyticsService(
         var monthStartUtc = new DateTime(year, month, 1, 0, 0, 0, DateTimeKind.Utc);
         var monthEndUtc = monthStartUtc.AddMonths(1);
         var previousMonthStartUtc = monthStartUtc.AddMonths(-1);
-        var deltaWindowStartUtc = monthStartUtc.AddMonths(-3);
+        var deltaWindowStartUtc = monthStartUtc.AddMonths(-1);
         var nowUtc = DateTime.UtcNow;
 
         var categories = (await userService.GetUserCategoriesAsync(ct))
