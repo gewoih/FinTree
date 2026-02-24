@@ -2,10 +2,10 @@
 import { computed } from 'vue';
 import type { ChartData, ChartDataset, TooltipItem } from 'chart.js';
 import UiButton from '../../ui/UiButton.vue';
-import UiSelect from '../../ui/UiSelect.vue';
 import Skeleton from 'primevue/skeleton';
 import Message from 'primevue/message';
 import Chart from 'primevue/chart';
+import Select from 'primevue/select';
 import type { ExpenseGranularity } from '@/types/analytics.ts';
 import { useChartColors } from '@/composables/useChartColors.ts';
 
@@ -135,12 +135,13 @@ const chartOptions = computed(() => ({
           </button>
         </div>
       </div>
-      <UiSelect
+      <Select
         :model-value="granularity"
         :options="granularityOptions"
         option-label="label"
         option-value="value"
         class="bars-card__select"
+        append-to="body"
         @update:model-value="emit('update:granularity', $event as ExpenseGranularity)"
       />
     </div>

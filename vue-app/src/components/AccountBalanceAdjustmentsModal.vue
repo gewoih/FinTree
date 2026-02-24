@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue'
+import Dialog from 'primevue/dialog'
 import { useToast } from 'primevue/usetoast'
-import UiDialog from '@/ui/UiDialog.vue'
 import UiInputNumber from '@/ui/UiInputNumber.vue'
 
 import type { Account } from '../types'
@@ -105,13 +105,14 @@ watch(
 </script>
 
 <template>
-  <UiDialog
+  <Dialog
     :visible="props.visible"
     :closable="false"
     modal
     class="adjustments-dialog"
     :style="{ width: '420px' }"
     :breakpoints="{ '640px': 'calc(100vw - 1rem)' }"
+    append-to="body"
     dismissable-mask
     @update:visible="val => emit('update:visible', val)"
   >
@@ -166,7 +167,7 @@ watch(
         </UiButton>
       </div>
     </div>
-  </UiDialog>
+  </Dialog>
 </template>
 
 <style scoped>

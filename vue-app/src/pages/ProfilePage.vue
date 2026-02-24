@@ -7,7 +7,7 @@ import { useProfilePage } from '../composables/useProfilePage';
 import UiButton from '../ui/UiButton.vue';
 import UiCard from '../ui/UiCard.vue';
 import UiInputText from '../ui/UiInputText.vue';
-import UiSelect from '../ui/UiSelect.vue';
+import Select from 'primevue/select';
 import Skeleton from 'primevue/skeleton';
 
 const {
@@ -138,7 +138,7 @@ const {
                   class="settings-label"
                   for="profileCurrency"
                 >Базовая валюта</label>
-                <UiSelect
+                <Select
                   id="profileCurrency"
                   v-model="form.baseCurrencyCode"
                   :options="currencyOptions"
@@ -146,6 +146,7 @@ const {
                   option-value="value"
                   placeholder="Выберите валюту"
                   :disabled="isLoading || isReadOnlyMode"
+                  append-to="body"
                 />
                 <small class="helper-text">
                   <template v-if="isLoading">Загрузка доступных валют…</template>

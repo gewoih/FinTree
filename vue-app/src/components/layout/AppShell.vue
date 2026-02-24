@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import UiDrawer from '@/ui/UiDrawer.vue'
+import Drawer from 'primevue/drawer'
 import ThemeToggle from '../common/ThemeToggle.vue'
 import UiButton from '../../ui/UiButton.vue'
 import BottomTabBar from './BottomTabBar.vue'
@@ -93,11 +93,14 @@ const {
     </div>
 
     <!-- Mobile Drawer (hidden on desktop) -->
-    <UiDrawer
+    <Drawer
       v-if="isDrawerVisible"
       v-model:visible="sidebarVisible"
       position="left"
       class="app-shell__drawer-mobile"
+      append-to="body"
+      :auto-z-index="true"
+      :base-z-index="0"
     >
       <template #header>
         <div class="app-shell__drawer-header">
@@ -177,7 +180,7 @@ const {
           </button>
         </div>
       </div>
-    </UiDrawer>
+    </Drawer>
 
     <!-- Desktop Sidebar -->
     <aside
@@ -284,3 +287,24 @@ const {
 </template>
 
 <style scoped src="../../styles/components/app-shell.css"></style>
+<style scoped>
+:global(.p-drawer-mask) {
+  position: fixed;
+  z-index: var(--ft-z-drawer);
+  inset: 0;
+
+  background: var(--ft-bg-overlay);
+  backdrop-filter: blur(2px);
+}
+
+:global(.p-drawer) {
+  color: var(--ft-text-primary);
+  background: var(--ft-surface-raised);
+  border-inline-end: 1px solid var(--ft-border-default);
+  box-shadow: var(--ft-shadow-lg);
+}
+
+:global(.p-drawer .p-drawer-content) {
+  padding: 0;
+}
+</style>

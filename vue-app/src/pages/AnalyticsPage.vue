@@ -12,7 +12,8 @@ import SummaryStrip from '../components/analytics/SummaryStrip.vue';
 import PageHeader from '../components/common/PageHeader.vue';
 import PageContainer from '../components/layout/PageContainer.vue';
 import { useAnalyticsPage } from '../composables/useAnalyticsPage';
-import UiDatePicker from '@/ui/UiDatePicker.vue';
+import type { MonthPickerInstance } from '@/types/analytics-page';
+import DatePicker from 'primevue/datepicker';
 import Skeleton from 'primevue/skeleton';
 
 const activeTab = ref<'current' | 'evolution'>('current');
@@ -58,6 +59,10 @@ const {
   retryDashboard,
   updateSelectedMonth,
 } = useAnalyticsPage();
+
+const bindMonthPickerRef = (instance: unknown) => {
+  monthPickerRef.value = instance as MonthPickerInstance | null;
+};
 </script>
 
 <template>
@@ -92,14 +97,15 @@ const {
           >
             <i class="pi pi-chevron-right" />
           </button>
-          <UiDatePicker
-            ref="monthPickerRef"
+          <DatePicker
+            :ref="bindMonthPickerRef"
             :model-value="selectedMonth"
             view="month"
             date-format="MM yy"
             :manual-input="false"
             :max-date="maxMonthDate"
             class="analytics-month-selector__picker"
+            append-to="body"
             @update:model-value="updateSelectedMonth"
           />
         </div>

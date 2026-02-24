@@ -1,14 +1,14 @@
 <script setup lang="ts">
 /* eslint-disable max-lines */
 import { computed, ref, watch, watchEffect } from 'vue';
+import Dialog from 'primevue/dialog';
 import { useToast } from 'primevue/usetoast';
 import { useConfirmDialog } from '../composables/useConfirmDialog';
-import UiDialog from '../ui/UiDialog.vue';
 import UiButton from '../ui/UiButton.vue';
-import UiDatePicker from '../ui/UiDatePicker.vue';
 import UiInputNumber from '../ui/UiInputNumber.vue';
 import UiInputText from '../ui/UiInputText.vue';
-import UiSelect from '../ui/UiSelect.vue';
+import DatePicker from 'primevue/datepicker';
+import Select from 'primevue/select';
 import SelectButton from 'primevue/selectbutton';
 import type {
   CreateTransferPayload,
@@ -373,12 +373,13 @@ const handleDelete = () => {
 </script>
 
 <template>
-  <UiDialog
+  <Dialog
     :visible="props.visible"
     :modal="true"
     class="txn-dialog"
     :closable="false"
     :dismissable-mask="true"
+    append-to="body"
     role="dialog"
     aria-modal="true"
     aria-labelledby="txn-dialog-title"
@@ -471,12 +472,13 @@ const handleDelete = () => {
               Категория
             </label>
 
-            <UiSelect
+            <Select
               id="category"
               v-model="selectedCategory"
               :options="filteredCategories"
               option-label="name"
               placeholder="Выберите категорию"
+              append-to="body"
               required
               :disabled="props.readonly"
               class="w-full"
@@ -493,7 +495,7 @@ const handleDelete = () => {
                   <span>{{ slotProps.option.name }}</span>
                 </div>
               </template>
-            </UiSelect>
+            </Select>
 
             <small
               v-if="categoryError"
@@ -511,12 +513,13 @@ const handleDelete = () => {
               Счёт
             </label>
 
-            <UiSelect
+            <Select
               id="account"
               v-model="selectedAccount"
               :options="store.accounts"
               option-label="name"
               placeholder="Выберите счёт"
+              append-to="body"
               required
               :disabled="props.readonly"
               class="w-full"
@@ -535,7 +538,7 @@ const handleDelete = () => {
                   </span>
                 </div>
               </template>
-            </UiSelect>
+            </Select>
 
             <small
               v-if="accountError"
@@ -555,13 +558,14 @@ const handleDelete = () => {
               Дата
             </label>
 
-            <UiDatePicker
+            <DatePicker
               id="date"
               v-model="txnDate"
               date-format="dd.mm.yy"
               :show-icon="true"
               :select-other-months="true"
               :max-date="maxDate"
+              append-to="body"
               required
               :disabled="props.readonly"
               class="w-full txn-form__date-picker"
@@ -666,12 +670,13 @@ const handleDelete = () => {
           <!-- From block -->
           <div class="xfer-flow__block">
             <span class="xfer-flow__label">Откуда</span>
-            <UiSelect
+            <Select
               id="from-account"
               v-model="fromAccount"
               :options="store.accounts"
               option-label="name"
               placeholder="Выберите счёт"
+              append-to="body"
               :disabled="props.readonly"
               class="w-full"
             >
@@ -686,7 +691,7 @@ const handleDelete = () => {
                   </span>
                 </div>
               </template>
-            </UiSelect>
+            </Select>
             <div class="xfer-flow__amount-row">
               <UiInputNumber
                 id="from-amount"
@@ -713,12 +718,13 @@ const handleDelete = () => {
           <!-- To block -->
           <div class="xfer-flow__block">
             <span class="xfer-flow__label">Куда</span>
-            <UiSelect
+            <Select
               id="to-account"
               v-model="toAccount"
               :options="store.accounts.filter(acc => acc.id !== fromAccount?.id)"
               option-label="name"
               placeholder="Выберите счёт"
+              append-to="body"
               :disabled="props.readonly"
               class="w-full"
             >
@@ -733,7 +739,7 @@ const handleDelete = () => {
                   </span>
                 </div>
               </template>
-            </UiSelect>
+            </Select>
             <div
               v-if="!isSameCurrency"
               class="xfer-flow__amount-row"
@@ -787,13 +793,14 @@ const handleDelete = () => {
 
           <div class="xfer-form__field">
             <label for="transfer-date">Дата</label>
-            <UiDatePicker
+            <DatePicker
               id="transfer-date"
               v-model="xferDate"
               date-format="dd.mm.yy"
               :show-icon="true"
               :select-other-months="true"
               :max-date="xferToday"
+              append-to="body"
               :disabled="props.readonly"
               class="w-full"
             />
@@ -857,7 +864,7 @@ const handleDelete = () => {
         </div>
       </footer>
     </form>
-  </UiDialog>
+  </Dialog>
 </template>
 
 <style src="../styles/components/transaction-form.css"></style>

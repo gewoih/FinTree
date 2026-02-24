@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue';
-import UiDialog from '../ui/UiDialog.vue';
+import Dialog from 'primevue/dialog';
 import UiInputText from '../ui/UiInputText.vue';
 import SelectButton from 'primevue/selectbutton';
 import Checkbox from 'primevue/checkbox';
@@ -227,13 +227,14 @@ const handleDelete = () => {
 </script>
 
 <template>
-  <UiDialog
+  <Dialog
     :visible="props.visible"
     :closable="false"
     modal
     :dismissable-mask="true"
     :style="{ width: '560px' }"
     class="category-dialog"
+    append-to="body"
     @update:visible="val => emit('update:visible', val)"
   >
     <div class="category-dialog__container">
@@ -438,7 +439,7 @@ const handleDelete = () => {
         </div>
       </form>
     </div>
-  </UiDialog>
+  </Dialog>
 </template>
 
 <style scoped src="../styles/components/category-form-modal.css"></style>

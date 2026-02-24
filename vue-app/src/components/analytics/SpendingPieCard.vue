@@ -2,10 +2,10 @@
 import { computed } from 'vue';
 import type { ChartData, Plugin } from 'chart.js';
 import UiButton from '../../ui/UiButton.vue';
-import UiSelect from '../../ui/UiSelect.vue';
 import Skeleton from 'primevue/skeleton';
 import Message from 'primevue/message';
 import Chart from 'primevue/chart';
+import Select from 'primevue/select';
 import type { CategoryLegendItem, CategoryScope } from '../../types/analytics';
 import { useChartColors } from '../../composables/useChartColors';
 
@@ -125,12 +125,13 @@ const chartOptions = computed(() => ({
           </button>
         </div>
       </div>
-      <UiSelect
+      <Select
         :model-value="scope"
         :options="scopeOptions"
         option-label="label"
         option-value="value"
         class="donut-card__scope-select"
+        append-to="body"
         @update:model-value="emit('update:scope', $event as CategoryScope)"
       />
     </div>

@@ -2,8 +2,8 @@
 import { computed, ref } from 'vue';
 import type { Account, Category } from '../types';
 import UiInputText from '../ui/UiInputText.vue';
-import UiSelect from '../ui/UiSelect.vue';
-import UiDatePicker from '../ui/UiDatePicker.vue';
+import DatePicker from 'primevue/datepicker';
+import Select from 'primevue/select';
 import { useViewport } from '../composables/useViewport';
 
 const props = defineProps<{
@@ -121,27 +121,29 @@ const controlsVisible = computed(() => !isMobile.value || isOpen.value);
         />
       </div>
 
-      <UiSelect
+      <Select
         :model-value="props.selectedCategory"
         :options="categoryOptions"
         option-label="label"
         option-value="value"
         placeholder="Категория"
         class="transaction-filters__control"
+        append-to="body"
         @update:model-value="handleCategoryUpdate"
       />
 
-      <UiSelect
+      <Select
         :model-value="props.selectedAccount"
         :options="accountOptions"
         option-label="label"
         option-value="value"
         placeholder="Счёт"
         class="transaction-filters__control"
+        append-to="body"
         @update:model-value="handleAccountUpdate"
       />
 
-      <UiDatePicker
+      <DatePicker
         :model-value="props.dateRange"
         selection-mode="range"
         :manual-input="false"
@@ -149,6 +151,7 @@ const controlsVisible = computed(() => !isMobile.value || isOpen.value);
         placeholder="Период"
         show-button-bar
         class="transaction-filters__control"
+        append-to="body"
         @update:model-value="handleDateRangeUpdate"
       />
 
