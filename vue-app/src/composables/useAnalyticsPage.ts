@@ -3,7 +3,6 @@ import { useRouter } from 'vue-router';
 import type { OnboardingStep } from '../components/analytics/OnboardingStepper.vue';
 import { useUserStore } from '../stores/user';
 import { useFinanceStore } from '../stores/finance';
-import { useAnalytics } from './useAnalytics';
 import { useAnalyticsDashboardData } from './useAnalyticsDashboardData';
 import { isCategoriesOnboardingVisited, markCategoriesOnboardingVisited } from '../utils/onboarding';
 import {
@@ -26,7 +25,6 @@ export function useAnalyticsPage() {
   const userStore = useUserStore();
   const financeStore = useFinanceStore();
   const router = useRouter();
-  const { trackEvent } = useAnalytics();
   
   const now = new Date();
   const selectedMonth = ref<Date>(new Date(now.getFullYear(), now.getMonth(), 1));
@@ -134,13 +132,11 @@ export function useAnalyticsPage() {
       markCategoriesOnboardingVisited(currentUserId.value);
       hasVisitedCategoriesStep.value = true;
     }
-  
-    trackEvent('onboarding_step_click', { step: step.key });
+
     void router.push(step.actionTo);
   }
   
   async function handleSkipOnboarding() {
-    trackEvent('onboarding_skip');
     await userStore.skipOnboarding();
   }
   
@@ -271,10 +267,6 @@ export function useAnalyticsPage() {
       shouldLoadOnboardingState ? loadOnboardingTransactionsState() : Promise.resolve(),
       checkRetrospectiveBanner(),
     ]);
-  
-    if (shouldLoadOnboardingState) {
-      trackEvent('onboarding_start');
-    }
   });
 
   return {
