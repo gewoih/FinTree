@@ -347,16 +347,16 @@
   }
 
   .ft-input-shell {
-    --ft-input-shell-min-height: var(--ft-control-height);
-    --ft-input-shell-padding-x: var(--ft-space-3);
-    --ft-input-shell-padding-y: 0;
+    --ft-input-shell-min-height: var(--ft-form-control-height);
+    --ft-input-shell-padding-x: var(--ft-form-control-padding-x);
+    --ft-input-shell-padding-y: var(--ft-form-control-padding-y);
     --ft-input-shell-gap: var(--ft-space-2);
     --ft-input-shell-bg: var(--ft-surface-base);
     --ft-input-shell-border: var(--ft-border-default);
     --ft-input-shell-border-hover: var(--ft-border-strong);
     --ft-input-shell-border-focus: var(--ft-border-strong);
-    --ft-input-shell-radius: var(--ft-radius-md);
-    --ft-input-shell-focus-size: 3px;
+    --ft-input-shell-radius: var(--ft-radius-lg);
+    --ft-input-shell-focus-size: var(--ft-form-focus-ring-width);
 
     display: flex;
     gap: var(--ft-input-shell-gap);

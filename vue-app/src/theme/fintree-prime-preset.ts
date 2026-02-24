@@ -94,6 +94,11 @@ const primeOverridesCss = `
   .p-inputnumber-input::placeholder { color: var(--ft-text-tertiary); opacity: 1; }
   .p-inputnumber-input:disabled, .p-inputnumber.p-disabled { cursor: not-allowed; opacity: 0.6; }
 
+  .p-inputtext, .p-select, .p-datepicker .p-datepicker-input { min-height: var(--ft-form-control-height); font-size: var(--ft-text-base); }
+  .p-inputtext, .p-datepicker .p-datepicker-input { padding: var(--ft-form-control-padding-y) var(--ft-form-control-padding-x); line-height: var(--ft-leading-tight); }
+  .p-select .p-select-label { display: flex; align-items: center; min-height: calc(var(--ft-form-control-height) - 2px); padding: var(--ft-form-control-padding-y) var(--ft-form-control-padding-x); line-height: var(--ft-leading-tight); }
+  .p-select .p-select-dropdown, .p-datepicker .p-datepicker-dropdown { width: var(--ft-form-control-height); }
+
   .p-confirmdialog .p-dialog-close-button,
   .p-confirm-dialog .p-dialog-close-button {
     cursor: pointer;
@@ -193,27 +198,11 @@ const zincScale = {
 
 const surfaceScale = { 0: 'var(--ft-gray-50)', ...zincScale };
 
-const primaryScale = {
-  50: 'var(--ft-primary-50)',
-  100: 'var(--ft-primary-100)',
-  200: 'var(--ft-primary-200)',
-  300: 'var(--ft-primary-300)',
-  400: 'var(--ft-primary-400)',
-  500: 'var(--ft-primary-500)',
-  600: 'var(--ft-primary-600)',
-  700: 'var(--ft-primary-700)',
-  800: 'var(--ft-primary-800)',
-  900: 'var(--ft-primary-900)',
-  950: 'var(--ft-primary-950)',
-};
+const primaryScale = { 50: 'var(--ft-primary-50)', 100: 'var(--ft-primary-100)', 200: 'var(--ft-primary-200)', 300: 'var(--ft-primary-300)', 400: 'var(--ft-primary-400)', 500: 'var(--ft-primary-500)', 600: 'var(--ft-primary-600)', 700: 'var(--ft-primary-700)', 800: 'var(--ft-primary-800)', 900: 'var(--ft-primary-900)', 950: 'var(--ft-primary-950)' };
 
-const focusRing = {
-  width: '3px',
-  style: 'solid',
-  color: 'var(--ft-focus-ring)',
-  offset: '3px',
-  shadow: 'none',
-};
+const focusRing = { width: '3px', style: 'solid', color: 'var(--ft-focus-ring)', offset: '3px', shadow: 'none' };
+
+const formFocusRing = { width: 'var(--ft-form-focus-ring-width)', style: 'solid', color: 'var(--ft-focus-ring)', offset: 'var(--ft-form-focus-ring-offset)', shadow: 'none' };
 
 const formField = {
   background: 'var(--ft-surface-base)',
@@ -235,13 +224,13 @@ const formField = {
   floatLabelInvalidColor: 'var(--ft-danger-500)',
   iconColor: 'var(--ft-text-secondary)',
   shadow: 'none',
-  paddingX: 'var(--ft-space-4)',
-  paddingY: '0',
+  paddingX: 'var(--ft-form-control-padding-x)',
+  paddingY: 'var(--ft-form-control-padding-y)',
   borderRadius: 'var(--ft-radius-lg)',
-  focusRing,
+  focusRing: formFocusRing,
   transitionDuration: 'var(--ft-transition-fast)',
-  sm: { fontSize: 'var(--ft-text-sm)', paddingX: 'var(--ft-space-3)', paddingY: '0' },
-  lg: { fontSize: 'var(--ft-text-base)', paddingX: 'var(--ft-space-6)', paddingY: '0' },
+  sm: { fontSize: 'var(--ft-text-sm)', paddingX: 'var(--ft-space-3)', paddingY: 'var(--ft-form-control-padding-y)' },
+  lg: { fontSize: 'var(--ft-text-base)', paddingX: 'var(--ft-space-6)', paddingY: 'var(--ft-form-control-padding-y)' },
 };
 
 const sharedColorScheme = {
@@ -337,10 +326,10 @@ export const FinTreePrimePreset = definePreset(Aura, {
         color: 'var(--ft-text-primary)',
         disabledColor: 'var(--ft-text-disabled)',
         placeholderColor: 'var(--ft-text-tertiary)',
-        paddingX: 'var(--ft-space-4)',
-        paddingY: '0',
+        paddingX: 'var(--ft-form-control-padding-x)',
+        paddingY: 'var(--ft-form-control-padding-y)',
         borderRadius: 'var(--ft-radius-lg)',
-        focusRing,
+        focusRing: formFocusRing,
         transitionDuration: 'var(--ft-transition-fast)',
       },
     },
@@ -354,14 +343,14 @@ export const FinTreePrimePreset = definePreset(Aura, {
         color: 'var(--ft-text-primary)',
         disabledColor: 'var(--ft-text-disabled)',
         placeholderColor: 'var(--ft-text-tertiary)',
-        paddingX: 'var(--ft-space-4)',
-        paddingY: '0',
+        paddingX: 'var(--ft-form-control-padding-x)',
+        paddingY: 'var(--ft-form-control-padding-y)',
         borderRadius: 'var(--ft-radius-lg)',
-        focusRing,
+        focusRing: formFocusRing,
         transitionDuration: 'var(--ft-transition-fast)',
       },
       dropdown: {
-        width: 'var(--ft-control-height)',
+        width: 'var(--ft-form-control-height)',
         color: 'var(--ft-text-secondary)',
       },
       overlay: {
@@ -385,12 +374,12 @@ export const FinTreePrimePreset = definePreset(Aura, {
     datepicker: {
       root: { transitionDuration: 'var(--ft-transition-fast)' },
       dropdown: {
-        width: 'var(--ft-control-height)',
+        width: 'var(--ft-form-control-height)',
         borderColor: 'var(--ft-border-default)',
         hoverBorderColor: 'var(--ft-border-strong)',
         activeBorderColor: 'var(--ft-interactive-default)',
         borderRadius: 'var(--ft-radius-lg)',
-        focusRing,
+        focusRing: formFocusRing,
         background: 'var(--ft-surface-base)',
         hoverBackground: 'var(--ft-surface-overlay)',
         activeBackground: 'var(--ft-surface-overlay)',

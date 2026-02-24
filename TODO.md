@@ -15,16 +15,6 @@
 
 ---
 
-## Navigation & Layout
-
-- [ ] `FT-TODO-019` Fix tablet sidebar drawer styling
-  **Acceptance criteria:** the drawer close button is positioned correctly within the header (not floating outside it); drawer header, nav links, user card, and logout button match the design system tokens and spacing used in the desktop sidebar.
-
-- [ ] `FT-TODO-018` Strengthen bottom tab bar visual separation in light mode
-  **Acceptance criteria:** bottom tab bar is visually distinct from the page background in light mode without relying solely on `border-top` and `box-shadow` (e.g. via a slightly more distinct `--ft-surface-*` token or a stronger border).
-
----
-
 ## Modals & Interaction Patterns
 
 - [ ] `FT-TODO-032` Split TransactionForm.vue into smaller units and remove temporary `max-lines` suppression
@@ -32,20 +22,13 @@
 
 ---
 
-## CSS / Styling Technical Debt
-
-- [ ] `FT-TODO-023` Define visual style for UiBadge `secondary` severity
-  **Acceptance criteria:** `severity="secondary"` renders with a distinct background, color, and border using `--ft-*` tokens. Currently has no CSS rule — visually unstyled/inherited.
-
----
-
 ## Forms & Branding Alignment
 
-- [ ] `FT-TODO-034` Increase default field size for `UiInputText`, `UiSelect`, and `UiDatePicker` to match design baseline
+- [x] `FT-TODO-034` Increase default field size for `InputText`, `Select`, and `DatePicker` to match design baseline and WCAG
   **Acceptance criteria:** these wrappers use token-driven sizing that matches `DESIGN.md` form guidance and the target visual baseline (larger touch-friendly controls, consistent label/input spacing, min target size `44x44`).
 
-- [ ] `FT-TODO-035` Reduce focus ring thickness for form inputs while preserving accessibility contrast
-  **Acceptance criteria:** focused states in `UiInputText`, `UiSelect`, and `UiDatePicker` use a smaller token-driven ring/outline than current visuals, remain keyboard-visible, and keep non-text contrast at least `3:1` per `DESIGN.md`.
+- [x] `FT-TODO-035` Reduce focus ring thickness for form inputs while preserving accessibility contrast
+  **Acceptance criteria:** focused states in `InputText`, `Select`, and `DatePicker` use a smaller token-driven ring/outline than current visuals, remain keyboard-visible, and keep non-text contrast at least `3:1` per `DESIGN.md`.
 
 - [ ] `FT-TODO-036` Make net worth chart section in `InvestmentsPage.vue` fill available card height
   **Acceptance criteria:** the "Изменение капитала" chart area expands to use full available panel height (no large unused empty area), with responsive behavior intact at `360px` and desktop widths.
