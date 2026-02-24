@@ -345,6 +345,12 @@
   --ft-input-height-sm: 2.25rem;  /* 36px */
   --ft-input-height-md: 2.75rem;  /* 44px */
   --ft-input-height-lg: 3rem;     /* 48px */
+  --ft-form-control-height: 3rem; /* 48px — default form field baseline */
+  --ft-form-control-padding-x: var(--ft-space-4);
+  --ft-form-control-padding-y: 0;
+  --ft-form-field-stack-gap: var(--ft-space-3);
+  --ft-form-focus-ring-width: 2px;
+  --ft-form-focus-ring-offset: 2px;
   --ft-button-height-sm: 2.75rem;  /* 44px */
   --ft-button-height-md: 3rem;    /* 48px */
   --ft-button-height-lg: 3.25rem;  /* 52px */

@@ -9,7 +9,9 @@ using FinTree.Application.Transactions;
 using FinTree.Application.Transactions.Dto;
 using FinTree.Application.Users;
 using FinTree.Domain.Categories;
+using FinTree.Domain.Identity;
 using FinTree.Domain.Transactions;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 
@@ -18,6 +20,7 @@ namespace FinTree.Application.Telegram;
 public sealed partial class TelegramOperationsService(
     IAppDbContext context,
     CurrencyConverter currencyConverter,
+    UserManager<User> userManager,
     ILogger<TelegramOperationsService> logger)
 {
     private const string StartMessage =
@@ -259,7 +262,7 @@ public sealed partial class TelegramOperationsService(
 
     private async Task<List<CategoryRef>> LoadCategoriesAsync(Guid userId, CancellationToken ct)
     {
-        var userService = new UserService(context, new TelegramCurrentUser(userId));
+        var userService = new UserService(context, new TelegramCurrentUser(userId), userManager);
         var categories = await userService.GetUserCategoriesAsync(ct);
 
         var defaults = await context.TransactionCategories

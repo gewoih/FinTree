@@ -70,47 +70,9 @@
   display: flex;
 }
 
-.txn-form__type-control {
-  overflow: hidden;
-  display: flex;
-  gap: var(--ft-space-1);
-
-  width: 100%;
-  padding: var(--ft-space-1);
-
-  background: var(--ft-surface-base);
-  border: 1px solid var(--ft-border-default);
-  border-radius: var(--ft-radius-lg);
-
-  transition: border-color var(--ft-transition-fast), box-shadow var(--ft-transition-fast);
-}
-
-.txn-form__type-control:focus-within {
-  border-color: var(--ft-border-strong);
-  box-shadow: 0 0 0 2px var(--ft-focus-ring);
-}
-
-.txn-form__type-control .p-togglebutton {
-  flex: 1;
-
-  min-height: var(--ft-control-height);
-
-  color: var(--ft-text-secondary);
-
-  background: transparent;
-  border: 1px solid transparent;
-  border-radius: var(--ft-radius-md);
-}
-
-.txn-form__type-control .p-togglebutton:focus-visible {
-  outline: none;
-}
-
-.txn-form__type-control .p-togglebutton.p-togglebutton-checked {
-  color: var(--ft-text-primary);
-  background: color-mix(in srgb, var(--ft-primary-400) 12%, var(--ft-surface-base));
-  border-color: color-mix(in srgb, var(--ft-primary-400) 36%, var(--ft-border-default));
-  box-shadow: none;
+.txn-form__type-control.ft-select-button {
+  --ft-select-button-active-bg: color-mix(in srgb, var(--ft-primary-400) 12%, var(--ft-surface-base));
+  --ft-select-button-active-border: color-mix(in srgb, var(--ft-primary-400) 36%, var(--ft-border-default));
 }
 
 .txn-form__type-control .p-togglebutton:nth-of-type(1).p-togglebutton-checked {

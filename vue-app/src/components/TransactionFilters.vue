@@ -111,7 +111,7 @@ const controlsVisible = computed(() => !isMobile.value || isOpen.value);
       v-show="controlsVisible"
       class="transaction-filters__controls"
     >
-      <div class="transaction-filters__search">
+      <div class="transaction-filters__search ft-input-shell">
         <i class="pi pi-search" />
         <InputText
           :model-value="props.searchText"
@@ -240,53 +240,10 @@ const controlsVisible = computed(() => !isMobile.value || isOpen.value);
 }
 
 .transaction-filters__search {
-  display: flex;
-  gap: var(--ft-space-2);
-  align-items: center;
-
-  min-height: var(--ft-input-height-sm);
-  padding: 0 var(--ft-space-3);
-
-  background: var(--ft-surface-base);
-  border: 1px solid var(--ft-border-subtle);
-  border-radius: var(--ft-radius-md);
-
-  transition:
-    border-color var(--ft-transition-fast),
-    box-shadow var(--ft-transition-fast);
-}
-
-.transaction-filters__search:focus-within {
-  border-color: var(--ft-border-strong);
-  box-shadow:
-    0 0 0 3px var(--ft-focus-ring),
-    var(--ft-shadow-xs);
-}
-
-.transaction-filters__search i {
-  flex-shrink: 0;
-  font-size: var(--ft-text-sm);
-  color: var(--ft-text-tertiary);
-}
-
-.transaction-filters__search :deep(.ui-input),
-.transaction-filters__search :deep(.p-inputtext) {
-  flex: 1;
-
-  padding-left: 0;
-
-  background: transparent;
-  border: none;
-  box-shadow: none !important;
-}
-
-.transaction-filters__search :deep(.ui-input:focus),
-.transaction-filters__search :deep(.ui-input:focus-visible),
-.transaction-filters__search :deep(.p-inputtext:focus),
-.transaction-filters__search :deep(.p-inputtext:focus-visible) {
-  border: none !important;
-  outline: none;
-  box-shadow: none !important;
+  --ft-input-shell-min-height: var(--ft-input-height-sm);
+  --ft-input-shell-padding-x: var(--ft-space-3);
+  --ft-input-shell-border: var(--ft-border-subtle);
+  --ft-input-shell-border-hover: var(--ft-border-default);
 }
 
 .transaction-filters__control {

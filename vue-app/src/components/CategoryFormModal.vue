@@ -10,7 +10,7 @@ import type { Category, CategoryType } from '../types';
 import { CATEGORY_TYPE } from '../types';
 import { useFinanceStore } from '../stores/finance';
 import { useFormModal } from '../composables/useFormModal';
-import { CATEGORY_ICON_OPTIONS } from '../constants';
+import { getCategoryIconOptions } from '../constants';
 import UiButton from '../ui/UiButton.vue';
 import FormField from './common/FormField.vue';
 
@@ -58,9 +58,13 @@ const isMandatory = ref(false);
 const isDeleting = ref(false);
 
 const isEditMode = computed(() => Boolean(props.category));
-const isExpenseCategory = computed(
-  () => (categoryType.value ?? props.category?.type ?? props.defaultType) === CATEGORY_TYPE.Expense
+const activeCategoryType = computed<CategoryType>(
+  () => categoryType.value ?? props.category?.type ?? props.defaultType ?? CATEGORY_TYPE.Expense
 );
+const isExpenseCategory = computed(
+  () => activeCategoryType.value === CATEGORY_TYPE.Expense
+);
+const iconOptions = computed(() => getCategoryIconOptions(activeCategoryType.value, icon.value));
 const categoryTypeOptions = [
   { label: 'Доход', value: CATEGORY_TYPE.Income },
   { label: 'Расход', value: CATEGORY_TYPE.Expense },
@@ -294,7 +298,7 @@ const handleDelete = () => {
                 option-label="label"
                 option-value="value"
                 :allow-empty="false"
-                class="w-full"
+                class="w-full ft-select-button"
                 :disabled="props.readonly"
                 :aria-describedby="fieldAttrs['aria-describedby']"
                 :aria-invalid="fieldAttrs['aria-invalid']"
@@ -332,7 +336,7 @@ const handleDelete = () => {
                   :aria-invalid="fieldAttrs['aria-invalid']"
                 >
                   <button
-                    v-for="option in CATEGORY_ICON_OPTIONS"
+                    v-for="option in iconOptions"
                     :id="`icon-${option.value}`"
                     :key="option.value"
                     type="button"

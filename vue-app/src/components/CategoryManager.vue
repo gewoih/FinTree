@@ -94,7 +94,7 @@ defineExpose({
       <div class="categories-manager__controls">
         <SelectButton
           v-model="selectedCategoryType"
-          class="categories-toggle"
+          class="ft-select-button"
           :options="categoryTypeOptions"
           option-label="label"
           option-value="value"
@@ -224,12 +224,6 @@ defineExpose({
 .categories-manager__controls {
   display: flex;
   justify-content: flex-start;
-}
-
-.categories-toggle :deep(.p-button) {
-  min-height: 36px;
-  padding: 0 var(--ft-space-4);
-  font-size: var(--ft-text-sm);
 }
 
 .categories-manager__body {

@@ -29,17 +29,17 @@ CSS layer order:
 
 Ownership by file:
 - `vue-app/src/assets/design-tokens.css` — all `--ft-*` tokens. No visual rules.
-- `vue-app/src/style.css` — global reset, `html`/`body`, typography base, scrollbar
-- `vue-app/src/styles/theme.css` — shared layout patterns only (`.ft-card`, `.ft-section`, `.ft-stat`, etc.). Nothing PrimeVue-related.
-- `vue-app/src/ui/Ui*.vue` `<style scoped>` — 100% of that wrapper's visual contract. All `:deep()` for PrimeVue internals. This is the only place PrimeVue wrapper styles live.
-- `vue-app/src/styles/components/` — feature components too large for inline scoped styles (non-PrimeVue)
+- `vue-app/src/style.css` — global reset, `html`/`body`, typography base, scrollbar, and shared Prime utility classes where component tokens are insufficient (for example SelectButton contract).
+- `vue-app/src/styles/theme.css` — shared layout patterns (`.ft-card`, `.ft-section`, `.ft-stat`, etc.). No feature-specific Prime visual theming.
+- `vue-app/src/ui/Ui*.vue` `<style scoped>` — wrapper-level visual contracts and `:deep()` for internal Prime nodes when wrappers are used.
+- `vue-app/src/styles/components/` — feature components too large for inline scoped styles; may include Prime layout constraints, but not Prime visual state theming.
 - `vue-app/src/styles/pages/` — page-level layout only
 
 Rules:
 - **One component, one file.** A component's styles live only in that component's file.
 - When touching `UiButton`, edit `UiButton.vue` only. Never touch a shared file to fix a specific component's appearance.
 - Before editing any CSS: identify every file that contains styles for the target component. If more than one file, co-locate first, then make the visual change.
-- PrimeVue wrapper styles must never live in `theme.css`, `style.css`, or any shared CSS file.
+- Prime visual state theming must be centralized in the preset (`src/theme/fintree-prime-preset.ts`), wrappers, or explicit shared utility contracts in `style.css`.
 
 ### CSS Verification Gate
 
@@ -84,32 +84,24 @@ Rules:
 
 ## 5) PrimeVue (Styled Hybrid) Contract
 
-- All visual PrimeVue components are consumed via `vue-app/src/ui/*` wrappers only.
 - PrimeVue runtime config lives in `vue-app/src/main.ts`.
 - PrimeVue runs in styled mode with a custom preset bridge that maps to `--ft-*` tokens.
-- Wrappers must inherit global PrimeVue styling by default; local `unstyled` overrides are allowed only for targeted testing or compatibility edge cases.
+- Wrappers are preferred for shared UX/API contracts, but direct Prime component imports in feature files are allowed when a wrapper does not provide additional value.
+- Local `unstyled` overrides are allowed only for targeted testing or compatibility edge cases.
 
-Direct imports outside wrappers are allowed only for:
+Direct imports in feature files are allowed for PrimeVue components used by the app, plus core services/utilities:
 - `primevue/config`
 - `primevue/toastservice`
 - `primevue/confirmationservice`
 - `primevue/tooltip`
 - `primevue/usetoast`
 - `primevue/useconfirm`
-- `primevue/chart`
-- `primevue/checkbox`
-- `primevue/message`
-- `primevue/paginator`
-- `primevue/selectbutton`
-- `primevue/skeleton`
-- `primevue/tag`
-- `primevue/toggleswitch`
-- type-only `primevue/menuitem`
+- component imports from `primevue/*` (e.g. `dialog`, `inputtext`, `inputnumber`, `select`, `datepicker`, `chart`, `message`, `paginator`, `selectbutton`, `skeleton`, `tag`, `menu`, `drawer`, `datatable`, `column`, `checkbox`, `toggleswitch`)
+- type-only imports (e.g. `primevue/menuitem`)
 
-Wrapper rules:
+Styling rules:
 - PT (`pt` / `ptOptions` / `data-pc-section` driven theming) is not used in this codebase.
-- Wrappers own the public visual state API through token-driven presets and wrapper classes.
-- Visual states (`hover`, `focus`, `disabled`, `invalid`, `active`) are centralized in wrappers/shared layers.
+- Visual states (`hover`, `focus`, `disabled`, `invalid`, `active`) must be centralized in the preset, wrapper styles, or shared contracts; do not style these states ad hoc inside feature files.
 
 `:deep(.p-...)` rules:
 - Allowed in wrappers for internal Prime nodes.
@@ -164,9 +156,9 @@ Rules:
 
 ## 8) Forms and Validation UX
 
-- Field wrappers (`UiInputText`, `UiInputNumber`, `UiSelect`, `UiDatePicker`) must expose `invalid` and optional `error` props as the validation API.
-- Feature `pages/` and `components/` must not set `p-invalid` directly.
-- Shared invalid-state visuals are owned by field wrappers (`UiInputText`, `UiInputNumber`, `UiSelect`, `UiDatePicker`) and must stay token-driven.
+- Form controls must expose a clear validation API (`invalid` and optional `error`) either through wrappers or consistent direct component usage.
+- Feature `pages/` and `components/` must not set `p-invalid` classes manually.
+- Shared invalid-state visuals are token-driven and owned by preset/wrappers/shared contracts, not per-page ad hoc CSS.
 - Label, hint, error, and focus behavior must be visually consistent across screens.
 - Destructive actions require explicit user confirmation.
 

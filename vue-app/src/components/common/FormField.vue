@@ -92,7 +92,7 @@ const fieldAttrs = computed(() => ({
 .form-field {
   display: flex;
   flex-direction: column;
-  gap: var(--ft-space-2);
+  gap: var(--ft-form-field-stack-gap);
 }
 
 .form-field__label-row {
@@ -200,7 +200,7 @@ const fieldAttrs = computed(() => ({
   min-width: var(--ft-control-height);
   min-height: var(--ft-control-height);
 
-  font-size: 0.95rem;
+  font-size: var(--ft-text-base);
   color: var(--ft-text-muted);
   text-transform: none;
 

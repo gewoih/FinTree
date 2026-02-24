@@ -1,4 +1,5 @@
 // FinTree Application Constants
+import { CATEGORY_TYPE, type CategoryType } from '../types';
 
 export const APP_CONFIG = {
   name: 'FinTree',
@@ -387,3 +388,63 @@ export const CATEGORY_ICON_OPTIONS = PRIME_ICON_VALUES.map(value => ({
   label: value,
   value,
 }));
+
+const INCOME_CATEGORY_ICON_VALUES = [
+  'pi-briefcase',
+  'pi-wallet',
+  'pi-dollar',
+  'pi-chart-line',
+  'pi-building-columns',
+  'pi-credit-card',
+  'pi-money-bill',
+  'pi-verified',
+  'pi-gift',
+  'pi-star',
+  'pi-arrow-down-left',
+  'pi-plus-circle',
+] as const;
+
+const EXPENSE_CATEGORY_ICON_VALUES = [
+  'pi-shopping-cart',
+  'pi-shopping-bag',
+  'pi-home',
+  'pi-car',
+  'pi-heart',
+  'pi-bolt',
+  'pi-mobile',
+  'pi-ticket',
+  'pi-book',
+  'pi-wrench',
+  'pi-receipt',
+  'pi-arrow-up-right',
+] as const;
+
+const buildCategoryIconOptions = (values: readonly string[]) =>
+  values.map(value => ({
+    label: value,
+    value,
+  }));
+
+const INCOME_CATEGORY_ICON_OPTIONS = buildCategoryIconOptions(INCOME_CATEGORY_ICON_VALUES);
+const EXPENSE_CATEGORY_ICON_OPTIONS = buildCategoryIconOptions(EXPENSE_CATEGORY_ICON_VALUES);
+
+const LEGACY_CATEGORY_ICON_LOOKUP = new Set(CATEGORY_ICON_OPTIONS.map(option => option.value));
+
+export const getCategoryIconOptions = (
+  type: CategoryType | null | undefined,
+  currentIcon: string | null | undefined
+) => {
+  const curatedOptions = type === CATEGORY_TYPE.Income
+    ? INCOME_CATEGORY_ICON_OPTIONS
+    : EXPENSE_CATEGORY_ICON_OPTIONS;
+
+  if (!currentIcon || curatedOptions.some(option => option.value === currentIcon)) {
+    return curatedOptions;
+  }
+
+  if (!LEGACY_CATEGORY_ICON_LOOKUP.has(currentIcon)) {
+    return curatedOptions;
+  }
+
+  return [{ label: `${currentIcon} (legacy)`, value: currentIcon }, ...curatedOptions];
+};

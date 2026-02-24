@@ -7,6 +7,7 @@ using System.Threading.RateLimiting;
 using FinTree.Api;
 using FinTree.Application.Abstractions;
 using FinTree.Application.Accounts;
+using FinTree.Application.Admin;
 using FinTree.Application.Analytics;
 using FinTree.Application.Currencies;
 using FinTree.Application.Exceptions;
@@ -161,6 +162,7 @@ builder.Services.Configure<AuthOptions>(options =>
     options.RefreshTokenLifetimeDays = authOptions.RefreshTokenLifetimeDays;
 });
 builder.Services.Configure<TelegramAuthOptions>(builder.Configuration.GetSection("Telegram"));
+builder.Services.Configure<AdminOptions>(builder.Configuration.GetSection("Admin"));
 
 builder.Services.AddIdentity<User, Role>(o =>
     {
@@ -205,7 +207,10 @@ builder.Services.AddAuthentication(options =>
         };
     });
 
-builder.Services.AddAuthorization();
+builder.Services.AddAuthorization(options =>
+{
+    options.AddPolicy(AuthPolicies.OwnerOnly, policy => policy.RequireRole(AppRoleNames.Owner));
+});
 
 builder.Services.AddHttpContextAccessor();
 builder.Services.AddHttpClient();
@@ -232,9 +237,11 @@ builder.Services.AddScoped<AuthService>();
 builder.Services.AddScoped<ICurrentUser, HttpCurrentUser>();
 builder.Services.AddScoped<AnalyticsService>();
 builder.Services.AddScoped<RetrospectiveService>();
+builder.Services.AddScoped<AdminService>();
 builder.Services.AddScoped<CurrencyConverter>();
 builder.Services.AddScoped<TelegramOperationsService>();
 builder.Services.AddScoped<DatabaseInitializer>();
+builder.Services.AddScoped<OwnerRoleBootstrapper>();
 
 if (!string.IsNullOrWhiteSpace(telegramToken))
     builder.Services.AddHostedService<TelegramBotHostedService>();
@@ -307,5 +314,8 @@ await appDbContext.Database.MigrateAsync();
 
 var dbInitializer = serviceProvider.GetRequiredService<DatabaseInitializer>();
 await dbInitializer.SeedTransactionCategories();
+
+var ownerRoleBootstrapper = serviceProvider.GetRequiredService<OwnerRoleBootstrapper>();
+await ownerRoleBootstrapper.InitializeAsync();
 
 await app.RunAsync();

@@ -20,6 +20,7 @@ const {
   formattedSubscriptionPayments,
   hasChanges,
   isLoading,
+  isOwner,
   isPaymentHistoryOpen,
   isReadOnlyMode,
   isSaving,
@@ -28,6 +29,7 @@ const {
   subscriptionExpiresAtLabel,
   subscriptionPlans,
   userInitials,
+  goToAdminPanel,
   handleClearTelegram,
   handlePay,
   handleSubmit,
@@ -89,6 +91,33 @@ const {
         aria-labelledby="profile-tab"
       >
         <!-- Card 1: Profile (read-only, muted) -->
+        <UiCard
+          v-if="isOwner"
+          class="profile-card"
+          variant="outlined"
+          padding="lg"
+        >
+          <template #header>
+            <div class="card-header">
+              <h3 class="card-title">
+                Админ-панель
+              </h3>
+            </div>
+          </template>
+
+          <p class="profile-admin-panel__description">
+            Просматривайте ключевые метрики сервиса: пользователей, транзакции и операционную активность.
+          </p>
+
+          <div class="profile-admin-panel__actions">
+            <UiButton
+              label="Открыть админ-панель"
+              icon="pi pi-shield"
+              @click="goToAdminPanel"
+            />
+          </div>
+        </UiCard>
+
         <UiCard
           class="profile-card"
           variant="muted"

@@ -35,6 +35,7 @@ export function useProfilePage() {
     const isLoading = computed(() => isUserLoading.value || areCurrenciesLoading.value);
     const isSaving = computed(() => isUserSaving.value);
     const isSubscriptionActive = computed(() => hasActiveSubscription.value);
+    const isOwner = computed(() => currentUser.value?.isOwner === true);
     const subscriptionExpiresAtLabel = computed(() => {
         const raw = currentUser.value?.subscription?.expiresAtUtc;
         if (!raw) return null;
@@ -264,6 +265,10 @@ export function useProfilePage() {
         });
     }
 
+    function goToAdminPanel() {
+        void router.push('/admin');
+    }
+
     return {
         activeTab,
         areSubscriptionPaymentsLoading,
@@ -279,9 +284,11 @@ export function useProfilePage() {
         isSaving,
         isSubscriptionActive,
         isSubscriptionProcessing,
+        isOwner,
         subscriptionExpiresAtLabel,
         subscriptionPlans,
         userInitials,
+        goToAdminPanel,
         handleClearTelegram,
         handlePay,
         handleSubmit,

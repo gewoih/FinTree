@@ -3,11 +3,12 @@ using FinTree.Application.Exceptions;
 using FinTree.Application.Transactions.Dto;
 using FinTree.Domain.Identity;
 using FinTree.Domain.Subscriptions;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 
 namespace FinTree.Application.Users;
 
-public sealed class UserService(IAppDbContext context, ICurrentUser currentUser)
+public sealed class UserService(IAppDbContext context, ICurrentUser currentUser, UserManager<User> userManager)
 {
     public async Task<MeDto> GetCurrentUserDataAsync(CancellationToken ct)
     {
@@ -25,7 +26,8 @@ public sealed class UserService(IAppDbContext context, ICurrentUser currentUser)
 
         var nowUtc = DateTime.UtcNow;
         var (onboardingCompleted, onboardingSkipped) = await ResolveOnboardingStateAsync(userData, ct);
-        return MapMe(userData, nowUtc, onboardingCompleted, onboardingSkipped);
+        var isOwner = await userManager.IsInRoleAsync(userData, AppRoleNames.Owner);
+        return MapMe(userData, nowUtc, onboardingCompleted, onboardingSkipped, isOwner);
     }
 
     public async Task<MeDto> SimulateSubscriptionPaymentAsync(SimulateSubscriptionPaymentRequest request, CancellationToken ct)
@@ -66,7 +68,8 @@ public sealed class UserService(IAppDbContext context, ICurrentUser currentUser)
         await context.SaveChangesAsync(ct);
 
         var (onboardingCompleted, onboardingSkipped) = await ResolveOnboardingStateAsync(user, ct);
-        return MapMe(user, now, onboardingCompleted, onboardingSkipped);
+        var isOwner = await userManager.IsInRoleAsync(user, AppRoleNames.Owner);
+        return MapMe(user, now, onboardingCompleted, onboardingSkipped, isOwner);
     }
 
     public async Task<MeDto> SkipOnboardingAsync(CancellationToken ct)
@@ -82,7 +85,8 @@ public sealed class UserService(IAppDbContext context, ICurrentUser currentUser)
 
         var nowUtc = DateTime.UtcNow;
         var (onboardingCompleted, onboardingSkipped) = await ResolveOnboardingStateAsync(user, ct);
-        return MapMe(user, nowUtc, onboardingCompleted, onboardingSkipped);
+        var isOwner = await userManager.IsInRoleAsync(user, AppRoleNames.Owner);
+        return MapMe(user, nowUtc, onboardingCompleted, onboardingSkipped, isOwner);
     }
 
     public async Task MarkAsMainAsync(Guid accountId, CancellationToken ct = default)
@@ -129,7 +133,8 @@ public sealed class UserService(IAppDbContext context, ICurrentUser currentUser)
 
         var nowUtc = DateTime.UtcNow;
         var (onboardingCompleted, onboardingSkipped) = await ResolveOnboardingStateAsync(user, ct);
-        return MapMe(user, nowUtc, onboardingCompleted, onboardingSkipped);
+        var isOwner = await userManager.IsInRoleAsync(user, AppRoleNames.Owner);
+        return MapMe(user, nowUtc, onboardingCompleted, onboardingSkipped, isOwner);
     }
 
     public async Task<List<TransactionCategoryDto>> GetUserCategoriesAsync(CancellationToken ct)
@@ -205,7 +210,12 @@ public sealed class UserService(IAppDbContext context, ICurrentUser currentUser)
         return (hasMainAccount && hasTelegramLinked && hasFirstTransaction, user.OnboardingSkippedAtUtc != null);
     }
 
-    private static MeDto MapMe(User user, DateTime nowUtc, bool onboardingCompleted, bool onboardingSkipped)
+    private static MeDto MapMe(
+        User user,
+        DateTime nowUtc,
+        bool onboardingCompleted,
+        bool onboardingSkipped,
+        bool isOwner)
     {
         var isSubscriptionActive = user.HasActiveSubscription(nowUtc);
         var subscription = new SubscriptionInfoDto(
@@ -224,6 +234,7 @@ public sealed class UserService(IAppDbContext context, ICurrentUser currentUser)
             user.BaseCurrencyCode,
             subscription,
             onboardingCompleted,
-            onboardingSkipped);
+            onboardingSkipped,
+            isOwner);
     }
 }

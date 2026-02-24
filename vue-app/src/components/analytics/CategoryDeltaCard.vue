@@ -77,7 +77,7 @@ const formatPercent = (value: number | null) =>
           Изменения по категориям
         </h3>
         <button
-          v-tooltip="{ value: 'Какие категории расходов выросли или снизились по сравнению с прошлым месяцем. Помогает увидеть тренды.', event: 'click' }"
+          v-tooltip="{ value: 'Какие категории расходов выросли или снизились по сравнению с прошлым месяцем. Помогает увидеть тренды.', event: 'click', autoHide: false }"
           type="button"
           class="delta-card__hint"
           aria-label="Подсказка"

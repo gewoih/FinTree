@@ -63,7 +63,7 @@ const shareAccent = computed(() => {
           Пиковые дни
         </h3>
         <button
-          v-tooltip="{ value: 'Дни, когда расходы значительно превысили среднедневной уровень. Помогает выявить крупные разовые траты.', event: 'click' }"
+          v-tooltip="{ value: 'Дни, когда расходы значительно превысили среднедневной уровень. Помогает выявить крупные разовые траты.', event: 'click', autoHide: false }"
           type="button"
           class="peak-days__hint"
           aria-label="Подсказка"

@@ -241,6 +241,17 @@
   color: var(--ft-text-secondary);
 }
 
+.profile-admin-panel__description {
+  margin: 0;
+  font-size: var(--ft-text-sm);
+  color: var(--ft-text-secondary);
+}
+
+.profile-admin-panel__actions {
+  display: flex;
+  justify-content: flex-start;
+}
+
 /* Card 4: Collapsible payment history */
 .collapsible-header {
   cursor: pointer;

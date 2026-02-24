@@ -280,3 +280,129 @@
     }
   }
 }
+
+@layer components {
+  .ft-select-button.p-selectbutton {
+    --ft-select-button-bg: var(--ft-surface-base);
+    --ft-select-button-border: var(--ft-border-default);
+    --ft-select-button-border-hover: var(--ft-border-strong);
+    --ft-select-button-border-focus: var(--ft-border-strong);
+    --ft-select-button-active-bg: color-mix(in srgb, var(--ft-primary-500) 14%, var(--ft-surface-base));
+    --ft-select-button-active-border: color-mix(in srgb, var(--ft-primary-400) 42%, var(--ft-border-default));
+    --ft-select-button-active-color: var(--ft-text-primary);
+    --ft-select-button-inactive-color: var(--ft-text-secondary);
+    --ft-select-button-gap: var(--ft-space-1);
+    --ft-select-button-padding: var(--ft-space-1);
+    --ft-select-button-min-height: var(--ft-control-height);
+    --ft-select-button-font-size: var(--ft-text-sm);
+
+    overflow: hidden;
+    display: flex;
+    gap: var(--ft-select-button-gap);
+
+    width: 100%;
+    padding: var(--ft-select-button-padding);
+
+    background: var(--ft-select-button-bg);
+    border: 1px solid var(--ft-select-button-border);
+    border-radius: var(--ft-radius-lg);
+
+    transition: border-color var(--ft-transition-fast), box-shadow var(--ft-transition-fast), background-color var(--ft-transition-fast);
+  }
+
+  .ft-select-button.p-selectbutton:not(.p-disabled):hover {
+    border-color: var(--ft-select-button-border-hover);
+  }
+
+  .ft-select-button.p-selectbutton:focus-within {
+    border-color: var(--ft-select-button-border-focus);
+    box-shadow: 0 0 0 2px var(--ft-focus-ring);
+  }
+
+  .ft-select-button.p-selectbutton .p-togglebutton {
+    flex: 1;
+
+    min-height: var(--ft-select-button-min-height);
+    padding: 0 var(--ft-space-4);
+
+    font-size: var(--ft-select-button-font-size);
+    font-weight: var(--ft-font-medium);
+    color: var(--ft-select-button-inactive-color);
+
+    background: transparent;
+    border: 1px solid transparent;
+    border-radius: var(--ft-radius-md);
+    box-shadow: none;
+  }
+
+  .ft-select-button.p-selectbutton .p-togglebutton:focus-visible {
+    outline: none;
+  }
+
+  .ft-select-button.p-selectbutton .p-togglebutton.p-togglebutton-checked {
+    color: var(--ft-select-button-active-color);
+    background: var(--ft-select-button-active-bg);
+    border-color: var(--ft-select-button-active-border);
+    box-shadow: none;
+  }
+
+  .ft-input-shell {
+    --ft-input-shell-min-height: var(--ft-form-control-height);
+    --ft-input-shell-padding-x: var(--ft-form-control-padding-x);
+    --ft-input-shell-padding-y: var(--ft-form-control-padding-y);
+    --ft-input-shell-gap: var(--ft-space-2);
+    --ft-input-shell-bg: var(--ft-surface-base);
+    --ft-input-shell-border: var(--ft-border-default);
+    --ft-input-shell-border-hover: var(--ft-border-strong);
+    --ft-input-shell-border-focus: var(--ft-border-strong);
+    --ft-input-shell-radius: var(--ft-radius-lg);
+    --ft-input-shell-focus-size: var(--ft-form-focus-ring-width);
+
+    display: flex;
+    gap: var(--ft-input-shell-gap);
+    align-items: center;
+
+    min-height: var(--ft-input-shell-min-height);
+    padding: var(--ft-input-shell-padding-y) var(--ft-input-shell-padding-x);
+
+    background: var(--ft-input-shell-bg);
+    border: 1px solid var(--ft-input-shell-border);
+    border-radius: var(--ft-input-shell-radius);
+
+    transition: border-color var(--ft-transition-fast), box-shadow var(--ft-transition-fast);
+  }
+
+  .ft-input-shell:hover {
+    border-color: var(--ft-input-shell-border-hover);
+  }
+
+  .ft-input-shell:focus-within {
+    border-color: var(--ft-input-shell-border-focus);
+    box-shadow:
+      0 0 0 var(--ft-input-shell-focus-size) var(--ft-focus-ring),
+      var(--ft-shadow-xs);
+  }
+
+  .ft-input-shell i {
+    flex-shrink: 0;
+    font-size: var(--ft-text-sm);
+    color: var(--ft-text-tertiary);
+  }
+
+  .ft-input-shell :is(.ui-input, .p-inputtext) {
+    flex: 1;
+
+    width: 100%;
+    padding: 0;
+
+    background: transparent;
+    border: none;
+    box-shadow: none !important;
+  }
+
+  .ft-input-shell :is(.ui-input:focus, .ui-input:focus-visible, .p-inputtext:focus, .p-inputtext:focus-visible) {
+    border: none !important;
+    outline: none;
+    box-shadow: none !important;
+  }
+}

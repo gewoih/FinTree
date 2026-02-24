@@ -1,5 +1,12 @@
 import Aura from '@primeuix/themes/aura';
 import { definePreset } from '@primeuix/themes';
+import {
+  datePickerScheme,
+  inputNumberButtons,
+  messageScheme,
+  toastScheme,
+  tooltipRoot,
+} from './fintree-prime-component-schemes';
 
 const primeOverridesCss = `
 @layer overrides {
@@ -7,6 +14,10 @@ const primeOverridesCss = `
   [role='tooltip'], .p-tooltip { pointer-events: none; position: absolute; z-index: var(--ft-z-tooltip); }
   [role='tooltip'] > .p-tooltip-arrow, [role='tooltip'] > div:first-child { display: none; }
   [role='tooltip'] > .p-tooltip-text, [role='tooltip'] > div:last-child { border: 1px solid var(--ft-border-default); }
+
+  @media (pointer: coarse) {
+    [role='tooltip'], .p-tooltip { pointer-events: auto; }
+  }
 
   .p-dialog-mask {
     position: fixed;
@@ -82,6 +93,11 @@ const primeOverridesCss = `
 
   .p-inputnumber-input::placeholder { color: var(--ft-text-tertiary); opacity: 1; }
   .p-inputnumber-input:disabled, .p-inputnumber.p-disabled { cursor: not-allowed; opacity: 0.6; }
+
+  .p-inputtext, .p-select, .p-datepicker .p-datepicker-input { min-height: var(--ft-form-control-height); font-size: var(--ft-text-base); }
+  .p-inputtext, .p-datepicker .p-datepicker-input { padding: var(--ft-form-control-padding-y) var(--ft-form-control-padding-x); line-height: var(--ft-leading-tight); }
+  .p-select .p-select-label { display: flex; align-items: center; min-height: calc(var(--ft-form-control-height) - 2px); padding: var(--ft-form-control-padding-y) var(--ft-form-control-padding-x); line-height: var(--ft-leading-tight); }
+  .p-select .p-select-dropdown, .p-datepicker .p-datepicker-dropdown { width: var(--ft-form-control-height); }
 
   .p-confirmdialog .p-dialog-close-button,
   .p-confirm-dialog .p-dialog-close-button {
@@ -182,27 +198,11 @@ const zincScale = {
 
 const surfaceScale = { 0: 'var(--ft-gray-50)', ...zincScale };
 
-const primaryScale = {
-  50: 'var(--ft-primary-50)',
-  100: 'var(--ft-primary-100)',
-  200: 'var(--ft-primary-200)',
-  300: 'var(--ft-primary-300)',
-  400: 'var(--ft-primary-400)',
-  500: 'var(--ft-primary-500)',
-  600: 'var(--ft-primary-600)',
-  700: 'var(--ft-primary-700)',
-  800: 'var(--ft-primary-800)',
-  900: 'var(--ft-primary-900)',
-  950: 'var(--ft-primary-950)',
-};
+const primaryScale = { 50: 'var(--ft-primary-50)', 100: 'var(--ft-primary-100)', 200: 'var(--ft-primary-200)', 300: 'var(--ft-primary-300)', 400: 'var(--ft-primary-400)', 500: 'var(--ft-primary-500)', 600: 'var(--ft-primary-600)', 700: 'var(--ft-primary-700)', 800: 'var(--ft-primary-800)', 900: 'var(--ft-primary-900)', 950: 'var(--ft-primary-950)' };
 
-const focusRing = {
-  width: '3px',
-  style: 'solid',
-  color: 'var(--ft-focus-ring)',
-  offset: '3px',
-  shadow: 'none',
-};
+const focusRing = { width: '3px', style: 'solid', color: 'var(--ft-focus-ring)', offset: '3px', shadow: 'none' };
+
+const formFocusRing = { width: 'var(--ft-form-focus-ring-width)', style: 'solid', color: 'var(--ft-focus-ring)', offset: 'var(--ft-form-focus-ring-offset)', shadow: 'none' };
 
 const formField = {
   background: 'var(--ft-surface-base)',
@@ -224,13 +224,13 @@ const formField = {
   floatLabelInvalidColor: 'var(--ft-danger-500)',
   iconColor: 'var(--ft-text-secondary)',
   shadow: 'none',
-  paddingX: 'var(--ft-space-4)',
-  paddingY: '0',
+  paddingX: 'var(--ft-form-control-padding-x)',
+  paddingY: 'var(--ft-form-control-padding-y)',
   borderRadius: 'var(--ft-radius-lg)',
-  focusRing,
+  focusRing: formFocusRing,
   transitionDuration: 'var(--ft-transition-fast)',
-  sm: { fontSize: 'var(--ft-text-sm)', paddingX: 'var(--ft-space-3)', paddingY: '0' },
-  lg: { fontSize: 'var(--ft-text-base)', paddingX: 'var(--ft-space-6)', paddingY: '0' },
+  sm: { fontSize: 'var(--ft-text-sm)', paddingX: 'var(--ft-space-3)', paddingY: 'var(--ft-form-control-padding-y)' },
+  lg: { fontSize: 'var(--ft-text-base)', paddingX: 'var(--ft-space-6)', paddingY: 'var(--ft-form-control-padding-y)' },
 };
 
 const sharedColorScheme = {
@@ -292,44 +292,7 @@ const sharedColorScheme = {
     submenuIcon: { color: 'var(--ft-text-secondary)', focusColor: 'var(--ft-text-primary)', activeColor: 'var(--ft-text-primary)' },
   },
 };
-
-const tooltipRoot = { root: { background: 'var(--ft-surface-raised)', color: 'var(--ft-text-primary)' } };
-const inputNumberButtons = {
-  button: {
-    background: 'transparent',
-    hoverBackground: 'var(--ft-surface-overlay)',
-    activeBackground: 'var(--ft-surface-overlay)',
-    borderColor: 'var(--ft-border-default)',
-    hoverBorderColor: 'var(--ft-border-strong)',
-    activeBorderColor: 'var(--ft-border-strong)',
-    color: 'var(--ft-text-secondary)',
-    hoverColor: 'var(--ft-text-primary)',
-    activeColor: 'var(--ft-text-primary)',
-  },
-};
-
-const toastShadow = '0 18px 32px color-mix(in srgb, var(--ft-bg-base) 60%, transparent), 0 2px 8px color-mix(in srgb, var(--ft-bg-base) 32%, transparent)';
-const toastBackground = 'linear-gradient(180deg, color-mix(in srgb, var(--ft-surface-overlay) 92%, transparent) 0%, var(--ft-surface-raised) 100%)';
-
-const makeToastTone = (borderColor: string) => ({
-  background: toastBackground,
-  borderColor,
-  color: 'var(--ft-text-primary)',
-  detailColor: 'var(--ft-text-secondary)',
-  shadow: toastShadow,
-  closeButton: { hoverBackground: 'var(--ft-surface-overlay)', focusRing: { color: borderColor, shadow: 'none' } },
-});
-
-const toastScheme = {
-  root: { blur: '2px' },
-  info: makeToastTone('var(--ft-info-500)'),
-  success: makeToastTone('var(--ft-success-500)'),
-  warn: makeToastTone('var(--ft-warning-500)'),
-  error: makeToastTone('var(--ft-danger-500)'),
-};
-
 const semanticScheme = { surface: surfaceScale, ...sharedColorScheme };
-
 export const FinTreePrimePreset = definePreset(Aura, {
   primitive: { zinc: zincScale },
   semantic: {
@@ -338,6 +301,95 @@ export const FinTreePrimePreset = definePreset(Aura, {
     focusRing,
   },
   components: {
+    button: {
+      root: {
+        borderRadius: 'var(--ft-radius-lg)',
+        roundedBorderRadius: 'var(--ft-radius-full)',
+        gap: 'var(--ft-space-2)',
+        paddingX: 'var(--ft-space-4)',
+        paddingY: '0',
+        iconOnlyWidth: 'var(--ft-button-height-sm)',
+        sm: { fontSize: 'var(--ft-text-sm)', paddingX: 'var(--ft-space-3)', paddingY: '0', iconOnlyWidth: 'var(--ft-button-height-sm)' },
+        lg: { fontSize: 'var(--ft-text-base)', paddingX: 'var(--ft-space-6)', paddingY: '0', iconOnlyWidth: 'var(--ft-button-height-lg)' },
+        label: { fontWeight: 'var(--ft-font-semibold)' },
+        focusRing,
+        transitionDuration: 'var(--ft-transition-fast)',
+      },
+    },
+    inputtext: {
+      root: {
+        background: 'var(--ft-surface-base)',
+        borderColor: 'var(--ft-border-default)',
+        hoverBorderColor: 'var(--ft-border-strong)',
+        focusBorderColor: 'var(--ft-interactive-default)',
+        invalidBorderColor: 'var(--ft-danger-500)',
+        color: 'var(--ft-text-primary)',
+        disabledColor: 'var(--ft-text-disabled)',
+        placeholderColor: 'var(--ft-text-tertiary)',
+        paddingX: 'var(--ft-form-control-padding-x)',
+        paddingY: 'var(--ft-form-control-padding-y)',
+        borderRadius: 'var(--ft-radius-lg)',
+        focusRing: formFocusRing,
+        transitionDuration: 'var(--ft-transition-fast)',
+      },
+    },
+    select: {
+      root: {
+        background: 'var(--ft-surface-base)',
+        borderColor: 'var(--ft-border-default)',
+        hoverBorderColor: 'var(--ft-border-strong)',
+        focusBorderColor: 'var(--ft-interactive-default)',
+        invalidBorderColor: 'var(--ft-danger-500)',
+        color: 'var(--ft-text-primary)',
+        disabledColor: 'var(--ft-text-disabled)',
+        placeholderColor: 'var(--ft-text-tertiary)',
+        paddingX: 'var(--ft-form-control-padding-x)',
+        paddingY: 'var(--ft-form-control-padding-y)',
+        borderRadius: 'var(--ft-radius-lg)',
+        focusRing: formFocusRing,
+        transitionDuration: 'var(--ft-transition-fast)',
+      },
+      dropdown: {
+        width: 'var(--ft-form-control-height)',
+        color: 'var(--ft-text-secondary)',
+      },
+      overlay: {
+        background: 'var(--ft-surface-raised)',
+        borderColor: 'var(--ft-border-default)',
+        borderRadius: 'var(--ft-radius-lg)',
+        color: 'var(--ft-text-primary)',
+        shadow: 'var(--ft-shadow-lg)',
+      },
+      option: {
+        focusBackground: 'var(--ft-surface-overlay)',
+        selectedBackground: 'color-mix(in srgb, var(--ft-primary-500) 18%, transparent)',
+        selectedFocusBackground: 'color-mix(in srgb, var(--ft-primary-500) 26%, transparent)',
+        color: 'var(--ft-text-primary)',
+        focusColor: 'var(--ft-text-primary)',
+        selectedColor: 'var(--ft-text-primary)',
+        selectedFocusColor: 'var(--ft-text-primary)',
+        borderRadius: 'var(--ft-radius-md)',
+      },
+    },
+    datepicker: {
+      root: { transitionDuration: 'var(--ft-transition-fast)' },
+      dropdown: {
+        width: 'var(--ft-form-control-height)',
+        borderColor: 'var(--ft-border-default)',
+        hoverBorderColor: 'var(--ft-border-strong)',
+        activeBorderColor: 'var(--ft-interactive-default)',
+        borderRadius: 'var(--ft-radius-lg)',
+        focusRing: formFocusRing,
+        background: 'var(--ft-surface-base)',
+        hoverBackground: 'var(--ft-surface-overlay)',
+        activeBackground: 'var(--ft-surface-overlay)',
+        color: 'var(--ft-text-secondary)',
+        hoverColor: 'var(--ft-text-primary)',
+        activeColor: 'var(--ft-text-primary)',
+      },
+      inputIcon: { color: 'var(--ft-text-secondary)' },
+      colorScheme: { light: datePickerScheme, dark: datePickerScheme },
+    },
     tooltip: {
       root: {
         maxWidth: 'min(20rem, calc(100vw - (var(--ft-space-4) * 2)))',
@@ -401,6 +453,25 @@ export const FinTreePrimePreset = definePreset(Aura, {
       },
       currentPageReport: { color: 'var(--ft-text-secondary)' },
       jumpToPageInput: { maxWidth: 'var(--ft-container-xs)' },
+    },
+    message: {
+      root: {
+        borderRadius: 'var(--ft-radius-lg)',
+        borderWidth: '1px',
+        transitionDuration: 'var(--ft-transition-fast)',
+      },
+      content: { padding: 'var(--ft-space-3)', gap: 'var(--ft-space-2)' },
+      text: { fontSize: 'var(--ft-text-sm)', fontWeight: 'var(--ft-font-medium)' },
+      icon: { size: 'var(--ft-text-base)' },
+      closeButton: { width: '2rem', height: '2rem', borderRadius: 'var(--ft-radius-md)', focusRing },
+      closeIcon: { size: '1rem' },
+      colorScheme: { light: messageScheme, dark: messageScheme },
+    },
+    selectbutton: {
+      root: {
+        borderRadius: 'var(--ft-radius-lg)',
+        invalidBorderColor: 'var(--ft-danger-500)',
+      },
     },
     toast: {
       root: {
