@@ -137,7 +137,7 @@ public sealed class AuthService(
         await context.SaveChangesAsync(ct);
         await transaction.CommitAsync(ct);
 
-        var accessToken = GenerateAccessToken(storedToken.User);
+        var accessToken = await GenerateAccessTokenAsync(storedToken.User);
         return new AuthResponse(accessToken, nextRefreshValue, storedToken.User.Email!, storedToken.User.Id);
     }
 
@@ -157,15 +157,19 @@ public sealed class AuthService(
         await context.SaveChangesAsync(ct);
     }
 
-    private string GenerateAccessToken(User user)
+    private async Task<string> GenerateAccessTokenAsync(User user)
     {
-        var claims = new[]
+        var roleClaims = (await userManager.GetRolesAsync(user))
+            .Select(role => new Claim(ClaimTypes.Role, role));
+
+        var claims = new List<Claim>
         {
             new Claim(JwtRegisteredClaimNames.Sub, user.Id.ToString()),
             new Claim(JwtRegisteredClaimNames.Email, user.Email!),
             new Claim(ClaimTypes.NameIdentifier, user.Id.ToString()),
             new Claim(ClaimTypes.Name, user.UserName)
         };
+        claims.AddRange(roleClaims);
 
         var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_authOptions.JwtSecretKey));
         var credentials = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
@@ -190,7 +194,7 @@ public sealed class AuthService(
         await context.RefreshTokens.AddAsync(refreshToken, ct);
         await context.SaveChangesAsync(ct);
 
-        var accessToken = GenerateAccessToken(user);
+        var accessToken = await GenerateAccessTokenAsync(user);
         return new AuthResponse(accessToken, refreshTokenValue, user.Email!, user.Id);
     }
 

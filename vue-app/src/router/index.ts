@@ -1,11 +1,13 @@
 import { createRouter, createWebHistory } from 'vue-router';
 import { useAuthStore } from '../stores/auth';
+import { useUserStore } from '../stores/user';
 
 declare module 'vue-router' {
   interface RouteMeta {
     title?: string;
     public?: boolean;
     requiresAuth?: boolean;
+    requiresOwner?: boolean;
   }
 }
 
@@ -109,6 +111,12 @@ export const router = createRouter({
       meta: { title: 'Профиль', requiresAuth: true },
     },
     {
+      path: '/admin',
+      name: 'admin',
+      component: () => import('../pages/AdminPage.vue'),
+      meta: { title: 'Админ-панель', requiresAuth: true, requiresOwner: true },
+    },
+    {
       path: '/expenses',
       redirect: '/transactions',
     },
@@ -139,6 +147,14 @@ router.beforeEach(async to => {
 
   if (to.meta.requiresAuth && !isAuthenticated) {
     return '/login';
+  }
+
+  if (to.meta.requiresOwner) {
+    const userStore = useUserStore();
+    const isOwner = userStore.currentUser?.isOwner === true;
+    if (!isOwner) {
+      return '/profile';
+    }
   }
 
   if ((to.name === 'login' || to.name === 'register') && isAuthenticated) {

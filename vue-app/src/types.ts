@@ -298,6 +298,34 @@ export interface AnalyticsDashboardDto {
     readiness: AnalyticsReadinessDto;
 }
 
+export interface AdminKpisDto {
+    totalUsers: number;
+    activeSubscriptions: number;
+    activeSubscriptionsRatePercent: number;
+    onboardingCompletedUsers: number;
+    onboardingCompletionRatePercent: number;
+    totalAccounts: number;
+    totalTransactions: number;
+    transactionsLast30Days: number;
+}
+
+export interface AdminUserSnapshotDto {
+    userId: string;
+    email: string | null;
+    name: string;
+    isOwner: boolean;
+    hasActiveSubscription: boolean;
+    isOnboardingCompleted: boolean;
+    isTelegramLinked: boolean;
+    transactionsCount: number;
+    lastTransactionAtUtc: string | null;
+}
+
+export interface AdminOverviewDto {
+    kpis: AdminKpisDto;
+    users: AdminUserSnapshotDto[];
+}
+
 export interface CurrentUserDto {
     id: string;
     name: string;
@@ -308,6 +336,7 @@ export interface CurrentUserDto {
     subscription: SubscriptionInfoDto;
     onboardingCompleted: boolean;
     onboardingSkipped: boolean;
+    isOwner: boolean;
 }
 
 export interface SubscriptionInfoDto {

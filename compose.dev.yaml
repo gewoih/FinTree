@@ -31,6 +31,7 @@ services:
       Telegram__BotToken: ${TELEGRAM_BOT_TOKEN}
       ConnectionStrings__DefaultConnection: ${CONNECTION_STRINGS_DEFAULT}
       FxRates__ApiKey: ${FXRATES_API_KEY}
+      Admin__OwnerEmailsCsv: ${ADMIN_OWNER_EMAILS}
       Cors__AllowedOrigins__0: "http://localhost:8080"
       Cors__AllowedOrigins__1: "http://localhost:8082"
     ports:

@@ -12,6 +12,7 @@ import type {
     UpdateCategoryPayload,
     Currency,
     AnalyticsDashboardDto,
+    AdminOverviewDto,
     CurrentUserDto,
     SubscriptionPaymentDto,
     SubscriptionPlan,
@@ -393,6 +394,11 @@ export const apiService = {
         const response = await apiClient.get<AnalyticsDashboardDto>('/analytics/dashboard', {
             params: { year, month }
         });
+        return response.data;
+    },
+
+    async getAdminOverview(): Promise<AdminOverviewDto> {
+        const response = await apiClient.get<AdminOverviewDto>('/admin/overview');
         return response.data;
     },
 

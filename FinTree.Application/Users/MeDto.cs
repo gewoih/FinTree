@@ -9,4 +9,5 @@ public record struct MeDto(
     string BaseCurrencyCode,
     SubscriptionInfoDto Subscription,
     bool OnboardingCompleted,
-    bool OnboardingSkipped);
+    bool OnboardingSkipped,
+    bool IsOwner);
