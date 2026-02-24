@@ -4,6 +4,7 @@ using FinTree.Domain.Base;
 using FinTree.Domain.Categories;
 using FinTree.Domain.Currencies;
 using FinTree.Domain.Identity;
+using FinTree.Domain.Retrospectives;
 using FinTree.Domain.Subscriptions;
 using FinTree.Domain.Transactions;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
@@ -23,6 +24,7 @@ public sealed class AppDbContext(DbContextOptions<AppDbContext> options) : Ident
     public DbSet<AccountBalanceAdjustment> AccountBalanceAdjustments => Set<AccountBalanceAdjustment>();
     public DbSet<Transaction> Transactions => Set<Transaction>();
     public DbSet<FxUsdRate> FxUsdRates => Set<FxUsdRate>();
+    public DbSet<MonthlyRetrospective> Retrospectives => Set<MonthlyRetrospective>();
 
     public Task<IDbContextTransaction> BeginTransactionAsync(CancellationToken cancellationToken = default)
         => Database.BeginTransactionAsync(cancellationToken);
@@ -38,6 +40,7 @@ public sealed class AppDbContext(DbContextOptions<AppDbContext> options) : Ident
         ConfigureRefreshTokens(modelBuilder);
         ConfigureSubscriptionPayments(modelBuilder);
         ConfigureUsers(modelBuilder);
+        ConfigureRetrospectives(modelBuilder);
         ApplySoftDeleteQueryFilters(modelBuilder);
     }
 
@@ -91,6 +94,23 @@ public sealed class AppDbContext(DbContextOptions<AppDbContext> options) : Ident
                 .HasDatabaseName("IX_AspNetUsers_TelegramUserId")
                 .IsUnique()
                 .HasFilter("\"TelegramUserId\" IS NOT NULL");
+        });
+    }
+
+    private static void ConfigureRetrospectives(ModelBuilder modelBuilder)
+    {
+        modelBuilder.Entity<MonthlyRetrospective>(entity =>
+        {
+            entity.ToTable("MonthlyRetrospectives");
+            entity.Property(x => x.MonthDate).HasColumnType("date");
+            entity.Property(x => x.Conclusion).HasMaxLength(2000);
+            entity.Property(x => x.NextMonthPlan).HasMaxLength(2000);
+            entity.HasIndex(x => new { x.UserId, x.MonthDate }).IsUnique();
+            entity.HasOne<User>()
+                .WithMany()
+                .HasForeignKey(x => x.UserId)
+                .OnDelete(DeleteBehavior.Cascade)
+                .IsRequired();
         });
     }
 

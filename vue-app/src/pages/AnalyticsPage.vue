@@ -57,6 +57,9 @@ const {
   handleStepClick,
   openMonthPicker,
   retryDashboard,
+  showRetrospectiveBanner,
+  previousMonthStr,
+  dismissRetrospectiveBanner,
   updateSelectedMonth,
 } = useAnalyticsPage();
 
@@ -137,6 +140,30 @@ const bindMonthPickerRef = (instance: unknown) => {
     </div>
 
     <div v-show="activeTab === 'current'">
+      <div
+        v-if="showRetrospectiveBanner"
+        class="analytics-page__retro-banner"
+        role="alert"
+      >
+        <span>Прошлый месяц завершён. Хотите подвести итоги?</span>
+        <div class="analytics-page__retro-banner-actions">
+          <router-link
+            :to="`/reflections/${previousMonthStr}`"
+            class="analytics-page__retro-banner-link"
+          >
+            Подвести итоги
+          </router-link>
+          <button
+            type="button"
+            class="analytics-page__retro-banner-close"
+            aria-label="Закрыть напоминание"
+            @click="dismissRetrospectiveBanner"
+          >
+            ✕
+          </button>
+        </div>
+      </div>
+
       <div
         v-if="isFirstRun && !isOnboardingDataReady"
         class="analytics-onboarding-skeleton"
