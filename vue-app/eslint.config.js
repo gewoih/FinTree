@@ -46,6 +46,8 @@ export default [
                                 "!primevue/dialog",
                                 "!primevue/datepicker",
                                 "!primevue/drawer",
+                                "!primevue/inputnumber",
+                                "!primevue/inputtext",
                                 "!primevue/message",
                                 "!primevue/menu",
                                 "!primevue/paginator",

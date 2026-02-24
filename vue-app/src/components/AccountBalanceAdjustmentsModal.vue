@@ -1,8 +1,8 @@
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue'
 import Dialog from 'primevue/dialog'
+import InputNumber from 'primevue/inputnumber'
 import { useToast } from 'primevue/usetoast'
-import UiInputNumber from '@/ui/UiInputNumber.vue'
 
 import type { Account } from '../types'
 import { useAccountBalanceAdjustments } from '../composables/useAccountBalanceAdjustments'
@@ -137,7 +137,7 @@ watch(
         required
       >
         <template #default="{ fieldAttrs }">
-          <UiInputNumber
+          <InputNumber
             v-model="newBalance"
             :input-id="fieldAttrs.id"
             :min-fraction-digits="2"

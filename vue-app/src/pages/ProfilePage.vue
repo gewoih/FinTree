@@ -6,7 +6,7 @@ import PageContainer from '../components/layout/PageContainer.vue';
 import { useProfilePage } from '../composables/useProfilePage';
 import UiButton from '../ui/UiButton.vue';
 import UiCard from '../ui/UiCard.vue';
-import UiInputText from '../ui/UiInputText.vue';
+import InputText from 'primevue/inputtext';
 import Select from 'primevue/select';
 import Skeleton from 'primevue/skeleton';
 
@@ -160,7 +160,7 @@ const {
                   for="profileTelegram"
                 >Telegram-бот</label>
                 <div class="telegram-input">
-                  <UiInputText
+                  <InputText
                     id="profileTelegram"
                     v-model="form.telegramUserId"
                     placeholder="123456789"

@@ -4,9 +4,9 @@ import { computed, ref, watch, watchEffect } from 'vue';
 import Dialog from 'primevue/dialog';
 import { useToast } from 'primevue/usetoast';
 import { useConfirmDialog } from '../composables/useConfirmDialog';
+import InputNumber from 'primevue/inputnumber';
+import InputText from 'primevue/inputtext';
 import UiButton from '../ui/UiButton.vue';
-import UiInputNumber from '../ui/UiInputNumber.vue';
-import UiInputText from '../ui/UiInputText.vue';
 import DatePicker from 'primevue/datepicker';
 import Select from 'primevue/select';
 import SelectButton from 'primevue/selectbutton';
@@ -434,7 +434,7 @@ const handleDelete = () => {
           </label>
 
           <div class="txn-form__amount-shell">
-            <UiInputNumber
+            <InputNumber
               id="amount"
               v-model="amount"
               mode="decimal"
@@ -652,7 +652,7 @@ const handleDelete = () => {
                 Заметка
               </label>
 
-              <UiInputText
+              <InputText
                 id="txn-description"
                 v-model="txnDescription"
                 :placeholder="isIncome ? 'Например: зарплата' : 'Например: утренний кофе'"
@@ -693,7 +693,7 @@ const handleDelete = () => {
               </template>
             </Select>
             <div class="xfer-flow__amount-row">
-              <UiInputNumber
+              <InputNumber
                 id="from-amount"
                 v-model="fromAmount"
                 mode="decimal"
@@ -744,7 +744,7 @@ const handleDelete = () => {
               v-if="!isSameCurrency"
               class="xfer-flow__amount-row"
             >
-              <UiInputNumber
+              <InputNumber
                 id="to-amount"
                 v-model="toAmount"
                 mode="decimal"
@@ -777,7 +777,7 @@ const handleDelete = () => {
           <div class="xfer-form__field">
             <label for="fee-amount">Комиссия</label>
             <div class="xfer-flow__amount-row">
-              <UiInputNumber
+              <InputNumber
                 id="fee-amount"
                 v-model="feeAmount"
                 mode="decimal"
@@ -810,7 +810,7 @@ const handleDelete = () => {
         <!-- Note -->
         <div class="xfer-form__field xfer-form__field--full">
           <label for="xfer-description">Заметка</label>
-          <UiInputText
+          <InputText
             id="xfer-description"
             v-model="xferDescription"
             placeholder="Например: перевод между счетами"

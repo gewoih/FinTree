@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue';
 import Dialog from 'primevue/dialog';
-import UiInputText from '../ui/UiInputText.vue';
+import InputText from 'primevue/inputtext';
 import SelectButton from 'primevue/selectbutton';
 import Checkbox from 'primevue/checkbox';
 import { useToast } from 'primevue/usetoast';
@@ -269,7 +269,7 @@ const handleDelete = () => {
             required
           >
             <template #default="{ fieldAttrs }">
-              <UiInputText
+              <InputText
                 v-bind="fieldAttrs"
                 v-model="name"
                 placeholder="Например, «Транспорт»"
@@ -372,7 +372,7 @@ const handleDelete = () => {
                   :aria-describedby="fieldAttrs['aria-describedby']"
                   :aria-invalid="fieldAttrs['aria-invalid']"
                 >
-                <UiInputText
+                <InputText
                   v-model="color"
                   maxlength="7"
                   class="w-full"

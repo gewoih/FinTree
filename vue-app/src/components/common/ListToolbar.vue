@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import UiInputText from '../../ui/UiInputText.vue'
+import InputText from 'primevue/inputtext'
 
 defineProps<{
   modelValue: 'active' | 'archived'
@@ -55,7 +55,7 @@ const handleSearchUpdate = (value: string | null | undefined) => {
         class="pi pi-search"
         aria-hidden="true"
       />
-      <UiInputText
+      <InputText
         :model-value="searchText"
         :placeholder="searchPlaceholder ?? 'Поиск...'"
         autocomplete="off"

@@ -1,7 +1,6 @@
 import './assets/design-tokens.css';
 import './style.css';
 import './styles/theme.css';
-import './styles/prime-textarea.css';
 import { createApp } from 'vue';
 import { createPinia } from 'pinia';
 import App from './App.vue';

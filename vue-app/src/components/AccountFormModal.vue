@@ -1,8 +1,8 @@
 <script setup lang="ts">
 import { computed, onMounted, ref, watch } from 'vue'
 import Dialog from 'primevue/dialog'
+import InputText from 'primevue/inputtext'
 import Select from 'primevue/select'
-import UiInputText from '../ui/UiInputText.vue'
 import { useFinanceStore } from '../stores/finance'
 import { useFormModal } from '../composables/useFormModal'
 import type { Account, AccountType } from '../types'
@@ -215,7 +215,7 @@ const handleSubmit = async () => {
           required
         >
           <template #default="{ fieldAttrs }">
-            <UiInputText
+            <InputText
               v-bind="fieldAttrs"
               v-model="name"
               class="w-full"

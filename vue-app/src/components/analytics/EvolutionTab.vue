@@ -158,35 +158,41 @@ const deltaLabel = computed(() => {
 }
 
 .evolution-tab__range-btn {
+  cursor: pointer;
+
   padding: var(--ft-space-1) var(--ft-space-3);
+
+  font-size: var(--ft-text-sm);
+  color: var(--ft-text-secondary);
+
+  background: transparent;
   border: 1px solid var(--ft-border-default);
   border-radius: var(--ft-radius-md);
-  background: transparent;
-  color: var(--ft-text-secondary);
-  cursor: pointer;
-  font-size: var(--ft-text-sm);
+
   transition: all var(--ft-transition-fast);
 }
 
 .evolution-tab__range-btn--active {
-  border-color: var(--ft-primary-400);
   color: var(--ft-primary-400);
   background: color-mix(in srgb, var(--ft-primary-400) 10%, transparent);
+  border-color: var(--ft-primary-400);
 }
 
 .evolution-tab__kpi-select {
   width: 100%;
   padding: var(--ft-space-2) var(--ft-space-3);
+
+  font-size: var(--ft-text-sm);
+  color: var(--ft-text-primary);
+
+  background: var(--ft-surface-base);
   border: 1px solid var(--ft-border-default);
   border-radius: var(--ft-radius-md);
-  background: var(--ft-surface-base);
-  color: var(--ft-text-primary);
-  font-size: var(--ft-text-sm);
 }
 
 .evolution-tab__chart-wrap {
-  height: 240px;
   position: relative;
+  height: 240px;
 }
 
 .evolution-tab__loading,
@@ -194,9 +200,11 @@ const deltaLabel = computed(() => {
   display: flex;
   align-items: center;
   justify-content: center;
+
   height: 100%;
-  color: var(--ft-text-tertiary);
+
   font-size: var(--ft-text-sm);
+  color: var(--ft-text-tertiary);
 }
 
 .evolution-tab__summary {
@@ -207,8 +215,8 @@ const deltaLabel = computed(() => {
 
 .evolution-tab__current {
   font-size: var(--ft-text-sm);
-  color: var(--ft-text-primary);
   font-variant-numeric: tabular-nums;
+  color: var(--ft-text-primary);
 }
 
 .evolution-tab__delta {

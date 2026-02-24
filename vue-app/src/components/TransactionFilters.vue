@@ -1,8 +1,8 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue';
 import type { Account, Category } from '../types';
-import UiInputText from '../ui/UiInputText.vue';
 import DatePicker from 'primevue/datepicker';
+import InputText from 'primevue/inputtext';
 import Select from 'primevue/select';
 import { useViewport } from '../composables/useViewport';
 
@@ -113,7 +113,7 @@ const controlsVisible = computed(() => !isMobile.value || isOpen.value);
     >
       <div class="transaction-filters__search">
         <i class="pi pi-search" />
-        <UiInputText
+        <InputText
           :model-value="props.searchText"
           placeholder="Поиск…"
           autocomplete="off"
