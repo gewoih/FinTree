@@ -5,10 +5,9 @@ import { useFinanceStore } from '../stores/finance'
 import { useUserStore } from '../stores/user'
 import PageContainer from '../components/layout/PageContainer.vue'
 import PageHeader from '../components/common/PageHeader.vue'
-import UiSection from '../ui/UiSection.vue'
 import UiButton from '../ui/UiButton.vue'
-import UiSkeleton from '../ui/UiSkeleton.vue'
-import UiMessage from '../ui/UiMessage.vue'
+import Skeleton from 'primevue/skeleton';
+import Message from 'primevue/message';
 import { markCategoriesOnboardingVisited } from '../utils/onboarding'
 
 const financeStore = useFinanceStore()
@@ -47,12 +46,12 @@ onMounted(() => {
       </template>
     </PageHeader>
 
-    <UiSection class="categories__content">
+    <section class="categories__content">
       <div
         v-if="shouldShowCategoriesSkeleton"
         class="categories__skeleton"
       >
-        <UiSkeleton
+        <Skeleton
           v-for="i in 4"
           :key="i"
           height="120px"
@@ -63,9 +62,9 @@ onMounted(() => {
         v-else-if="shouldShowCategoriesErrorState"
         class="categories__error"
       >
-        <UiMessage severity="error">
+        <Message severity="error">
           {{ categoriesError || 'Не удалось загрузить категории.' }}
-        </UiMessage>
+        </Message>
         <UiButton
           label="Повторить"
           icon="pi pi-refresh"
@@ -79,9 +78,9 @@ onMounted(() => {
           v-if="categoriesState === 'error'"
           class="categories__error categories__error--inline"
         >
-          <UiMessage severity="error">
+          <Message severity="error">
             {{ categoriesError || 'Не удалось обновить категории. Показаны последние доступные данные.' }}
-          </UiMessage>
+          </Message>
           <UiButton
             label="Повторить"
             icon="pi pi-refresh"
@@ -95,7 +94,7 @@ onMounted(() => {
           ref="managerRef"
         />
       </template>
-    </UiSection>
+    </section>
   </PageContainer>
 </template>
 

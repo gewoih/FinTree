@@ -10,7 +10,15 @@ const ALLOWED_IMPORTS = new Set([
   'primevue/tooltip',
   'primevue/usetoast',
   'primevue/useconfirm',
+  'primevue/chart',
+  'primevue/checkbox',
+  'primevue/paginator',
+  'primevue/message',
+  'primevue/toggleswitch',
+  'primevue/selectbutton',
+  'primevue/skeleton',
   'primevue/menuitem',
+  'primevue/tag',
 ]);
 
 const TEMP_ALLOWLIST = new Set([

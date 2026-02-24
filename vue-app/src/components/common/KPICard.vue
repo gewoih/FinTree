@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import UiCard from '../../ui/UiCard.vue'
-import UiSkeleton from '../../ui/UiSkeleton.vue'
+import Skeleton from 'primevue/skeleton';
 
 interface Props {
   title: string
@@ -60,15 +60,15 @@ const trendClass = computed(() => {
       v-if="loading"
       class="kpi-card__loading"
     >
-      <UiSkeleton
+      <Skeleton
         width="80%"
         height="1.5rem"
       />
-      <UiSkeleton
+      <Skeleton
         width="60%"
         height="2.25rem"
       />
-      <UiSkeleton
+      <Skeleton
         width="45%"
         height="1rem"
       />

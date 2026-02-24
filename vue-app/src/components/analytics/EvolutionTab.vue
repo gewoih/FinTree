@@ -70,7 +70,11 @@ const deltaLabel = computed(() => {
 <template>
   <div class="evolution-tab">
     <!-- Range filter -->
-    <div class="evolution-tab__ranges" role="group" aria-label="Период">
+    <div
+      class="evolution-tab__ranges"
+      role="group"
+      aria-label="Период"
+    >
       <button
         v-for="r in RANGES"
         :key="r.value"
@@ -88,7 +92,11 @@ const deltaLabel = computed(() => {
       class="evolution-tab__kpi-select"
       aria-label="Показатель"
     >
-      <option v-for="opt in KPI_OPTIONS" :key="opt.key" :value="opt.key">
+      <option
+        v-for="opt in KPI_OPTIONS"
+        :key="opt.key"
+        :value="opt.key"
+      >
         {{ opt.label }}
       </option>
     </select>
@@ -100,23 +108,38 @@ const deltaLabel = computed(() => {
       :aria-label="`График: ${KPI_OPTIONS.find(o => o.key === selectedKpi)?.label}`"
     >
       <template v-if="state === 'loading'">
-        <div class="evolution-tab__loading">Загрузка…</div>
+        <div class="evolution-tab__loading">
+          Загрузка…
+        </div>
       </template>
       <template v-else-if="state === 'error'">
-        <div class="evolution-tab__error">{{ error }}</div>
+        <div class="evolution-tab__error">
+          {{ error }}
+        </div>
       </template>
       <template v-else-if="state === 'empty'">
-        <div class="evolution-tab__error">Нет данных за выбранный период</div>
+        <div class="evolution-tab__error">
+          Нет данных за выбранный период
+        </div>
       </template>
       <template v-else>
-        <Line :data="chartData" :options="chartOptions" />
+        <Line
+          :data="chartData"
+          :options="chartOptions"
+        />
       </template>
     </div>
 
     <!-- Current value + delta -->
-    <div v-if="currentMonthValue != null" class="evolution-tab__summary">
+    <div
+      v-if="currentMonthValue != null"
+      class="evolution-tab__summary"
+    >
       <span class="evolution-tab__current">Текущий месяц: {{ currentMonthValue }}</span>
-      <span v-if="deltaLabel" class="evolution-tab__delta">{{ deltaLabel }}</span>
+      <span
+        v-if="deltaLabel"
+        class="evolution-tab__delta"
+      >{{ deltaLabel }}</span>
     </div>
   </div>
 </template>

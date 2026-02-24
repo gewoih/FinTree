@@ -3,9 +3,9 @@ import { computed } from 'vue';
 import type { ChartData, Plugin } from 'chart.js';
 import UiButton from '../../ui/UiButton.vue';
 import UiSelect from '../../ui/UiSelect.vue';
-import UiSkeleton from '@/ui/UiSkeleton.vue';
-import UiMessage from '@/ui/UiMessage.vue';
-import UiChart from '@/ui/UiChart.vue';
+import Skeleton from 'primevue/skeleton';
+import Message from 'primevue/message';
+import Chart from 'primevue/chart';
 import type { CategoryLegendItem, CategoryScope } from '../../types/analytics';
 import { useChartColors } from '../../composables/useChartColors';
 
@@ -139,13 +139,13 @@ const chartOptions = computed(() => ({
       v-if="loading"
       class="donut-card__loading"
     >
-      <UiSkeleton
+      <Skeleton
         width="220px"
         height="220px"
         border-radius="999px"
       />
       <div class="donut-card__loading-legend">
-        <UiSkeleton
+        <Skeleton
           v-for="i in 4"
           :key="i"
           height="18px"
@@ -158,7 +158,7 @@ const chartOptions = computed(() => ({
       v-else-if="error"
       class="donut-card__message"
     >
-      <UiMessage
+      <Message
         severity="error"
         icon="pi pi-exclamation-triangle"
         :closable="false"
@@ -177,14 +177,14 @@ const chartOptions = computed(() => ({
             @click="emit('retry')"
           />
         </div>
-      </UiMessage>
+      </Message>
     </div>
 
     <div
       v-else-if="showEmpty"
       class="donut-card__message"
     >
-      <UiMessage
+      <Message
         severity="info"
         icon="pi pi-inbox"
         :closable="false"
@@ -197,7 +197,7 @@ const chartOptions = computed(() => ({
             Добавьте расходы, чтобы увидеть распределение.
           </p>
         </div>
-      </UiMessage>
+      </Message>
     </div>
 
     <div
@@ -209,7 +209,7 @@ const chartOptions = computed(() => ({
         role="img"
         aria-label="Круговая диаграмма расходов по категориям"
       >
-        <UiChart
+        <Chart
           v-if="donutChartData"
           type="doughnut"
           :data="donutChartData"

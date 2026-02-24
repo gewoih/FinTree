@@ -2,8 +2,8 @@
 import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue';
 import UiDialog from '../ui/UiDialog.vue';
 import UiInputText from '../ui/UiInputText.vue';
-import UiSelectButton from '../ui/UiSelectButton.vue';
-import UiCheckbox from '../ui/UiCheckbox.vue';
+import SelectButton from 'primevue/selectbutton';
+import Checkbox from 'primevue/checkbox';
 import { useToast } from 'primevue/usetoast';
 import { useConfirmDialog } from '../composables/useConfirmDialog';
 import type { Category, CategoryType } from '../types';
@@ -287,7 +287,7 @@ const handleDelete = () => {
             required
           >
             <template #default="{ fieldAttrs }">
-              <UiSelectButton
+              <SelectButton
                 v-model="categoryType"
                 :options="categoryTypeOptions"
                 option-label="label"
@@ -390,7 +390,7 @@ const handleDelete = () => {
         >
           <template #default>
             <label class="mandatory-toggle">
-              <UiCheckbox
+              <Checkbox
                 v-model="isMandatory"
                 binary
                 :disabled="props.readonly"

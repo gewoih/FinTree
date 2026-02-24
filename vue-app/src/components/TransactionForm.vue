@@ -1,4 +1,5 @@
 <script setup lang="ts">
+/* eslint-disable max-lines */
 import { computed, ref, watch, watchEffect } from 'vue';
 import { useToast } from 'primevue/usetoast';
 import { useConfirmDialog } from '../composables/useConfirmDialog';
@@ -8,7 +9,7 @@ import UiDatePicker from '../ui/UiDatePicker.vue';
 import UiInputNumber from '../ui/UiInputNumber.vue';
 import UiInputText from '../ui/UiInputText.vue';
 import UiSelect from '../ui/UiSelect.vue';
-import UiSelectButton from '../ui/UiSelectButton.vue';
+import SelectButton from 'primevue/selectbutton';
 import type {
   CreateTransferPayload,
   NewTransactionPayload,
@@ -410,7 +411,7 @@ const handleDelete = () => {
       </header>
 
       <section class="txn-form__type">
-        <UiSelectButton
+        <SelectButton
           v-model="formMode"
           :options="allTypeOptions"
           option-label="label"

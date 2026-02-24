@@ -3,9 +3,9 @@ import { computed } from 'vue';
 import type { ChartData, ChartDataset, TooltipItem } from 'chart.js';
 import UiButton from '../../ui/UiButton.vue';
 import UiSelect from '../../ui/UiSelect.vue';
-import UiSkeleton from '@/ui/UiSkeleton.vue';
-import UiMessage from '@/ui/UiMessage.vue';
-import UiChart from '@/ui/UiChart.vue';
+import Skeleton from 'primevue/skeleton';
+import Message from 'primevue/message';
+import Chart from 'primevue/chart';
 import type { ExpenseGranularity } from '@/types/analytics.ts';
 import { useChartColors } from '@/composables/useChartColors.ts';
 
@@ -151,7 +151,7 @@ const chartOptions = computed(() => ({
       role="status"
       aria-live="polite"
     >
-      <UiSkeleton
+      <Skeleton
         width="100%"
         height="280px"
         border-radius="16px"
@@ -162,7 +162,7 @@ const chartOptions = computed(() => ({
       v-else-if="error"
       class="bars-card__message"
     >
-      <UiMessage
+      <Message
         severity="error"
         icon="pi pi-exclamation-triangle"
         :closable="false"
@@ -181,14 +181,14 @@ const chartOptions = computed(() => ({
             @click="emit('retry')"
           />
         </div>
-      </UiMessage>
+      </Message>
     </div>
 
     <div
       v-else-if="empty"
       class="bars-card__message"
     >
-      <UiMessage
+      <Message
         severity="info"
         icon="pi pi-inbox"
         :closable="false"
@@ -201,7 +201,7 @@ const chartOptions = computed(() => ({
             Добавьте операции, чтобы увидеть динамику расходов.
           </p>
         </div>
-      </UiMessage>
+      </Message>
     </div>
 
     <div
@@ -211,7 +211,7 @@ const chartOptions = computed(() => ({
       aria-label="Столбчатая диаграмма расходов по дням"
     >
       <div class="bars-card__chart-container">
-        <UiChart
+        <Chart
           v-if="styledChartData"
           type="bar"
           :data="styledChartData"

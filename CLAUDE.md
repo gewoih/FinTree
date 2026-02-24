@@ -11,7 +11,7 @@ References:
 ## Project Context
 
 - Backend: .NET (Clean Architecture/DDD)
-- Frontend: Vue 3 + TypeScript + PrimeVue (unstyled)
+- Frontend: Vue 3 + TypeScript + PrimeVue (styled, token-driven preset)
 - Target audience: users with low financial literacy
 - Product UX baseline: clarity and predictability over cleverness
 

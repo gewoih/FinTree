@@ -1,9 +1,8 @@
 <script setup lang="ts">
-import { computed, ref, useAttrs } from 'vue';
+import { ref, useAttrs } from 'vue';
 import Menu from 'primevue/menu';
 import type { MenuPassThroughOptions } from 'primevue/menu';
 import type { MenuItem } from 'primevue/menuitem';
-import { mergePt } from './prime/pt';
 
 defineOptions({ inheritAttrs: false });
 
@@ -30,19 +29,6 @@ const props = withDefaults(
 
 const attrs = useAttrs();
 const menuRef = ref<InstanceType<typeof Menu> | null>(null);
-
-const mergedPt = computed(() =>
-  mergePt(
-    {
-      root: { class: 'ui-menu__root' },
-      list: { class: 'ui-menu__list' },
-      item: { class: 'ui-menu__item' },
-      itemContent: { class: 'ui-menu__item-content' },
-      itemLink: { class: 'ui-menu__item-link' },
-    } as MenuPassThroughOptions,
-    props.pt
-  )
-);
 
 const toggle = (event: Event) => {
   menuRef.value?.toggle(event);
@@ -73,8 +59,8 @@ defineExpose({
     :append-to="props.appendTo"
     :auto-z-index="props.autoZIndex"
     :base-z-index="props.baseZIndex"
-    :unstyled="props.unstyled ?? true"
-    :pt="mergedPt"
+    :unstyled="props.unstyled"
+    :pt="props.pt"
   >
     <template
       v-if="$slots.start"
@@ -103,7 +89,7 @@ defineExpose({
 </template>
 
 <style scoped>
-:global(.ui-menu__root) {
+:global(.p-menu) {
   color: var(--ft-text-primary);
 
   background: linear-gradient(
@@ -118,40 +104,40 @@ defineExpose({
     0 2px 8px color-mix(in srgb, var(--ft-bg-base) 32%, transparent);
 }
 
-:global(.ui-menu__list)::-webkit-scrollbar {
+:global(.p-menu-list)::-webkit-scrollbar {
   width: var(--ft-scrollbar-size);
   height: var(--ft-scrollbar-size);
 }
 
-:global(.ui-menu__list)::-webkit-scrollbar-track {
+:global(.p-menu-list)::-webkit-scrollbar-track {
   background: var(--ft-scrollbar-track);
   border-radius: var(--ft-radius-full);
 }
 
-:global(.ui-menu__list)::-webkit-scrollbar-thumb {
+:global(.p-menu-list)::-webkit-scrollbar-thumb {
   background: var(--ft-scrollbar-thumb);
   border: 2px solid var(--ft-scrollbar-track);
   border-radius: var(--ft-radius-full);
 }
 
-:global(.ui-menu__list)::-webkit-scrollbar-thumb:hover {
+:global(.p-menu-list)::-webkit-scrollbar-thumb:hover {
   background: var(--ft-scrollbar-thumb-hover);
 }
 
-:global(.ui-menu__list)::-webkit-scrollbar-thumb:active {
+:global(.p-menu-list)::-webkit-scrollbar-thumb:active {
   background: var(--ft-scrollbar-thumb-active);
 }
 
-:global(.ui-menu__list),
-:global(.ui-menu__item),
-:global(.ui-menu__item-content) {
+:global(.p-menu-list),
+:global(.p-menu-item),
+:global(.p-menu-item-content) {
   margin: 0;
   padding: 0;
   list-style: none;
   background: transparent;
 }
 
-:global(.ui-menu__item-link) {
+:global(.p-menu-item-link) {
   display: flex;
   gap: var(--ft-space-2);
   align-items: center;
@@ -163,8 +149,8 @@ defineExpose({
   border-radius: var(--ft-radius-md);
 }
 
-:global(.ui-menu__item-link:hover),
-:global(.ui-menu__item-content:hover) {
+:global(.p-menu-item-link:hover),
+:global(.p-menu-item-content:hover) {
   background: color-mix(in srgb, var(--ft-primary-400) 12%, transparent);
 }
 </style>

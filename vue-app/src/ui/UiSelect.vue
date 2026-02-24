@@ -3,7 +3,6 @@ import { computed, useAttrs } from 'vue';
 import Select from 'primevue/select';
 import type { SelectPassThroughOptions } from 'primevue/select';
 import { resolveFieldInvalidState } from './prime/field-state';
-import { mergeClassNames, mergePt } from './prime/pt';
 
 const props = defineProps<{
   modelValue?: unknown;
@@ -33,79 +32,12 @@ const isInvalid = computed(() =>
   })
 );
 const mergedOverlayClass = computed(() => ['ui-select-overlay', props.overlayClass]);
-
-const mergedPt = computed(() =>
-  mergePt(
-    {
-      root: {
-        class: mergeClassNames(
-          'ui-select__root p-select p-component p-inputwrapper',
-          isInvalid.value ? 'ui-field--invalid' : undefined
-        ),
-      },
-      label: {
-        class: 'ui-select__label p-select-label',
-      },
-      clearIcon: {
-        class: 'ui-select__clear-icon p-select-clear-icon',
-      },
-      dropdown: {
-        class: 'ui-select__dropdown p-select-dropdown',
-      },
-      loadingicon: {
-        class: 'ui-select__loading-icon p-select-loading-icon',
-      },
-      dropdownIcon: {
-        class: 'ui-select__dropdown-icon p-select-dropdown-icon',
-      },
-      overlay: {
-        class: 'ui-select-overlay p-select-overlay p-component',
-      },
-      header: {
-        class: 'ui-select__header p-select-header',
-      },
-      pcFilter: {
-        root: {
-          class: 'ui-select__filter p-select-filter',
-        },
-      },
-      listContainer: {
-        class: 'ui-select__list-container p-select-list-container',
-      },
-      list: {
-        class: 'ui-select__list p-select-list',
-      },
-      optionGroup: {
-        class: 'ui-select__option-group p-select-option-group',
-      },
-      optionGroupLabel: {
-        class: 'ui-select__option-group-label p-select-option-group-label',
-      },
-      option: {
-        class: 'ui-select__option p-select-option',
-      },
-      optionLabel: {
-        class: 'ui-select__option-label p-select-option-label',
-      },
-      optionCheckIcon: {
-        class: 'ui-select__option-check-icon p-select-option-check-icon',
-      },
-      optionBlankIcon: {
-        class: 'ui-select__option-blank-icon p-select-option-blank-icon',
-      },
-      emptyMessage: {
-        class: 'ui-select__empty-message p-select-empty-message',
-      },
-    } as SelectPassThroughOptions,
-    props.pt
-  )
-);
 </script>
 
 <template>
   <Select
     v-bind="attrs"
-    class="ui-select"
+    :class="['ui-select', { 'ui-field--invalid': isInvalid }]"
     :model-value="props.modelValue"
     :options="props.options"
     :option-label="props.optionLabel"
@@ -116,8 +48,8 @@ const mergedPt = computed(() =>
     :append-to="props.appendTo ?? 'body'"
     :invalid="isInvalid"
     :aria-invalid="isInvalid ? 'true' : undefined"
-    :unstyled="props.unstyled ?? true"
-    :pt="mergedPt"
+    :unstyled="props.unstyled"
+    :pt="props.pt"
     @update:model-value="val => emit('update:modelValue', val)"
   >
     <template
@@ -176,7 +108,7 @@ const mergedPt = computed(() =>
   outline-offset: 3px;
 }
 
-:deep(.ui-select__label) {
+:deep(.p-select-label) {
   overflow: hidden;
   display: flex;
   align-items: center;
@@ -196,7 +128,7 @@ const mergedPt = computed(() =>
   outline: 0;
 }
 
-:deep(.ui-select__dropdown) {
+:deep(.p-select-dropdown) {
   display: inline-flex;
   align-items: center;
   align-self: stretch;
@@ -216,13 +148,13 @@ const mergedPt = computed(() =>
     background-color var(--ft-transition-fast);
 }
 
-:deep(.ui-select__dropdown svg) {
+:deep(.p-select-dropdown svg) {
   width: 1rem;
   height: 1rem;
   transition: transform var(--ft-transition-fast);
 }
 
-.ui-select:not(.p-disabled):hover :deep(.ui-select__dropdown) {
+.ui-select:not(.p-disabled):hover :deep(.p-select-dropdown) {
   color: var(--ft-text-primary);
   background: color-mix(in srgb, var(--ft-surface-overlay) 65%, transparent);
 }
@@ -236,7 +168,7 @@ const mergedPt = computed(() =>
   box-shadow: 0 0 0 1px color-mix(in srgb, var(--ft-danger-500) 18%, transparent);
 }
 
-.ui-select.ui-field--invalid :deep(.ui-select__dropdown) {
+.ui-select.ui-field--invalid :deep(.p-select-dropdown) {
   border-inline-start-color: color-mix(in srgb, var(--ft-danger-500) 42%, var(--ft-border-soft));
 }
 
@@ -280,13 +212,13 @@ const mergedPt = computed(() =>
     0 2px 8px color-mix(in srgb, var(--ft-bg-base) 32%, transparent);
 }
 
-:global(.ui-select__header) {
+:global(.p-select-header) {
   margin-bottom: var(--ft-space-1);
   padding: var(--ft-space-2);
   border-bottom: 1px solid var(--ft-border-soft);
 }
 
-:global(.ui-select__filter) {
+:global(.p-select-filter) {
   width: 100%;
   min-height: 2.25rem;
   padding: 0 var(--ft-space-3);
@@ -304,13 +236,13 @@ const mergedPt = computed(() =>
     background-color var(--ft-transition-fast);
 }
 
-:global(.ui-select__filter:focus-visible) {
+:global(.p-select-filter:focus-visible) {
   border-color: var(--ft-border-strong);
   outline: none;
   box-shadow: 0 0 0 2px color-mix(in srgb, var(--ft-focus-ring) 52%, transparent);
 }
 
-:global(.ui-select__list-container) {
+:global(.p-select-list-container) {
   scrollbar-color: var(--ft-scrollbar-thumb) var(--ft-scrollbar-track);
   scrollbar-width: thin;
 
@@ -323,38 +255,38 @@ const mergedPt = computed(() =>
   background: var(--ft-surface-raised);
 }
 
-:global(.ui-select__list-container)::-webkit-scrollbar {
+:global(.p-select-list-container)::-webkit-scrollbar {
   width: var(--ft-scrollbar-size);
   height: var(--ft-scrollbar-size);
 }
 
-:global(.ui-select__list-container)::-webkit-scrollbar-track {
+:global(.p-select-list-container)::-webkit-scrollbar-track {
   background: var(--ft-scrollbar-track);
   border-radius: var(--ft-radius-full);
 }
 
-:global(.ui-select__list-container)::-webkit-scrollbar-thumb {
+:global(.p-select-list-container)::-webkit-scrollbar-thumb {
   background: var(--ft-scrollbar-thumb);
   border: 2px solid var(--ft-scrollbar-track);
   border-radius: var(--ft-radius-full);
 }
 
-:global(.ui-select__list-container)::-webkit-scrollbar-thumb:hover {
+:global(.p-select-list-container)::-webkit-scrollbar-thumb:hover {
   background: var(--ft-scrollbar-thumb-hover);
 }
 
-:global(.ui-select__list-container)::-webkit-scrollbar-thumb:active {
+:global(.p-select-list-container)::-webkit-scrollbar-thumb:active {
   background: var(--ft-scrollbar-thumb-active);
 }
 
-:global(.ui-select__list) {
+:global(.p-select-list) {
   display: grid;
   margin: 0;
   padding: 0;
   list-style: none;
 }
 
-:global(.ui-select__option) {
+:global(.p-select-option) {
   cursor: pointer;
 
   position: relative;
@@ -379,7 +311,7 @@ const mergedPt = computed(() =>
     color var(--ft-transition-fast);
 }
 
-:global(.ui-select__option-label) {
+:global(.p-select-option-label) {
   overflow: hidden;
   flex: 1;
 
@@ -389,29 +321,29 @@ const mergedPt = computed(() =>
   white-space: nowrap;
 }
 
-:global(.ui-select__option-check-icon) {
+:global(.p-select-option-check-icon) {
   color: var(--ft-primary-200);
 }
 
-:global(.ui-select__option[data-p-focused='true']),
-:global(.ui-select__option:hover) {
+:global(.p-select-option[data-p-focused='true']),
+:global(.p-select-option:hover) {
   background: color-mix(in srgb, var(--ft-primary-400) 14%, transparent);
   border-color: color-mix(in srgb, var(--ft-primary-400) 38%, transparent);
 }
 
-:global(.ui-select__option[data-p-selected='true']) {
+:global(.p-select-option[data-p-selected='true']) {
   font-weight: var(--ft-font-medium);
   background: color-mix(in srgb, var(--ft-primary-400) 24%, transparent);
   border-color: color-mix(in srgb, var(--ft-primary-400) 45%, transparent);
   box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--ft-primary-300) 45%, transparent);
 }
 
-:global(.ui-select__option[data-p-disabled='true']) {
+:global(.p-select-option[data-p-disabled='true']) {
   cursor: not-allowed;
   opacity: 0.55;
 }
 
-:global(.ui-select__empty-message) {
+:global(.p-select-empty-message) {
   padding: var(--ft-space-3) var(--ft-space-3) var(--ft-space-4);
   font-size: var(--ft-text-sm);
   color: var(--ft-text-secondary);

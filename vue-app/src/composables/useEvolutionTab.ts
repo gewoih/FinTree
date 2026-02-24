@@ -68,7 +68,8 @@ export function useEvolutionTab() {
 
   const previousMonthValue = computed(() => {
     const months = data.value.filter(m => m.hasData)
-    return months.length >= 2 ? months[months.length - 2][selectedKpi.value] : null
+    const previous = months.at(-2)
+    return previous ? previous[selectedKpi.value] : null
   })
 
   const monthOverMonthDelta = computed(() => {

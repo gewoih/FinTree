@@ -1,8 +1,7 @@
 <script setup lang="ts">
-import { computed, useAttrs } from 'vue';
+import { useAttrs } from 'vue';
 import Toast from 'primevue/toast';
 import type { ToastPassThroughOptions } from 'primevue/toast';
-import { mergePt } from './prime/pt';
 
 defineOptions({ inheritAttrs: false });
 
@@ -22,24 +21,6 @@ const props = withDefaults(
 );
 
 const attrs = useAttrs();
-
-const mergedPt = computed(() =>
-  mergePt(
-    {
-      root: { class: 'ui-toast__root' },
-      message: { class: 'ui-toast__message' },
-      messageContent: { class: 'ui-toast__message-content' },
-      messageIcon: { class: 'ui-toast__message-icon' },
-      messageText: { class: 'ui-toast__message-text' },
-      summary: { class: 'ui-toast__summary' },
-      detail: { class: 'ui-toast__detail' },
-      buttonContainer: { class: 'ui-toast__button-container' },
-      closeButton: { class: 'ui-toast__close-button' },
-      closeIcon: { class: 'ui-toast__close-icon' },
-    } as ToastPassThroughOptions,
-    props.pt
-  )
-);
 </script>
 
 <template>
@@ -48,15 +29,14 @@ const mergedPt = computed(() =>
     class="ui-toast"
     :auto-z-index="props.autoZIndex"
     :base-z-index="props.baseZIndex"
-    :unstyled="props.unstyled ?? true"
-    :pt="mergedPt"
+    :unstyled="props.unstyled"
+    :pt="props.pt"
   />
 </template>
 
 <style scoped>
 /* Toast is a fixed overlay teleported outside the component tree — all rules use :global() */
 
-:global(.ui-toast__root),
 :global(.p-toast) {
   z-index: var(--ft-z-toast);
 
@@ -68,7 +48,6 @@ const mergedPt = computed(() =>
 }
 
 /* Individual message card — shares the overlay-card appearance */
-:global(.ui-toast__message),
 :global(.p-toast-message) {
   color: var(--ft-text-primary);
 
@@ -84,34 +63,28 @@ const mergedPt = computed(() =>
     0 2px 8px color-mix(in srgb, var(--ft-bg-base) 32%, transparent);
 }
 
-:global(.ui-toast__message),
 :global(.p-toast .p-toast-message) {
   overflow: hidden;
   padding: var(--ft-space-3);
   border-inline-start: 3px solid var(--ft-border-default);
 }
 
-:global(.ui-toast__message[data-p~='success']),
 :global(.p-toast .p-toast-message.p-toast-message-success) {
   border-inline-start-color: var(--ft-success-500);
 }
 
-:global(.ui-toast__message[data-p~='info']),
 :global(.p-toast .p-toast-message.p-toast-message-info) {
   border-inline-start-color: var(--ft-info-500);
 }
 
-:global(.ui-toast__message[data-p~='warn']),
 :global(.p-toast .p-toast-message.p-toast-message-warn) {
   border-inline-start-color: var(--ft-warning-500);
 }
 
-:global(.ui-toast__message[data-p~='error']),
 :global(.p-toast .p-toast-message.p-toast-message-error) {
   border-inline-start-color: var(--ft-danger-500);
 }
 
-:global(.ui-toast__message-content),
 :global(.p-toast .p-toast-message-content) {
   display: grid;
   grid-template-columns: auto minmax(0, 1fr) auto;
@@ -119,28 +92,24 @@ const mergedPt = computed(() =>
   align-items: flex-start;
 }
 
-:global(.ui-toast__message-icon),
 :global(.p-toast .p-toast-message-icon) {
   margin-top: 0.125rem; /* sub-pixel nudge, no token exists at this scale */
   font-size: var(--ft-text-base);
   color: var(--ft-text-secondary);
 }
 
-:global(.ui-toast__message-text),
 :global(.p-toast .p-toast-message-text) {
   display: grid;
   gap: var(--ft-space-1);
   min-width: 0;
 }
 
-:global(.ui-toast__summary),
 :global(.p-toast .p-toast-summary) {
   font-size: var(--ft-text-base);
   font-weight: var(--ft-font-semibold);
   line-height: var(--ft-leading-tight);
 }
 
-:global(.ui-toast__detail),
 :global(.p-toast .p-toast-detail) {
   margin: 0;
   font-size: var(--ft-text-sm);
@@ -148,12 +117,10 @@ const mergedPt = computed(() =>
   color: var(--ft-text-secondary);
 }
 
-:global(.ui-toast__button-container),
 :global(.p-toast .p-toast-button-container) {
   align-self: flex-start;
 }
 
-:global(.ui-toast__close-button),
 :global(.p-toast .p-toast-close-button) {
   cursor: pointer;
 
@@ -176,14 +143,12 @@ const mergedPt = computed(() =>
     border-color var(--ft-transition-fast);
 }
 
-:global(.ui-toast__close-button:hover),
 :global(.p-toast .p-toast-close-button:hover) {
   color: var(--ft-text-primary);
   background: var(--ft-surface-overlay);
   border-color: var(--ft-border-default);
 }
 
-:global(.ui-toast__close-icon),
 :global(.p-toast .p-toast-close-icon) {
   width: 1rem;
   height: 1rem;

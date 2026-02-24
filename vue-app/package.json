@@ -17,6 +17,7 @@
     "lint:api-boundaries": "node scripts/check-api-boundaries.mjs"
   },
   "dependencies": {
+    "@primeuix/themes": "^2.0.3",
     "axios": "^1.12.2",
     "chart.js": "^4.5.1",
     "pinia": "^3.0.3",

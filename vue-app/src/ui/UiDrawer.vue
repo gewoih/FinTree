@@ -1,8 +1,7 @@
 <script setup lang="ts">
-import { computed, useAttrs } from 'vue';
+import { useAttrs } from 'vue';
 import Drawer from 'primevue/drawer';
 import type { DrawerPassThroughOptions } from 'primevue/drawer';
-import { mergePt } from './prime/pt';
 
 defineOptions({ inheritAttrs: false });
 
@@ -27,18 +26,6 @@ const emit = defineEmits<{
 }>();
 
 const attrs = useAttrs();
-
-const mergedPt = computed(() =>
-  mergePt(
-    {
-      root: { class: 'ui-drawer__root' },
-      header: { class: 'ui-drawer__header' },
-      content: { class: 'ui-drawer__content' },
-      mask: { class: 'ui-drawer__mask' },
-    } as DrawerPassThroughOptions,
-    props.pt
-  )
-);
 </script>
 
 <template>
@@ -46,10 +33,10 @@ const mergedPt = computed(() =>
     v-bind="attrs"
     class="ui-drawer"
     :visible="props.visible"
-    :unstyled="props.unstyled ?? true"
+    :unstyled="props.unstyled"
     :auto-z-index="props.autoZIndex"
     :base-z-index="props.baseZIndex"
-    :pt="mergedPt"
+    :pt="props.pt"
     @update:visible="value => emit('update:visible', value)"
   >
     <template
@@ -71,7 +58,6 @@ const mergedPt = computed(() =>
 </template>
 
 <style scoped>
-:global(.ui-drawer__mask),
 :global(.p-drawer-mask) {
   position: fixed;
   z-index: var(--ft-z-drawer);
@@ -81,7 +67,6 @@ const mergedPt = computed(() =>
   backdrop-filter: blur(2px);
 }
 
-:global(.ui-drawer__root),
 :global(.p-drawer) {
   color: var(--ft-text-primary);
   background: var(--ft-surface-raised);
@@ -89,7 +74,6 @@ const mergedPt = computed(() =>
   box-shadow: var(--ft-shadow-lg);
 }
 
-:global(.ui-drawer__content),
 :global(.p-drawer .p-drawer-content) {
   padding: 0;
 }

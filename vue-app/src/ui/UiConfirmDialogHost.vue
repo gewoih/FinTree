@@ -1,8 +1,7 @@
 <script setup lang="ts">
-import { computed, useAttrs } from 'vue';
+import { useAttrs } from 'vue';
 import ConfirmDialog from 'primevue/confirmdialog';
 import type { ConfirmDialogPassThroughOptions } from 'primevue/confirmdialog';
-import { mergePt } from './prime/pt';
 
 defineOptions({ inheritAttrs: false });
 
@@ -18,38 +17,20 @@ const props = withDefaults(
 );
 
 const attrs = useAttrs();
-
-const mergedPt = computed(() =>
-  mergePt(
-    {
-      root: { class: 'ui-confirm-dialog__root' },
-      header: { class: 'ui-confirm-dialog__header' },
-      title: { class: 'ui-confirm-dialog__title' },
-      pcCloseButton: { root: { class: 'ui-confirm-dialog__close-button' } },
-      content: { class: 'ui-confirm-dialog__content' },
-      icon: { class: 'ui-confirm-dialog__icon' },
-      message: { class: 'ui-confirm-dialog__message' },
-      footer: { class: 'ui-confirm-dialog__footer' },
-      pcRejectButton: { root: { class: 'ui-confirm-dialog__button ui-confirm-dialog__button--reject' } },
-      pcAcceptButton: { root: { class: 'ui-confirm-dialog__button ui-confirm-dialog__button--accept' } },
-    } as ConfirmDialogPassThroughOptions,
-    props.pt
-  )
-);
 </script>
 
 <template>
   <ConfirmDialog
     v-bind="attrs"
     class="ui-confirm-dialog"
-    :unstyled="props.unstyled ?? true"
-    :pt="mergedPt"
+    :unstyled="props.unstyled"
+    :pt="props.pt"
   />
 </template>
 
 <style scoped>
 /* Root panel — teleported to body, shares mask with UiDialog */
-:global(.ui-confirm-dialog__root),
+:global(.p-confirmdialog),
 :global(.p-confirm-dialog) {
   overflow: hidden;
 
@@ -65,7 +46,8 @@ const mergedPt = computed(() =>
   box-shadow: var(--ft-shadow-lg);
 }
 
-:global(.ui-confirm-dialog__header) {
+:global(.p-confirmdialog .p-dialog-header),
+:global(.p-confirm-dialog .p-dialog-header) {
   display: flex;
   gap: var(--ft-space-2);
   align-items: center;
@@ -76,13 +58,15 @@ const mergedPt = computed(() =>
   border-bottom: 1px solid var(--ft-border-soft);
 }
 
-:global(.ui-confirm-dialog__title) {
+:global(.p-confirmdialog .p-dialog-title),
+:global(.p-confirm-dialog .p-dialog-title) {
   font-size: var(--ft-text-base);
   font-weight: var(--ft-font-semibold);
   color: var(--ft-heading);
 }
 
-:global(.ui-confirm-dialog__close-button) {
+:global(.p-confirmdialog .p-dialog-close-button),
+:global(.p-confirm-dialog .p-dialog-close-button) {
   cursor: pointer;
 
   display: inline-flex;
@@ -105,13 +89,15 @@ const mergedPt = computed(() =>
     border-color var(--ft-transition-fast);
 }
 
-:global(.ui-confirm-dialog__close-button:hover) {
+:global(.p-confirmdialog .p-dialog-close-button:hover),
+:global(.p-confirm-dialog .p-dialog-close-button:hover) {
   color: var(--ft-text-primary);
   background: var(--ft-surface-overlay);
   border-color: var(--ft-border-default);
 }
 
-:global(.ui-confirm-dialog__content) {
+:global(.p-confirmdialog .p-dialog-content),
+:global(.p-confirm-dialog .p-dialog-content) {
   overflow: auto;
   display: flex;
   gap: var(--ft-space-3);
@@ -122,20 +108,23 @@ const mergedPt = computed(() =>
   background: var(--ft-surface-raised);
 }
 
-:global(.ui-confirm-dialog__icon) {
+:global(.p-confirmdialog .p-confirmdialog-icon),
+:global(.p-confirm-dialog .p-confirm-dialog-icon) {
   flex-shrink: 0;
   margin-top: 0.125rem; /* sub-pixel nudge, no token exists at this scale */
   font-size: var(--ft-text-lg);
   color: var(--ft-text-secondary);
 }
 
-:global(.ui-confirm-dialog__message) {
+:global(.p-confirmdialog .p-confirmdialog-message),
+:global(.p-confirm-dialog .p-confirm-dialog-message) {
   font-size: var(--ft-text-sm);
   line-height: var(--ft-leading-normal);
   color: var(--ft-text-secondary);
 }
 
-:global(.ui-confirm-dialog__footer) {
+:global(.p-confirmdialog .p-dialog-footer),
+:global(.p-confirm-dialog .p-dialog-footer) {
   display: flex;
   gap: var(--ft-space-2);
   justify-content: flex-end;
@@ -145,7 +134,8 @@ const mergedPt = computed(() =>
   border-top: 1px solid var(--ft-border-soft);
 }
 
-:global(.ui-confirm-dialog__button) {
+:global(.p-confirmdialog .p-dialog-footer .p-button),
+:global(.p-confirm-dialog .p-dialog-footer .p-button) {
   cursor: pointer;
 
   display: inline-flex;
@@ -167,29 +157,34 @@ const mergedPt = computed(() =>
     color var(--ft-transition-fast);
 }
 
-:global(.ui-confirm-dialog__button--reject) {
+:global(.p-confirmdialog .p-confirmdialog-reject-button),
+:global(.p-confirm-dialog .p-confirm-dialog-reject) {
   color: var(--ft-text-primary);
   background: var(--ft-surface-overlay);
   border-color: var(--ft-border-default);
 }
 
-:global(.ui-confirm-dialog__button--reject:hover:not(:disabled)) {
+:global(.p-confirmdialog .p-confirmdialog-reject-button:hover:not(:disabled)),
+:global(.p-confirm-dialog .p-confirm-dialog-reject:hover:not(:disabled)) {
   background: color-mix(in srgb, var(--ft-surface-overlay) 80%, var(--ft-surface-raised));
   border-color: var(--ft-border-strong);
 }
 
-:global(.ui-confirm-dialog__button--accept) {
+:global(.p-confirmdialog .p-confirmdialog-accept-button),
+:global(.p-confirm-dialog .p-confirm-dialog-accept) {
   color: var(--ft-text-inverse);
   background: var(--ft-danger-500);
   border-color: var(--ft-danger-500);
 }
 
-:global(.ui-confirm-dialog__button--accept:hover:not(:disabled)) {
+:global(.p-confirmdialog .p-confirmdialog-accept-button:hover:not(:disabled)),
+:global(.p-confirm-dialog .p-confirm-dialog-accept:hover:not(:disabled)) {
   background: color-mix(in srgb, var(--ft-danger-500) 85%, black);
   border-color: color-mix(in srgb, var(--ft-danger-500) 85%, black);
 }
 
-:global(.ui-confirm-dialog__button:disabled) {
+:global(.p-confirmdialog .p-dialog-footer .p-button:disabled),
+:global(.p-confirm-dialog .p-dialog-footer .p-button:disabled) {
   cursor: not-allowed;
   opacity: 0.6;
 }

@@ -82,11 +82,12 @@ Rules:
 
 ---
 
-## 5) PrimeVue (Unstyled) Contract
+## 5) PrimeVue (Styled Hybrid) Contract
 
 - All visual PrimeVue components are consumed via `vue-app/src/ui/*` wrappers only.
 - PrimeVue runtime config lives in `vue-app/src/main.ts`.
-- Unstyled mode is always on in wrapper contracts; wrappers may still override via local `unstyled` prop for targeted tests.
+- PrimeVue runs in styled mode with a custom preset bridge that maps to `--ft-*` tokens.
+- Wrappers must inherit global PrimeVue styling by default; local `unstyled` overrides are allowed only for targeted testing or compatibility edge cases.
 
 Direct imports outside wrappers are allowed only for:
 - `primevue/config`
@@ -95,6 +96,14 @@ Direct imports outside wrappers are allowed only for:
 - `primevue/tooltip`
 - `primevue/usetoast`
 - `primevue/useconfirm`
+- `primevue/chart`
+- `primevue/checkbox`
+- `primevue/message`
+- `primevue/paginator`
+- `primevue/selectbutton`
+- `primevue/skeleton`
+- `primevue/tag`
+- `primevue/toggleswitch`
 - type-only `primevue/menuitem`
 
 Wrapper rules:
@@ -156,7 +165,7 @@ Rules:
 
 - Field wrappers (`UiInputText`, `UiInputNumber`, `UiSelect`, `UiDatePicker`) must expose `invalid` and optional `error` props as the validation API.
 - Feature `pages/` and `components/` must not set `p-invalid` directly.
-- Shared invalid-state visuals are defined in `vue-app/src/styles/prime-unstyled-shared.css`.
+- Shared invalid-state visuals are owned by field wrappers (`UiInputText`, `UiInputNumber`, `UiSelect`, `UiDatePicker`) and must stay token-driven.
 - Label, hint, error, and focus behavior must be visually consistent across screens.
 - Destructive actions require explicit user confirmation.
 

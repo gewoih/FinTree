@@ -9,9 +9,8 @@ import AccountCard from '../components/AccountCard.vue'
 import AccountBalanceAdjustmentsModal from '../components/AccountBalanceAdjustmentsModal.vue'
 import type { Account } from '../types'
 import UiButton from '../ui/UiButton.vue'
-import UiSkeleton from '../ui/UiSkeleton.vue'
-import UiSection from '../ui/UiSection.vue'
-import UiMessage from '../ui/UiMessage.vue'
+import Skeleton from 'primevue/skeleton';
+import Message from 'primevue/message';
 import EmptyState from '../components/common/EmptyState.vue'
 import PageContainer from '../components/layout/PageContainer.vue'
 import PageHeader from '../components/common/PageHeader.vue'
@@ -249,7 +248,7 @@ onMounted(async () => {
       </template>
     </PageHeader>
 
-    <UiSection class="accounts__content">
+    <section class="accounts__content">
       <ListToolbar
         :model-value="view"
         :search-text="searchText"
@@ -264,9 +263,9 @@ onMounted(async () => {
         v-if="currentAccountsState === 'error' && hasVisibleAccounts"
         class="accounts__error accounts__error--inline"
       >
-        <UiMessage severity="error">
+        <Message severity="error">
           {{ currentAccountsError || 'Не удалось загрузить список счетов.' }}
-        </UiMessage>
+        </Message>
         <UiButton
           label="Повторить"
           icon="pi pi-refresh"
@@ -279,7 +278,7 @@ onMounted(async () => {
         v-if="shouldShowAccountsSkeleton"
         class="accounts__skeleton"
       >
-        <UiSkeleton
+        <Skeleton
           v-for="i in 4"
           :key="i"
           height="220px"
@@ -291,9 +290,9 @@ onMounted(async () => {
         v-else-if="shouldShowAccountsErrorState"
         class="accounts__error"
       >
-        <UiMessage severity="error">
+        <Message severity="error">
           {{ currentAccountsError || 'Не удалось загрузить список счетов.' }}
-        </UiMessage>
+        </Message>
         <UiButton
           label="Повторить"
           icon="pi pi-refresh"
@@ -354,7 +353,7 @@ onMounted(async () => {
           @update-liquidity="handleLiquidityToggle(account, $event)"
         />
       </div>
-    </UiSection>
+    </section>
 
     <AccountFormModal
       v-model:visible="modalVisible"

@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed, onBeforeUnmount, ref, watch } from 'vue'
-import UiSkeleton from '@/ui/UiSkeleton.vue'
-import UiPaginator from '@/ui/UiPaginator.vue'
+import Skeleton from 'primevue/skeleton';
+import Paginator from 'primevue/paginator'
 import { useRoute, useRouter } from 'vue-router'
 import { useFinanceStore } from '../stores/finance'
 import { useUserStore } from '../stores/user'
@@ -18,7 +18,7 @@ import { getUtcDateOnlyKey, toUtcDateOnlyIso } from '../utils/dateOnly'
 import type { Transaction, TransactionsQuery, UpdateTransferPayload } from '../types'
 import UiCard from '../ui/UiCard.vue'
 import UiButton from '../ui/UiButton.vue'
-import UiMessage from '../ui/UiMessage.vue'
+import Message from 'primevue/message';
 import EmptyState from './common/EmptyState.vue'
 
 const props = withDefaults(defineProps<{
@@ -294,7 +294,7 @@ const resolveCategoryIconStyle = (txn: EnrichedTransaction) => {
       v-if="shouldShowTransactionsSkeleton"
       class="txn-list__skeleton"
     >
-      <UiSkeleton
+      <Skeleton
         v-for="i in 6"
         :key="i"
         height="64px"
@@ -305,9 +305,9 @@ const resolveCategoryIconStyle = (txn: EnrichedTransaction) => {
       v-else-if="shouldShowTransactionsErrorState"
       class="txn-list__error"
     >
-      <UiMessage severity="error">
+      <Message severity="error">
         {{ transactionsErrorText }}
-      </UiMessage>
+      </Message>
       <UiButton
         label="Повторить"
         icon="pi pi-refresh"
@@ -331,9 +331,9 @@ const resolveCategoryIconStyle = (txn: EnrichedTransaction) => {
         v-if="showTransactionsErrorInline"
         class="txn-list__error txn-list__error--inline"
       >
-        <UiMessage severity="error">
+        <Message severity="error">
           {{ transactionsErrorText }} Показаны последние доступные данные.
-        </UiMessage>
+        </Message>
         <UiButton
           label="Повторить"
           icon="pi pi-refresh"
@@ -440,7 +440,7 @@ const resolveCategoryIconStyle = (txn: EnrichedTransaction) => {
         <span class="txn-list__total">
           Итого: <strong>{{ formattedTotalAmount }}</strong>
         </span>
-        <UiPaginator
+        <Paginator
           :rows="paginationRows"
           :first="paginationFirst"
           :total-records="totalRecords"

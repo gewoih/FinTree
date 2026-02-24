@@ -1,8 +1,7 @@
 <script setup lang="ts">
-import { computed, useAttrs } from 'vue';
+import { useAttrs } from 'vue';
 import Dialog from 'primevue/dialog';
 import type { DialogPassThroughOptions } from 'primevue/dialog';
-import { mergePt } from './prime/pt';
 
 defineOptions({ inheritAttrs: false });
 
@@ -29,19 +28,6 @@ const emit = defineEmits<{
 }>();
 
 const attrs = useAttrs();
-
-const mergedPt = computed(() =>
-  mergePt(
-    {
-      root: { class: 'ui-dialog__root' },
-      content: { class: 'ui-dialog__content' },
-      header: { class: 'ui-dialog__header' },
-      footer: { class: 'ui-dialog__footer' },
-      mask: { class: 'ui-dialog__mask' },
-    } as DialogPassThroughOptions,
-    props.pt
-  )
-);
 </script>
 
 <template>
@@ -49,11 +35,11 @@ const mergedPt = computed(() =>
     v-bind="attrs"
     class="ui-dialog"
     :visible="props.visible"
-    :unstyled="props.unstyled ?? true"
+    :unstyled="props.unstyled"
     :auto-z-index="props.autoZIndex"
     :base-z-index="props.baseZIndex"
     :append-to="props.appendTo"
-    :pt="mergedPt"
+    :pt="props.pt"
     @update:visible="value => emit('update:visible', value)"
   >
     <template
@@ -76,7 +62,6 @@ const mergedPt = computed(() =>
 
 <style scoped>
 /* Mask / backdrop — teleported to body */
-:global(.ui-dialog__mask),
 :global(.p-dialog-mask) {
   position: fixed;
   z-index: var(--ft-z-modal);
@@ -93,7 +78,6 @@ const mergedPt = computed(() =>
 }
 
 /* Dialog panel — teleported to body */
-:global(.ui-dialog__root),
 :global(.p-dialog) {
   overflow: hidden;
 
@@ -109,14 +93,12 @@ const mergedPt = computed(() =>
 }
 
 /* Content area */
-:global(.ui-dialog__content),
 :global(.p-dialog .p-dialog-content) {
   overflow: auto;
   background: var(--ft-surface-raised);
 }
 
 /* Footer */
-:global(.ui-dialog__footer),
 :global(.p-dialog .p-dialog-footer) {
   display: flex;
   gap: var(--ft-space-2);

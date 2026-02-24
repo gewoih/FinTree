@@ -2,7 +2,6 @@
 import { computed, useAttrs } from 'vue';
 import InputText from 'primevue/inputtext';
 import type { InputTextPassThroughOptions } from 'primevue/inputtext';
-import { mergePt } from './prime/pt';
 import { resolveFieldInvalidState } from './prime/field-state';
 
 const props = defineProps<{
@@ -29,17 +28,6 @@ const isInvalid = computed(() =>
   })
 );
 
-const mergedPt = computed(() =>
-  mergePt(
-    {
-      root: {
-        class: 'ui-input__root p-inputtext',
-      },
-    } as InputTextPassThroughOptions,
-    props.pt
-  )
-);
-
 const handleUpdateModelValue = (value: string | null | undefined) => {
   emit('update:modelValue', value ?? '');
 };
@@ -55,8 +43,8 @@ const handleUpdateModelValue = (value: string | null | undefined) => {
     :type="props.type"
     :invalid="isInvalid"
     :aria-invalid="isInvalid ? 'true' : undefined"
-    :unstyled="props.unstyled ?? true"
-    :pt="mergedPt"
+    :unstyled="props.unstyled"
+    :pt="props.pt"
     @update:model-value="handleUpdateModelValue"
   />
 </template>

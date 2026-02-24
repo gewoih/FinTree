@@ -1,8 +1,8 @@
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue'
-import UiSkeleton from '@/ui/UiSkeleton.vue'
-import UiSelectButton from '@/ui/UiSelectButton.vue'
-import UiBadge from '@/ui/UiBadge.vue'
+import Tag from 'primevue/tag'
+import Skeleton from 'primevue/skeleton';
+import SelectButton from 'primevue/selectbutton';
 import { useFinanceStore } from '../stores/finance'
 import CategoryFormModal from './CategoryFormModal.vue'
 import type { Category, CategoryType } from '../types'
@@ -92,7 +92,7 @@ defineExpose({
 
     <div class="categories-manager__body">
       <div class="categories-manager__controls">
-        <UiSelectButton
+        <SelectButton
           v-model="selectedCategoryType"
           class="categories-toggle"
           :options="categoryTypeOptions"
@@ -107,7 +107,7 @@ defineExpose({
         role="status"
         aria-live="polite"
       >
-        <UiSkeleton
+        <Skeleton
           v-for="i in 3"
           :key="i"
           height="120px"
@@ -153,13 +153,13 @@ defineExpose({
                   />
                   <span class="category-name">
                     {{ category.name }}
-                    <UiBadge
+                    <Tag
                       v-if="category.isMandatory"
                       severity="info"
                       class="category-mandatory"
                     >
                       Обязательная
-                    </UiBadge>
+                    </Tag>
                   </span>
                 </div>
                 <i

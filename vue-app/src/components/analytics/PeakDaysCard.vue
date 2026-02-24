@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue';
-import UiSkeleton from '@/ui/UiSkeleton.vue';
-import UiMessage from '@/ui/UiMessage.vue';
+import Skeleton from 'primevue/skeleton';
+import Message from 'primevue/message';
 import UiButton from '../../ui/UiButton.vue';
 
 interface PeakDayItem {
@@ -77,12 +77,12 @@ const shareAccent = computed(() => {
       v-if="loading"
       class="peak-days__loading"
     >
-      <UiSkeleton
+      <Skeleton
         width="100%"
         height="60px"
         border-radius="12px"
       />
-      <UiSkeleton
+      <Skeleton
         v-for="i in 2"
         :key="i"
         width="100%"
@@ -95,7 +95,7 @@ const shareAccent = computed(() => {
       v-else-if="error"
       class="peak-days__message"
     >
-      <UiMessage
+      <Message
         severity="error"
         icon="pi pi-exclamation-triangle"
         :closable="false"
@@ -109,20 +109,20 @@ const shareAccent = computed(() => {
             @click="emit('retry')"
           />
         </div>
-      </UiMessage>
+      </Message>
     </div>
 
     <div
       v-else-if="showEmpty"
       class="peak-days__message"
     >
-      <UiMessage
+      <Message
         severity="info"
         icon="pi pi-check-circle"
         :closable="false"
       >
         <p>Пиковых дней нет — расходы стабильны.</p>
-      </UiMessage>
+      </Message>
     </div>
 
     <template v-else>

@@ -1,9 +1,9 @@
 <script setup lang="ts">
 import { computed } from 'vue';
 import type { Plugin } from 'chart.js';
-import UiSkeleton from '@/ui/UiSkeleton.vue';
-import UiMessage from '@/ui/UiMessage.vue';
-import UiChart from '@/ui/UiChart.vue';
+import Skeleton from 'primevue/skeleton';
+import Message from 'primevue/message';
+import Chart from 'primevue/chart';
 import { useChartColors } from '@/composables/useChartColors';
 
 interface AllocationAccount {
@@ -144,13 +144,13 @@ const formatMoney = (value: number) =>
       v-if="loading"
       class="allocation-card__loading"
     >
-      <UiSkeleton
+      <Skeleton
         width="220px"
         height="220px"
         border-radius="999px"
       />
       <div class="allocation-card__loading-legend">
-        <UiSkeleton
+        <Skeleton
           v-for="i in 4"
           :key="i"
           height="18px"
@@ -159,21 +159,21 @@ const formatMoney = (value: number) =>
       </div>
     </div>
 
-    <UiMessage
+    <Message
       v-else-if="segments.length === 0"
       severity="info"
       icon="pi pi-inbox"
       :closable="false"
     >
       Добавьте инвестиционные счета и операции, чтобы увидеть структуру портфеля.
-    </UiMessage>
+    </Message>
 
     <div
       v-else
       class="allocation-card__content"
     >
       <div class="allocation-card__chart">
-        <UiChart
+        <Chart
           v-if="donutChartData"
           type="doughnut"
           :data="donutChartData"

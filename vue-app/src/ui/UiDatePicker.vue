@@ -3,7 +3,6 @@ import { computed, useAttrs } from 'vue';
 import DatePicker from 'primevue/datepicker';
 import type { DatePickerPassThroughOptions } from 'primevue/datepicker';
 import { resolveFieldInvalidState } from './prime/field-state';
-import { mergeClassNames, mergePt } from './prime/pt';
 
 const props = withDefaults(
   defineProps<{
@@ -55,106 +54,12 @@ const isInvalid = computed(() =>
   })
 );
 const mergedPanelClass = computed(() => ['ui-date-picker-overlay', props.panelClass]);
-
-const mergedPt = computed(() =>
-  mergePt(
-    {
-      root: {
-        class: mergeClassNames(
-          'ui-date-picker__root p-datepicker p-component p-inputwrapper',
-          isInvalid.value ? 'ui-field--invalid' : undefined
-        ),
-      },
-      pcInputText: {
-        root: {
-          class: 'ui-date-picker__input p-datepicker-input p-inputtext',
-        },
-      },
-      clearIcon: {
-        class: 'ui-date-picker__clear-icon p-datepicker-clear-icon',
-      },
-      dropdown: {
-        class: 'ui-date-picker__dropdown p-datepicker-dropdown',
-      },
-      inputIconContainer: {
-        class: 'ui-date-picker__input-icon-container p-datepicker-input-icon-container',
-      },
-      inputIcon: {
-        class: 'ui-date-picker__input-icon p-datepicker-input-icon',
-      },
-      panel: {
-        class: 'ui-date-picker-overlay p-datepicker-panel p-component',
-      },
-      calendarContainer: {
-        class: 'ui-date-picker__calendar-container p-datepicker-calendar-container',
-      },
-      calendar: {
-        class: 'ui-date-picker__calendar p-datepicker-calendar',
-      },
-      header: {
-        class: 'ui-date-picker__header p-datepicker-header',
-      },
-      pcPrevButton: {
-        root: { class: 'ui-date-picker__nav-button p-datepicker-prev-button' },
-      },
-      title: {
-        class: 'ui-date-picker__title p-datepicker-title',
-      },
-      selectMonth: {
-        class: 'ui-date-picker__select-month p-datepicker-select-month',
-      },
-      selectYear: {
-        class: 'ui-date-picker__select-year p-datepicker-select-year',
-      },
-      pcNextButton: {
-        root: { class: 'ui-date-picker__nav-button p-datepicker-next-button' },
-      },
-      dayView: {
-        class: 'ui-date-picker__day-view p-datepicker-day-view',
-      },
-      weekDayCell: {
-        class: 'ui-date-picker__week-day-cell p-datepicker-weekday-cell',
-      },
-      weekDay: {
-        class: 'ui-date-picker__week-day p-datepicker-weekday',
-      },
-      dayCell: {
-        class: 'ui-date-picker__day-cell p-datepicker-day-cell',
-      },
-      day: {
-        class: 'ui-date-picker__day p-datepicker-day',
-      },
-      monthView: {
-        class: 'ui-date-picker__month-view p-datepicker-month-view',
-      },
-      month: {
-        class: 'ui-date-picker__month p-datepicker-month',
-      },
-      yearView: {
-        class: 'ui-date-picker__year-view p-datepicker-year-view',
-      },
-      year: {
-        class: 'ui-date-picker__year p-datepicker-year',
-      },
-      buttonbar: {
-        class: 'ui-date-picker__buttonbar p-datepicker-buttonbar',
-      },
-      pcTodayButton: {
-        root: { class: 'ui-date-picker__today-button p-datepicker-today-button' },
-      },
-      pcClearButton: {
-        root: { class: 'ui-date-picker__clear-button p-datepicker-clear-button' },
-      },
-    } as DatePickerPassThroughOptions,
-    props.pt
-  )
-);
 </script>
 
 <template>
   <DatePicker
     v-bind="attrs"
-    class="ui-date-picker"
+    :class="['ui-date-picker', { 'ui-field--invalid': isInvalid }]"
     :model-value="props.modelValue"
     :placeholder="props.placeholder"
     :disabled="props.disabled"
@@ -169,21 +74,13 @@ const mergedPt = computed(() =>
     :select-other-months="true"
     :invalid="isInvalid"
     :aria-invalid="isInvalid ? 'true' : undefined"
-    :unstyled="props.unstyled ?? true"
-    :pt="mergedPt"
+    :unstyled="props.unstyled"
+    :pt="props.pt"
     @update:model-value="val => emit('update:modelValue', val as Date[] | Date | null)"
   />
 </template>
 
 <style scoped>
-/* ── Root trigger wrapper ── */
-
-/*
- * NOTE: .ui-date-picker__root and data-v-xxx land on the same DOM element via
- * PrimeVue PT + Vue fallthrough, so :deep(.ui-date-picker__root) would compile
- * to [data-v-xxx] .ui-date-picker__root (descendant combinator) and never match.
- * All root-element styles live here on .ui-date-picker instead.
- */
 .ui-date-picker {
   overflow: hidden;
   display: flex;
@@ -227,12 +124,10 @@ const mergedPt = computed(() =>
   box-shadow: 0 0 0 1px color-mix(in srgb, var(--ft-danger-500) 18%, transparent);
 }
 
-.ui-date-picker.ui-field--invalid :deep(.ui-date-picker__dropdown) {
+.ui-date-picker.ui-field--invalid :deep(.p-datepicker-dropdown) {
   border-inline-start-color: color-mix(in srgb, var(--ft-danger-500) 42%, var(--ft-border-soft));
 }
 
-/* ── Input text ── */
-:deep(.ui-date-picker__input),
 :deep(.p-datepicker-input) {
   width: 100%;
   min-height: calc(var(--ft-control-height) - 2px);
@@ -248,20 +143,16 @@ const mergedPt = computed(() =>
   outline: 0;
 }
 
-:deep(.ui-date-picker__input::placeholder),
 :deep(.p-datepicker-input::placeholder) {
   color: var(--ft-text-tertiary);
   opacity: 1;
 }
 
-:deep(.ui-date-picker__input:disabled),
 :deep(.p-datepicker.p-disabled) {
   cursor: not-allowed;
   opacity: 0.6;
 }
 
-/* ── Dropdown button ── */
-:deep(.ui-date-picker__dropdown),
 :deep(.p-datepicker-dropdown) {
   display: inline-flex;
   align-items: center;
@@ -283,19 +174,17 @@ const mergedPt = computed(() =>
     background-color var(--ft-transition-fast);
 }
 
-:deep(.ui-date-picker__dropdown svg),
 :deep(.p-datepicker-dropdown svg) {
   width: 1rem;
   height: 1rem;
   transition: transform var(--ft-transition-fast);
 }
 
-.ui-date-picker:not(.p-disabled):hover :deep(.ui-date-picker__dropdown) {
+.ui-date-picker:not(.p-disabled):hover :deep(.p-datepicker-dropdown) {
   color: var(--ft-text-primary);
   background: color-mix(in srgb, var(--ft-surface-overlay) 65%, transparent);
 }
 
-/* ── Calendar overlay panel (teleported — use :global()) ── */
 :global(.ui-date-picker-overlay),
 :global(.p-datepicker-panel) {
   isolation: isolate;
@@ -324,45 +213,36 @@ const mergedPt = computed(() =>
     0 2px 8px color-mix(in srgb, var(--ft-bg-base) 32%, transparent);
 }
 
-/* ── Calendar container scrollbar ── */
-:global(.ui-date-picker__calendar-container),
 :global(.p-datepicker-calendar-container) {
   overflow: auto;
   max-height: min(26rem, 60vh);
   padding: var(--ft-space-1) var(--ft-space-2) var(--ft-space-2);
 }
 
-:global(.ui-date-picker__calendar-container)::-webkit-scrollbar,
 :global(.p-datepicker-calendar-container)::-webkit-scrollbar {
   width: var(--ft-scrollbar-size);
   height: var(--ft-scrollbar-size);
 }
 
-:global(.ui-date-picker__calendar-container)::-webkit-scrollbar-track,
 :global(.p-datepicker-calendar-container)::-webkit-scrollbar-track {
   background: var(--ft-scrollbar-track);
   border-radius: var(--ft-radius-full);
 }
 
-:global(.ui-date-picker__calendar-container)::-webkit-scrollbar-thumb,
 :global(.p-datepicker-calendar-container)::-webkit-scrollbar-thumb {
   background: var(--ft-scrollbar-thumb);
   border: 2px solid var(--ft-scrollbar-track);
   border-radius: var(--ft-radius-full);
 }
 
-:global(.ui-date-picker__calendar-container)::-webkit-scrollbar-thumb:hover,
 :global(.p-datepicker-calendar-container)::-webkit-scrollbar-thumb:hover {
   background: var(--ft-scrollbar-thumb-hover);
 }
 
-:global(.ui-date-picker__calendar-container)::-webkit-scrollbar-thumb:active,
 :global(.p-datepicker-calendar-container)::-webkit-scrollbar-thumb:active {
   background: var(--ft-scrollbar-thumb-active);
 }
 
-/* ── Calendar header ── */
-:global(.ui-date-picker__header),
 :global(.p-datepicker-header) {
   display: flex;
   gap: var(--ft-space-2);
@@ -377,15 +257,12 @@ const mergedPt = computed(() =>
   border-radius: var(--ft-radius-md);
 }
 
-:global(.ui-date-picker__title),
 :global(.p-datepicker-title) {
   display: inline-flex;
   gap: var(--ft-space-2);
   align-items: center;
 }
 
-/* ── Navigation buttons ── */
-:global(.ui-date-picker__nav-button),
 :global(.p-datepicker-prev-button),
 :global(.p-datepicker-next-button) {
   cursor: pointer;
@@ -413,7 +290,6 @@ const mergedPt = computed(() =>
     background-color var(--ft-transition-fast);
 }
 
-:global(.ui-date-picker__nav-button:not(:disabled):hover),
 :global(.p-datepicker-prev-button:not(:disabled):hover),
 :global(.p-datepicker-next-button:not(:disabled):hover) {
   color: var(--ft-text-primary);
@@ -421,9 +297,6 @@ const mergedPt = computed(() =>
   border-color: color-mix(in srgb, var(--ft-primary-400) 40%, transparent);
 }
 
-/* ── Month/year select buttons ── */
-:global(.ui-date-picker__select-month),
-:global(.ui-date-picker__select-year),
 :global(.p-datepicker-select-month),
 :global(.p-datepicker-select-year) {
   cursor: pointer;
@@ -441,8 +314,6 @@ const mergedPt = computed(() =>
   border-radius: var(--ft-radius-md);
 }
 
-:global(.ui-date-picker__select-month:focus-visible),
-:global(.ui-date-picker__select-year:focus-visible),
 :global(.p-datepicker-select-month:focus-visible),
 :global(.p-datepicker-select-year:focus-visible) {
   border-color: var(--ft-border-strong);
@@ -450,15 +321,12 @@ const mergedPt = computed(() =>
   box-shadow: 0 0 0 2px color-mix(in srgb, var(--ft-focus-ring) 52%, transparent);
 }
 
-/* ── Day grid ── */
-:global(.ui-date-picker__calendar),
 :global(.p-datepicker-calendar) {
   border-spacing: 0.25rem;
   border-collapse: separate;
   width: 100%;
 }
 
-:global(.ui-date-picker__calendar th),
 :global(.p-datepicker-calendar th) {
   padding: var(--ft-space-1);
 
@@ -470,10 +338,7 @@ const mergedPt = computed(() =>
   letter-spacing: 0.03em;
 }
 
-:global(.ui-date-picker__day),
-:global(.p-datepicker-day),
-:global(.ui-date-picker__calendar td > span),
-:global(.p-datepicker-calendar td > span) {
+:global(.p-datepicker-day) {
   display: grid;
   place-items: center;
 
@@ -494,19 +359,14 @@ const mergedPt = computed(() =>
     background-color var(--ft-transition-fast);
 }
 
-:global(.ui-date-picker__day:not([data-p-disabled='true']):hover),
-:global(.ui-date-picker__calendar td > span:not([data-p-disabled='true']):hover),
-:global(.p-datepicker-day:not(.p-disabled):hover),
-:global(.p-datepicker-calendar td > span:not(.p-disabled):hover) {
+:global(.p-datepicker-day:not(.p-disabled):hover) {
   background: color-mix(in srgb, var(--ft-primary-400) 14%, transparent);
   border-color: color-mix(in srgb, var(--ft-primary-400) 36%, transparent);
 }
 
-/* ── Selected state ── */
-:global(.ui-date-picker__day[data-p-selected='true']),
 :global(.p-datepicker-day-selected),
 :global(.p-datepicker-day-selected-range),
-:global(.p-datepicker-calendar td > span.p-highlight) {
+:global(.p-datepicker-day.p-highlight) {
   color: var(--ft-text-inverse);
   background: linear-gradient(
     135deg,
@@ -517,30 +377,21 @@ const mergedPt = computed(() =>
   box-shadow: 0 4px 12px color-mix(in srgb, var(--ft-primary-600) 40%, transparent);
 }
 
-/* ── Today indicator ── */
-:global(.ui-date-picker__day-cell.p-datepicker-today .ui-date-picker__day),
 :global(.p-datepicker-day-cell.p-datepicker-today .p-datepicker-day),
 :global(.p-datepicker-today > span) {
   border-color: color-mix(in srgb, var(--ft-primary-300) 55%, transparent);
   box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--ft-primary-200) 35%, transparent);
 }
 
-/* ── Other-month days ── */
-:global(.ui-date-picker__day-cell.p-datepicker-other-month .ui-date-picker__day),
 :global(.p-datepicker-day-cell.p-datepicker-other-month .p-datepicker-day) {
   color: var(--ft-text-tertiary);
   opacity: 0.72;
 }
 
-/* ── Disabled days ── */
-:global(.ui-date-picker__day[data-p-disabled='true']),
 :global(.p-datepicker-day.p-disabled) {
   opacity: 0.5;
 }
 
-/* ── Month/year view grids ── */
-:global(.ui-date-picker__month-view),
-:global(.ui-date-picker__year-view),
 :global(.p-datepicker-month-view),
 :global(.p-datepicker-year-view) {
   display: grid;
@@ -549,8 +400,6 @@ const mergedPt = computed(() =>
   padding: 0;
 }
 
-:global(.ui-date-picker__month),
-:global(.ui-date-picker__year),
 :global(.p-datepicker-month),
 :global(.p-datepicker-year) {
   cursor: pointer;
@@ -568,16 +417,12 @@ const mergedPt = computed(() =>
   border-radius: var(--ft-radius-md);
 }
 
-:global(.ui-date-picker__month:not(.p-disabled):hover),
-:global(.ui-date-picker__year:not(.p-disabled):hover),
 :global(.p-datepicker-month:not(.p-disabled):hover),
 :global(.p-datepicker-year:not(.p-disabled):hover) {
   background: color-mix(in srgb, var(--ft-primary-400) 14%, transparent);
   border-color: color-mix(in srgb, var(--ft-primary-400) 36%, transparent);
 }
 
-:global(.ui-date-picker__month.p-datepicker-month-selected),
-:global(.ui-date-picker__year.p-datepicker-year-selected),
 :global(.p-datepicker-month.p-datepicker-month-selected),
 :global(.p-datepicker-year.p-datepicker-year-selected) {
   color: var(--ft-text-inverse);
@@ -585,8 +430,6 @@ const mergedPt = computed(() =>
   border-color: color-mix(in srgb, var(--ft-primary-300) 45%, var(--ft-primary-400));
 }
 
-/* ── Button bar ── */
-:global(.ui-date-picker__buttonbar),
 :global(.p-datepicker-buttonbar) {
   display: flex;
   gap: var(--ft-space-2);
@@ -598,8 +441,6 @@ const mergedPt = computed(() =>
   border-top: 1px solid var(--ft-border-soft);
 }
 
-:global(.ui-date-picker__buttonbar .ui-date-picker__today-button),
-:global(.ui-date-picker__buttonbar .ui-date-picker__clear-button),
 :global(.p-datepicker-buttonbar .p-datepicker-today-button),
 :global(.p-datepicker-buttonbar .p-datepicker-clear-button) {
   min-height: 2rem;
@@ -613,15 +454,12 @@ const mergedPt = computed(() =>
   border-radius: var(--ft-radius-md);
 }
 
-:global(.ui-date-picker__buttonbar .ui-date-picker__today-button:not(:disabled):hover),
-:global(.ui-date-picker__buttonbar .ui-date-picker__clear-button:not(:disabled):hover),
 :global(.p-datepicker-buttonbar .p-datepicker-today-button:not(:disabled):hover),
 :global(.p-datepicker-buttonbar .p-datepicker-clear-button:not(:disabled):hover) {
   background: color-mix(in srgb, var(--ft-primary-400) 14%, transparent);
   border-color: color-mix(in srgb, var(--ft-primary-400) 42%, transparent);
 }
 
-/* ── Responsive: narrow screens ── */
 @media (width <= 480px) {
   :global(.ui-date-picker-overlay),
   :global(.p-datepicker-panel) {

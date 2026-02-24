@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import UiCard from '@/ui/UiCard.vue';
-import UiSkeleton from '@/ui/UiSkeleton.vue';
-import UiMessage from '@/ui/UiMessage.vue';
+import Skeleton from 'primevue/skeleton';
+import Message from 'primevue/message';
 import UiButton from '../../ui/UiButton.vue';
 import { useHeroHealthCardState } from '@/composables/useHeroHealthCardState';
 import type { HealthGroup, PeakDayItem, PeaksSummary } from '@/types/hero-health-card';
@@ -55,13 +55,13 @@ const {
         role="status"
         aria-live="polite"
       >
-        <UiSkeleton
+        <Skeleton
           width="128px"
           height="128px"
           border-radius="999px"
         />
         <div class="hero-card__loading-metrics">
-          <UiSkeleton
+          <Skeleton
             v-for="index in 4"
             :key="index"
             height="72px"
@@ -75,7 +75,7 @@ const {
         v-else-if="error"
         class="hero-card__message"
       >
-        <UiMessage
+        <Message
           severity="error"
           icon="pi pi-exclamation-triangle"
           :closable="false"
@@ -94,14 +94,14 @@ const {
               @click="emit('retry')"
             />
           </div>
-        </UiMessage>
+        </Message>
       </div>
 
       <div
         v-else-if="showEmpty"
         class="hero-card__message"
       >
-        <UiMessage
+        <Message
           severity="info"
           icon="pi pi-inbox"
           :closable="false"
@@ -114,7 +114,7 @@ const {
               Добавьте несколько транзакций, чтобы увидеть метрики.
             </p>
           </div>
-        </UiMessage>
+        </Message>
       </div>
 
       <div

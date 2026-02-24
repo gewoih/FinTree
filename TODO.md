@@ -33,9 +33,8 @@
 
 ## Modals & Interaction Patterns
 
-- [x] `FT-TODO-020` Style PrimeVue Select (dropdown) — complete; all acceptance criteria met in UiSelect.vue
-
-- [x] `FT-TODO-021` Style PrimeVue DatePicker (calendar) — complete; all acceptance criteria met in UiDatePicker.vue
+- [ ] `FT-TODO-032` Split TransactionForm.vue into smaller units and remove temporary `max-lines` suppression
+  **Acceptance criteria:** `src/components/TransactionForm.vue` no longer uses file-level `eslint-disable max-lines`; logic/template are extracted into focused child components or composables, and `npm run lint` passes without that suppression.
 
 ---
 
@@ -49,17 +48,6 @@
 
 - [ ] `FT-TODO-024` Replace raw `0.95rem` literal in UiButton.vue icon font-size with a `--ft-*` token
   **Acceptance criteria:** `font-size: 0.95rem` in `.ui-button :deep(.ui-button__icon)` uses a `--ft-text-*` token. Add token to `design-tokens.css` if the scale doesn't already cover it.
-
-- [x] `FT-TODO-027` Fix UiPaginator button touch target — bumped to `var(--ft-control-height)` (44px)
-
-- [x] `FT-TODO-028` Replace `font-size: 1rem` in UiToastHost.vue — now `var(--ft-text-base)`
-
-- [x] `FT-TODO-026b` Clarify UiSelect panelClass vs overlayClass redundancy — resolved: removed `panelClass` prop entirely, `overlayClass` is the canonical prop
-
-- [x] `FT-TODO-029` Fix dead `.ui-chart__root` scoped selector in UiChart.vue — replaced with `.ui-chart` (fallthrough class); removed dead `:deep(.p-chart)` companion
-  **Acceptance criteria:** The `.ui-chart__root` selector on line ~54 of `UiChart.vue` is either removed (relying on `:deep(.p-chart)` as the working selector) or converted to `:deep(.ui-chart__root)`. The plain scoped selector cannot match because PrimeVue renders the element outside the scoped boundary.
-
-- [x] `FT-TODO-030` Replace raw rem in UiConfirmDialogHost.vue — `font-size: 1.125rem` → `var(--ft-text-lg)`; `margin-top: 0.125rem` kept as sub-pixel nudge (no token at this scale)
 
 - [ ] `FT-TODO-025` Fix 31 pre-existing stylelint property-order warnings in `EvolutionTab.vue` and `analytics-page.css`
   **Acceptance criteria:** `npm run lint:style` passes with 0 warnings from those two files.

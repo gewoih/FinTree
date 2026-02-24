@@ -8,7 +8,7 @@ import UiButton from '../ui/UiButton.vue';
 import UiCard from '../ui/UiCard.vue';
 import UiInputText from '../ui/UiInputText.vue';
 import UiSelect from '../ui/UiSelect.vue';
-import UiSkeleton from '../ui/UiSkeleton.vue';
+import Skeleton from 'primevue/skeleton';
 
 const {
   activeTab,
@@ -305,7 +305,7 @@ const {
               v-if="areSubscriptionPaymentsLoading"
               class="payment-history__skeleton"
             >
-              <UiSkeleton
+              <Skeleton
                 v-for="i in 3"
                 :key="i"
                 height="52px"

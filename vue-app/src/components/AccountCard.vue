@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue'
-import UiToggleSwitch from '@/ui/UiToggleSwitch.vue'
+import ToggleSwitch from 'primevue/toggleswitch'
 import UiMenu from '@/ui/UiMenu.vue'
 import type { MenuItem } from 'primevue/menuitem'
 import type { Account } from '../types'
@@ -171,10 +171,10 @@ const toggleMenu = (event: Event) => {
         class="liquidity-control-compact"
         @click.stop
       >
-        <UiToggleSwitch
-          v-if="!readonly && !interactionLocked"
-          v-model="liquidityModel"
-          :disabled="isLiquidityLoading"
+        <ToggleSwitch
+            v-if="!readonly && !interactionLocked"
+            v-model="liquidityModel"
+            :disabled="isLiquidityLoading"
         />
         <span
           v-else

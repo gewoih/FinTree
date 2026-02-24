@@ -1,10 +1,10 @@
 <script setup lang="ts">
 import { computed } from 'vue';
 import type { ChartData, TooltipItem, Plugin } from 'chart.js';
-import UiSkeleton from '@/ui/UiSkeleton.vue';
-import UiMessage from '@/ui/UiMessage.vue';
+import Skeleton from 'primevue/skeleton';
+import Message from 'primevue/message';
 import UiButton from '../../ui/UiButton.vue';
-import UiChart from '@/ui/UiChart.vue';
+import Chart from 'primevue/chart';
 import type { ForecastSummary } from '@/types/analytics.ts';
 import { useChartColors } from '@/composables/useChartColors.ts';
 
@@ -165,20 +165,20 @@ const chartOptions = computed(() => ({
         v-if="loading"
         class="forecast-card__loading-kpi"
       >
-        <UiSkeleton
+        <Skeleton
           width="200px"
           height="20px"
         />
-        <UiSkeleton
+        <Skeleton
           width="260px"
           height="44px"
         />
         <div class="forecast-card__loading-secondary">
-          <UiSkeleton
+          <Skeleton
             width="110px"
             height="36px"
           />
-          <UiSkeleton
+          <Skeleton
             width="110px"
             height="36px"
           />
@@ -206,7 +206,7 @@ const chartOptions = computed(() => ({
       </div>
     </div>
 
-    <UiSkeleton
+    <Skeleton
       v-if="loading"
       width="100%"
       height="300px"
@@ -217,7 +217,7 @@ const chartOptions = computed(() => ({
       v-else-if="error"
       class="forecast-card__message"
     >
-      <UiMessage
+      <Message
         severity="error"
         icon="pi pi-exclamation-triangle"
         :closable="false"
@@ -236,14 +236,14 @@ const chartOptions = computed(() => ({
             @click="emit('retry')"
           />
         </div>
-      </UiMessage>
+      </Message>
     </div>
 
     <div
       v-else-if="!readinessMet"
       class="forecast-card__message"
     >
-      <UiMessage
+      <Message
         severity="info"
         icon="pi pi-info-circle"
         :closable="false"
@@ -256,14 +256,14 @@ const chartOptions = computed(() => ({
             Нужны расходы минимум в {{ requiredExpenseDays }} днях. Сейчас: {{ observedExpenseDays }}.
           </p>
         </div>
-      </UiMessage>
+      </Message>
     </div>
 
     <div
       v-else-if="showEmpty"
       class="forecast-card__message"
     >
-      <UiMessage
+      <Message
         severity="info"
         icon="pi pi-inbox"
         :closable="false"
@@ -276,7 +276,7 @@ const chartOptions = computed(() => ({
             Нужны ежедневные расходы за текущий месяц.
           </p>
         </div>
-      </UiMessage>
+      </Message>
     </div>
 
     <template v-else>
@@ -286,7 +286,7 @@ const chartOptions = computed(() => ({
         aria-label="График прогноза расходов"
       >
         <div class="forecast-card__chart-container">
-          <UiChart
+          <Chart
             v-if="chartData"
             type="line"
             :data="chartData"
