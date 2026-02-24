@@ -2,9 +2,9 @@
 import { computed } from 'vue';
 import type { ChartData, TooltipItem } from 'chart.js';
 import UiButton from '../../ui/UiButton.vue';
-import UiSkeleton from '@/ui/UiSkeleton.vue';
-import UiMessage from '@/ui/UiMessage.vue';
-import UiChart from '@/ui/UiChart.vue';
+import Skeleton from 'primevue/skeleton';
+import Message from 'primevue/message';
+import Chart from 'primevue/chart';
 import { useChartColors } from '../../composables/useChartColors';
 
 const props = withDefaults(
@@ -88,7 +88,7 @@ const chartOptions = computed(() => ({
       v-if="loading"
       class="networth-card__loading"
     >
-      <UiSkeleton
+      <Skeleton
         width="100%"
         height="280px"
         border-radius="16px"
@@ -99,7 +99,7 @@ const chartOptions = computed(() => ({
       v-else-if="error"
       class="networth-card__message"
     >
-      <UiMessage
+      <Message
         severity="error"
         icon="pi pi-exclamation-triangle"
         :closable="false"
@@ -118,14 +118,14 @@ const chartOptions = computed(() => ({
             @click="emit('retry')"
           />
         </div>
-      </UiMessage>
+      </Message>
     </div>
 
     <div
       v-else-if="showEmpty"
       class="networth-card__message"
     >
-      <UiMessage
+      <Message
         severity="info"
         icon="pi pi-inbox"
         :closable="false"
@@ -138,7 +138,7 @@ const chartOptions = computed(() => ({
             Добавьте операции, чтобы увидеть динамику капитала.
           </p>
         </div>
-      </UiMessage>
+      </Message>
     </div>
 
     <div
@@ -148,7 +148,7 @@ const chartOptions = computed(() => ({
       aria-label="График динамики капитала"
     >
       <div class="networth-card__chart-container">
-        <UiChart
+        <Chart
           v-if="chartData"
           :type="props.chartType"
           :data="chartData"

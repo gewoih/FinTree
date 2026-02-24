@@ -13,10 +13,10 @@
     "lint:style:fix": "stylelint \"src/**/*.{css,scss,vue}\" --fix",
     "type-check": "vue-tsc --noEmit",
     "lint:design-contract": "node scripts/check-design-contract.mjs",
-    "lint:prime-imports": "node scripts/check-prime-imports.mjs",
     "lint:api-boundaries": "node scripts/check-api-boundaries.mjs"
   },
   "dependencies": {
+    "@primeuix/themes": "^2.0.3",
     "axios": "^1.12.2",
     "chart.js": "^4.5.1",
     "pinia": "^3.0.3",

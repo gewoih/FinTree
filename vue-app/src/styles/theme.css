@@ -38,6 +38,13 @@
   border: 1px solid var(--ft-border-soft);
   border-radius: var(--ft-radius-card);
   box-shadow: var(--ft-shadow-card);
+
+  transition: transform var(--ft-transition-fast), box-shadow var(--ft-transition-fast);
+}
+
+.ft-card:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--ft-shadow-soft);
 }
 
 .ft-card--muted {

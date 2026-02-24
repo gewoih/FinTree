@@ -19,6 +19,7 @@ import type {
     TransactionsQuery,
     UpdateUserProfilePayload,
     NetWorthSnapshotDto,
+    EvolutionMonthDto,
     InvestmentsOverviewDto,
     AccountBalanceAdjustmentDto,
     CreateTransferPayload,
@@ -395,6 +396,13 @@ export const apiService = {
     async getNetWorthTrend(months?: number): Promise<NetWorthSnapshotDto[]> {
         const response = await apiClient.get<NetWorthSnapshotDto[]>('/analytics/net-worth', {
             params: months ? { months } : {},
+        });
+        return response.data;
+    },
+
+    async getEvolution(months: number): Promise<EvolutionMonthDto[]> {
+        const response = await apiClient.get<EvolutionMonthDto[]>('/analytics/evolution', {
+            params: { months }
         });
         return response.data;
     },

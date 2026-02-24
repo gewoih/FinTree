@@ -1,7 +1,6 @@
 import './assets/design-tokens.css';
 import './style.css';
 import './styles/theme.css';
-import './styles/prime-unstyled-shared.css';
 import { createApp } from 'vue';
 import { createPinia } from 'pinia';
 import App from './App.vue';
@@ -13,6 +12,7 @@ import ToastService from 'primevue/toastservice';
 import ConfirmationService from 'primevue/confirmationservice';
 import Tooltip from 'primevue/tooltip';
 import { registerComponents } from './components';
+import { FinTreePrimePreset } from './theme/fintree-prime-preset';
 
 const THEME_STORAGE_KEY = 'fintree-theme';
 
@@ -66,7 +66,17 @@ app.use(router);
 
 app.use(PrimeVue, {
     locale: ruLocale,
-    unstyled: true,
+    unstyled: false,
+    theme: {
+        preset: FinTreePrimePreset,
+        options: {
+            darkModeSelector: '.dark-mode',
+            cssLayer: {
+                name: 'primevue',
+                order: 'reset, tokens, base, components, primevue, overrides',
+            },
+        },
+    },
     zIndex: {
         modal: 1040,
         overlay: 1050,

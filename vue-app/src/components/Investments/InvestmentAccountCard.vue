@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue';
+import Menu from 'primevue/menu';
 import type { MenuItem } from 'primevue/menuitem';
-import UiMenu from '@/ui/UiMenu.vue';
 import type { AccountType, Currency, InvestmentAccountOverviewDto } from '../../types';
 import { getAccountTypeInfo } from '../../utils/accountHelpers';
 import { formatCurrency } from '../../utils/formatters';
@@ -36,7 +36,7 @@ const emit = defineEmits<{
   (e: 'rename'): void;
 }>();
 
-const menuRef = ref<{ toggle: (event: Event) => void } | null>(null);
+const menuRef = ref<InstanceType<typeof Menu> | null>(null);
 
 const accountTypeInfo = computed(() => getAccountTypeInfo(props.account.type as AccountType));
 const currencyCode = computed(() => props.account.currency?.code || props.account.currencyCode);
@@ -160,10 +160,11 @@ const toggleMenu = (event: Event) => {
       >
         <i class="pi pi-ellipsis-v" />
       </button>
-      <UiMenu
+      <Menu
         ref="menuRef"
         :model="menuItems"
         :popup="true"
+        append-to="body"
       />
     </header>
 

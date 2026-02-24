@@ -6,9 +6,9 @@ import PageContainer from '../components/layout/PageContainer.vue';
 import { useProfilePage } from '../composables/useProfilePage';
 import UiButton from '../ui/UiButton.vue';
 import UiCard from '../ui/UiCard.vue';
-import UiInputText from '../ui/UiInputText.vue';
-import UiSelect from '../ui/UiSelect.vue';
-import UiSkeleton from '../ui/UiSkeleton.vue';
+import InputText from 'primevue/inputtext';
+import Select from 'primevue/select';
+import Skeleton from 'primevue/skeleton';
 
 const {
   activeTab,
@@ -138,7 +138,7 @@ const {
                   class="settings-label"
                   for="profileCurrency"
                 >Базовая валюта</label>
-                <UiSelect
+                <Select
                   id="profileCurrency"
                   v-model="form.baseCurrencyCode"
                   :options="currencyOptions"
@@ -146,6 +146,7 @@ const {
                   option-value="value"
                   placeholder="Выберите валюту"
                   :disabled="isLoading || isReadOnlyMode"
+                  append-to="body"
                 />
                 <small class="helper-text">
                   <template v-if="isLoading">Загрузка доступных валют…</template>
@@ -159,7 +160,7 @@ const {
                   for="profileTelegram"
                 >Telegram-бот</label>
                 <div class="telegram-input">
-                  <UiInputText
+                  <InputText
                     id="profileTelegram"
                     v-model="form.telegramUserId"
                     placeholder="123456789"
@@ -305,7 +306,7 @@ const {
               v-if="areSubscriptionPaymentsLoading"
               class="payment-history__skeleton"
             >
-              <UiSkeleton
+              <Skeleton
                 v-for="i in 3"
                 :key="i"
                 height="52px"

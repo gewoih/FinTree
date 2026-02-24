@@ -1,23 +1,27 @@
 ## Analytics
 
+- [ ] `FT-TODO-024` Avoid repeated per-month projection of allTransactions in GetEvolutionAsync
+  **Acceptance criteria:** `allTransactions` is projected into its tuple form once before the monthly loop and reused, instead of being re-projected on every iteration via `.Select(...)` inside `ComputeNetWorthAt`'s call site.
+
+- [ ] `FT-TODO-025` GetEvolutionAsync makes N async calls to CurrencyConverter inside the month loop (one per month). Pre-fetch all needed rates before the loop (similar to GetNetWorthTrendAsync pattern) to reduce to O(1) currency service calls.
+
+- [ ] `FT-TODO-026` ComputeBalanceAt in GetEvolutionAsync duplicates balance reconstruction logic that also exists in GetNetWorthTrendAsync (ApplyBalanceEvent). Consider extracting a shared private helper to eliminate the maintenance risk of formula divergence.
+
+- [ ] `FT-TODO-027` useEvolutionTab monthOverMonthDelta suppresses delta when prev === 0. This guard is correct for percentage change but wrong for absolute delta. Review before shipping Evolution UI — for now delta is informational only.
+
+- [ ] `FT-TODO-028` useEvolutionTab previousMonthValue does not align correctly with currentMonthValue when trailing months have hasData=false (e.g. current in-progress month). Both should be computed from the same filtered+reversed iteration to avoid off-by-one delta.
+
+- [ ] `FT-TODO-MONEY` explore the opportunity to uncomment throwing exception in Money.ctr() if amount is negative or zero. Is Money should handle negative amounts?
+
 - [ ] `FT-TODO-009` Rebuild category icons considering income/expense context  
   **Acceptance criteria:** two curated icon sets are used (income and expense) with fallback support for legacy values.
 
 - [ ] `FT-TODO-011` Fix non-clickable tooltips in analytics on mobile
   **Acceptance criteria:** tooltips are fully interactive and accessible on mobile devices without gesture conflicts.
 
-- [x] `FT-TODO-015` Unify base expense calculation across forecast and liquidity metrics
-  **Acceptance criteria:** a single shared calculation logic is used for baseline expense in both forecast and liquidity features.
-
 ---
 
 ## Navigation & Layout
-
-- [x] `FT-TODO-012` Hide sidebar menu in mobile layout
-  **Acceptance criteria:** sidebar is collapsed by default and accessible via a dedicated mobile navigation trigger.
-
-- [x] `FT-TODO-013` Align top navigation and bottom navigation (mobile) styling with sidebar
-  **Acceptance criteria:** gradient is removed and navigation elements share a unified visual system with sidebar tokens.
 
 - [ ] `FT-TODO-019` Fix tablet sidebar drawer styling
   **Acceptance criteria:** the drawer close button is positioned correctly within the header (not floating outside it); drawer header, nav links, user card, and logout button match the design system tokens and spacing used in the desktop sidebar.
@@ -27,26 +31,36 @@
 
 ---
 
-## Charts & Visual System
+## Modals & Interaction Patterns
 
-- [x] `FT-TODO-014` Remove chart color overrides (`chartColorGuards.ts`)  
-  **Acceptance criteria:** no runtime color guards override chart palette behavior.
-
-- [x] `FT-TODO-016` Set default chart color to base olive token  
-  **Acceptance criteria:** charts use base olive color as primary default unless explicitly overridden.
+- [ ] `FT-TODO-032` Split TransactionForm.vue into smaller units and remove temporary `max-lines` suppression
+  **Acceptance criteria:** `src/components/TransactionForm.vue` no longer uses file-level `eslint-disable max-lines`; logic/template are extracted into focused child components or composables, and `npm run lint` passes without that suppression.
 
 ---
 
-## Modals & Interaction Patterns
+## CSS / Styling Technical Debt
 
-- [x] `FT-TODO-017` Redesign confirmation modal (`confirm.require`) and extract dedicated component
-  **Acceptance criteria:** reusable confirmation component exists with consistent API, styling, and accessibility behavior.
+- [ ] `FT-TODO-023` Define visual style for UiBadge `secondary` severity
+  **Acceptance criteria:** `severity="secondary"` renders with a distinct background, color, and border using `--ft-*` tokens. Currently has no CSS rule — visually unstyled/inherited.
 
-- [ ] `FT-TODO-020` Style PrimeVue Select (dropdown) component to match design system
-  **Acceptance criteria:** dropdown panel background uses `--ft-surface-*` tokens; option items have correct hover, selected, and focused states using `--ft-primary-*` tokens; item spacing matches design density; scrollbar is styled consistently; panel border and shadow match other overlay surfaces.
+- [ ] `FT-TODO-033` Replace raw `0.95rem` literal in UiButton.vue icon font-size with a `--ft-*` token
+  **Acceptance criteria:** `font-size: 0.95rem` in `.ui-button :deep(.p-button-icon)` uses a `--ft-text-*` token. Add token to `design-tokens.css` if the scale doesn't already cover it.
 
-- [ ] `FT-TODO-021` Style PrimeVue DatePicker (calendar) component to match design system
-  **Acceptance criteria:** navigation prev/next buttons use design system icon-button styling (no raw gray background); month/year header buttons match surface tokens; day cells have correct hover and selected states using `--ft-primary-*` tokens; "Today" and "Clear" footer buttons use the standard secondary button style; day-of-week labels use `--ft-text-muted`; calendar panel border and shadow match other overlay surfaces.
+---
+
+## Forms & Branding Alignment
+
+- [ ] `FT-TODO-034` Increase default field size for `UiInputText`, `UiSelect`, and `UiDatePicker` to match design baseline
+  **Acceptance criteria:** these wrappers use token-driven sizing that matches `DESIGN.md` form guidance and the target visual baseline (larger touch-friendly controls, consistent label/input spacing, min target size `44x44`).
+
+- [ ] `FT-TODO-035` Reduce focus ring thickness for form inputs while preserving accessibility contrast
+  **Acceptance criteria:** focused states in `UiInputText`, `UiSelect`, and `UiDatePicker` use a smaller token-driven ring/outline than current visuals, remain keyboard-visible, and keep non-text contrast at least `3:1` per `DESIGN.md`.
+
+- [ ] `FT-TODO-036` Make net worth chart section in `InvestmentsPage.vue` fill available card height
+  **Acceptance criteria:** the "Изменение капитала" chart area expands to use full available panel height (no large unused empty area), with responsive behavior intact at `360px` and desktop widths.
+
+- [ ] `FT-TODO-037` Standardize brand styling for all select-button controls (including `CategoriesPage.vue`)
+  **Acceptance criteria:** all SelectButton-like controls share one token-driven brand style contract (active, inactive, hover, focus, border/radius, typography) consistent with `DESIGN.md` and `design-tokens.css`.
 
 ---
 

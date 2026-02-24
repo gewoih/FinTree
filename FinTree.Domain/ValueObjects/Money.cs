@@ -15,7 +15,7 @@ public sealed record Money
 
     public Money(string currencyCode, decimal amount)
     {
-        ArgumentOutOfRangeException.ThrowIfNegativeOrZero(amount);
+        //ArgumentOutOfRangeException.ThrowIfNegativeOrZero(amount);
         ArgumentException.ThrowIfNullOrWhiteSpace(currencyCode);
 
         CurrencyCode = currencyCode;

@@ -1,3 +1,3 @@
 interface Window {
-    ym: any
+  ym?: (counterId: number, method: string, ...args: unknown[]) => void
 }

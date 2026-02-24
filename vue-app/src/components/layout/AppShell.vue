@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import UiDrawer from '@/ui/UiDrawer.vue'
+import Drawer from 'primevue/drawer'
 import ThemeToggle from '../common/ThemeToggle.vue'
 import UiButton from '../../ui/UiButton.vue'
 import BottomTabBar from './BottomTabBar.vue'
@@ -93,11 +93,14 @@ const {
     </div>
 
     <!-- Mobile Drawer (hidden on desktop) -->
-    <UiDrawer
+    <Drawer
       v-if="isDrawerVisible"
       v-model:visible="sidebarVisible"
       position="left"
       class="app-shell__drawer-mobile"
+      append-to="body"
+      :auto-z-index="true"
+      :base-z-index="0"
     >
       <template #header>
         <div class="app-shell__drawer-header">
@@ -177,7 +180,7 @@ const {
           </button>
         </div>
       </div>
-    </UiDrawer>
+    </Drawer>
 
     <!-- Desktop Sidebar -->
     <aside

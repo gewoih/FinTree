@@ -6,8 +6,7 @@ import type { Transaction, UpdateTransferPayload } from '../types'
 import TransactionList from '../components/TransactionList.vue'
 import TransactionForm from '../components/TransactionForm.vue'
 import UiButton from '../ui/UiButton.vue'
-import UiSection from '../ui/UiSection.vue'
-import UiSkeleton from '../ui/UiSkeleton.vue'
+import Skeleton from 'primevue/skeleton';
 import PageContainer from '../components/layout/PageContainer.vue'
 import PageHeader from '../components/common/PageHeader.vue'
 
@@ -63,12 +62,12 @@ onMounted(async () => {
       </template>
     </PageHeader>
 
-    <UiSection class="transactions__content">
+    <section class="transactions__content">
       <div
         v-if="!isFinanceReady"
         class="transactions__skeleton"
       >
-        <UiSkeleton
+        <Skeleton
           v-for="i in 6"
           :key="i"
           height="56px"
@@ -81,7 +80,7 @@ onMounted(async () => {
         @edit-transaction="handleEditTransaction"
         @edit-transfer="handleEditTransfer"
       />
-    </UiSection>
+    </section>
 
     <TransactionForm
       v-model:visible="transactionDialogVisible"

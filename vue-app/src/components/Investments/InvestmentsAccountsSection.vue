@@ -3,8 +3,8 @@ import type { Account, AccountType } from '../../types';
 import type { ViewState } from '../../types/view-state';
 import InvestmentAccountCard from './InvestmentAccountCard.vue';
 import UiButton from '@/ui/UiButton.vue';
-import UiMessage from '@/ui/UiMessage.vue';
-import UiSkeleton from '@/ui/UiSkeleton.vue';
+import Message from 'primevue/message';
+import Skeleton from 'primevue/skeleton';
 import EmptyState from '@/components/common/EmptyState.vue';
 import ListToolbar from '@/components/common/ListToolbar.vue';
 
@@ -92,13 +92,13 @@ const setView = (value: InvestmentsView) => {
       v-if="currentAccountsState === 'error' && hasVisibleAccounts"
       class="investments-accounts__message investments-accounts__message--inline"
     >
-      <UiMessage
+      <Message
         severity="error"
         icon="pi pi-exclamation-triangle"
         :closable="false"
       >
         {{ currentAccountsError || 'Не удалось загрузить счета.' }}
-      </UiMessage>
+      </Message>
       <UiButton
         label="Повторить"
         icon="pi pi-refresh"
@@ -111,7 +111,7 @@ const setView = (value: InvestmentsView) => {
       v-if="shouldShowAccountsSkeleton"
       class="investments-accounts__skeleton"
     >
-      <UiSkeleton
+      <Skeleton
         v-for="i in 4"
         :key="i"
         height="180px"
@@ -122,13 +122,13 @@ const setView = (value: InvestmentsView) => {
       v-else-if="shouldShowAccountsErrorState"
       class="investments-accounts__message"
     >
-      <UiMessage
+      <Message
         severity="error"
         icon="pi pi-exclamation-triangle"
         :closable="false"
       >
         {{ currentAccountsError || 'Не удалось загрузить счета.' }}
-      </UiMessage>
+      </Message>
       <UiButton
         label="Повторить"
         icon="pi pi-refresh"

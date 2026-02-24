@@ -1,8 +1,8 @@
 <script setup lang="ts">
 import { computed, onMounted, ref, watch } from 'vue'
-import UiDialog from '../ui/UiDialog.vue'
-import UiInputText from '../ui/UiInputText.vue'
-import UiSelect from '../ui/UiSelect.vue'
+import Dialog from 'primevue/dialog'
+import InputText from 'primevue/inputtext'
+import Select from 'primevue/select'
 import { useFinanceStore } from '../stores/finance'
 import { useFormModal } from '../composables/useFormModal'
 import type { Account, AccountType } from '../types'
@@ -178,13 +178,14 @@ const handleSubmit = async () => {
 </script>
 
 <template>
-  <UiDialog
+  <Dialog
     :visible="props.visible"
     :closable="false"
     modal
     class="account-dialog"
     :style="{ width: '400px' }"
     :breakpoints="{ '640px': 'calc(100vw - 1rem)' }"
+    append-to="body"
     dismissable-mask
     @update:visible="val => emit('update:visible', val)"
   >
@@ -214,7 +215,7 @@ const handleSubmit = async () => {
           required
         >
           <template #default="{ fieldAttrs }">
-            <UiInputText
+            <InputText
               v-bind="fieldAttrs"
               v-model="name"
               class="w-full"
@@ -233,7 +234,7 @@ const handleSubmit = async () => {
           required
         >
           <template #default="{ fieldAttrs }">
-            <UiSelect
+            <Select
               v-model="selectedType"
               :options="typeOptions"
               option-label="label"
@@ -241,6 +242,7 @@ const handleSubmit = async () => {
               class="w-full"
               :input-id="fieldAttrs.id"
               :aria-describedby="fieldAttrs['aria-describedby']"
+              append-to="body"
             >
               <template #option="{ option }">
                 <span class="type-option">
@@ -248,7 +250,7 @@ const handleSubmit = async () => {
                   {{ option.label }}
                 </span>
               </template>
-            </UiSelect>
+            </Select>
           </template>
         </FormField>
 
@@ -259,7 +261,7 @@ const handleSubmit = async () => {
           required
         >
           <template #default="{ fieldAttrs }">
-            <UiSelect
+            <Select
               v-model="selectedCurrencyCode"
               :options="currencyOptions"
               option-label="label"
@@ -270,6 +272,7 @@ const handleSubmit = async () => {
               :input-id="fieldAttrs.id"
               :aria-describedby="fieldAttrs['aria-describedby']"
               :aria-invalid="fieldAttrs['aria-invalid']"
+              append-to="body"
             />
           </template>
           <template #hint>
@@ -289,7 +292,7 @@ const handleSubmit = async () => {
         </div>
       </form>
     </div>
-  </UiDialog>
+  </Dialog>
 </template>
 
 <style scoped>
@@ -346,7 +349,6 @@ const handleSubmit = async () => {
 .form-layout :deep(.ui-input),
 .form-layout :deep(.ui-input-number__root),
 .form-layout :deep(.ui-input-number__input),
-.form-layout :deep(.ui-select__root),
 .form-layout :deep(.p-inputtext),
 .form-layout :deep(.p-inputnumber),
 .form-layout :deep(.p-inputnumber-input),
@@ -354,7 +356,6 @@ const handleSubmit = async () => {
   width: 100%;
 }
 
-.form-layout :deep(.ui-select__label),
 .form-layout :deep(.p-select-label) {
   overflow: hidden;
   text-overflow: ellipsis;

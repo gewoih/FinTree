@@ -28,25 +28,26 @@ CSS layer order:
 ```
 
 Ownership by file:
-- `vue-app/src/assets/design-tokens.css` — all `--ft-*` tokens
-- `vue-app/src/style.css` — reset, base typography, layout helpers
-- `vue-app/src/styles/theme.css` — shared component patterns
-- `vue-app/src/styles/prime-unstyled-shared.css` — complete PrimeVue visual contract (unstyled wrappers + compatibility overrides)
+- `vue-app/src/assets/design-tokens.css` — all `--ft-*` tokens. No visual rules.
+- `vue-app/src/style.css` — global reset, `html`/`body`, typography base, scrollbar
+- `vue-app/src/styles/theme.css` — shared layout patterns only (`.ft-card`, `.ft-section`, `.ft-stat`, etc.). Nothing PrimeVue-related.
+- `vue-app/src/ui/Ui*.vue` `<style scoped>` — 100% of that wrapper's visual contract. All `:deep()` for PrimeVue internals. This is the only place PrimeVue wrapper styles live.
+- `vue-app/src/styles/components/` — feature components too large for inline scoped styles (non-PrimeVue)
+- `vue-app/src/styles/pages/` — page-level layout only
 
 Rules:
-- If a style is needed in 2+ places, it must not live in a feature component.
-- New shared visual behavior must be introduced in the owning shared layer, not copied across feature files.
+- **One component, one file.** A component's styles live only in that component's file.
+- When touching `UiButton`, edit `UiButton.vue` only. Never touch a shared file to fix a specific component's appearance.
+- Before editing any CSS: identify every file that contains styles for the target component. If more than one file, co-locate first, then make the visual change.
+- PrimeVue wrapper styles must never live in `theme.css`, `style.css`, or any shared CSS file.
 
-### SFC Style Extraction
+### CSS Verification Gate
 
-- When moving styles out of `.vue` files, place them in:
-  - `vue-app/src/styles/pages/` for routed page styles
-  - `vue-app/src/styles/components/` for feature/component styles
-- Keep component scoping by default via `<style scoped src="...">`.
-- Do not convert extracted styles to global/unscoped CSS unless the style is intentionally shared and documented.
-- If extracted styles require deep targeting:
-  - prefer explicit class hooks on wrapper/component roots, or
-  - keep the deep rule inside the original SFC block.
+After any CSS change:
+1. Run `cd vue-app && npm run lint:style` — must pass with 0 warnings
+2. Verify the component in dark mode (default) and light mode (`.light-mode` on `<html>`)
+3. Verify at mobile (360px) and desktop (1280px) breakpoints
+4. Do not mark a task complete without this verification
 
 ---
 
@@ -81,11 +82,12 @@ Rules:
 
 ---
 
-## 5) PrimeVue (Unstyled) Contract
+## 5) PrimeVue (Styled Hybrid) Contract
 
 - All visual PrimeVue components are consumed via `vue-app/src/ui/*` wrappers only.
 - PrimeVue runtime config lives in `vue-app/src/main.ts`.
-- Unstyled mode is always on in wrapper contracts; wrappers may still override via local `unstyled` prop for targeted tests.
+- PrimeVue runs in styled mode with a custom preset bridge that maps to `--ft-*` tokens.
+- Wrappers must inherit global PrimeVue styling by default; local `unstyled` overrides are allowed only for targeted testing or compatibility edge cases.
 
 Direct imports outside wrappers are allowed only for:
 - `primevue/config`
@@ -94,10 +96,19 @@ Direct imports outside wrappers are allowed only for:
 - `primevue/tooltip`
 - `primevue/usetoast`
 - `primevue/useconfirm`
+- `primevue/chart`
+- `primevue/checkbox`
+- `primevue/message`
+- `primevue/paginator`
+- `primevue/selectbutton`
+- `primevue/skeleton`
+- `primevue/tag`
+- `primevue/toggleswitch`
 - type-only `primevue/menuitem`
 
 Wrapper rules:
-- Wrappers own `pt` classes and the public visual state API.
+- PT (`pt` / `ptOptions` / `data-pc-section` driven theming) is not used in this codebase.
+- Wrappers own the public visual state API through token-driven presets and wrapper classes.
 - Visual states (`hover`, `focus`, `disabled`, `invalid`, `active`) are centralized in wrappers/shared layers.
 
 `:deep(.p-...)` rules:
@@ -155,7 +166,7 @@ Rules:
 
 - Field wrappers (`UiInputText`, `UiInputNumber`, `UiSelect`, `UiDatePicker`) must expose `invalid` and optional `error` props as the validation API.
 - Feature `pages/` and `components/` must not set `p-invalid` directly.
-- Shared invalid-state visuals are defined in `vue-app/src/styles/prime-unstyled-shared.css`.
+- Shared invalid-state visuals are owned by field wrappers (`UiInputText`, `UiInputNumber`, `UiSelect`, `UiDatePicker`) and must stay token-driven.
 - Label, hint, error, and focus behavior must be visually consistent across screens.
 - Destructive actions require explicit user confirmation.
 
@@ -232,7 +243,6 @@ cd vue-app && npm run type-check
 cd vue-app && npm run lint
 cd vue-app && npm run lint:style
 cd vue-app && npm run lint:design-contract
-cd vue-app && npm run lint:prime-imports
 cd vue-app && npm run lint:api-boundaries
 cd vue-app && npm run build
 ```

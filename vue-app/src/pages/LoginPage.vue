@@ -4,7 +4,7 @@ import { useRouter } from 'vue-router'
 import { useAuthStore } from '../stores/auth'
 import UiButton from '../ui/UiButton.vue'
 import UiCard from '../ui/UiCard.vue'
-import UiInputText from '../ui/UiInputText.vue'
+import InputText from 'primevue/inputtext'
 import ThemeToggle from '../components/common/ThemeToggle.vue'
 
 const router = useRouter()
@@ -147,7 +147,7 @@ const handleLogin = async () => {
         >
           <div class="auth__field">
             <label for="login-email">Email</label>
-            <UiInputText
+            <InputText
               id="login-email"
               v-model="email"
               type="email"
@@ -159,7 +159,7 @@ const handleLogin = async () => {
           <div class="auth__field">
             <label for="login-password">Пароль</label>
             <div class="auth__password-wrap">
-              <UiInputText
+              <InputText
                 id="login-password"
                 v-model="password"
                 :type="showPassword ? 'text' : 'password'"

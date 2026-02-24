@@ -1,9 +1,9 @@
 <script setup lang="ts">
 import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue';
-import UiDialog from '../ui/UiDialog.vue';
-import UiInputText from '../ui/UiInputText.vue';
-import UiSelectButton from '../ui/UiSelectButton.vue';
-import UiCheckbox from '../ui/UiCheckbox.vue';
+import Dialog from 'primevue/dialog';
+import InputText from 'primevue/inputtext';
+import SelectButton from 'primevue/selectbutton';
+import Checkbox from 'primevue/checkbox';
 import { useToast } from 'primevue/usetoast';
 import { useConfirmDialog } from '../composables/useConfirmDialog';
 import type { Category, CategoryType } from '../types';
@@ -227,13 +227,14 @@ const handleDelete = () => {
 </script>
 
 <template>
-  <UiDialog
+  <Dialog
     :visible="props.visible"
     :closable="false"
     modal
     :dismissable-mask="true"
     :style="{ width: '560px' }"
     class="category-dialog"
+    append-to="body"
     @update:visible="val => emit('update:visible', val)"
   >
     <div class="category-dialog__container">
@@ -268,7 +269,7 @@ const handleDelete = () => {
             required
           >
             <template #default="{ fieldAttrs }">
-              <UiInputText
+              <InputText
                 v-bind="fieldAttrs"
                 v-model="name"
                 placeholder="Например, «Транспорт»"
@@ -287,7 +288,7 @@ const handleDelete = () => {
             required
           >
             <template #default="{ fieldAttrs }">
-              <UiSelectButton
+              <SelectButton
                 v-model="categoryType"
                 :options="categoryTypeOptions"
                 option-label="label"
@@ -371,7 +372,7 @@ const handleDelete = () => {
                   :aria-describedby="fieldAttrs['aria-describedby']"
                   :aria-invalid="fieldAttrs['aria-invalid']"
                 >
-                <UiInputText
+                <InputText
                   v-model="color"
                   maxlength="7"
                   class="w-full"
@@ -390,7 +391,7 @@ const handleDelete = () => {
         >
           <template #default>
             <label class="mandatory-toggle">
-              <UiCheckbox
+              <Checkbox
                 v-model="isMandatory"
                 binary
                 :disabled="props.readonly"
@@ -438,7 +439,7 @@ const handleDelete = () => {
         </div>
       </form>
     </div>
-  </UiDialog>
+  </Dialog>
 </template>
 
 <style scoped src="../styles/components/category-form-modal.css"></style>

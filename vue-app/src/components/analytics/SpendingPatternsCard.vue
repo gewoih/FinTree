@@ -1,8 +1,8 @@
 <script setup lang="ts">
 import { computed } from 'vue';
 import UiCard from '@/ui/UiCard.vue';
-import UiSkeleton from '@/ui/UiSkeleton.vue';
-import UiMessage from '@/ui/UiMessage.vue';
+import Skeleton from 'primevue/skeleton';
+import Message from 'primevue/message';
 import UiButton from '../../ui/UiButton.vue';
 
 interface PeakDayItem {
@@ -60,7 +60,7 @@ const spikeLabel = computed(() => (props.spikeCount == null ? '—' : props.spik
         v-if="loading"
         class="card-loading"
       >
-        <UiSkeleton
+        <Skeleton
           v-for="index in 4"
           :key="index"
           height="24px"
@@ -72,7 +72,7 @@ const spikeLabel = computed(() => (props.spikeCount == null ? '—' : props.spik
         v-else-if="error"
         class="card-message"
       >
-        <UiMessage
+        <Message
           severity="error"
           icon="pi pi-exclamation-triangle"
           :closable="false"
@@ -91,14 +91,14 @@ const spikeLabel = computed(() => (props.spikeCount == null ? '—' : props.spik
               @click="emit('retry')"
             />
           </div>
-        </UiMessage>
+        </Message>
       </div>
 
       <div
         v-else-if="showEmpty"
         class="card-message"
       >
-        <UiMessage
+        <Message
           severity="info"
           icon="pi pi-inbox"
           :closable="false"
@@ -111,7 +111,7 @@ const spikeLabel = computed(() => (props.spikeCount == null ? '—' : props.spik
               Добавьте ежедневные траты, чтобы увидеть пиковые дни.
             </p>
           </div>
-        </UiMessage>
+        </Message>
       </div>
 
       <div

@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue'
-import UiToggleSwitch from '@/ui/UiToggleSwitch.vue'
-import UiMenu from '@/ui/UiMenu.vue'
+import ToggleSwitch from 'primevue/toggleswitch'
+import Menu from 'primevue/menu'
 import type { MenuItem } from 'primevue/menuitem'
 import type { Account } from '../types'
 import { formatCurrency } from '../utils/formatters'
@@ -32,7 +32,7 @@ const emit = defineEmits<{
   updateLiquidity: [value: boolean]
 }>()
 
-const menuRef = ref()
+const menuRef = ref<InstanceType<typeof Menu> | null>(null)
 const userStore = useUserStore()
 
 const currencyDisplay = computed(() => {
@@ -112,7 +112,7 @@ const menuItems = computed<MenuItem[]>(() => {
 })
 
 const toggleMenu = (event: Event) => {
-  menuRef.value.toggle(event)
+  menuRef.value?.toggle(event)
 }
 </script>
 
@@ -140,13 +140,11 @@ const toggleMenu = (event: Event) => {
           :aria-label="`Действия для счета ${account.name}`"
           @click.stop="toggleMenu"
         />
-        <UiMenu
+        <Menu
           ref="menuRef"
           :model="menuItems"
           :popup="true"
-          :pt="{
-            root: { class: 'account-menu' },
-          }"
+          append-to="body"
         />
       </div>
     </header>
@@ -171,7 +169,7 @@ const toggleMenu = (event: Event) => {
         class="liquidity-control-compact"
         @click.stop
       >
-        <UiToggleSwitch
+        <ToggleSwitch
           v-if="!readonly && !interactionLocked"
           v-model="liquidityModel"
           :disabled="isLiquidityLoading"

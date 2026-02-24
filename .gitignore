@@ -483,3 +483,9 @@ $RECYCLE.BIN/
 
 # Vim temporary swap files
 *.swp
+
+# Git worktrees
+.worktrees/
+
+# Git worktrees
+.worktrees/

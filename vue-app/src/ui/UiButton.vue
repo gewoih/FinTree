@@ -2,9 +2,8 @@
 import { computed, useAttrs } from 'vue';
 import Button from 'primevue/button';
 import type { ButtonPassThroughOptions } from 'primevue/button';
-import { mergePt } from './prime/pt';
 
-type ButtonVariant = 'primary' | 'secondary' | 'ghost' | 'danger' | 'cta';
+type ButtonVariant = 'primary' | 'secondary' | 'ghost' | 'danger' | 'cta' | 'muted' | 'outlined';
 type ButtonSize = 'sm' | 'md' | 'lg';
 
 const props = withDefaults(
@@ -35,38 +34,27 @@ const props = withDefaults(
 );
 
 const attrs = useAttrs();
+const normalizedVariant = computed<ButtonVariant>(() => {
+  if (props.variant === 'muted') return 'ghost';
+  if (props.variant === 'outlined') return 'secondary';
+  return props.variant;
+});
 
 const severity = computed(() => {
-  if (props.variant === 'danger') return 'danger';
-  if (props.variant === 'secondary') return 'secondary';
-  if (props.variant === 'cta') return 'success';
+  if (normalizedVariant.value === 'danger') return 'danger';
+  if (normalizedVariant.value === 'secondary') return 'secondary';
+  if (normalizedVariant.value === 'cta') return 'success';
   return 'primary';
 });
 
-const isText = computed(() => props.variant === 'ghost');
-const isOutlined = computed(() => props.variant === 'secondary');
+const isText = computed(() => normalizedVariant.value === 'ghost');
+const isOutlined = computed(() => normalizedVariant.value === 'secondary');
 const isIconOnly = computed(() => props.icon && !props.label);
-const mergedPt = computed(() =>
-  mergePt(
-    {
-      root: {
-        class: 'ui-button__root',
-      },
-      icon: {
-        class: 'ui-button__icon',
-      },
-      label: {
-        class: 'ui-button__label',
-      },
-    } as ButtonPassThroughOptions,
-    props.pt
-  )
-);
 
 const buttonClasses = computed(() => [
   'ui-button',
   `ui-button--${props.size}`,
-  `ui-button--${props.variant}`,
+  `ui-button--${normalizedVariant.value}`,
   {
     'ui-button--block': props.block,
     'ui-button--rounded': props.rounded,
@@ -86,10 +74,9 @@ const buttonClasses = computed(() => [
     :severity="severity"
     :text="isText"
     :outlined="isOutlined && !isText"
-    :unstyled="true"
     :rounded="rounded"
     :class="buttonClasses"
-    :pt="mergedPt"
+    :pt="props.pt"
   >
     <template
       v-if="$slots.icon"
@@ -149,13 +136,11 @@ const buttonClasses = computed(() => [
   transform: translateY(0);
 }
 
-.ui-button :deep(.ui-button__icon),
 .ui-button :deep(.p-button-icon) {
   margin: 0;
   font-size: 0.95rem;
 }
 
-.ui-button :deep(.ui-button__label),
 .ui-button :deep(.p-button-label) {
   line-height: 1;
 }
@@ -167,7 +152,6 @@ const buttonClasses = computed(() => [
   padding: 0;
 }
 
-.ui-button--icon-only :deep(.ui-button__label),
 .ui-button--icon-only :deep(.p-button-label) {
   display: none;
 }
