@@ -207,6 +207,12 @@
   align-items: center;
 }
 
+.txn-list__paginator {
+  padding: var(--ft-space-2);
+  background: transparent;
+  border: none;
+}
+
 .txn-list__total {
   font-size: var(--ft-text-sm);
   color: var(--ft-text-secondary);

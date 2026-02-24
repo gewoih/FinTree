@@ -107,7 +107,8 @@ Direct imports outside wrappers are allowed only for:
 - type-only `primevue/menuitem`
 
 Wrapper rules:
-- Wrappers own `pt` classes and the public visual state API.
+- PT (`pt` / `ptOptions` / `data-pc-section` driven theming) is not used in this codebase.
+- Wrappers own the public visual state API through token-driven presets and wrapper classes.
 - Visual states (`hover`, `focus`, `disabled`, `invalid`, `active`) are centralized in wrappers/shared layers.
 
 `:deep(.p-...)` rules:
@@ -242,7 +243,6 @@ cd vue-app && npm run type-check
 cd vue-app && npm run lint
 cd vue-app && npm run lint:style
 cd vue-app && npm run lint:design-contract
-cd vue-app && npm run lint:prime-imports
 cd vue-app && npm run lint:api-boundaries
 cd vue-app && npm run build
 ```

@@ -441,6 +441,7 @@ const resolveCategoryIconStyle = (txn: EnrichedTransaction) => {
           Итого: <strong>{{ formattedTotalAmount }}</strong>
         </span>
         <Paginator
+          class="txn-list__paginator"
           :rows="paginationRows"
           :first="paginationFirst"
           :total-records="totalRecords"

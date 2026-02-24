@@ -145,9 +145,6 @@ const toggleMenu = (event: Event) => {
           :model="menuItems"
           :popup="true"
           append-to="body"
-          :pt="{
-            root: { class: 'account-menu' },
-          }"
         />
       </div>
     </header>

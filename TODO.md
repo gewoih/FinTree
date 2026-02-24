@@ -11,7 +11,7 @@
 
 - [ ] `FT-TODO-028` useEvolutionTab previousMonthValue does not align correctly with currentMonthValue when trailing months have hasData=false (e.g. current in-progress month). Both should be computed from the same filtered+reversed iteration to avoid off-by-one delta.
 
-- [ ] 'FT-TODO-MONEY' explore the opportunity to uncomment throwing exception in Money.ctr() if amount is negative or zero. Is Money should handle negative amounts?
+- [ ] `FT-TODO-MONEY` explore the opportunity to uncomment throwing exception in Money.ctr() if amount is negative or zero. Is Money should handle negative amounts?
 
 - [ ] `FT-TODO-009` Rebuild category icons considering income/expense context  
   **Acceptance criteria:** two curated icon sets are used (income and expense) with fallback support for legacy values.
@@ -43,17 +43,8 @@
 - [ ] `FT-TODO-023` Define visual style for UiBadge `secondary` severity
   **Acceptance criteria:** `severity="secondary"` renders with a distinct background, color, and border using `--ft-*` tokens. Currently has no CSS rule — visually unstyled/inherited.
 
-- [ ] `FT-TODO-022` Fix pre-existing stylelint errors in extracted CSS files
-  **Acceptance criteria:** `npm run lint:style` passes with 0 warnings. Currently failing: `src/styles/components/app-shell.css` (3 errors — `:deep` in plain CSS) and `src/styles/components/transaction-list.css` (1 error — `:deep` in plain CSS). Fix by moving `:deep()` rules into the owning `.vue` component's scoped block.
-
-- [ ] `FT-TODO-024` Replace raw `0.95rem` literal in UiButton.vue icon font-size with a `--ft-*` token
-  **Acceptance criteria:** `font-size: 0.95rem` in `.ui-button :deep(.ui-button__icon)` uses a `--ft-text-*` token. Add token to `design-tokens.css` if the scale doesn't already cover it.
-
-- [ ] `FT-TODO-025` Fix 31 pre-existing stylelint property-order warnings in `EvolutionTab.vue` and `analytics-page.css`
-  **Acceptance criteria:** `npm run lint:style` passes with 0 warnings from those two files.
-
-- [ ] `FT-TODO-031` Create UiTextarea.vue and co-locate `.p-inputtextarea` styles
-  **Acceptance criteria:** A `UiTextarea.vue` wrapper component exists in `src/ui/`. The `.p-inputtextarea` overrides currently in `src/styles/prime-textarea.css` are moved into its `<style scoped>` block as `:deep(.p-inputtextarea)`. The `prime-textarea.css` file and its import in `main.ts` are deleted.
+- [ ] `FT-TODO-033` Replace raw `0.95rem` literal in UiButton.vue icon font-size with a `--ft-*` token
+  **Acceptance criteria:** `font-size: 0.95rem` in `.ui-button :deep(.p-button-icon)` uses a `--ft-text-*` token. Add token to `design-tokens.css` if the scale doesn't already cover it.
 
 ---
 
