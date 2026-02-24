@@ -126,7 +126,7 @@ const chartOptions = computed(() => ({
             Динамика расходов
           </h3>
           <button
-            v-tooltip="{ value: 'Как менялись расходы день за днём, по неделям или месяцам. Пунктирная линия — среднее значение.', event: 'click' }"
+            v-tooltip="{ value: 'Как менялись расходы день за днём, по неделям или месяцам. Пунктирная линия — среднее значение.', event: 'click', autoHide: false }"
             type="button"
             class="bars-card__hint"
             aria-label="Подсказка"

@@ -152,7 +152,7 @@ const chartOptions = computed(() => ({
           Прогноз расходов
         </h3>
         <button
-          v-tooltip="{ value: 'Оценка расходов до конца месяца на основе текущего темпа трат. Три сценария: оптимистичный, базовый и рисковый.', event: 'click' }"
+          v-tooltip="{ value: 'Оценка расходов до конца месяца на основе текущего темпа трат. Три сценария: оптимистичный, базовый и рисковый.', event: 'click', autoHide: false }"
           type="button"
           class="forecast-card__hint"
           aria-label="Подсказка"

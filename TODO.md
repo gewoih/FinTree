@@ -13,12 +13,6 @@
 
 - [ ] `FT-TODO-MONEY` explore the opportunity to uncomment throwing exception in Money.ctr() if amount is negative or zero. Is Money should handle negative amounts?
 
-- [ ] `FT-TODO-009` Rebuild category icons considering income/expense context  
-  **Acceptance criteria:** two curated icon sets are used (income and expense) with fallback support for legacy values.
-
-- [ ] `FT-TODO-011` Fix non-clickable tooltips in analytics on mobile
-  **Acceptance criteria:** tooltips are fully interactive and accessible on mobile devices without gesture conflicts.
-
 ---
 
 ## Navigation & Layout

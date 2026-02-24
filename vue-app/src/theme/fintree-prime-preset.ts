@@ -15,6 +15,10 @@ const primeOverridesCss = `
   [role='tooltip'] > .p-tooltip-arrow, [role='tooltip'] > div:first-child { display: none; }
   [role='tooltip'] > .p-tooltip-text, [role='tooltip'] > div:last-child { border: 1px solid var(--ft-border-default); }
 
+  @media (pointer: coarse) {
+    [role='tooltip'], .p-tooltip { pointer-events: auto; }
+  }
+
   .p-dialog-mask {
     position: fixed;
     z-index: var(--ft-z-modal);

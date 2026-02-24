@@ -93,7 +93,7 @@ const iconAccentClass = (accent: MetricAccent) => `summary-strip__icon--${accent
           <p class="summary-strip__label">
             {{ metric.label }}
             <button
-              v-tooltip="{ value: metric.tooltip, event: 'click' }"
+              v-tooltip="{ value: metric.tooltip, event: 'click', autoHide: false }"
               type="button"
               class="summary-strip__hint"
               aria-label="Подсказка"

@@ -29,7 +29,7 @@ const valueClass = (accent: HealthAccent) => `health-score__main-value--${accent
         {{ title }}
       </p>
       <button
-        v-tooltip="{ value: tooltip, event: 'click' }"
+        v-tooltip="{ value: tooltip, event: 'click', autoHide: false }"
         type="button"
         class="health-score__hint"
         aria-label="Подсказка"

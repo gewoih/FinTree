@@ -116,7 +116,7 @@ const chartOptions = computed(() => ({
             Расходы по категориям
           </h3>
           <button
-            v-tooltip="{ value: 'Показывает, на что уходят деньги. Кликните на категорию, чтобы увидеть транзакции.', event: 'click' }"
+            v-tooltip="{ value: 'Показывает, на что уходят деньги. Кликните на категорию, чтобы увидеть транзакции.', event: 'click', autoHide: false }"
             type="button"
             class="donut-card__hint"
             aria-label="Подсказка"
