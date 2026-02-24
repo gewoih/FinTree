@@ -1,41 +1,104 @@
-import { ref, computed } from 'vue'
+import { computed, ref, watch } from 'vue'
 import { apiService } from '@/services/api.service'
-import type { EvolutionMonthDto } from '@/types'
+import { useUserStore } from '@/stores/user'
 import type { ViewState } from '@/types/view-state'
+import type { EvolutionMonthDto } from '@/types'
+import {
+  EVOLUTION_GROUPS,
+  EVOLUTION_KPI_META,
+  EVOLUTION_KPI_ORDER,
+  EVOLUTION_STORAGE_PREFIX,
+  extractKpiValue,
+  formatKpiDelta,
+  formatKpiValue,
+  formatMonthLong,
+  formatMonthShort,
+  normalizeVisibleKpis,
+  resolveDeltaTone,
+  toMonthKey,
+  toPreviousCalendarMonth,
+  type EvolutionKpi,
+  type EvolutionRange,
+  type EvolutionKpiGroupModel,
+  type EvolutionTableRowModel,
+} from '@/composables/evolutionTabMeta'
 
-export type EvolutionKpi =
-  | 'savingsRate'
-  | 'stabilityIndex'
-  | 'discretionaryPercent'
-  | 'netWorth'
-  | 'liquidMonths'
-  | 'meanDaily'
-  | 'peakDayRatio'
+export {
+  EVOLUTION_GROUPS,
+  EVOLUTION_KPI_META,
+  EVOLUTION_KPI_ORDER,
+  type EvolutionKpi,
+  type EvolutionRange,
+  type EvolutionKpiGroupId,
+  type EvolutionDeltaTone,
+  type EvolutionValueKind,
+  type EvolutionKpiCardModel,
+  type EvolutionKpiGroupModel,
+  type EvolutionTableCellModel,
+  type EvolutionTableRowModel,
+} from '@/composables/evolutionTabMeta'
 
-export type EvolutionRange = 6 | 12 | 0
+function readVisibleKpis(storageKey: string): EvolutionKpi[] {
+  if (typeof localStorage === 'undefined') return [...EVOLUTION_KPI_ORDER]
 
-export const KPI_OPTIONS: { key: EvolutionKpi; label: string }[] = [
-  { key: 'savingsRate', label: 'Норма сбережений' },
-  { key: 'stabilityIndex', label: 'Индекс стабильности' },
-  { key: 'discretionaryPercent', label: 'Необязательные расходы' },
-  { key: 'netWorth', label: 'Чистый капитал' },
-  { key: 'liquidMonths', label: 'Финансовая подушка' },
-  { key: 'meanDaily', label: 'Средние расходы в день' },
-  { key: 'peakDayRatio', label: 'Доля пиковых дней' },
-]
+  try {
+    const raw = localStorage.getItem(storageKey)
+    if (!raw) return [...EVOLUTION_KPI_ORDER]
+
+    const parsed = JSON.parse(raw)
+    const normalized = normalizeVisibleKpis(parsed)
+    if (!normalized) return [...EVOLUTION_KPI_ORDER]
+    return normalized
+  } catch {
+    return [...EVOLUTION_KPI_ORDER]
+  }
+}
+
+function persistVisibleKpis(storageKey: string, visibleKpis: EvolutionKpi[]): void {
+  if (typeof localStorage === 'undefined') return
+
+  try {
+    localStorage.setItem(storageKey, JSON.stringify(visibleKpis))
+  } catch {
+    // Ignore storage write errors (e.g. private mode restrictions).
+  }
+}
 
 export function useEvolutionTab() {
+  const userStore = useUserStore()
+
   const data = ref<EvolutionMonthDto[]>([])
   const state = ref<ViewState>('idle')
   const error = ref<string | null>(null)
 
-  const selectedKpi = ref<EvolutionKpi>('savingsRate')
-  const selectedRange = ref<EvolutionRange>(12)
+  const selectedRange = ref<EvolutionRange>(6)
+  const visibleKpis = ref<EvolutionKpi[]>([...EVOLUTION_KPI_ORDER])
+
+  const baseCurrencyCode = computed(() => userStore.baseCurrencyCode ?? 'RUB')
+  const storageKey = computed(() => `${EVOLUTION_STORAGE_PREFIX}${userStore.currentUser?.id ?? 'anonymous'}`)
+
+  watch(
+    storageKey,
+    key => {
+      visibleKpis.value = readVisibleKpis(key)
+    },
+    { immediate: true }
+  )
+
+  watch(
+    [storageKey, visibleKpis],
+    ([key, currentVisible]) => {
+      persistVisibleKpis(key, currentVisible)
+    },
+    { deep: true }
+  )
 
   async function load() {
     if (state.value === 'loading') return
+
     state.value = 'loading'
     error.value = null
+
     try {
       data.value = await apiService.getEvolution(selectedRange.value)
       state.value = data.value.length > 0 ? 'success' : 'empty'
@@ -50,46 +113,174 @@ export function useEvolutionTab() {
     await load()
   }
 
-  const chartLabels = computed(() =>
-    data.value.map(m => {
-      const d = new Date(m.year, m.month - 1, 1)
-      return d.toLocaleDateString('ru-RU', { month: 'short', year: '2-digit' })
-    })
-  )
+  function toggleKpi(kpi: EvolutionKpi) {
+    const visible = new Set(visibleKpis.value)
 
-  const chartValues = computed(() =>
-    data.value.map(m => (m.hasData ? (m[selectedKpi.value] ?? null) : null))
-  )
+    if (visible.has(kpi)) {
+      visible.delete(kpi)
+    } else {
+      visible.add(kpi)
+    }
 
-  const currentMonthValue = computed(() => {
-    const last = [...data.value].reverse().find(m => m.hasData)
-    return last ? last[selectedKpi.value] : null
+    visibleKpis.value = EVOLUTION_KPI_ORDER.filter(key => visible.has(key))
+  }
+
+  function showAllKpis() {
+    visibleKpis.value = [...EVOLUTION_KPI_ORDER]
+  }
+
+  const visibleKpiSet = computed(() => new Set(visibleKpis.value))
+  const hasVisibleKpis = computed(() => visibleKpis.value.length > 0)
+
+  const monthMap = computed(() => {
+    const map = new Map<string, EvolutionMonthDto>()
+
+    for (const month of data.value) {
+      map.set(toMonthKey(month.year, month.month), month)
+    }
+
+    return map
   })
 
-  const previousMonthValue = computed(() => {
-    const months = data.value.filter(m => m.hasData)
-    const previous = months.at(-2)
-    return previous ? previous[selectedKpi.value] : null
+  function resolveLatestPoint(kpi: EvolutionKpi) {
+    for (let index = data.value.length - 1; index >= 0; index -= 1) {
+      const month = data.value.at(index)
+      if (!month) continue
+
+      const value = extractKpiValue(month, kpi)
+      if (value == null) continue
+
+      const prevMonthKey = toPreviousCalendarMonth(month.year, month.month)
+      const previousMonth = monthMap.value.get(toMonthKey(prevMonthKey.year, prevMonthKey.month))
+      const previousValue = extractKpiValue(previousMonth, kpi)
+
+      return {
+        month,
+        value,
+        delta: previousValue == null ? null : value - previousValue,
+      }
+    }
+
+    return null
+  }
+
+  function resolveMonthDelta(month: EvolutionMonthDto, kpi: EvolutionKpi): number | null {
+    const value = extractKpiValue(month, kpi)
+    if (value == null) return null
+
+    const prevMonth = toPreviousCalendarMonth(month.year, month.month)
+    const previous = monthMap.value.get(toMonthKey(prevMonth.year, prevMonth.month))
+    const previousValue = extractKpiValue(previous, kpi)
+
+    if (previousValue == null) return null
+    return value - previousValue
+  }
+
+  function resolveChartSeries(kpi: EvolutionKpi): { labels: string[]; values: number[] } {
+    const labels: string[] = []
+    const values: number[] = []
+
+    for (const month of data.value) {
+      const value = extractKpiValue(month, kpi)
+      if (value == null) continue
+
+      labels.push(formatMonthShort(month.year, month.month))
+      values.push(value)
+    }
+
+    return { labels, values }
+  }
+
+  const groupedChartModels = computed<EvolutionKpiGroupModel[]>(() => {
+    const groups: EvolutionKpiGroupModel[] = []
+
+    for (const group of EVOLUTION_GROUPS) {
+      const cards = EVOLUTION_KPI_ORDER
+        .filter(kpi => visibleKpiSet.value.has(kpi) && EVOLUTION_KPI_META[kpi].groupId === group.id)
+        .map(kpi => {
+          const meta = EVOLUTION_KPI_META[kpi]
+          const series = resolveChartSeries(kpi)
+          const hasSeriesData = series.values.length > 0
+          const latestPoint = resolveLatestPoint(kpi)
+          const deltaTone = resolveDeltaTone(meta, latestPoint?.delta ?? null)
+
+          return {
+            key: kpi,
+            label: meta.label,
+            description: meta.description,
+            directionHint: meta.directionHint,
+            labels: series.labels,
+            values: series.values,
+            hasSeriesData,
+            currentMonthLabel: latestPoint
+              ? formatMonthLong(latestPoint.month.year, latestPoint.month.month)
+              : null,
+            currentValueLabel: latestPoint
+              ? formatKpiValue(meta, latestPoint.value, baseCurrencyCode.value)
+              : null,
+            deltaLabel: formatKpiDelta(meta, latestPoint?.delta ?? null, baseCurrencyCode.value),
+            deltaTone,
+          }
+        })
+
+      groups.push({
+        id: group.id,
+        label: group.label,
+        cards,
+      })
+    }
+
+    return groups
   })
 
-  const monthOverMonthDelta = computed(() => {
-    const cur = currentMonthValue.value
-    const prev = previousMonthValue.value
-    if (cur == null || prev == null || prev === 0) return null
-    return cur - prev
+  const tableRows = computed<EvolutionTableRowModel[]>(() => {
+    const rows: EvolutionTableRowModel[] = []
+
+    for (let index = data.value.length - 1; index >= 0; index -= 1) {
+      const month = data.value.at(index)
+      if (!month) continue
+
+      if (!month.hasData) continue
+
+      const cells = EVOLUTION_KPI_ORDER.map(kpi => {
+        const meta = EVOLUTION_KPI_META[kpi]
+        const value = extractKpiValue(month, kpi)
+        const delta = resolveMonthDelta(month, kpi)
+        const deltaTone = resolveDeltaTone(meta, delta)
+
+        return {
+          key: kpi,
+          valueLabel: formatKpiValue(meta, value, baseCurrencyCode.value),
+          deltaLabel: formatKpiDelta(meta, delta, baseCurrencyCode.value),
+          deltaTone,
+        }
+      })
+
+      rows.push({
+        key: toMonthKey(month.year, month.month),
+        monthLabel: formatMonthLong(month.year, month.month),
+        cells,
+      })
+    }
+
+    return rows
   })
+
+  const hasTableRows = computed(() => tableRows.value.length > 0)
 
   return {
-    data,
     state,
     error,
-    selectedKpi,
     selectedRange,
-    chartLabels,
-    chartValues,
-    currentMonthValue,
-    monthOverMonthDelta,
+    visibleKpis,
+    groupedChartModels,
+    tableRows,
+    hasTableRows,
+    hasVisibleKpis,
+    baseCurrencyCode,
     load,
     changeRange,
+    toggleKpi,
+    showAllKpis,
   }
 }

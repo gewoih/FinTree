@@ -203,6 +203,10 @@
   border-bottom-color: var(--ft-primary-400);
 }
 
+.analytics-page__evolution-tab {
+  margin-inline: var(--ft-space-4);
+}
+
 .analytics-page__retro-banner {
   display: flex;
   gap: var(--ft-space-3);
@@ -272,5 +276,9 @@
   .analytics-page__retro-banner-actions {
     justify-content: space-between;
     width: 100%;
+  }
+
+  .analytics-page__evolution-tab {
+    margin-inline: 0;
   }
 }
