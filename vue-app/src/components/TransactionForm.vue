@@ -419,7 +419,7 @@ const handleDelete = () => {
           option-value="value"
           :allow-empty="false"
           :disabled="props.readonly || isEditMode"
-          class="txn-form__type-control"
+          class="ft-select-button ft-select-button--txn txn-form__type-control"
         />
       </section>
 

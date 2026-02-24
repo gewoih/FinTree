@@ -50,7 +50,7 @@ const handleSearchUpdate = (value: string | null | undefined) => {
       </button>
     </div>
 
-    <div class="list-toolbar__search">
+    <div class="list-toolbar__search ft-input-shell">
       <i
         class="pi pi-search"
         aria-hidden="true"
@@ -119,52 +119,12 @@ const handleSearchUpdate = (value: string | null | undefined) => {
 }
 
 .list-toolbar__search {
-  display: flex;
-  flex: 1;
-  gap: var(--ft-space-2);
-  align-items: center;
+  --ft-input-shell-min-height: 36px;
+  --ft-input-shell-padding-x: var(--ft-space-1);
+  --ft-input-shell-padding-y: var(--ft-space-1);
 
+  flex: 1;
   min-width: 200px;
-  min-height: 36px;
-  padding: var(--ft-space-1);
-
-  background: var(--ft-surface-base);
-  border: 1px solid var(--ft-border-default);
-  border-radius: var(--ft-radius-md);
-
-  transition:
-    border-color var(--ft-transition-fast),
-    box-shadow var(--ft-transition-fast);
-}
-
-.list-toolbar__search:focus-within {
-  border-color: var(--ft-border-strong);
-  box-shadow:
-    0 0 0 3px var(--ft-focus-ring),
-    var(--ft-shadow-xs);
-}
-
-.list-toolbar__search i {
-  flex-shrink: 0;
-  font-size: var(--ft-text-sm);
-  color: var(--ft-text-tertiary);
-}
-
-.list-toolbar__search :deep(.p-inputtext) {
-  flex: 1;
-
-  width: 100%;
-  padding: 0;
-
-  background: transparent;
-  border: none;
-  box-shadow: none !important;
-}
-
-.list-toolbar__search :deep(.p-inputtext:focus) {
-  border: none !important;
-  outline: none;
-  box-shadow: none !important;
 }
 
 @media (width <= 640px) {

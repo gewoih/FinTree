@@ -294,7 +294,7 @@ const handleDelete = () => {
                 option-label="label"
                 option-value="value"
                 :allow-empty="false"
-                class="w-full"
+                class="w-full ft-select-button"
                 :disabled="props.readonly"
                 :aria-describedby="fieldAttrs['aria-describedby']"
                 :aria-invalid="fieldAttrs['aria-invalid']"

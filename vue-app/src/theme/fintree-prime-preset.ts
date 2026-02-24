@@ -1,5 +1,12 @@
 import Aura from '@primeuix/themes/aura';
 import { definePreset } from '@primeuix/themes';
+import {
+  datePickerScheme,
+  inputNumberButtons,
+  messageScheme,
+  toastScheme,
+  tooltipRoot,
+} from './fintree-prime-component-schemes';
 
 const primeOverridesCss = `
 @layer overrides {
@@ -292,44 +299,7 @@ const sharedColorScheme = {
     submenuIcon: { color: 'var(--ft-text-secondary)', focusColor: 'var(--ft-text-primary)', activeColor: 'var(--ft-text-primary)' },
   },
 };
-
-const tooltipRoot = { root: { background: 'var(--ft-surface-raised)', color: 'var(--ft-text-primary)' } };
-const inputNumberButtons = {
-  button: {
-    background: 'transparent',
-    hoverBackground: 'var(--ft-surface-overlay)',
-    activeBackground: 'var(--ft-surface-overlay)',
-    borderColor: 'var(--ft-border-default)',
-    hoverBorderColor: 'var(--ft-border-strong)',
-    activeBorderColor: 'var(--ft-border-strong)',
-    color: 'var(--ft-text-secondary)',
-    hoverColor: 'var(--ft-text-primary)',
-    activeColor: 'var(--ft-text-primary)',
-  },
-};
-
-const toastShadow = '0 18px 32px color-mix(in srgb, var(--ft-bg-base) 60%, transparent), 0 2px 8px color-mix(in srgb, var(--ft-bg-base) 32%, transparent)';
-const toastBackground = 'linear-gradient(180deg, color-mix(in srgb, var(--ft-surface-overlay) 92%, transparent) 0%, var(--ft-surface-raised) 100%)';
-
-const makeToastTone = (borderColor: string) => ({
-  background: toastBackground,
-  borderColor,
-  color: 'var(--ft-text-primary)',
-  detailColor: 'var(--ft-text-secondary)',
-  shadow: toastShadow,
-  closeButton: { hoverBackground: 'var(--ft-surface-overlay)', focusRing: { color: borderColor, shadow: 'none' } },
-});
-
-const toastScheme = {
-  root: { blur: '2px' },
-  info: makeToastTone('var(--ft-info-500)'),
-  success: makeToastTone('var(--ft-success-500)'),
-  warn: makeToastTone('var(--ft-warning-500)'),
-  error: makeToastTone('var(--ft-danger-500)'),
-};
-
 const semanticScheme = { surface: surfaceScale, ...sharedColorScheme };
-
 export const FinTreePrimePreset = definePreset(Aura, {
   primitive: { zinc: zincScale },
   semantic: {
@@ -338,6 +308,95 @@ export const FinTreePrimePreset = definePreset(Aura, {
     focusRing,
   },
   components: {
+    button: {
+      root: {
+        borderRadius: 'var(--ft-radius-lg)',
+        roundedBorderRadius: 'var(--ft-radius-full)',
+        gap: 'var(--ft-space-2)',
+        paddingX: 'var(--ft-space-4)',
+        paddingY: '0',
+        iconOnlyWidth: 'var(--ft-button-height-sm)',
+        sm: { fontSize: 'var(--ft-text-sm)', paddingX: 'var(--ft-space-3)', paddingY: '0', iconOnlyWidth: 'var(--ft-button-height-sm)' },
+        lg: { fontSize: 'var(--ft-text-base)', paddingX: 'var(--ft-space-6)', paddingY: '0', iconOnlyWidth: 'var(--ft-button-height-lg)' },
+        label: { fontWeight: 'var(--ft-font-semibold)' },
+        focusRing,
+        transitionDuration: 'var(--ft-transition-fast)',
+      },
+    },
+    inputtext: {
+      root: {
+        background: 'var(--ft-surface-base)',
+        borderColor: 'var(--ft-border-default)',
+        hoverBorderColor: 'var(--ft-border-strong)',
+        focusBorderColor: 'var(--ft-interactive-default)',
+        invalidBorderColor: 'var(--ft-danger-500)',
+        color: 'var(--ft-text-primary)',
+        disabledColor: 'var(--ft-text-disabled)',
+        placeholderColor: 'var(--ft-text-tertiary)',
+        paddingX: 'var(--ft-space-4)',
+        paddingY: '0',
+        borderRadius: 'var(--ft-radius-lg)',
+        focusRing,
+        transitionDuration: 'var(--ft-transition-fast)',
+      },
+    },
+    select: {
+      root: {
+        background: 'var(--ft-surface-base)',
+        borderColor: 'var(--ft-border-default)',
+        hoverBorderColor: 'var(--ft-border-strong)',
+        focusBorderColor: 'var(--ft-interactive-default)',
+        invalidBorderColor: 'var(--ft-danger-500)',
+        color: 'var(--ft-text-primary)',
+        disabledColor: 'var(--ft-text-disabled)',
+        placeholderColor: 'var(--ft-text-tertiary)',
+        paddingX: 'var(--ft-space-4)',
+        paddingY: '0',
+        borderRadius: 'var(--ft-radius-lg)',
+        focusRing,
+        transitionDuration: 'var(--ft-transition-fast)',
+      },
+      dropdown: {
+        width: 'var(--ft-control-height)',
+        color: 'var(--ft-text-secondary)',
+      },
+      overlay: {
+        background: 'var(--ft-surface-raised)',
+        borderColor: 'var(--ft-border-default)',
+        borderRadius: 'var(--ft-radius-lg)',
+        color: 'var(--ft-text-primary)',
+        shadow: 'var(--ft-shadow-lg)',
+      },
+      option: {
+        focusBackground: 'var(--ft-surface-overlay)',
+        selectedBackground: 'color-mix(in srgb, var(--ft-primary-500) 18%, transparent)',
+        selectedFocusBackground: 'color-mix(in srgb, var(--ft-primary-500) 26%, transparent)',
+        color: 'var(--ft-text-primary)',
+        focusColor: 'var(--ft-text-primary)',
+        selectedColor: 'var(--ft-text-primary)',
+        selectedFocusColor: 'var(--ft-text-primary)',
+        borderRadius: 'var(--ft-radius-md)',
+      },
+    },
+    datepicker: {
+      root: { transitionDuration: 'var(--ft-transition-fast)' },
+      dropdown: {
+        width: 'var(--ft-control-height)',
+        borderColor: 'var(--ft-border-default)',
+        hoverBorderColor: 'var(--ft-border-strong)',
+        activeBorderColor: 'var(--ft-interactive-default)',
+        borderRadius: 'var(--ft-radius-lg)',
+        focusRing,
+        background: 'var(--ft-surface-base)',
+        hoverBackground: 'var(--ft-surface-overlay)',
+        activeBackground: 'var(--ft-surface-overlay)',
+        color: 'var(--ft-text-secondary)',
+        hoverColor: 'var(--ft-text-primary)',
+        activeColor: 'var(--ft-text-primary)',
+      },
+      inputIcon: { color: 'var(--ft-text-secondary)' },
+      colorScheme: { light: datePickerScheme, dark: datePickerScheme },
+    },
     tooltip: {
       root: {
         maxWidth: 'min(20rem, calc(100vw - (var(--ft-space-4) * 2)))',
@@ -401,6 +460,25 @@ export const FinTreePrimePreset = definePreset(Aura, {
       },
       currentPageReport: { color: 'var(--ft-text-secondary)' },
       jumpToPageInput: { maxWidth: 'var(--ft-container-xs)' },
+    },
+    message: {
+      root: {
+        borderRadius: 'var(--ft-radius-lg)',
+        borderWidth: '1px',
+        transitionDuration: 'var(--ft-transition-fast)',
+      },
+      content: { padding: 'var(--ft-space-3)', gap: 'var(--ft-space-2)' },
+      text: { fontSize: 'var(--ft-text-sm)', fontWeight: 'var(--ft-font-medium)' },
+      icon: { size: 'var(--ft-text-base)' },
+      closeButton: { width: '2rem', height: '2rem', borderRadius: 'var(--ft-radius-md)', focusRing },
+      closeIcon: { size: '1rem' },
+      colorScheme: { light: messageScheme, dark: messageScheme },
+    },
+    selectbutton: {
+      root: {
+        borderRadius: 'var(--ft-radius-lg)',
+        invalidBorderColor: 'var(--ft-danger-500)',
+      },
     },
     toast: {
       root: {

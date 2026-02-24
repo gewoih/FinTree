@@ -36,6 +36,7 @@ References:
 - Do not introduce silent technical debt. If debt is unavoidable, add a concise item to `TODO.md` in the same task.
 - Do not claim completion without running required verification commands for the touched scope.
 - For any work under `vue-app/**`, use the canonical frontend checklist in `DESIGN.md` instead of duplicating command lists.
+- For PrimeVue visuals under `vue-app/**`, keep state theming (`hover`/`focus`/`invalid`/`active`) centralized in the styled preset, wrappers, or shared contracts; avoid per-feature visual overrides.
 - **Never commit.** Do not run `git commit` or `git add` under any circumstances unless the user explicitly asks for a commit in that moment. This applies even if a plan file or skill instructs you to commit.
 - **Migration approval gate.** Never create, edit, delete, or regenerate files under `FinTree.Infrastructure/Migrations/**` and never run `dotnet ef migrations` commands unless the user explicitly approves migration work in that turn.
 - **No .NET build commands.** Never run `dotnet build`, `dotnet test`, `dotnet run`, or `dotnet publish` unless the user explicitly asks for that command in that turn.
