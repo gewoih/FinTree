@@ -48,6 +48,22 @@
 
 ---
 
+## Forms & Branding Alignment
+
+- [ ] `FT-TODO-034` Increase default field size for `UiInputText`, `UiSelect`, and `UiDatePicker` to match design baseline
+  **Acceptance criteria:** these wrappers use token-driven sizing that matches `DESIGN.md` form guidance and the target visual baseline (larger touch-friendly controls, consistent label/input spacing, min target size `44x44`).
+
+- [ ] `FT-TODO-035` Reduce focus ring thickness for form inputs while preserving accessibility contrast
+  **Acceptance criteria:** focused states in `UiInputText`, `UiSelect`, and `UiDatePicker` use a smaller token-driven ring/outline than current visuals, remain keyboard-visible, and keep non-text contrast at least `3:1` per `DESIGN.md`.
+
+- [ ] `FT-TODO-036` Make net worth chart section in `InvestmentsPage.vue` fill available card height
+  **Acceptance criteria:** the "Изменение капитала" chart area expands to use full available panel height (no large unused empty area), with responsive behavior intact at `360px` and desktop widths.
+
+- [ ] `FT-TODO-037` Standardize brand styling for all select-button controls (including `CategoriesPage.vue`)
+  **Acceptance criteria:** all SelectButton-like controls share one token-driven brand style contract (active, inactive, hover, focus, border/radius, typography) consistent with `DESIGN.md` and `design-tokens.css`.
+
+---
+
 ## Marketing
 
 - [ ] `FT-TODO-010` Reduce and restructure landing page content  
