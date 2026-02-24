@@ -299,7 +299,10 @@ const bindMonthPickerRef = (instance: unknown) => {
       </div>
     </div>
 
-    <EvolutionTab v-show="activeTab === 'evolution'" />
+    <EvolutionTab
+      v-show="activeTab === 'evolution'"
+      class="analytics-page__evolution-tab"
+    />
   </PageContainer>
 </template>
 
