@@ -247,13 +247,13 @@ const valueClass = (accent: HealthAccent) => `health-score__main-value--${accent
   }
 
   .health-score__main-value {
-    font-size: 1.5rem;
+    font-size: var(--ft-text-2xl);
   }
 
   .health-score__icon {
-    width: 36px;
-    height: 36px;
-    font-size: 0.95rem;
+    width: 44px;
+    height: 44px;
+    font-size: var(--ft-text-base);
   }
 }
 </style>

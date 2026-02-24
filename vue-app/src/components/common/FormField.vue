@@ -200,7 +200,7 @@ const fieldAttrs = computed(() => ({
   min-width: var(--ft-control-height);
   min-height: var(--ft-control-height);
 
-  font-size: 0.95rem;
+  font-size: var(--ft-text-base);
   color: var(--ft-text-muted);
   text-transform: none;
 

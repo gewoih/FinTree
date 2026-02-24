@@ -228,7 +228,7 @@ const iconAccentClass = (accent: MetricAccent) => `summary-strip__icon--${accent
   min-height: var(--ft-control-height);
   padding: 0;
 
-  font-size: 0.95rem;
+  font-size: var(--ft-text-base);
   color: var(--ft-text-muted);
   text-transform: none;
 

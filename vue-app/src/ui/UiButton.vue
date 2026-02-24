@@ -138,7 +138,7 @@ const buttonClasses = computed(() => [
 
 .ui-button :deep(.p-button-icon) {
   margin: 0;
-  font-size: 0.95rem;
+  font-size: var(--ft-text-base)
 }
 
 .ui-button :deep(.p-button-label) {

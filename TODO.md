@@ -43,9 +43,6 @@
 - [ ] `FT-TODO-023` Define visual style for UiBadge `secondary` severity
   **Acceptance criteria:** `severity="secondary"` renders with a distinct background, color, and border using `--ft-*` tokens. Currently has no CSS rule — visually unstyled/inherited.
 
-- [ ] `FT-TODO-033` Replace raw `0.95rem` literal in UiButton.vue icon font-size with a `--ft-*` token
-  **Acceptance criteria:** `font-size: 0.95rem` in `.ui-button :deep(.p-button-icon)` uses a `--ft-text-*` token. Add token to `design-tokens.css` if the scale doesn't already cover it.
-
 ---
 
 ## Forms & Branding Alignment
