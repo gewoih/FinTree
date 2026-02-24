@@ -20,10 +20,13 @@ import type {
     UpdateUserProfilePayload,
     NetWorthSnapshotDto,
     EvolutionMonthDto,
+    RetrospectiveDto,
+    RetrospectiveListItemDto,
     InvestmentsOverviewDto,
     AccountBalanceAdjustmentDto,
     CreateTransferPayload,
-    UpdateTransferPayload
+    UpdateTransferPayload,
+    UpsertRetrospectivePayload
 } from '../types.ts';
 
 type AuthRedirectConfig = AxiosRequestConfig & {
@@ -405,6 +408,39 @@ export const apiService = {
             params: { months }
         });
         return response.data;
+    },
+
+    async getRetrospectives(): Promise<RetrospectiveListItemDto[]> {
+        const response = await apiClient.get<RetrospectiveListItemDto[]>('/retrospectives');
+        return response.data;
+    },
+
+    async getRetrospectiveAvailableMonths(): Promise<string[]> {
+        const response = await apiClient.get<string[]>('/retrospectives/available-months');
+        return response.data;
+    },
+
+    async getRetrospective(month: string): Promise<RetrospectiveDto> {
+        const response = await apiClient.get<RetrospectiveDto>(`/retrospectives/${month}`);
+        return response.data;
+    },
+
+    async getBannerStatus(month: string): Promise<{ showBanner: boolean }> {
+        const response = await apiClient.get<{ showBanner: boolean }>(`/retrospectives/banner/${month}`);
+        return response.data;
+    },
+
+    async upsertRetrospective(payload: UpsertRetrospectivePayload): Promise<RetrospectiveDto> {
+        const response = await apiClient.post<RetrospectiveDto>('/retrospectives', payload);
+        return response.data;
+    },
+
+    async deleteRetrospective(month: string): Promise<void> {
+        await apiClient.delete(`/retrospectives/${month}`);
+    },
+
+    async dismissBanner(month: string): Promise<void> {
+        await apiClient.post(`/retrospectives/${month}/dismiss`);
     },
 
     // Текущий пользователь

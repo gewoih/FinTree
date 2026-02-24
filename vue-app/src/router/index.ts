@@ -91,6 +91,18 @@ export const router = createRouter({
       meta: { title: 'Главная', requiresAuth: true },
     },
     {
+      path: '/reflections',
+      name: 'reflections',
+      component: () => import('../pages/ReflectionsPage.vue'),
+      meta: { title: 'Рефлексии', requiresAuth: true },
+    },
+    {
+      path: '/reflections/:month',
+      name: 'reflection-detail',
+      component: () => import('../pages/RetroDetailPage.vue'),
+      meta: { title: 'Рефлексия', requiresAuth: true },
+    },
+    {
       path: '/profile',
       name: 'profile',
       component: () => import('../pages/ProfilePage.vue'),

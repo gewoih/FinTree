@@ -389,3 +389,31 @@ export interface InvestmentsOverviewDto {
     totalReturnPercent: number | null;
     accounts: InvestmentAccountOverviewDto[];
 }
+
+export interface RetrospectiveListItemDto {
+    month: string;
+    disciplineRating: number | null;
+    impulseControlRating: number | null;
+    confidenceRating: number | null;
+    conclusionPreview: string | null;
+    hasContent: boolean;
+}
+
+export interface RetrospectiveDto {
+    month: string;
+    bannerDismissedAt: string | null;
+    conclusion: string | null;
+    nextMonthPlan: string | null;
+    disciplineRating: number | null;
+    impulseControlRating: number | null;
+    confidenceRating: number | null;
+}
+
+export interface UpsertRetrospectivePayload {
+    month: string;
+    conclusion?: string | null;
+    nextMonthPlan?: string | null;
+    disciplineRating?: number | null;
+    impulseControlRating?: number | null;
+    confidenceRating?: number | null;
+}

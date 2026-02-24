@@ -37,6 +37,8 @@ References:
 - Do not claim completion without running required verification commands for the touched scope.
 - For any work under `vue-app/**`, use the canonical frontend checklist in `DESIGN.md` instead of duplicating command lists.
 - **Never commit.** Do not run `git commit` or `git add` under any circumstances unless the user explicitly asks for a commit in that moment. This applies even if a plan file or skill instructs you to commit.
+- **Migration approval gate.** Never create, edit, delete, or regenerate files under `FinTree.Infrastructure/Migrations/**` and never run `dotnet ef migrations` commands unless the user explicitly approves migration work in that turn.
+- **No .NET build commands.** Never run `dotnet build`, `dotnet test`, `dotnet run`, or `dotnet publish` unless the user explicitly asks for that command in that turn.
 - **CSS blast radius rule.** Before editing any CSS, identify every file that contains styles for the component you are changing. If that list has more than one file, co-locate all styles into the component file first, then make the visual change. Never edit a shared CSS file to fix a specific component's appearance.
 - **Never ignore problems.** When you encounter a bug, inconsistency, incorrect pattern, or technical debt while working on any task — you must either fix it in place (if it is small and low-risk) or add a concise item to `TODO.md` immediately. Silently passing over a known problem is not allowed.
 

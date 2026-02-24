@@ -20,6 +20,7 @@ import type { MonthPickerInstance } from '../types/analytics-page';
 import { useChartColors } from './useChartColors';
 import { useAnalyticsFormatting } from './useAnalyticsFormatting';
 import { useAnalyticsPageMetrics } from './useAnalyticsPageMetrics';
+import { apiService } from '@/services/api.service';
 
 export function useAnalyticsPage() {
   const userStore = useUserStore();
@@ -34,6 +35,7 @@ export function useAnalyticsPage() {
   const selectedGranularity = ref<ExpenseGranularity>('days');
   const categoryScopeOptions = CATEGORY_SCOPE_OPTIONS;
   const selectedCategoryScope = ref<CategoryScope>('all');
+  const showRetrospectiveBanner = ref(false);
   
   const {
     dashboard,
@@ -183,6 +185,11 @@ export function useAnalyticsPage() {
     const now = new Date();
     return new Date(now.getFullYear(), now.getMonth() + 1, 0);
   });
+  const previousMonthStr = computed(() => {
+    const now = new Date();
+    const prevMonth = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+    return `${prevMonth.getFullYear()}-${String(prevMonth.getMonth() + 1).padStart(2, '0')}`;
+  });
   
   // --- Month picker ---
   const updateSelectedMonth = (value: Date | Date[] | (Date | null)[] | null | undefined) => {
@@ -195,6 +202,30 @@ export function useAnalyticsPage() {
   const goToNextMonth = () => {
     if (!canNavigateNext.value) return;
     selectedMonth.value = addLocalMonths(normalizedSelectedMonth.value, 1);
+  };
+
+  const checkRetrospectiveBanner = async () => {
+    const dayOfMonth = new Date().getDate();
+    if (dayOfMonth > 7) {
+      showRetrospectiveBanner.value = false;
+      return;
+    }
+
+    try {
+      const { showBanner } = await apiService.getBannerStatus(previousMonthStr.value);
+      showRetrospectiveBanner.value = showBanner;
+    } catch {
+      showRetrospectiveBanner.value = false;
+    }
+  };
+
+  const dismissRetrospectiveBanner = async () => {
+    showRetrospectiveBanner.value = false;
+    try {
+      await apiService.dismissBanner(previousMonthStr.value);
+    } catch {
+      // Keep banner hidden for current session to avoid UX flicker.
+    }
   };
   
   watch(selectedMonth, (value) => {
@@ -238,6 +269,7 @@ export function useAnalyticsPage() {
       financeStore.fetchAccounts(),
       financeStore.fetchCategories(),
       shouldLoadOnboardingState ? loadOnboardingTransactionsState() : Promise.resolve(),
+      checkRetrospectiveBanner(),
     ]);
   
     if (shouldLoadOnboardingState) {
@@ -284,6 +316,9 @@ export function useAnalyticsPage() {
     handleStepClick,
     openMonthPicker,
     retryDashboard,
+    showRetrospectiveBanner,
+    previousMonthStr,
+    dismissRetrospectiveBanner,
     updateSelectedMonth,
   };
 }

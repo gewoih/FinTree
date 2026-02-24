@@ -7,7 +7,7 @@ const tabs = [
   { label: 'Главная', icon: 'pi-chart-line', to: '/analytics' },
   { label: 'Счета', icon: 'pi-wallet', to: '/accounts' },
   { label: 'Транзакции', icon: 'pi-list', to: '/transactions' },
-  { label: 'Инвестиции', icon: 'pi-briefcase', to: '/investments' },
+  { label: 'Рефлексии', icon: 'pi-book', to: '/reflections' },
   { label: 'Ещё', icon: 'pi-ellipsis-h', to: '/profile' }
 ]
 </script>
