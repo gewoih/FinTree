@@ -141,6 +141,58 @@ public sealed class AccountsService(
         return result;
     }
 
+    internal async Task<List<AccountAnalyticsSnapshot>> GetAccountSnapshotsAsync(
+        bool includeArchived,
+        CancellationToken ct = default)
+    {
+        var query = context.Accounts
+            .AsNoTracking()
+            .Where(a => a.UserId == currentUser.Id);
+
+        if (!includeArchived)
+            query = query.Where(a => !a.IsArchived);
+
+        var accounts = await query
+            .Select(a => new { a.Id, a.CurrencyCode, a.IsLiquid, a.IsArchived, a.CreatedAt })
+            .ToListAsync(ct);
+
+        return accounts
+            .Select(a => new AccountAnalyticsSnapshot(
+                a.Id,
+                a.CurrencyCode,
+                a.IsLiquid,
+                a.IsArchived,
+                NormalizeUtc(a.CreatedAt.UtcDateTime)))
+            .ToList();
+    }
+
+    internal async Task<List<AccountAdjustmentAnalyticsSnapshot>> GetAccountAdjustmentSnapshotsAsync(
+        IReadOnlyCollection<Guid> accountIds,
+        DateTime? beforeUtc = null,
+        CancellationToken ct = default)
+    {
+        if (accountIds.Count == 0)
+            return [];
+
+        var query = context.AccountBalanceAdjustments
+            .AsNoTracking()
+            .Where(a => a.Account.UserId == currentUser.Id && accountIds.Contains(a.AccountId));
+
+        if (beforeUtc.HasValue)
+            query = query.Where(a => a.OccurredAt < beforeUtc.Value);
+
+        var adjustments = await query
+            .Select(a => new { a.AccountId, a.Amount, a.OccurredAt })
+            .ToListAsync(ct);
+
+        return adjustments
+            .Select(a => new AccountAdjustmentAnalyticsSnapshot(
+                a.AccountId,
+                a.Amount,
+                NormalizeUtc(a.OccurredAt)))
+            .ToList();
+    }
+
     public async Task<InvestmentsOverviewDto> GetInvestmentsOverviewAsync(
         DateTime? from,
         DateTime? to,

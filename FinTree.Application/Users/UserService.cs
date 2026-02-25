@@ -10,6 +10,16 @@ namespace FinTree.Application.Users;
 
 public sealed class UserService(IAppDbContext context, ICurrentUser currentUser, UserManager<User> userManager)
 {
+    internal async Task<string> GetCurrentUserBaseCurrencyCodeAsync(CancellationToken ct = default)
+    {
+        var currentUserId = currentUser.Id;
+        return await context.Users
+            .AsNoTracking()
+            .Where(u => u.Id == currentUserId)
+            .Select(u => u.BaseCurrencyCode)
+            .SingleAsync(ct);
+    }
+
     public async Task<MeDto> GetCurrentUserDataAsync(CancellationToken ct)
     {
         var currentUserId = currentUser.Id;

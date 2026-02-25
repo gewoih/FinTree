@@ -235,7 +235,7 @@ builder.Services.AddScoped<AccountsService>();
 builder.Services.AddScoped<UserService>();
 builder.Services.AddScoped<AuthService>();
 builder.Services.AddScoped<ICurrentUser, HttpCurrentUser>();
-builder.Services.AddScoped<AnalyticsService>();
+builder.Services.AddAnalyticsServices();
 builder.Services.AddScoped<RetrospectiveService>();
 builder.Services.AddScoped<AdminService>();
 builder.Services.AddScoped<CurrencyConverter>();

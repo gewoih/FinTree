@@ -161,6 +161,100 @@ public sealed class TransactionsService(IAppDbContext context, ICurrentUser curr
         return new PagedResult<TransactionDto>(userTransactions, page, size, total);
     }
 
+    internal async Task<int> GetDistinctExpenseDaysCountAsync(CancellationToken ct = default)
+    {
+        var currentUserId = currentUser.Id;
+        return await context.Transactions
+            .AsNoTracking()
+            .Where(t => t.Account.UserId == currentUserId &&
+                        !t.IsTransfer &&
+                        t.Type == TransactionType.Expense)
+            .Select(t => t.OccurredAt.Date)
+            .Distinct()
+            .CountAsync(ct);
+    }
+
+    internal async Task<DateTime?> GetEarliestOccurredAtBeforeAsync(
+        DateTime beforeUtc,
+        bool excludeTransfers,
+        CancellationToken ct = default)
+    {
+        var query = context.Transactions
+            .AsNoTracking()
+            .Where(t => t.Account.UserId == currentUser.Id && t.OccurredAt < beforeUtc);
+
+        if (excludeTransfers)
+            query = query.Where(t => !t.IsTransfer);
+
+        var raw = await query
+            .Select(t => (DateTime?)t.OccurredAt)
+            .MinAsync(ct);
+
+        return raw.HasValue ? NormalizeUtc(raw.Value) : null;
+    }
+
+    internal async Task<List<TransactionAnalyticsSnapshot>> GetTransactionSnapshotsAsync(
+        DateTime? fromUtc = null,
+        DateTime? toUtc = null,
+        bool excludeTransfers = false,
+        TransactionType? type = null,
+        IReadOnlyCollection<Guid>? accountIds = null,
+        bool excludeArchivedAccounts = false,
+        CancellationToken ct = default)
+    {
+        var currentUserId = currentUser.Id;
+        var query = context.Transactions
+            .AsNoTracking()
+            .Where(t => t.Account.UserId == currentUserId);
+
+        if (excludeArchivedAccounts)
+            query = query.Where(t => !t.Account.IsArchived);
+
+        if (accountIds is not null)
+        {
+            if (accountIds.Count == 0)
+                return [];
+
+            query = query.Where(t => accountIds.Contains(t.AccountId));
+        }
+
+        if (excludeTransfers)
+            query = query.Where(t => !t.IsTransfer);
+
+        if (type.HasValue)
+            query = query.Where(t => t.Type == type.Value);
+
+        if (fromUtc.HasValue)
+            query = query.Where(t => t.OccurredAt >= fromUtc.Value);
+
+        if (toUtc.HasValue)
+            query = query.Where(t => t.OccurredAt < toUtc.Value);
+
+        var rows = await query
+            .Select(t => new
+            {
+                t.AccountId,
+                t.CategoryId,
+                t.Money,
+                t.OccurredAt,
+                t.Type,
+                t.IsTransfer,
+                t.IsMandatory
+            })
+            .ToListAsync(ct);
+
+        return rows
+            .Select(t => new TransactionAnalyticsSnapshot(
+                t.AccountId,
+                t.CategoryId,
+                t.Money,
+                NormalizeUtc(t.OccurredAt),
+                t.Type,
+                t.IsTransfer,
+                t.IsMandatory))
+            .ToList();
+    }
+
     public async Task<Guid> CreateTransferAsync(CreateTransfer command, CancellationToken ct)
     {
         if (command.FromAccountId == command.ToAccountId)
