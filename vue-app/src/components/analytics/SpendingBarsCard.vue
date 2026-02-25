@@ -229,6 +229,7 @@ const chartOptions = computed(() => ({
   flex-direction: column;
   gap: var(--ft-space-4);
 
+  height: 100%;
   padding: clamp(1rem, 2vw, 1.5rem);
 
   background: var(--ft-surface-base);
@@ -294,6 +295,8 @@ const chartOptions = computed(() => ({
 
 .bars-card__message {
   display: grid;
+  align-content: start;
+  min-height: 280px;
 }
 
 .bars-card__message-body {
@@ -315,9 +318,9 @@ const chartOptions = computed(() => ({
 }
 
 .bars-card__chart {
-  aspect-ratio: 16 / 9;
+  flex: 1;
   width: 100%;
-  max-height: 400px;
+  min-height: 280px;
   padding: var(--ft-space-2) 0;
 }
 
@@ -325,6 +328,7 @@ const chartOptions = computed(() => ({
   position: relative;
   width: 100%;
   height: 100%;
+  min-height: 280px;
 }
 
 .bars-card__chart-container :deep(.p-chart) {
@@ -355,8 +359,11 @@ const chartOptions = computed(() => ({
   }
 
   .bars-card__chart {
-    aspect-ratio: 4 / 3;
-    max-height: 280px;
+    min-height: 220px;
+  }
+
+  .bars-card__chart-container {
+    min-height: 220px;
   }
 }
 </style>
