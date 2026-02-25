@@ -165,6 +165,7 @@ const chartOptions = computed(() => ({
   flex-direction: column;
   gap: var(--ft-space-4);
 
+  height: 100%;
   padding: clamp(1rem, 2vw, 1.5rem);
 
   background: var(--ft-surface-base);
@@ -190,10 +191,13 @@ const chartOptions = computed(() => ({
 .networth-card__loading {
   display: grid;
   gap: var(--ft-space-3);
+  min-height: 280px;
 }
 
 .networth-card__message {
   display: grid;
+  align-content: start;
+  min-height: 280px;
 }
 
 .networth-card__message-body {
@@ -216,13 +220,26 @@ const chartOptions = computed(() => ({
 }
 
 .networth-card__chart {
+  flex: 1;
+  min-height: 280px;
   padding: var(--ft-space-2) 0 var(--ft-space-1);
 }
 
 .networth-card__chart-container {
   position: relative;
   width: 100%;
-  height: 350px;
+  height: 100%;
+  min-height: 280px;
+}
+
+.networth-card__chart-container :deep(.p-chart) {
+  width: 100%;
+  height: 100%;
+}
+
+.networth-card__chart-container :deep(canvas) {
+  height: 100%;
+  max-height: 100%;
 }
 
 @media (width <= 640px) {
@@ -235,8 +252,12 @@ const chartOptions = computed(() => ({
     font-size: var(--ft-text-sm);
   }
 
+  .networth-card__chart {
+    min-height: 220px;
+  }
+
   .networth-card__chart-container {
-    height: 260px;
+    min-height: 220px;
   }
 }
 </style>

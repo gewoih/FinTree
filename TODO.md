@@ -13,8 +13,5 @@
 
 ## Forms & Branding Alignment
 
-- [ ] `FT-TODO-036` Make net worth chart section in `InvestmentsPage.vue` fill available card height
-  **Acceptance criteria:** the "Изменение капитала" chart area expands to use full available panel height (no large unused empty area), with responsive behavior intact at `360px` and desktop widths.
-
 - [ ] `FT-TODO-037` Standardize brand styling for all select-button controls (including `CategoriesPage.vue`)
   **Acceptance criteria:** all SelectButton-like controls share one token-driven brand style contract (active, inactive, hover, focus, border/radius, typography) consistent with `DESIGN.md` and `design-tokens.css`.
