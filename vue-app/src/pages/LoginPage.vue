@@ -170,7 +170,7 @@ const handleLogin = async () => {
                 type="button"
                 class="auth__eye"
                 :aria-label="showPassword ? 'Скрыть пароль' : 'Показать пароль'"
-                tabindex="-1"
+                :aria-pressed="showPassword"
                 @click="showPassword = !showPassword"
               >
                 <i :class="showPassword ? 'pi pi-eye-slash' : 'pi pi-eye'" />
@@ -363,10 +363,12 @@ const handleLogin = async () => {
 
 .auth__password-wrap {
   position: relative;
+  width: 100%;
 }
 
-.auth__password-wrap :deep(input) {
-  padding-right: var(--ft-space-10);
+.auth__password-wrap :deep(.p-inputtext) {
+  width: 100%;
+  padding-right: calc(var(--ft-space-8) + var(--ft-space-3));
 }
 
 .auth__eye {
@@ -380,6 +382,8 @@ const handleLogin = async () => {
   display: grid;
   place-items: center;
 
+  width: var(--ft-space-6);
+  height: var(--ft-space-6);
   padding: 0;
 
   font-size: 1rem;
@@ -393,6 +397,13 @@ const handleLogin = async () => {
 
 .auth__eye:hover {
   color: var(--ft-text-primary);
+}
+
+.auth__eye:focus-visible {
+  color: var(--ft-text-primary);
+  border-radius: var(--ft-radius-sm);
+  outline: 2px solid var(--ft-primary-400);
+  outline-offset: 1px;
 }
 
 .auth__forgot-link {
