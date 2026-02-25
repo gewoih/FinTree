@@ -20,49 +20,70 @@ const props = defineProps<{
 }>()
 
 const isTableExpanded = ref(true)
-const showAllTableRows = ref(false)
+const showAllTableMonths = ref(false)
 
 watch(
   () => props.selectedRange,
   range => {
     if (range !== 0) {
-      showAllTableRows.value = false
+      showAllTableMonths.value = false
     }
   }
 )
 
-const tableColumns = computed(() => EVOLUTION_KPI_ORDER.map(key => EVOLUTION_KPI_META[key]))
-
-interface EvolutionTableDisplayRow {
+interface EvolutionTableDisplayMonth {
   key: string
   monthLabel: string
-  cellsByKey: Record<EvolutionKpi, EvolutionTableCellModel | undefined>
+  cellsByKpi: Record<EvolutionKpi, EvolutionTableCellModel | undefined>
 }
 
-const displayedRows = computed<EvolutionTableDisplayRow[]>(() => {
-  const sourceRows =
-    props.selectedRange !== 0 || showAllTableRows.value ? props.rows : props.rows.slice(0, 12)
+interface EvolutionTableDisplayRow {
+  key: EvolutionKpi
+  kpiLabel: string
+  cellsByMonthKey: Record<string, EvolutionTableCellModel | undefined>
+}
 
-  return sourceRows.map(row => {
-    const cellsByKey = {} as Record<EvolutionKpi, EvolutionTableCellModel | undefined>
+const displayedMonths = computed<EvolutionTableDisplayMonth[]>(() => {
+  const sourceRows =
+    props.selectedRange !== 0 || showAllTableMonths.value ? props.rows : props.rows.slice(0, 12)
+  const orderedRows = [...sourceRows].reverse()
+
+  return orderedRows.map(row => {
+    const cellsByKpi = {} as Record<EvolutionKpi, EvolutionTableCellModel | undefined>
 
     for (const key of EVOLUTION_KPI_ORDER) {
-      cellsByKey[key] = row.cells.find(cell => cell.key === key)
+      cellsByKpi[key] = row.cells.find(cell => cell.key === key)
     }
 
     return {
       key: row.key,
       monthLabel: row.monthLabel,
-      cellsByKey,
+      cellsByKpi,
     }
   })
 })
 
-const canShowAllRows = computed(
-  () => props.selectedRange === 0 && props.rows.length > 12 && !showAllTableRows.value
+const displayedRows = computed<EvolutionTableDisplayRow[]>(() =>
+  EVOLUTION_KPI_ORDER.map(kpi => {
+    const cellsByMonthKey: Record<string, EvolutionTableCellModel | undefined> = {}
+
+    for (const month of displayedMonths.value) {
+      cellsByMonthKey[month.key] = month.cellsByKpi[kpi]
+    }
+
+    return {
+      key: kpi,
+      kpiLabel: EVOLUTION_KPI_META[kpi].label,
+      cellsByMonthKey,
+    }
+  })
 )
 
-const hiddenRowsCount = computed(() => props.rows.length - displayedRows.value.length)
+const canShowAllMonths = computed(
+  () => props.selectedRange === 0 && props.rows.length > 12 && !showAllTableMonths.value
+)
+
+const hiddenMonthsCount = computed(() => props.rows.length - displayedMonths.value.length)
 
 function deltaClass(tone: EvolutionDeltaTone | null): string {
   if (tone === 'better') return 'evolution-delta--better'
@@ -108,39 +129,39 @@ function deltaClass(tone: EvolutionDeltaTone | null): string {
             class="evolution-table__grid"
           >
             <Column
-              field="monthLabel"
-              header="Месяц"
-              header-class="evolution-table__month-col"
-              body-class="evolution-table__month-col"
+              field="kpiLabel"
+              header="Показатель"
+              header-class="evolution-table__kpi-col"
+              body-class="evolution-table__kpi-col"
             >
               <template #body="{ data }">
-                <span class="evolution-table__month-text">
-                  {{ data.monthLabel }}
+                <span class="evolution-table__kpi-text">
+                  {{ data.kpiLabel }}
                 </span>
               </template>
             </Column>
 
             <Column
-              v-for="column in tableColumns"
+              v-for="column in displayedMonths"
               :key="column.key"
               :field="column.key"
-              :header="column.label"
-              header-class="evolution-table__kpi-col"
-              body-class="evolution-table__kpi-col"
+              :header="column.monthLabel"
+              header-class="evolution-table__month-col"
+              body-class="evolution-table__month-col"
             >
               <template #body="{ data }">
                 <div class="evolution-table__cell-value">
-                  {{ data.cellsByKey[column.key]?.valueLabel ?? '—' }}
+                  {{ data.cellsByMonthKey[column.key]?.valueLabel ?? '—' }}
                 </div>
                 <div
-                  v-if="data.cellsByKey[column.key]?.deltaLabel"
+                  v-if="data.cellsByMonthKey[column.key]?.deltaLabel"
                   class="evolution-table__cell-delta"
                 >
                   <span
                     class="evolution-table__delta-pill"
-                    :class="deltaClass(data.cellsByKey[column.key]?.deltaTone ?? null)"
+                    :class="deltaClass(data.cellsByMonthKey[column.key]?.deltaTone ?? null)"
                   >
-                    {{ data.cellsByKey[column.key]?.deltaLabel }}
+                    {{ data.cellsByMonthKey[column.key]?.deltaLabel }}
                   </span>
                 </div>
               </template>
@@ -149,12 +170,12 @@ function deltaClass(tone: EvolutionDeltaTone | null): string {
         </div>
 
         <button
-          v-if="canShowAllRows"
+          v-if="canShowAllMonths"
           type="button"
           class="evolution-table__show-all"
-          @click="showAllTableRows = true"
+          @click="showAllTableMonths = true"
         >
-          Показать все месяцы ({{ hiddenRowsCount }})
+          Показать все месяцы ({{ hiddenMonthsCount }})
         </button>
       </template>
     </div>
@@ -242,34 +263,34 @@ function deltaClass(tone: EvolutionDeltaTone | null): string {
   border-bottom: none;
 }
 
-.evolution-table__grid :deep(th.evolution-table__month-col) {
+.evolution-table__grid :deep(th.evolution-table__kpi-col) {
   position: sticky;
   z-index: 3;
   left: 0;
 
-  width: 160px;
-  min-width: 160px;
+  width: 220px;
+  min-width: 220px;
 }
 
-.evolution-table__grid :deep(td.evolution-table__month-col) {
+.evolution-table__grid :deep(td.evolution-table__kpi-col) {
   position: sticky;
   z-index: 2;
   left: 0;
 
-  width: 160px;
-  min-width: 160px;
+  width: 220px;
+  min-width: 220px;
 
   background: var(--ft-surface-base);
 }
 
-.evolution-table__grid :deep(th.evolution-table__kpi-col),
-.evolution-table__grid :deep(td.evolution-table__kpi-col) {
+.evolution-table__grid :deep(th.evolution-table__month-col),
+.evolution-table__grid :deep(td.evolution-table__month-col) {
   width: 130px;
   min-width: 130px;
 }
 /* stylelint-enable selector-pseudo-class-no-unknown */
 
-.evolution-table__month-text {
+.evolution-table__kpi-text {
   font-size: var(--ft-text-base);
   font-weight: var(--ft-font-semibold);
   line-height: 1.2;
@@ -366,18 +387,18 @@ function deltaClass(tone: EvolutionDeltaTone | null): string {
     padding: var(--ft-space-2) var(--ft-space-3);
   }
 
-  .evolution-table__grid :deep(th.evolution-table__month-col),
-  .evolution-table__grid :deep(td.evolution-table__month-col) {
-    min-width: 150px;
-  }
-
   .evolution-table__grid :deep(th.evolution-table__kpi-col),
   .evolution-table__grid :deep(td.evolution-table__kpi-col) {
+    min-width: 170px;
+  }
+
+  .evolution-table__grid :deep(th.evolution-table__month-col),
+  .evolution-table__grid :deep(td.evolution-table__month-col) {
     min-width: 120px;
   }
   /* stylelint-enable selector-pseudo-class-no-unknown */
 
-  .evolution-table__month-text,
+  .evolution-table__kpi-text,
   .evolution-table__cell-value {
     font-size: var(--ft-text-base);
   }
