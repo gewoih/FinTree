@@ -15,7 +15,6 @@ public sealed class AnalyticsService(
     UserService userService)
 {
     private static readonly TimeSpan OpeningBalanceDetectionWindow = TimeSpan.FromSeconds(5);
-    private static readonly DateTime OpeningBalanceAnchorUtc = DateTime.UnixEpoch;
     private readonly record struct CategoryMeta(string Name, string Color, bool IsMandatory);
     private readonly record struct CategoryTotals(decimal Total, decimal MandatoryTotal, decimal DiscretionaryTotal);
 
@@ -347,64 +346,30 @@ public sealed class AnalyticsService(
         var monthsToBuild = ((currentMonthStartUtc.Year - effectiveStartMonthUtc.Year) * 12) +
                             (currentMonthStartUtc.Month - effectiveStartMonthUtc.Month) + 1;
 
-        var eventsByAccount = accounts.ToDictionary(a => a.Id, _ => new List<BalanceEvent>());
-        foreach (var txn in rawTransactions)
-        {
-            ct.ThrowIfCancellationRequested();
+        var accountIds = accounts
+            .Select(a => a.Id)
+            .ToArray();
 
-            var occurredUtc = NormalizeUtc(txn.OccurredAt);
+        var eventsByAccount = BuildBalanceEventsByAccount(
+            accountIds,
+            accountCreatedAtById,
+            rawTransactions.Select(t => (
+                t.AccountId,
+                NormalizeUtc(t.OccurredAt),
+                t.Type == TransactionType.Income ? t.Money.Amount : -t.Money.Amount)),
+            rawAdjustments.Select(a => (a.AccountId, NormalizeUtc(a.OccurredAt), a.Amount)),
+            ct);
 
-            var delta = txn.Type == TransactionType.Income ? txn.Money.Amount : -txn.Money.Amount;
-            eventsByAccount[txn.AccountId].Add(new BalanceEvent(occurredUtc, delta, false));
-        }
+        var balancesByAccount = accountIds.ToDictionary(id => id, _ => 0m);
+        var eventIndexByAccount = accountIds.ToDictionary(id => id, _ => 0);
 
-        var adjustmentsByAccount = rawAdjustments
-            .GroupBy(a => a.AccountId)
-            .ToDictionary(
-                g => g.Key,
-                g =>
-                {
-                    var events = g
-                        .Select(a => new BalanceEvent(NormalizeUtc(a.OccurredAt), a.Amount, true))
-                        .OrderBy(a => a.OccurredAt)
-                        .ToList();
-
-                    if (events.Count == 1 &&
-                        IsOpeningBalanceAnchor(accountCreatedAtById[g.Key], events[0].OccurredAt))
-                    {
-                        var opening = events[0];
-                        events[0] = new BalanceEvent(OpeningBalanceAnchorUtc, opening.Amount, true);
-                    }
-
-                    return events;
-                });
-
-        foreach (var adjustmentGroup in adjustmentsByAccount)
-        {
-            ct.ThrowIfCancellationRequested();
-            eventsByAccount[adjustmentGroup.Key].AddRange(adjustmentGroup.Value);
-        }
-
-        foreach (var list in eventsByAccount.Values)
-            list.Sort((a, b) => a.OccurredAt.CompareTo(b.OccurredAt));
-
-        var balancesByAccount = accounts.ToDictionary(a => a.Id, _ => 0m);
-        var eventIndexByAccount = accounts.ToDictionary(a => a.Id, _ => 0);
-
-        foreach (var account in accounts)
-        {
-            var events = eventsByAccount[account.Id];
-            var idx = 0;
-            var currentBalance = 0m;
-            while (idx < events.Count && events[idx].OccurredAt < effectiveStartMonthUtc)
-            {
-                currentBalance = ApplyBalanceEvent(currentBalance, events[idx]);
-                idx++;
-            }
-
-            balancesByAccount[account.Id] = currentBalance;
-            eventIndexByAccount[account.Id] = idx;
-        }
+        AdvanceBalancesToBoundary(
+            effectiveStartMonthUtc,
+            accountIds,
+            eventsByAccount,
+            balancesByAccount,
+            eventIndexByAccount,
+            ct);
 
         var result = new List<NetWorthSnapshotDto>(monthsToBuild);
         for (var i = 0; i < monthsToBuild; i++)
@@ -429,21 +394,13 @@ public sealed class AnalyticsService(
                 rateByCurrency[code] = converted.Amount;
             }
 
-            foreach (var account in accounts)
-            {
-                var events = eventsByAccount[account.Id];
-                var idx = eventIndexByAccount[account.Id];
-                var currentBalance = balancesByAccount[account.Id];
-
-                while (idx < events.Count && events[idx].OccurredAt < boundary)
-                {
-                    currentBalance = ApplyBalanceEvent(currentBalance, events[idx]);
-                    idx++;
-                }
-
-                balancesByAccount[account.Id] = currentBalance;
-                eventIndexByAccount[account.Id] = idx;
-            }
+            AdvanceBalancesToBoundary(
+                boundary,
+                accountIds,
+                eventsByAccount,
+                balancesByAccount,
+                eventIndexByAccount,
+                ct);
 
             var netWorth = 0m;
             foreach (var account in accounts)
@@ -466,6 +423,15 @@ public sealed class AnalyticsService(
     private static decimal Round2(decimal value)
         => Math.Round(value, 2, MidpointRounding.AwayFromZero);
 
+    private readonly record struct AccountSnapshot(Guid Id, string CurrencyCode, bool IsLiquid, DateTime CreatedAtUtc);
+    private readonly record struct AdjustmentSnapshot(Guid AccountId, decimal Amount, DateTime OccurredAtUtc);
+    private readonly record struct TransactionSnapshot(
+        Guid AccountId,
+        Money Money,
+        DateTime OccurredAtUtc,
+        TransactionType Type,
+        bool IsTransfer,
+        bool IsMandatory);
     private readonly record struct BalanceEvent(DateTime OccurredAt, decimal Amount, bool IsAdjustment);
 
     private static decimal ApplyBalanceEvent(decimal currentBalance, BalanceEvent balanceEvent)
@@ -1144,27 +1110,39 @@ public sealed class AnalyticsService(
             .Where(u => u.Id == currentUserId)
             .Select(u => u.BaseCurrencyCode)
             .SingleAsync(ct);
+        var baseCurrencyCodeNormalized = NormalizeCurrencyCode(baseCurrencyCode);
 
         var now = DateTime.UtcNow;
         var windowMonths = months > 0 ? months : 120;
         var windowStart = new DateTime(now.Year, now.Month, 1, 0, 0, 0, DateTimeKind.Utc)
             .AddMonths(-(windowMonths - 1));
 
-        // Load accounts and adjustments for net worth calculation
-        var accounts = await context.Accounts
+        var rawAccounts = await context.Accounts
             .AsNoTracking()
             .Where(a => a.UserId == currentUserId && !a.IsArchived)
             .Select(a => new { a.Id, a.CurrencyCode, a.IsLiquid, a.CreatedAt })
             .ToListAsync(ct);
+        var accountSnapshots = rawAccounts
+            .Select(a => new AccountSnapshot(a.Id, a.CurrencyCode, a.IsLiquid, NormalizeUtc(a.CreatedAt.UtcDateTime)))
+            .ToList();
+        var accountIds = accountSnapshots
+            .Select(a => a.Id)
+            .ToArray();
+        var accountCreatedAtById = accountSnapshots
+            .ToDictionary(a => a.Id, a => a.CreatedAtUtc);
+        var liquidAccounts = accountSnapshots
+            .Where(a => a.IsLiquid)
+            .ToList();
 
         var allAdjustments = await context.AccountBalanceAdjustments
             .AsNoTracking()
             .Where(a => a.Account.UserId == currentUserId)
             .Select(a => new { a.AccountId, a.Amount, a.OccurredAt })
             .ToListAsync(ct);
+        var adjustmentSnapshots = allAdjustments
+            .Select(a => new AdjustmentSnapshot(a.AccountId, a.Amount, NormalizeUtc(a.OccurredAt)))
+            .ToList();
 
-        // Single query: all transactions for the user's non-archived accounts.
-        // Window/transfer filtering is applied in memory below for spending metrics.
         var allTransactions = await context.Transactions
             .AsNoTracking()
             .Where(t => t.Account.UserId == currentUserId && !t.Account.IsArchived)
@@ -1178,11 +1156,89 @@ public sealed class AnalyticsService(
                 t.IsMandatory
             })
             .ToListAsync(ct);
-
-        // In-memory filter for spending/income metrics
-        var windowTransactions = allTransactions
-            .Where(t => !t.IsTransfer && t.OccurredAt >= windowStart)
+        var transactionSnapshots = allTransactions
+            .Select(t => new TransactionSnapshot(
+                t.AccountId,
+                t.Money,
+                NormalizeUtc(t.OccurredAt),
+                t.Type,
+                t.IsTransfer,
+                t.IsMandatory))
             .ToList();
+
+        var windowTransactions = transactionSnapshots
+            .Where(t => !t.IsTransfer && t.OccurredAtUtc >= windowStart)
+            .ToList();
+
+        var monthStartsWithData = windowTransactions
+            .Select(t => new DateTime(t.OccurredAtUtc.Year, t.OccurredAtUtc.Month, 1, 0, 0, 0, DateTimeKind.Utc))
+            .ToHashSet();
+
+        var distinctAccountCurrencies = accountSnapshots
+            .Select(a => NormalizeCurrencyCode(a.CurrencyCode))
+            .Distinct(StringComparer.OrdinalIgnoreCase)
+            .ToArray();
+
+        var fxRateRequests = new HashSet<(string CurrencyCode, DateTime DayStartUtc)>();
+        foreach (var txn in windowTransactions)
+            fxRateRequests.Add((NormalizeCurrencyCode(txn.Money.CurrencyCode), txn.OccurredAtUtc.Date));
+
+        foreach (var monthStart in monthStartsWithData)
+        {
+            var boundary = monthStart.AddMonths(1);
+            var rateAtUtc = boundary.AddTicks(-1);
+            var dayStartUtc = rateAtUtc.Date;
+            foreach (var currencyCode in distinctAccountCurrencies)
+                fxRateRequests.Add((currencyCode, dayStartUtc));
+        }
+
+        var rateByCurrencyAndDay = await currencyConverter.GetCrossRatesAsync(
+            fxRateRequests.Select(request => (request.CurrencyCode, request.DayStartUtc)),
+            baseCurrencyCode,
+            ct);
+
+        var eventsByAccount = BuildBalanceEventsByAccount(
+            accountIds,
+            accountCreatedAtById,
+            transactionSnapshots.Select(t => (
+                t.AccountId,
+                t.OccurredAtUtc,
+                t.Type == TransactionType.Income ? t.Money.Amount : -t.Money.Amount)),
+            adjustmentSnapshots.Select(a => (a.AccountId, a.OccurredAtUtc, a.Amount)),
+            ct);
+
+        var balancesByAccount = accountIds.ToDictionary(id => id, _ => 0m);
+        var eventIndexByAccount = accountIds.ToDictionary(id => id, _ => 0);
+
+        AdvanceBalancesToBoundary(
+            windowStart,
+            accountIds,
+            eventsByAccount,
+            balancesByAccount,
+            eventIndexByAccount,
+            ct);
+
+        decimal ConvertAmount(string currencyCode, decimal amount, DateTime occurredAtUtc)
+        {
+            var normalizedCurrencyCode = NormalizeCurrencyCode(currencyCode);
+            if (string.Equals(normalizedCurrencyCode, baseCurrencyCodeNormalized, StringComparison.OrdinalIgnoreCase))
+                return amount;
+
+            var rateKey = (normalizedCurrencyCode, occurredAtUtc.Date);
+            return rateByCurrencyAndDay.TryGetValue(rateKey, out var rate)
+                ? amount * rate
+                : amount;
+        }
+
+        decimal ConvertAmountWithRate(string currencyCode, decimal amount, DateTime occurredAtUtc)
+        {
+            var normalizedCurrencyCode = NormalizeCurrencyCode(currencyCode);
+            if (string.Equals(normalizedCurrencyCode, baseCurrencyCodeNormalized, StringComparison.OrdinalIgnoreCase))
+                return amount;
+
+            var rate = rateByCurrencyAndDay[(normalizedCurrencyCode, occurredAtUtc.Date)];
+            return amount * rate;
+        }
 
         var result = new List<EvolutionMonthDto>(windowMonths);
 
@@ -1190,16 +1246,25 @@ public sealed class AnalyticsService(
         {
             var monthStart = windowStart.AddMonths(i);
             var monthEnd = monthStart.AddMonths(1);
-            if (monthStart > now) break;
+            if (monthStart > now)
+                break;
+
+            AdvanceBalancesToBoundary(
+                monthEnd,
+                accountIds,
+                eventsByAccount,
+                balancesByAccount,
+                eventIndexByAccount,
+                ct);
 
             var monthExpenses = windowTransactions
                 .Where(t => t.Type == TransactionType.Expense &&
-                            t.OccurredAt >= monthStart && t.OccurredAt < monthEnd)
+                            t.OccurredAtUtc >= monthStart && t.OccurredAtUtc < monthEnd)
                 .ToList();
 
             var monthIncomeTransactions = windowTransactions
                 .Where(t => t.Type == TransactionType.Income &&
-                            t.OccurredAt >= monthStart && t.OccurredAt < monthEnd)
+                            t.OccurredAtUtc >= monthStart && t.OccurredAtUtc < monthEnd)
                 .ToList();
 
             if (monthExpenses.Count == 0 && monthIncomeTransactions.Count == 0)
@@ -1209,41 +1274,21 @@ public sealed class AnalyticsService(
                 continue;
             }
 
-            // Build currency+day pairs for this month's transactions to fetch cross rates
-            var currencyDayPairs = monthExpenses
-                .Select(t => (t.Money.CurrencyCode, NormalizeUtc(t.OccurredAt)))
-                .Concat(monthIncomeTransactions.Select(t => (t.Money.CurrencyCode, NormalizeUtc(t.OccurredAt))))
-                .Distinct()
-                .ToList();
-
-            var rateByCurrencyAndDay = await currencyConverter.GetCrossRatesAsync(
-                currencyDayPairs,
-                baseCurrencyCode,
-                ct);
-
-            decimal ConvertAmount(string currencyCode, decimal amount, DateTime occurredAt)
-            {
-                var rateKey = (NormalizeCurrencyCode(currencyCode), NormalizeUtc(occurredAt).Date);
-                return rateByCurrencyAndDay.TryGetValue(rateKey, out var rate)
-                    ? amount * rate
-                    : amount;
-            }
-
             var monthIncome = monthIncomeTransactions.Sum(t =>
-                ConvertAmount(t.Money.CurrencyCode, t.Money.Amount, t.OccurredAt));
+                ConvertAmount(t.Money.CurrencyCode, t.Money.Amount, t.OccurredAtUtc));
 
             var dailyTotals = monthExpenses
-                .GroupBy(t => NormalizeUtc(t.OccurredAt).Date)
+                .GroupBy(t => t.OccurredAtUtc.Date)
                 .ToDictionary(
                     g => g.Key,
-                    g => g.Sum(t => ConvertAmount(t.Money.CurrencyCode, t.Money.Amount, t.OccurredAt)));
+                    g => g.Sum(t => ConvertAmount(t.Money.CurrencyCode, t.Money.Amount, t.OccurredAtUtc)));
 
             var dailyDiscretionary = monthExpenses
                 .Where(t => !t.IsMandatory)
-                .GroupBy(t => NormalizeUtc(t.OccurredAt).Date)
+                .GroupBy(t => t.OccurredAtUtc.Date)
                 .ToDictionary(
                     g => g.Key,
-                    g => g.Sum(t => ConvertAmount(t.Money.CurrencyCode, t.Money.Amount, t.OccurredAt)));
+                    g => g.Sum(t => ConvertAmount(t.Money.CurrencyCode, t.Money.Amount, t.OccurredAtUtc)));
 
             var monthTotal = dailyTotals.Values.Sum();
             var discretionaryTotal = dailyDiscretionary.Values.Sum();
@@ -1285,40 +1330,16 @@ public sealed class AnalyticsService(
                 }
             }
 
-            var netWorth = await ComputeNetWorthAt(
-                monthEnd,
-                accounts.Select(a => (a.Id, a.CurrencyCode, a.IsLiquid, a.CreatedAt.UtcDateTime)).ToList(),
-                allTransactions.Select(t => (t.AccountId, t.Money, NormalizeUtc(t.OccurredAt), t.Type)).ToList(),
-                allAdjustments.Select(a => (a.AccountId, a.Amount, NormalizeUtc(a.OccurredAt))).ToList(),
-                baseCurrencyCode,
-                ct);
+            var rateAtUtc = monthEnd.AddTicks(-1);
+            var netWorth = accountSnapshots.Sum(account =>
+                ConvertAmountWithRate(account.CurrencyCode, balancesByAccount[account.Id], rateAtUtc));
+            netWorth = Round2(netWorth);
 
             decimal? liquidMonths = null;
             if (meanDaily > 0m)
             {
-                var liquidAssets = 0m;
-                foreach (var account in accounts.Where(a => a.IsLiquid))
-                {
-                    var balance = ComputeBalanceAt(
-                        account.CreatedAt.UtcDateTime,
-                        monthEnd,
-                        allTransactions
-                            .Where(t => t.AccountId == account.Id)
-                            .Select(t => (t.Money, NormalizeUtc(t.OccurredAt), t.Type))
-                            .ToList(),
-                        allAdjustments
-                            .Where(a => a.AccountId == account.Id)
-                            .Select(a => (a.Amount, NormalizeUtc(a.OccurredAt)))
-                            .ToList());
-
-                    var rateAtUtc = monthEnd.AddTicks(-1);
-                    var converted = await currencyConverter.ConvertAsync(
-                        new Money(account.CurrencyCode, balance),
-                        baseCurrencyCode,
-                        rateAtUtc,
-                        ct);
-                    liquidAssets += converted.Amount;
-                }
+                var liquidAssets = liquidAccounts.Sum(account =>
+                    ConvertAmountWithRate(account.CurrencyCode, balancesByAccount[account.Id], rateAtUtc));
 
                 liquidMonths = Round2(liquidAssets / (meanDaily * 30.44m));
             }
@@ -1332,91 +1353,96 @@ public sealed class AnalyticsService(
         return result;
     }
 
-    private async Task<decimal> ComputeNetWorthAt(
-        DateTime asOf,
-        List<(Guid Id, string CurrencyCode, bool IsLiquid, DateTime CreatedAt)> accounts,
-        List<(Guid AccountId, Money Money, DateTime OccurredAt, TransactionType Type)> allTransactions,
-        List<(Guid AccountId, decimal Amount, DateTime OccurredAt)> allAdjustments,
-        string baseCurrencyCode,
+    private static Dictionary<Guid, List<BalanceEvent>> BuildBalanceEventsByAccount(
+        IReadOnlyCollection<Guid> accountIds,
+        IReadOnlyDictionary<Guid, DateTime> accountCreatedAtById,
+        IEnumerable<(Guid AccountId, DateTime OccurredAtUtc, decimal DeltaAmount)> transactionDeltas,
+        IEnumerable<(Guid AccountId, DateTime OccurredAtUtc, decimal Amount)> adjustments,
         CancellationToken ct)
     {
-        var total = 0m;
-        var rateAtUtc = asOf.AddTicks(-1);
+        var sequencedEventsByAccount = accountIds.ToDictionary(id => id, _ => new List<(BalanceEvent Event, int Sequence)>());
+        var sequence = 0;
 
-        foreach (var account in accounts)
+        foreach (var txn in transactionDeltas)
         {
-            var txns = allTransactions
-                .Where(t => t.AccountId == account.Id)
-                .Select(t => (t.Money, t.OccurredAt, t.Type))
-                .ToList();
+            ct.ThrowIfCancellationRequested();
 
-            var adjs = allAdjustments
-                .Where(a => a.AccountId == account.Id)
-                .Select(a => (a.Amount, a.OccurredAt))
-                .ToList();
+            if (!sequencedEventsByAccount.TryGetValue(txn.AccountId, out var events))
+                continue;
 
-            var balance = ComputeBalanceAt(
-                account.CreatedAt,
-                asOf,
-                txns,
-                adjs);
-
-            var converted = await currencyConverter.ConvertAsync(
-                new Money(account.CurrencyCode, balance),
-                baseCurrencyCode,
-                rateAtUtc,
-                ct);
-            total += converted.Amount;
+            events.Add((new BalanceEvent(txn.OccurredAtUtc, txn.DeltaAmount, false), sequence++));
         }
 
-        return Round2(total);
+        var adjustmentsByAccount = adjustments
+            .GroupBy(a => a.AccountId)
+            .ToDictionary(g => g.Key, g => g.OrderBy(a => a.OccurredAtUtc).ToList());
+
+        foreach (var accountAdjustments in adjustmentsByAccount)
+        {
+            ct.ThrowIfCancellationRequested();
+
+            if (!sequencedEventsByAccount.TryGetValue(accountAdjustments.Key, out var events))
+                continue;
+
+            var normalizedAdjustments = accountAdjustments.Value
+                .Select(a => new BalanceEvent(a.OccurredAtUtc, a.Amount, true))
+                .ToList();
+
+            if (normalizedAdjustments.Count == 1 &&
+                accountCreatedAtById.TryGetValue(accountAdjustments.Key, out var accountCreatedAtUtc) &&
+                IsOpeningBalanceAnchor(accountCreatedAtUtc, normalizedAdjustments[0].OccurredAt))
+            {
+                var opening = normalizedAdjustments[0];
+                normalizedAdjustments[0] = new BalanceEvent(accountCreatedAtUtc, opening.Amount, true);
+            }
+
+            foreach (var adjustment in normalizedAdjustments)
+                events.Add((adjustment, sequence++));
+        }
+
+        var eventsByAccount = accountIds.ToDictionary(id => id, _ => new List<BalanceEvent>());
+        foreach (var accountId in accountIds)
+        {
+            var orderedEvents = sequencedEventsByAccount[accountId]
+                .OrderBy(x => x.Event.OccurredAt)
+                .ThenBy(x => x.Event.IsAdjustment ? 1 : 0)
+                .ThenBy(x => x.Sequence)
+                .Select(x => x.Event)
+                .ToList();
+
+            eventsByAccount[accountId] = orderedEvents;
+        }
+
+        return eventsByAccount;
     }
 
-    private static decimal ComputeBalanceAt(
-        DateTime accountCreatedAt,
-        DateTime asOf,
-        List<(Money Money, DateTime OccurredAt, TransactionType Type)> transactions,
-        List<(decimal Amount, DateTime OccurredAt)> adjustments)
+    private static void AdvanceBalancesToBoundary(
+        DateTime boundaryUtc,
+        IReadOnlyCollection<Guid> accountIds,
+        IReadOnlyDictionary<Guid, List<BalanceEvent>> eventsByAccount,
+        IDictionary<Guid, decimal> balancesByAccount,
+        IDictionary<Guid, int> eventIndexByAccount,
+        CancellationToken ct)
     {
-        var accountCreatedAtUtc = accountCreatedAt.Kind == DateTimeKind.Utc
-            ? accountCreatedAt
-            : DateTime.SpecifyKind(accountCreatedAt, DateTimeKind.Utc);
-
-        // Sort and detect opening-balance anchor (single adjustment within 5 s of account creation)
-        var sortedAdjs = adjustments
-            .Where(a => a.OccurredAt < asOf)
-            .OrderBy(a => a.OccurredAt)
-            .ToList();
-
-        var sortedTxns = transactions
-            .Where(t => t.OccurredAt < asOf)
-            .OrderBy(t => t.OccurredAt)
-            .ToList();
-
-        if (sortedAdjs.Count == 1 &&
-            IsOpeningBalanceAnchor(accountCreatedAtUtc, sortedAdjs[0].OccurredAt))
+        foreach (var accountId in accountIds)
         {
-            // Single opening-balance adjustment: treat it as the absolute balance anchor at time zero
-            var opening = sortedAdjs[0].Amount;
-            var delta = sortedTxns
-                .Sum(t => t.Type == TransactionType.Income ? t.Money.Amount : -t.Money.Amount);
-            return opening + delta;
-        }
+            ct.ThrowIfCancellationRequested();
 
-        if (sortedAdjs.Count > 0)
-        {
-            // Multiple adjustments: use the latest one before asOf as the absolute anchor,
-            // then add transaction deltas that occurred after that anchor.
-            var latestAdj = sortedAdjs[^1];
-            var delta = sortedTxns
-                .Where(t => t.OccurredAt > latestAdj.OccurredAt)
-                .Sum(t => t.Type == TransactionType.Income ? t.Money.Amount : -t.Money.Amount);
-            return latestAdj.Amount + delta;
-        }
+            if (!eventsByAccount.TryGetValue(accountId, out var events))
+                continue;
 
-        // No adjustments: sum all transaction deltas
-        return sortedTxns
-            .Sum(t => t.Type == TransactionType.Income ? t.Money.Amount : -t.Money.Amount);
+            var idx = eventIndexByAccount[accountId];
+            var currentBalance = balancesByAccount[accountId];
+
+            while (idx < events.Count && events[idx].OccurredAt < boundaryUtc)
+            {
+                currentBalance = ApplyBalanceEvent(currentBalance, events[idx]);
+                idx++;
+            }
+
+            balancesByAccount[accountId] = currentBalance;
+            eventIndexByAccount[accountId] = idx;
+        }
     }
 
     private static void ValidateYearMonth(int year, int month)
