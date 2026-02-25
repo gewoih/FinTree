@@ -28,11 +28,8 @@
 - [ ] `FT-TODO-042` Invert X/Y axes in evolution table presentation
   **Acceptance criteria:** evolution table is transposed to the new axis orientation while preserving values, deltas, sorting intent, sticky headers, and mobile horizontal-scroll usability.
 
-- [ ] `FT-TODO-043` Consolidate typography to Inter only across the Vue app
-  **Acceptance criteria:** design tokens and component styles no longer reference alternative font families (including mono fallbacks) unless explicitly approved; UI renders with Inter as the single configured family.
-
 - [ ] `FT-TODO-044` Prevent negative `liquidMonths` values in analytics (dashboard + evolution)
-  **Acceptance criteria:** `liquidMonths` is clamped to `>= 0` before API response mapping for all analytics endpoints; add/update tests for negative-balance and low-liquidity scenarios.
+  **Acceptance criteria:** `liquidMonths` is clamped to `>= 0` before API response mapping for all analytics endpoints;
 
 - [ ] `FT-TODO-045` Improve user understanding of Stability Index (copy + UX, with possible metric rethink)
   **Acceptance criteria:** dashboard/evolution surfaces explain what affects the metric, how to interpret “good/bad”, and what action to take; wording is simplified for low-financial-literacy users; if metric definition changes, mapping and labels remain consistent across frontend/backend.

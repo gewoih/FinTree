@@ -52,7 +52,7 @@ const centerTextPlugin = computed<Plugin<'doughnut'>>(() => ({
 
     const text = formattedTotal.value;
     const fontSize = Math.min(width, height) * 0.08;
-    ctx.font = `bold ${fontSize}px sans-serif`;
+    ctx.font = `bold ${fontSize}px Inter`;
     ctx.fillStyle = colors.tooltipText;
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';

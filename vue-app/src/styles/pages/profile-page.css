@@ -170,7 +170,7 @@
 .helper-text code {
   padding: 0.1em 0.35em;
 
-  font-family: var(--ft-font-mono, 'JetBrains Mono', monospace);
+  font-family: var(--ft-font-base);
   font-size: 0.9em;
 
   background: var(--ft-surface-raised);
