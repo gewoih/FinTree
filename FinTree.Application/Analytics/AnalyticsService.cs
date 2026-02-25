@@ -171,15 +171,19 @@ public sealed class AnalyticsService(
             observedDailyValues.Add(dayAmount);
         }
 
+        var positiveObservedDailyValues = observedDailyValues
+            .Where(v => v > 0m)
+            .ToList();
+        
         var meanDaily = observedDailyValues.Count > 0 ? observedDailyValues.Average() : (decimal?)null;
-        var medianDaily = observedDailyValues.Count > 0 ? ComputeMedian(observedDailyValues) : null;
+        var medianDaily = positiveObservedDailyValues.Count > 0 ? ComputeMedian(positiveObservedDailyValues) : null;
         var discretionaryDayValues = dailyTotalsDiscretionary.Values.Where(v => v > 0m).ToList();
         var peakMedianDaily = discretionaryDayValues.Count > 0 ? ComputeMedian(discretionaryDayValues) : null;
         decimal? stabilityIndex = null;
         if (observedDailyValues.Count >= 4 && medianDaily is > 0m)
         {
-            var q1 = ComputeQuantile(observedDailyValues, 0.25d);
-            var q3 = ComputeQuantile(observedDailyValues, 0.75d);
+            var q1 = ComputeQuantile(positiveObservedDailyValues, 0.25d);
+            var q3 = ComputeQuantile(positiveObservedDailyValues, 0.75d);
             if (q1.HasValue && q3.HasValue)
                 stabilityIndex = (q3.Value - q1.Value) / medianDaily.Value;
         }
