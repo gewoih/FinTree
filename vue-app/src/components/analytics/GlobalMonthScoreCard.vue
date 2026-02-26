@@ -79,33 +79,45 @@ function deltaClass(tone: GlobalMonthScoreDeltaTone): string {
     </template>
 
     <template v-else>
-      <div class="global-score__main">
-        <p class="global-score__label">
-          Общий рейтинг месяца
-        </p>
-
-        <div class="global-score__headline">
-          <p class="global-score__value">
-            {{ model.scoreLabel }}
+      <div class="global-score__layout">
+        <div class="global-score__main">
+          <p class="global-score__label">
+            Общий рейтинг месяца
           </p>
+
+          <div class="global-score__headline">
+            <p class="global-score__value">
+              {{ model.scoreLabel }}
+            </p>
+            <p
+              class="global-score__status"
+              :class="statusClass(model.accent)"
+            >
+              {{ model.statusLabel }}
+            </p>
+          </div>
+
+          <p class="global-score__description">
+            {{ model.statusDescription }}
+          </p>
+
           <p
-            class="global-score__status"
-            :class="statusClass(model.accent)"
+            class="global-score__delta"
+            :class="deltaClass(model.deltaTone)"
           >
-            {{ model.statusLabel }}
+            {{ model.deltaLabel ?? 'Нет данных для сравнения с предыдущим месяцем' }}
           </p>
         </div>
 
-        <p class="global-score__description">
-          {{ model.statusDescription }}
-        </p>
-
-        <p
-          class="global-score__delta"
-          :class="deltaClass(model.deltaTone)"
+        <section
+          v-if="$slots.factors"
+          class="global-score__factors"
+          aria-label="Факторы, из которых складывается рейтинг"
         >
-          {{ model.deltaLabel ?? 'Нет данных для сравнения с предыдущим месяцем' }}
-        </p>
+          <div class="global-score__factors-grid">
+            <slot name="factors" />
+          </div>
+        </section>
       </div>
     </template>
   </section>
@@ -116,12 +128,11 @@ function deltaClass(tone: GlobalMonthScoreDeltaTone): string {
   display: grid;
   gap: var(--ft-space-4);
 
-  padding: clamp(1.25rem, 2.2vw, 1.85rem);
+  padding: clamp(1rem, 1.8vw, 1.5rem);
 
   background: var(--ft-surface-base);
   border: 1px solid var(--ft-border-subtle);
   border-radius: var(--ft-radius-xl);
-  box-shadow: var(--ft-shadow-sm);
 }
 
 .global-score__loading {
@@ -143,6 +154,12 @@ function deltaClass(tone: GlobalMonthScoreDeltaTone): string {
 .global-score__main {
   display: grid;
   gap: var(--ft-space-2);
+  min-height: 0;
+}
+
+.global-score__layout {
+  display: grid;
+  gap: var(--ft-space-3);
 }
 
 .global-score__label {
@@ -208,7 +225,7 @@ function deltaClass(tone: GlobalMonthScoreDeltaTone): string {
 
 .global-score__description {
   margin: 0;
-  font-size: var(--ft-text-sm);
+  font-size: var(--ft-text-base);
   color: var(--ft-text-secondary);
 }
 
@@ -230,6 +247,17 @@ function deltaClass(tone: GlobalMonthScoreDeltaTone): string {
   color: var(--ft-text-muted);
 }
 
+.global-score__factors {
+  display: grid;
+  gap: var(--ft-space-3);
+}
+
+.global-score__factors-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--ft-space-3);
+}
+
 .global-score--good .global-score__value {
   color: var(--ft-success-400);
 }
@@ -245,12 +273,48 @@ function deltaClass(tone: GlobalMonthScoreDeltaTone): string {
 @media (width <= 640px) {
   .global-score {
     gap: var(--ft-space-3);
-    padding: var(--ft-space-4);
+    padding: var(--ft-space-3) var(--ft-space-2);
   }
 
   .global-score__error {
     flex-direction: column;
     align-items: flex-start;
+  }
+
+  .global-score__description {
+    font-size: var(--ft-text-base);
+  }
+
+  .global-score__factors-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (width >= 641px) and (width <= 1023px) {
+  .global-score__factors-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (width >= 1024px) {
+  .global-score__layout {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 3fr);
+    align-items: stretch;
+    min-height: 100%;
+  }
+
+  .global-score__main {
+    display: flex;
+    flex-direction: column;
+    gap: var(--ft-space-3);
+    justify-content: center;
+
+    height: 100%;
+  }
+
+  .global-score__factors-grid {
+    grid-template-rows: repeat(2, minmax(0, 1fr));
+    align-items: stretch;
   }
 }
 </style>

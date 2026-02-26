@@ -226,24 +226,25 @@ const bindMonthPickerRef = (instance: unknown) => {
           :error="dashboardError"
           :model="globalMonthScore"
           @retry="retryDashboard"
-        />
+        >
+          <template #factors>
+            <HealthScoreCard
+              v-for="card in healthCards"
+              :key="card.key"
+              :title="card.title"
+              :icon="card.icon"
+              :main-value="card.mainValue"
+              :main-label="card.mainLabel"
+              :secondary-value="card.secondaryValue"
+              :secondary-label="card.secondaryLabel"
+              :accent="card.accent"
+              :tooltip="card.tooltip"
+              subdued
+            />
+          </template>
+        </GlobalMonthScoreCard>
 
-        <!-- Section 2: Health score cards -->
-        <HealthScoreCard
-          v-for="card in healthCards"
-          :key="card.key"
-          class="analytics-grid__item analytics-grid__item--span-3"
-          :title="card.title"
-          :icon="card.icon"
-          :main-value="card.mainValue"
-          :main-label="card.mainLabel"
-          :secondary-value="card.secondaryValue"
-          :secondary-label="card.secondaryLabel"
-          :accent="card.accent"
-          :tooltip="card.tooltip"
-        />
-
-        <!-- Section 3: Two main charts -->
+        <!-- Section 2: Two main charts -->
         <SpendingPieCard
           class="analytics-grid__item analytics-grid__item--span-6"
           :loading="dashboardLoading"
