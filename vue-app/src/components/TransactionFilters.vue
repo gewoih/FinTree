@@ -2,7 +2,9 @@
 import { computed, ref } from 'vue';
 import type { Account, Category } from '../types';
 import DatePicker from 'primevue/datepicker';
+import IconField from 'primevue/iconfield';
 import InputText from 'primevue/inputtext';
+import InputIcon from 'primevue/inputicon';
 import Select from 'primevue/select';
 import { useViewport } from '../composables/useViewport';
 
@@ -111,15 +113,19 @@ const controlsVisible = computed(() => !isMobile.value || isOpen.value);
       v-show="controlsVisible"
       class="transaction-filters__controls"
     >
-      <div class="transaction-filters__search ft-input-shell">
-        <i class="pi pi-search" />
+      <IconField class="transaction-filters__search ft-filter-search">
+        <InputIcon
+          class="pi pi-search"
+          aria-hidden="true"
+        />
         <InputText
+          class="ft-filter-control"
           :model-value="props.searchText"
           placeholder="Поиск…"
           autocomplete="off"
           @update:model-value="handleSearchUpdate"
         />
-      </div>
+      </IconField>
 
       <Select
         :model-value="props.selectedCategory"
@@ -127,7 +133,7 @@ const controlsVisible = computed(() => !isMobile.value || isOpen.value);
         option-label="label"
         option-value="value"
         placeholder="Категория"
-        class="transaction-filters__control"
+        class="transaction-filters__control ft-filter-control"
         append-to="body"
         @update:model-value="handleCategoryUpdate"
       />
@@ -138,7 +144,7 @@ const controlsVisible = computed(() => !isMobile.value || isOpen.value);
         option-label="label"
         option-value="value"
         placeholder="Счёт"
-        class="transaction-filters__control"
+        class="transaction-filters__control ft-filter-control"
         append-to="body"
         @update:model-value="handleAccountUpdate"
       />
@@ -150,7 +156,7 @@ const controlsVisible = computed(() => !isMobile.value || isOpen.value);
         date-format="dd.mm.yy"
         placeholder="Период"
         show-button-bar
-        class="transaction-filters__control"
+        class="transaction-filters__control ft-filter-control"
         append-to="body"
         @update:model-value="handleDateRangeUpdate"
       />
@@ -183,7 +189,7 @@ const controlsVisible = computed(() => !isMobile.value || isOpen.value);
   align-items: center;
 
   width: 100%;
-  height: var(--ft-input-height-sm);
+  height: var(--ft-control-height);
   padding: 0 var(--ft-space-3);
 
   font-size: var(--ft-text-sm);
@@ -240,10 +246,7 @@ const controlsVisible = computed(() => !isMobile.value || isOpen.value);
 }
 
 .transaction-filters__search {
-  --ft-input-shell-min-height: var(--ft-input-height-sm);
-  --ft-input-shell-padding-x: var(--ft-space-3);
-  --ft-input-shell-border: var(--ft-border-subtle);
-  --ft-input-shell-border-hover: var(--ft-border-default);
+  width: 100%;
 }
 
 .transaction-filters__control {

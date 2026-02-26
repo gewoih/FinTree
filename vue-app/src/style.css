@@ -346,63 +346,63 @@
     box-shadow: none;
   }
 
-  .ft-input-shell {
-    --ft-input-shell-min-height: var(--ft-form-control-height);
-    --ft-input-shell-padding-x: var(--ft-form-control-padding-x);
-    --ft-input-shell-padding-y: var(--ft-form-control-padding-y);
-    --ft-input-shell-gap: var(--ft-space-2);
-    --ft-input-shell-bg: var(--ft-surface-base);
-    --ft-input-shell-border: var(--ft-border-default);
-    --ft-input-shell-border-hover: var(--ft-border-strong);
-    --ft-input-shell-border-focus: var(--ft-border-strong);
-    --ft-input-shell-radius: var(--ft-radius-lg);
-    --ft-input-shell-focus-size: var(--ft-form-focus-ring-width);
+  .ft-filter-search.p-iconfield {
+    --ft-form-control-height: var(--ft-control-height);
+    --ft-form-control-padding-x: var(--ft-space-3);
+    --ft-form-control-padding-y: 0;
 
-    display: flex;
-    gap: var(--ft-input-shell-gap);
-    align-items: center;
-
-    min-height: var(--ft-input-shell-min-height);
-    padding: var(--ft-input-shell-padding-y) var(--ft-input-shell-padding-x);
-
-    background: var(--ft-input-shell-bg);
-    border: 1px solid var(--ft-input-shell-border);
-    border-radius: var(--ft-input-shell-radius);
-
-    transition: border-color var(--ft-transition-fast), box-shadow var(--ft-transition-fast);
+    width: 100%;
   }
 
-  .ft-input-shell:hover {
-    border-color: var(--ft-input-shell-border-hover);
-  }
-
-  .ft-input-shell:focus-within {
-    border-color: var(--ft-input-shell-border-focus);
-    box-shadow:
-      0 0 0 var(--ft-input-shell-focus-size) var(--ft-focus-ring),
-      var(--ft-shadow-xs);
-  }
-
-  .ft-input-shell i {
-    flex-shrink: 0;
-    font-size: var(--ft-text-sm);
+  .ft-filter-search.p-iconfield .p-inputicon {
     color: var(--ft-text-tertiary);
   }
 
-  .ft-input-shell :is(.ui-input, .p-inputtext) {
-    flex: 1;
-
+  .ft-filter-search.p-iconfield > .p-inputtext {
     width: 100%;
-    padding: 0;
-
-    background: transparent;
-    border: none;
     box-shadow: none !important;
   }
 
-  .ft-input-shell :is(.ui-input:focus, .ui-input:focus-visible, .p-inputtext:focus, .p-inputtext:focus-visible) {
-    border: none !important;
+  .ft-filter-control {
+    --ft-form-control-height: var(--ft-control-height);
+    --ft-form-control-padding-x: var(--ft-space-3);
+    --ft-form-control-padding-y: 0;
+
+    box-shadow: none !important;
+  }
+
+  .ft-filter-control.p-inputtext,
+  .ft-filter-control.p-select,
+  .ft-filter-control.p-datepicker {
+    outline: none !important;
+    box-shadow: none !important;
+  }
+
+  .ft-filter-control.p-inputtext:hover,
+  .ft-filter-control.p-select:not(.p-disabled):hover,
+  .ft-filter-control.p-datepicker:not(.p-disabled):hover,
+  .ft-filter-control.p-inputtext.p-invalid,
+  .ft-filter-control.p-select.p-invalid,
+  .ft-filter-control.p-datepicker.p-invalid {
+    box-shadow: none !important;
+  }
+
+  .ft-filter-control:is(.p-select, .p-datepicker).p-focus,
+  .ft-filter-control:is(.p-select, .p-datepicker).p-inputwrapper-focus,
+  .ft-filter-control:is(.p-select, .p-datepicker):focus-within,
+  .ft-filter-control.p-inputtext:focus,
+  .ft-filter-control.p-inputtext:focus-visible,
+  .ft-filter-control.p-invalid {
+    border-color: var(--ft-interactive-default);
     outline: none;
     box-shadow: none !important;
+  }
+
+  .ft-filter-control.p-invalid,
+  .ft-filter-control.p-invalid:focus,
+  .ft-filter-control.p-invalid:focus-visible,
+  .ft-filter-control.p-invalid.p-focus,
+  .ft-filter-control.p-invalid.p-inputwrapper-focus {
+    border-color: var(--ft-danger-500);
   }
 }
