@@ -49,8 +49,9 @@ internal sealed class DashboardAnalyticsCalculator(
 
         var dailyTotals = new Dictionary<DateOnly, decimal>();
         var dailyTotalsDiscretionary = new Dictionary<DateOnly, decimal>();
-        var currentCategoryTotals = new Dictionary<Guid, CategoryTotals>();
-        var priorCategoryTotals = new Dictionary<Guid, decimal>();
+        var currentExpenseCategoryTotals = new Dictionary<Guid, CategoryTotals>();
+        var currentIncomeCategoryTotals = new Dictionary<Guid, decimal>();
+        var priorExpenseCategoryTotals = new Dictionary<Guid, decimal>();
         var priorMonthsWithData = new HashSet<(int Year, int Month)>();
 
         var totalIncome = 0m;
@@ -71,7 +72,13 @@ internal sealed class DashboardAnalyticsCalculator(
             if (txn.Type == TransactionType.Income)
             {
                 if (isCurrentMonth)
+                {
                     totalIncome += amount;
+                    if (currentIncomeCategoryTotals.TryGetValue(txn.CategoryId, out var currentIncome))
+                        currentIncomeCategoryTotals[txn.CategoryId] = currentIncome + amount;
+                    else
+                        currentIncomeCategoryTotals[txn.CategoryId] = amount;
+                }
                 continue;
             }
 
@@ -92,7 +99,7 @@ internal sealed class DashboardAnalyticsCalculator(
                         dailyTotalsDiscretionary[dateKey] = amount;
                 }
 
-                if (currentCategoryTotals.TryGetValue(txn.CategoryId, out var categoryTotals))
+                if (currentExpenseCategoryTotals.TryGetValue(txn.CategoryId, out var categoryTotals))
                 {
                     categoryTotals = categoryTotals with
                     {
@@ -100,11 +107,11 @@ internal sealed class DashboardAnalyticsCalculator(
                         MandatoryTotal = categoryTotals.MandatoryTotal + (txn.IsMandatory ? amount : 0m),
                         DiscretionaryTotal = categoryTotals.DiscretionaryTotal + (txn.IsMandatory ? 0m : amount)
                     };
-                    currentCategoryTotals[txn.CategoryId] = categoryTotals;
+                    currentExpenseCategoryTotals[txn.CategoryId] = categoryTotals;
                 }
                 else
                 {
-                    currentCategoryTotals[txn.CategoryId] = new CategoryTotals(
+                    currentExpenseCategoryTotals[txn.CategoryId] = new CategoryTotals(
                         amount,
                         txn.IsMandatory ? amount : 0m,
                         txn.IsMandatory ? 0m : amount);
@@ -117,10 +124,10 @@ internal sealed class DashboardAnalyticsCalculator(
             var isPriorWindow = occurredUtc >= deltaWindowStartUtc && occurredUtc < monthStartUtc;
             if (isPriorWindow)
             {
-                if (priorCategoryTotals.TryGetValue(txn.CategoryId, out var priorTotal))
-                    priorCategoryTotals[txn.CategoryId] = priorTotal + amount;
+                if (priorExpenseCategoryTotals.TryGetValue(txn.CategoryId, out var priorTotal))
+                    priorExpenseCategoryTotals[txn.CategoryId] = priorTotal + amount;
                 else
-                    priorCategoryTotals[txn.CategoryId] = amount;
+                    priorExpenseCategoryTotals[txn.CategoryId] = amount;
                 priorMonthsWithData.Add((occurredUtc.Year, occurredUtc.Month));
             }
 
@@ -178,7 +185,7 @@ internal sealed class DashboardAnalyticsCalculator(
 
         var peaks = BuildPeakDays(dailyTotalsDiscretionary, peakMedianDaily, totalExpenses);
 
-        var categoryItems = currentCategoryTotals.Select(kv =>
+        var categoryItems = currentExpenseCategoryTotals.Select(kv =>
         {
             if (!categories.TryGetValue(kv.Key, out var info))
                 info = new CategoryMeta("Без категории", "#9e9e9e", false);
@@ -194,12 +201,30 @@ internal sealed class DashboardAnalyticsCalculator(
                 info.IsMandatory);
         }).OrderByDescending(x => x.Amount).ToList();
 
+        var incomeCategoryItems = currentIncomeCategoryTotals.Select(kv =>
+        {
+            if (!categories.TryGetValue(kv.Key, out var info))
+                info = new CategoryMeta("Без категории", "#9e9e9e", false);
+            var rawAmount = kv.Value;
+            var amount = AnalyticsMath.Round2(rawAmount);
+            var percent = totalIncome > 0m ? (rawAmount / totalIncome) * 100 : (decimal?)null;
+            return new CategoryBreakdownItemDto(
+                kv.Key,
+                info.Name,
+                info.Color,
+                amount,
+                0m,
+                0m,
+                percent,
+                info.IsMandatory);
+        }).OrderByDescending(x => x.Amount).ToList();
+
         var priorMonthCount = Math.Max(priorMonthsWithData.Count, 1);
-        var averagedPriorTotals = priorCategoryTotals
+        var averagedPriorTotals = priorExpenseCategoryTotals
             .ToDictionary(kv => kv.Key, kv => kv.Value / priorMonthCount);
 
         var categoryDelta = BuildCategoryDelta(
-            currentCategoryTotals.ToDictionary(kv => kv.Key, kv => kv.Value.Total),
+            currentExpenseCategoryTotals.ToDictionary(kv => kv.Key, kv => kv.Value.Total),
             averagedPriorTotals,
             categories);
 
@@ -243,6 +268,7 @@ internal sealed class DashboardAnalyticsCalculator(
             peaks.Summary,
             peaks.Days,
             new CategoryBreakdownDto(categoryItems, categoryDelta),
+            new CategoryBreakdownDto(incomeCategoryItems, new CategoryDeltaDto([], [])),
             spending,
             forecast,
             readiness);

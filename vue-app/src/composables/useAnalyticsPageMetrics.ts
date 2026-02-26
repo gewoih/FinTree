@@ -2,6 +2,7 @@ import { computed, type ComputedRef, type Ref } from 'vue';
 import type { Router } from 'vue-router';
 import type { AnalyticsDashboardDto, AnalyticsReadinessDto, MonthlyExpenseDto } from '../types';
 import type {
+    CategoryDatasetMode,
     CategoryLegendItem,
     CategoryScope,
     ExpenseGranularity,
@@ -21,6 +22,7 @@ interface UseAnalyticsPageMetricsContext {
     dashboard: Ref<AnalyticsDashboardDto | null>;
     formatting: ReturnType<typeof useAnalyticsFormatting>;
     router: Router;
+    selectedCategoryMode: Ref<CategoryDatasetMode>;
     selectedCategoryScope: Ref<CategoryScope>;
     selectedGranularity: Ref<ExpenseGranularity>;
     selectedMonth: Ref<Date>;
@@ -33,6 +35,7 @@ export function useAnalyticsPageMetrics(context: UseAnalyticsPageMetricsContext)
         dashboard,
         formatting,
         router,
+        selectedCategoryMode,
         selectedCategoryScope,
         selectedGranularity,
         selectedMonth,
@@ -201,7 +204,9 @@ export function useAnalyticsPageMetrics(context: UseAnalyticsPageMetricsContext)
     }
 
     const categoryLegend = computed<CategoryLegendItem[]>(() => {
-        const items = dashboard.value?.categories.items ?? [];
+        const items = selectedCategoryMode.value === 'incomes'
+            ? dashboard.value?.incomeCategories?.items ?? []
+            : dashboard.value?.categories.items ?? [];
         if (!items.length) return [];
 
         return items.map((item, index) => {
@@ -225,6 +230,10 @@ export function useAnalyticsPageMetrics(context: UseAnalyticsPageMetricsContext)
     const filteredCategoryLegend = computed<CategoryLegendItem[]>(() => {
         const scopedItems = categoryLegend.value
             .map((item) => {
+                if (selectedCategoryMode.value === 'incomes') {
+                    return { ...item, amount: item.amount };
+                }
+
                 const scopedAmount = selectedCategoryScope.value === 'mandatory'
                     ? item.mandatoryAmount
                     : selectedCategoryScope.value === 'discretionary'

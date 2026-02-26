@@ -24,6 +24,7 @@ const {
   canNavigateNext,
   categoryChartData,
   categoryDelta,
+  categoryModeOptions,
   categoryScopeOptions,
   dashboardError,
   dashboardLoading,
@@ -43,6 +44,7 @@ const {
   onboardingSteps,
   peakDays,
   peakSummary,
+  selectedCategoryMode,
   selectedCategoryScope,
   selectedGranularity,
   selectedMonth,
@@ -224,9 +226,12 @@ const bindMonthPickerRef = (instance: unknown) => {
           :chart-data="categoryChartData"
           :legend="filteredCategoryLegend"
           :currency="baseCurrency"
+          :mode="selectedCategoryMode"
+          :mode-options="categoryModeOptions"
           :scope="selectedCategoryScope"
           :scope-options="categoryScopeOptions"
           @retry="retryDashboard"
+          @update:mode="selectedCategoryMode = $event"
           @update:scope="selectedCategoryScope = $event"
           @select-category="handleCategorySelect"
         />

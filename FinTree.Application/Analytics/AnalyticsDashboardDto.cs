@@ -9,6 +9,7 @@ public readonly record struct AnalyticsDashboardDto(
     PeakDaysSummaryDto Peaks,
     IReadOnlyList<PeakDayDto> PeakDays,
     CategoryBreakdownDto Categories,
+    CategoryBreakdownDto IncomeCategories,
     SpendingBreakdownDto Spending,
     ForecastDto Forecast,
     AnalyticsReadinessDto Readiness);

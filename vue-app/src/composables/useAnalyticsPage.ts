@@ -6,12 +6,14 @@ import { useFinanceStore } from '../stores/finance';
 import { useAnalyticsDashboardData } from './useAnalyticsDashboardData';
 import { isCategoriesOnboardingVisited, markCategoriesOnboardingVisited } from '../utils/onboarding';
 import {
+    CATEGORY_MODE_OPTIONS,
     CATEGORY_SCOPE_OPTIONS,
     DEFAULT_ANALYTICS_READINESS,
     GRANULARITY_OPTIONS,
 } from '../constants/analytics-page';
 import type { AnalyticsReadinessDto } from '../types';
 import type {
+    CategoryDatasetMode,
     CategoryScope,
     ExpenseGranularity,
 } from '../types/analytics';
@@ -31,7 +33,9 @@ export function useAnalyticsPage() {
   const monthPickerRef = ref<MonthPickerInstance | null>(null);
   const granularityOptions = GRANULARITY_OPTIONS;
   const selectedGranularity = ref<ExpenseGranularity>('days');
+  const categoryModeOptions = CATEGORY_MODE_OPTIONS;
   const categoryScopeOptions = CATEGORY_SCOPE_OPTIONS;
+  const selectedCategoryMode = ref<CategoryDatasetMode>('expenses');
   const selectedCategoryScope = ref<CategoryScope>('all');
   const showRetrospectiveBanner = ref(false);
   
@@ -165,6 +169,7 @@ export function useAnalyticsPage() {
     dashboard,
     formatting,
     router,
+    selectedCategoryMode,
     selectedCategoryScope,
     selectedGranularity,
     selectedMonth,
@@ -275,6 +280,7 @@ export function useAnalyticsPage() {
     canNavigateNext,
     categoryChartData,
     categoryDelta,
+    categoryModeOptions,
     categoryScopeOptions,
     dashboardError,
     dashboardLoading,
@@ -294,6 +300,7 @@ export function useAnalyticsPage() {
     onboardingSteps,
     peakDays,
     peakSummary,
+    selectedCategoryMode,
     selectedCategoryScope,
     selectedGranularity,
     selectedMonth,

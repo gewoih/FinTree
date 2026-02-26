@@ -5,8 +5,9 @@ import UiButton from '../../ui/UiButton.vue';
 import Skeleton from 'primevue/skeleton';
 import Message from 'primevue/message';
 import Chart from 'primevue/chart';
+import SelectButton from 'primevue/selectbutton';
 import Select from 'primevue/select';
-import type { CategoryLegendItem, CategoryScope } from '../../types/analytics';
+import type { CategoryDatasetMode, CategoryLegendItem, CategoryScope } from '../../types/analytics';
 import { useChartColors } from '../../composables/useChartColors';
 
 const props = defineProps<{
@@ -15,6 +16,8 @@ const props = defineProps<{
   chartData: ChartData<'pie', number[], string> | null;
   legend: CategoryLegendItem[];
   currency: string;
+  mode: CategoryDatasetMode;
+  modeOptions: Array<{ label: string; value: CategoryDatasetMode }>;
   scope: CategoryScope;
   scopeOptions: Array<{ label: string; value: CategoryScope }>;
 }>();
@@ -22,6 +25,7 @@ const props = defineProps<{
 const emit = defineEmits<{
   (event: 'retry'): void;
   (event: 'select-category', value: CategoryLegendItem): void;
+  (event: 'update:mode', value: CategoryDatasetMode): void;
   (event: 'update:scope', value: CategoryScope): void;
 }>();
 
@@ -34,10 +38,33 @@ const handleCategoryClick = (item: CategoryLegendItem) => {
 const showEmpty = computed(
   () => !props.loading && !props.error && (!props.chartData || props.legend.length === 0)
 );
+const isExpensesMode = computed(() => props.mode === 'expenses');
 
 const totalAmount = computed(() => {
   return props.legend.reduce((sum, item) => sum + item.amount, 0);
 });
+
+const chartTitle = computed(() => (isExpensesMode.value ? 'Расходы по категориям' : 'Доходы по категориям'));
+const chartHint = computed(() => (
+  isExpensesMode.value
+    ? 'Показывает, на что уходят деньги. Кликните на категорию, чтобы увидеть транзакции.'
+    : 'Показывает источники поступлений. Кликните на категорию, чтобы увидеть транзакции.'
+));
+const errorTitle = computed(() => (
+  isExpensesMode.value
+    ? 'Не удалось загрузить структуру расходов'
+    : 'Не удалось загрузить структуру доходов'
+));
+const emptyHint = computed(() => (
+  isExpensesMode.value
+    ? 'Добавьте расходы, чтобы увидеть распределение.'
+    : 'Добавьте доходы, чтобы увидеть распределение.'
+));
+const chartAriaLabel = computed(() => (
+  isExpensesMode.value
+    ? 'Круговая диаграмма расходов по категориям'
+    : 'Круговая диаграмма доходов по категориям'
+));
 
 const formattedTotal = computed(() => {
   if (totalAmount.value <= 0) return '—';
@@ -113,10 +140,10 @@ const chartOptions = computed(() => ({
       <div>
         <div class="donut-card__title-row">
           <h3 class="donut-card__title">
-            Расходы по категориям
+            {{ chartTitle }}
           </h3>
           <button
-            v-tooltip="{ value: 'Показывает, на что уходят деньги. Кликните на категорию, чтобы увидеть транзакции.', event: 'click', autoHide: false }"
+            v-tooltip="{ value: chartHint, event: 'click', autoHide: false }"
             type="button"
             class="donut-card__hint"
             aria-label="Подсказка"
@@ -125,15 +152,32 @@ const chartOptions = computed(() => ({
           </button>
         </div>
       </div>
-      <Select
-        :model-value="scope"
-        :options="scopeOptions"
-        option-label="label"
-        option-value="value"
-        class="donut-card__scope-select"
-        append-to="body"
-        @update:model-value="emit('update:scope', $event as CategoryScope)"
-      />
+      <div class="donut-card__controls">
+        <SelectButton
+          :model-value="mode"
+          :options="modeOptions"
+          option-label="label"
+          option-value="value"
+          :allow-empty="false"
+          class="ft-select-button donut-card__mode-toggle"
+          @update:model-value="emit('update:mode', $event as CategoryDatasetMode)"
+        />
+        <Select
+          v-if="isExpensesMode"
+          :model-value="scope"
+          :options="scopeOptions"
+          option-label="label"
+          option-value="value"
+          class="donut-card__scope-select"
+          append-to="body"
+          @update:model-value="emit('update:scope', $event as CategoryScope)"
+        />
+        <div
+          v-else
+          class="donut-card__scope-select-placeholder"
+          aria-hidden="true"
+        />
+      </div>
     </div>
 
     <div
@@ -166,7 +210,7 @@ const chartOptions = computed(() => ({
       >
         <div class="donut-card__message-body">
           <p class="donut-card__message-title">
-            Не удалось загрузить структуру расходов
+            {{ errorTitle }}
           </p>
           <p class="donut-card__message-text">
             {{ error }}
@@ -195,7 +239,7 @@ const chartOptions = computed(() => ({
             Нет данных за период
           </p>
           <p class="donut-card__message-text">
-            Добавьте расходы, чтобы увидеть распределение.
+            {{ emptyHint }}
           </p>
         </div>
       </Message>
@@ -208,7 +252,7 @@ const chartOptions = computed(() => ({
       <div
         class="donut-card__chart"
         role="img"
-        aria-label="Круговая диаграмма расходов по категориям"
+        :aria-label="chartAriaLabel"
       >
         <Chart
           v-if="donutChartData"
@@ -263,7 +307,7 @@ const chartOptions = computed(() => ({
   flex-direction: column;
   gap: var(--ft-space-4);
 
-  padding: clamp(1rem, 2vw, 1.5rem);
+  padding: clamp(0.75rem, 1.2vw, 1rem);
 
   background: var(--ft-surface-base);
   border: 1px solid var(--ft-border-subtle);
@@ -289,6 +333,29 @@ const chartOptions = computed(() => ({
   font-size: var(--ft-text-lg);
   font-weight: var(--ft-font-semibold);
   color: var(--ft-text-primary);
+}
+
+.donut-card__controls {
+  display: grid;
+  grid-template-columns: 270px 180px;
+  gap: var(--ft-space-2);
+  align-items: center;
+}
+
+.donut-card__mode-toggle.ft-select-button.p-selectbutton {
+  width: 100%;
+  min-width: 0;
+}
+
+.donut-card__scope-select {
+  width: 100%;
+}
+
+.donut-card__scope-select-placeholder {
+  pointer-events: none;
+  width: 100%;
+  min-height: var(--ft-control-height);
+  visibility: hidden;
 }
 
 .donut-card__hint {
@@ -358,7 +425,7 @@ const chartOptions = computed(() => ({
 
 .donut-card__content {
   display: grid;
-  gap: var(--ft-space-4);
+  gap: var(--ft-space-3);
   align-items: start;
 }
 
@@ -368,12 +435,12 @@ const chartOptions = computed(() => ({
   justify-content: center;
 
   width: 100%;
-  padding: var(--ft-space-2);
+  padding: var(--ft-space-1);
 }
 
 .donut-card__chart :deep(.p-chart) {
   width: 100%;
-  max-width: 280px;
+  max-width: 360px;
 }
 
 .donut-card__chart :deep(canvas) {
@@ -451,13 +518,16 @@ const chartOptions = computed(() => ({
 }
 
 @media (width >= 768px) {
-  .donut-card__scope-select {
-    min-width: 180px;
-    max-width: 220px;
+  .donut-card__head {
+    align-items: center;
   }
 
   .donut-card__content {
-    grid-template-columns: minmax(200px, 280px) minmax(0, 1fr);
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  }
+
+  .donut-card__chart :deep(.p-chart) {
+    max-width: 100%;
   }
 
   .donut-card__legend {
@@ -473,7 +543,20 @@ const chartOptions = computed(() => ({
     align-items: stretch;
   }
 
+  .donut-card__controls {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+  }
+
   .donut-card__scope-select {
+    width: 100%;
+  }
+
+  .donut-card__scope-select-placeholder {
+    display: none;
+  }
+
+  .donut-card__mode-toggle.ft-select-button.p-selectbutton {
     width: 100%;
   }
 

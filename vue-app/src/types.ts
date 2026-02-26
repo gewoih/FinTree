@@ -302,6 +302,7 @@ export interface AnalyticsDashboardDto {
     peaks: PeakDaysSummaryDto;
     peakDays: PeakDayDto[];
     categories: CategoryBreakdownDto;
+    incomeCategories: CategoryBreakdownDto;
     spending: SpendingBreakdownDto;
     forecast: ForecastDto;
     readiness: AnalyticsReadinessDto;

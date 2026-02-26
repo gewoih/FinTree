@@ -13,6 +13,7 @@ export interface CategoryLegendItem {
 
 export type ExpenseGranularity = 'days' | 'weeks' | 'months';
 export type CategoryScope = 'all' | 'mandatory' | 'discretionary';
+export type CategoryDatasetMode = 'expenses' | 'incomes';
 
 export interface ForecastSummary {
   forecastTotal: number | null;
