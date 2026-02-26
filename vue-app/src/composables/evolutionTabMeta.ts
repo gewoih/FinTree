@@ -1,6 +1,7 @@
 import type { EvolutionMonthDto } from '@/types'
 
 export type EvolutionKpi =
+  | 'totalMonthScore'
   | 'savingsRate'
   | 'stabilityScore'
   | 'discretionaryPercent'
@@ -61,9 +62,10 @@ export interface EvolutionTableRowModel {
   cells: EvolutionTableCellModel[]
 }
 
-export const EVOLUTION_STORAGE_PREFIX = 'ft:evolution:visible-kpis:'
+export const EVOLUTION_STORAGE_PREFIX = 'ft:evolution:v2:visible-kpis:'
 
 export const EVOLUTION_KPI_ORDER: EvolutionKpi[] = [
+  'totalMonthScore',
   'savingsRate',
   'stabilityScore',
   'discretionaryPercent',
@@ -80,6 +82,16 @@ export const EVOLUTION_GROUPS: Array<{ id: EvolutionKpiGroupId; label: string }>
 ]
 
 export const EVOLUTION_KPI_META: Record<EvolutionKpi, EvolutionKpiMeta> = {
+  totalMonthScore: {
+    key: 'totalMonthScore',
+    label: 'Общий рейтинг месяца',
+    groupId: 'balance',
+    description: 'Итоговый взвешенный балл за месяц по ключевым финансовым метрикам.',
+    directionHint: 'Цель: выше',
+    direction: 'higher-better',
+    valueKind: 'score',
+    precision: 0,
+  },
   savingsRate: {
     key: 'savingsRate',
     label: 'Норма сбережений',

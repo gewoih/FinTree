@@ -10,7 +10,10 @@ internal sealed class EvolutionAnalyticsCalculator(
     AccountsService accountsService,
     TransactionsService transactionsService,
     UserService userService,
-    CurrencyConverter currencyConverter)
+    CurrencyConverter currencyConverter,
+    IPeakMetricsService peakMetricsService,
+    ILiquidityMonthsService liquidityMonthsService,
+    ITotalMonthScoreService totalMonthScoreService)
     : IEvolutionAnalyticsCalculator
 {
     public async Task<List<EvolutionMonthDto>> GetEvolutionAsync(int months, CancellationToken ct)
@@ -22,6 +25,7 @@ internal sealed class EvolutionAnalyticsCalculator(
         var windowMonths = months > 0 ? months : 120;
         var windowStart = new DateTime(now.Year, now.Month, 1, 0, 0, 0, DateTimeKind.Utc)
             .AddMonths(-(windowMonths - 1));
+        var liquidityWindowStart = windowStart.AddDays(-180);
 
         var accountSnapshots = await accountsService.GetAccountSnapshotsAsync(includeArchived: false, ct);
         var accountIds = accountSnapshots
@@ -35,13 +39,20 @@ internal sealed class EvolutionAnalyticsCalculator(
 
         var adjustmentSnapshots = await accountsService.GetAccountAdjustmentSnapshotsAsync(accountIds, ct: ct);
 
-        var transactionSnapshots = await transactionsService.GetTransactionSnapshotsAsync(
-            excludeArchivedAccounts: true,
-            ct: ct);
+        var transactionSnapshots = await transactionsService.GetTransactionSnapshotsAsync(ct: ct);
 
         var windowTransactions = transactionSnapshots
             .Where(t => !t.IsTransfer && t.OccurredAtUtc >= windowStart)
             .ToList();
+        var liquidityExpenseTransactions = transactionSnapshots
+            .Where(t => !t.IsTransfer &&
+                        t.Type == TransactionType.Expense &&
+                        t.OccurredAtUtc >= liquidityWindowStart)
+            .ToList();
+        var earliestTrackedAtUtc = transactionSnapshots
+            .Where(t => !t.IsTransfer)
+            .Select(t => (DateTime?)t.OccurredAtUtc)
+            .Min();
 
         var monthStartsWithData = windowTransactions
             .Select(t => new DateTime(t.OccurredAtUtc.Year, t.OccurredAtUtc.Month, 1, 0, 0, 0, DateTimeKind.Utc))
@@ -54,6 +65,8 @@ internal sealed class EvolutionAnalyticsCalculator(
 
         var fxRateRequests = new HashSet<(string CurrencyCode, DateTime DayStartUtc)>();
         foreach (var txn in windowTransactions)
+            fxRateRequests.Add((AnalyticsNormalization.NormalizeCurrencyCode(txn.Money.CurrencyCode), txn.OccurredAtUtc.Date));
+        foreach (var txn in liquidityExpenseTransactions)
             fxRateRequests.Add((AnalyticsNormalization.NormalizeCurrencyCode(txn.Money.CurrencyCode), txn.OccurredAtUtc.Date));
 
         foreach (var monthStart in monthStartsWithData)
@@ -113,6 +126,13 @@ internal sealed class EvolutionAnalyticsCalculator(
             return amount * rate;
         }
 
+        var liquidityExpenseDailyTotals = liquidityExpenseTransactions
+            .GroupBy(transaction => DateOnly.FromDateTime(transaction.OccurredAtUtc))
+            .ToDictionary(
+                group => group.Key,
+                group => group.Sum(transaction =>
+                    ConvertAmount(transaction.Money.CurrencyCode, transaction.Money.Amount, transaction.OccurredAtUtc)));
+
         var result = new List<EvolutionMonthDto>(windowMonths);
 
         for (var i = 0; i < windowMonths; i++)
@@ -143,7 +163,7 @@ internal sealed class EvolutionAnalyticsCalculator(
             if (monthExpenses.Count == 0 && monthIncomeTransactions.Count == 0)
             {
                 result.Add(new EvolutionMonthDto(monthStart.Year, monthStart.Month, false,
-                    null, null, null, null, null, null, null, null, null, null));
+                    null, null, null, null, null, null, null, null, null, null, null, null));
                 continue;
             }
 
@@ -151,14 +171,14 @@ internal sealed class EvolutionAnalyticsCalculator(
                 ConvertAmount(t.Money.CurrencyCode, t.Money.Amount, t.OccurredAtUtc));
 
             var dailyTotals = monthExpenses
-                .GroupBy(t => t.OccurredAtUtc.Date)
+                .GroupBy(t => DateOnly.FromDateTime(t.OccurredAtUtc))
                 .ToDictionary(
                     g => g.Key,
                     g => g.Sum(t => ConvertAmount(t.Money.CurrencyCode, t.Money.Amount, t.OccurredAtUtc)));
 
             var dailyDiscretionary = monthExpenses
                 .Where(t => !t.IsMandatory)
-                .GroupBy(t => t.OccurredAtUtc.Date)
+                .GroupBy(t => DateOnly.FromDateTime(t.OccurredAtUtc))
                 .ToDictionary(
                     g => g.Key,
                     g => g.Sum(t => ConvertAmount(t.Money.CurrencyCode, t.Money.Amount, t.OccurredAtUtc)));
@@ -168,12 +188,18 @@ internal sealed class EvolutionAnalyticsCalculator(
             var observedDays = dailyTotals.Count;
 
             var meanDaily = observedDays > 0 ? AnalyticsMath.Round2(monthTotal / observedDays) : 0m;
-            var savingsRate = monthIncome > 0
-                ? AnalyticsMath.Round2((monthIncome - monthTotal) / monthIncome)
+            var rawSavingsRate = monthIncome > 0
+                ? (monthIncome - monthTotal) / monthIncome
                 : (decimal?)null;
-            var discretionaryPercent = monthTotal > 0
-                ? AnalyticsMath.Round2(discretionaryTotal / monthTotal * 100)
-                : 0m;
+            var savingsRate = rawSavingsRate.HasValue
+                ? AnalyticsMath.Round2(rawSavingsRate.Value)
+                : (decimal?)null;
+            var rawDiscretionaryPercent = monthTotal > 0
+                ? (discretionaryTotal / monthTotal) * 100m
+                : (decimal?)null;
+            var discretionaryPercent = rawDiscretionaryPercent.HasValue
+                ? AnalyticsMath.Round2(rawDiscretionaryPercent.Value)
+                : (decimal?)null;
 
             var stabilityIndexValue = AnalyticsMath.ComputeStabilityIndex(dailyTotals.Values.ToList());
             var stabilityIndex = stabilityIndexValue.HasValue
@@ -183,33 +209,31 @@ internal sealed class EvolutionAnalyticsCalculator(
             var stabilityActionCode = AnalyticsMath.ResolveStabilityActionCode(stabilityStatus);
             var stabilityScore = AnalyticsMath.ComputeStabilityScore(stabilityIndex);
 
-            decimal? peakDayRatio = null;
-            if (dailyDiscretionary.Count >= 1)
-            {
-                var discValues = dailyDiscretionary.Values.Where(v => v > 0m).ToList();
-                if (discValues.Count > 0)
-                {
-                    var discMedian = AnalyticsMath.ComputeMedian(discValues) ?? 0m;
-                    var threshold = AnalyticsMath.ComputePeakThreshold(discValues, discMedian);
-                    var peakCount = discValues.Count(v => v >= threshold);
-                    var daysInMonth = DateTime.DaysInMonth(monthStart.Year, monthStart.Month);
-                    peakDayRatio = AnalyticsMath.Round2((decimal)peakCount / daysInMonth * 100);
-                }
-            }
+            var daysInMonth = DateTime.DaysInMonth(monthStart.Year, monthStart.Month);
+            var peakMetrics = peakMetricsService.Calculate(dailyDiscretionary, monthTotal, daysInMonth);
+            var peakDayRatio = peakMetrics.PeakDayRatioPercent;
+            var peakSpendSharePercent = peakMetrics.PeakSpendSharePercent;
 
             var rateAtUtc = monthEnd.AddTicks(-1);
             var netWorth = accountSnapshots.Sum(account =>
                 ConvertAmountWithRate(account.CurrencyCode, balancesByAccount[account.Id], rateAtUtc));
             netWorth = AnalyticsMath.Round2(netWorth);
 
-            decimal? liquidMonths = null;
-            if (meanDaily > 0m)
-            {
-                var liquidAssets = liquidAccounts.Sum(account =>
-                    ConvertAmountWithRate(account.CurrencyCode, balancesByAccount[account.Id], rateAtUtc));
+            var liquidAssets = liquidAccounts.Sum(account =>
+                ConvertAmountWithRate(account.CurrencyCode, balancesByAccount[account.Id], rateAtUtc));
+            liquidAssets = AnalyticsMath.Round2(liquidAssets);
 
-                liquidMonths = AnalyticsMath.Round2(liquidAssets / (meanDaily * 30.44m));
-            }
+            var averageDailyExpense = liquidityMonthsService.ComputeAverageDailyExpense(
+                liquidityExpenseDailyTotals,
+                earliestTrackedAtUtc,
+                monthEnd);
+            var liquidMonths = liquidityMonthsService.ComputeLiquidMonths(liquidAssets, averageDailyExpense);
+            var totalMonthScore = totalMonthScoreService.CalculateTotalMonthScore(
+                rawSavingsRate,
+                liquidMonths,
+                stabilityScore,
+                rawDiscretionaryPercent,
+                peakSpendSharePercent);
 
             result.Add(new EvolutionMonthDto(
                 monthStart.Year,
@@ -224,7 +248,9 @@ internal sealed class EvolutionAnalyticsCalculator(
                 netWorth,
                 liquidMonths,
                 meanDaily,
-                peakDayRatio));
+                peakDayRatio,
+                peakSpendSharePercent,
+                totalMonthScore));
         }
 
         return result;

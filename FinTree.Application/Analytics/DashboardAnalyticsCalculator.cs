@@ -1,17 +1,17 @@
-using FinTree.Application.Accounts;
 using FinTree.Application.Currencies;
 using FinTree.Application.Transactions;
 using FinTree.Application.Users;
 using FinTree.Domain.Transactions;
-using FinTree.Domain.ValueObjects;
 
 namespace FinTree.Application.Analytics;
 
 internal sealed class DashboardAnalyticsCalculator(
-    AccountsService accountsService,
     TransactionsService transactionsService,
     CurrencyConverter currencyConverter,
-    UserService userService)
+    UserService userService,
+    IPeakMetricsService peakMetricsService,
+    ILiquidityMonthsService liquidityMonthsService,
+    ITotalMonthScoreService totalMonthScoreService)
     : IDashboardAnalyticsCalculator
 {
     private readonly record struct CategoryMeta(string Name, string Color, bool IsMandatory);
@@ -166,8 +166,6 @@ internal sealed class DashboardAnalyticsCalculator(
         var medianDaily = positiveObservedDailyValues.Count > 0
             ? AnalyticsMath.ComputeMedian(positiveObservedDailyValues)
             : null;
-        var discretionaryDayValues = dailyTotalsDiscretionary.Values.Where(v => v > 0m).ToList();
-        var peakMedianDaily = discretionaryDayValues.Count > 0 ? AnalyticsMath.ComputeMedian(discretionaryDayValues) : null;
         var stabilityIndexValue = AnalyticsMath.ComputeStabilityIndex(positiveObservedDailyValues);
         var stabilityIndex = stabilityIndexValue.HasValue
             ? AnalyticsMath.Round2(stabilityIndexValue.Value)
@@ -183,7 +181,7 @@ internal sealed class DashboardAnalyticsCalculator(
             ? (totalExpenses - previousMonthExpenses) / previousMonthExpenses * 100
             : (decimal?)null;
 
-        var peaks = BuildPeakDays(dailyTotalsDiscretionary, peakMedianDaily, totalExpenses);
+        var peaks = peakMetricsService.Calculate(dailyTotalsDiscretionary, totalExpenses, daysInMonth);
 
         var categoryItems = currentExpenseCategoryTotals.Select(kv =>
         {
@@ -238,10 +236,16 @@ internal sealed class DashboardAnalyticsCalculator(
 
         var forecast = await BuildForecastAsync(year, month, dailyTotals, baseCurrencyCode, ct);
 
-        var (liquidAssets, liquidMonths, liquidStatus) = await BuildLiquidMetricsAsync(
-            baseCurrencyCode,
-            monthEndUtc,
-            ct);
+        var liquidAssets = await liquidityMonthsService.GetLiquidAssetsAtAsync(baseCurrencyCode, monthEndUtc, ct);
+        var averageDailyExpense = await liquidityMonthsService.GetAverageDailyExpenseAsync(baseCurrencyCode, monthEndUtc, ct);
+        var liquidMonths = liquidityMonthsService.ComputeLiquidMonths(liquidAssets, averageDailyExpense);
+        var liquidStatus = AnalyticsMath.ResolveLiquidStatus(liquidMonths);
+        var totalMonthScore = totalMonthScoreService.CalculateTotalMonthScore(
+            savingsRate,
+            liquidMonths,
+            stabilityScore,
+            discretionaryShare,
+            peaks.PeakSpendSharePercent);
 
         var health = new FinancialHealthSummaryDto(
             MonthIncome: AnalyticsMath.Round2(totalIncome),
@@ -259,7 +263,8 @@ internal sealed class DashboardAnalyticsCalculator(
             MonthOverMonthChangePercent: monthOverMonth,
             LiquidAssets: AnalyticsMath.Round2(liquidAssets),
             LiquidMonths: liquidMonths,
-            LiquidMonthsStatus: liquidStatus);
+            LiquidMonthsStatus: liquidStatus,
+            TotalMonthScore: totalMonthScore);
 
         return new AnalyticsDashboardDto(
             year,
@@ -272,180 +277,6 @@ internal sealed class DashboardAnalyticsCalculator(
             spending,
             forecast,
             readiness);
-    }
-
-    private static (PeakDaysSummaryDto Summary, List<PeakDayDto> Days) BuildPeakDays(
-        Dictionary<DateOnly, decimal> dailyTotals,
-        decimal? medianDaily,
-        decimal monthTotal)
-    {
-        if (!medianDaily.HasValue || medianDaily.Value <= 0m || monthTotal <= 0m)
-            return (new PeakDaysSummaryDto(0, 0m, null, monthTotal), new List<PeakDayDto>());
-
-        var positiveDailyTotals = dailyTotals.Values
-            .Where(value => value > 0m)
-            .ToList();
-
-        if (positiveDailyTotals.Count == 0)
-            return (new PeakDaysSummaryDto(0, 0m, null, monthTotal), new List<PeakDayDto>());
-
-        var threshold = AnalyticsMath.ComputePeakThreshold(positiveDailyTotals, medianDaily.Value);
-        var peakDays = dailyTotals
-            .Where(kv => kv.Value >= threshold)
-            .Select(kv =>
-            {
-                var share = (kv.Value / monthTotal) * 100m;
-                return new PeakDayDto(kv.Key.Year, kv.Key.Month, kv.Key.Day, AnalyticsMath.Round2(kv.Value), share);
-            })
-            .OrderByDescending(x => x.Amount)
-            .ToList();
-
-        var total = peakDays.Sum(x => x.Amount);
-        var sharePercent = total > 0m ? (total / monthTotal) * 100m : (decimal?)null;
-
-        return (new PeakDaysSummaryDto(peakDays.Count, AnalyticsMath.Round2(total), sharePercent, monthTotal), peakDays);
-    }
-
-    private async Task<(decimal LiquidAssets, decimal? LiquidMonths, string? LiquidStatus)> BuildLiquidMetricsAsync(
-        string baseCurrencyCode,
-        DateTime monthEndUtc,
-        CancellationToken ct)
-    {
-        var liquidAssets = await GetLiquidAssetsAtAsync(baseCurrencyCode, monthEndUtc, ct);
-        var dailyRate = await GetAverageDailyExpenseAsync(baseCurrencyCode, monthEndUtc, ct);
-        var monthlyExpense180d = dailyRate * 30.44m;
-
-        var liquidMonths = monthlyExpense180d > 0m
-            ? Math.Round(liquidAssets / monthlyExpense180d, 2, MidpointRounding.AwayFromZero)
-            : 0m;
-
-        var status = AnalyticsMath.ResolveLiquidStatus(liquidMonths);
-        return (liquidAssets, liquidMonths, status);
-    }
-
-    private async Task<decimal> GetAverageDailyExpenseAsync(string baseCurrencyCode, DateTime windowEnd, CancellationToken ct)
-    {
-        var windowStartUtc = windowEnd.AddDays(-180);
-
-        var earliestTrackedAtRaw = await transactionsService.GetEarliestOccurredAtBeforeAsync(
-            windowEnd,
-            excludeTransfers: true,
-            ct);
-
-        if (!earliestTrackedAtRaw.HasValue)
-            return 0m;
-
-        var rawExpenses = await transactionsService.GetTransactionSnapshotsAsync(
-            fromUtc: windowStartUtc,
-            toUtc: windowEnd,
-            excludeTransfers: true,
-            type: TransactionType.Expense,
-            ct: ct);
-
-        if (rawExpenses.Count == 0)
-            return 0m;
-
-        var rateByCurrencyAndDay = await currencyConverter.GetCrossRatesAsync(
-            rawExpenses.Select(e => (e.Money.CurrencyCode, e.OccurredAtUtc)),
-            baseCurrencyCode,
-            ct);
-
-        var totalExpense = 0m;
-        foreach (var expense in rawExpenses)
-        {
-            ct.ThrowIfCancellationRequested();
-            var rateKey = (AnalyticsNormalization.NormalizeCurrencyCode(expense.Money.CurrencyCode), expense.OccurredAtUtc.Date);
-            totalExpense += expense.Money.Amount * rateByCurrencyAndDay[rateKey];
-        }
-
-        var effectiveStartUtc = earliestTrackedAtRaw.Value > windowStartUtc ? earliestTrackedAtRaw.Value : windowStartUtc;
-        var calendarDays = (decimal)(windowEnd - effectiveStartUtc).TotalDays;
-
-        if (calendarDays <= 0m)
-            return 0m;
-
-        return totalExpense / calendarDays;
-    }
-
-    private async Task<decimal> GetLiquidAssetsAtAsync(string baseCurrencyCode, DateTime atUtc, CancellationToken ct)
-    {
-        var liquidAccounts = (await accountsService.GetAccountSnapshotsAsync(includeArchived: false, ct))
-            .Where(a => a.IsLiquid)
-            .ToList();
-
-        if (liquidAccounts.Count == 0)
-            return 0m;
-
-        var accountIds = liquidAccounts.Select(a => a.Id).ToList();
-        var rawAdjustments = await accountsService.GetAccountAdjustmentSnapshotsAsync(accountIds, beforeUtc: atUtc, ct: ct);
-
-        var rawTransactions = await transactionsService.GetTransactionSnapshotsAsync(
-            toUtc: atUtc,
-            accountIds: accountIds,
-            ct: ct);
-
-        var adjustmentsByAccount = rawAdjustments
-            .GroupBy(a => a.AccountId)
-            .ToDictionary(
-                g => g.Key,
-                g => g.OrderBy(a => a.OccurredAtUtc).ToList());
-
-        var transactionsByAccount = rawTransactions
-            .GroupBy(t => t.AccountId)
-            .ToDictionary(
-                g => g.Key,
-                g => g.Select(t => new
-                    {
-                        Delta = t.Type == TransactionType.Income ? t.Money.Amount : -t.Money.Amount,
-                        t.OccurredAtUtc
-                    })
-                    .OrderBy(t => t.OccurredAtUtc)
-                    .ToList());
-
-        var rateAtUtc = atUtc.AddTicks(-1);
-        var rateByCurrency = new Dictionary<string, decimal>(StringComparer.OrdinalIgnoreCase);
-        foreach (var currency in liquidAccounts.Select(a => a.CurrencyCode).Distinct(StringComparer.OrdinalIgnoreCase))
-        {
-            if (string.Equals(currency, baseCurrencyCode, StringComparison.OrdinalIgnoreCase))
-            {
-                rateByCurrency[currency] = 1m;
-                continue;
-            }
-
-            var converted = await currencyConverter.ConvertAsync(
-                new Money(currency, 1m),
-                baseCurrencyCode,
-                rateAtUtc,
-                ct);
-            rateByCurrency[currency] = converted.Amount;
-        }
-
-        var total = 0m;
-        foreach (var account in liquidAccounts)
-        {
-            var balance = 0m;
-            DateTime? anchorAt = null;
-
-            if (adjustmentsByAccount.TryGetValue(account.Id, out var accountAdjustments) && accountAdjustments.Count > 0)
-            {
-                var latestAdjustment = accountAdjustments[^1];
-                balance = latestAdjustment.Amount;
-                anchorAt = latestAdjustment.OccurredAtUtc;
-            }
-
-            if (transactionsByAccount.TryGetValue(account.Id, out var accountTransactions) && accountTransactions.Count > 0)
-            {
-                var delta = accountTransactions
-                    .Where(t => !anchorAt.HasValue || t.OccurredAtUtc > anchorAt.Value)
-                    .Sum(t => t.Delta);
-                balance += delta;
-            }
-
-            var rate = rateByCurrency.TryGetValue(account.CurrencyCode, out var foundRate) ? foundRate : 1m;
-            total += balance * rate;
-        }
-
-        return AnalyticsMath.Round2(total);
     }
 
     private static CategoryDeltaDto BuildCategoryDelta(
@@ -756,7 +587,7 @@ internal sealed class DashboardAnalyticsCalculator(
             daysInMonth,
             observedDays,
             observedCumulative);
-        var baselineDailyRate = await GetAverageDailyExpenseAsync(baseCurrencyCode, forecastEnd.AddDays(1), ct);
+        var baselineDailyRate = await liquidityMonthsService.GetAverageDailyExpenseAsync(baseCurrencyCode, forecastEnd.AddDays(1), ct);
         var baselineLimit = baselineDailyRate > 0m
             ? AnalyticsMath.Round2(baselineDailyRate * daysInMonth)
             : (decimal?)null;

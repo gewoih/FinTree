@@ -1,6 +1,11 @@
 import { computed, type ComputedRef, type Ref } from 'vue';
 import type { Router } from 'vue-router';
-import type { AnalyticsDashboardDto, AnalyticsReadinessDto, MonthlyExpenseDto } from '../types';
+import type {
+    AnalyticsDashboardDto,
+    AnalyticsReadinessDto,
+    EvolutionMonthDto,
+    MonthlyExpenseDto,
+} from '../types';
 import type {
     CategoryDatasetMode,
     CategoryLegendItem,
@@ -11,6 +16,7 @@ import type {
 import type { PeakDayItem } from '../types/analytics-page';
 import type { useAnalyticsFormatting } from './useAnalyticsFormatting';
 import type { useChartColors } from './useChartColors';
+import { useGlobalMonthScore } from './useGlobalMonthScore';
 import {
     resolveStabilityAccent,
     resolveStabilityActionText,
@@ -20,6 +26,7 @@ interface UseAnalyticsPageMetricsContext {
     analyticsReadiness: ComputedRef<AnalyticsReadinessDto>;
     chartColors: ReturnType<typeof useChartColors>['colors'];
     dashboard: Ref<AnalyticsDashboardDto | null>;
+    evolutionMonths: Ref<EvolutionMonthDto[]>;
     formatting: ReturnType<typeof useAnalyticsFormatting>;
     router: Router;
     selectedCategoryMode: Ref<CategoryDatasetMode>;
@@ -33,6 +40,7 @@ export function useAnalyticsPageMetrics(context: UseAnalyticsPageMetricsContext)
         analyticsReadiness,
         chartColors,
         dashboard,
+        evolutionMonths,
         formatting,
         router,
         selectedCategoryMode,
@@ -165,6 +173,12 @@ export function useAnalyticsPageMetrics(context: UseAnalyticsPageMetricsContext)
                 tooltip: 'Ваши необязательные расходы.',
             },
         ];
+    });
+
+    const { globalMonthScore } = useGlobalMonthScore({
+        dashboard,
+        evolutionMonths,
+        selectedMonth,
     });
 
     function handleCategorySelect(category: CategoryLegendItem) {
@@ -436,6 +450,7 @@ export function useAnalyticsPageMetrics(context: UseAnalyticsPageMetricsContext)
         filteredCategoryLegend,
         forecastChartData,
         forecastSummary,
+        globalMonthScore,
         healthCards,
         peakDays,
         peakSummary,

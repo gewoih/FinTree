@@ -3,6 +3,7 @@ import { ref } from 'vue';
 import CategoryDeltaCard from '../components/analytics/CategoryDeltaCard.vue';
 import EvolutionTab from '@/components/analytics/EvolutionTab.vue';
 import ForecastCard from '../components/analytics/ForecastCard.vue';
+import GlobalMonthScoreCard from '../components/analytics/GlobalMonthScoreCard.vue';
 import HealthScoreCard from '../components/analytics/HealthScoreCard.vue';
 import OnboardingStepper from '../components/analytics/OnboardingStepper.vue';
 import PeakDaysCard from '../components/analytics/PeakDaysCard.vue';
@@ -34,6 +35,7 @@ const {
   forecastReadinessMessage,
   forecastSummary,
   granularityOptions,
+  globalMonthScore,
   healthCards,
   isAnalyticsReady,
   isFirstRun,
@@ -218,7 +220,30 @@ const bindMonthPickerRef = (instance: unknown) => {
           @retry="retryDashboard"
         />
 
-        <!-- Section 2: Two main charts -->
+        <GlobalMonthScoreCard
+          class="analytics-grid__item analytics-grid__item--span-12"
+          :loading="dashboardLoading"
+          :error="dashboardError"
+          :model="globalMonthScore"
+          @retry="retryDashboard"
+        />
+
+        <!-- Section 2: Health score cards -->
+        <HealthScoreCard
+          v-for="card in healthCards"
+          :key="card.key"
+          class="analytics-grid__item analytics-grid__item--span-3"
+          :title="card.title"
+          :icon="card.icon"
+          :main-value="card.mainValue"
+          :main-label="card.mainLabel"
+          :secondary-value="card.secondaryValue"
+          :secondary-label="card.secondaryLabel"
+          :accent="card.accent"
+          :tooltip="card.tooltip"
+        />
+
+        <!-- Section 3: Two main charts -->
         <SpendingPieCard
           class="analytics-grid__item analytics-grid__item--span-6"
           :loading="dashboardLoading"
@@ -247,21 +272,6 @@ const bindMonthPickerRef = (instance: unknown) => {
           :currency="baseCurrency"
           @update:granularity="selectedGranularity = $event"
           @retry="retryDashboard"
-        />
-
-        <!-- Section 3: Health score cards -->
-        <HealthScoreCard
-          v-for="card in healthCards"
-          :key="card.key"
-          class="analytics-grid__item analytics-grid__item--span-3"
-          :title="card.title"
-          :icon="card.icon"
-          :main-value="card.mainValue"
-          :main-label="card.mainLabel"
-          :secondary-value="card.secondaryValue"
-          :secondary-label="card.secondaryLabel"
-          :accent="card.accent"
-          :tooltip="card.tooltip"
         />
 
         <!-- Section 4 & 5: Peak days + Category delta -->

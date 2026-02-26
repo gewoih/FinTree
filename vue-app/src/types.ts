@@ -209,6 +209,7 @@ export interface FinancialHealthSummaryDto {
     liquidAssets: number | null;
     liquidMonths: number | null;
     liquidMonthsStatus: 'good' | 'average' | 'poor' | null;
+    totalMonthScore: number | null;
 }
 
 export interface PeakDaysSummaryDto {
@@ -402,6 +403,8 @@ export interface EvolutionMonthDto {
     liquidMonths: number | null
     meanDaily: number | null
     peakDayRatio: number | null
+    peakSpendSharePercent: number | null
+    totalMonthScore: number | null
 }
 
 export interface AccountBalanceAdjustmentDto {

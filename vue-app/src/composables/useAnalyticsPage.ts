@@ -11,7 +11,7 @@ import {
     DEFAULT_ANALYTICS_READINESS,
     GRANULARITY_OPTIONS,
 } from '../constants/analytics-page';
-import type { AnalyticsReadinessDto } from '../types';
+import type { AnalyticsReadinessDto, EvolutionMonthDto } from '../types';
 import type {
     CategoryDatasetMode,
     CategoryScope,
@@ -38,6 +38,7 @@ export function useAnalyticsPage() {
   const selectedCategoryMode = ref<CategoryDatasetMode>('expenses');
   const selectedCategoryScope = ref<CategoryScope>('all');
   const showRetrospectiveBanner = ref(false);
+  const evolutionMonths = ref<EvolutionMonthDto[]>([]);
   
   const {
     dashboard,
@@ -149,7 +150,16 @@ export function useAnalyticsPage() {
     void loadDashboard(normalizedSelectedMonth.value);
   }
 
+  async function loadEvolutionMonths() {
+    try {
+      evolutionMonths.value = await apiService.getEvolution(0);
+    } catch {
+      evolutionMonths.value = [];
+    }
+  }
+
   const {
+    globalMonthScore,
     summaryMetrics,
     healthCards,
     handleCategorySelect,
@@ -167,6 +177,7 @@ export function useAnalyticsPage() {
     analyticsReadiness,
     chartColors,
     dashboard,
+    evolutionMonths,
     formatting,
     router,
     selectedCategoryMode,
@@ -239,6 +250,10 @@ export function useAnalyticsPage() {
     (userId) => {
       resetOnboardingTransactionsState();
       onboardingSyncedForUserId.value = null;
+      evolutionMonths.value = [];
+      if (userId) {
+        void loadEvolutionMonths();
+      }
       hasVisitedCategoriesStep.value = isCategoriesOnboardingVisited(userId);
     },
     { immediate: true }
@@ -267,6 +282,7 @@ export function useAnalyticsPage() {
     const shouldLoadOnboardingState = isFirstRun.value;
     await Promise.all([
       loadDashboard(normalizedSelectedMonth.value),
+      loadEvolutionMonths(),
       financeStore.fetchAccounts(),
       financeStore.fetchCategories(),
       shouldLoadOnboardingState ? loadOnboardingTransactionsState() : Promise.resolve(),
@@ -305,6 +321,7 @@ export function useAnalyticsPage() {
     selectedGranularity,
     selectedMonth,
     selectedMonthLabel,
+    globalMonthScore,
     summaryMetrics,
     goToNextMonth,
     goToPreviousMonth,

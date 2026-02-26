@@ -54,6 +54,8 @@ function formatChartValue(kind: EvolutionValueKind, precision: number, rawValue:
 
 function getSeriesColor(kpi: EvolutionKpi): string {
   switch (kpi) {
+    case 'totalMonthScore':
+      return colors.primary
     case 'savingsRate':
       return colors.palette[0] ?? colors.primary
     case 'stabilityScore':

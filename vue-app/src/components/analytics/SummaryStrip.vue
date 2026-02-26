@@ -164,7 +164,7 @@ const iconAccentClass = (accent: MetricAccent) => `summary-strip__icon--${accent
   width: 44px;
   height: 44px;
 
-  font-size: 1.1rem;
+  font-size: var(--ft-text-base);
   color: var(--ft-text-secondary);
 
   background: color-mix(in srgb, var(--ft-surface-raised) 80%, transparent);
