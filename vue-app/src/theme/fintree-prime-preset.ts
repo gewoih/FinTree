@@ -95,9 +95,19 @@ const primeOverridesCss = `
   .p-inputnumber-input:disabled, .p-inputnumber.p-disabled { cursor: not-allowed; opacity: 0.6; }
 
   .p-inputtext, .p-select, .p-datepicker .p-datepicker-input { min-height: var(--ft-form-control-height); font-size: var(--ft-text-base); }
+  .p-select.p-select-sm { min-height: var(--ft-input-height-sm); }
+  .p-select.p-select-lg { min-height: var(--ft-input-height-lg); }
   .p-inputtext, .p-datepicker .p-datepicker-input { padding: var(--ft-form-control-padding-y) var(--ft-form-control-padding-x); line-height: var(--ft-leading-tight); }
-  .p-select .p-select-label { display: flex; align-items: center; min-height: calc(var(--ft-form-control-height) - 2px); padding: var(--ft-form-control-padding-y) var(--ft-form-control-padding-x); line-height: var(--ft-leading-tight); }
-  .p-select .p-select-dropdown, .p-datepicker .p-datepicker-dropdown { width: var(--ft-form-control-height); }
+  .p-select .p-select-label { line-height: calc(var(--ft-form-control-height) - 2px); }
+  .p-select.p-select-sm .p-select-label { line-height: calc(var(--ft-input-height-sm) - 2px); }
+  .p-select.p-select-lg .p-select-label { line-height: calc(var(--ft-input-height-lg) - 2px); }
+  .p-select .p-select-dropdown-icon { line-height: 1; }
+  .p-select .p-select-dropdown,
+  .p-datepicker .p-datepicker-dropdown {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+  }
 
   .p-confirmdialog .p-dialog-close-button,
   .p-confirm-dialog .p-dialog-close-button {
@@ -331,6 +341,16 @@ export const FinTreePrimePreset = definePreset(Aura, {
         borderRadius: 'var(--ft-radius-lg)',
         focusRing: formFocusRing,
         transitionDuration: 'var(--ft-transition-fast)',
+        sm: {
+          fontSize: 'var(--ft-text-sm)',
+          paddingX: 'var(--ft-space-3)',
+          paddingY: 'var(--ft-form-control-padding-y)',
+        },
+        lg: {
+          fontSize: 'var(--ft-text-base)',
+          paddingX: 'var(--ft-space-6)',
+          paddingY: 'var(--ft-form-control-padding-y)',
+        },
       },
     },
     select: {
