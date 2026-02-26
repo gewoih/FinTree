@@ -1,7 +1,13 @@
 import { computed, type ComputedRef, type Ref } from 'vue';
 import type { Router } from 'vue-router';
-import type { AnalyticsDashboardDto, AnalyticsReadinessDto, MonthlyExpenseDto } from '../types';
 import type {
+    AnalyticsDashboardDto,
+    AnalyticsReadinessDto,
+    EvolutionMonthDto,
+    MonthlyExpenseDto,
+} from '../types';
+import type {
+    CategoryDatasetMode,
     CategoryLegendItem,
     CategoryScope,
     ExpenseGranularity,
@@ -10,13 +16,20 @@ import type {
 import type { PeakDayItem } from '../types/analytics-page';
 import type { useAnalyticsFormatting } from './useAnalyticsFormatting';
 import type { useChartColors } from './useChartColors';
+import { useGlobalMonthScore } from './useGlobalMonthScore';
+import {
+    resolveStabilityAccent,
+    resolveStabilityActionText,
+} from '@/constants/stabilityInsight';
 
 interface UseAnalyticsPageMetricsContext {
     analyticsReadiness: ComputedRef<AnalyticsReadinessDto>;
     chartColors: ReturnType<typeof useChartColors>['colors'];
     dashboard: Ref<AnalyticsDashboardDto | null>;
+    evolutionMonths: Ref<EvolutionMonthDto[]>;
     formatting: ReturnType<typeof useAnalyticsFormatting>;
     router: Router;
+    selectedCategoryMode: Ref<CategoryDatasetMode>;
     selectedCategoryScope: Ref<CategoryScope>;
     selectedGranularity: Ref<ExpenseGranularity>;
     selectedMonth: Ref<Date>;
@@ -27,8 +40,10 @@ export function useAnalyticsPageMetrics(context: UseAnalyticsPageMetricsContext)
         analyticsReadiness,
         chartColors,
         dashboard,
+        evolutionMonths,
         formatting,
         router,
+        selectedCategoryMode,
         selectedCategoryScope,
         selectedGranularity,
         selectedMonth,
@@ -41,9 +56,7 @@ export function useAnalyticsPageMetrics(context: UseAnalyticsPageMetricsContext)
         formatSignedMoney,
         resolveSavingsStatus,
         resolveDiscretionaryStatus,
-        resolveStabilityStatus,
         resolveCushionStatus,
-        resolveStabilityLabel,
         getMonthRangeLocal,
         formatDateQuery,
         formatMonthLabel,
@@ -95,9 +108,11 @@ export function useAnalyticsPageMetrics(context: UseAnalyticsPageMetricsContext)
     const healthCards = computed(() => {
         const health = dashboard.value?.health;
         const readiness = analyticsReadiness.value;
-        const stabilityTooltip = readiness.hasForecastAndStabilityData
-            ? 'Насколько стабильны ваши расходы. Чем ниже ниже индекс — тем лучше.'
-            : `Индекс появится после ${readiness.requiredExpenseDays} дней с расходами. Сейчас: ${readiness.observedExpenseDays}.`;
+        const hasStabilityData = readiness.hasStabilityDataForSelectedMonth;
+        const stabilityAction = resolveStabilityActionText(health?.stabilityActionCode ?? null);
+        const stabilityTooltip = hasStabilityData
+            ? 'Показывает, насколько стабильны ваши расходы за месяц. Чем выше балл, тем лучше.'
+            : `Нужны расходы хотя бы в ${readiness.requiredStabilityDays} днях этого месяца. Сейчас: ${readiness.observedStabilityDaysInSelectedMonth} из ${readiness.requiredStabilityDays}.`;
 
         const savingsAccent = resolveSavingsStatus(
             health?.savingsRate ?? null,
@@ -105,8 +120,8 @@ export function useAnalyticsPageMetrics(context: UseAnalyticsPageMetricsContext)
             health?.monthTotal ?? null
         );
         const cushionAccent = resolveCushionStatus(health?.liquidMonthsStatus ?? null);
-        const stabilityAccent = readiness.hasForecastAndStabilityData
-            ? resolveStabilityStatus(health?.stabilityIndex ?? null)
+        const stabilityAccent = hasStabilityData
+            ? resolveStabilityAccent(health?.stabilityStatus ?? null)
             : 'neutral';
         const discretionaryAccent = resolveDiscretionaryStatus(health?.discretionarySharePercent ?? null);
 
@@ -135,16 +150,14 @@ export function useAnalyticsPageMetrics(context: UseAnalyticsPageMetricsContext)
             },
             {
                 key: 'stability',
-                title: 'Индекс стабильности',
+                title: 'Стабильность трат',
                 icon: 'pi pi-chart-line',
-                mainValue: readiness.hasForecastAndStabilityData
-                    ? (health?.stabilityIndex == null ? '-' : health.stabilityIndex.toString())
+                mainValue: hasStabilityData
+                    ? (health?.stabilityScore == null ? '—' : `${health.stabilityScore}/100`)
                     : 'Недостаточно данных',
-                mainLabel: readiness.hasForecastAndStabilityData ? '' : 'Продолжайте добавлять транзакции',
-                secondaryValue: readiness.hasForecastAndStabilityData
-                    ? resolveStabilityLabel(health?.stabilityIndex ?? null)
-                    : `${readiness.observedExpenseDays} из ${readiness.requiredExpenseDays}`,
-                secondaryLabel: readiness.hasForecastAndStabilityData ? '' : 'дней расходов',
+                mainLabel: hasStabilityData
+                    ? stabilityAction
+                    : `${readiness.observedStabilityDaysInSelectedMonth} из ${readiness.requiredStabilityDays} дней с расходами`,
                 accent: stabilityAccent,
                 tooltip: stabilityTooltip,
             },
@@ -160,6 +173,12 @@ export function useAnalyticsPageMetrics(context: UseAnalyticsPageMetricsContext)
                 tooltip: 'Ваши необязательные расходы.',
             },
         ];
+    });
+
+    const { globalMonthScore } = useGlobalMonthScore({
+        dashboard,
+        evolutionMonths,
+        selectedMonth,
     });
 
     function handleCategorySelect(category: CategoryLegendItem) {
@@ -199,7 +218,9 @@ export function useAnalyticsPageMetrics(context: UseAnalyticsPageMetricsContext)
     }
 
     const categoryLegend = computed<CategoryLegendItem[]>(() => {
-        const items = dashboard.value?.categories.items ?? [];
+        const items = selectedCategoryMode.value === 'incomes'
+            ? dashboard.value?.incomeCategories?.items ?? []
+            : dashboard.value?.categories.items ?? [];
         if (!items.length) return [];
 
         return items.map((item, index) => {
@@ -223,6 +244,10 @@ export function useAnalyticsPageMetrics(context: UseAnalyticsPageMetricsContext)
     const filteredCategoryLegend = computed<CategoryLegendItem[]>(() => {
         const scopedItems = categoryLegend.value
             .map((item) => {
+                if (selectedCategoryMode.value === 'incomes') {
+                    return { ...item, amount: item.amount };
+                }
+
                 const scopedAmount = selectedCategoryScope.value === 'mandatory'
                     ? item.mandatoryAmount
                     : selectedCategoryScope.value === 'discretionary'
@@ -425,6 +450,7 @@ export function useAnalyticsPageMetrics(context: UseAnalyticsPageMetricsContext)
         filteredCategoryLegend,
         forecastChartData,
         forecastSummary,
+        globalMonthScore,
         healthCards,
         peakDays,
         peakSummary,

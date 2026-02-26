@@ -45,8 +45,8 @@ function formatChartValue(kind: EvolutionValueKind, precision: number, rawValue:
       return formatMoney(rawValue, precision)
     case 'months':
       return `${formatNumber(rawValue, precision)} мес.`
-    case 'index':
-      return formatNumber(rawValue, precision)
+    case 'score':
+      return `${formatNumber(rawValue, precision)}/100`
     default:
       return '—'
   }
@@ -54,9 +54,11 @@ function formatChartValue(kind: EvolutionValueKind, precision: number, rawValue:
 
 function getSeriesColor(kpi: EvolutionKpi): string {
   switch (kpi) {
+    case 'totalMonthScore':
+      return colors.primary
     case 'savingsRate':
       return colors.palette[0] ?? colors.primary
-    case 'stabilityIndex':
+    case 'stabilityScore':
       return colors.palette[1] ?? colors.primary
     case 'discretionaryPercent':
       return colors.palette[2] ?? colors.primary
@@ -187,6 +189,20 @@ function deltaClass(tone: EvolutionDeltaTone | null): string {
       >
         {{ card.deltaLabel }}
       </p>
+
+      <p
+        v-if="card.statusLabel"
+        class="evolution-card__status"
+      >
+        {{ card.statusLabel }}
+      </p>
+
+      <p
+        v-if="card.actionLabel"
+        class="evolution-card__action"
+      >
+        {{ card.actionLabel }}
+      </p>
     </div>
 
     <div
@@ -294,6 +310,18 @@ function deltaClass(tone: EvolutionDeltaTone | null): string {
   font-size: var(--ft-text-sm);
   font-weight: var(--ft-font-semibold);
   font-variant-numeric: tabular-nums;
+}
+
+.evolution-card__status {
+  margin: 0;
+  font-size: var(--ft-text-sm);
+  color: var(--ft-text-primary);
+}
+
+.evolution-card__action {
+  margin: 0;
+  font-size: var(--ft-text-sm);
+  color: var(--ft-text-secondary);
 }
 
 .evolution-card__gap-note {

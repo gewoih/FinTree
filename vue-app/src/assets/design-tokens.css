@@ -196,9 +196,8 @@
 
   /* ━━━ TYPOGRAPHY ━━━ */
 
-  --ft-font-base: 'Inter', 'Helvetica Neue', 'Arial', sans-serif;
-  --ft-font-display: 'Inter', 'Helvetica Neue', 'Arial', sans-serif;
-  --ft-font-mono: 'JetBrains Mono', 'Fira Code', 'SF Mono', monospace;
+  --ft-font-base: 'Inter';
+  --ft-font-display: 'Inter';
   --ft-letter-spacing-display: -0.02em;  /* large headings/KPIs — tighter feels premium */
   --ft-letter-spacing-tight:   -0.01em;  /* medium headings */
   --ft-letter-spacing-normal:   0em;     /* body text */

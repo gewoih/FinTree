@@ -1,15 +1,65 @@
 <script setup lang="ts">
+import { computed, onBeforeUnmount, ref, watch } from 'vue'
 import { useRoute } from 'vue-router'
 
 const route = useRoute()
 
-const tabs = [
+const primaryTabs = [
   { label: 'Главная', icon: 'pi-chart-line', to: '/analytics' },
   { label: 'Счета', icon: 'pi-wallet', to: '/accounts' },
   { label: 'Транзакции', icon: 'pi-list', to: '/transactions' },
-  { label: 'Рефлексии', icon: 'pi-book', to: '/reflections' },
-  { label: 'Ещё', icon: 'pi-ellipsis-h', to: '/profile' }
+  { label: 'Инвестиции', icon: 'pi-briefcase', to: '/investments' }
 ]
+
+const moreMenuItems = [
+  { label: 'Профиль', icon: 'pi-user', to: '/profile' },
+  { label: 'Рефлексии', icon: 'pi-book', to: '/reflections' }
+]
+
+const moreMenuRef = ref<HTMLElement | null>(null)
+const isMoreMenuOpen = ref(false)
+
+const isRouteActive = (targetPath: string) =>
+  route.path === targetPath || route.path.startsWith(`${targetPath}/`)
+
+const isMoreActive = computed(() => moreMenuItems.some(item => isRouteActive(item.to)))
+
+const closeMoreMenu = () => {
+  isMoreMenuOpen.value = false
+}
+
+const toggleMoreMenu = () => {
+  isMoreMenuOpen.value = !isMoreMenuOpen.value
+}
+
+const handleOutsideClick = (event: MouseEvent) => {
+  const target = event.target
+  if (!(target instanceof Node) || !moreMenuRef.value?.contains(target)) {
+    closeMoreMenu()
+  }
+}
+
+watch(
+  isMoreMenuOpen,
+  isOpen => {
+    if (isOpen) {
+      document.addEventListener('click', handleOutsideClick)
+      return
+    }
+    document.removeEventListener('click', handleOutsideClick)
+  }
+)
+
+watch(
+  () => route.fullPath,
+  () => {
+    closeMoreMenu()
+  }
+)
+
+onBeforeUnmount(() => {
+  document.removeEventListener('click', handleOutsideClick)
+})
 </script>
 
 <template>
@@ -18,11 +68,11 @@ const tabs = [
     aria-label="Основная навигация"
   >
     <router-link
-      v-for="tab in tabs"
+      v-for="tab in primaryTabs"
       :key="tab.to"
       :to="tab.to"
       class="bottom-tab-bar__item"
-      :aria-current="route.path === tab.to ? 'page' : undefined"
+      :aria-current="isRouteActive(tab.to) ? 'page' : undefined"
     >
       <i
         :class="['pi', tab.icon]"
@@ -30,6 +80,49 @@ const tabs = [
       />
       <span class="bottom-tab-bar__label">{{ tab.label }}</span>
     </router-link>
+
+    <div
+      ref="moreMenuRef"
+      class="bottom-tab-bar__more"
+    >
+      <button
+        type="button"
+        class="bottom-tab-bar__item bottom-tab-bar__item--button"
+        :aria-current="isMoreActive ? 'page' : undefined"
+        :aria-expanded="isMoreMenuOpen"
+        aria-controls="mobile-more-menu"
+        aria-haspopup="true"
+        @click="toggleMoreMenu"
+      >
+        <i
+          class="pi pi-ellipsis-h"
+          aria-hidden="true"
+        />
+        <span class="bottom-tab-bar__label">Ещё</span>
+      </button>
+
+      <nav
+        v-if="isMoreMenuOpen"
+        id="mobile-more-menu"
+        class="bottom-tab-bar__more-menu"
+        aria-label="Дополнительная навигация"
+      >
+        <router-link
+          v-for="item in moreMenuItems"
+          :key="item.to"
+          :to="item.to"
+          class="bottom-tab-bar__more-link"
+          :aria-current="isRouteActive(item.to) ? 'page' : undefined"
+          @click="closeMoreMenu"
+        >
+          <i
+            :class="['pi', item.icon]"
+            aria-hidden="true"
+          />
+          <span>{{ item.label }}</span>
+        </router-link>
+      </nav>
+    </div>
   </nav>
 </template>
 
@@ -76,6 +169,16 @@ const tabs = [
     color var(--ft-transition-fast),
     background-color var(--ft-transition-fast),
     transform var(--ft-transition-fast);
+}
+
+.bottom-tab-bar__item--button {
+  cursor: pointer;
+
+  font: inherit;
+  text-align: inherit;
+
+  background: transparent;
+  border: 0;
 }
 
 .bottom-tab-bar__item::before {
@@ -141,6 +244,59 @@ const tabs = [
   text-overflow: ellipsis;
   letter-spacing: -0.01em;
   white-space: nowrap;
+}
+
+.bottom-tab-bar__more {
+  position: relative;
+  display: flex;
+  flex: 1 1 0;
+}
+
+.bottom-tab-bar__more-menu {
+  position: absolute;
+  z-index: calc(var(--ft-z-sticky) + 2);
+  right: var(--ft-space-2);
+  bottom: calc(100% + var(--ft-space-2));
+
+  display: flex;
+  flex-direction: column;
+  gap: var(--ft-space-1);
+
+  min-width: 168px;
+  padding: var(--ft-space-2);
+
+  background: color-mix(in srgb, var(--ft-surface-raised) 96%, var(--ft-surface-base));
+  border: 1px solid var(--ft-border-default);
+  border-radius: var(--ft-radius-lg);
+  box-shadow: var(--ft-shadow-md);
+}
+
+.bottom-tab-bar__more-link {
+  display: inline-flex;
+  gap: var(--ft-space-2);
+  align-items: center;
+
+  min-height: 40px;
+  padding: var(--ft-space-2) var(--ft-space-3);
+
+  font-size: var(--ft-text-sm);
+  font-weight: var(--ft-font-medium);
+  color: var(--ft-text-secondary);
+  text-decoration: none;
+
+  border-radius: var(--ft-radius-md);
+
+  transition: all var(--ft-transition-fast);
+}
+
+.bottom-tab-bar__more-link:hover {
+  color: var(--ft-text-primary);
+  background: color-mix(in srgb, var(--ft-primary-500) 10%, transparent);
+}
+
+.bottom-tab-bar__more-link[aria-current='page'] {
+  color: var(--ft-primary-400);
+  background: color-mix(in srgb, var(--ft-primary-500) 12%, transparent);
 }
 
 @media (width < 1024px) {

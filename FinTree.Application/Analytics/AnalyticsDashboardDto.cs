@@ -9,6 +9,7 @@ public readonly record struct AnalyticsDashboardDto(
     PeakDaysSummaryDto Peaks,
     IReadOnlyList<PeakDayDto> PeakDays,
     CategoryBreakdownDto Categories,
+    CategoryBreakdownDto IncomeCategories,
     SpendingBreakdownDto Spending,
     ForecastDto Forecast,
     AnalyticsReadinessDto Readiness);
@@ -16,7 +17,10 @@ public readonly record struct AnalyticsDashboardDto(
 public readonly record struct AnalyticsReadinessDto(
     bool HasForecastAndStabilityData,
     int ObservedExpenseDays,
-    int RequiredExpenseDays);
+    int RequiredExpenseDays,
+    bool HasStabilityDataForSelectedMonth,
+    int ObservedStabilityDaysInSelectedMonth,
+    int RequiredStabilityDays);
 
 public readonly record struct FinancialHealthSummaryDto(
     decimal? MonthIncome,
@@ -24,6 +28,9 @@ public readonly record struct FinancialHealthSummaryDto(
     decimal? MeanDaily,
     decimal? MedianDaily,
     decimal? StabilityIndex,
+    int? StabilityScore,
+    string? StabilityStatus,
+    string? StabilityActionCode,
     decimal? SavingsRate,
     decimal? NetCashflow,
     decimal? DiscretionaryTotal,
@@ -31,7 +38,8 @@ public readonly record struct FinancialHealthSummaryDto(
     decimal? MonthOverMonthChangePercent,
     decimal? LiquidAssets,
     decimal? LiquidMonths,
-    string? LiquidMonthsStatus);
+    string? LiquidMonthsStatus,
+    int? TotalMonthScore);
 
 public readonly record struct PeakDaysSummaryDto(
     int Count,

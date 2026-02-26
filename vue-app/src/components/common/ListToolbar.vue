@@ -1,5 +1,7 @@
 <script setup lang="ts">
+import IconField from 'primevue/iconfield'
 import InputText from 'primevue/inputtext'
+import InputIcon from 'primevue/inputicon'
 
 defineProps<{
   modelValue: 'active' | 'archived'
@@ -50,19 +52,20 @@ const handleSearchUpdate = (value: string | null | undefined) => {
       </button>
     </div>
 
-    <div class="list-toolbar__search ft-input-shell">
-      <i
+    <IconField class="list-toolbar__search ft-filter-search">
+      <InputIcon
         class="pi pi-search"
         aria-hidden="true"
       />
       <InputText
+        class="ft-filter-control"
         :model-value="searchText"
         :placeholder="searchPlaceholder ?? 'Поиск...'"
         autocomplete="off"
         aria-label="Поиск"
         @update:model-value="handleSearchUpdate"
       />
-    </div>
+    </IconField>
   </div>
 </template>
 
@@ -79,11 +82,12 @@ const handleSearchUpdate = (value: string | null | undefined) => {
   flex-shrink: 0;
   gap: var(--ft-space-2);
 
-  padding: var(--ft-space-1);
+  min-height: var(--ft-control-height);
+  padding: 0;
 
   background: var(--ft-surface-base);
-  border: 1px solid var(--ft-border-default);
   border-radius: var(--ft-radius-lg);
+  box-shadow: inset 0 0 0 1px var(--ft-border-default);
 }
 
 .list-toolbar__tab {
@@ -93,8 +97,8 @@ const handleSearchUpdate = (value: string | null | undefined) => {
   gap: var(--ft-space-2);
   align-items: center;
 
-  min-height: 44px;
-  padding: var(--ft-space-2) var(--ft-space-3);
+  min-height: var(--ft-control-height);
+  padding: 0 var(--ft-space-3);
 
   font-weight: var(--ft-font-medium);
   color: var(--ft-text-secondary);
@@ -119,10 +123,6 @@ const handleSearchUpdate = (value: string | null | undefined) => {
 }
 
 .list-toolbar__search {
-  --ft-input-shell-min-height: 36px;
-  --ft-input-shell-padding-x: var(--ft-space-1);
-  --ft-input-shell-padding-y: var(--ft-space-1);
-
   flex: 1;
   min-width: 200px;
 }

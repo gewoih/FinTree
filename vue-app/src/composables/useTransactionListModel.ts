@@ -209,7 +209,10 @@ export function useTransactionListModel(
     const sorted = [...enrichedTransactions.value].sort((a, b) => {
       const timeA = new Date(a.occurredAt).getTime()
       const timeB = new Date(b.occurredAt).getTime()
-      return timeB - timeA
+      if (timeB !== timeA) {
+        return timeB - timeA
+      }
+      return b.id.localeCompare(a.id)
     })
 
     return sorted.map((item, index) => {

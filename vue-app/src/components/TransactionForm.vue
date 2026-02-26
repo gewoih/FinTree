@@ -39,6 +39,17 @@ const emit = defineEmits<{
   'update:visible': [value: boolean];
 }>();
 
+const buildOccurredAtIso = (selectedDate: Date): string => {
+  const selectedDateMidnightUtcIso = toUtcDateOnlyIso(selectedDate);
+  const todayMidnightUtcIso = toUtcDateOnlyIso(new Date());
+
+  if (selectedDateMidnightUtcIso === todayMidnightUtcIso) {
+    return new Date().toISOString();
+  }
+
+  return selectedDateMidnightUtcIso;
+};
+
 // ---- Transaction form state ----
 const {
   store,
@@ -156,7 +167,7 @@ const { isSubmitting: isTxnSubmitting, handleSubmit: handleTxnSubmit, showWarnin
         accountId: selectedAccount.value!.id,
         categoryId: selectedCategory.value!.id,
         amount: amount.value!,
-        occurredAt: toUtcDateOnlyIso(txnDate.value),
+        occurredAt: buildOccurredAtIso(txnDate.value),
         description: txnDescription.value ? txnDescription.value.trim() : null,
         isMandatory: isMandatory.value,
       };
@@ -168,7 +179,7 @@ const { isSubmitting: isTxnSubmitting, handleSubmit: handleTxnSubmit, showWarnin
       accountId: selectedAccount.value!.id,
       categoryId: selectedCategory.value!.id,
       amount: amount.value!,
-      occurredAt: toUtcDateOnlyIso(txnDate.value),
+      occurredAt: buildOccurredAtIso(txnDate.value),
       description: txnDescription.value ? txnDescription.value.trim() : null,
       isMandatory: isMandatory.value,
     };
@@ -191,7 +202,7 @@ const { isSubmitting: isXferSubmitting, handleSubmit: handleXferSubmit } = useFo
         fromAmount: fromAmount.value!,
         toAmount: resolvedToAmount.value!,
         feeAmount: feeAmount.value ?? null,
-        occurredAt: toUtcDateOnlyIso(xferDate.value),
+        occurredAt: buildOccurredAtIso(xferDate.value),
         description: xferDescription.value ? xferDescription.value.trim() : null,
       };
       return await store.updateTransfer(payload);
@@ -203,7 +214,7 @@ const { isSubmitting: isXferSubmitting, handleSubmit: handleXferSubmit } = useFo
       fromAmount: fromAmount.value!,
       toAmount: resolvedToAmount.value!,
       feeAmount: feeAmount.value ?? null,
-      occurredAt: toUtcDateOnlyIso(xferDate.value),
+      occurredAt: buildOccurredAtIso(xferDate.value),
       description: xferDescription.value ? xferDescription.value.trim() : null,
     };
     return await store.createTransfer(payload);
@@ -829,6 +840,7 @@ const handleDelete = () => {
             label="Удалить"
             icon="pi pi-trash"
             variant="danger"
+            size="sm"
             :loading="isDeleting"
             :disabled="props.readonly || isSubmittingAny"
             @click="handleDelete"
@@ -850,6 +862,7 @@ const handleDelete = () => {
             type="button"
             label="Отмена"
             variant="secondary"
+            size="sm"
             :disabled="isDeleting || isSubmittingAny"
             @click="emit('update:visible', false)"
           />
@@ -858,6 +871,7 @@ const handleDelete = () => {
             type="submit"
             :label="isEditMode ? 'Обновить' : 'Сохранить'"
             icon="pi pi-check"
+            size="sm"
             :disabled="props.readonly || (isTransferMode ? xferSubmitDisabled : txnSubmitDisabled) || isDeleting"
             :loading="isTransferMode ? isXferSubmitting : isTxnSubmitting"
           />

@@ -3,6 +3,8 @@
 }
 
 .accounts__content {
+  display: flex;
+  flex-direction: column;
   gap: var(--ft-space-4);
 }
 

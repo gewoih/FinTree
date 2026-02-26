@@ -83,7 +83,7 @@ const baselineLabelPlugin = computed<Plugin<'line'>>(() => ({
 
     const { ctx } = chart;
     ctx.save();
-    ctx.font = `600 11px sans-serif`;
+    ctx.font = `600 11px Inter`;
     ctx.fillStyle = colors.baseline;
     ctx.textAlign = 'right';
     ctx.textBaseline = 'bottom';

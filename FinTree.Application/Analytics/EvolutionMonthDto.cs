@@ -6,9 +6,14 @@ public sealed record EvolutionMonthDto(
     bool HasData,
     decimal? SavingsRate,
     decimal? StabilityIndex,
+    int? StabilityScore,
+    string? StabilityStatus,
+    string? StabilityActionCode,
     decimal? DiscretionaryPercent,
     decimal? NetWorth,
     decimal? LiquidMonths,
     decimal? MeanDaily,
-    decimal? PeakDayRatio
+    decimal? PeakDayRatio,
+    decimal? PeakSpendSharePercent,
+    int? TotalMonthScore
 );

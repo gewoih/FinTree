@@ -3,6 +3,7 @@ import { ref } from 'vue';
 import CategoryDeltaCard from '../components/analytics/CategoryDeltaCard.vue';
 import EvolutionTab from '@/components/analytics/EvolutionTab.vue';
 import ForecastCard from '../components/analytics/ForecastCard.vue';
+import GlobalMonthScoreCard from '../components/analytics/GlobalMonthScoreCard.vue';
 import HealthScoreCard from '../components/analytics/HealthScoreCard.vue';
 import OnboardingStepper from '../components/analytics/OnboardingStepper.vue';
 import PeakDaysCard from '../components/analytics/PeakDaysCard.vue';
@@ -24,6 +25,7 @@ const {
   canNavigateNext,
   categoryChartData,
   categoryDelta,
+  categoryModeOptions,
   categoryScopeOptions,
   dashboardError,
   dashboardLoading,
@@ -33,6 +35,7 @@ const {
   forecastReadinessMessage,
   forecastSummary,
   granularityOptions,
+  globalMonthScore,
   healthCards,
   isAnalyticsReady,
   isFirstRun,
@@ -43,6 +46,7 @@ const {
   onboardingSteps,
   peakDays,
   peakSummary,
+  selectedCategoryMode,
   selectedCategoryScope,
   selectedGranularity,
   selectedMonth,
@@ -216,6 +220,30 @@ const bindMonthPickerRef = (instance: unknown) => {
           @retry="retryDashboard"
         />
 
+        <GlobalMonthScoreCard
+          class="analytics-grid__item analytics-grid__item--span-12"
+          :loading="dashboardLoading"
+          :error="dashboardError"
+          :model="globalMonthScore"
+          @retry="retryDashboard"
+        >
+          <template #factors>
+            <HealthScoreCard
+              v-for="card in healthCards"
+              :key="card.key"
+              :title="card.title"
+              :icon="card.icon"
+              :main-value="card.mainValue"
+              :main-label="card.mainLabel"
+              :secondary-value="card.secondaryValue"
+              :secondary-label="card.secondaryLabel"
+              :accent="card.accent"
+              :tooltip="card.tooltip"
+              subdued
+            />
+          </template>
+        </GlobalMonthScoreCard>
+
         <!-- Section 2: Two main charts -->
         <SpendingPieCard
           class="analytics-grid__item analytics-grid__item--span-6"
@@ -224,9 +252,12 @@ const bindMonthPickerRef = (instance: unknown) => {
           :chart-data="categoryChartData"
           :legend="filteredCategoryLegend"
           :currency="baseCurrency"
+          :mode="selectedCategoryMode"
+          :mode-options="categoryModeOptions"
           :scope="selectedCategoryScope"
           :scope-options="categoryScopeOptions"
           @retry="retryDashboard"
+          @update:mode="selectedCategoryMode = $event"
           @update:scope="selectedCategoryScope = $event"
           @select-category="handleCategorySelect"
         />
@@ -242,21 +273,6 @@ const bindMonthPickerRef = (instance: unknown) => {
           :currency="baseCurrency"
           @update:granularity="selectedGranularity = $event"
           @retry="retryDashboard"
-        />
-
-        <!-- Section 3: Health score cards -->
-        <HealthScoreCard
-          v-for="card in healthCards"
-          :key="card.key"
-          class="analytics-grid__item analytics-grid__item--span-3"
-          :title="card.title"
-          :icon="card.icon"
-          :main-value="card.mainValue"
-          :main-label="card.mainLabel"
-          :secondary-value="card.secondaryValue"
-          :secondary-label="card.secondaryLabel"
-          :accent="card.accent"
-          :tooltip="card.tooltip"
         />
 
         <!-- Section 4 & 5: Peak days + Category delta -->

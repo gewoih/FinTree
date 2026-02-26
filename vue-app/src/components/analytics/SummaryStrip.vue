@@ -122,10 +122,12 @@ const iconAccentClass = (accent: MetricAccent) => `summary-strip__icon--${accent
 <style scoped>
 .summary-strip {
   display: grid;
+  grid-auto-rows: 1fr;
   grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: var(--ft-space-4);
+  gap: var(--ft-space-3);
+  align-items: stretch;
 
-  padding: var(--ft-space-5);
+  padding: var(--ft-space-2);
 
   background: var(--ft-surface-base);
   border: 1px solid var(--ft-border-subtle);
@@ -135,10 +137,12 @@ const iconAccentClass = (accent: MetricAccent) => `summary-strip__icon--${accent
 
 .summary-strip__item {
   display: flex;
-  gap: var(--ft-space-3);
+  gap: var(--ft-space-2);
   align-items: center;
+  justify-content: center;
 
-  padding: var(--ft-space-3);
+  min-width: 0;
+  padding: var(--ft-space-2);
 
   border-radius: var(--ft-radius-xl);
 }
@@ -164,11 +168,10 @@ const iconAccentClass = (accent: MetricAccent) => `summary-strip__icon--${accent
   width: 44px;
   height: 44px;
 
-  font-size: 1.1rem;
+  font-size: var(--ft-text-base);
   color: var(--ft-text-secondary);
 
-  background: color-mix(in srgb, var(--ft-surface-raised) 80%, transparent);
-  border: 1px solid var(--ft-border-subtle);
+  background: var(--ft-surface-raised);
   border-radius: var(--ft-radius-lg);
 }
 
@@ -199,6 +202,7 @@ const iconAccentClass = (accent: MetricAccent) => `summary-strip__icon--${accent
 .summary-strip__text {
   display: grid;
   gap: 2px;
+  width: fit-content;
   min-width: 0;
 }
 
@@ -247,13 +251,16 @@ const iconAccentClass = (accent: MetricAccent) => `summary-strip__icon--${accent
 }
 
 .summary-strip__value {
+  min-width: 11ch;
   margin: 0;
 
   font-size: clamp(1.5rem, 2.5vw, 2rem);
+  font-feature-settings: 'tnum' 1;
   font-weight: var(--ft-font-bold);
   font-variant-numeric: tabular-nums;
   line-height: 1.15;
   color: var(--ft-text-primary);
+  white-space: nowrap;
 }
 
 .summary-strip__value--income {
@@ -303,7 +310,7 @@ const iconAccentClass = (accent: MetricAccent) => `summary-strip__icon--${accent
   .summary-strip {
     grid-template-columns: 1fr;
     gap: var(--ft-space-2);
-    padding: var(--ft-space-4);
+    padding: var(--ft-space-3);
   }
 
   .summary-strip__item {

@@ -1,5 +1,5 @@
 import type { AnalyticsReadinessDto } from '../types'
-import type { CategoryScope, ExpenseGranularity } from '../types/analytics'
+import type { CategoryDatasetMode, CategoryScope, ExpenseGranularity } from '../types/analytics'
 
 export const GRANULARITY_OPTIONS: Array<{ label: string; value: ExpenseGranularity }> = [
   { label: 'День', value: 'days' },
@@ -13,8 +13,16 @@ export const CATEGORY_SCOPE_OPTIONS: Array<{ label: string; value: CategoryScope
   { label: 'Необязательные', value: 'discretionary' }
 ]
 
+export const CATEGORY_MODE_OPTIONS: Array<{ label: string; value: CategoryDatasetMode }> = [
+  { label: 'Расходы', value: 'expenses' },
+  { label: 'Доходы', value: 'incomes' }
+]
+
 export const DEFAULT_ANALYTICS_READINESS: AnalyticsReadinessDto = {
   hasForecastAndStabilityData: false,
   observedExpenseDays: 0,
-  requiredExpenseDays: 7
+  requiredExpenseDays: 7,
+  hasStabilityDataForSelectedMonth: false,
+  observedStabilityDaysInSelectedMonth: 0,
+  requiredStabilityDays: 4,
 }

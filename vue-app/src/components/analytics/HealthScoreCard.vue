@@ -10,6 +10,7 @@ defineProps<{
   secondaryLabel?: string;
   accent: HealthAccent;
   tooltip: string;
+  subdued?: boolean;
 }>();
 
 const barClass = (accent: HealthAccent) => `health-score__bar--${accent}`;
@@ -17,7 +18,10 @@ const valueClass = (accent: HealthAccent) => `health-score__main-value--${accent
 </script>
 
 <template>
-  <div class="health-score">
+  <div
+    class="health-score"
+    :class="{ 'health-score--subdued': subdued }"
+  >
     <div class="health-score__header">
       <span
         class="health-score__icon"
@@ -82,7 +86,13 @@ const valueClass = (accent: HealthAccent) => `health-score__main-value--${accent
   background: var(--ft-surface-base);
   border: 1px solid var(--ft-border-subtle);
   border-radius: var(--ft-radius-xl);
-  box-shadow: var(--ft-shadow-sm);
+}
+
+.health-score--subdued {
+  gap: var(--ft-space-3);
+  padding: var(--ft-space-3);
+  background: var(--ft-surface-base);
+  box-shadow: none;
 }
 
 .health-score__header {
@@ -99,10 +109,10 @@ const valueClass = (accent: HealthAccent) => `health-score__main-value--${accent
   width: var(--ft-control-height);
   height: var(--ft-control-height);
 
-  font-size: 1.05rem;
+  font-size: var(--ft-text-base);
   color: var(--ft-text-secondary);
 
-  background: color-mix(in srgb, var(--ft-surface-raised) 80%, transparent);
+  background: var(--ft-surface-raised);
   border: 1px solid var(--ft-border-subtle);
   border-radius: var(--ft-radius-lg);
 }
@@ -130,6 +140,10 @@ const valueClass = (accent: HealthAccent) => `health-score__main-value--${accent
   font-size: var(--ft-text-base);
   font-weight: var(--ft-font-semibold);
   color: var(--ft-text-secondary);
+}
+
+.health-score--subdued .health-score__title {
+  font-size: var(--ft-text-sm);
 }
 
 .health-score__hint {
@@ -176,6 +190,10 @@ const valueClass = (accent: HealthAccent) => `health-score__main-value--${accent
   color: var(--ft-text-primary);
 }
 
+.health-score--subdued .health-score__main-value {
+  font-size: clamp(1.55rem, 2.2vw, 1.9rem);
+}
+
 .health-score__main-value--good {
   color: var(--ft-success-400);
 }
@@ -194,6 +212,10 @@ const valueClass = (accent: HealthAccent) => `health-score__main-value--${accent
   color: var(--ft-text-secondary);
 }
 
+.health-score--subdued .health-score__main-label {
+  font-size: var(--ft-text-xs);
+}
+
 .health-score__secondary {
   display: flex;
   gap: var(--ft-space-2);
@@ -206,6 +228,12 @@ const valueClass = (accent: HealthAccent) => `health-score__main-value--${accent
   border-top: 1px solid var(--ft-border-subtle);
 }
 
+.health-score--subdued .health-score__secondary {
+  padding-top: 0;
+  font-size: var(--ft-text-sm);
+  border-top: none;
+}
+
 .health-score__secondary-value {
   font-weight: var(--ft-font-semibold);
   color: var(--ft-text-primary);
@@ -214,6 +242,10 @@ const valueClass = (accent: HealthAccent) => `health-score__main-value--${accent
 .health-score__secondary-label {
   font-size: var(--ft-text-sm);
   color: var(--ft-text-secondary);
+}
+
+.health-score--subdued .health-score__secondary-label {
+  font-size: var(--ft-text-xs);
 }
 
 .health-score__bar {
@@ -226,6 +258,10 @@ const valueClass = (accent: HealthAccent) => `health-score__main-value--${accent
 
   background: var(--ft-border-subtle);
   border-radius: 0 0 var(--ft-radius-xl) var(--ft-radius-xl);
+}
+
+.health-score--subdued .health-score__bar {
+  height: 2px;
 }
 
 .health-score__bar--good {
@@ -246,14 +282,28 @@ const valueClass = (accent: HealthAccent) => `health-score__main-value--${accent
     padding: var(--ft-space-4);
   }
 
+  .health-score--subdued {
+    gap: var(--ft-space-2);
+    padding: var(--ft-space-3);
+  }
+
   .health-score__main-value {
     font-size: var(--ft-text-2xl);
+  }
+
+  .health-score--subdued .health-score__main-value {
+    font-size: clamp(1.45rem, 7vw, 1.75rem);
   }
 
   .health-score__icon {
     width: 44px;
     height: 44px;
     font-size: var(--ft-text-base);
+  }
+
+  .health-score--subdued .health-score__icon {
+    width: 40px;
+    height: 40px;
   }
 }
 </style>

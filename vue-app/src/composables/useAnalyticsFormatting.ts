@@ -49,26 +49,12 @@ export function useAnalyticsFormatting(baseCurrency: MaybeRef<string>) {
     return 'poor'
   }
 
-  const resolveStabilityStatus = (value: number | null): 'good' | 'average' | 'poor' | 'neutral' => {
-    if (value == null || Number.isNaN(value)) return 'neutral'
-    if (value <= 1.0) return 'good'
-    if (value <= 2.0) return 'average'
-    return 'poor'
-  }
-
   const resolveCushionStatus = (status: string | null): 'good' | 'average' | 'poor' | 'neutral' => {
     if (!status) return 'neutral'
     if (status === 'good') return 'good'
     if (status === 'average') return 'average'
     if (status === 'poor') return 'poor'
     return 'neutral'
-  }
-
-  const resolveStabilityLabel = (index: number | null): string => {
-    if (index == null || Number.isNaN(index)) return '—'
-    if (index <= 1.0) return 'Ваши расходы стабильны'
-    if (index <= 2.0) return 'Редкие всплески расходов'
-    return 'Частые всплески расходов'
   }
 
   const normalizeMonth = (date: Date): Date => {
@@ -133,9 +119,7 @@ export function useAnalyticsFormatting(baseCurrency: MaybeRef<string>) {
     formatSignedMoney,
     resolveSavingsStatus,
     resolveDiscretionaryStatus,
-    resolveStabilityStatus,
     resolveCushionStatus,
-    resolveStabilityLabel,
     normalizeMonth,
     addLocalMonths,
     getMonthRangeLocal,
