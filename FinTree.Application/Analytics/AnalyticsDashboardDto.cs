@@ -16,7 +16,10 @@ public readonly record struct AnalyticsDashboardDto(
 public readonly record struct AnalyticsReadinessDto(
     bool HasForecastAndStabilityData,
     int ObservedExpenseDays,
-    int RequiredExpenseDays);
+    int RequiredExpenseDays,
+    bool HasStabilityDataForSelectedMonth,
+    int ObservedStabilityDaysInSelectedMonth,
+    int RequiredStabilityDays);
 
 public readonly record struct FinancialHealthSummaryDto(
     decimal? MonthIncome,
@@ -24,6 +27,9 @@ public readonly record struct FinancialHealthSummaryDto(
     decimal? MeanDaily,
     decimal? MedianDaily,
     decimal? StabilityIndex,
+    int? StabilityScore,
+    string? StabilityStatus,
+    string? StabilityActionCode,
     decimal? SavingsRate,
     decimal? NetCashflow,
     decimal? DiscretionaryTotal,

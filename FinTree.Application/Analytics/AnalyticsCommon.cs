@@ -1,5 +1,4 @@
 using FinTree.Application.Exceptions;
-using FinTree.Domain.Transactions;
 
 namespace FinTree.Application.Analytics;
 
@@ -53,7 +52,7 @@ internal static class AnalyticsMath
             .Select(value => Math.Abs(value - medianDaily))
             .ToList();
         var mad = ComputeMedian(absoluteDeviations) ?? 0m;
-        var robustThreshold = medianDaily + (1.2m * mad);
+        var robustThreshold = medianDaily + 1.2m * mad;
 
         return Math.Max(p90, robustThreshold);
     }
@@ -79,27 +78,58 @@ internal static class AnalyticsMath
         return (q3.Value - q1.Value) / median.Value;
     }
 
+    public static string? ResolveStabilityStatus(decimal? stabilityIndex)
+    {
+        return stabilityIndex switch
+        {
+            null => null,
+            <= 1.0m => "good",
+            <= 2.0m => "average",
+            _ => "poor"
+        };
+    }
+
+    public static string? ResolveStabilityActionCode(string? stabilityStatus)
+        => stabilityStatus switch
+        {
+            "good" => "keep_routine",
+            "average" => "smooth_spikes",
+            "poor" => "cap_impulse_spend",
+            _ => null
+        };
+
+    public static int? ComputeStabilityScore(decimal? stabilityIndex)
+    {
+        if (!stabilityIndex.HasValue)
+            return null;
+
+        var index = stabilityIndex.Value;
+        var score = index switch
+        {
+            <= 1.0m => 100m - index * 30m,
+            <= 2.0m => 70m - (index - 1.0m) * 30m,
+            <= 4.0m => 40m - (index - 2.0m) * 20m,
+            _ => 0m
+        };
+
+        var clamped = Math.Clamp(score, 0m, 100m);
+        return (int)Math.Round(clamped, 0, MidpointRounding.AwayFromZero);
+    }
+
     public static string? ResolveLiquidStatus(decimal? liquidMonths)
     {
-        if (!liquidMonths.HasValue)
-            return null;
-        if (liquidMonths.Value > 6m)
-            return "good";
-        if (liquidMonths.Value >= 3m)
-            return "average";
-        return "poor";
+        return liquidMonths switch
+        {
+            null => null,
+            > 6m => "good",
+            >= 3m => "average",
+            _ => "poor"
+        };
     }
 }
 
 internal static class AnalyticsNormalization
 {
-    public static DateTime NormalizeUtc(DateTime value)
-    {
-        if (value.Kind == DateTimeKind.Unspecified)
-            return DateTime.SpecifyKind(value, DateTimeKind.Utc);
-        return value.ToUniversalTime();
-    }
-
     public static string NormalizeCurrencyCode(string value)
         => string.IsNullOrWhiteSpace(value) ? string.Empty : value.Trim().ToUpperInvariant();
 

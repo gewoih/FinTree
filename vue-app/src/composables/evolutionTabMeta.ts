@@ -2,7 +2,7 @@ import type { EvolutionMonthDto } from '@/types'
 
 export type EvolutionKpi =
   | 'savingsRate'
-  | 'stabilityIndex'
+  | 'stabilityScore'
   | 'discretionaryPercent'
   | 'netWorth'
   | 'liquidMonths'
@@ -12,7 +12,7 @@ export type EvolutionKpi =
 export type EvolutionRange = 6 | 12 | 0
 export type EvolutionKpiGroupId = 'balance' | 'stability' | 'capital'
 export type EvolutionDirection = 'higher-better' | 'lower-better'
-export type EvolutionValueKind = 'ratio' | 'percent' | 'currency' | 'months' | 'index'
+export type EvolutionValueKind = 'ratio' | 'percent' | 'currency' | 'months' | 'score'
 export type EvolutionDeltaTone = 'better' | 'worse' | 'neutral'
 
 export interface EvolutionKpiMeta {
@@ -38,6 +38,8 @@ export interface EvolutionKpiCardModel {
   currentValueLabel: string | null
   deltaLabel: string | null
   deltaTone: EvolutionDeltaTone | null
+  statusLabel: string | null
+  actionLabel: string | null
 }
 
 export interface EvolutionKpiGroupModel {
@@ -63,7 +65,7 @@ export const EVOLUTION_STORAGE_PREFIX = 'ft:evolution:visible-kpis:'
 
 export const EVOLUTION_KPI_ORDER: EvolutionKpi[] = [
   'savingsRate',
-  'stabilityIndex',
+  'stabilityScore',
   'discretionaryPercent',
   'netWorth',
   'liquidMonths',
@@ -73,7 +75,7 @@ export const EVOLUTION_KPI_ORDER: EvolutionKpi[] = [
 
 export const EVOLUTION_GROUPS: Array<{ id: EvolutionKpiGroupId; label: string }> = [
   { id: 'balance', label: 'Баланс доходов и расходов' },
-  { id: 'stability', label: 'Стабильность расходов' },
+  { id: 'stability', label: 'Стабильность трат' },
   { id: 'capital', label: 'Капитал и подушка' },
 ]
 
@@ -108,15 +110,15 @@ export const EVOLUTION_KPI_META: Record<EvolutionKpi, EvolutionKpiMeta> = {
     valueKind: 'currency',
     precision: 0,
   },
-  stabilityIndex: {
-    key: 'stabilityIndex',
-    label: 'Индекс стабильности',
+  stabilityScore: {
+    key: 'stabilityScore',
+    label: 'Стабильность трат',
     groupId: 'stability',
-    description: 'Насколько равномерны расходы по дням.',
-    directionHint: 'Цель: ниже',
-    direction: 'lower-better',
-    valueKind: 'index',
-    precision: 2,
+    description: 'Показывает, насколько ровно распределены траты по месяцу.',
+    directionHint: 'Цель: выше',
+    direction: 'higher-better',
+    valueKind: 'score',
+    precision: 0,
   },
   peakDayRatio: {
     key: 'peakDayRatio',
@@ -195,9 +197,10 @@ export function normalizeVisibleKpis(input: unknown): EvolutionKpi[] | null {
 
   for (const raw of input) {
     if (typeof raw !== 'string') continue
-    if (!EVOLUTION_KPI_ORDER.includes(raw as EvolutionKpi)) continue
+    const migratedKey = raw === 'stabilityIndex' ? 'stabilityScore' : raw
+    if (!EVOLUTION_KPI_ORDER.includes(migratedKey as EvolutionKpi)) continue
 
-    const key = raw as EvolutionKpi
+    const key = migratedKey as EvolutionKpi
     if (seen.has(key)) continue
 
     seen.add(key)
@@ -239,8 +242,8 @@ export function formatKpiValue(meta: EvolutionKpiMeta, value: number | null, cur
       return formatMoney(value, currencyCode, meta.precision)
     case 'months':
       return `${formatNumber(value, meta.precision)} мес.`
-    case 'index':
-      return formatNumber(value, meta.precision)
+    case 'score':
+      return `${formatNumber(value, meta.precision)}/100`
     default:
       return '—'
   }
@@ -261,8 +264,8 @@ export function formatKpiDelta(meta: EvolutionKpiMeta, delta: number | null, cur
       return `${sign}${formatMoney(absolute, currencyCode, meta.precision)}`
     case 'months':
       return `${sign}${formatNumber(absolute, meta.precision)} мес.`
-    case 'index':
-      return `${sign}${formatNumber(absolute, meta.precision)}`
+    case 'score':
+      return `${sign}${formatNumber(absolute, meta.precision)} п.`
     default:
       return null
   }

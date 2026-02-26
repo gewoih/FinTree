@@ -33,11 +33,8 @@ internal sealed class DashboardAnalyticsCalculator(
             .ToDictionary(c => c.Id, c => new CategoryMeta(c.Name, c.Color, c.IsMandatory));
 
         const int requiredExpenseDays = 7;
+        const int requiredStabilityDays = 4;
         var observedExpenseDays = await transactionsService.GetDistinctExpenseDaysCountAsync(ct);
-        var readiness = new AnalyticsReadinessDto(
-            observedExpenseDays >= requiredExpenseDays,
-            observedExpenseDays,
-            requiredExpenseDays);
 
         var transactions = await transactionsService.GetTransactionSnapshotsAsync(
             fromUtc: deltaWindowStartUtc,
@@ -149,13 +146,28 @@ internal sealed class DashboardAnalyticsCalculator(
             .Where(v => v > 0m)
             .ToList();
 
+        var observedStabilityDaysInSelectedMonth = positiveObservedDailyValues.Count;
+        var readiness = new AnalyticsReadinessDto(
+            observedExpenseDays >= requiredExpenseDays,
+            observedExpenseDays,
+            requiredExpenseDays,
+            observedStabilityDaysInSelectedMonth >= requiredStabilityDays,
+            observedStabilityDaysInSelectedMonth,
+            requiredStabilityDays);
+
         var meanDaily = observedDailyValues.Count > 0 ? observedDailyValues.Average() : (decimal?)null;
         var medianDaily = positiveObservedDailyValues.Count > 0
             ? AnalyticsMath.ComputeMedian(positiveObservedDailyValues)
             : null;
         var discretionaryDayValues = dailyTotalsDiscretionary.Values.Where(v => v > 0m).ToList();
         var peakMedianDaily = discretionaryDayValues.Count > 0 ? AnalyticsMath.ComputeMedian(discretionaryDayValues) : null;
-        var stabilityIndex = AnalyticsMath.ComputeStabilityIndex(positiveObservedDailyValues);
+        var stabilityIndexValue = AnalyticsMath.ComputeStabilityIndex(positiveObservedDailyValues);
+        var stabilityIndex = stabilityIndexValue.HasValue
+            ? AnalyticsMath.Round2(stabilityIndexValue.Value)
+            : (decimal?)null;
+        var stabilityStatus = AnalyticsMath.ResolveStabilityStatus(stabilityIndex);
+        var stabilityActionCode = AnalyticsMath.ResolveStabilityActionCode(stabilityStatus);
+        var stabilityScore = AnalyticsMath.ComputeStabilityScore(stabilityIndex);
 
         var netCashflow = totalIncome - totalExpenses;
         var savingsRate = totalIncome > 0m ? netCashflow / totalIncome : (decimal?)null;
@@ -211,7 +223,10 @@ internal sealed class DashboardAnalyticsCalculator(
             MonthTotal: AnalyticsMath.Round2(totalExpenses),
             MeanDaily: meanDaily.HasValue ? AnalyticsMath.Round2(meanDaily.Value) : null,
             MedianDaily: medianDaily.HasValue ? AnalyticsMath.Round2(medianDaily.Value) : null,
-            StabilityIndex: stabilityIndex.HasValue ? AnalyticsMath.Round2(stabilityIndex.Value) : null,
+            StabilityIndex: stabilityIndex,
+            StabilityScore: stabilityScore,
+            StabilityStatus: stabilityStatus,
+            StabilityActionCode: stabilityActionCode,
             SavingsRate: savingsRate,
             NetCashflow: AnalyticsMath.Round2(netCashflow),
             DiscretionaryTotal: AnalyticsMath.Round2(discretionaryTotal),

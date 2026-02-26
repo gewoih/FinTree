@@ -16,5 +16,8 @@ export const CATEGORY_SCOPE_OPTIONS: Array<{ label: string; value: CategoryScope
 export const DEFAULT_ANALYTICS_READINESS: AnalyticsReadinessDto = {
   hasForecastAndStabilityData: false,
   observedExpenseDays: 0,
-  requiredExpenseDays: 7
+  requiredExpenseDays: 7,
+  hasStabilityDataForSelectedMonth: false,
+  observedStabilityDaysInSelectedMonth: 0,
+  requiredStabilityDays: 4,
 }

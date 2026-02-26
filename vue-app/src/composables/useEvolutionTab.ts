@@ -5,6 +5,10 @@ import type { ViewState } from '@/types/view-state'
 import type { EvolutionMonthDto } from '@/types'
 import { resolveLatestDeltaPoint } from '@/composables/evolutionDeltaPoint'
 import {
+  resolveStabilityActionText,
+  resolveStabilityStatusLabel,
+} from '@/constants/stabilityInsight'
+import {
   EVOLUTION_GROUPS,
   EVOLUTION_KPI_META,
   EVOLUTION_KPI_ORDER,
@@ -193,6 +197,13 @@ export function useEvolutionTab() {
           const hasSeriesData = series.values.length > 0
           const latestPoint = resolveLatestPoint(kpi)
           const deltaTone = resolveDeltaTone(meta, latestPoint?.delta ?? null)
+          const isStabilityScore = kpi === 'stabilityScore'
+          const statusLabel = isStabilityScore && latestPoint
+            ? resolveStabilityStatusLabel(latestPoint.month.stabilityStatus)
+            : null
+          const actionLabel = isStabilityScore && latestPoint
+            ? resolveStabilityActionText(latestPoint.month.stabilityActionCode)
+            : null
 
           return {
             key: kpi,
@@ -210,6 +221,8 @@ export function useEvolutionTab() {
               : null,
             deltaLabel: formatKpiDelta(meta, latestPoint?.delta ?? null, baseCurrencyCode.value),
             deltaTone,
+            statusLabel,
+            actionLabel,
           }
         })
 

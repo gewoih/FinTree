@@ -189,12 +189,18 @@ export interface MonthlyExpenseDto {
     amount: number;
 }
 
+export type StabilityStatusCode = 'good' | 'average' | 'poor';
+export type StabilityActionCode = 'keep_routine' | 'smooth_spikes' | 'cap_impulse_spend';
+
 export interface FinancialHealthSummaryDto {
     monthIncome: number | null;
     monthTotal: number | null;
     meanDaily: number | null;
     medianDaily: number | null;
     stabilityIndex: number | null;
+    stabilityScore: number | null;
+    stabilityStatus: StabilityStatusCode | null;
+    stabilityActionCode: StabilityActionCode | null;
     savingsRate: number | null;
     netCashflow: number | null;
     discretionaryTotal: number | null;
@@ -284,6 +290,9 @@ export interface AnalyticsReadinessDto {
     hasForecastAndStabilityData: boolean;
     observedExpenseDays: number;
     requiredExpenseDays: number;
+    hasStabilityDataForSelectedMonth: boolean;
+    observedStabilityDaysInSelectedMonth: number;
+    requiredStabilityDays: number;
 }
 
 export interface AnalyticsDashboardDto {
@@ -384,6 +393,9 @@ export interface EvolutionMonthDto {
     hasData: boolean
     savingsRate: number | null
     stabilityIndex: number | null
+    stabilityScore: number | null
+    stabilityStatus: StabilityStatusCode | null
+    stabilityActionCode: StabilityActionCode | null
     discretionaryPercent: number | null
     netWorth: number | null
     liquidMonths: number | null

@@ -143,7 +143,7 @@ internal sealed class EvolutionAnalyticsCalculator(
             if (monthExpenses.Count == 0 && monthIncomeTransactions.Count == 0)
             {
                 result.Add(new EvolutionMonthDto(monthStart.Year, monthStart.Month, false,
-                    null, null, null, null, null, null, null));
+                    null, null, null, null, null, null, null, null, null, null));
                 continue;
             }
 
@@ -179,6 +179,9 @@ internal sealed class EvolutionAnalyticsCalculator(
             var stabilityIndex = stabilityIndexValue.HasValue
                 ? AnalyticsMath.Round2(stabilityIndexValue.Value)
                 : (decimal?)null;
+            var stabilityStatus = AnalyticsMath.ResolveStabilityStatus(stabilityIndex);
+            var stabilityActionCode = AnalyticsMath.ResolveStabilityActionCode(stabilityStatus);
+            var stabilityScore = AnalyticsMath.ComputeStabilityScore(stabilityIndex);
 
             decimal? peakDayRatio = null;
             if (dailyDiscretionary.Count >= 1)
@@ -214,6 +217,9 @@ internal sealed class EvolutionAnalyticsCalculator(
                 true,
                 savingsRate,
                 stabilityIndex,
+                stabilityScore,
+                stabilityStatus,
+                stabilityActionCode,
                 discretionaryPercent,
                 netWorth,
                 liquidMonths,
