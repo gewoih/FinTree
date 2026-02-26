@@ -173,10 +173,12 @@ onBeforeUnmount(() => {
 
 .bottom-tab-bar__item--button {
   cursor: pointer;
-  border: 0;
+
   font: inherit;
   text-align: inherit;
+
   background: transparent;
+  border: 0;
 }
 
 .bottom-tab-bar__item::before {
@@ -252,9 +254,9 @@ onBeforeUnmount(() => {
 
 .bottom-tab-bar__more-menu {
   position: absolute;
+  z-index: calc(var(--ft-z-sticky) + 2);
   right: var(--ft-space-2);
   bottom: calc(100% + var(--ft-space-2));
-  z-index: calc(var(--ft-z-sticky) + 2);
 
   display: flex;
   flex-direction: column;
@@ -283,6 +285,7 @@ onBeforeUnmount(() => {
   text-decoration: none;
 
   border-radius: var(--ft-radius-md);
+
   transition: all var(--ft-transition-fast);
 }
 

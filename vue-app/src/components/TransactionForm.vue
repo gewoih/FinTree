@@ -840,6 +840,7 @@ const handleDelete = () => {
             label="Удалить"
             icon="pi pi-trash"
             variant="danger"
+            size="sm"
             :loading="isDeleting"
             :disabled="props.readonly || isSubmittingAny"
             @click="handleDelete"
@@ -861,6 +862,7 @@ const handleDelete = () => {
             type="button"
             label="Отмена"
             variant="secondary"
+            size="sm"
             :disabled="isDeleting || isSubmittingAny"
             @click="emit('update:visible', false)"
           />
@@ -869,6 +871,7 @@ const handleDelete = () => {
             type="submit"
             :label="isEditMode ? 'Обновить' : 'Сохранить'"
             icon="pi pi-check"
+            size="sm"
             :disabled="props.readonly || (isTransferMode ? xferSubmitDisabled : txnSubmitDisabled) || isDeleting"
             :loading="isTransferMode ? isXferSubmitting : isTxnSubmitting"
           />
