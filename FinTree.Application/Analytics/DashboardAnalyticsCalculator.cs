@@ -57,6 +57,7 @@ internal sealed class DashboardAnalyticsCalculator(
         var totalIncome = 0m;
         var totalExpenses = 0m;
         var previousMonthExpenses = 0m;
+        var previousMonthIncome = 0m;
         var discretionaryTotal = 0m;
 
         foreach (var txn in transactions)
@@ -79,6 +80,10 @@ internal sealed class DashboardAnalyticsCalculator(
                     else
                         currentIncomeCategoryTotals[txn.CategoryId] = amount;
                 }
+
+                if (isPreviousMonth)
+                    previousMonthIncome += amount;
+
                 continue;
             }
 
@@ -181,6 +186,16 @@ internal sealed class DashboardAnalyticsCalculator(
             ? (totalExpenses - previousMonthExpenses) / previousMonthExpenses * 100
             : (decimal?)null;
 
+        var incomeMoM = previousMonthIncome > 0m
+            ? (totalIncome - previousMonthIncome) / previousMonthIncome * 100
+            : (decimal?)null;
+
+        var previousNetCashflow = previousMonthIncome - previousMonthExpenses;
+        // Use Math.Abs so the percentage sign reflects direction of change, not the sign of the previous cashflow.
+        var balanceMoM = previousNetCashflow != 0m
+            ? (netCashflow - previousNetCashflow) / Math.Abs(previousNetCashflow) * 100
+            : (decimal?)null;
+
         var peaks = peakMetricsService.Calculate(dailyTotalsDiscretionary, totalExpenses, daysInMonth);
 
         var categoryItems = currentExpenseCategoryTotals.Select(kv =>
@@ -264,7 +279,9 @@ internal sealed class DashboardAnalyticsCalculator(
             LiquidAssets: AnalyticsMath.Round2(liquidAssets),
             LiquidMonths: liquidMonths,
             LiquidMonthsStatus: liquidStatus,
-            TotalMonthScore: totalMonthScore);
+            TotalMonthScore: totalMonthScore,
+            IncomeMonthOverMonthChangePercent: incomeMoM,
+            BalanceMonthOverMonthChangePercent: balanceMoM);
 
         return new AnalyticsDashboardDto(
             year,

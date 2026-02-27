@@ -39,7 +39,9 @@ public readonly record struct FinancialHealthSummaryDto(
     decimal? LiquidAssets,
     decimal? LiquidMonths,
     string? LiquidMonthsStatus,
-    int? TotalMonthScore);
+    int? TotalMonthScore,
+    decimal? IncomeMonthOverMonthChangePercent,
+    decimal? BalanceMonthOverMonthChangePercent);
 
 public readonly record struct PeakDaysSummaryDto(
     int Count,

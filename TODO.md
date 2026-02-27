@@ -5,19 +5,7 @@
   **Context:** `npm run lint` reports 22 `@typescript-eslint/no-explicit-any` errors in `vue-app/src/main.ts` (lines 95–135). These pre-date FT-TODO-034 and block `--max-warnings=0` from passing cleanly.
   **Files:** `vue-app/src/main.ts`
 
----
-
 ## Analytics Page UX Improvements
-
-- [ ] `FT-TODO-033` Normalize month-over-month comparisons in SummaryStrip
-  **Context:** РАСХОДЫ already shows "X% к пред. месяцу" via `health.monthOverMonthChangePercent`. ДОХОД and БАЛАНС МЕСЯЦА show no trend comparison, making the strip inconsistent. Analytics and evolution must stay separate — the MoM values must come from the backend, not computed from evolution history on the frontend.
-  **Backend:** Add two new nullable fields to `FinancialHealthSummaryDto` (C# model + mapping):
-  - `incomeMonthOverMonthChangePercent: decimal?` — income this month vs previous month
-  - `balanceMonthOverMonthChangePercent: decimal?` — net cashflow this month vs previous month
-  These should follow the same calculation logic as the existing `monthOverMonthChangePercent` (expense MoM).
-  **Frontend:** Update `FinancialHealthSummaryDto` in `vue-app/src/types.ts` with the two new fields (nullable number). Then in `useAnalyticsPageMetrics.ts` → `summaryMetrics`, add `secondary` for `income` and `balance` using the same label format: `+X.X% к пред. месяцу`. Omit gracefully (`undefined`) when the field is null.
-  **Files:** Backend DTO + mapping, `vue-app/src/types.ts`, `vue-app/src/composables/useAnalyticsPageMetrics.ts`
-  **Acceptance criteria:** All 3 KPI cards show a MoM secondary line when previous-month data exists; no crash when it's the first month with data.
 
 - [ ] `FT-TODO-035` SpendingPieCard — group categories < 5% into expandable "Прочее"
   **Context:** Many categories have < 5% share, creating thin unreadable donut arcs. Users should see a clean chart, but still be able to drill into small categories.

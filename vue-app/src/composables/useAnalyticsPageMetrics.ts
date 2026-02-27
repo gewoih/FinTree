@@ -79,6 +79,12 @@ export function useAnalyticsPageMetrics(context: UseAnalyticsPageMetricsContext)
                 icon: 'pi pi-plus-circle',
                 accent: 'income' as const,
                 tooltip: 'Все доходы за выбранный месяц.',
+                secondary: (() => {
+                    const mom = health?.incomeMonthOverMonthChangePercent ?? null;
+                    return mom != null
+                        ? `${mom > 0 ? '+' : ''}${mom.toFixed(1)}% к пред. месяцу`
+                        : undefined;
+                })(),
             },
             {
                 key: 'expense',
@@ -88,9 +94,9 @@ export function useAnalyticsPageMetrics(context: UseAnalyticsPageMetricsContext)
                 accent: 'expense' as const,
                 tooltip: 'Все расходы за выбранный месяц.',
                 secondary: (() => {
-                    const momChange = health?.monthOverMonthChangePercent ?? null;
-                    return momChange != null
-                        ? `${momChange > 0 ? '+' : ''}${momChange.toFixed(1)}% к пред. месяцу`
+                    const mom = health?.monthOverMonthChangePercent ?? null;
+                    return mom != null
+                        ? `${mom > 0 ? '+' : ''}${mom.toFixed(1)}% к пред. месяцу`
                         : undefined;
                 })(),
             },
@@ -101,6 +107,12 @@ export function useAnalyticsPageMetrics(context: UseAnalyticsPageMetricsContext)
                 icon: 'pi pi-wallet',
                 accent: balanceAccent,
                 tooltip: 'Доходы минус расходы.',
+                secondary: (() => {
+                    const mom = health?.balanceMonthOverMonthChangePercent ?? null;
+                    return mom != null
+                        ? `${mom > 0 ? '+' : ''}${mom.toFixed(1)}% к пред. месяцу`
+                        : undefined;
+                })(),
             },
         ];
     });
