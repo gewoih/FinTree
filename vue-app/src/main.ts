@@ -1,7 +1,7 @@
 import './assets/design-tokens.css';
 import './style.css';
 import './styles/theme.css';
-import { createApp } from 'vue';
+import { createApp, type DirectiveBinding, type VNode } from 'vue';
 import { createPinia } from 'pinia';
 import App from './App.vue';
 import router from './router';
@@ -92,14 +92,37 @@ app.use(PrimeVue, {
 // synthetic mouse-event chain, and we do the toggle ourselves.
 // NOTE: Tooltip is a Vue directive object { beforeMount, updated, unmounted, ... },
 // not { methods: {...} } — methods live on per-element instances at el._$instances.
-const _origTooltipBeforeMount = (Tooltip as any).beforeMount;
-const _origTooltipUpdated = (Tooltip as any).updated;
-const _origTooltipUnmounted = (Tooltip as any).unmounted;
 
-function _ftBindTouch(el: any, binding: any): void {
+interface TooltipTarget extends HTMLElement {
+    $_ptooltipId?: string;
+    $_ptooltipHideDelay?: number;
+    $_ptooltipShowDelay?: number;
+    $_ftTouchEnd?: ((e: TouchEvent) => void) | null;
+}
+interface TooltipInstance {
+    getTarget(el: HTMLElement): TooltipTarget;
+    show(target: TooltipTarget, binding: DirectiveBinding, delay?: number): void;
+    hide(target: TooltipTarget, delay?: number): void;
+}
+interface TooltipEl extends HTMLElement {
+    $instance?: TooltipInstance;
+    $_ftTarget?: TooltipTarget;
+}
+type TooltipHook = (el: TooltipEl, binding: DirectiveBinding, vnode: VNode, prevVnode: VNode | null) => void;
+interface PatchableTooltip {
+    beforeMount?: TooltipHook;
+    updated?: TooltipHook;
+    unmounted?: TooltipHook;
+}
+
+const _origTooltipBeforeMount = (Tooltip as PatchableTooltip).beforeMount!;
+const _origTooltipUpdated = (Tooltip as PatchableTooltip).updated!;
+const _origTooltipUnmounted = (Tooltip as PatchableTooltip).unmounted!;
+
+function _ftBindTouch(el: TooltipEl, binding: DirectiveBinding): void {
     const instance = el.$instance;
     if (!instance) return;
-    const target: any = instance.getTarget(el);
+    const target: TooltipTarget = instance.getTarget(el);
     el.$_ftTarget = target;
     target.$_ftTouchEnd = (e: TouchEvent) => {
         e.preventDefault(); // suppress synthetic mouseenter + click
@@ -112,27 +135,27 @@ function _ftBindTouch(el: any, binding: any): void {
     target.addEventListener('touchend', target.$_ftTouchEnd, { passive: false });
 }
 
-function _ftUnbindTouch(el: any): void {
+function _ftUnbindTouch(el: TooltipEl): void {
     const target = el.$_ftTarget;
     if (target?.$_ftTouchEnd) {
         target.removeEventListener('touchend', target.$_ftTouchEnd);
         target.$_ftTouchEnd = null;
     }
-    el.$_ftTarget = null;
+    el.$_ftTarget = undefined;
 }
 
-(Tooltip as any).beforeMount = function (el: any, binding: any, vnode: any, prevVnode: any) {
+(Tooltip as PatchableTooltip).beforeMount = function (el: TooltipEl, binding: DirectiveBinding, vnode: VNode, prevVnode: VNode | null) {
     _origTooltipBeforeMount.call(this, el, binding, vnode, prevVnode);
     _ftBindTouch(el, binding);
 };
 
-(Tooltip as any).updated = function (el: any, binding: any, vnode: any, prevVnode: any) {
+(Tooltip as PatchableTooltip).updated = function (el: TooltipEl, binding: DirectiveBinding, vnode: VNode, prevVnode: VNode | null) {
     _ftUnbindTouch(el);
     _origTooltipUpdated.call(this, el, binding, vnode, prevVnode);
     _ftBindTouch(el, binding);
 };
 
-(Tooltip as any).unmounted = function (el: any, binding: any, vnode: any, prevVnode: any) {
+(Tooltip as PatchableTooltip).unmounted = function (el: TooltipEl, binding: DirectiveBinding, vnode: VNode, prevVnode: VNode | null) {
     _ftUnbindTouch(el);
     _origTooltipUnmounted.call(this, el, binding, vnode, prevVnode);
 };
