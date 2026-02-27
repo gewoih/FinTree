@@ -390,33 +390,93 @@ export const CATEGORY_ICON_OPTIONS = PRIME_ICON_VALUES.map(value => ({
 }));
 
 const INCOME_CATEGORY_ICON_VALUES = [
+  // Salary / employment
   'pi-briefcase',
   'pi-wallet',
-  'pi-dollar',
-  'pi-chart-line',
-  'pi-building-columns',
-  'pi-credit-card',
   'pi-money-bill',
-  'pi-verified',
-  'pi-gift',
+  'pi-dollar',
+  // Freelance / self-employed
+  'pi-desktop',
+  'pi-code',
+  'pi-pencil',
+  'pi-pen-to-square',
+  // Investments / finance
+  'pi-chart-line',
+  'pi-chart-bar',
+  'pi-building-columns',
+  'pi-percentage',
+  // Business
+  'pi-building',
+  'pi-shop',
+  'pi-truck',
+  // Crypto
+  'pi-bitcoin',
+  'pi-ethereum',
+  // Cashback / rewards / bonuses
   'pi-star',
+  'pi-star-fill',
+  'pi-sparkles',
+  'pi-verified',
+  // Gifts / transfers received
+  'pi-gift',
   'pi-arrow-down-left',
-  'pi-plus-circle',
+  // Rental income
+  'pi-home',
+  'pi-key',
+  // Prizes / achievements
+  'pi-trophy',
+  'pi-crown',
 ] as const;
 
 const EXPENSE_CATEGORY_ICON_VALUES = [
+  // Groceries / food shopping
   'pi-shopping-cart',
   'pi-shopping-bag',
-  'pi-home',
-  'pi-car',
+  'pi-shop',
+  // Café / dining out
+  'pi-face-smile',
+  // Health / pharmacy
   'pi-heart',
+  'pi-heart-fill',
+  'pi-wave-pulse',
+  'pi-plus-circle',
+  // Transport
+  'pi-car',
+  'pi-truck',
+  'pi-send',
+  // Housing / rent
+  'pi-home',
+  'pi-building',
+  'pi-key',
+  // Utilities
   'pi-bolt',
-  'pi-mobile',
-  'pi-ticket',
-  'pi-book',
+  'pi-wifi',
+  'pi-phone',
+  // Repairs / maintenance
   'pi-wrench',
+  'pi-hammer',
+  // Entertainment / leisure
+  'pi-ticket',
+  'pi-headphones',
+  'pi-video',
+  'pi-palette',
+  'pi-star',
+  // Education
+  'pi-book',
+  'pi-graduation-cap',
+  // Subscriptions
+  'pi-refresh',
+  'pi-mobile',
+  // Travel
+  'pi-globe',
+  'pi-map-marker',
+  // Bills / payments
+  'pi-credit-card',
   'pi-receipt',
-  'pi-arrow-up-right',
+  // Gifts / misc
+  'pi-gift',
+  'pi-tag',
+  'pi-percentage',
 ] as const;
 
 const buildCategoryIconOptions = (values: readonly string[]) =>

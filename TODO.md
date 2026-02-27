@@ -1,5 +1,2 @@
 - [ ] `FT-TODO-032` Split TransactionForm.vue into smaller units and remove temporary `max-lines` suppression
   **Acceptance criteria:** `src/components/TransactionForm.vue` no longer uses file-level `eslint-disable max-lines`; logic/template are extracted into focused child components or composables, and `npm run lint` passes without that suppression.
-
-- [ ] `FT-TODO-050` Curate highly specific everyday income/expense icon catalog for regular users
-  **Acceptance criteria:** category icon picker uses a curated everyday-finance catalog (Iconify-compatible) with clearly semantic icons for common real-life transactions (e.g., groceries, pharmacy, transport, rent, utilities, salary, freelance, cashback, gifts); income and expense pickers each provide broad non-generic coverage; mandatory categories keep at least one explicit semantic icon option; legacy saved `pi-*` icons remain visible/editable without migration.
