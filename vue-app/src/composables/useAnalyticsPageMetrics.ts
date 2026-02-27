@@ -215,20 +215,6 @@ export function useAnalyticsPageMetrics(context: UseAnalyticsPageMetricsContext)
         });
     }
 
-    function handlePeakSummarySelect() {
-        if (!peakDays.value.length) return;
-        const dates = peakDays.value.map((item) => item.date.getTime());
-        const minDate = new Date(Math.min(...dates));
-        const maxDate = new Date(Math.max(...dates));
-        void router.push({
-            name: 'transactions',
-            query: {
-                from: formatDateQuery(minDate),
-                to: formatDateQuery(maxDate),
-            },
-        });
-    }
-
     const categoryLegend = computed<CategoryLegendItem[]>(() => {
         const items = selectedCategoryMode.value === 'incomes'
             ? dashboard.value?.incomeCategories?.items ?? []
@@ -459,6 +445,5 @@ export function useAnalyticsPageMetrics(context: UseAnalyticsPageMetricsContext)
         summaryMetrics,
         handleCategorySelect,
         handlePeakSelect,
-        handlePeakSummarySelect,
     };
 }

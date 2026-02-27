@@ -20,12 +20,3 @@
      - `watch([mode, scope], () => isOtherExpanded.value = false)` to reset on filter change
   **Files:** `vue-app/src/types/analytics.ts`, `vue-app/src/composables/useAnalyticsPageMetrics.ts`, `vue-app/src/components/analytics/SpendingPieCard.vue`
   **Acceptance criteria:** Months with many small categories show a grey "Прочее" arc. Clicking "Прочее" in legend expands sub-items. Clicking a sub-item navigates to that category's transactions. Switching mode/scope collapses the expansion.
-
-- [ ] `FT-TODO-036` PeakDaysCard — make summary non-interactive, keep only day-row clicks
-  **Context:** The summary block (showing total peak share %) is currently a clickable button that navigates to transactions covering all peak days. This is confusing — the individual day rows already handle per-day navigation. The summary should be informational only.
-  **Implementation:**
-  - `PeakDaysCard.vue`: change the summary element from a `<button>` to a `<div>`. Remove its `@click` handler and any cursor/hover styles.
-  - `AnalyticsPage.vue`: remove the `@select-peak-summary="handlePeakSummarySelect"` binding (event no longer emitted).
-  - The colored accent (≤10% green / ≤25% amber / >25% red) and all displayed values stay unchanged — only interactivity is removed.
-  **Files:** `vue-app/src/components/analytics/PeakDaysCard.vue`, `vue-app/src/pages/AnalyticsPage.vue`
-  **Acceptance criteria:** Summary block is not clickable and shows no hover/pointer cursor. Individual day rows still navigate to transactions on click.

@@ -36,7 +36,6 @@ const props = withDefaults(
 const emit = defineEmits<{
   (event: 'retry'): void;
   (event: 'select-peak', value: PeakDayItem): void;
-  (event: 'select-peak-summary'): void;
 }>();
 
 const showAll = ref(false);
@@ -126,17 +125,14 @@ const shareAccent = computed(() => {
     </div>
 
     <template v-else>
-      <button
-        type="button"
+      <div
         class="peak-days__summary"
         :class="`peak-days__summary--${shareAccent}`"
-        :aria-label="`${summary.shareLabel} расходов в пиковые дни: ${summary.count} дней, ${summary.totalLabel} из ${summary.monthLabel}`"
-        @click="emit('select-peak-summary')"
       >
         <span class="peak-days__share-value">{{ summary.shareLabel }}</span>
         <span class="peak-days__share-text">расходов в пиковые дни</span>
         <span class="peak-days__share-meta">{{ summary.count }} дней &middot; {{ summary.totalLabel }} из {{ summary.monthLabel }}</span>
-      </button>
+      </div>
 
       <div class="peak-days__list">
         <button
@@ -257,30 +253,15 @@ const shareAccent = computed(() => {
 }
 
 .peak-days__summary {
-  cursor: pointer;
-
   display: grid;
   gap: var(--ft-space-1);
 
   width: 100%;
   padding: var(--ft-space-3);
 
-  text-align: left;
-
   background: color-mix(in srgb, var(--ft-surface-raised) 60%, transparent);
   border: 1px solid var(--ft-border-subtle);
   border-radius: var(--ft-radius-lg);
-
-  transition: border-color var(--ft-transition-fast);
-}
-
-.peak-days__summary:hover {
-  border-color: color-mix(in srgb, var(--ft-border-strong) 50%, transparent);
-}
-
-.peak-days__summary:focus-visible {
-  outline: 2px solid color-mix(in srgb, var(--ft-primary-500) 55%, transparent);
-  outline-offset: 2px;
 }
 
 .peak-days__share-value {

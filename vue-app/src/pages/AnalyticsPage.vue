@@ -56,7 +56,6 @@ const {
   goToPreviousMonth,
   handleCategorySelect,
   handlePeakSelect,
-  handlePeakSummarySelect,
   handleSkipOnboarding,
   handleStepClick,
   openMonthPicker,
@@ -292,7 +291,6 @@ const bindMonthPickerRef = (instance: unknown) => {
           :summary="peakSummary"
           @retry="retryDashboard"
           @select-peak="handlePeakSelect"
-          @select-peak-summary="handlePeakSummarySelect"
         />
 
         <CategoryDeltaCard
