@@ -85,6 +85,58 @@ app.use(PrimeVue, {
     },
 });
 
+// Patch PrimeVue Tooltip for touch devices.
+// Root cause: PrimeVue always binds mouseenter→show and click→hide. On a touch
+// tap the browser synthesises both in sequence, so the tooltip shows then
+// immediately hides. Calling preventDefault() on touchend suppresses the entire
+// synthetic mouse-event chain, and we do the toggle ourselves.
+// NOTE: Tooltip is a Vue directive object { beforeMount, updated, unmounted, ... },
+// not { methods: {...} } — methods live on per-element instances at el._$instances.
+const _origTooltipBeforeMount = (Tooltip as any).beforeMount;
+const _origTooltipUpdated = (Tooltip as any).updated;
+const _origTooltipUnmounted = (Tooltip as any).unmounted;
+
+function _ftBindTouch(el: any, binding: any): void {
+    const instance = el.$instance;
+    if (!instance) return;
+    const target: any = instance.getTarget(el);
+    el.$_ftTarget = target;
+    target.$_ftTouchEnd = (e: TouchEvent) => {
+        e.preventDefault(); // suppress synthetic mouseenter + click
+        if (target.$_ptooltipId) {
+            instance.hide(target, target.$_ptooltipHideDelay);
+        } else {
+            instance.show(target, binding, target.$_ptooltipShowDelay);
+        }
+    };
+    target.addEventListener('touchend', target.$_ftTouchEnd, { passive: false });
+}
+
+function _ftUnbindTouch(el: any): void {
+    const target = el.$_ftTarget;
+    if (target?.$_ftTouchEnd) {
+        target.removeEventListener('touchend', target.$_ftTouchEnd);
+        target.$_ftTouchEnd = null;
+    }
+    el.$_ftTarget = null;
+}
+
+(Tooltip as any).beforeMount = function (el: any, binding: any, vnode: any, prevVnode: any) {
+    _origTooltipBeforeMount.call(this, el, binding, vnode, prevVnode);
+    _ftBindTouch(el, binding);
+};
+
+(Tooltip as any).updated = function (el: any, binding: any, vnode: any, prevVnode: any) {
+    _ftUnbindTouch(el);
+    _origTooltipUpdated.call(this, el, binding, vnode, prevVnode);
+    _ftBindTouch(el, binding);
+};
+
+(Tooltip as any).unmounted = function (el: any, binding: any, vnode: any, prevVnode: any) {
+    _ftUnbindTouch(el);
+    _origTooltipUnmounted.call(this, el, binding, vnode, prevVnode);
+};
+
 app.directive('tooltip', Tooltip);
 
 registerComponents(app);
