@@ -201,6 +201,6 @@ internal sealed class LiquidityMonthsService(
         if (monthlyExpense <= 0m)
             return 0m;
 
-        return Math.Round(liquidAssets / monthlyExpense, 2, MidpointRounding.AwayFromZero);
+        return Math.Max(0m, Math.Round(liquidAssets / monthlyExpense, 2, MidpointRounding.AwayFromZero));
     }
 }
