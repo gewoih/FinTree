@@ -14,11 +14,13 @@ const props = withDefaults(defineProps<{
   forecast: ForecastSummary | null;
   chartData: ChartData<'line', Array<number | null>, string> | null;
   currency: string;
+  isCurrentMonth?: boolean;
   readinessMet?: boolean;
   readinessMessage?: string;
   observedExpenseDays?: number;
   requiredExpenseDays?: number;
 }>(), {
+  isCurrentMonth: true,
   readinessMet: true,
   readinessMessage: 'Недостаточно данных, продолжайте добавлять транзакции',
   observedExpenseDays: 0,
@@ -31,15 +33,21 @@ const emit = defineEmits<{
 
 const { colors, tooltipConfig } = useChartColors();
 
+const hasActualData = computed(() =>
+  (props.chartData?.datasets[0]?.data as Array<number | null> | undefined)
+    ?.some((v) => v != null) ?? false
+);
+
+const hasForecast = computed(
+  () => props.forecast?.optimisticTotal != null && props.forecast?.riskTotal != null
+);
+
 const showEmpty = computed(
   () =>
     props.readinessMet &&
     !props.loading &&
     !props.error &&
-    (!props.forecast ||
-      props.forecast.forecastTotal == null ||
-      props.forecast.currentSpent == null ||
-      !props.chartData)
+    (!props.chartData || !hasActualData.value)
 );
 
 const fmt = (value: number | null | undefined) => {
@@ -51,19 +59,12 @@ const fmt = (value: number | null | undefined) => {
   });
 };
 
-const formattedForecast = computed(() => fmt(props.forecast?.forecastTotal));
-const formattedOptimistic = computed(() => fmt(props.forecast?.optimisticTotal));
-const formattedRisk = computed(() => fmt(props.forecast?.riskTotal));
+const formattedRange = computed(() =>
+  `${fmt(props.forecast?.optimisticTotal)} — ${fmt(props.forecast?.riskTotal)}`
+);
+const formattedActual = computed(() => fmt(props.forecast?.currentSpent));
 const formattedLimit = computed(() => fmt(props.forecast?.baselineLimit));
 const hasBaseline = computed(() => props.forecast?.baselineLimit != null);
-
-const heroClass = computed(() => {
-  switch (props.forecast?.status) {
-    case 'average': return 'forecast-hero--average';
-    case 'poor': return 'forecast-hero--poor';
-    default: return null;
-  }
-});
 
 const baselineLabelPlugin = computed<Plugin<'line'>>(() => ({
   id: 'baselineLabel',
@@ -107,6 +108,7 @@ const chartOptions = computed(() => ({
       },
     },
     y: {
+      beginAtZero: false,
       grid: { color: colors.grid, drawBorder: false },
       ticks: {
         color: colors.text,
@@ -152,7 +154,7 @@ const chartOptions = computed(() => ({
           Прогноз расходов
         </h3>
         <button
-          v-tooltip="{ value: 'Оценка расходов до конца месяца на основе текущего темпа трат. Три сценария: оптимистичный, базовый и рисковый.', event: 'click', autoHide: false }"
+          v-tooltip="{ value: 'Прогноз расходов до конца месяца на основе исторического темпа трат. Коридор показывает диапазон вероятных итогов.', event: 'click', autoHide: false }"
           type="button"
           class="forecast-card__hint"
           aria-label="Подсказка"
@@ -173,35 +175,21 @@ const chartOptions = computed(() => ({
           width="260px"
           height="44px"
         />
-        <div class="forecast-card__loading-secondary">
-          <Skeleton
-            width="110px"
-            height="36px"
-          />
-          <Skeleton
-            width="110px"
-            height="36px"
-          />
-        </div>
       </div>
 
       <div
         v-else-if="!error && readinessMet && !showEmpty"
         class="forecast-kpi"
       >
-        <div :class="['forecast-hero', heroClass]">
-          <span class="forecast-hero__label">Реалистичный сценарий</span>
-          <span class="forecast-hero__value">{{ formattedForecast }}</span>
-        </div>
-        <div class="forecast-secondary">
-          <div class="forecast-stat forecast-stat--optimistic">
-            <span class="forecast-stat__label">Оптимистичный</span>
-            <span class="forecast-stat__value">{{ formattedOptimistic }}</span>
-          </div>
-          <div class="forecast-stat forecast-stat--risk">
-            <span class="forecast-stat__label">Риск</span>
-            <span class="forecast-stat__value">{{ formattedRisk }}</span>
-          </div>
+        <div class="forecast-hero">
+          <template v-if="hasForecast">
+            <span class="forecast-hero__label">Прогноз до конца месяца</span>
+            <span class="forecast-hero__value">{{ formattedRange }}</span>
+          </template>
+          <template v-else>
+            <span class="forecast-hero__label">Итого за месяц</span>
+            <span class="forecast-hero__value">{{ formattedActual }}</span>
+          </template>
         </div>
       </div>
     </div>
@@ -209,7 +197,7 @@ const chartOptions = computed(() => ({
     <Skeleton
       v-if="loading"
       width="100%"
-      height="300px"
+      height="280px"
       border-radius="16px"
     />
 
@@ -302,16 +290,8 @@ const chartOptions = computed(() => ({
           Факт
         </span>
         <span class="forecast-legend__item">
-          <span class="forecast-legend__line forecast-legend__line--forecast" />
-          Прогноз
-        </span>
-        <span class="forecast-legend__item">
-          <span class="forecast-legend__line forecast-legend__line--optimistic" />
-          Оптимистичный
-        </span>
-        <span class="forecast-legend__item">
-          <span class="forecast-legend__line forecast-legend__line--risk" />
-          Риск
+          <span class="forecast-legend__band forecast-legend__band--corridor" />
+          Коридор прогноза
         </span>
         <span
           v-if="hasBaseline"

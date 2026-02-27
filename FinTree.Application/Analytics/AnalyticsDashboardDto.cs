@@ -91,17 +91,14 @@ public readonly record struct ForecastDto(
     ForecastSeriesDto Series);
 
 public readonly record struct ForecastSummaryDto(
-    decimal? ForecastTotal,
     decimal? OptimisticTotal,
     decimal? RiskTotal,
     decimal? CurrentSpent,
-    decimal? BaselineLimit,
-    string? Status);
+    decimal? BaselineLimit);
 
 public readonly record struct ForecastSeriesDto(
     IReadOnlyList<int> Days,
     IReadOnlyList<decimal?> Actual,
     IReadOnlyList<decimal?> Optimistic,
-    IReadOnlyList<decimal?> Forecast,
     IReadOnlyList<decimal?> Risk,
     decimal? Baseline);
