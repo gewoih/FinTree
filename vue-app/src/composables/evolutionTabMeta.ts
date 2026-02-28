@@ -5,21 +5,18 @@ export type EvolutionKpi =
   | 'savingsRate'
   | 'stabilityScore'
   | 'discretionaryPercent'
-  | 'netWorth'
   | 'liquidMonths'
-  | 'meanDaily'
   | 'peakDayRatio'
 
 export type EvolutionRange = 6 | 12 | 0
-export type EvolutionKpiGroupId = 'balance' | 'stability' | 'capital'
 export type EvolutionDirection = 'higher-better' | 'lower-better'
 export type EvolutionValueKind = 'ratio' | 'percent' | 'currency' | 'months' | 'score'
 export type EvolutionDeltaTone = 'better' | 'worse' | 'neutral'
+export type EvolutionTrendVerdict = 'growing' | 'declining' | 'stable'
 
 export interface EvolutionKpiMeta {
   key: EvolutionKpi
   label: string
-  groupId: EvolutionKpiGroupId
   description: string
   directionHint: string
   direction: EvolutionDirection
@@ -41,12 +38,7 @@ export interface EvolutionKpiCardModel {
   deltaTone: EvolutionDeltaTone | null
   statusLabel: string | null
   actionLabel: string | null
-}
-
-export interface EvolutionKpiGroupModel {
-  id: EvolutionKpiGroupId
-  label: string
-  cards: EvolutionKpiCardModel[]
+  trendVerdict: EvolutionTrendVerdict | null
 }
 
 export interface EvolutionTableCellModel {
@@ -62,30 +54,19 @@ export interface EvolutionTableRowModel {
   cells: EvolutionTableCellModel[]
 }
 
-export const EVOLUTION_STORAGE_PREFIX = 'ft:evolution:v2:visible-kpis:'
-
 export const EVOLUTION_KPI_ORDER: EvolutionKpi[] = [
   'totalMonthScore',
   'savingsRate',
   'stabilityScore',
   'discretionaryPercent',
-  'netWorth',
   'liquidMonths',
-  'meanDaily',
   'peakDayRatio',
-]
-
-export const EVOLUTION_GROUPS: Array<{ id: EvolutionKpiGroupId; label: string }> = [
-  { id: 'balance', label: 'Баланс доходов и расходов' },
-  { id: 'stability', label: 'Стабильность трат' },
-  { id: 'capital', label: 'Капитал и подушка' },
 ]
 
 export const EVOLUTION_KPI_META: Record<EvolutionKpi, EvolutionKpiMeta> = {
   totalMonthScore: {
     key: 'totalMonthScore',
     label: 'Общий рейтинг месяца',
-    groupId: 'balance',
     description: 'Итоговый взвешенный балл за месяц по ключевым финансовым метрикам.',
     directionHint: 'Цель: выше',
     direction: 'higher-better',
@@ -95,7 +76,6 @@ export const EVOLUTION_KPI_META: Record<EvolutionKpi, EvolutionKpiMeta> = {
   savingsRate: {
     key: 'savingsRate',
     label: 'Норма сбережений',
-    groupId: 'balance',
     description: 'Сколько дохода остаётся после всех расходов.',
     directionHint: 'Цель: выше',
     direction: 'higher-better',
@@ -105,27 +85,15 @@ export const EVOLUTION_KPI_META: Record<EvolutionKpi, EvolutionKpiMeta> = {
   discretionaryPercent: {
     key: 'discretionaryPercent',
     label: 'Необязательные расходы',
-    groupId: 'balance',
     description: 'Доля необязательных трат в общих расходах.',
     directionHint: 'Цель: ниже',
     direction: 'lower-better',
     valueKind: 'percent',
     precision: 1,
   },
-  meanDaily: {
-    key: 'meanDaily',
-    label: 'Средние расходы в день',
-    groupId: 'balance',
-    description: 'Средний размер дневных расходов за месяц.',
-    directionHint: 'Цель: ниже',
-    direction: 'lower-better',
-    valueKind: 'currency',
-    precision: 0,
-  },
   stabilityScore: {
     key: 'stabilityScore',
     label: 'Стабильность трат',
-    groupId: 'stability',
     description: 'Показывает, насколько ровно распределены траты по месяцу.',
     directionHint: 'Цель: выше',
     direction: 'higher-better',
@@ -135,27 +103,15 @@ export const EVOLUTION_KPI_META: Record<EvolutionKpi, EvolutionKpiMeta> = {
   peakDayRatio: {
     key: 'peakDayRatio',
     label: 'Доля пиковых дней',
-    groupId: 'stability',
     description: 'Процент дней с аномально высокими расходами.',
     directionHint: 'Цель: ниже',
     direction: 'lower-better',
     valueKind: 'percent',
     precision: 1,
   },
-  netWorth: {
-    key: 'netWorth',
-    label: 'Чистый капитал',
-    groupId: 'capital',
-    description: 'Сумма активов за вычетом обязательств.',
-    directionHint: 'Цель: выше',
-    direction: 'higher-better',
-    valueKind: 'currency',
-    precision: 0,
-  },
   liquidMonths: {
     key: 'liquidMonths',
     label: 'Финансовая подушка',
-    groupId: 'capital',
     description: 'На сколько месяцев хватит ликвидных средств.',
     directionHint: 'Цель: выше',
     direction: 'higher-better',
@@ -199,31 +155,6 @@ export function extractKpiValue(month: EvolutionMonthDto | null | undefined, key
   if (!month || !month.hasData) return null
   const value = month[key]
   return value == null ? null : Number(value)
-}
-
-export function normalizeVisibleKpis(input: unknown): EvolutionKpi[] | null {
-  if (!Array.isArray(input)) return null
-
-  const seen = new Set<EvolutionKpi>()
-  const normalized: EvolutionKpi[] = []
-
-  for (const raw of input) {
-    if (typeof raw !== 'string') continue
-    const migratedKey = raw === 'stabilityIndex' ? 'stabilityScore' : raw
-    if (!EVOLUTION_KPI_ORDER.includes(migratedKey as EvolutionKpi)) continue
-
-    const key = migratedKey as EvolutionKpi
-    if (seen.has(key)) continue
-
-    seen.add(key)
-    normalized.push(key)
-  }
-
-  if (input.length > 0 && normalized.length === 0) {
-    return [...EVOLUTION_KPI_ORDER]
-  }
-
-  return normalized
 }
 
 function formatNumber(value: number, fractionDigits: number): string {
@@ -292,4 +223,17 @@ export function resolveDeltaTone(meta: EvolutionKpiMeta, delta: number | null): 
   }
 
   return delta < 0 ? 'better' : 'worse'
+}
+
+export function resolveTrendVerdict(values: Array<number | null>): EvolutionTrendVerdict | null {
+  const nonNull = values.filter((v): v is number => v != null)
+  if (nonNull.length < 2) return null
+
+  const last = nonNull.at(-1)!
+  const anchor = nonNull.length >= 3 ? nonNull.at(-3)! : nonNull.at(0)!
+  const slope = last - anchor
+
+  if (slope > 5) return 'growing'
+  if (slope < -5) return 'declining'
+  return 'stable'
 }

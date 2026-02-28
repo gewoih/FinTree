@@ -8,13 +8,14 @@ import {
   type EvolutionKpiCardModel,
   type EvolutionDeltaTone,
   type EvolutionValueKind,
+  type EvolutionTrendVerdict,
 } from '@/composables/useEvolutionTab'
 import { useChartColors } from '@/composables/useChartColors'
 
 const props = defineProps<{
   card: EvolutionKpiCardModel
   currencyCode: string
-  renderChart: boolean
+  hero?: boolean
 }>()
 
 const { colors, tooltipConfig } = useChartColors()
@@ -62,17 +63,26 @@ function getSeriesColor(kpi: EvolutionKpi): string {
       return colors.palette[1] ?? colors.primary
     case 'discretionaryPercent':
       return colors.palette[2] ?? colors.primary
-    case 'netWorth':
-      return colors.palette[3] ?? colors.primary
     case 'liquidMonths':
-      return colors.palette[4] ?? colors.optimistic
-    case 'meanDaily':
-      return colors.forecast
+      return colors.palette[3] ?? colors.optimistic
     case 'peakDayRatio':
       return colors.risk
     default:
       return colors.primary
   }
+}
+
+function withAlpha(color: string, alpha: number): string {
+  const hexMatch = color.match(/^#([0-9a-f]{6})$/i)
+  if (hexMatch) {
+    const a = Math.round(alpha * 255).toString(16).padStart(2, '0')
+    return `${color}${a}`
+  }
+  const rgbMatch = color.match(/^rgb\((\d+),\s*(\d+),\s*(\d+)\)$/)
+  if (rgbMatch) {
+    return `rgba(${rgbMatch[1]}, ${rgbMatch[2]}, ${rgbMatch[3]}, ${alpha})`
+  }
+  return color
 }
 
 const chartData = computed(() => {
@@ -84,11 +94,13 @@ const chartData = computed(() => {
       {
         data: props.card.values,
         borderColor: seriesColor,
-        backgroundColor: seriesColor,
-        borderWidth: 1,
-        borderRadius: 8,
-        maxBarThickness: 44,
-        minBarLength: 4,
+        backgroundColor: props.hero ? withAlpha(seriesColor, 0.15) : seriesColor,
+        borderWidth: props.hero ? 2 : 1.5,
+        tension: props.hero ? 0.4 : 0.3,
+        pointRadius: props.hero ? 4 : 3,
+        pointHoverRadius: props.hero ? 7 : 5,
+        pointBackgroundColor: seriesColor,
+        fill: props.hero ? true : false,
       },
     ],
   }
@@ -133,7 +145,7 @@ const chartOptions = computed(() => {
       tooltip: {
         ...tooltipConfig(),
         callbacks: {
-          label(context: TooltipItem<'bar'>) {
+          label(context: TooltipItem<'line'>) {
             const raw = context.parsed.y
             if (raw == null || Number.isNaN(raw)) {
               return `${meta.label}: —`
@@ -152,10 +164,25 @@ function deltaClass(tone: EvolutionDeltaTone | null): string {
   if (tone === 'worse') return 'evolution-delta--worse'
   return 'evolution-delta--neutral'
 }
+
+function verdictClass(verdict: EvolutionTrendVerdict): string {
+  if (verdict === 'growing') return 'evolution-verdict--growing'
+  if (verdict === 'declining') return 'evolution-verdict--declining'
+  return 'evolution-verdict--stable'
+}
+
+function verdictLabel(verdict: EvolutionTrendVerdict): string {
+  if (verdict === 'growing') return '↑ Растёт'
+  if (verdict === 'declining') return '↓ Снижается'
+  return '→ Стабильно'
+}
 </script>
 
 <template>
-  <article class="evolution-card">
+  <article
+    class="evolution-card"
+    :class="{ 'evolution-card--hero': hero }"
+  >
     <div class="evolution-card__head">
       <div class="evolution-card__title-row">
         <h3 class="evolution-card__title">
@@ -168,27 +195,38 @@ function deltaClass(tone: EvolutionDeltaTone | null): string {
     </div>
 
     <div class="evolution-card__summary">
-      <p
-        v-if="card.currentValueLabel"
-        class="evolution-card__current"
-      >
-        <span>{{ card.currentMonthLabel }}:</span>
-        <strong>{{ card.currentValueLabel }}</strong>
-      </p>
-      <p
-        v-else
-        class="evolution-card__current evolution-card__current--empty"
-      >
-        Недостаточно данных для текущего значения
-      </p>
+      <div :class="hero ? 'evolution-card__hero-row' : null">
+        <p
+          v-if="card.currentValueLabel"
+          class="evolution-card__current"
+        >
+          <span>{{ card.currentMonthLabel }}:</span>
+          <strong>{{ card.currentValueLabel }}</strong>
+        </p>
+        <p
+          v-else
+          class="evolution-card__current evolution-card__current--empty"
+        >
+          Недостаточно данных для текущего значения
+        </p>
 
-      <p
-        v-if="card.deltaLabel"
-        class="evolution-card__delta"
-        :class="deltaClass(card.deltaTone)"
-      >
-        {{ card.deltaLabel }}
-      </p>
+        <div class="evolution-card__badges">
+        <p
+          v-if="card.deltaLabel"
+          class="evolution-card__delta"
+          :class="deltaClass(card.deltaTone)"
+        >
+          {{ card.deltaLabel }}
+        </p>
+
+        <p
+          v-if="card.trendVerdict"
+          class="evolution-verdict"
+          :class="verdictClass(card.trendVerdict)"
+        >
+          {{ verdictLabel(card.trendVerdict) }}
+        </p>
+      </div>
 
       <p
         v-if="card.statusLabel"
@@ -211,11 +249,11 @@ function deltaClass(tone: EvolutionDeltaTone | null): string {
       :aria-label="`График показателя ${card.label}`"
     >
       <div
-        v-if="card.hasSeriesData && renderChart"
+        v-if="card.hasSeriesData"
         class="evolution-card__chart-container"
       >
         <Chart
-          type="bar"
+          type="line"
           :data="chartData"
           :options="chartOptions"
         />
@@ -227,6 +265,7 @@ function deltaClass(tone: EvolutionDeltaTone | null): string {
       >
         Нет достаточных данных для построения графика.
       </div>
+    </div>
     </div>
   </article>
 </template>
@@ -241,6 +280,10 @@ function deltaClass(tone: EvolutionDeltaTone | null): string {
   background: var(--ft-surface-soft);
   border: 1px solid var(--ft-border-subtle);
   border-radius: var(--ft-radius-lg);
+}
+
+.evolution-card--hero {
+  border-top: 3px solid var(--ft-primary-400);
 }
 
 .evolution-card__head {
@@ -262,14 +305,8 @@ function deltaClass(tone: EvolutionDeltaTone | null): string {
   color: var(--ft-text-primary);
 }
 
-.evolution-card__direction {
-  padding: 2px var(--ft-space-2);
-
-  font-size: var(--ft-text-xs);
-  color: var(--ft-text-secondary);
-
-  background: var(--ft-surface-overlay);
-  border-radius: var(--ft-radius-full);
+.evolution-card--hero .evolution-card__title {
+  font-size: var(--ft-text-lg);
 }
 
 .evolution-card__description {
@@ -301,8 +338,22 @@ function deltaClass(tone: EvolutionDeltaTone | null): string {
   color: var(--ft-text-primary);
 }
 
+.evolution-card--hero .evolution-card__current strong {
+  font-size: var(--ft-text-2xl);
+  font-family: var(--ft-font-mono);
+}
+
 .evolution-card__current--empty {
   color: var(--ft-text-tertiary);
+}
+
+.evolution-card__badges {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--ft-space-2);
+  align-items: center;
+
+  margin-top: var(--ft-space-1);
 }
 
 .evolution-card__delta {
@@ -310,6 +361,16 @@ function deltaClass(tone: EvolutionDeltaTone | null): string {
   font-size: var(--ft-text-sm);
   font-weight: var(--ft-font-semibold);
   font-variant-numeric: tabular-nums;
+}
+
+.evolution-verdict {
+  margin: 0;
+  padding: 2px var(--ft-space-2);
+
+  font-size: var(--ft-text-xs);
+  font-weight: var(--ft-font-semibold);
+
+  border-radius: var(--ft-radius-full);
 }
 
 .evolution-card__status {
@@ -324,12 +385,6 @@ function deltaClass(tone: EvolutionDeltaTone | null): string {
   color: var(--ft-text-secondary);
 }
 
-.evolution-card__gap-note {
-  margin: 0;
-  font-size: var(--ft-text-xs);
-  color: var(--ft-text-tertiary);
-}
-
 .evolution-delta--better {
   color: var(--ft-success-400);
 }
@@ -342,14 +397,37 @@ function deltaClass(tone: EvolutionDeltaTone | null): string {
   color: var(--ft-warning-400);
 }
 
+.evolution-verdict--growing {
+  color: var(--ft-success-400);
+  background: color-mix(in srgb, var(--ft-success-400) 12%, transparent);
+}
+
+.evolution-verdict--declining {
+  color: var(--ft-danger-400);
+  background: color-mix(in srgb, var(--ft-danger-400) 12%, transparent);
+}
+
+.evolution-verdict--stable {
+  color: var(--ft-text-secondary);
+  background: var(--ft-surface-overlay);
+}
+
 .evolution-card__chart {
   min-height: 330px;
+}
+
+.evolution-card--hero .evolution-card__chart {
+  min-height: 380px;
 }
 
 .evolution-card__chart-container {
   position: relative;
   width: 100%;
   height: 330px;
+}
+
+.evolution-card--hero .evolution-card__chart-container {
+  height: 380px;
 }
 
 /* stylelint-disable-next-line selector-pseudo-class-no-unknown */
@@ -379,10 +457,19 @@ function deltaClass(tone: EvolutionDeltaTone | null): string {
   border-radius: var(--ft-radius-md);
 }
 
+.evolution-card--hero .evolution-card__no-data {
+  height: 380px;
+}
+
 @media (width <= 640px) {
   .evolution-card__chart-container,
   .evolution-card__no-data {
     height: 300px;
+  }
+
+  .evolution-card--hero .evolution-card__chart-container,
+  .evolution-card--hero .evolution-card__no-data {
+    height: 340px;
   }
 }
 </style>

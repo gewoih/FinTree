@@ -1,4 +1,4 @@
-import { computed, ref, watch } from 'vue'
+import { computed, ref } from 'vue'
 import { apiService } from '@/services/api.service'
 import { useUserStore } from '@/stores/user'
 import type { ViewState } from '@/types/view-state'
@@ -9,65 +9,34 @@ import {
   resolveStabilityStatusLabel,
 } from '@/constants/stabilityInsight'
 import {
-  EVOLUTION_GROUPS,
   EVOLUTION_KPI_META,
   EVOLUTION_KPI_ORDER,
-  EVOLUTION_STORAGE_PREFIX,
   extractKpiValue,
   formatKpiDelta,
   formatKpiValue,
   formatMonthLong,
   formatMonthShort,
-  normalizeVisibleKpis,
   resolveDeltaTone,
+  resolveTrendVerdict,
   toMonthKey,
   toPreviousCalendarMonth,
   type EvolutionKpi,
   type EvolutionRange,
-  type EvolutionKpiGroupModel,
   type EvolutionTableRowModel,
 } from '@/composables/evolutionTabMeta'
 
 export {
-  EVOLUTION_GROUPS,
   EVOLUTION_KPI_META,
   EVOLUTION_KPI_ORDER,
   type EvolutionKpi,
   type EvolutionRange,
-  type EvolutionKpiGroupId,
   type EvolutionDeltaTone,
   type EvolutionValueKind,
   type EvolutionKpiCardModel,
-  type EvolutionKpiGroupModel,
   type EvolutionTableCellModel,
   type EvolutionTableRowModel,
+  type EvolutionTrendVerdict,
 } from '@/composables/evolutionTabMeta'
-
-function readVisibleKpis(storageKey: string): EvolutionKpi[] {
-  if (typeof localStorage === 'undefined') return [...EVOLUTION_KPI_ORDER]
-
-  try {
-    const raw = localStorage.getItem(storageKey)
-    if (!raw) return [...EVOLUTION_KPI_ORDER]
-
-    const parsed = JSON.parse(raw)
-    const normalized = normalizeVisibleKpis(parsed)
-    if (!normalized) return [...EVOLUTION_KPI_ORDER]
-    return normalized
-  } catch {
-    return [...EVOLUTION_KPI_ORDER]
-  }
-}
-
-function persistVisibleKpis(storageKey: string, visibleKpis: EvolutionKpi[]): void {
-  if (typeof localStorage === 'undefined') return
-
-  try {
-    localStorage.setItem(storageKey, JSON.stringify(visibleKpis))
-  } catch {
-    // Ignore storage write errors (e.g. private mode restrictions).
-  }
-}
 
 export function useEvolutionTab() {
   const userStore = useUserStore()
@@ -77,26 +46,8 @@ export function useEvolutionTab() {
   const error = ref<string | null>(null)
 
   const selectedRange = ref<EvolutionRange>(6)
-  const visibleKpis = ref<EvolutionKpi[]>([...EVOLUTION_KPI_ORDER])
 
   const baseCurrencyCode = computed(() => userStore.baseCurrencyCode ?? 'RUB')
-  const storageKey = computed(() => `${EVOLUTION_STORAGE_PREFIX}${userStore.currentUser?.id ?? 'anonymous'}`)
-
-  watch(
-    storageKey,
-    key => {
-      visibleKpis.value = readVisibleKpis(key)
-    },
-    { immediate: true }
-  )
-
-  watch(
-    [storageKey, visibleKpis],
-    ([key, currentVisible]) => {
-      persistVisibleKpis(key, currentVisible)
-    },
-    { deep: true }
-  )
 
   async function load() {
     if (state.value === 'loading') return
@@ -117,25 +68,6 @@ export function useEvolutionTab() {
     selectedRange.value = range
     await load()
   }
-
-  function toggleKpi(kpi: EvolutionKpi) {
-    const visible = new Set(visibleKpis.value)
-
-    if (visible.has(kpi)) {
-      visible.delete(kpi)
-    } else {
-      visible.add(kpi)
-    }
-
-    visibleKpis.value = EVOLUTION_KPI_ORDER.filter(key => visible.has(key))
-  }
-
-  function showAllKpis() {
-    visibleKpis.value = [...EVOLUTION_KPI_ORDER]
-  }
-
-  const visibleKpiSet = computed(() => new Set(visibleKpis.value))
-  const hasVisibleKpis = computed(() => visibleKpis.value.length > 0)
 
   const monthMap = computed(() => {
     const map = new Map<string, EvolutionMonthDto>()
@@ -185,56 +117,52 @@ export function useEvolutionTab() {
     return { labels, values }
   }
 
-  const groupedChartModels = computed<EvolutionKpiGroupModel[]>(() => {
-    const groups: EvolutionKpiGroupModel[] = []
+  function buildCardModel(kpi: EvolutionKpi) {
+    const meta = EVOLUTION_KPI_META[kpi]
+    const series = resolveChartSeries(kpi)
+    const hasSeriesData = series.values.length > 0
+    const latestPoint = resolveLatestPoint(kpi)
+    const deltaTone = resolveDeltaTone(meta, latestPoint?.delta ?? null)
+    const isStabilityScore = kpi === 'stabilityScore'
+    const statusLabel = isStabilityScore && latestPoint
+      ? resolveStabilityStatusLabel(latestPoint.month.stabilityStatus)
+      : null
+    const actionLabel = isStabilityScore && latestPoint
+      ? resolveStabilityActionText(latestPoint.month.stabilityActionCode)
+      : null
+    const trendVerdict = kpi === 'totalMonthScore'
+      ? resolveTrendVerdict(series.values)
+      : null
 
-    for (const group of EVOLUTION_GROUPS) {
-      const cards = EVOLUTION_KPI_ORDER
-        .filter(kpi => visibleKpiSet.value.has(kpi) && EVOLUTION_KPI_META[kpi].groupId === group.id)
-        .map(kpi => {
-          const meta = EVOLUTION_KPI_META[kpi]
-          const series = resolveChartSeries(kpi)
-          const hasSeriesData = series.values.length > 0
-          const latestPoint = resolveLatestPoint(kpi)
-          const deltaTone = resolveDeltaTone(meta, latestPoint?.delta ?? null)
-          const isStabilityScore = kpi === 'stabilityScore'
-          const statusLabel = isStabilityScore && latestPoint
-            ? resolveStabilityStatusLabel(latestPoint.month.stabilityStatus)
-            : null
-          const actionLabel = isStabilityScore && latestPoint
-            ? resolveStabilityActionText(latestPoint.month.stabilityActionCode)
-            : null
-
-          return {
-            key: kpi,
-            label: meta.label,
-            description: meta.description,
-            directionHint: meta.directionHint,
-            labels: series.labels,
-            values: series.values,
-            hasSeriesData,
-            currentMonthLabel: latestPoint
-              ? formatMonthLong(latestPoint.month.year, latestPoint.month.month)
-              : null,
-            currentValueLabel: latestPoint
-              ? formatKpiValue(meta, latestPoint.value, baseCurrencyCode.value)
-              : null,
-            deltaLabel: formatKpiDelta(meta, latestPoint?.delta ?? null, baseCurrencyCode.value),
-            deltaTone,
-            statusLabel,
-            actionLabel,
-          }
-        })
-
-      groups.push({
-        id: group.id,
-        label: group.label,
-        cards,
-      })
+    return {
+      key: kpi,
+      label: meta.label,
+      description: meta.description,
+      directionHint: meta.directionHint,
+      labels: series.labels,
+      values: series.values,
+      hasSeriesData,
+      currentMonthLabel: latestPoint
+        ? formatMonthLong(latestPoint.month.year, latestPoint.month.month)
+        : null,
+      currentValueLabel: latestPoint
+        ? formatKpiValue(meta, latestPoint.value, baseCurrencyCode.value)
+        : null,
+      deltaLabel: formatKpiDelta(meta, latestPoint?.delta ?? null, baseCurrencyCode.value),
+      deltaTone,
+      statusLabel,
+      actionLabel,
+      trendVerdict,
     }
+  }
 
-    return groups
-  })
+  const heroCard = computed(() => buildCardModel('totalMonthScore'))
+
+  const kpiCards = computed(() =>
+    EVOLUTION_KPI_ORDER
+      .filter(kpi => kpi !== 'totalMonthScore')
+      .map(buildCardModel)
+  )
 
   const tableRows = computed<EvolutionTableRowModel[]>(() => {
     const rows: EvolutionTableRowModel[] = []
@@ -275,15 +203,12 @@ export function useEvolutionTab() {
     state,
     error,
     selectedRange,
-    visibleKpis,
-    groupedChartModels,
+    baseCurrencyCode,
+    heroCard,
+    kpiCards,
     tableRows,
     hasTableRows,
-    hasVisibleKpis,
-    baseCurrencyCode,
     load,
     changeRange,
-    toggleKpi,
-    showAllKpis,
   }
 }
