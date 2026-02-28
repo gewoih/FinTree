@@ -66,6 +66,12 @@ const formattedActual = computed(() => fmt(props.forecast?.currentSpent));
 const formattedLimit = computed(() => fmt(props.forecast?.baselineLimit));
 const hasBaseline = computed(() => props.forecast?.baselineLimit != null);
 
+const heroLabel = computed(() => {
+  if (!props.isCurrentMonth) return 'Итого за месяц';
+  if (hasForecast.value) return 'Прогноз до конца месяца';
+  return 'Расходы за месяц';
+});
+
 const baselineLabelPlugin = computed<Plugin<'line'>>(() => ({
   id: 'baselineLabel',
   afterDraw(chart) {
@@ -182,14 +188,8 @@ const chartOptions = computed(() => ({
         class="forecast-kpi"
       >
         <div class="forecast-hero">
-          <template v-if="hasForecast">
-            <span class="forecast-hero__label">Прогноз до конца месяца</span>
-            <span class="forecast-hero__value">{{ formattedRange }}</span>
-          </template>
-          <template v-else>
-            <span class="forecast-hero__label">Итого за месяц</span>
-            <span class="forecast-hero__value">{{ formattedActual }}</span>
-          </template>
+          <span class="forecast-hero__label">{{ heroLabel }}</span>
+          <span class="forecast-hero__value">{{ hasForecast ? formattedRange : formattedActual }}</span>
         </div>
       </div>
     </div>

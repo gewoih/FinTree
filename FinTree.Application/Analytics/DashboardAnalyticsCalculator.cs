@@ -565,7 +565,10 @@ internal sealed class DashboardAnalyticsCalculator(
         decimal? optimisticDaily = null;
         decimal? riskDaily = null;
 
-        var remainingDays = Math.Max(daysInMonth - observedDays, 0);
+        // On the last day of the current month today is still in progress, so treat it as 1 remaining day.
+        var remainingDays = isCurrentMonth && nowUtc.Day == daysInMonth
+            ? 1
+            : Math.Max(daysInMonth - observedDays, 0);
 
         if (remainingDays > 0 && pool.Length >= 10)
         {
