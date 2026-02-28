@@ -1,7 +1,7 @@
 import { computed, type Ref } from 'vue'
 import type { AnalyticsDashboardDto, EvolutionMonthDto } from '@/types'
 
-export type GlobalMonthScoreAccent = 'good' | 'average' | 'poor' | 'neutral'
+export type GlobalMonthScoreAccent = 'excellent' | 'good' | 'average' | 'poor' | 'critical' | 'neutral'
 export type GlobalMonthScoreDeltaTone = 'better' | 'worse' | 'neutral' | null
 
 export interface GlobalMonthScoreModel {
@@ -45,29 +45,37 @@ export function useGlobalMonthScore(context: UseGlobalMonthScoreContext) {
 
     let accent: GlobalMonthScoreAccent = 'neutral'
     if (score != null) {
-      if (score < 40) {
+      if (score < 20) {
+        accent = 'critical'
+      } else if (score < 40) {
         accent = 'poor'
-      } else if (score < 75) {
+      } else if (score < 60) {
         accent = 'average'
-      } else {
+      } else if (score < 80) {
         accent = 'good'
+      } else {
+        accent = 'excellent'
       }
     }
 
     let statusLabel = 'Недостаточно данных'
     let statusDescription = 'Добавьте больше операций за месяц, чтобы оценка стала точнее.'
 
-    if (score != null) {
-      if (score < 40) {
-        statusLabel = 'Нужна коррекция'
-        statusDescription = 'Тренд месяца нестабилен. Начните с метрик, которые просели сильнее всего.'
-      } else if (score < 75) {
-        statusLabel = 'Зона внимания'
-        statusDescription = 'Ситуация под контролем, но есть точки для улучшения в отдельных метриках.'
-      } else {
-        statusLabel = 'Все в порядке'
-        statusDescription = 'Базовые финансовые привычки устойчивы. Поддерживайте текущий темп.'
-      }
+    if (accent === 'critical') {
+      statusLabel = 'Критическая ситуация'
+      statusDescription = 'Ваши финансы в критическом состоянии. Требуются срочные меры.'
+    } else if (accent === 'poor') {
+      statusLabel = 'Нужна коррекция'
+      statusDescription = 'Нестабильная финансовая ситуация. Необходим серьезный контроль.'
+    } else if (accent === 'average') {
+      statusLabel = 'Зона внимания'
+      statusDescription = 'Ситуация под контролем, продолжайте оптимизировать метрики.'
+    } else if (accent === 'good') {
+      statusLabel = 'Все в порядке'
+      statusDescription = 'Ваши финансы стабильны. Продолжайте в том же направлении.'
+    } else if (accent === 'excellent') {
+      statusLabel = 'Отличный результат'
+      statusDescription = 'Ваши финансы в отличном состоянии. Поддерживайте текущий темп.'
     }
 
     const selectedMonthKey = `${selectedMonth.value.getFullYear()}-${String(selectedMonth.value.getMonth() + 1).padStart(2, '0')}`

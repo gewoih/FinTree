@@ -3,7 +3,7 @@ import Message from 'primevue/message'
 import Skeleton from 'primevue/skeleton'
 import UiButton from '@/ui/UiButton.vue'
 
-type GlobalMonthScoreAccent = 'good' | 'average' | 'poor' | 'neutral'
+type GlobalMonthScoreAccent = 'excellent' | 'good' | 'average' | 'poor' | 'critical' | 'neutral'
 type GlobalMonthScoreDeltaTone = 'better' | 'worse' | 'neutral' | null
 
 interface GlobalMonthScoreModel {
@@ -216,15 +216,23 @@ function deltaClass(tone: GlobalMonthScoreDeltaTone): string {
   gap: var(--ft-space-3);
 }
 
-.global-score--good .global-score__value {
+.global-score--excellent .global-score__value {
   color: var(--ft-success-400);
 }
 
+.global-score--good .global-score__value {
+  color: var(--ft-primary-400);
+}
+
 .global-score--average .global-score__value {
-  color: var(--ft-warning-400);
+  color: var(--ft-warning-300);
 }
 
 .global-score--poor .global-score__value {
+  color: var(--ft-warning-400);
+}
+
+.global-score--critical .global-score__value {
   color: var(--ft-danger-400);
 }
 
