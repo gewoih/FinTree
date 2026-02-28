@@ -57,6 +57,7 @@ internal sealed class DashboardAnalyticsCalculator(
         var totalIncome = 0m;
         var totalExpenses = 0m;
         var previousMonthExpenses = 0m;
+        var previousMonthIncome = 0m;
         var discretionaryTotal = 0m;
 
         foreach (var txn in transactions)
@@ -79,6 +80,10 @@ internal sealed class DashboardAnalyticsCalculator(
                     else
                         currentIncomeCategoryTotals[txn.CategoryId] = amount;
                 }
+
+                if (isPreviousMonth)
+                    previousMonthIncome += amount;
+
                 continue;
             }
 
@@ -181,6 +186,16 @@ internal sealed class DashboardAnalyticsCalculator(
             ? (totalExpenses - previousMonthExpenses) / previousMonthExpenses * 100
             : (decimal?)null;
 
+        var incomeMoM = previousMonthIncome > 0m
+            ? (totalIncome - previousMonthIncome) / previousMonthIncome * 100
+            : (decimal?)null;
+
+        var previousNetCashflow = previousMonthIncome - previousMonthExpenses;
+        // Use Math.Abs so the percentage sign reflects direction of change, not the sign of the previous cashflow.
+        var balanceMoM = previousNetCashflow != 0m
+            ? (netCashflow - previousNetCashflow) / Math.Abs(previousNetCashflow) * 100
+            : (decimal?)null;
+
         var peaks = peakMetricsService.Calculate(dailyTotalsDiscretionary, totalExpenses, daysInMonth);
 
         var categoryItems = currentExpenseCategoryTotals.Select(kv =>
@@ -264,7 +279,9 @@ internal sealed class DashboardAnalyticsCalculator(
             LiquidAssets: AnalyticsMath.Round2(liquidAssets),
             LiquidMonths: liquidMonths,
             LiquidMonthsStatus: liquidStatus,
-            TotalMonthScore: totalMonthScore);
+            TotalMonthScore: totalMonthScore,
+            IncomeMonthOverMonthChangePercent: incomeMoM,
+            BalanceMonthOverMonthChangePercent: balanceMoM);
 
         return new AnalyticsDashboardDto(
             year,
@@ -509,26 +526,85 @@ internal sealed class DashboardAnalyticsCalculator(
                 forecastDailyTotals[dateKey] = amountInBaseCurrency;
         }
 
-        var historicalDailyTotals = forecastDailyTotals.Values
-            .Where(v => v > 0m)
-            .ToList();
-
-        var optimisticDaily = AnalyticsMath.ComputeQuantile(historicalDailyTotals, 0.40d);
-        var baselineDaily = AnalyticsMath.ComputeQuantile(historicalDailyTotals, 0.50d);
-        var riskDaily = AnalyticsMath.ComputeQuantile(historicalDailyTotals, 0.75d);
+        if (forecastDailyTotals.Count > 0)
+        {
+            var firstDay = forecastDailyTotals.Keys.Min().ToDateTime(TimeOnly.MinValue);
+            if (firstDay > forecastStart)
+                forecastStart = firstDay;
+        }
+        
+        // Build pool — exclude today (partial day) when viewing current month
+        var poolEnd = isCurrentMonth ? forecastEnd.AddDays(-1) : forecastEnd;
+        var poolDays = Math.Clamp((int)(poolEnd - forecastStart).TotalDays + 1, 0, 180);
+        
+        var pool = new decimal[poolDays];
+        for (var i = 0; i < poolDays; i++)
+        {
+            var dateKey = DateOnly.FromDateTime(forecastStart.AddDays(i));
+            pool[i] = forecastDailyTotals.TryGetValue(dateKey, out var v) ? v : 0m;
+        }
+        
         var daysInMonth = DateTime.DaysInMonth(year, month);
         var observedDays = isCurrentMonth
             ? Math.Min(nowUtc.Day, daysInMonth)
             : daysInMonth;
+        
+        var observedCumulativeActual = 0m;
+        {
+            var runningTotal = 0m;
+            for (var day = 1; day <= observedDays; day++)
+            {
+                var dateKey = new DateOnly(year, month, day);
+                runningTotal += dailyTotals.TryGetValue(dateKey, out var v) ? v : 0m;
+            }
+            observedCumulativeActual = runningTotal;
+        }
+        
+        decimal? optimisticTotal = null;
+        decimal? riskTotal = null;
+        decimal? optimisticDaily = null;
+        decimal? riskDaily = null;
+
+        // On the last day of the current month today is still in progress, so treat it as 1 remaining day.
+        var remainingDays = isCurrentMonth && nowUtc.Day == daysInMonth
+            ? 1
+            : Math.Max(daysInMonth - observedDays, 0);
+
+        if (remainingDays > 0 && pool.Length >= 10)
+        {
+            static long ToCents(decimal x) => (long)Math.Round(x * 100m, MidpointRounding.AwayFromZero);
+            
+            const int simCount = 1000;
+            var simTotals = new decimal[simCount];
+            var seed = 42;
+            seed = HashCode.Combine(seed, year, month, observedDays, remainingDays, ToCents(observedCumulativeActual));
+            seed = pool.Aggregate(seed, (current, t) => HashCode.Combine(current, ToCents(t)));
+
+            var rng = new Random(seed);
+
+            for (var s = 0; s < simCount; s++)
+            {
+                var total = observedCumulativeActual;
+                for (var r = 0; r < remainingDays; r++)
+                    total += pool[rng.Next(pool.Length)];
+                simTotals[s] = total;
+            }
+
+            Array.Sort(simTotals);
+            optimisticTotal = simTotals[350]; // P35
+            riskTotal = simTotals[850]; // P85
+
+            optimisticDaily = (optimisticTotal.Value - observedCumulativeActual) / remainingDays;
+            riskDaily = (riskTotal.Value - observedCumulativeActual) / remainingDays;
+        }
 
         var days = new List<int>(daysInMonth);
         var actual = new List<decimal?>(daysInMonth);
         var optimistic = new List<decimal?>(daysInMonth);
-        var forecast = new List<decimal?>(daysInMonth);
         var risk = new List<decimal?>(daysInMonth);
 
-        decimal cumulative = 0m;
-        decimal observedCumulative = 0m;
+        var cumulative = 0m;
+        var observedCumulative = 0m;
         for (var day = 1; day <= daysInMonth; day++)
         {
             days.Add(day);
@@ -550,13 +626,7 @@ internal sealed class DashboardAnalyticsCalculator(
                 observedDays,
                 cumulative,
                 observedCumulative));
-            forecast.Add(BuildForecastScenarioPoint(
-                baselineDaily,
-                isCurrentMonth,
-                day,
-                observedDays,
-                cumulative,
-                observedCumulative));
+
             risk.Add(BuildForecastScenarioPoint(
                 riskDaily,
                 isCurrentMonth,
@@ -567,49 +637,20 @@ internal sealed class DashboardAnalyticsCalculator(
         }
 
         var currentSpent = isCurrentMonth
-            ? AnalyticsMath.Round2(observedCumulative)
+            ? AnalyticsMath.Round2(observedCumulativeActual)
             : AnalyticsMath.Round2(cumulative);
-        var optimisticTotal = BuildForecastScenarioTotal(
-            optimisticDaily,
-            isCurrentMonth,
-            daysInMonth,
-            observedDays,
-            observedCumulative);
-        var forecastTotal = BuildForecastScenarioTotal(
-            baselineDaily,
-            isCurrentMonth,
-            daysInMonth,
-            observedDays,
-            observedCumulative);
-        var riskTotal = BuildForecastScenarioTotal(
-            riskDaily,
-            isCurrentMonth,
-            daysInMonth,
-            observedDays,
-            observedCumulative);
+        
         var baselineDailyRate = await liquidityMonthsService.GetAverageDailyExpenseAsync(baseCurrencyCode, forecastEnd.AddDays(1), ct);
         var baselineLimit = baselineDailyRate > 0m
             ? AnalyticsMath.Round2(baselineDailyRate * daysInMonth)
             : (decimal?)null;
 
-        string? status = null;
-        if (baselineLimit.HasValue && forecastTotal.HasValue)
-        {
-            status = forecastTotal <= baselineLimit * 0.9m
-                ? "good"
-                : forecastTotal <= baselineLimit * 1.05m
-                    ? "average"
-                    : "poor";
-        }
-
         var summary = new ForecastSummaryDto(
-            forecastTotal,
             optimisticTotal,
             riskTotal,
             currentSpent,
-            baselineLimit,
-            status);
-        var series = new ForecastSeriesDto(days, actual, optimistic, forecast, risk, baselineLimit);
+            baselineLimit);
+        var series = new ForecastSeriesDto(days, actual, optimistic, risk, baselineLimit);
         return new ForecastDto(summary, series);
     }
 
@@ -635,22 +676,4 @@ internal sealed class DashboardAnalyticsCalculator(
         return AnalyticsMath.Round2(projectedDaily.Value * day);
     }
 
-    private static decimal? BuildForecastScenarioTotal(
-        decimal? projectedDaily,
-        bool isCurrentMonth,
-        int daysInMonth,
-        int observedDays,
-        decimal observedCumulativeActual)
-    {
-        if (!projectedDaily.HasValue)
-            return null;
-
-        if (isCurrentMonth)
-        {
-            var remainingDays = Math.Max(daysInMonth - observedDays, 0);
-            return AnalyticsMath.Round2(observedCumulativeActual + projectedDaily.Value * remainingDays);
-        }
-
-        return AnalyticsMath.Round2(projectedDaily.Value * daysInMonth);
-    }
 }

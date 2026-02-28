@@ -79,6 +79,12 @@ export function useAnalyticsPageMetrics(context: UseAnalyticsPageMetricsContext)
                 icon: 'pi pi-plus-circle',
                 accent: 'income' as const,
                 tooltip: 'Все доходы за выбранный месяц.',
+                secondary: (() => {
+                    const mom = health?.incomeMonthOverMonthChangePercent ?? null;
+                    return mom != null
+                        ? `${mom > 0 ? '+' : ''}${mom.toFixed(1)}% к пред. месяцу`
+                        : undefined;
+                })(),
             },
             {
                 key: 'expense',
@@ -88,9 +94,9 @@ export function useAnalyticsPageMetrics(context: UseAnalyticsPageMetricsContext)
                 accent: 'expense' as const,
                 tooltip: 'Все расходы за выбранный месяц.',
                 secondary: (() => {
-                    const momChange = health?.monthOverMonthChangePercent ?? null;
-                    return momChange != null
-                        ? `${momChange > 0 ? '+' : ''}${momChange.toFixed(1)}% к пред. месяцу`
+                    const mom = health?.monthOverMonthChangePercent ?? null;
+                    return mom != null
+                        ? `${mom > 0 ? '+' : ''}${mom.toFixed(1)}% к пред. месяцу`
                         : undefined;
                 })(),
             },
@@ -101,6 +107,12 @@ export function useAnalyticsPageMetrics(context: UseAnalyticsPageMetricsContext)
                 icon: 'pi pi-wallet',
                 accent: balanceAccent,
                 tooltip: 'Доходы минус расходы.',
+                secondary: (() => {
+                    const mom = health?.balanceMonthOverMonthChangePercent ?? null;
+                    return mom != null
+                        ? `${mom > 0 ? '+' : ''}${mom.toFixed(1)}% к пред. месяцу`
+                        : undefined;
+                })(),
             },
         ];
     });
@@ -203,42 +215,22 @@ export function useAnalyticsPageMetrics(context: UseAnalyticsPageMetricsContext)
         });
     }
 
-    function handlePeakSummarySelect() {
-        if (!peakDays.value.length) return;
-        const dates = peakDays.value.map((item) => item.date.getTime());
-        const minDate = new Date(Math.min(...dates));
-        const maxDate = new Date(Math.max(...dates));
-        void router.push({
-            name: 'transactions',
-            query: {
-                from: formatDateQuery(minDate),
-                to: formatDateQuery(maxDate),
-            },
-        });
-    }
-
     const categoryLegend = computed<CategoryLegendItem[]>(() => {
         const items = selectedCategoryMode.value === 'incomes'
             ? dashboard.value?.incomeCategories?.items ?? []
             : dashboard.value?.categories.items ?? [];
         if (!items.length) return [];
 
-        return items.map((item, index) => {
-            const resolvedColor = item.color?.trim()
-                || chartColors.palette[index % chartColors.palette.length]
-                || chartColors.primary;
-
-            return {
-                id: item.id,
-                name: item.name,
-                amount: Number(item.amount ?? 0),
-                mandatoryAmount: Number(item.mandatoryAmount ?? 0),
-                discretionaryAmount: Number(item.discretionaryAmount ?? 0),
-                percent: Number(item.percent ?? 0),
-                color: resolvedColor,
-                isMandatory: item.isMandatory ?? false,
-            };
-        });
+        return items.map((item, index) => ({
+            id: item.id,
+            name: item.name,
+            amount: Number(item.amount ?? 0),
+            mandatoryAmount: Number(item.mandatoryAmount ?? 0),
+            discretionaryAmount: Number(item.discretionaryAmount ?? 0),
+            percent: Number(item.percent ?? 0),
+            color: chartColors.categoryPalette[index % chartColors.categoryPalette.length] ?? chartColors.primary,
+            isMandatory: item.isMandatory ?? false,
+        }));
     });
 
     const filteredCategoryLegend = computed<CategoryLegendItem[]>(() => {
@@ -260,10 +252,29 @@ export function useAnalyticsPageMetrics(context: UseAnalyticsPageMetricsContext)
 
         const total = scopedItems.reduce((sum, item) => sum + item.amount, 0);
         if (total <= 0) return scopedItems;
-        return scopedItems.map((item) => ({
+
+        const itemsWithPercent = scopedItems.map((item) => ({
             ...item,
             percent: (item.amount / total) * 100,
         }));
+
+        const mainItems = itemsWithPercent.filter((item) => item.percent >= 3);
+        const otherItems = itemsWithPercent.filter((item) => item.percent < 3);
+
+        if (otherItems.length === 0) return itemsWithPercent;
+
+        const otherAmount = otherItems.reduce((sum, item) => sum + item.amount, 0);
+        const otherEntry: CategoryLegendItem = {
+            id: '__other__',
+            name: 'Прочее',
+            color: '#676B7A', // --ft-gray-500, theme-invariant neutral
+            amount: otherAmount,
+            mandatoryAmount: otherItems.reduce((sum, item) => sum + item.mandatoryAmount, 0),
+            discretionaryAmount: otherItems.reduce((sum, item) => sum + item.discretionaryAmount, 0),
+            percent: (otherAmount / total) * 100,
+            children: otherItems,
+        };
+        return [...mainItems, otherEntry];
     });
 
     const categoryChartData = computed(() => {
@@ -400,32 +411,22 @@ export function useAnalyticsPageMetrics(context: UseAnalyticsPageMetricsContext)
                 {
                     label: 'Оптимистичный',
                     data: series.optimistic,
-                    borderColor: chartColors.optimistic,
-                    borderDash: [4, 6],
-                    borderWidth: 1.75,
+                    borderWidth: 0,
+                    fill: '+1',
+                    backgroundColor: `rgba(${hexToRgb(chartColors.optimistic)}, 0.15)`,
                     pointRadius: 0,
-                    fill: false,
                     tension: 0.2,
-                },
-                {
-                    label: 'Базовый',
-                    data: series.forecast,
-                    borderColor: chartColors.forecast,
-                    borderDash: [8, 6],
-                    borderWidth: 2,
-                    pointRadius: 0,
-                    fill: false,
-                    tension: 0.25,
+                    spanGaps: false,
                 },
                 {
                     label: 'Риск',
                     data: series.risk,
-                    borderColor: chartColors.risk,
-                    borderDash: [10, 6],
-                    borderWidth: 1.5,
-                    pointRadius: 0,
+                    borderWidth: 0,
                     fill: false,
+                    backgroundColor: 'transparent',
+                    pointRadius: 0,
                     tension: 0.2,
+                    spanGaps: false,
                 },
                 ...(hasBaseline
                     ? [{
@@ -457,6 +458,5 @@ export function useAnalyticsPageMetrics(context: UseAnalyticsPageMetricsContext)
         summaryMetrics,
         handleCategorySelect,
         handlePeakSelect,
-        handlePeakSummarySelect,
     };
 }

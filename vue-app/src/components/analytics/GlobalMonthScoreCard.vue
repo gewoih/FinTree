@@ -3,7 +3,7 @@ import Message from 'primevue/message'
 import Skeleton from 'primevue/skeleton'
 import UiButton from '@/ui/UiButton.vue'
 
-type GlobalMonthScoreAccent = 'good' | 'average' | 'poor' | 'neutral'
+type GlobalMonthScoreAccent = 'excellent' | 'good' | 'average' | 'poor' | 'critical' | 'neutral'
 type GlobalMonthScoreDeltaTone = 'better' | 'worse' | 'neutral' | null
 
 interface GlobalMonthScoreModel {
@@ -27,7 +27,6 @@ const emit = defineEmits<{
 }>()
 
 const accentClass = (accent: GlobalMonthScoreAccent) => `global-score--${accent}`
-const statusClass = (accent: GlobalMonthScoreAccent) => `global-score__status--${accent}`
 
 function deltaClass(tone: GlobalMonthScoreDeltaTone): string {
   if (tone === 'better') return 'global-score__delta--better'
@@ -88,12 +87,6 @@ function deltaClass(tone: GlobalMonthScoreDeltaTone): string {
           <div class="global-score__headline">
             <p class="global-score__value">
               {{ model.scoreLabel }}
-            </p>
-            <p
-              class="global-score__status"
-              :class="statusClass(model.accent)"
-            >
-              {{ model.statusLabel }}
             </p>
           </div>
 
@@ -188,41 +181,6 @@ function deltaClass(tone: GlobalMonthScoreDeltaTone): string {
   color: var(--ft-text-primary);
 }
 
-.global-score__status {
-  margin: 0;
-  padding: var(--ft-space-1) var(--ft-space-2);
-
-  font-size: var(--ft-text-sm);
-  font-weight: var(--ft-font-semibold);
-  color: var(--ft-text-primary);
-
-  border: 1px solid var(--ft-border-subtle);
-  border-radius: var(--ft-radius-full);
-}
-
-.global-score__status--good {
-  color: var(--ft-success-400);
-  background: color-mix(in srgb, var(--ft-success-400) 10%, transparent);
-  border-color: color-mix(in srgb, var(--ft-success-400) 30%, transparent);
-}
-
-.global-score__status--average {
-  color: var(--ft-warning-400);
-  background: color-mix(in srgb, var(--ft-warning-400) 12%, transparent);
-  border-color: color-mix(in srgb, var(--ft-warning-400) 34%, transparent);
-}
-
-.global-score__status--poor {
-  color: var(--ft-danger-400);
-  background: color-mix(in srgb, var(--ft-danger-400) 12%, transparent);
-  border-color: color-mix(in srgb, var(--ft-danger-400) 34%, transparent);
-}
-
-.global-score__status--neutral {
-  color: var(--ft-text-secondary);
-  background: color-mix(in srgb, var(--ft-surface-raised) 88%, transparent);
-}
-
 .global-score__description {
   margin: 0;
   font-size: var(--ft-text-base);
@@ -258,15 +216,23 @@ function deltaClass(tone: GlobalMonthScoreDeltaTone): string {
   gap: var(--ft-space-3);
 }
 
-.global-score--good .global-score__value {
+.global-score--excellent .global-score__value {
   color: var(--ft-success-400);
 }
 
+.global-score--good .global-score__value {
+  color: var(--ft-primary-400);
+}
+
 .global-score--average .global-score__value {
-  color: var(--ft-warning-400);
+  color: var(--ft-warning-300);
 }
 
 .global-score--poor .global-score__value {
+  color: var(--ft-warning-400);
+}
+
+.global-score--critical .global-score__value {
   color: var(--ft-danger-400);
 }
 

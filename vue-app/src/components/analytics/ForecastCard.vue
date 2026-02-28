@@ -14,11 +14,13 @@ const props = withDefaults(defineProps<{
   forecast: ForecastSummary | null;
   chartData: ChartData<'line', Array<number | null>, string> | null;
   currency: string;
+  isCurrentMonth?: boolean;
   readinessMet?: boolean;
   readinessMessage?: string;
   observedExpenseDays?: number;
   requiredExpenseDays?: number;
 }>(), {
+  isCurrentMonth: true,
   readinessMet: true,
   readinessMessage: 'Недостаточно данных, продолжайте добавлять транзакции',
   observedExpenseDays: 0,
@@ -31,38 +33,64 @@ const emit = defineEmits<{
 
 const { colors, tooltipConfig } = useChartColors();
 
+const hasActualData = computed(() =>
+  (props.chartData?.datasets[0]?.data as Array<number | null> | undefined)
+    ?.some((v) => v != null) ?? false
+);
+
+const hasForecast = computed(
+  () => props.forecast?.optimisticTotal != null && props.forecast?.riskTotal != null
+);
+
 const showEmpty = computed(
   () =>
     props.readinessMet &&
     !props.loading &&
     !props.error &&
-    (!props.forecast ||
-      props.forecast.forecastTotal == null ||
-      props.forecast.currentSpent == null ||
-      !props.chartData)
+    (!props.chartData || !hasActualData.value)
 );
 
 const fmt = (value: number | null | undefined) => {
   if (value == null) return '—';
-  return value.toLocaleString('ru-RU', {
+  let rounded = value;
+  let fractionDigits = 0;
+  if (Math.abs(value) < 1000) {
+    fractionDigits = 2;
+  } else if (Math.abs(value) >= 100000) {
+    rounded = Math.round(value / 100) * 100;
+  }
+  return rounded.toLocaleString('ru-RU', {
     style: 'currency',
     currency: props.currency,
-    minimumFractionDigits: 0,
+    minimumFractionDigits: fractionDigits,
+    maximumFractionDigits: fractionDigits,
   });
 };
 
-const formattedForecast = computed(() => fmt(props.forecast?.forecastTotal));
-const formattedOptimistic = computed(() => fmt(props.forecast?.optimisticTotal));
-const formattedRisk = computed(() => fmt(props.forecast?.riskTotal));
+const baselineComparison = computed(() => {
+  const forecast = props.forecast;
+  if (!forecast?.baselineLimit || !forecast.optimisticTotal || !forecast.riskTotal) return null;
+  const midpoint = (forecast.optimisticTotal + forecast.riskTotal) / 2;
+  const diff = forecast.baselineLimit - midpoint;
+  const pct = Math.round(Math.abs(diff) / forecast.baselineLimit * 100);
+  const isBelow = diff > 0;
+  return {
+    text: `На ${fmt(Math.abs(diff))} (${pct}%) ${isBelow ? 'ниже' : 'выше'} базовых расходов`,
+    isBelow,
+  };
+});
+
+const formattedRange = computed(() =>
+  `${fmt(props.forecast?.optimisticTotal)} — ${fmt(props.forecast?.riskTotal)}`
+);
+const formattedActual = computed(() => fmt(props.forecast?.currentSpent));
 const formattedLimit = computed(() => fmt(props.forecast?.baselineLimit));
 const hasBaseline = computed(() => props.forecast?.baselineLimit != null);
 
-const heroClass = computed(() => {
-  switch (props.forecast?.status) {
-    case 'average': return 'forecast-hero--average';
-    case 'poor': return 'forecast-hero--poor';
-    default: return null;
-  }
+const heroLabel = computed(() => {
+  if (!props.isCurrentMonth) return 'Итого за месяц';
+  if (hasForecast.value) return 'Прогноз до конца месяца';
+  return 'Расходы за месяц';
 });
 
 const baselineLabelPlugin = computed<Plugin<'line'>>(() => ({
@@ -92,6 +120,20 @@ const baselineLabelPlugin = computed<Plugin<'line'>>(() => ({
   },
 }));
 
+const chartMaxY = computed<number | undefined>(() => {
+  if (!props.chartData?.datasets?.length) return undefined;
+  let max = 0;
+  for (const ds of props.chartData.datasets) {
+    for (const v of ds.data as Array<number | null>) {
+      if (v != null && v > max) max = v;
+    }
+  }
+  if (max === 0) return undefined;
+  const padded = max * 1.1;
+  const roundTo = padded < 10_000 ? 1_000 : padded < 100_000 ? 5_000 : 10_000;
+  return Math.ceil(padded / roundTo) * roundTo;
+});
+
 const chartOptions = computed(() => ({
   maintainAspectRatio: false,
   scales: {
@@ -107,6 +149,8 @@ const chartOptions = computed(() => ({
       },
     },
     y: {
+      beginAtZero: false,
+      max: chartMaxY.value,
       grid: { color: colors.grid, drawBorder: false },
       ticks: {
         color: colors.text,
@@ -152,7 +196,7 @@ const chartOptions = computed(() => ({
           Прогноз расходов
         </h3>
         <button
-          v-tooltip="{ value: 'Оценка расходов до конца месяца на основе текущего темпа трат. Три сценария: оптимистичный, базовый и рисковый.', event: 'click', autoHide: false }"
+          v-tooltip="{ value: 'Прогноз расходов до конца месяца на основе исторического темпа трат. Коридор показывает диапазон вероятных итогов.', event: 'click', autoHide: false }"
           type="button"
           class="forecast-card__hint"
           aria-label="Подсказка"
@@ -173,35 +217,23 @@ const chartOptions = computed(() => ({
           width="260px"
           height="44px"
         />
-        <div class="forecast-card__loading-secondary">
-          <Skeleton
-            width="110px"
-            height="36px"
-          />
-          <Skeleton
-            width="110px"
-            height="36px"
-          />
-        </div>
       </div>
 
       <div
         v-else-if="!error && readinessMet && !showEmpty"
         class="forecast-kpi"
       >
-        <div :class="['forecast-hero', heroClass]">
-          <span class="forecast-hero__label">Реалистичный сценарий</span>
-          <span class="forecast-hero__value">{{ formattedForecast }}</span>
-        </div>
-        <div class="forecast-secondary">
-          <div class="forecast-stat forecast-stat--optimistic">
-            <span class="forecast-stat__label">Оптимистичный</span>
-            <span class="forecast-stat__value">{{ formattedOptimistic }}</span>
-          </div>
-          <div class="forecast-stat forecast-stat--risk">
-            <span class="forecast-stat__label">Риск</span>
-            <span class="forecast-stat__value">{{ formattedRisk }}</span>
-          </div>
+        <div class="forecast-hero">
+          <span class="forecast-hero__label">{{ heroLabel }}</span>
+          <span class="forecast-hero__value">{{ hasForecast ? formattedRange : formattedActual }}</span>
+          <span
+            v-if="hasForecast && baselineComparison"
+            class="forecast-hero__baseline-note"
+            :class="baselineComparison!.isBelow ? 'forecast-hero__baseline-note--below' : 'forecast-hero__baseline-note--above'"
+          >
+            <i :class="baselineComparison!.isBelow ? 'pi pi-arrow-down' : 'pi pi-arrow-up'" />
+            {{ baselineComparison!.text }}
+          </span>
         </div>
       </div>
     </div>
@@ -209,7 +241,7 @@ const chartOptions = computed(() => ({
     <Skeleton
       v-if="loading"
       width="100%"
-      height="300px"
+      height="280px"
       border-radius="16px"
     />
 
@@ -302,16 +334,8 @@ const chartOptions = computed(() => ({
           Факт
         </span>
         <span class="forecast-legend__item">
-          <span class="forecast-legend__line forecast-legend__line--forecast" />
-          Прогноз
-        </span>
-        <span class="forecast-legend__item">
-          <span class="forecast-legend__line forecast-legend__line--optimistic" />
-          Оптимистичный
-        </span>
-        <span class="forecast-legend__item">
-          <span class="forecast-legend__line forecast-legend__line--risk" />
-          Риск
+          <span class="forecast-legend__band forecast-legend__band--corridor" />
+          Коридор прогноза
         </span>
         <span
           v-if="hasBaseline"

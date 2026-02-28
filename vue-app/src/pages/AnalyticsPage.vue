@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref } from 'vue';
+import { ref, computed } from 'vue';
 import CategoryDeltaCard from '../components/analytics/CategoryDeltaCard.vue';
 import EvolutionTab from '@/components/analytics/EvolutionTab.vue';
 import ForecastCard from '../components/analytics/ForecastCard.vue';
@@ -56,7 +56,6 @@ const {
   goToPreviousMonth,
   handleCategorySelect,
   handlePeakSelect,
-  handlePeakSummarySelect,
   handleSkipOnboarding,
   handleStepClick,
   openMonthPicker,
@@ -66,6 +65,14 @@ const {
   dismissRetrospectiveBanner,
   updateSelectedMonth,
 } = useAnalyticsPage();
+
+const isCurrentMonth = computed(() => {
+  const now = new Date();
+  return (
+    selectedMonth.value.getFullYear() === now.getFullYear() &&
+    selectedMonth.value.getMonth() === now.getMonth()
+  );
+});
 
 const bindMonthPickerRef = (instance: unknown) => {
   monthPickerRef.value = instance as MonthPickerInstance | null;
@@ -284,7 +291,6 @@ const bindMonthPickerRef = (instance: unknown) => {
           :summary="peakSummary"
           @retry="retryDashboard"
           @select-peak="handlePeakSelect"
-          @select-peak-summary="handlePeakSummarySelect"
         />
 
         <CategoryDeltaCard
@@ -306,6 +312,7 @@ const bindMonthPickerRef = (instance: unknown) => {
           :forecast="forecastSummary"
           :chart-data="forecastChartData"
           :currency="baseCurrency"
+          :is-current-month="isCurrentMonth"
           :readiness-met="isForecastAndStabilityReady"
           :readiness-message="forecastReadinessMessage"
           :observed-expense-days="analyticsReadiness.observedExpenseDays"
