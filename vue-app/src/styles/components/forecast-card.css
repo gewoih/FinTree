@@ -115,15 +115,15 @@
   display: flex;
   align-items: center;
   gap: var(--ft-space-1);
-  font-size: var(--ft-font-size-sm);
+  font-size: var(--ft-text-sm);
 }
 
 .forecast-hero__baseline-note--below {
-  color: var(--ft-success-500);
+  color: var(--ft-success-400);
 }
 
 .forecast-hero__baseline-note--above {
-  color: var(--ft-warning-500);
+  color: var(--ft-warning-400);
 }
 
 /* Chart viewport */
