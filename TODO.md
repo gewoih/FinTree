@@ -25,10 +25,3 @@
   5. `useAnalyticsPage.ts` (or `useAnalyticsPageMetrics.ts`) → add `zoneBar` config to each of the 4 metric objects using raw values already available in the composable
   **Files:** `vue-app/src/types/analytics-page.ts`, `vue-app/src/components/ui/UiZoneBar.vue` (new), `vue-app/src/components/analytics/SummaryStrip.vue`, `vue-app/src/composables/useAnalyticsPage.ts` (or useAnalyticsPageMetrics.ts)
   **Acceptance criteria:** Each of the 4 metric cards has a zone bar at the bottom. Marker position reflects current value. Savings 78.3% → marker at right edge. Stability 64 → marker in amber zone. Cards without `zoneBar` unaffected.
-
-- [ ] `FT-TODO-042` PeakDaysCard — add benchmark reference text
-  **Context:** Peak % is colored by threshold (≤10% green, ≤25% amber, >25% red) but users see no reference point explaining what's normal.
-  **Implementation:**
-  Add computed `benchmarkLabel` based on `props.summary.share`: `≤0.10 → 'норма — до 10%'`, `≤0.25 → 'повышенный — до 25% допустимо'`, `>0.25 → 'высокий — рекомендовано до 25%'`. Render as `<span class="peak-days__benchmark">` below the metadata line. CSS: `--ft-font-size-xs`, `--ft-text-secondary`.
-  **Files:** `vue-app/src/components/analytics/PeakDaysCard.vue`
-  **Acceptance criteria:** Benchmark label appears below peak days metadata. Text varies by current zone.

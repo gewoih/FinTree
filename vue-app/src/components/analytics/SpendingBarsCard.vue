@@ -59,6 +59,15 @@ const cappedMax = computed<number | null>(() => {
   return Math.ceil(raw / roundTo) * roundTo;
 });
 
+const formattedAverage = computed(() => {
+  if (averageValue.value == null) return null;
+  return averageValue.value.toLocaleString('ru-RU', {
+    style: 'currency',
+    currency: props.currency,
+    maximumFractionDigits: 0,
+  });
+});
+
 const spikeLabelsPlugin = computed<Plugin<'bar'>>(() => ({
   id: 'spikeLabels',
   afterDraw(chart) {
@@ -318,6 +327,16 @@ const chartOptions = computed(() => ({
         />
       </div>
     </div>
+
+    <div
+      v-if="averageValue != null && !loading && !error && !empty"
+      class="bars-card__legend"
+    >
+      <span class="bars-card__legend-item">
+        <span class="bars-card__legend-dash" />
+        Среднее: {{ formattedAverage }}
+      </span>
+    </div>
   </div>
 </template>
 
@@ -437,6 +456,27 @@ const chartOptions = computed(() => ({
 .bars-card__chart-container :deep(canvas) {
   height: 100%;
   max-height: 100%;
+}
+
+.bars-card__legend {
+  display: flex;
+  gap: var(--ft-space-4);
+  padding-top: var(--ft-space-1);
+}
+
+.bars-card__legend-item {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--ft-space-2);
+  font-size: var(--ft-text-base);
+  color: var(--ft-text-base);
+}
+
+.bars-card__legend-dash {
+  display: inline-block;
+  width: 20px;
+  height: 0;
+  border-top: 1.5px dashed var(--ft-text-muted);
 }
 
 @media (width >= 768px) {

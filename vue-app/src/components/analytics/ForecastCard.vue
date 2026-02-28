@@ -120,6 +120,20 @@ const baselineLabelPlugin = computed<Plugin<'line'>>(() => ({
   },
 }));
 
+const chartMaxY = computed<number | undefined>(() => {
+  if (!props.chartData?.datasets?.length) return undefined;
+  let max = 0;
+  for (const ds of props.chartData.datasets) {
+    for (const v of ds.data as Array<number | null>) {
+      if (v != null && v > max) max = v;
+    }
+  }
+  if (max === 0) return undefined;
+  const padded = max * 1.1;
+  const roundTo = padded < 10_000 ? 1_000 : padded < 100_000 ? 5_000 : 10_000;
+  return Math.ceil(padded / roundTo) * roundTo;
+});
+
 const chartOptions = computed(() => ({
   maintainAspectRatio: false,
   scales: {
@@ -136,6 +150,7 @@ const chartOptions = computed(() => ({
     },
     y: {
       beginAtZero: false,
+      max: chartMaxY.value,
       grid: { color: colors.grid, drawBorder: false },
       ticks: {
         color: colors.text,
