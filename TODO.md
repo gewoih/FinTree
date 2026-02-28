@@ -1,10 +1,6 @@
 - [ ] `FT-TODO-032` Split TransactionForm.vue into smaller units and remove temporary `max-lines` suppression
   **Acceptance criteria:** `src/components/TransactionForm.vue` no longer uses file-level `eslint-disable max-lines`; logic/template are extracted into focused child components or composables, and `npm run lint` passes without that suppression.
 
-- [ ] `FT-TODO-037` Fix pre-existing `no-explicit-any` errors in `main.ts`
-  **Context:** `npm run lint` reports 22 `@typescript-eslint/no-explicit-any` errors in `vue-app/src/main.ts` (lines 95–135). These pre-date FT-TODO-034 and block `--max-warnings=0` from passing cleanly.
-  **Files:** `vue-app/src/main.ts`
-
 ## Analytics Page UX Improvements
 
 - [ ] `FT-TODO-040` SummaryStrip — zone progress bar for the 4 metric cards

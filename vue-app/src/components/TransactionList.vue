@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, onBeforeUnmount, ref, watch } from 'vue'
+import { computed, onBeforeUnmount, reactive, ref, watch } from 'vue'
 import Skeleton from 'primevue/skeleton';
 import Paginator from 'primevue/paginator'
 import { useRoute, useRouter } from 'vue-router'
@@ -261,13 +261,13 @@ const handleRowClick = (txn: EnrichedTransaction) => {
   emit('edit-transaction', txn)
 }
 
-const togglingMandatoryId = ref<string | null>(null)
+const togglingMandatoryIds = reactive(new Set<string>())
 
 const handleToggleMandatory = async (event: Event, txn: EnrichedTransaction) => {
   event.stopPropagation()
-  if (props.readonly || txn.isTransferSummary || togglingMandatoryId.value) return
+  if (props.readonly || txn.isTransferSummary || togglingMandatoryIds.has(txn.id)) return
 
-  togglingMandatoryId.value = txn.id
+  togglingMandatoryIds.add(txn.id)
   const nextValue = !txn.isMandatory
 
   const success = await store.updateTransaction({
@@ -281,7 +281,7 @@ const handleToggleMandatory = async (event: Event, txn: EnrichedTransaction) => 
     isMandatory: nextValue
   })
 
-  togglingMandatoryId.value = null
+  togglingMandatoryIds.delete(txn.id)
 
   toast.add({
     severity: success ? 'success' : 'error',
@@ -426,11 +426,11 @@ const resolveCategoryIconStyle = (txn: EnrichedTransaction) => {
                       type="button"
                       class="txn-row__mandatory-btn"
                       :class="{ 'txn-row__mandatory-btn--active': txn.isMandatory }"
-                      :disabled="togglingMandatoryId === txn.id"
+                      :disabled="togglingMandatoryIds.has(txn.id)"
                       :title="txn.isMandatory ? 'Снять обязательный' : 'Пометить обязательным'"
                       @click="handleToggleMandatory($event, txn)"
                     >
-                      <i class="pi pi-lock" />
+                      <i :class="txn.isMandatory ? 'pi pi-lock' : 'pi pi-lock-open'" />
                     </button>
                   </span>
                   <span class="txn-row__meta">
