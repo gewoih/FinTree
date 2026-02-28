@@ -40,16 +40,6 @@
   **Files:** `vue-app/src/types/analytics-page.ts`, `vue-app/src/components/ui/UiZoneBar.vue` (new), `vue-app/src/components/analytics/SummaryStrip.vue`, `vue-app/src/composables/useAnalyticsPage.ts` (or useAnalyticsPageMetrics.ts)
   **Acceptance criteria:** Each of the 4 metric cards has a zone bar at the bottom. Marker position reflects current value. Savings 78.3% → marker at right edge. Stability 64 → marker in amber zone. Cards without `zoneBar` unaffected.
 
-- [ ] `FT-TODO-041` SpendingBarsCard — cap Y-axis and label spike bars
-  **Context:** A single large daily spend (e.g. 55 000₽ vs average ~4 000₽) makes all other bars unreadable. Capping the Y-axis at P85 of non-zero values and labelling capped bars preserves readability.
-  **Implementation:**
-  1. Compute `isCapped = spikeFactor > 3` where `spikeFactor = maxValue / averageValue` (reuse existing `averageValue` computed)
-  2. When `isCapped`: `cappedMax = p85(nonZeroValues) × 1.2` (p85 = sorted values at index `Math.floor(len × 0.85)`). Set `chartOptions.scales.y.max = cappedMax` dynamically.
-  3. Add custom Chart.js plugin `spikeLabelsPlugin` (passed via `<Chart :plugins>`): in `afterDraw`, for each bar in dataset[0] where `data[i] > cappedMax`, draw formatted currency label at `(bar.x, chartArea.top + 4)` using `ctx.fillText`. Use `formatMoney` from `useAnalyticsFormatting`.
-  4. When `!isCapped`: no y-axis max override, no plugin draws labels.
-  **Files:** `vue-app/src/components/analytics/SpendingBarsCard.vue`
-  **Acceptance criteria:** Month with spike (max/avg > 3×): normal bars are readable, spike bars are clipped with ₽ label above. Month without spike: chart unchanged.
-
 - [ ] `FT-TODO-042` PeakDaysCard — add benchmark reference text
   **Context:** Peak % is colored by threshold (≤10% green, ≤25% amber, >25% red) but users see no reference point explaining what's normal.
   **Implementation:**

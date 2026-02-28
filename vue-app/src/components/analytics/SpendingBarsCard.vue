@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { computed } from 'vue';
-import type { ChartData, ChartDataset, TooltipItem } from 'chart.js';
+import type { ChartData, ChartDataset, TooltipItem, Plugin } from 'chart.js';
 import UiButton from '../../ui/UiButton.vue';
 import Skeleton from 'primevue/skeleton';
 import Message from 'primevue/message';
@@ -34,6 +34,99 @@ const averageValue = computed(() => {
   return nonZero.reduce((a, b) => a + b, 0) / nonZero.length;
 });
 
+const maxValue = computed(() => {
+  if (!props.chartData?.datasets?.[0]?.data) return null;
+  const nonZero = (props.chartData.datasets[0].data as number[]).filter(v => v > 0);
+  if (!nonZero.length) return null;
+  return Math.max(...nonZero);
+});
+
+const isCapped = computed(() => {
+  if (averageValue.value == null || maxValue.value == null || averageValue.value === 0) return false;
+  return maxValue.value / averageValue.value > 3;
+});
+
+const cappedMax = computed<number | null>(() => {
+  if (!isCapped.value || !props.chartData?.datasets?.[0]?.data) return null;
+  const nonZero = (props.chartData.datasets[0].data as number[])
+    .filter(v => v > 0)
+    .sort((a, b) => a - b);
+  if (!nonZero.length) return null;
+  const p85 = nonZero[Math.min(Math.floor(nonZero.length * 0.85), nonZero.length - 1)];
+  if (p85 == null) return null;
+  const raw = p85 * 1.2;
+  const roundTo = raw < 1000 ? 100 : raw < 10000 ? 1000 : raw < 100000 ? 5000 : 10000;
+  return Math.ceil(raw / roundTo) * roundTo;
+});
+
+const spikeLabelsPlugin = computed<Plugin<'bar'>>(() => ({
+  id: 'spikeLabels',
+  afterDraw(chart) {
+    if (!isCapped.value || cappedMax.value == null) return;
+
+    const { ctx, chartArea, data } = chart;
+    const meta = chart.getDatasetMeta(0);
+    const rawData = data.datasets[0].data as number[];
+
+    meta.data.forEach((el, i) => {
+      const value = rawData[i];
+      if (value == null || cappedMax.value == null || value <= cappedMax.value) return;
+
+      const barEl = el as { x: number; y: number; width: number };
+      const barLeft = barEl.x - barEl.width / 2;
+      const barRight = barEl.x + barEl.width / 2;
+
+      // Zigzag at the cut-off edge of the bar
+      const zigY = chartArea.top;
+      const zigH = 5;
+      const steps = Math.max(4, Math.floor(barEl.width / 6));
+
+      ctx.save();
+      ctx.beginPath();
+      ctx.moveTo(barLeft, zigY);
+      for (let z = 0; z < steps; z++) {
+        const x = barLeft + (barRight - barLeft) * ((z + 1) / steps);
+        const y = zigY + (z % 2 === 0 ? zigH : 0);
+        ctx.lineTo(x, y);
+      }
+      ctx.strokeStyle = colors.surface;
+      ctx.lineWidth = 2.5;
+      ctx.lineJoin = 'miter';
+      ctx.stroke();
+      ctx.restore();
+
+      // Currency label in the padding space above chartArea
+      const label = value.toLocaleString('ru-RU', {
+        style: 'currency',
+        currency: props.currency,
+        maximumFractionDigits: 0,
+      });
+
+      ctx.save();
+      ctx.font = 'bold 11px Inter';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'top';
+
+      const padX = 5;
+      const padY = 3;
+      const textWidth = ctx.measureText(label).width;
+      const pillW = textWidth + padX * 2;
+      const pillH = 18;
+      const pillX = barEl.x - pillW / 2;
+      const pillY = chartArea.top - pillH - 6;
+
+      ctx.fillStyle = colors.tooltipBg;
+      ctx.beginPath();
+      ctx.roundRect(pillX, pillY, pillW, pillH, 4);
+      ctx.fill();
+
+      ctx.fillStyle = colors.tooltipText;
+      ctx.fillText(label, barEl.x, pillY + padY);
+      ctx.restore();
+    });
+  },
+}));
+
 const styledChartData = computed(() => {
   if (!props.chartData) return null;
   const datasets = [...props.chartData.datasets] as ChartDataset<'bar' | 'line', number[]>[];
@@ -44,9 +137,9 @@ const styledChartData = computed(() => {
       label: 'Среднее',
       data: Array(len).fill(averageValue.value),
       type: 'line' as const,
-      borderColor: colors.grid,
-      borderDash: [6, 4],
-      borderWidth: 1.5,
+      borderColor: colors.tooltipSecondary,
+      borderDash: [5, 3],
+      borderWidth: 1,
       pointRadius: 0,
       fill: false,
     };
@@ -61,6 +154,9 @@ const styledChartData = computed(() => {
 
 const chartOptions = computed(() => ({
   maintainAspectRatio: false,
+  layout: {
+    padding: { top: isCapped.value ? 28 : 0 },
+  },
   scales: {
     x: {
       grid: {
@@ -72,6 +168,7 @@ const chartOptions = computed(() => ({
       },
     },
     y: {
+      ...(cappedMax.value != null ? { max: cappedMax.value } : {}),
       grid: {
         color: colors.grid,
       },
@@ -217,6 +314,7 @@ const chartOptions = computed(() => ({
           type="bar"
           :data="styledChartData"
           :options="chartOptions"
+          :plugins="isCapped ? [spikeLabelsPlugin] : []"
         />
       </div>
     </div>
