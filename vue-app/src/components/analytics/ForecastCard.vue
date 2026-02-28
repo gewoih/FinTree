@@ -52,12 +52,33 @@ const showEmpty = computed(
 
 const fmt = (value: number | null | undefined) => {
   if (value == null) return '—';
-  return value.toLocaleString('ru-RU', {
+  let rounded = value;
+  let fractionDigits = 0;
+  if (Math.abs(value) < 1000) {
+    fractionDigits = 2;
+  } else if (Math.abs(value) >= 100000) {
+    rounded = Math.round(value / 100) * 100;
+  }
+  return rounded.toLocaleString('ru-RU', {
     style: 'currency',
     currency: props.currency,
-    minimumFractionDigits: 0,
+    minimumFractionDigits: fractionDigits,
+    maximumFractionDigits: fractionDigits,
   });
 };
+
+const baselineComparison = computed(() => {
+  const forecast = props.forecast;
+  if (!forecast?.baselineLimit || !forecast.optimisticTotal || !forecast.riskTotal) return null;
+  const midpoint = (forecast.optimisticTotal + forecast.riskTotal) / 2;
+  const diff = forecast.baselineLimit - midpoint;
+  const pct = Math.round(Math.abs(diff) / forecast.baselineLimit * 100);
+  const isBelow = diff > 0;
+  return {
+    text: `На ${fmt(Math.abs(diff))} (${pct}%) ${isBelow ? 'ниже' : 'выше'} базовых расходов`,
+    isBelow,
+  };
+});
 
 const formattedRange = computed(() =>
   `${fmt(props.forecast?.optimisticTotal)} — ${fmt(props.forecast?.riskTotal)}`
@@ -190,6 +211,14 @@ const chartOptions = computed(() => ({
         <div class="forecast-hero">
           <span class="forecast-hero__label">{{ heroLabel }}</span>
           <span class="forecast-hero__value">{{ hasForecast ? formattedRange : formattedActual }}</span>
+          <span
+            v-if="hasForecast && baselineComparison"
+            class="forecast-hero__baseline-note"
+            :class="baselineComparison!.isBelow ? 'forecast-hero__baseline-note--below' : 'forecast-hero__baseline-note--above'"
+          >
+            <i :class="baselineComparison!.isBelow ? 'pi pi-arrow-down' : 'pi pi-arrow-up'" />
+            {{ baselineComparison!.text }}
+          </span>
         </div>
       </div>
     </div>

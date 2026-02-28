@@ -111,6 +111,21 @@
   color: var(--ft-primary-400);
 }
 
+.forecast-hero__baseline-note {
+  display: flex;
+  align-items: center;
+  gap: var(--ft-space-1);
+  font-size: var(--ft-font-size-sm);
+}
+
+.forecast-hero__baseline-note--below {
+  color: var(--ft-success-500);
+}
+
+.forecast-hero__baseline-note--above {
+  color: var(--ft-warning-500);
+}
+
 /* Chart viewport */
 .forecast-card__chart {
   width: 100%;
