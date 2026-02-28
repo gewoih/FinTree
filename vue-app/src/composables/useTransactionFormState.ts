@@ -235,11 +235,12 @@ export function useTransactionFormState(props: TransactionFormStateProps) {
     description.value = transaction.description || ''
     date.value = parseUtcDateOnlyToLocalDate(transaction.occurredAt) ?? new Date(transaction.occurredAt)
 
-    mandatoryOverridden.value = false
     if (transactionType.value === TRANSACTION_TYPE.Income) {
       isMandatory.value = false
+      mandatoryOverridden.value = false
     } else {
       isMandatory.value = transaction.isMandatory
+      mandatoryOverridden.value = true
     }
 
     showAdvanced.value = true

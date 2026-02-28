@@ -102,6 +102,11 @@
   border-bottom: none;
 }
 
+.txn-row--mandatory {
+  border-left: 3px solid var(--ft-accent-primary);
+  padding-left: calc(var(--ft-space-5) - 3px);
+}
+
 .txn-row__left {
   display: flex;
   gap: var(--ft-space-3);
@@ -150,11 +155,6 @@
   color: var(--ft-text-primary);
 }
 
-.txn-row__mandatory {
-  font-size: 0.7rem;
-  color: var(--ft-warning-400);
-}
-
 .txn-row__meta {
   overflow: hidden;
 
@@ -199,6 +199,57 @@
   color: var(--ft-text-tertiary);
 }
 
+/* --- Mandatory toggle button --- */
+.txn-row__mandatory-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+
+  width: 44px;
+  height: 44px;
+  padding: 0;
+  margin-left: var(--ft-space-1);
+
+  color: var(--ft-text-tertiary);
+  vertical-align: middle;
+
+  background: none;
+  border: none;
+  border-radius: var(--ft-radius-md);
+  outline: none;
+  cursor: pointer;
+
+  opacity: 0;
+  transition:
+    opacity var(--ft-transition-fast),
+    color var(--ft-transition-fast),
+    background-color var(--ft-transition-fast);
+}
+
+.txn-row__mandatory-btn i {
+  font-size: 1rem;
+}
+
+.txn-row__mandatory-btn--active {
+  color: var(--ft-warning-400);
+  opacity: 1;
+}
+
+.txn-row__mandatory-btn:hover {
+  color: var(--ft-warning-400);
+  background: color-mix(in srgb, var(--ft-warning-400) 12%, transparent);
+  opacity: 1;
+}
+
+.txn-row__mandatory-btn:disabled {
+  opacity: 0.4;
+  cursor: default;
+}
+
+.txn-row:hover .txn-row__mandatory-btn:not(.txn-row__mandatory-btn--active) {
+  opacity: 1;
+}
+
 /* --- Footer --- */
 .txn-list__footer {
   display: flex;
@@ -223,6 +274,21 @@
   color: var(--ft-text-primary);
 }
 
+/* Light mode: --ft-warning-400 (#C7A246) on white = 2.4:1 — fails WCAG 1.4.11 (3:1).
+   Use --ft-warning-700 (#7E5D1F) = 6.0:1 on white — consistent with light-mode badge/urgency token pattern. */
+.light-mode .txn-row--mandatory {
+  border-left-color: var(--ft-warning-700);
+}
+
+.light-mode .txn-row__mandatory-btn--active,
+.light-mode .txn-row__mandatory-btn:hover {
+  color: var(--ft-warning-700);
+}
+
+.light-mode .txn-row__mandatory-btn:hover {
+  background: color-mix(in srgb, var(--ft-warning-700) 10%, transparent);
+}
+
 @media (width <= 640px) {
   .txn-row {
     min-height: 56px;
@@ -233,7 +299,15 @@
     padding: var(--ft-space-2) var(--ft-space-3);
   }
 
+  .txn-row--mandatory {
+    padding-left: calc(var(--ft-space-3) - 3px);
+  }
+
   .txn-row__meta {
     max-width: 160px;
+  }
+
+  .txn-row__mandatory-btn {
+    opacity: 1;
   }
 }

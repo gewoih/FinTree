@@ -78,7 +78,7 @@ public sealed partial class TelegramOperationsService(
 
     private sealed record AccountRef(Guid Id, string Name, string CurrencyCode, bool IsMain);
 
-    private sealed record CategoryRef(Guid Id, string Name, CategoryType Type, bool IsDefault);
+    private sealed record CategoryRef(Guid Id, string Name, CategoryType Type, bool IsDefault, bool IsMandatory);
 
     private sealed record OperationResult(int LineNumber, string Summary, IReadOnlyList<string> Details);
 
@@ -272,7 +272,7 @@ public sealed partial class TelegramOperationsService(
             .ToDictionaryAsync(x => x.Id, x => x.IsDefault, ct);
 
         return categories
-            .Select(c => new CategoryRef(c.Id, c.Name, c.Type, defaults.GetValueOrDefault(c.Id)))
+            .Select(c => new CategoryRef(c.Id, c.Name, c.Type, defaults.GetValueOrDefault(c.Id), c.IsMandatory))
             .ToList();
     }
 
@@ -746,7 +746,7 @@ public sealed partial class TelegramOperationsService(
                             resolvedTransaction.OccurredAt,
                             resolvedTransaction.Category.Id,
                             resolvedTransaction.Description,
-                            false),
+                            resolvedTransaction is { Type: TransactionType.Expense, Category.IsMandatory: true }),
                         ct);
 
                     results.Add(BuildTransactionResult(resolvedTransaction));

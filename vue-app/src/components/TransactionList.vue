@@ -3,6 +3,7 @@ import { computed, onBeforeUnmount, ref, watch } from 'vue'
 import Skeleton from 'primevue/skeleton';
 import Paginator from 'primevue/paginator'
 import { useRoute, useRouter } from 'vue-router'
+import { useToast } from 'primevue/usetoast'
 import { useFinanceStore } from '../stores/finance'
 import { useUserStore } from '../stores/user'
 import { PAGINATION_OPTIONS } from '../constants'
@@ -16,6 +17,7 @@ import TransactionFilters from './TransactionFilters.vue'
 import { formatCurrency } from '../utils/formatters'
 import { getUtcDateOnlyKey, toUtcDateOnlyIso } from '../utils/dateOnly'
 import type { Transaction, TransactionsQuery, UpdateTransferPayload } from '../types'
+import { TRANSACTION_TYPE } from '../types'
 import UiCard from '../ui/UiCard.vue'
 import UiButton from '../ui/UiButton.vue'
 import Message from 'primevue/message';
@@ -35,6 +37,7 @@ const emit = defineEmits<{
 
 const store = useFinanceStore()
 const userStore = useUserStore()
+const toast = useToast()
 const route = useRoute()
 const router = useRouter()
 
@@ -258,6 +261,37 @@ const handleRowClick = (txn: EnrichedTransaction) => {
   emit('edit-transaction', txn)
 }
 
+const togglingMandatoryId = ref<string | null>(null)
+
+const handleToggleMandatory = async (event: Event, txn: EnrichedTransaction) => {
+  event.stopPropagation()
+  if (props.readonly || txn.isTransferSummary || togglingMandatoryId.value) return
+
+  togglingMandatoryId.value = txn.id
+  const nextValue = !txn.isMandatory
+
+  const success = await store.updateTransaction({
+    id: txn.id,
+    type: txn.type,
+    accountId: txn.accountId,
+    categoryId: txn.categoryId,
+    amount: Math.abs(Number(txn.amount)),
+    occurredAt: txn.occurredAt,
+    description: txn.description ?? null,
+    isMandatory: nextValue
+  })
+
+  togglingMandatoryId.value = null
+
+  toast.add({
+    severity: success ? 'success' : 'error',
+    summary: success
+      ? (nextValue ? 'Помечено как обязательное' : 'Отмечено как необязательное')
+      : 'Не удалось обновить',
+    life: 2500
+  })
+}
+
 const resolveCategoryColor = (txn: EnrichedTransaction): string =>
   txn.categoryColor?.trim() || FALLBACK_CATEGORY_COLOR
 
@@ -359,7 +393,10 @@ const resolveCategoryIconStyle = (txn: EnrichedTransaction) => {
               :key="txn.id"
               type="button"
               class="txn-row"
-              :class="{ 'txn-row--transfer': txn.isTransferSummary }"
+              :class="{
+                'txn-row--transfer': txn.isTransferSummary,
+                'txn-row--mandatory': txn.isMandatory && !txn.isTransferSummary
+              }"
               :disabled="props.readonly"
               @click="handleRowClick(txn)"
             >
@@ -384,11 +421,17 @@ const resolveCategoryIconStyle = (txn: EnrichedTransaction) => {
                 <div class="txn-row__info">
                   <span class="txn-row__category">
                     {{ txn.categoryName ?? '—' }}
-                    <i
-                      v-if="txn.isMandatory && !txn.isTransferSummary"
-                      class="pi pi-lock txn-row__mandatory"
-                      title="Обязательный платеж"
-                    />
+                    <button
+                      v-if="!props.readonly && !txn.isTransferSummary && txn.type === TRANSACTION_TYPE.Expense"
+                      type="button"
+                      class="txn-row__mandatory-btn"
+                      :class="{ 'txn-row__mandatory-btn--active': txn.isMandatory }"
+                      :disabled="togglingMandatoryId === txn.id"
+                      :title="txn.isMandatory ? 'Снять обязательный' : 'Пометить обязательным'"
+                      @click="handleToggleMandatory($event, txn)"
+                    >
+                      <i class="pi pi-lock" />
+                    </button>
                   </span>
                   <span class="txn-row__meta">
                     <template v-if="txn.accountName">{{ txn.accountName }}</template>
