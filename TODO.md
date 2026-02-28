@@ -21,22 +21,6 @@
   **Files:** `vue-app/src/types/analytics.ts`, `vue-app/src/composables/useAnalyticsPageMetrics.ts`, `vue-app/src/components/analytics/SpendingPieCard.vue`
   **Acceptance criteria:** Months with many small categories show a grey "Прочее" arc. Clicking "Прочее" in legend expands sub-items. Clicking a sub-item navigates to that category's transactions. Switching mode/scope collapses the expansion.
 
-- [ ] `FT-TODO-038` SummaryStrip — soften expense accent color (muted coral instead of danger-red)
-  **Context:** Expense numbers use `--ft-danger-400` (#FF756C) which reads as "danger". Normal spending is not an error signal.
-  **Implementation:**
-  1. `design-tokens.css` → add `--ft-expense-text: #D4877F` in `:root` (dark) and `--ft-expense-text: #A3524D` in `.light-mode`
-  2. `SummaryStrip.vue` → update `.summary-strip__value--expense` and `.summary-strip__icon--expense` to use `var(--ft-expense-text)` instead of `var(--ft-danger-400)`. The icon background `color-mix` should also use `var(--ft-expense-text)` as base.
-  **Files:** `vue-app/src/assets/design-tokens.css`, `vue-app/src/components/analytics/SummaryStrip.vue`
-  **Acceptance criteria:** РАСХОДЫ value and icon use a warm muted coral, visibly softer than danger red. Form validation errors still use `--ft-danger-400` unchanged.
-
-- [ ] `FT-TODO-039` GlobalMonthScoreCard — remove all three status badges
-  **Context:** Three badge variants ("Нужна коррекция" <40, "Зона внимания" 40–74, "Все в порядке" 75+) create conflicting signals next to the score and MoM delta. All three are removed.
-  **Implementation:**
-  1. `GlobalMonthScoreCard.vue` → remove `<p class="global-score__status" :class="statusClass(model.accent)">{{ model.statusLabel }}</p>` and all `.global-score__status` + `.global-score__status--*` CSS rules.
-  2. `useGlobalMonthScore.ts` → keep `statusLabel`/`statusDescription` fields (may be needed elsewhere), but they no longer drive any visible element.
-  **Files:** `vue-app/src/components/analytics/GlobalMonthScoreCard.vue`
-  **Acceptance criteria:** Rating section shows only the numeric score and MoM delta. No badge visible in any score range.
-
 - [ ] `FT-TODO-040` SummaryStrip — zone progress bar for the 4 metric cards
   **Context:** Metric cards (Сбережения, Финансовая подушка, Стабильность трат, Необязательные) show numbers with no benchmark context. A segmented zone bar with a marker communicates the quality of each value at a glance.
   **Zone definitions (frontend-only):**
@@ -78,12 +62,3 @@
   **Implementation:** Remove the `deltaPercent` branch from `barWidth()`. Always use: `(Math.abs(item.deltaAmount) / maxDelta) * 100`, clamped 4–100%. The fallback logic already present is correct.
   **Files:** `vue-app/src/components/analytics/CategoryDeltaCard.vue`
   **Acceptance criteria:** Widest bar in each direction = largest absolute ₽ delta. Equal ₽ amounts → equal bar widths regardless of % change.
-
-- [ ] `FT-TODO-044` ForecastCard — smart rounding + baseline comparison text
-  **Context:** `fmt()` shows kopecks (110 470,55 ₽) because `maximumFractionDigits` is not set. Users also see a baseline dashed line with no text interpretation.
-  **Implementation:**
-  1. Replace `fmt()` with tiered rounding: `< 1 000` → 2 decimals, `1 000–99 999` → 0 decimals, `≥ 100 000` → round to nearest 100 (using `Math.round(value / 100) * 100`). Currency-safe via `props.currency`.
-  2. Add computed `baselineComparison`: midpoint = (optimistic + risk) / 2; diff = baselineLimit − midpoint; `"На ${fmt(|diff|)} (${pct}%) ниже/выше базовых расходов"`. Return `null` if baseline is null/0.
-  3. Render `<span class="forecast-hero__baseline-note">` after the range value. CSS: `--ft-font-size-sm`, `--ft-text-secondary`.
-  **Files:** `vue-app/src/components/analytics/ForecastCard.vue`
-  **Acceptance criteria:** Range shows no kopecks and large values rounded to 100. Baseline comparison text appears below range. Hidden when baseline unavailable.
