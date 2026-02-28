@@ -7,20 +7,6 @@
 
 ## Analytics Page UX Improvements
 
-- [ ] `FT-TODO-035` SpendingPieCard — group categories < 5% into expandable "Прочее"
-  **Context:** Many categories have < 5% share, creating thin unreadable donut arcs. Users should see a clean chart, but still be able to drill into small categories.
-  **Implementation:**
-  1. `vue-app/src/types/analytics.ts` → add `children?: CategoryLegendItem[]` to `CategoryLegendItem`.
-  2. `useAnalyticsPageMetrics.ts` → `filteredCategoryLegend`: after sorting, split items into `mainItems` (percent ≥ 5%) and `otherItems` (percent < 5%). If `otherItems.length > 0`, append a synthetic entry `{ id: '__other__', name: 'Прочее', color: <neutral grey token>, amount: sum, percent: sum%, children: otherItems }`. `categoryChartData` uses this computed automatically, so the grey slice appears in the chart.
-  3. `SpendingPieCard.vue`:
-     - Add `const isOtherExpanded = ref(false)` local state
-     - In legend, detect `item.id === '__other__'`: render as a chevron toggle row (no navigation on click, just toggle expansion)
-     - When expanded, render `item.children` as indented sub-rows
-     - Sub-rows fire `emit('select-category', child)` → navigates to transactions for that category + month date range
-     - `watch([mode, scope], () => isOtherExpanded.value = false)` to reset on filter change
-  **Files:** `vue-app/src/types/analytics.ts`, `vue-app/src/composables/useAnalyticsPageMetrics.ts`, `vue-app/src/components/analytics/SpendingPieCard.vue`
-  **Acceptance criteria:** Months with many small categories show a grey "Прочее" arc. Clicking "Прочее" in legend expands sub-items. Clicking a sub-item navigates to that category's transactions. Switching mode/scope collapses the expansion.
-
 - [ ] `FT-TODO-040` SummaryStrip — zone progress bar for the 4 metric cards
   **Context:** Metric cards (Сбережения, Финансовая подушка, Стабильность трат, Необязательные) show numbers with no benchmark context. A segmented zone bar with a marker communicates the quality of each value at a glance.
   **Zone definitions (frontend-only):**
@@ -46,9 +32,3 @@
   Add computed `benchmarkLabel` based on `props.summary.share`: `≤0.10 → 'норма — до 10%'`, `≤0.25 → 'повышенный — до 25% допустимо'`, `>0.25 → 'высокий — рекомендовано до 25%'`. Render as `<span class="peak-days__benchmark">` below the metadata line. CSS: `--ft-font-size-xs`, `--ft-text-secondary`.
   **Files:** `vue-app/src/components/analytics/PeakDaysCard.vue`
   **Acceptance criteria:** Benchmark label appears below peak days metadata. Text varies by current zone.
-
-- [ ] `FT-TODO-043` CategoryDeltaCard — bar widths proportional to ₽ amount
-  **Context:** `barWidth()` uses `deltaPercent` as primary, making a +122% / +1 937₽ bar wider than a -91% / -36 658₽ bar. Width must reflect ₽ magnitude, not % change.
-  **Implementation:** Remove the `deltaPercent` branch from `barWidth()`. Always use: `(Math.abs(item.deltaAmount) / maxDelta) * 100`, clamped 4–100%. The fallback logic already present is correct.
-  **Files:** `vue-app/src/components/analytics/CategoryDeltaCard.vue`
-  **Acceptance criteria:** Widest bar in each direction = largest absolute ₽ delta. Equal ₽ amounts → equal bar widths regardless of % change.

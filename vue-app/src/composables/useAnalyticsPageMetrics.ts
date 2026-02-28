@@ -221,22 +221,16 @@ export function useAnalyticsPageMetrics(context: UseAnalyticsPageMetricsContext)
             : dashboard.value?.categories.items ?? [];
         if (!items.length) return [];
 
-        return items.map((item, index) => {
-            const resolvedColor = item.color?.trim()
-                || chartColors.palette[index % chartColors.palette.length]
-                || chartColors.primary;
-
-            return {
-                id: item.id,
-                name: item.name,
-                amount: Number(item.amount ?? 0),
-                mandatoryAmount: Number(item.mandatoryAmount ?? 0),
-                discretionaryAmount: Number(item.discretionaryAmount ?? 0),
-                percent: Number(item.percent ?? 0),
-                color: resolvedColor,
-                isMandatory: item.isMandatory ?? false,
-            };
-        });
+        return items.map((item, index) => ({
+            id: item.id,
+            name: item.name,
+            amount: Number(item.amount ?? 0),
+            mandatoryAmount: Number(item.mandatoryAmount ?? 0),
+            discretionaryAmount: Number(item.discretionaryAmount ?? 0),
+            percent: Number(item.percent ?? 0),
+            color: chartColors.categoryPalette[index % chartColors.categoryPalette.length] ?? chartColors.primary,
+            isMandatory: item.isMandatory ?? false,
+        }));
     });
 
     const filteredCategoryLegend = computed<CategoryLegendItem[]>(() => {
@@ -258,10 +252,29 @@ export function useAnalyticsPageMetrics(context: UseAnalyticsPageMetricsContext)
 
         const total = scopedItems.reduce((sum, item) => sum + item.amount, 0);
         if (total <= 0) return scopedItems;
-        return scopedItems.map((item) => ({
+
+        const itemsWithPercent = scopedItems.map((item) => ({
             ...item,
             percent: (item.amount / total) * 100,
         }));
+
+        const mainItems = itemsWithPercent.filter((item) => item.percent >= 3);
+        const otherItems = itemsWithPercent.filter((item) => item.percent < 3);
+
+        if (otherItems.length === 0) return itemsWithPercent;
+
+        const otherAmount = otherItems.reduce((sum, item) => sum + item.amount, 0);
+        const otherEntry: CategoryLegendItem = {
+            id: '__other__',
+            name: 'Прочее',
+            color: '#676B7A', // --ft-gray-500, theme-invariant neutral
+            amount: otherAmount,
+            mandatoryAmount: otherItems.reduce((sum, item) => sum + item.mandatoryAmount, 0),
+            discretionaryAmount: otherItems.reduce((sum, item) => sum + item.discretionaryAmount, 0),
+            percent: (otherAmount / total) * 100,
+            children: otherItems,
+        };
+        return [...mainItems, otherEntry];
     });
 
     const categoryChartData = computed(() => {

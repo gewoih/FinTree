@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed } from 'vue';
+import { computed, ref, watch } from 'vue';
 import type { ChartData, Plugin } from 'chart.js';
 import UiButton from '../../ui/UiButton.vue';
 import Skeleton from 'primevue/skeleton';
@@ -31,9 +31,74 @@ const emit = defineEmits<{
 
 const { colors, tooltipConfig } = useChartColors();
 
-const handleCategoryClick = (item: CategoryLegendItem) => {
-  emit('select-category', item);
-};
+const chartRef = ref<InstanceType<typeof Chart>>();
+const isOtherExpanded = ref(false);
+
+watch(() => [props.mode, props.scope, props.legend], () => {
+  isOtherExpanded.value = false;
+});
+
+
+function highlightSlice(index: number) {
+  const chart = chartRef.value?.getChart();
+  if (!chart) return;
+  const point = { datasetIndex: 0, index };
+  chart.setActiveElements([point]);
+  chart.tooltip?.setActiveElements([point], { x: 0, y: 0 });
+  chart.update('none');
+}
+
+function clearHighlight() {
+  const chart = chartRef.value?.getChart();
+  if (!chart) return;
+  chart.setActiveElements([]);
+  chart.tooltip?.setActiveElements([], { x: 0, y: 0 });
+  chart.update('none');
+}
+
+const currencyFormatter = computed(() =>
+  new Intl.NumberFormat('ru-RU', {
+    style: 'currency',
+    currency: props.currency,
+    maximumFractionDigits: 0,
+  })
+);
+
+function fmtAmount(amount: number): string {
+  return currencyFormatter.value.format(amount);
+}
+
+interface LegendRow {
+  key: string;
+  item: CategoryLegendItem;
+  isOther: boolean;
+  isChild: boolean;
+  sliceIndex: number;
+}
+
+const legendRows = computed<LegendRow[]>(() => {
+  const rows: LegendRow[] = [];
+  let otherIdx = -1;
+  props.legend.forEach((item, index) => {
+    const isOther = item.id === '__other__';
+    if (isOther) otherIdx = index;
+    rows.push({ key: item.id, item, isOther, isChild: false, sliceIndex: index });
+    if (isOther && isOtherExpanded.value && item.children) {
+      item.children.forEach((child) => {
+        rows.push({ key: child.id, item: child, isOther: false, isChild: true, sliceIndex: otherIdx });
+      });
+    }
+  });
+  return rows;
+});
+
+function handleLegendClick(row: LegendRow) {
+  if (row.isOther) {
+    isOtherExpanded.value = !isOtherExpanded.value;
+  } else {
+    emit('select-category', row.item);
+  }
+}
 
 const showEmpty = computed(
   () => !props.loading && !props.error && (!props.chartData || props.legend.length === 0)
@@ -256,6 +321,7 @@ const chartOptions = computed(() => ({
       >
         <Chart
           v-if="donutChartData"
+          ref="chartRef"
           type="doughnut"
           :data="donutChartData"
           :options="chartOptions"
@@ -264,304 +330,45 @@ const chartOptions = computed(() => ({
       </div>
       <ul class="donut-card__legend">
         <li
-          v-for="item in legend"
-          :key="item.id"
+          v-for="row in legendRows"
+          :key="row.key"
           class="donut-card__legend-item"
+          :class="{
+            'donut-card__legend-item--other': row.isOther,
+            'donut-card__legend-item--child': row.isChild,
+          }"
           role="button"
           tabindex="0"
-          :aria-label="`${item.name}, ${item.amount.toLocaleString('ru-RU', {
-            style: 'currency',
-            currency,
-            maximumFractionDigits: 0,
-          })}, ${item.percent.toFixed(1)}%`"
-          @click="handleCategoryClick(item)"
-          @keydown.enter.prevent="handleCategoryClick(item)"
-          @keydown.space.prevent="handleCategoryClick(item)"
+          :aria-expanded="row.isOther ? isOtherExpanded : undefined"
+          :aria-label="`${row.item.name}, ${fmtAmount(row.item.amount)}, ${row.item.percent.toFixed(1)}%`"
+          @click="handleLegendClick(row)"
+          @keydown.enter.prevent="handleLegendClick(row)"
+          @keydown.space.prevent="handleLegendClick(row)"
+          @mouseenter="highlightSlice(row.sliceIndex)"
+          @mouseleave="clearHighlight"
         >
           <span
             class="donut-card__legend-color"
-            :style="{ backgroundColor: item.color }"
+            :class="{ 'donut-card__legend-color--sm': row.isChild }"
+            :style="{ backgroundColor: row.item.color }"
           />
           <div class="donut-card__legend-body">
-            <span class="donut-card__legend-name">{{ item.name }}</span>
-            <span class="donut-card__legend-amount">
-              {{
-                item.amount.toLocaleString('ru-RU', {
-                  style: 'currency',
-                  currency,
-                  maximumFractionDigits: 0,
-                })
-              }}
-            </span>
+            <span class="donut-card__legend-name">{{ row.item.name }}</span>
+            <span class="donut-card__legend-amount">{{ fmtAmount(row.item.amount) }}</span>
           </div>
-          <span class="donut-card__legend-percent">{{ item.percent.toFixed(1) }}%</span>
+          <span
+            class="donut-card__legend-percent"
+            :class="{ 'donut-card__legend-percent--sm': row.isChild }"
+          >{{ row.item.percent.toFixed(1) }}%</span>
+          <i
+            v-if="row.isOther"
+            class="pi donut-card__legend-chevron"
+            :class="isOtherExpanded ? 'pi-chevron-up' : 'pi-chevron-down'"
+          />
         </li>
       </ul>
     </div>
   </div>
 </template>
 
-<style scoped>
-.donut-card {
-  display: flex;
-  flex-direction: column;
-  gap: var(--ft-space-4);
-
-  padding: clamp(0.75rem, 1.2vw, 1rem);
-
-  background: var(--ft-surface-base);
-  border: 1px solid var(--ft-border-subtle);
-  border-radius: var(--ft-radius-xl);
-  box-shadow: var(--ft-shadow-sm);
-}
-
-.donut-card__head {
-  display: flex;
-  gap: var(--ft-space-4);
-  align-items: flex-start;
-  justify-content: space-between;
-}
-
-.donut-card__title-row {
-  display: inline-flex;
-  gap: var(--ft-space-2);
-  align-items: center;
-}
-
-.donut-card__title {
-  margin: 0;
-  font-size: var(--ft-text-lg);
-  font-weight: var(--ft-font-semibold);
-  color: var(--ft-text-primary);
-}
-
-.donut-card__controls {
-  display: grid;
-  grid-template-columns: 270px 180px;
-  gap: var(--ft-space-2);
-  align-items: center;
-}
-
-.donut-card__mode-toggle.ft-select-button.p-selectbutton {
-  width: 100%;
-  min-width: 0;
-}
-
-.donut-card__scope-select {
-  width: 100%;
-}
-
-.donut-card__scope-select-placeholder {
-  pointer-events: none;
-  width: 100%;
-  min-height: var(--ft-control-height);
-  visibility: hidden;
-}
-
-.donut-card__hint {
-  cursor: pointer;
-
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-
-  /* Ensure minimum touch target size */
-  min-width: var(--ft-control-height);
-  min-height: var(--ft-control-height);
-  padding: 0;
-
-  font-size: 1rem;
-  color: var(--ft-text-muted);
-
-  background: none;
-  border: none;
-
-  transition: color var(--ft-transition-fast);
-}
-
-.donut-card__hint:hover {
-  color: var(--ft-text-secondary);
-}
-
-.donut-card__hint:active {
-  color: var(--ft-accent-primary);
-}
-
-.donut-card__loading {
-  display: grid;
-  gap: var(--ft-space-4);
-  place-items: center;
-  min-height: 280px;
-}
-
-.donut-card__loading-legend {
-  display: grid;
-  gap: var(--ft-space-2);
-  width: 100%;
-  max-width: 240px;
-}
-
-.donut-card__message {
-  display: grid;
-}
-
-.donut-card__message-body {
-  display: grid;
-  gap: var(--ft-space-3);
-}
-
-.donut-card__message-body--compact {
-  gap: var(--ft-space-2);
-}
-
-.donut-card__message-title {
-  margin: 0;
-  font-weight: var(--ft-font-semibold);
-}
-
-.donut-card__message-text {
-  margin: 0;
-}
-
-.donut-card__content {
-  display: grid;
-  gap: var(--ft-space-3);
-  align-items: start;
-}
-
-.donut-card__chart {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-
-  width: 100%;
-  padding: var(--ft-space-1);
-}
-
-.donut-card__chart :deep(.p-chart) {
-  width: 100%;
-  max-width: 360px;
-}
-
-.donut-card__chart :deep(canvas) {
-  width: 100% !important;
-  height: auto !important;
-}
-
-.donut-card__legend {
-  display: grid;
-  gap: var(--ft-space-2);
-
-  margin: 0;
-  padding: 0;
-
-  list-style: none;
-}
-
-.donut-card__legend-item {
-  cursor: pointer;
-
-  display: flex;
-  gap: var(--ft-space-3);
-  align-items: center;
-
-  padding: var(--ft-space-3);
-
-  border: 1px solid transparent;
-  border-radius: var(--ft-radius-lg);
-
-  transition: background var(--ft-transition-fast), border-color var(--ft-transition-fast);
-}
-
-.donut-card__legend-item:hover {
-  background: color-mix(in srgb, var(--ft-surface-raised) 70%, transparent);
-  border-color: var(--ft-border-subtle);
-}
-
-.donut-card__legend-item:focus-visible {
-  outline: 2px solid color-mix(in srgb, var(--ft-primary-500) 65%, transparent);
-  outline-offset: 2px;
-}
-
-.donut-card__legend-color {
-  flex-shrink: 0;
-  width: 12px;
-  height: 12px;
-  border-radius: var(--ft-radius-full);
-}
-
-.donut-card__legend-body {
-  display: grid;
-  flex: 1;
-  gap: 1px;
-  min-width: 0;
-}
-
-.donut-card__legend-name {
-  font-size: var(--ft-text-base);
-  font-weight: var(--ft-font-medium);
-  color: var(--ft-text-primary);
-}
-
-.donut-card__legend-amount {
-  font-size: var(--ft-text-sm);
-  font-weight: var(--ft-font-semibold);
-  font-variant-numeric: tabular-nums;
-  color: var(--ft-text-secondary);
-}
-
-.donut-card__legend-percent {
-  font-size: var(--ft-text-base);
-  font-weight: var(--ft-font-bold);
-  color: var(--ft-text-primary);
-  white-space: nowrap;
-}
-
-@media (width >= 768px) {
-  .donut-card__head {
-    align-items: center;
-  }
-
-  .donut-card__content {
-    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
-  }
-
-  .donut-card__chart :deep(.p-chart) {
-    max-width: 100%;
-  }
-
-  .donut-card__legend {
-    overflow: auto;
-    max-height: 320px;
-    padding-right: var(--ft-space-1);
-  }
-}
-
-@media (width <= 640px) {
-  .donut-card__head {
-    flex-direction: column;
-    align-items: stretch;
-  }
-
-  .donut-card__controls {
-    display: grid;
-    grid-template-columns: minmax(0, 1fr);
-  }
-
-  .donut-card__scope-select {
-    width: 100%;
-  }
-
-  .donut-card__scope-select-placeholder {
-    display: none;
-  }
-
-  .donut-card__mode-toggle.ft-select-button.p-selectbutton {
-    width: 100%;
-  }
-
-  .donut-card__chart :deep(.p-chart) {
-    max-width: 220px;
-  }
-}
-</style>
+<style scoped src="../../styles/components/spending-pie-card.css"></style>

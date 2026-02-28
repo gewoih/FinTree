@@ -66,13 +66,13 @@ const spikeLabelsPlugin = computed<Plugin<'bar'>>(() => ({
 
     const { ctx, chartArea, data } = chart;
     const meta = chart.getDatasetMeta(0);
-    const rawData = data.datasets[0].data as number[];
+    const rawData = (data.datasets[0]?.data ?? []) as number[];
 
     meta.data.forEach((el, i) => {
       const value = rawData[i];
       if (value == null || cappedMax.value == null || value <= cappedMax.value) return;
 
-      const barEl = el as { x: number; y: number; width: number };
+      const barEl = el as unknown as { x: number; y: number; width: number };
       const barLeft = barEl.x - barEl.width / 2;
       const barRight = barEl.x + barEl.width / 2;
 

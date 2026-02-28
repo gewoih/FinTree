@@ -9,6 +9,7 @@ export interface CategoryLegendItem {
   discretionaryAmount: number;
   percent: number;
   isMandatory?: boolean;
+  children?: CategoryLegendItem[];
 }
 
 export type ExpenseGranularity = 'days' | 'weeks' | 'months';

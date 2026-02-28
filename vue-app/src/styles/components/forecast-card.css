@@ -133,7 +133,7 @@
 
 .forecast-card__chart-container {
   position: relative;
-  height: 560px;
+  height: 400px;
 }
 
 /* stylelint-disable-next-line selector-pseudo-class-no-unknown */
