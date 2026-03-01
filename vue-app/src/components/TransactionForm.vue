@@ -63,7 +63,6 @@ const {
   date: txnDate,
   isMandatory,
   mandatoryOverridden,
-  showAdvanced,
   isDeleting: isTxnDeleting,
   markTouched,
   resetTouched,
@@ -317,10 +316,6 @@ const handleFormSubmitEvent = async (event?: SubmitEvent) => {
   }
 };
 
-const toggleAdvanced = () => {
-  showAdvanced.value = !showAdvanced.value;
-};
-
 const handleDelete = () => {
   if (props.readonly) {
     return;
@@ -381,6 +376,50 @@ const handleDelete = () => {
     },
   });
 };
+
+// ---- Category chip row ----
+const categorySelectRef = ref<InstanceType<typeof Select> | null>(null);
+const VISIBLE_CHIP_COUNT = 4;
+
+const visibleCategoryChips = computed(() =>
+  filteredCategories.value.slice(0, VISIBLE_CHIP_COUNT)
+);
+
+const selectedInChips = computed(() =>
+  visibleCategoryChips.value.some(c => c.id === selectedCategory.value?.id)
+);
+
+const selectCategory = (cat: (typeof filteredCategories.value)[number]) => {
+  selectedCategory.value = cat;
+  markTouched('category');
+};
+
+// ---- Date badge ----
+// DatePicker does not expose show() — we click the underlying input programmatically
+const datePickerRef = ref<InstanceType<typeof DatePicker> | null>(null);
+const openDatePicker = () => {
+  const el = (datePickerRef.value as any)?.$el as HTMLElement | null;
+  el?.querySelector('input')?.click();
+};
+
+const isToday = computed(() => {
+  const today = new Date();
+  const d = txnDate.value;
+  return (
+    d.getFullYear() === today.getFullYear() &&
+    d.getMonth() === today.getMonth() &&
+    d.getDate() === today.getDate()
+  );
+});
+
+const formattedTxnDate = computed(() =>
+  txnDate.value.toLocaleDateString('ru-RU', {
+    day: '2-digit',
+    month: '2-digit',
+    year: 'numeric',
+  })
+);
+
 </script>
 
 <template>
@@ -404,6 +443,12 @@ const handleDelete = () => {
       class="txn-form"
       @submit.prevent="handleFormSubmitEvent"
     >
+      <!-- Mobile drag handle -->
+      <div
+        class="txn-form__handle"
+        aria-hidden="true"
+      />
+
       <header class="txn-form__header">
         <h2
           id="txn-dialog-title"
@@ -436,6 +481,7 @@ const handleDelete = () => {
 
       <!-- ── TRANSACTION FIELDS (Expense / Income) ── -->
       <template v-if="!isTransferMode">
+        <!-- Amount -->
         <section class="txn-form__section txn-form__section--amount">
           <label
             for="amount"
@@ -474,112 +520,178 @@ const handleDelete = () => {
           </small>
         </section>
 
-        <section class="txn-form__core-fields">
-          <div class="txn-form__field">
-            <label
-              for="category"
-              class="txn-form__field-label"
-            >
-              Категория
-            </label>
+        <!-- Category: chip row + hidden fallback Select -->
+        <section class="txn-form__field">
+          <label
+            for="category"
+            class="txn-form__field-label"
+          >
+            Категория
+          </label>
 
-            <Select
-              id="category"
-              v-model="selectedCategory"
-              :options="filteredCategories"
-              option-label="name"
-              placeholder="Выберите категорию"
-              append-to="body"
-              required
-              :disabled="props.readonly"
-              class="w-full"
-              :invalid="Boolean(categoryError)"
-              @change="markTouched('category')"
-              @blur="markTouched('category')"
-            >
-              <template #option="slotProps">
-                <div class="txn-form__option-name">
-                  <span
-                    class="txn-form__cat-dot"
-                    :style="{ backgroundColor: slotProps.option.color }"
+          <div
+            class="txn-form__cat-row"
+            :class="{ 'is-invalid': Boolean(categoryError) }"
+          >
+            <div class="txn-form__cat-chips">
+              <button
+                v-for="cat in visibleCategoryChips"
+                :key="cat.id"
+                type="button"
+                class="txn-form__cat-chip"
+                :class="{ 'is-active': selectedCategory?.id === cat.id }"
+                :disabled="props.readonly"
+                @click="selectCategory(cat)"
+              >
+                <i
+                  :class="['pi', cat.icon || 'pi-tag']"
+                  aria-hidden="true"
+                />
+                <span class="txn-form__cat-chip-label">{{ cat.name }}</span>
+              </button>
+            </div>
+
+            <!-- "Все →" chip: shows selected name if overflow, otherwise opens full list -->
+            <div class="txn-form__cat-more">
+              <button
+                v-if="filteredCategories.length > VISIBLE_CHIP_COUNT || (!selectedInChips && selectedCategory)"
+                type="button"
+                class="txn-form__cat-chip txn-form__cat-chip--more"
+                :class="{ 'is-active': !selectedInChips && Boolean(selectedCategory) }"
+                :disabled="props.readonly"
+                aria-haspopup="listbox"
+                @click="categorySelectRef?.show()"
+              >
+                <template v-if="!selectedInChips && selectedCategory">
+                  <i
+                    :class="['pi', selectedCategory.icon || 'pi-tag']"
+                    aria-hidden="true"
                   />
-                  <span>{{ slotProps.option.name }}</span>
-                </div>
-              </template>
-            </Select>
+                  <span class="txn-form__cat-chip-label">{{ selectedCategory.name }}</span>
+                </template>
+                <template v-else>
+                  <span>Все</span>
+                  <i
+                    class="pi pi-chevron-right"
+                    aria-hidden="true"
+                  />
+                </template>
+              </button>
 
-            <small
-              v-if="categoryError"
-              class="txn-form__error"
-            >
-              {{ categoryError }}
-            </small>
-          </div>
-
-          <div class="txn-form__field">
-            <label
-              for="account"
-              class="txn-form__field-label"
-            >
-              Счёт
-            </label>
-
-            <Select
-              id="account"
-              v-model="selectedAccount"
-              :options="store.accounts"
-              option-label="name"
-              placeholder="Выберите счёт"
-              append-to="body"
-              required
-              :disabled="props.readonly"
-              class="w-full"
-              :invalid="Boolean(accountError)"
-              @change="markTouched('account')"
-              @blur="markTouched('account')"
-            >
-              <template #option="slotProps">
-                <div class="txn-form__option-line">
+              <!-- Hidden Select: programmatically opened by "Все →", a11y fallback -->
+              <Select
+                id="category"
+                ref="categorySelectRef"
+                v-model="selectedCategory"
+                :options="filteredCategories"
+                option-label="name"
+                placeholder="Выберите категорию"
+                append-to="body"
+                required
+                :disabled="props.readonly"
+                class="txn-form__cat-select-hidden"
+                :invalid="Boolean(categoryError)"
+                @change="markTouched('category')"
+                @blur="markTouched('category')"
+              >
+                <template #option="slotProps">
                   <div class="txn-form__option-name">
-                    <i class="pi pi-credit-card" />
+                    <i
+                      :class="['pi', slotProps.option.icon || 'pi-tag']"
+                      aria-hidden="true"
+                    />
                     <span>{{ slotProps.option.name }}</span>
                   </div>
-                  <span class="txn-form__option-currency">
-                    {{ slotProps.option.currency?.symbol ?? '' }} {{ slotProps.option.currency?.code ?? slotProps.option.currencyCode ?? '—' }}
-                  </span>
-                </div>
-              </template>
-            </Select>
-
-            <small
-              v-if="accountError"
-              class="txn-form__error"
-            >
-              {{ accountError }}
-            </small>
+                </template>
+              </Select>
+            </div>
           </div>
+
+          <small
+            v-if="categoryError"
+            class="txn-form__error"
+          >
+            {{ categoryError }}
+          </small>
         </section>
 
-        <section class="txn-form__quick-row">
-          <div class="txn-form__field">
-            <label
-              for="date"
-              class="txn-form__field-label"
-            >
-              Дата
-            </label>
+        <!-- Account -->
+        <div class="txn-form__field">
+          <label
+            for="account"
+            class="txn-form__field-label"
+          >
+            Счёт
+          </label>
 
+          <Select
+            id="account"
+            v-model="selectedAccount"
+            :options="store.accounts"
+            option-label="name"
+            placeholder="Выберите счёт"
+            append-to="body"
+            required
+            :disabled="props.readonly"
+            class="w-full"
+            :invalid="Boolean(accountError)"
+            @change="markTouched('account')"
+            @blur="markTouched('account')"
+          >
+            <template #option="slotProps">
+              <div class="txn-form__option-line">
+                <div class="txn-form__option-name">
+                  <i class="pi pi-credit-card" />
+                  <span>{{ slotProps.option.name }}</span>
+                </div>
+                <span class="txn-form__option-currency">
+                  {{ slotProps.option.currency?.symbol ?? '' }} {{ slotProps.option.currency?.code ?? slotProps.option.currencyCode ?? '—' }}
+                </span>
+              </div>
+            </template>
+          </Select>
+
+          <small
+            v-if="accountError"
+            class="txn-form__error"
+          >
+            {{ accountError }}
+          </small>
+        </div>
+
+        <!-- Meta row: date badge + note -->
+        <div class="txn-form__meta-row">
+          <!-- Date badge -->
+          <div class="txn-form__field txn-form__field--date">
+            <label class="txn-form__field-label">Дата</label>
+
+            <button
+              type="button"
+              class="txn-form__date-badge"
+              :class="{ 'is-today': isToday, 'is-invalid': Boolean(dateError) }"
+              :disabled="props.readonly"
+              @click="openDatePicker"
+            >
+              <i
+                class="pi pi-calendar"
+                aria-hidden="true"
+              />
+              <span>{{ isToday ? 'Сегодня' : formattedTxnDate }}</span>
+            </button>
+
+            <!-- Hidden DatePicker — programmatically opened by the badge button -->
             <DatePicker
               id="date"
+              ref="datePickerRef"
               v-model="txnDate"
               date-format="dd.mm.yy"
-              :show-icon="true"
+              :show-icon="false"
               :select-other-months="true"
               :max-date="maxDate"
               append-to="body"
               required
               :disabled="props.readonly"
-              class="w-full txn-form__date-picker"
+              class="txn-form__datepicker-hidden"
               :invalid="Boolean(dateError)"
               @update:model-value="markTouched('date')"
               @blur="markTouched('date')"
@@ -592,87 +704,46 @@ const handleDelete = () => {
               {{ dateError }}
             </small>
           </div>
-        </section>
 
-        <button
-          type="button"
-          class="txn-form__advanced-toggle"
-          :aria-expanded="showAdvanced"
-          aria-controls="txn-form-advanced"
-          @click="toggleAdvanced"
-        >
-          <span>Дополнительно</span>
-          <i
-            class="pi pi-chevron-down"
-            :class="{ 'is-open': showAdvanced }"
-            aria-hidden="true"
-          />
-        </button>
-
-        <Transition name="txn-advanced">
-          <section
-            v-if="showAdvanced"
-            id="txn-form-advanced"
-            class="txn-form__advanced-panel"
-          >
-            <div
-              v-if="!isIncome"
-              class="txn-form__field"
+          <!-- Note field -->
+          <div class="txn-form__field txn-form__field--note">
+            <label
+              for="txn-description"
+              class="txn-form__field-label"
             >
-              <div class="txn-form__field-label-row">
-                <label
-                  for="mandatory-toggle"
-                  class="txn-form__field-label"
-                >
-                  Тип расхода
-                </label>
+              Заметка
+            </label>
 
-                <span
-                  v-tooltip.bottom="'Расходы, которые нельзя избежать: аренда, коммуналка, кредиты. Влияет на расчёт финансовой устойчивости.'"
-                  class="txn-form__hint"
-                  aria-hidden="true"
-                >
-                  <i class="pi pi-info-circle" />
-                </span>
-              </div>
+            <InputText
+              id="txn-description"
+              v-model="txnDescription"
+              :placeholder="isIncome ? 'Зарплата, дивиденды…' : 'Кофе, такси…'"
+              :disabled="props.readonly"
+              class="w-full"
+            />
+          </div>
+        </div>
 
-              <div class="txn-form__mandatory-wrap">
-                <button
-                  id="mandatory-toggle"
-                  type="button"
-                  class="txn-form__mandatory-chip"
-                  :class="{ 'is-active': isMandatory }"
-                  :disabled="props.readonly"
-                  :aria-pressed="isMandatory"
-                  @click="toggleMandatory"
-                >
-                  <i
-                    :class="isMandatory ? 'pi pi-check-circle' : 'pi pi-circle'"
-                    aria-hidden="true"
-                  />
-                  <span>{{ isMandatory ? 'Обязательный расход' : 'Необязательный расход' }}</span>
-                </button>
-              </div>
-            </div>
-
-            <div class="txn-form__field">
-              <label
-                for="txn-description"
-                class="txn-form__field-label"
-              >
-                Заметка
-              </label>
-
-              <InputText
-                id="txn-description"
-                v-model="txnDescription"
-                :placeholder="isIncome ? 'Например: зарплата' : 'Например: утренний кофе'"
-                :disabled="props.readonly"
-                class="w-full"
-              />
-            </div>
-          </section>
-        </Transition>
+        <!-- Mandatory toggle — iOS-style switch for expenses -->
+        <label
+          v-if="!isIncome"
+          class="txn-form__mandatory-row"
+        >
+          <span class="txn-form__mandatory-label">Обязательный</span>
+          <span
+            class="txn-form__mandatory-switch"
+            :class="{ 'is-on': isMandatory }"
+          >
+            <input
+              type="checkbox"
+              class="txn-form__mandatory-input"
+              :checked="isMandatory"
+              :disabled="props.readonly"
+              @change="toggleMandatory()"
+            >
+            <span class="txn-form__mandatory-thumb" aria-hidden="true" />
+          </span>
+        </label>
       </template>
 
       <!-- ── TRANSFER FIELDS ── -->
@@ -833,7 +904,11 @@ const handleDelete = () => {
 
       <!-- ── FOOTER ── -->
       <footer class="txn-form__footer">
-        <div class="txn-form__footer-left">
+        <!-- Secondary actions: delete (edit mode) OR add-another (create mode) -->
+        <div
+          v-if="isEditMode || (!isTransferMode && !isTxnEditMode)"
+          class="txn-form__footer-secondary"
+        >
           <UiButton
             v-if="isEditMode"
             type="button"
@@ -845,9 +920,7 @@ const handleDelete = () => {
             :disabled="props.readonly || isSubmittingAny"
             @click="handleDelete"
           />
-        </div>
 
-        <div class="txn-form__footer-right">
           <button
             v-if="!isTransferMode && !isTxnEditMode"
             type="button"
@@ -857,13 +930,17 @@ const handleDelete = () => {
           >
             Сохранить и добавить ещё
           </button>
+        </div>
 
+        <!-- Primary actions: Cancel (desktop only) + Save -->
+        <div class="txn-form__footer-primary">
           <UiButton
             type="button"
             label="Отмена"
-            variant="secondary"
+            variant="ghost"
             size="sm"
             :disabled="isDeleting || isSubmittingAny"
+            class="txn-form__cancel-btn"
             @click="emit('update:visible', false)"
           />
 

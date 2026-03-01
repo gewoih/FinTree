@@ -1,11 +1,6 @@
-import { computed, type ComputedRef, type Ref } from 'vue';
-import type { Router } from 'vue-router';
-import type {
-    AnalyticsDashboardDto,
-    AnalyticsReadinessDto,
-    EvolutionMonthDto,
-    MonthlyExpenseDto,
-} from '../types';
+import {computed, type ComputedRef, type Ref} from 'vue';
+import type {Router} from 'vue-router';
+import type {AnalyticsDashboardDto, AnalyticsReadinessDto, EvolutionMonthDto, MonthlyExpenseDto,} from '../types';
 import type {
     CategoryDatasetMode,
     CategoryLegendItem,
@@ -13,14 +8,11 @@ import type {
     ExpenseGranularity,
     ForecastSummary,
 } from '../types/analytics';
-import type { PeakDayItem } from '../types/analytics-page';
-import type { useAnalyticsFormatting } from './useAnalyticsFormatting';
-import type { useChartColors } from './useChartColors';
-import { useGlobalMonthScore } from './useGlobalMonthScore';
-import {
-    resolveStabilityAccent,
-    resolveStabilityActionText,
-} from '@/constants/stabilityInsight';
+import type {PeakDayItem} from '../types/analytics-page';
+import type {useAnalyticsFormatting} from './useAnalyticsFormatting';
+import type {useChartColors} from './useChartColors';
+import {useGlobalMonthScore} from './useGlobalMonthScore';
+import {resolveStabilityAccent, resolveStabilityActionText,} from '@/constants/stabilityInsight';
 
 interface UseAnalyticsPageMetricsContext {
     analyticsReadiness: ComputedRef<AnalyticsReadinessDto>;
@@ -164,9 +156,7 @@ export function useAnalyticsPageMetrics(context: UseAnalyticsPageMetricsContext)
                 key: 'stability',
                 title: 'Стабильность трат',
                 icon: 'pi pi-chart-line',
-                mainValue: hasStabilityData
-                    ? (health?.stabilityScore == null ? '—' : `${health.stabilityScore}/100`)
-                    : 'Недостаточно данных',
+                mainValue: (health?.stabilityScore == null ? '—' : `${health.stabilityScore}/100`),
                 mainLabel: hasStabilityData
                     ? stabilityAction
                     : `${readiness.observedStabilityDaysInSelectedMonth} из ${readiness.requiredStabilityDays} дней с расходами`,
@@ -333,7 +323,7 @@ export function useAnalyticsPageMetrics(context: UseAnalyticsPageMetricsContext)
 
     function getSortedExpenses(granularity: ExpenseGranularity): MonthlyExpenseDto[] {
         const items = dashboard.value?.spending?.[granularity] ?? [];
-        const sorted = [...items].sort((a, b) => {
+        return [...items].sort((a, b) => {
             if (granularity === 'weeks') {
                 if (a.year !== b.year) return a.year - b.year;
                 return (a.week ?? 0) - (b.week ?? 0);
@@ -343,7 +333,6 @@ export function useAnalyticsPageMetrics(context: UseAnalyticsPageMetricsContext)
             if (granularity === 'days') return (a.day ?? 0) - (b.day ?? 0);
             return 0;
         });
-        return sorted;
     }
 
     function formatExpenseLabel(entry: MonthlyExpenseDto, granularity: ExpenseGranularity): string {

@@ -1,3 +1,4 @@
+/* ── Dialog shell ── */
 .txn-dialog {
   width: min(calc(100vw - (var(--ft-space-3) * 2)), 560px);
   max-width: 560px;
@@ -18,6 +19,7 @@
   border-radius: inherit;
 }
 
+/* ── Form root ── */
 .txn-form {
   --txn-form-pad-inline: var(--ft-space-3);
 
@@ -27,7 +29,7 @@
   gap: var(--ft-space-2);
 
   min-width: 0;
-  padding: var(--ft-space-3) var(--txn-form-pad-inline) 0;
+  padding: 0 var(--txn-form-pad-inline) 0;
 
   background: var(--ft-surface-raised);
 }
@@ -36,11 +38,27 @@
   min-width: 0;
 }
 
+/* ── Handle bar (mobile drag affordance) ── */
+.txn-form__handle {
+  align-self: center;
+
+  width: 2.25rem;
+  height: 0.25rem;
+  margin-top: var(--ft-space-2);
+  margin-bottom: calc(var(--ft-space-1) * -1);
+
+  background: var(--ft-border-strong);
+  border-radius: var(--ft-radius-full);
+}
+
+/* ── Header ── */
 .txn-form__header {
   display: flex;
   gap: var(--ft-space-3);
   align-items: center;
   justify-content: space-between;
+
+  padding-top: var(--ft-space-2);
 }
 
 .txn-form__title {
@@ -78,6 +96,7 @@
   background: var(--ft-surface-muted);
 }
 
+/* ── Type selector ── */
 .txn-form__type {
   display: flex;
 }
@@ -88,18 +107,13 @@
   --ft-select-button-padding: var(--ft-space-1);
 }
 
-.txn-form__type-control .p-togglebutton:nth-of-type(1).p-togglebutton-checked {
-  color: var(--ft-text-primary);
-  background: color-mix(in srgb, var(--ft-danger-500) 16%, var(--ft-surface-base));
-  border-color: color-mix(in srgb, var(--ft-danger-400) 48%, var(--ft-border-default));
+/* Suppress focus ring on the whole group — individual button state is already visible */
+.txn-form__type-control.ft-select-button.p-selectbutton:focus-within {
+  box-shadow: none;
 }
 
-.txn-form__type-control .p-togglebutton:nth-of-type(2).p-togglebutton-checked {
-  color: var(--ft-text-primary);
-  background: color-mix(in srgb, var(--ft-success-500) 16%, var(--ft-surface-base));
-  border-color: color-mix(in srgb, var(--ft-success-400) 48%, var(--ft-border-default));
-}
 
+/* ── Generic field/section ── */
 .txn-form__section {
   display: flex;
   flex-direction: column;
@@ -132,6 +146,7 @@
   color: var(--ft-text-tertiary);
 }
 
+/* ── Amount shell ── */
 .txn-form__amount-shell {
   display: flex;
   gap: var(--ft-space-2);
@@ -149,7 +164,6 @@
 
 .txn-form__amount-shell:focus-within {
   border-color: var(--ft-border-strong);
-  box-shadow: 0 0 0 var(--ft-form-focus-ring-width) var(--ft-focus-ring);
 }
 
 .txn-form__amount-shell:has(.ui-input-number__root.ui-field--invalid),
@@ -209,108 +223,292 @@
   border-radius: var(--ft-radius-md);
 }
 
-.txn-form__core-fields,
-.txn-form__quick-row {
-  display: grid;
-  grid-template-columns: 1fr;
-  gap: var(--ft-space-2);
-  align-items: start;
-}
-
-.txn-form__mandatory-wrap {
+/* ── Category chip row ── */
+.txn-form__cat-row {
   display: flex;
-  flex-direction: column;
   gap: var(--ft-space-2);
+  align-items: flex-start;
+  min-width: 0;
 }
 
-.txn-form__mandatory-chip {
+.txn-form__cat-row.is-invalid .txn-form__cat-chips,
+.txn-form__cat-row.is-invalid .txn-form__cat-chip {
+  border-color: color-mix(in srgb, var(--ft-danger-500) 60%, var(--ft-border-default));
+}
+
+.txn-form__cat-chips {
+  display: flex;
+  flex-wrap: nowrap;
+  gap: var(--ft-space-1);
+  min-width: 0;
+
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+
+.txn-form__cat-chips::-webkit-scrollbar {
+  display: none;
+}
+
+.txn-form__cat-chip {
   cursor: pointer;
 
   display: inline-flex;
-  gap: var(--ft-space-2);
+  flex-shrink: 0;
+  gap: var(--ft-space-1);
   align-items: center;
-  justify-content: flex-start;
 
-  min-height: var(--ft-control-height);
-  padding: var(--ft-space-2) var(--ft-space-3);
-
-  font-size: var(--ft-text-sm);
-  color: var(--ft-text-secondary);
-  text-align: left;
-
-  background: var(--ft-surface-base);
-  border: 1px solid var(--ft-border-default);
-  border-radius: var(--ft-radius-lg);
-
-  transition: border-color var(--ft-transition-fast), color var(--ft-transition-fast), background-color var(--ft-transition-fast);
-}
-
-.txn-form__mandatory-chip i {
-  font-size: var(--ft-text-base);
-}
-
-.txn-form__mandatory-chip.is-active {
-  color: var(--ft-text-primary);
-  background: color-mix(in srgb, var(--ft-success-500) 14%, var(--ft-surface-base));
-  border-color: color-mix(in srgb, var(--ft-success-500) 55%, transparent);
-}
-
-.txn-form__mandatory-chip:disabled {
-  cursor: not-allowed;
-  opacity: 0.65;
-}
-
-.txn-form__advanced-toggle {
-  cursor: pointer;
-
-  display: inline-flex;
-  gap: var(--ft-space-2);
-  align-items: center;
-  justify-content: space-between;
-
-  min-height: var(--ft-control-height);
-  padding: var(--ft-space-2) var(--ft-space-3);
+  height: var(--ft-control-height);
+  padding: 0 var(--ft-space-2);
 
   font-size: var(--ft-text-sm);
   font-weight: var(--ft-font-medium);
   color: var(--ft-text-secondary);
+  white-space: nowrap;
 
-  background: color-mix(in srgb, var(--ft-surface-base) 92%, transparent);
+  background: var(--ft-surface-base);
   border: 1px solid var(--ft-border-default);
-  border-radius: var(--ft-radius-lg);
+  border-radius: var(--ft-radius-full);
 
-  transition: border-color var(--ft-transition-fast), color var(--ft-transition-fast);
+  transition: color var(--ft-transition-fast), background-color var(--ft-transition-fast), border-color var(--ft-transition-fast);
 }
 
-.txn-form__advanced-toggle:hover {
+.txn-form__cat-chip:hover:not(:disabled) {
   color: var(--ft-text-primary);
   border-color: var(--ft-border-strong);
 }
 
-.txn-form__advanced-toggle i {
-  transition: transform var(--ft-transition-fast);
+.txn-form__cat-chip.is-active {
+  color: var(--ft-primary-400);
+  background: color-mix(in srgb, var(--ft-primary-400) 22%, var(--ft-surface-base));
+  border-color: var(--ft-primary-400);
 }
 
-.txn-form__advanced-toggle i.is-open {
-  transform: rotate(180deg);
+.txn-form__cat-chip:disabled {
+  cursor: not-allowed;
+  opacity: 0.6;
 }
 
-.txn-form__advanced-panel {
-  display: flex;
-  flex-direction: column;
+.txn-form__cat-chip-label {
+  max-width: 8rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.txn-form__cat-chip i {
+  flex-shrink: 0;
+  font-size: var(--ft-text-sm);
+}
+
+/* Kept for the hidden Select option template */
+.txn-form__cat-dot {
+  flex-shrink: 0;
+
+  width: 0.5rem;
+  height: 0.5rem;
+
+  border-radius: var(--ft-radius-full);
+}
+
+/* "Все →" wrapper — positions hidden Select under the button */
+.txn-form__cat-more {
+  position: relative;
+  flex-shrink: 0;
+}
+
+.txn-form__cat-chip--more {
+  gap: var(--ft-space-1);
+}
+
+.txn-form__cat-chip--more i {
+  font-size: 0.625rem;
+  opacity: 0.7;
+}
+
+/* Hidden Select — sits inside .txn-form__cat-more so the dropdown opens near the button.
+   Zero-size, invisible, no pointer events — opened programmatically via show(). */
+.txn-form__cat-select-hidden {
+  position: absolute;
+  right: 0;
+  bottom: 0;
+
+  width: 0;
+  height: 0;
+  overflow: hidden;
+
+  opacity: 0;
+  pointer-events: none;
+}
+
+/* ── Date badge ── */
+.txn-form__field--date {
+  position: relative;
+  flex-shrink: 0;
+}
+
+.txn-form__date-badge {
+  cursor: pointer;
+
+  display: inline-flex;
   gap: var(--ft-space-2);
+  align-items: center;
 
-  padding: var(--ft-space-2);
+  height: var(--ft-control-height);
+  padding: 0 var(--ft-space-3);
+
+  font-size: var(--ft-text-sm);
+  font-weight: var(--ft-font-medium);
+  color: var(--ft-text-secondary);
+  white-space: nowrap;
 
   background: var(--ft-surface-base);
   border: 1px solid var(--ft-border-default);
   border-radius: var(--ft-radius-lg);
+
+  transition: color var(--ft-transition-fast), border-color var(--ft-transition-fast);
 }
 
-.txn-form__date-picker {
+.txn-form__date-badge:hover:not(:disabled) {
+  color: var(--ft-text-primary);
+  border-color: var(--ft-border-strong);
+}
+
+.txn-form__date-badge.is-today {
+  color: var(--ft-success-400);
+  border-color: color-mix(in srgb, var(--ft-success-500) 40%, var(--ft-border-default));
+}
+
+.txn-form__date-badge.is-invalid {
+  color: var(--ft-danger-500);
+  border-color: var(--ft-danger-500);
+}
+
+.txn-form__date-badge:disabled {
+  cursor: not-allowed;
+  opacity: 0.65;
+}
+
+.txn-form__date-badge i {
+  font-size: var(--ft-text-sm);
+}
+
+/* Hidden DatePicker — triggered programmatically by date badge.
+   Positioned absolutely over the badge so the overlay opens at the right location. */
+.txn-form__datepicker-hidden {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+
   width: 100%;
+  height: var(--ft-control-height);
+  overflow: hidden;
+
+  opacity: 0;
+  pointer-events: none;
 }
 
+/* Give the input real dimensions so PrimeVue can anchor the overlay correctly */
+.txn-form__datepicker-hidden .p-datepicker-input,
+.txn-form__datepicker-hidden .p-inputtext {
+  width: 100%;
+  height: 100%;
+  padding: 0;
+  border: none;
+  outline: none;
+}
+
+/* ── Meta row: date + note side by side ── */
+.txn-form__meta-row {
+  display: flex;
+  gap: var(--ft-space-2);
+  align-items: flex-end;
+  min-width: 0;
+}
+
+.txn-form__field--note {
+  flex: 1;
+  min-width: 0;
+}
+
+/* ── Mandatory iOS-style switch ── */
+.txn-form__mandatory-row {
+  display: flex;
+  gap: var(--ft-space-3);
+  align-items: center;
+  justify-content: flex-start;
+
+  cursor: pointer;
+}
+
+.txn-form__mandatory-label {
+  font-size: var(--ft-text-sm);
+  font-weight: var(--ft-font-medium);
+  color: var(--ft-text-secondary);
+  user-select: none;
+}
+
+.txn-form__mandatory-switch {
+  position: relative;
+  flex-shrink: 0;
+
+  width: 2.75rem;
+  height: 1.5rem;
+
+  background: var(--ft-border-strong);
+  border-radius: var(--ft-radius-full);
+
+  transition: background-color var(--ft-transition-fast);
+}
+
+.txn-form__mandatory-switch.is-on {
+  background: var(--ft-primary-400);
+}
+
+.txn-form__mandatory-input {
+  position: absolute;
+  inset: 0;
+
+  width: 100%;
+  height: 100%;
+  margin: 0;
+
+  cursor: pointer;
+  opacity: 0;
+}
+
+.txn-form__mandatory-input:disabled {
+  cursor: not-allowed;
+}
+
+.txn-form__mandatory-thumb {
+  pointer-events: none;
+
+  position: absolute;
+  top: 50%;
+  left: 0.2rem;
+  transform: translateY(-50%);
+
+  width: 1.1rem;
+  height: 1.1rem;
+
+  background: var(--ft-text-inverse);
+  border-radius: var(--ft-radius-full);
+  box-shadow: 0 1px 3px rgb(0 0 0 / 25%);
+
+  transition: left var(--ft-transition-fast);
+}
+
+.txn-form__mandatory-switch.is-on .txn-form__mandatory-thumb {
+  left: calc(100% - 1.1rem - 0.2rem);
+}
+
+.txn-form__mandatory-input:focus-visible ~ .txn-form__mandatory-thumb {
+  outline: 3px solid var(--ft-focus-ring);
+  outline-offset: 3px;
+}
+
+/* ── Dropdown option templates ── */
 .txn-form__option-line {
   display: flex;
   gap: var(--ft-space-3);
@@ -324,17 +522,12 @@
   align-items: center;
 }
 
-.txn-form__cat-dot {
-  width: var(--ft-space-3);
-  height: var(--ft-space-3);
-  border-radius: var(--ft-radius-full);
-}
-
 .txn-form__option-currency {
   font-size: var(--ft-text-xs);
   color: var(--ft-text-tertiary);
 }
 
+/* ── Error message ── */
 .txn-form__error {
   margin-top: var(--ft-space-1);
   font-size: var(--ft-text-sm);
@@ -342,6 +535,7 @@
   color: var(--ft-danger-500);
 }
 
+/* ── Footer (mobile-first) ── */
 .txn-form__footer {
   position: sticky;
   z-index: var(--ft-z-sticky);
@@ -349,10 +543,10 @@
 
   display: flex;
   flex-direction: column;
-  gap: var(--ft-space-1);
+  gap: var(--ft-space-2);
 
-  margin: var(--ft-space-1) calc(var(--txn-form-pad-inline) * -1) 0;
-  padding: var(--ft-space-2) var(--txn-form-pad-inline) calc(var(--ft-space-2) + env(safe-area-inset-bottom));
+  margin: var(--ft-space-2) calc(var(--txn-form-pad-inline) * -1) 0;
+  padding: var(--ft-space-3) var(--txn-form-pad-inline) calc(var(--ft-space-3) + env(safe-area-inset-bottom));
 
   background: linear-gradient(
     180deg,
@@ -362,33 +556,41 @@
   border-top: 1px solid var(--ft-border-soft);
 }
 
-.txn-form__footer-left,
-.txn-form__footer-right {
+/* Secondary: delete or add-another */
+.txn-form__footer-secondary {
   display: flex;
+  flex-direction: column;
   gap: var(--ft-space-1);
-  align-items: center;
-  min-width: 0;
 }
 
-.txn-form__footer-left {
-  width: 100%;
-}
-
-.txn-form__footer-right {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
-  width: 100%;
-}
-
-.txn-form__footer .p-button {
+.txn-form__footer-secondary .p-button {
   width: 100%;
   min-width: 0;
 }
 
+/* Primary: cancel (desktop) + save */
+.txn-form__footer-primary {
+  display: flex;
+  gap: var(--ft-space-2);
+}
+
+.txn-form__footer-primary .p-button {
+  flex: 1;
+  min-width: 0;
+}
+
+/* Cancel hidden on mobile */
+.txn-form__cancel-btn {
+  display: none;
+}
+
+/* Add-another: full-width text link */
 .txn-form__add-another {
   cursor: pointer;
 
-  grid-column: 1 / -1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 
   min-height: var(--ft-input-height-sm);
   padding: 0 var(--ft-space-2);
@@ -416,25 +618,16 @@
   background: transparent;
 }
 
+/* ── Focus visible ── */
 .txn-form__close:focus-visible,
-.txn-form__mandatory-chip:focus-visible,
-.txn-form__advanced-toggle:focus-visible,
+.txn-form__cat-chip:focus-visible,
+.txn-form__date-badge:focus-visible,
 .txn-form__add-another:focus-visible {
   outline: 3px solid var(--ft-focus-ring);
   outline-offset: 3px;
 }
 
-.txn-advanced-enter-active,
-.txn-advanced-leave-active {
-  transition: opacity var(--ft-transition-fast), transform var(--ft-transition-fast);
-}
-
-.txn-advanced-enter-from,
-.txn-advanced-leave-to {
-  transform: translateY(calc(var(--ft-space-2) * -1));
-  opacity: 0;
-}
-
+/* ── Mobile: bottom sheet ── */
 @media (width <= 640px) {
   .p-dialog-mask:has(.txn-dialog) {
     align-items: flex-end;
@@ -452,6 +645,7 @@
   }
 }
 
+/* ── Tablet/Desktop: centered dialog, horizontal footer ── */
 @media (width >= 768px) {
   .txn-form {
     --txn-form-pad-inline: var(--ft-space-4);
@@ -460,18 +654,16 @@
     padding-top: var(--ft-space-4);
   }
 
+  .txn-form__handle {
+    display: none;
+  }
+
+  .txn-form__header {
+    padding-top: 0; /* desktop padding handled by form padding-top */
+  }
+
   .txn-form__title {
     font-size: var(--ft-text-xl);
-  }
-
-  .txn-form__core-fields {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: var(--ft-space-3);
-  }
-
-  .txn-form__amount-input .ui-input-number__input,
-  .txn-form__amount-input .p-inputnumber-input.p-inputtext {
-    text-align: center;
   }
 
   .txn-form__footer {
@@ -481,23 +673,31 @@
     justify-content: space-between;
   }
 
-  .txn-form__footer-left {
+  .txn-form__footer-secondary {
+    flex-direction: row;
+  }
+
+  .txn-form__footer-secondary .p-button {
     width: auto;
   }
 
-  .txn-form__footer-right {
-    display: flex;
-    flex-wrap: wrap;
+  .txn-form__footer-primary {
+    flex-direction: row;
     justify-content: flex-end;
+    margin-left: auto;
+  }
+
+  .txn-form__footer-primary .p-button {
+    flex: none;
     width: auto;
   }
 
-  .txn-form__footer .p-button {
-    width: auto;
+  /* Show cancel on desktop */
+  .txn-form__cancel-btn {
+    display: inline-flex;
   }
 
   .txn-form__add-another {
-    grid-column: auto;
     width: auto;
   }
 }
