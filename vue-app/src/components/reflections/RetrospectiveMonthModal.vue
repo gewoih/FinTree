@@ -186,7 +186,7 @@ const onConfirm = () => {
   font-size: 0.65rem;
   color: var(--ft-text-secondary);
 
-  background: var(--ft-surface-section);
+  background: var(--ft-surface-base);
   border: 1px solid var(--ft-border-default);
   border-radius: var(--ft-radius-full);
 }

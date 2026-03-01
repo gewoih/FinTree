@@ -17,6 +17,12 @@ public sealed class MonthlyRetrospective : Entity
     [MaxLength(2000)]
     public string? NextMonthPlan { get; private set; }
 
+    [MaxLength(1000)]
+    public string? Wins { get; private set; }
+
+    [MaxLength(2000)]
+    public string? SavingsOpportunities { get; private set; }
+
     public int? DisciplineRating { get; private set; }
     public int? ImpulseControlRating { get; private set; }
     public int? ConfidenceRating { get; private set; }
@@ -42,12 +48,16 @@ public sealed class MonthlyRetrospective : Entity
     public void Update(
         string? conclusion,
         string? nextMonthPlan,
+        string? wins,
+        string? savingsOpportunities,
         int? disciplineRating,
         int? impulseControlRating,
         int? confidenceRating)
     {
         Conclusion = NormalizeText(conclusion);
         NextMonthPlan = NormalizeText(nextMonthPlan);
+        Wins = NormalizeText(wins);
+        SavingsOpportunities = NormalizeText(savingsOpportunities);
         DisciplineRating = disciplineRating;
         ImpulseControlRating = impulseControlRating;
         ConfidenceRating = confidenceRating;

@@ -440,6 +440,7 @@ export interface RetrospectiveListItemDto {
     impulseControlRating: number | null;
     confidenceRating: number | null;
     conclusionPreview: string | null;
+    winsPreview: string | null;
     hasContent: boolean;
 }
 
@@ -448,6 +449,8 @@ export interface RetrospectiveDto {
     bannerDismissedAt: string | null;
     conclusion: string | null;
     nextMonthPlan: string | null;
+    wins: string | null;
+    savingsOpportunities: string | null;
     disciplineRating: number | null;
     impulseControlRating: number | null;
     confidenceRating: number | null;
@@ -457,6 +460,8 @@ export interface UpsertRetrospectivePayload {
     month: string;
     conclusion?: string | null;
     nextMonthPlan?: string | null;
+    wins?: string | null;
+    savingsOpportunities?: string | null;
     disciplineRating?: number | null;
     impulseControlRating?: number | null;
     confidenceRating?: number | null;

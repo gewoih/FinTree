@@ -105,6 +105,8 @@ public sealed class AppDbContext(DbContextOptions<AppDbContext> options) : Ident
             entity.Property(x => x.MonthDate).HasColumnType("date");
             entity.Property(x => x.Conclusion).HasMaxLength(2000);
             entity.Property(x => x.NextMonthPlan).HasMaxLength(2000);
+            entity.Property(x => x.Wins).HasMaxLength(1000);
+            entity.Property(x => x.SavingsOpportunities).HasMaxLength(2000);
             entity.HasIndex(x => new { x.UserId, x.MonthDate }).IsUnique();
             entity.HasOne<User>()
                 .WithMany()

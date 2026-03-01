@@ -48,7 +48,6 @@ const {
 } = useReflections()
 
 const selectedRange = ref<ChartRange>(12)
-const selectedMetrics = ref<ScoreMetric[]>(METRIC_OPTIONS.map(metric => metric.key))
 const isCreateDialogVisible = ref(false)
 const selectedCreateMonth = ref<string | null>(null)
 const createError = ref<string | null>(null)
@@ -67,8 +66,6 @@ const historyForChart = computed(() => {
   return sortedHistory.value.slice(-selectedRange.value)
 })
 
-const chartMaxScore = computed(() => Math.max(selectedMetrics.value.length * 5, 5))
-
 const chartData = computed<ChartData<'bar', Array<number | null>, string> | null>(() => {
   if (historyForChart.value.length === 0) {
     return null
@@ -80,7 +77,6 @@ const chartData = computed<ChartData<'bar', Array<number | null>, string> | null
     data: historyForChart.value.map(item => item[metric.key]),
     backgroundColor: colors.palette[index] ?? colors.primary,
     borderRadius: 8,
-    hidden: !selectedMetrics.value.includes(metric.key),
     barPercentage: 0.82,
     categoryPercentage: 0.72,
     stack: 'scores',
@@ -109,7 +105,7 @@ const chartOptions = computed(() => ({
     y: {
       stacked: true,
       min: 0,
-      max: chartMaxScore.value,
+      max: 15,
       ticks: {
         stepSize: 5,
         color: colors.text,
@@ -119,6 +115,10 @@ const chartOptions = computed(() => ({
         color: colors.grid,
       },
     },
+  },
+  interaction: {
+    mode: 'index' as const,
+    intersect: false,
   },
   plugins: {
     legend: {
@@ -144,7 +144,7 @@ const chartOptions = computed(() => ({
           }
 
           const total = values.reduce((sum, value) => sum + value, 0)
-          const maxScore = values.length * 5
+          const maxScore = METRIC_OPTIONS.length * 5
           const percent = Math.round((total / maxScore) * 100)
 
           return `Итог: ${total}/${maxScore} (${percent}%)`
@@ -184,19 +184,15 @@ const openDetail = (month: string) => {
   router.push(`/reflections/${month}`)
 }
 
-const isMetricSelected = (metric: ScoreMetric) => selectedMetrics.value.includes(metric)
+const getCardPreview = (item: RetrospectiveListItemDto): string | null => {
+  return item.winsPreview ?? item.conclusionPreview ?? null
+}
 
-const toggleMetric = (metric: ScoreMetric) => {
-  if (isMetricSelected(metric)) {
-    if (selectedMetrics.value.length === 1) {
-      return
-    }
-
-    selectedMetrics.value = selectedMetrics.value.filter(item => item !== metric)
-    return
-  }
-
-  selectedMetrics.value = [...selectedMetrics.value, metric]
+const getScoreTone = (percent: number | null): string => {
+  if (percent == null) return ''
+  if (percent >= 70) return 'reflections-page__card-score--good'
+  if (percent >= 40) return 'reflections-page__card-score--average'
+  return 'reflections-page__card-score--poor'
 }
 
 const setRange = (range: ChartRange) => {
@@ -233,6 +229,10 @@ const formatScore = (value: number | null) => {
   return value == null ? '—' : `${value}/5`
 }
 
+const formatRating = (value: number | null) => {
+  return value == null ? '—' : String(value)
+}
+
 const getScoreValues = (item: RetrospectiveListItemDto): number[] => {
   return [
     item.disciplineRating,
@@ -255,20 +255,6 @@ const getScorePercent = (item: RetrospectiveListItemDto): number | null => {
 
 const formatScorePercent = (value: number | null) => {
   return value == null ? '—' : `${value}%`
-}
-
-const formatScoreIndexHint = (item: RetrospectiveListItemDto) => {
-  const scores = getScoreValues(item)
-
-  if (scores.length === 0) {
-    return 'Индекс не рассчитан: оценки не заполнены.'
-  }
-
-  const total = scores.reduce((sum, score) => sum + score, 0)
-  const max = scores.length * 5
-  const percent = Math.round((total / max) * 100)
-
-  return `Индекс месяца: ${percent}% (${total}/${max})`
 }
 
 onMounted(() => {
@@ -349,19 +335,10 @@ watch(selectedCreateMonth, value => {
       <template v-else>
         <section class="reflections-page__chart-card">
           <div class="reflections-page__chart-header">
-            <h2 class="reflections-page__chart-title">
-              История самооценки
-            </h2>
-            <p class="reflections-page__chart-hint">
-              Столбцы суммируются по трём метрикам; пропущенные оценки не подставляются нулями
-            </p>
+            <h2 class="reflections-page__chart-title">История самооценки</h2>
           </div>
 
-          <div
-            class="reflections-page__range"
-            role="group"
-            aria-label="Период"
-          >
+          <div class="reflections-page__range" role="group" aria-label="Период">
             <button
               v-for="range in RANGE_OPTIONS"
               :key="range.value"
@@ -374,30 +351,27 @@ watch(selectedCreateMonth, value => {
             </button>
           </div>
 
-          <div
-            class="reflections-page__metrics"
-            role="group"
-            aria-label="Показатели"
-          >
-            <button
-              v-for="metric in METRIC_OPTIONS"
-              :key="metric.key"
-              type="button"
-              class="reflections-page__metric-toggle"
-              :class="{ 'reflections-page__metric-toggle--active': isMetricSelected(metric.key) }"
-              @click="toggleMetric(metric.key)"
-            >
-              {{ metric.label }}
-            </button>
-          </div>
-
-          <div class="reflections-page__chart-wrap">
+          <div class="reflections-page__chart-wrap" role="img" aria-label="График истории самооценки">
             <Chart
               v-if="chartData"
               type="bar"
               :data="chartData"
               :options="chartOptions"
             />
+          </div>
+
+          <div class="reflections-page__chart-legend">
+            <span
+              v-for="(metric, index) in METRIC_OPTIONS"
+              :key="metric.key"
+              class="reflections-page__legend-item"
+            >
+              <span
+                class="reflections-page__legend-dot"
+                :style="{ background: colors.palette[index] ?? colors.primary }"
+              />
+              {{ metric.label }}
+            </span>
           </div>
         </section>
 
@@ -411,30 +385,23 @@ watch(selectedCreateMonth, value => {
           >
             <div class="reflections-page__card-top">
               <span class="reflections-page__card-month">{{ formatMonth(item.month) }}</span>
-              <span class="reflections-page__card-percent">{{ formatScorePercent(getScorePercent(item)) }}</span>
+              <span
+                class="reflections-page__card-score"
+                :class="getScoreTone(getScorePercent(item))"
+              >
+                {{ formatScorePercent(getScorePercent(item)) }}
+              </span>
             </div>
 
-            <div class="reflections-page__scores-grid">
-              <div class="reflections-page__score-pill">
-                <span class="reflections-page__score-label">Дисциплина</span>
-                <strong class="reflections-page__score-value">{{ formatScore(item.disciplineRating) }}</strong>
-              </div>
-              <div class="reflections-page__score-pill">
-                <span class="reflections-page__score-label">Импульсы</span>
-                <strong class="reflections-page__score-value">{{ formatScore(item.impulseControlRating) }}</strong>
-              </div>
-              <div class="reflections-page__score-pill">
-                <span class="reflections-page__score-label">Уверенность</span>
-                <strong class="reflections-page__score-value">{{ formatScore(item.confidenceRating) }}</strong>
-              </div>
-            </div>
-
-            <p class="reflections-page__card-index">
-              {{ formatScoreIndexHint(item) }}
+            <p class="reflections-page__card-ratings">
+              {{ formatRating(item.disciplineRating) }} · {{ formatRating(item.impulseControlRating) }} · {{ formatRating(item.confidenceRating) }}<span class="reflections-page__card-ratings-max"> /5</span>
             </p>
 
-            <p class="reflections-page__card-preview">
-              {{ item.conclusionPreview || 'Добавьте выводы за месяц, чтобы фиксировать ключевые наблюдения.' }}
+            <p
+              v-if="getCardPreview(item)"
+              class="reflections-page__card-preview"
+            >
+              {{ getCardPreview(item) }}
             </p>
           </button>
         </div>

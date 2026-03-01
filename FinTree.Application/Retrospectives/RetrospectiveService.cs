@@ -44,6 +44,8 @@ public sealed partial class RetrospectiveService(IAppDbContext context, ICurrent
             .Where(r =>
                 r.Conclusion != null ||
                 r.NextMonthPlan != null ||
+                r.Wins != null ||
+                r.SavingsOpportunities != null ||
                 r.DisciplineRating != null ||
                 r.ImpulseControlRating != null ||
                 r.ConfidenceRating != null)
@@ -56,7 +58,8 @@ public sealed partial class RetrospectiveService(IAppDbContext context, ICurrent
                 r.DisciplineRating,
                 r.ImpulseControlRating,
                 r.ConfidenceRating,
-                BuildConclusionPreview(r.Conclusion),
+                BuildPreview(r.Conclusion),
+                BuildPreview(r.Wins),
                 HasMeaningfulContent(r)))
             .ToList();
     }
@@ -95,6 +98,8 @@ public sealed partial class RetrospectiveService(IAppDbContext context, ICurrent
         entity.Update(
             command.Conclusion,
             command.NextMonthPlan,
+            command.Wins,
+            command.SavingsOpportunities,
             command.DisciplineRating,
             command.ImpulseControlRating,
             command.ConfidenceRating);
@@ -155,6 +160,8 @@ public sealed partial class RetrospectiveService(IAppDbContext context, ICurrent
             entity.BannerDismissedAt,
             entity.Conclusion,
             entity.NextMonthPlan,
+            entity.Wins,
+            entity.SavingsOpportunities,
             entity.DisciplineRating,
             entity.ImpulseControlRating,
             entity.ConfidenceRating);
@@ -198,7 +205,9 @@ public sealed partial class RetrospectiveService(IAppDbContext context, ICurrent
                command.ImpulseControlRating != null ||
                command.ConfidenceRating != null ||
                !string.IsNullOrWhiteSpace(command.Conclusion) ||
-               !string.IsNullOrWhiteSpace(command.NextMonthPlan);
+               !string.IsNullOrWhiteSpace(command.NextMonthPlan) ||
+               !string.IsNullOrWhiteSpace(command.Wins) ||
+               !string.IsNullOrWhiteSpace(command.SavingsOpportunities);
     }
 
     private static bool HasMeaningfulContent(MonthlyRetrospective entity)
@@ -207,15 +216,17 @@ public sealed partial class RetrospectiveService(IAppDbContext context, ICurrent
                entity.ImpulseControlRating != null ||
                entity.ConfidenceRating != null ||
                !string.IsNullOrWhiteSpace(entity.Conclusion) ||
-               !string.IsNullOrWhiteSpace(entity.NextMonthPlan);
+               !string.IsNullOrWhiteSpace(entity.NextMonthPlan) ||
+               !string.IsNullOrWhiteSpace(entity.Wins) ||
+               !string.IsNullOrWhiteSpace(entity.SavingsOpportunities);
     }
 
-    private static string? BuildConclusionPreview(string? conclusion)
+    private static string? BuildPreview(string? text)
     {
-        if (string.IsNullOrWhiteSpace(conclusion))
+        if (string.IsNullOrWhiteSpace(text))
             return null;
 
-        var trimmed = conclusion.Trim();
+        var trimmed = text.Trim();
         const int maxLength = 140;
 
         return trimmed.Length <= maxLength ? trimmed : $"{trimmed[..maxLength]}…";
