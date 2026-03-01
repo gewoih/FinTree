@@ -1,6 +1,6 @@
 using FinTree.Application.Analytics.Dto;
 
-namespace FinTree.Application.Analytics;
+namespace FinTree.Application.Analytics.Services;
 
 public static class CategoryDeltaService
 {

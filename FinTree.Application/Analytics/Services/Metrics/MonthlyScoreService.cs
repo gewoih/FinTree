@@ -1,13 +1,13 @@
-namespace FinTree.Application.Analytics;
+namespace FinTree.Application.Analytics.Services.Metrics;
 
 public sealed class MonthlyScoreService
 {
     private const decimal CushionSaturationMonths = 12m;
 
-    public static int? CalculateTotalMonthScore(
+    public static decimal? CalculateTotalMonthScore(
         decimal? savingsRate,
         decimal? liquidMonths,
-        int? stabilityScore,
+        decimal? stabilityScore,
         decimal? discretionaryShare,
         decimal? peakSpendShare)
     {
@@ -24,6 +24,6 @@ public sealed class MonthlyScoreService
         if (!weightedMean.HasValue || normalizedScores.Any(score => score is null))
             return null;
         
-        return (int)Math.Round(weightedMean.Value, 0);
+        return weightedMean.Value;
     }
 }

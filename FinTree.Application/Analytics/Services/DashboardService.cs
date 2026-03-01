@@ -1,12 +1,13 @@
 using System.Globalization;
 using FinTree.Application.Analytics.Dto;
+using FinTree.Application.Analytics.Services.Metrics;
 using FinTree.Application.Analytics.Shared;
 using FinTree.Application.Currencies;
 using FinTree.Application.Transactions;
 using FinTree.Application.Users;
 using FinTree.Domain.Transactions;
 
-namespace FinTree.Application.Analytics;
+namespace FinTree.Application.Analytics.Services;
 
 public sealed class DashboardService(
     TransactionsService transactionsService,
@@ -163,13 +164,8 @@ public sealed class DashboardService(
         var medianDaily = positiveObservedDailyValues.Count > 0
             ? MathService.ComputeMedian(positiveObservedDailyValues)
             : null;
-        var stabilityIndexValue = MathService.ComputeStabilityIndex(positiveObservedDailyValues);
-        var stabilityIndex = stabilityIndexValue.HasValue
-            ? MathService.Round2(stabilityIndexValue.Value)
-            : (decimal?)null;
-        var stabilityStatus = MathService.ResolveStabilityStatus(stabilityIndex);
-        var stabilityActionCode = MathService.ResolveStabilityActionCode(stabilityStatus);
-        var stabilityScore = MathService.ComputeStabilityScore(stabilityIndex);
+
+        var stability = StabilityService.ComputeStability(positiveObservedDailyValues);
 
         var netCashflow = totalIncome - totalExpenses;
         var savingsRate = totalIncome > 0m ? netCashflow / totalIncome : (decimal?)null;
@@ -252,7 +248,7 @@ public sealed class DashboardService(
         var totalMonthScore = MonthlyScoreService.CalculateTotalMonthScore(
             savingsRate,
             liquidMonths,
-            stabilityScore,
+            stability?.Index,
             discretionaryShare,
             peaks.PeakSpendSharePercent);
 
@@ -261,10 +257,10 @@ public sealed class DashboardService(
             MonthTotal: MathService.Round2(totalExpenses),
             MeanDaily: meanDaily.HasValue ? MathService.Round2(meanDaily.Value) : null,
             MedianDaily: medianDaily.HasValue ? MathService.Round2(medianDaily.Value) : null,
-            StabilityIndex: stabilityIndex,
-            StabilityScore: stabilityScore,
-            StabilityStatus: stabilityStatus,
-            StabilityActionCode: stabilityActionCode,
+            StabilityIndex: stability?.Index,
+            StabilityScore: (int?)stability?.Score,
+            StabilityStatus: stability?.Status,
+            StabilityActionCode: stability?.ActionCode,
             SavingsRate: savingsRate,
             NetCashflow: MathService.Round2(netCashflow),
             DiscretionaryTotal: MathService.Round2(discretionaryTotal),
@@ -273,7 +269,7 @@ public sealed class DashboardService(
             LiquidAssets: MathService.Round2(liquidAssets),
             LiquidMonths: liquidMonths,
             LiquidMonthsStatus: liquidStatus,
-            TotalMonthScore: totalMonthScore,
+            TotalMonthScore: (int?)totalMonthScore,
             IncomeMonthOverMonthChangePercent: incomeMoM,
             BalanceMonthOverMonthChangePercent: balanceMoM);
 

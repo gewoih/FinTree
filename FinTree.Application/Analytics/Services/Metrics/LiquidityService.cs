@@ -5,7 +5,7 @@ using FinTree.Application.Transactions;
 using FinTree.Domain.Transactions;
 using FinTree.Domain.ValueObjects;
 
-namespace FinTree.Application.Analytics;
+namespace FinTree.Application.Analytics.Services.Metrics;
 
 public sealed class LiquidityService(
     AccountsService accountsService,

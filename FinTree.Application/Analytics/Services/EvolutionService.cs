@@ -1,12 +1,13 @@
 using FinTree.Application.Accounts;
 using FinTree.Application.Analytics.Dto;
+using FinTree.Application.Analytics.Services.Metrics;
 using FinTree.Application.Analytics.Shared;
 using FinTree.Application.Currencies;
 using FinTree.Application.Transactions;
 using FinTree.Application.Users;
 using FinTree.Domain.Transactions;
 
-namespace FinTree.Application.Analytics;
+namespace FinTree.Application.Analytics.Services;
 
 public sealed class EvolutionService(
     AccountsService accountsService,
@@ -178,13 +179,7 @@ public sealed class EvolutionService(
                 ? MathService.Round2(rawDiscretionaryPercent.Value)
                 : (decimal?)null;
 
-            var stabilityIndexValue = MathService.ComputeStabilityIndex(dailyTotals.Values.ToList());
-            var stabilityIndex = stabilityIndexValue.HasValue
-                ? MathService.Round2(stabilityIndexValue.Value)
-                : (decimal?)null;
-            var stabilityStatus = MathService.ResolveStabilityStatus(stabilityIndex);
-            var stabilityActionCode = MathService.ResolveStabilityActionCode(stabilityStatus);
-            var stabilityScore = MathService.ComputeStabilityScore(stabilityIndex);
+            var stability = StabilityService.ComputeStability(dailyTotals.Values.ToList());
 
             var daysInMonth = DateTime.DaysInMonth(monthStart.Year, monthStart.Month);
             var peakMetrics = PeakDaysService.Calculate(dailyDiscretionary, monthTotal, daysInMonth);
@@ -208,7 +203,7 @@ public sealed class EvolutionService(
             var totalMonthScore = MonthlyScoreService.CalculateTotalMonthScore(
                 rawSavingsRate,
                 liquidMonths,
-                stabilityScore,
+                stability?.Score,
                 rawDiscretionaryPercent,
                 peakSpendSharePercent);
 
@@ -217,17 +212,17 @@ public sealed class EvolutionService(
                 monthStart.Month,
                 true,
                 savingsRate,
-                stabilityIndex,
-                stabilityScore,
-                stabilityStatus,
-                stabilityActionCode,
+                stability?.Index,
+                (int?)stability?.Score,
+                stability?.Status,
+                stability?.ActionCode,
                 discretionaryPercent,
                 netWorth,
                 liquidMonths,
                 meanDaily,
                 peakDayRatio,
                 peakSpendSharePercent,
-                totalMonthScore));
+                (int?)totalMonthScore));
         }
 
         return result;

@@ -7,7 +7,7 @@ using FinTree.Application.Users;
 using FinTree.Domain.Transactions;
 using FinTree.Domain.ValueObjects;
 
-namespace FinTree.Application.Analytics;
+namespace FinTree.Application.Analytics.Services;
 
 public sealed class NetWorthService(
     AccountsService accountsService,

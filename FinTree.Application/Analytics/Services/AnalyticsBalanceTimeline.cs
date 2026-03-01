@@ -1,4 +1,4 @@
-namespace FinTree.Application.Analytics;
+namespace FinTree.Application.Analytics.Services;
 
 internal static class AnalyticsBalanceTimeline
 {

@@ -9,6 +9,8 @@ using FinTree.Application.Abstractions;
 using FinTree.Application.Accounts;
 using FinTree.Application.Admin;
 using FinTree.Application.Analytics;
+using FinTree.Application.Analytics.Services;
+using FinTree.Application.Analytics.Services.Metrics;
 using FinTree.Application.Currencies;
 using FinTree.Application.Exceptions;
 using FinTree.Application.Retrospectives;
