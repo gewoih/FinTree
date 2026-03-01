@@ -211,61 +211,61 @@ function verdictLabel(verdict: EvolutionTrendVerdict): string {
         </p>
 
         <div class="evolution-card__badges">
+          <p
+            v-if="card.deltaLabel"
+            class="evolution-card__delta"
+            :class="deltaClass(card.deltaTone)"
+          >
+            {{ card.deltaLabel }}
+          </p>
+
+          <p
+            v-if="card.trendVerdict"
+            class="evolution-verdict"
+            :class="verdictClass(card.trendVerdict)"
+          >
+            {{ verdictLabel(card.trendVerdict) }}
+          </p>
+        </div>
+
         <p
-          v-if="card.deltaLabel"
-          class="evolution-card__delta"
-          :class="deltaClass(card.deltaTone)"
+          v-if="card.statusLabel"
+          class="evolution-card__status"
         >
-          {{ card.deltaLabel }}
+          {{ card.statusLabel }}
         </p>
 
         <p
-          v-if="card.trendVerdict"
-          class="evolution-verdict"
-          :class="verdictClass(card.trendVerdict)"
+          v-if="card.actionLabel"
+          class="evolution-card__action"
         >
-          {{ verdictLabel(card.trendVerdict) }}
+          {{ card.actionLabel }}
         </p>
       </div>
 
-      <p
-        v-if="card.statusLabel"
-        class="evolution-card__status"
-      >
-        {{ card.statusLabel }}
-      </p>
-
-      <p
-        v-if="card.actionLabel"
-        class="evolution-card__action"
-      >
-        {{ card.actionLabel }}
-      </p>
-    </div>
-
-    <div
-      class="evolution-card__chart"
-      role="img"
-      :aria-label="`График показателя ${card.label}`"
-    >
       <div
-        v-if="card.hasSeriesData"
-        class="evolution-card__chart-container"
+        class="evolution-card__chart"
+        role="img"
+        :aria-label="`График показателя ${card.label}`"
       >
-        <Chart
-          type="line"
-          :data="chartData"
-          :options="chartOptions"
-        />
-      </div>
+        <div
+          v-if="card.hasSeriesData"
+          class="evolution-card__chart-container"
+        >
+          <Chart
+            type="line"
+            :data="chartData"
+            :options="chartOptions"
+          />
+        </div>
 
-      <div
-        v-else
-        class="evolution-card__no-data"
-      >
-        Нет достаточных данных для построения графика.
+        <div
+          v-else
+          class="evolution-card__no-data"
+        >
+          Нет достаточных данных для построения графика.
+        </div>
       </div>
-    </div>
     </div>
   </article>
 </template>

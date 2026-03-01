@@ -398,7 +398,7 @@ const selectCategory = (cat: (typeof filteredCategories.value)[number]) => {
 // DatePicker does not expose show() — we click the underlying input programmatically
 const datePickerRef = ref<InstanceType<typeof DatePicker> | null>(null);
 const openDatePicker = () => {
-  const el = (datePickerRef.value as any)?.$el as HTMLElement | null;
+  const el = (datePickerRef.value as { $el: HTMLElement } | null)?.$el as HTMLElement | null;
   el?.querySelector('input')?.click();
 };
 
@@ -741,7 +741,10 @@ const formattedTxnDate = computed(() =>
               :disabled="props.readonly"
               @change="toggleMandatory()"
             >
-            <span class="txn-form__mandatory-thumb" aria-hidden="true" />
+            <span
+              class="txn-form__mandatory-thumb"
+              aria-hidden="true"
+            />
           </span>
         </label>
       </template>

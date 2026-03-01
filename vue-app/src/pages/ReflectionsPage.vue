@@ -225,9 +225,6 @@ const formatMonthCompact = (month: string) => {
   return date.toLocaleDateString('ru-RU', { month: 'short', year: '2-digit' })
 }
 
-const formatScore = (value: number | null) => {
-  return value == null ? '—' : `${value}/5`
-}
 
 const formatRating = (value: number | null) => {
   return value == null ? '—' : String(value)
@@ -335,10 +332,16 @@ watch(selectedCreateMonth, value => {
       <template v-else>
         <section class="reflections-page__chart-card">
           <div class="reflections-page__chart-header">
-            <h2 class="reflections-page__chart-title">История самооценки</h2>
+            <h2 class="reflections-page__chart-title">
+              История самооценки
+            </h2>
           </div>
 
-          <div class="reflections-page__range" role="group" aria-label="Период">
+          <div
+            class="reflections-page__range"
+            role="group"
+            aria-label="Период"
+          >
             <button
               v-for="range in RANGE_OPTIONS"
               :key="range.value"
@@ -351,7 +354,11 @@ watch(selectedCreateMonth, value => {
             </button>
           </div>
 
-          <div class="reflections-page__chart-wrap" role="img" aria-label="График истории самооценки">
+          <div
+            class="reflections-page__chart-wrap"
+            role="img"
+            aria-label="График истории самооценки"
+          >
             <Chart
               v-if="chartData"
               type="bar"
