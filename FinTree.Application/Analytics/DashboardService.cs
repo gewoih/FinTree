@@ -14,10 +14,6 @@ public sealed class DashboardService(
     UserService userService,
     LiquidityService liquidityService)
 {
-    private readonly record struct CategoryMeta(string Name, string Color, bool IsMandatory);
-
-    private readonly record struct CategoryTotals(decimal Total, decimal MandatoryTotal, decimal DiscretionaryTotal);
-
     public async Task<AnalyticsDashboardDto> GetDashboardAsync(int year, int month, CancellationToken ct)
     {
         var baseCurrencyCode = await userService.GetCurrentUserBaseCurrencyCodeAsync(ct);
@@ -232,7 +228,7 @@ public sealed class DashboardService(
         var averagedPriorTotals = priorExpenseCategoryTotals
             .ToDictionary(kv => kv.Key, kv => kv.Value / priorMonthCount);
 
-        var categoryDelta = BuildCategoryDelta(
+        var categoryDelta = CategoryDeltaService.GetCategoryDeltas(
             currentExpenseCategoryTotals.ToDictionary(kv => kv.Key, kv => kv.Value.Total),
             averagedPriorTotals,
             categories);
@@ -292,55 +288,6 @@ public sealed class DashboardService(
             spending,
             forecast,
             readiness);
-    }
-
-    private static CategoryDeltaDto BuildCategoryDelta(
-        Dictionary<Guid, decimal> currentTotals,
-        Dictionary<Guid, decimal> previousTotals,
-        Dictionary<Guid, CategoryMeta> categories)
-    {
-        var allIds = new HashSet<Guid>(currentTotals.Keys);
-        foreach (var id in previousTotals.Keys)
-            allIds.Add(id);
-
-        var entries = new List<CategoryDeltaItemDto>();
-        foreach (var id in allIds)
-        {
-            var current = currentTotals.GetValueOrDefault(id, 0m);
-            var previous = previousTotals.GetValueOrDefault(id, 0m);
-            if (current == 0m && previous == 0m)
-                continue;
-            if (previous <= 0m)
-                continue;
-
-            var delta = current - previous;
-            var deltaPercent = (delta / previous) * 100m;
-            if (!categories.TryGetValue(id, out var info))
-                info = new CategoryMeta("Без категории", "#9e9e9e", false);
-
-            entries.Add(new CategoryDeltaItemDto(
-                id,
-                info.Name,
-                info.Color,
-                MathService.Round2(current),
-                MathService.Round2(previous),
-                MathService.Round2(delta),
-                deltaPercent));
-        }
-
-        var increased = entries
-            .Where(x => x.DeltaAmount > 0)
-            .OrderByDescending(x => x.DeltaAmount)
-            .Take(3)
-            .ToList();
-
-        var decreased = entries
-            .Where(x => x.DeltaAmount < 0)
-            .OrderBy(x => x.DeltaAmount)
-            .Take(3)
-            .ToList();
-
-        return new CategoryDeltaDto(increased, decreased);
     }
 
     private async Task<SpendingBreakdownDto> BuildSpendingBreakdownAsync(
@@ -434,7 +381,7 @@ public sealed class DashboardService(
             .Select(kv =>
             {
                 var weekStart =
-                    System.Globalization.ISOWeek.ToDateTime(kv.Key.IsoYear, kv.Key.IsoWeek, DayOfWeek.Monday);
+                    ISOWeek.ToDateTime(kv.Key.IsoYear, kv.Key.IsoWeek, DayOfWeek.Monday);
                 return new MonthlyExpensesDto(
                     kv.Key.IsoYear,
                     weekStart.Month,
@@ -548,7 +495,7 @@ public sealed class DashboardService(
             ? Math.Min(nowUtc.Day, daysInMonth)
             : daysInMonth;
 
-        var observedCumulativeActual = 0m;
+        decimal observedCumulativeActual;
         {
             var runningTotal = 0m;
             for (var day = 1; day <= observedDays; day++)
@@ -630,7 +577,7 @@ public sealed class DashboardService(
         {
             days.Add(day);
             var dateKey = new DateOnly(year, month, day);
-            var dayAmount = dailyTotals.TryGetValue(dateKey, out var value) ? value : 0m;
+            var dayAmount = dailyTotals.GetValueOrDefault(dateKey, 0m);
             cumulative += dayAmount;
             if (day <= observedDays)
                 observedCumulative = cumulative;
@@ -688,14 +635,11 @@ public sealed class DashboardService(
         if (!projectedDaily.HasValue)
             return null;
 
-        if (isCurrentMonth)
-        {
-            if (day <= observedDays)
-                return MathService.Round2(cumulativeActual);
-
-            return MathService.Round2(observedCumulativeActual + projectedDaily.Value * (day - observedDays));
-        }
-
-        return MathService.Round2(projectedDaily.Value * day);
+        if (!isCurrentMonth) 
+            return MathService.Round2(projectedDaily.Value * day);
+        
+        return day <= observedDays 
+            ? MathService.Round2(cumulativeActual) 
+            : MathService.Round2(observedCumulativeActual + projectedDaily.Value * (day - observedDays));
     }
 }
