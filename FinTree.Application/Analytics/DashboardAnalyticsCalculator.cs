@@ -251,8 +251,9 @@ internal sealed class DashboardAnalyticsCalculator(
 
         var forecast = await BuildForecastAsync(year, month, dailyTotals, baseCurrencyCode, ct);
 
-        var liquidAssets = await liquidityMonthsService.GetLiquidAssetsAtAsync(baseCurrencyCode, monthEndUtc, ct);
-        var averageDailyExpense = await liquidityMonthsService.GetAverageDailyExpenseAsync(baseCurrencyCode, monthEndUtc, ct);
+        var todayMidnightUtc = new DateTime(nowUtc.Year, nowUtc.Month, nowUtc.Day, 0, 0, 0, DateTimeKind.Utc);
+        var liquidAssets = await liquidityMonthsService.GetLiquidAssetsAtAsync(baseCurrencyCode, nowUtc, ct);
+        var averageDailyExpense = await liquidityMonthsService.GetAverageDailyExpenseAsync(baseCurrencyCode, todayMidnightUtc, ct);
         var liquidMonths = liquidityMonthsService.ComputeLiquidMonths(liquidAssets, averageDailyExpense);
         var liquidStatus = AnalyticsMath.ResolveLiquidStatus(liquidMonths);
         var totalMonthScore = totalMonthScoreService.CalculateTotalMonthScore(
@@ -640,9 +641,10 @@ internal sealed class DashboardAnalyticsCalculator(
             ? AnalyticsMath.Round2(observedCumulativeActual)
             : AnalyticsMath.Round2(cumulative);
         
-        var baselineDailyRate = await liquidityMonthsService.GetAverageDailyExpenseAsync(baseCurrencyCode, forecastEnd.AddDays(1), ct);
+        var todayMidnightUtc = new DateTime(nowUtc.Year, nowUtc.Month, nowUtc.Day, 0, 0, 0, DateTimeKind.Utc);
+        var baselineDailyRate = await liquidityMonthsService.GetAverageDailyExpenseAsync(baseCurrencyCode, todayMidnightUtc, ct);
         var baselineLimit = baselineDailyRate > 0m
-            ? AnalyticsMath.Round2(baselineDailyRate * daysInMonth)
+            ? AnalyticsMath.Round2(baselineDailyRate * 30.44m)
             : (decimal?)null;
 
         var summary = new ForecastSummaryDto(
