@@ -104,7 +104,7 @@ public sealed class LiquidityService(
             total += balance * rate;
         }
 
-        return AnalyticsMath.Round2(total);
+        return MathService.Round2(total);
     }
 
     public async Task<decimal> GetAverageDailyExpenseAsync(string baseCurrencyCode, DateTime windowEndUtc,

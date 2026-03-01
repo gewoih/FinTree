@@ -165,15 +165,15 @@ public sealed class DashboardService(
 
         var meanDaily = observedDailyValues.Count > 0 ? observedDailyValues.Average() : (decimal?)null;
         var medianDaily = positiveObservedDailyValues.Count > 0
-            ? AnalyticsMath.ComputeMedian(positiveObservedDailyValues)
+            ? MathService.ComputeMedian(positiveObservedDailyValues)
             : null;
-        var stabilityIndexValue = AnalyticsMath.ComputeStabilityIndex(positiveObservedDailyValues);
+        var stabilityIndexValue = MathService.ComputeStabilityIndex(positiveObservedDailyValues);
         var stabilityIndex = stabilityIndexValue.HasValue
-            ? AnalyticsMath.Round2(stabilityIndexValue.Value)
+            ? MathService.Round2(stabilityIndexValue.Value)
             : (decimal?)null;
-        var stabilityStatus = AnalyticsMath.ResolveStabilityStatus(stabilityIndex);
-        var stabilityActionCode = AnalyticsMath.ResolveStabilityActionCode(stabilityStatus);
-        var stabilityScore = AnalyticsMath.ComputeStabilityScore(stabilityIndex);
+        var stabilityStatus = MathService.ResolveStabilityStatus(stabilityIndex);
+        var stabilityActionCode = MathService.ResolveStabilityActionCode(stabilityStatus);
+        var stabilityScore = MathService.ComputeStabilityScore(stabilityIndex);
 
         var netCashflow = totalIncome - totalExpenses;
         var savingsRate = totalIncome > 0m ? netCashflow / totalIncome : (decimal?)null;
@@ -203,9 +203,9 @@ public sealed class DashboardService(
                 kv.Key,
                 info.Name,
                 info.Color,
-                AnalyticsMath.Round2(kv.Value.Total),
-                AnalyticsMath.Round2(kv.Value.MandatoryTotal),
-                AnalyticsMath.Round2(kv.Value.DiscretionaryTotal),
+                MathService.Round2(kv.Value.Total),
+                MathService.Round2(kv.Value.MandatoryTotal),
+                MathService.Round2(kv.Value.DiscretionaryTotal),
                 percent,
                 info.IsMandatory);
         }).OrderByDescending(x => x.Amount).ToList();
@@ -215,7 +215,7 @@ public sealed class DashboardService(
             if (!categories.TryGetValue(kv.Key, out var info))
                 info = new CategoryMeta("Без категории", "#9e9e9e", false);
             var rawAmount = kv.Value;
-            var amount = AnalyticsMath.Round2(rawAmount);
+            var amount = MathService.Round2(rawAmount);
             var percent = totalIncome > 0m ? (rawAmount / totalIncome) * 100 : (decimal?)null;
             return new CategoryBreakdownItemDto(
                 kv.Key,
@@ -252,7 +252,7 @@ public sealed class DashboardService(
         var averageDailyExpense =
             await liquidityService.GetAverageDailyExpenseAsync(baseCurrencyCode, todayMidnightUtc, ct);
         var liquidMonths = liquidityService.ComputeLiquidMonths(liquidAssets, averageDailyExpense);
-        var liquidStatus = AnalyticsMath.ResolveLiquidStatus(liquidMonths);
+        var liquidStatus = MathService.ResolveLiquidStatus(liquidMonths);
         var totalMonthScore = MonthlyScoreService.CalculateTotalMonthScore(
             savingsRate,
             liquidMonths,
@@ -261,20 +261,20 @@ public sealed class DashboardService(
             peaks.PeakSpendSharePercent);
 
         var health = new FinancialHealthSummaryDto(
-            MonthIncome: AnalyticsMath.Round2(totalIncome),
-            MonthTotal: AnalyticsMath.Round2(totalExpenses),
-            MeanDaily: meanDaily.HasValue ? AnalyticsMath.Round2(meanDaily.Value) : null,
-            MedianDaily: medianDaily.HasValue ? AnalyticsMath.Round2(medianDaily.Value) : null,
+            MonthIncome: MathService.Round2(totalIncome),
+            MonthTotal: MathService.Round2(totalExpenses),
+            MeanDaily: meanDaily.HasValue ? MathService.Round2(meanDaily.Value) : null,
+            MedianDaily: medianDaily.HasValue ? MathService.Round2(medianDaily.Value) : null,
             StabilityIndex: stabilityIndex,
             StabilityScore: stabilityScore,
             StabilityStatus: stabilityStatus,
             StabilityActionCode: stabilityActionCode,
             SavingsRate: savingsRate,
-            NetCashflow: AnalyticsMath.Round2(netCashflow),
-            DiscretionaryTotal: AnalyticsMath.Round2(discretionaryTotal),
+            NetCashflow: MathService.Round2(netCashflow),
+            DiscretionaryTotal: MathService.Round2(discretionaryTotal),
             DiscretionarySharePercent: discretionaryShare,
             MonthOverMonthChangePercent: monthOverMonth,
-            LiquidAssets: AnalyticsMath.Round2(liquidAssets),
+            LiquidAssets: MathService.Round2(liquidAssets),
             LiquidMonths: liquidMonths,
             LiquidMonthsStatus: liquidStatus,
             TotalMonthScore: totalMonthScore,
@@ -322,9 +322,9 @@ public sealed class DashboardService(
                 id,
                 info.Name,
                 info.Color,
-                AnalyticsMath.Round2(current),
-                AnalyticsMath.Round2(previous),
-                AnalyticsMath.Round2(delta),
+                MathService.Round2(current),
+                MathService.Round2(previous),
+                MathService.Round2(delta),
                 deltaPercent));
         }
 
@@ -401,7 +401,7 @@ public sealed class DashboardService(
                     dateCursor.Month,
                     dateCursor.Day,
                     null,
-                    AnalyticsMath.Round2(amount)));
+                    MathService.Round2(amount)));
             }
         }
 
@@ -440,7 +440,7 @@ public sealed class DashboardService(
                     weekStart.Month,
                     null,
                     kv.Key.IsoWeek,
-                    AnalyticsMath.Round2(kv.Value));
+                    MathService.Round2(kv.Value));
             })
             .OrderBy(x => x.Year)
             .ThenBy(x => x.Week)
@@ -474,7 +474,7 @@ public sealed class DashboardService(
                     monthCursor.Month,
                     null,
                     null,
-                    AnalyticsMath.Round2(monthTotal)));
+                    MathService.Round2(monthTotal)));
                 monthCursor = monthCursor.AddMonths(1);
             }
         }
@@ -638,7 +638,7 @@ public sealed class DashboardService(
             if (isCurrentMonth && day > observedDays)
                 actual.Add(null);
             else
-                actual.Add(AnalyticsMath.Round2(cumulative));
+                actual.Add(MathService.Round2(cumulative));
 
             optimistic.Add(BuildForecastScenarioPoint(
                 optimisticDaily,
@@ -658,14 +658,14 @@ public sealed class DashboardService(
         }
 
         var currentSpent = isCurrentMonth
-            ? AnalyticsMath.Round2(observedCumulativeActual)
-            : AnalyticsMath.Round2(cumulative);
+            ? MathService.Round2(observedCumulativeActual)
+            : MathService.Round2(cumulative);
 
         var todayMidnightUtc = new DateTime(nowUtc.Year, nowUtc.Month, nowUtc.Day, 0, 0, 0, DateTimeKind.Utc);
         var baselineDailyRate =
             await liquidityService.GetAverageDailyExpenseAsync(baseCurrencyCode, todayMidnightUtc, ct);
         var baselineLimit = baselineDailyRate > 0m
-            ? AnalyticsMath.Round2(baselineDailyRate * 30.44m)
+            ? MathService.Round2(baselineDailyRate * 30.44m)
             : (decimal?)null;
 
         var summary = new ForecastSummaryDto(
@@ -691,11 +691,11 @@ public sealed class DashboardService(
         if (isCurrentMonth)
         {
             if (day <= observedDays)
-                return AnalyticsMath.Round2(cumulativeActual);
+                return MathService.Round2(cumulativeActual);
 
-            return AnalyticsMath.Round2(observedCumulativeActual + projectedDaily.Value * (day - observedDays));
+            return MathService.Round2(observedCumulativeActual + projectedDaily.Value * (day - observedDays));
         }
 
-        return AnalyticsMath.Round2(projectedDaily.Value * day);
+        return MathService.Round2(projectedDaily.Value * day);
     }
 }

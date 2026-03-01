@@ -149,7 +149,7 @@ public sealed class NetWorthService(
             result.Add(new NetWorthSnapshotDto(
                 monthDate.Year,
                 monthDate.Month,
-                AnalyticsMath.Round2(netWorth)));
+                MathService.Round2(netWorth)));
         }
 
         return result;

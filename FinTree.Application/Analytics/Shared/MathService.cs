@@ -1,6 +1,6 @@
 namespace FinTree.Application.Analytics.Shared;
 
-internal static class AnalyticsMath
+internal static class MathService
 {
     public static decimal Round2(decimal value)
         => Math.Round(value, 2, MidpointRounding.AwayFromZero);

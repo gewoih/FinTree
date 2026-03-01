@@ -164,27 +164,27 @@ public sealed class EvolutionService(
             var discretionaryTotal = dailyDiscretionary.Values.Sum();
             var observedDays = dailyTotals.Count;
 
-            var meanDaily = observedDays > 0 ? AnalyticsMath.Round2(monthTotal / observedDays) : 0m;
+            var meanDaily = observedDays > 0 ? MathService.Round2(monthTotal / observedDays) : 0m;
             var rawSavingsRate = monthIncome > 0
                 ? (monthIncome - monthTotal) / monthIncome
                 : (decimal?)null;
             var savingsRate = rawSavingsRate.HasValue
-                ? AnalyticsMath.Round2(rawSavingsRate.Value)
+                ? MathService.Round2(rawSavingsRate.Value)
                 : (decimal?)null;
             var rawDiscretionaryPercent = monthTotal > 0
                 ? (discretionaryTotal / monthTotal) * 100m
                 : (decimal?)null;
             var discretionaryPercent = rawDiscretionaryPercent.HasValue
-                ? AnalyticsMath.Round2(rawDiscretionaryPercent.Value)
+                ? MathService.Round2(rawDiscretionaryPercent.Value)
                 : (decimal?)null;
 
-            var stabilityIndexValue = AnalyticsMath.ComputeStabilityIndex(dailyTotals.Values.ToList());
+            var stabilityIndexValue = MathService.ComputeStabilityIndex(dailyTotals.Values.ToList());
             var stabilityIndex = stabilityIndexValue.HasValue
-                ? AnalyticsMath.Round2(stabilityIndexValue.Value)
+                ? MathService.Round2(stabilityIndexValue.Value)
                 : (decimal?)null;
-            var stabilityStatus = AnalyticsMath.ResolveStabilityStatus(stabilityIndex);
-            var stabilityActionCode = AnalyticsMath.ResolveStabilityActionCode(stabilityStatus);
-            var stabilityScore = AnalyticsMath.ComputeStabilityScore(stabilityIndex);
+            var stabilityStatus = MathService.ResolveStabilityStatus(stabilityIndex);
+            var stabilityActionCode = MathService.ResolveStabilityActionCode(stabilityStatus);
+            var stabilityScore = MathService.ComputeStabilityScore(stabilityIndex);
 
             var daysInMonth = DateTime.DaysInMonth(monthStart.Year, monthStart.Month);
             var peakMetrics = PeakDaysService.Calculate(dailyDiscretionary, monthTotal, daysInMonth);
@@ -194,11 +194,11 @@ public sealed class EvolutionService(
             var rateAtUtc = monthEnd.AddTicks(-1);
             var netWorth = accountSnapshots.Sum(account =>
                 ConvertAmount(account.CurrencyCode, balancesByAccount[account.Id], rateAtUtc));
-            netWorth = AnalyticsMath.Round2(netWorth);
+            netWorth = MathService.Round2(netWorth);
 
             var liquidAssets = liquidAccounts.Sum(account =>
                 ConvertAmount(account.CurrencyCode, balancesByAccount[account.Id], rateAtUtc));
-            liquidAssets = AnalyticsMath.Round2(liquidAssets);
+            liquidAssets = MathService.Round2(liquidAssets);
 
             var averageDailyExpense = liquidityService.ComputeAverageDailyExpense(
                 liquidityExpenseDailyTotals,

@@ -26,11 +26,11 @@ public sealed class PeakDaysService
         if (positiveDailyTotals.Count == 0)
             return Empty(monthTotal);
 
-        var medianDaily = AnalyticsMath.ComputeMedian(positiveDailyTotals);
+        var medianDaily = MathService.ComputeMedian(positiveDailyTotals);
         if (medianDaily is not > 0m)
             return Empty(monthTotal);
 
-        var threshold = AnalyticsMath.ComputePeakThreshold(positiveDailyTotals, medianDaily.Value);
+        var threshold = MathService.ComputePeakThreshold(positiveDailyTotals, medianDaily.Value);
         var peakDays = discretionaryDailyTotals
             .Where(kv => kv.Value >= threshold)
             .Select(kv =>
@@ -40,7 +40,7 @@ public sealed class PeakDaysService
                     kv.Key.Year,
                     kv.Key.Month,
                     kv.Key.Day,
-                    AnalyticsMath.Round2(kv.Value),
+                    MathService.Round2(kv.Value),
                     share);
             })
             .OrderByDescending(day => day.Amount)
@@ -52,12 +52,12 @@ public sealed class PeakDaysService
             : (decimal?)null;
 
         var peakDayRatioPercent = daysInMonth > 0
-            ? AnalyticsMath.Round2((decimal)peakDays.Count / daysInMonth * 100m)
+            ? MathService.Round2((decimal)peakDays.Count / daysInMonth * 100m)
             : (decimal?)null;
 
         var summary = new PeakDaysSummaryDto(
             peakDays.Count,
-            AnalyticsMath.Round2(totalPeakAmount),
+            MathService.Round2(totalPeakAmount),
             peakSpendSharePercent,
             monthTotal);
 
