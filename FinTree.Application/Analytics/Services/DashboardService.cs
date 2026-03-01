@@ -13,8 +13,12 @@ public sealed class DashboardService(
     TransactionsService transactionsService,
     CurrencyConverter currencyConverter,
     UserService userService,
-    LiquidityService liquidityService)
+    LiquidityService liquidityService,
+    ForecastService forecastService,
+    ExpenseService expenseService)
 {
+    private const int RollingWindowDays = 180;
+
     public async Task<AnalyticsDashboardDto> GetDashboardAsync(int year, int month, CancellationToken ct)
     {
         var baseCurrencyCode = await userService.GetCurrentUserBaseCurrencyCodeAsync(ct);
@@ -229,28 +233,22 @@ public sealed class DashboardService(
             averagedPriorTotals,
             categories);
 
-        var spending = await BuildSpendingBreakdownAsync(
-            year,
-            month,
-            baseCurrencyCode,
-            monthStartUtc,
-            monthEndUtc,
-            ct);
+        var spending = await BuildSpendingBreakdownAsync(year, month, baseCurrencyCode, monthStartUtc, monthEndUtc, ct);
 
-        var forecast = await BuildForecastAsync(year, month, dailyTotals, baseCurrencyCode, ct);
+        var forecast =
+            await forecastService.BuildForecastAsync(RollingWindowDays, year, month, dailyTotals, baseCurrencyCode, ct);
 
-        var todayMidnightUtc = new DateTime(nowUtc.Year, nowUtc.Month, nowUtc.Day, 0, 0, 0, DateTimeKind.Utc);
+        var toUtc = new DateTime(nowUtc.Year, nowUtc.Month, nowUtc.Day, 0, 0, 0, DateTimeKind.Utc);
+        var fromUtc = toUtc.AddDays(-RollingWindowDays);
         var liquidAssets = await liquidityService.GetLiquidAssetsAtAsync(baseCurrencyCode, nowUtc, ct);
+
         var averageDailyExpense =
-            await liquidityService.GetAverageDailyExpenseAsync(baseCurrencyCode, todayMidnightUtc, ct);
-        var liquidMonths = liquidityService.ComputeLiquidMonths(liquidAssets, averageDailyExpense);
+            await expenseService.GetAverageDailyExpenseAsync(baseCurrencyCode, fromUtc, toUtc, ct);
+
+        var liquidMonths = LiquidityService.ComputeLiquidMonths(liquidAssets, averageDailyExpense);
         var liquidStatus = MathService.ResolveLiquidStatus(liquidMonths);
-        var totalMonthScore = MonthlyScoreService.CalculateTotalMonthScore(
-            savingsRate,
-            liquidMonths,
-            stability?.Index,
-            discretionaryShare,
-            peaks.PeakSpendSharePercent);
+        var totalMonthScore = MonthlyScoreService.CalculateTotalMonthScore(savingsRate, liquidMonths,
+            stability?.Index, discretionaryShare, peaks.PeakSpendSharePercent);
 
         var health = new FinancialHealthSummaryDto(
             MonthIncome: MathService.Round2(totalIncome),
@@ -286,13 +284,8 @@ public sealed class DashboardService(
             readiness);
     }
 
-    private async Task<SpendingBreakdownDto> BuildSpendingBreakdownAsync(
-        int year,
-        int month,
-        string baseCurrencyCode,
-        DateTime monthStartUtc,
-        DateTime monthEndUtc,
-        CancellationToken ct)
+    private async Task<SpendingBreakdownDto> BuildSpendingBreakdownAsync(int year, int month, string baseCurrencyCode,
+        DateTime monthStartUtc, DateTime monthEndUtc, CancellationToken ct)
     {
         var monthsWindowStartUtc = monthStartUtc.AddMonths(-11);
 
@@ -423,219 +416,5 @@ public sealed class DashboardService(
         }
 
         return new SpendingBreakdownDto(days, weeksResult, months);
-    }
-
-    private async Task<ForecastDto> BuildForecastAsync(
-        int year,
-        int month,
-        Dictionary<DateOnly, decimal> dailyTotals,
-        string baseCurrencyCode,
-        CancellationToken ct)
-    {
-        var nowUtc = DateTime.UtcNow;
-        var monthStartUtc = new DateTime(year, month, 1, 0, 0, 0, DateTimeKind.Utc);
-        var monthEndUtc = monthStartUtc.AddMonths(1);
-        var isCurrentMonth = monthStartUtc.Year == nowUtc.Year && monthStartUtc.Month == nowUtc.Month;
-        var lastDate = isCurrentMonth ? nowUtc.Date : monthEndUtc.AddDays(-1).Date;
-
-        var forecastEnd = new DateTime(lastDate.Year, lastDate.Month, lastDate.Day, 0, 0, 0, DateTimeKind.Utc);
-        var forecastStart = forecastEnd.AddDays(-179);
-
-        var forecastTransactions = await transactionsService.GetTransactionSnapshotsAsync(
-            fromUtc: forecastStart,
-            toUtc: forecastEnd.AddTicks(1),
-            excludeTransfers: true,
-            type: TransactionType.Expense,
-            ct: ct);
-
-        var rateByCurrencyAndDay = await currencyConverter.GetCrossRatesAsync(
-            forecastTransactions.Select(txn => (txn.Money.CurrencyCode, txn.OccurredAtUtc)),
-            baseCurrencyCode,
-            ct);
-
-        var forecastDailyTotals = new Dictionary<DateOnly, decimal>();
-        foreach (var txn in forecastTransactions)
-        {
-            ct.ThrowIfCancellationRequested();
-
-            var rateKey = (txn.Money.CurrencyCode, txn.OccurredAtUtc.Date);
-            var amountInBaseCurrency = txn.Money.Amount * rateByCurrencyAndDay[rateKey];
-
-            var dateKey = DateOnly.FromDateTime(txn.OccurredAtUtc);
-            if (forecastDailyTotals.TryGetValue(dateKey, out var current))
-                forecastDailyTotals[dateKey] = current + amountInBaseCurrency;
-            else
-                forecastDailyTotals[dateKey] = amountInBaseCurrency;
-        }
-
-        if (forecastDailyTotals.Count > 0)
-        {
-            var firstDay = forecastDailyTotals.Keys.Min().ToDateTime(TimeOnly.MinValue);
-            if (firstDay > forecastStart)
-                forecastStart = firstDay;
-        }
-
-        // Build pool — exclude today (partial day) when viewing current month
-        var poolEnd = isCurrentMonth ? forecastEnd.AddDays(-1) : forecastEnd;
-        var poolDays = Math.Clamp((int)(poolEnd - forecastStart).TotalDays + 1, 0, 180);
-
-        var pool = new decimal[poolDays];
-        for (var i = 0; i < poolDays; i++)
-        {
-            var dateKey = DateOnly.FromDateTime(forecastStart.AddDays(i));
-            pool[i] = forecastDailyTotals.GetValueOrDefault(dateKey, 0m);
-        }
-
-        var daysInMonth = DateTime.DaysInMonth(year, month);
-        var observedDays = isCurrentMonth
-            ? Math.Min(nowUtc.Day, daysInMonth)
-            : daysInMonth;
-
-        decimal observedCumulativeActual;
-        {
-            var runningTotal = 0m;
-            for (var day = 1; day <= observedDays; day++)
-            {
-                var dateKey = new DateOnly(year, month, day);
-                runningTotal += dailyTotals.GetValueOrDefault(dateKey, 0m);
-            }
-
-            observedCumulativeActual = runningTotal;
-        }
-
-        decimal? optimisticTotal = null;
-        decimal? riskTotal = null;
-        decimal? optimisticDaily = null;
-        decimal? riskDaily = null;
-
-        // On the last day of the current month today is still in progress, so treat it as 1 remaining day.
-        var remainingDays = isCurrentMonth && nowUtc.Day == daysInMonth
-            ? 1
-            : Math.Max(daysInMonth - observedDays, 0);
-
-        if (remainingDays > 0 && pool.Length >= 10)
-        {
-            static long ToCents(decimal x) => (long)Math.Round(x * 100m, MidpointRounding.AwayFromZero);
-
-            const int simCount = 10_000;
-            var simTotals = new decimal[simCount];
-            var seed = 42;
-            seed = HashCode.Combine(seed, year, month, observedDays, remainingDays, ToCents(observedCumulativeActual));
-            seed = pool.Aggregate(seed, (current, t) => HashCode.Combine(current, ToCents(t)));
-
-            // Exponential decay weights: λ=0.02 → half-life ≈ 35 days.
-            // pool[0] is the oldest day, pool[^1] is the most recent.
-            const double lambda = 0.02;
-            var cdf = new double[pool.Length];
-            var weightSum = 0.0;
-            for (var i = 0; i < pool.Length; i++)
-            {
-                var age = pool.Length - 1 - i; // 0 = most recent
-                weightSum += Math.Exp(-lambda * age);
-                cdf[i] = weightSum;
-            }
-
-            for (var i = 0; i < pool.Length; i++)
-                cdf[i] /= weightSum;
-
-            var rng = new Random(seed);
-
-            for (var s = 0; s < simCount; s++)
-            {
-                var total = observedCumulativeActual;
-                for (var r = 0; r < remainingDays; r++)
-                {
-                    var u = rng.NextDouble();
-                    var idx = Array.BinarySearch(cdf, u);
-                    if (idx < 0) idx = ~idx;
-                    total += pool[Math.Clamp(idx, 0, pool.Length - 1)];
-                }
-
-                simTotals[s] = total;
-            }
-
-            Array.Sort(simTotals);
-            optimisticTotal = simTotals[3_500]; // P35
-            riskTotal = simTotals[8_500]; // P85
-
-            optimisticDaily = (optimisticTotal.Value - observedCumulativeActual) / remainingDays;
-            riskDaily = (riskTotal.Value - observedCumulativeActual) / remainingDays;
-        }
-
-        var days = new List<int>(daysInMonth);
-        var actual = new List<decimal?>(daysInMonth);
-        var optimistic = new List<decimal?>(daysInMonth);
-        var risk = new List<decimal?>(daysInMonth);
-
-        var cumulative = 0m;
-        var observedCumulative = 0m;
-        for (var day = 1; day <= daysInMonth; day++)
-        {
-            days.Add(day);
-            var dateKey = new DateOnly(year, month, day);
-            var dayAmount = dailyTotals.GetValueOrDefault(dateKey, 0m);
-            cumulative += dayAmount;
-            if (day <= observedDays)
-                observedCumulative = cumulative;
-
-            if (isCurrentMonth && day > observedDays)
-                actual.Add(null);
-            else
-                actual.Add(MathService.Round2(cumulative));
-
-            optimistic.Add(BuildForecastScenarioPoint(
-                optimisticDaily,
-                isCurrentMonth,
-                day,
-                observedDays,
-                cumulative,
-                observedCumulative));
-
-            risk.Add(BuildForecastScenarioPoint(
-                riskDaily,
-                isCurrentMonth,
-                day,
-                observedDays,
-                cumulative,
-                observedCumulative));
-        }
-
-        var currentSpent = isCurrentMonth
-            ? MathService.Round2(observedCumulativeActual)
-            : MathService.Round2(cumulative);
-
-        var todayMidnightUtc = new DateTime(nowUtc.Year, nowUtc.Month, nowUtc.Day, 0, 0, 0, DateTimeKind.Utc);
-        var baselineDailyRate =
-            await liquidityService.GetAverageDailyExpenseAsync(baseCurrencyCode, todayMidnightUtc, ct);
-        var baselineLimit = baselineDailyRate > 0m
-            ? MathService.Round2(baselineDailyRate * 30.44m)
-            : (decimal?)null;
-
-        var summary = new ForecastSummaryDto(
-            optimisticTotal,
-            riskTotal,
-            currentSpent,
-            baselineLimit);
-        var series = new ForecastSeriesDto(days, actual, optimistic, risk, baselineLimit);
-        return new ForecastDto(summary, series);
-    }
-
-    private static decimal? BuildForecastScenarioPoint(
-        decimal? projectedDaily,
-        bool isCurrentMonth,
-        int day,
-        int observedDays,
-        decimal cumulativeActual,
-        decimal observedCumulativeActual)
-    {
-        if (!projectedDaily.HasValue)
-            return null;
-
-        if (!isCurrentMonth) 
-            return MathService.Round2(projectedDaily.Value * day);
-        
-        return day <= observedDays 
-            ? MathService.Round2(cumulativeActual) 
-            : MathService.Round2(observedCumulativeActual + projectedDaily.Value * (day - observedDays));
     }
 }

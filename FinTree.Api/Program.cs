@@ -250,6 +250,8 @@ builder.Services.AddScoped<LiquidityService>();
 builder.Services.AddScoped<DashboardService>();
 builder.Services.AddScoped<NetWorthService>();
 builder.Services.AddScoped<EvolutionService>();
+builder.Services.AddScoped<ForecastService>();
+builder.Services.AddScoped<ExpenseService>();
 
 if (!string.IsNullOrWhiteSpace(telegramToken))
     builder.Services.AddHostedService<TelegramBotHostedService>();

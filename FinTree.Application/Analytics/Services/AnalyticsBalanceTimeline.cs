@@ -6,14 +6,14 @@ internal static class AnalyticsBalanceTimeline
 
     public readonly record struct BalanceEvent(DateTime OccurredAt, decimal Amount, bool IsAdjustment);
 
-    public static Dictionary<Guid, List<BalanceEvent>> BuildBalanceEventsByAccount(
-        IReadOnlyCollection<Guid> accountIds,
+    public static Dictionary<Guid, List<BalanceEvent>> BuildBalanceEventsByAccount(IReadOnlyCollection<Guid> accountIds,
         IReadOnlyDictionary<Guid, DateTime> accountCreatedAtById,
         IEnumerable<(Guid AccountId, DateTime OccurredAtUtc, decimal DeltaAmount)> transactionDeltas,
         IEnumerable<(Guid AccountId, DateTime OccurredAtUtc, decimal Amount)> adjustments,
         CancellationToken ct)
     {
-        var sequencedEventsByAccount = accountIds.ToDictionary(id => id, _ => new List<(BalanceEvent Event, int Sequence)>());
+        var sequencedEventsByAccount =
+            accountIds.ToDictionary(id => id, _ => new List<(BalanceEvent Event, int Sequence)>());
         var sequence = 0;
 
         foreach (var txn in transactionDeltas)

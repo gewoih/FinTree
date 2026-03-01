@@ -100,94 +100,16 @@ public sealed class LiquidityService(
                 balance += delta;
             }
 
-            var rate = rateByCurrency.TryGetValue(account.CurrencyCode, out var foundRate) ? foundRate : 1m;
+            var rate = rateByCurrency.GetValueOrDefault(account.CurrencyCode, 1m);
             total += balance * rate;
         }
 
         return MathService.Round2(total);
     }
 
-    public async Task<decimal> GetAverageDailyExpenseAsync(string baseCurrencyCode, DateTime windowEndUtc,
-        CancellationToken ct)
-    {
-        var windowStartUtc = windowEndUtc.AddDays(-180);
-
-        var earliestTrackedAtUtc = await transactionsService.GetEarliestOccurredAtBeforeAsync(
-            windowEndUtc,
-            excludeTransfers: true,
-            ct);
-
-        if (!earliestTrackedAtUtc.HasValue)
-            return 0m;
-
-        var rawExpenses = await transactionsService.GetTransactionSnapshotsAsync(
-            fromUtc: windowStartUtc,
-            toUtc: windowEndUtc,
-            excludeTransfers: true,
-            type: TransactionType.Expense,
-            ct: ct);
-
-        if (rawExpenses.Count == 0)
-            return 0m;
-
-        var rateByCurrencyAndDay = await currencyConverter.GetCrossRatesAsync(
-            rawExpenses.Select(expense => (expense.Money.CurrencyCode, expense.OccurredAtUtc)),
-            baseCurrencyCode,
-            ct);
-
-        var dailyTotals = new Dictionary<DateOnly, decimal>();
-
-        foreach (var expense in rawExpenses)
-        {
-            var rateKey = (expense.Money.CurrencyCode, expense.OccurredAtUtc.Date);
-
-            var amountInBaseCurrency = expense.Money.Amount * rateByCurrencyAndDay[rateKey];
-            var dayKey = DateOnly.FromDateTime(expense.OccurredAtUtc);
-
-            if (dailyTotals.TryGetValue(dayKey, out var current))
-                dailyTotals[dayKey] = current + amountInBaseCurrency;
-            else
-                dailyTotals[dayKey] = amountInBaseCurrency;
-        }
-
-        return ComputeAverageDailyExpense(dailyTotals, earliestTrackedAtUtc, windowEndUtc);
-    }
-
-    public decimal ComputeAverageDailyExpense(
-        IReadOnlyDictionary<DateOnly, decimal> expenseDailyTotals,
-        DateTime? earliestTrackedAtUtc,
-        DateTime windowEndUtc)
-    {
-        if (!earliestTrackedAtUtc.HasValue || earliestTrackedAtUtc.Value >= windowEndUtc)
-            return 0m;
-
-        var windowStartUtc = windowEndUtc.AddDays(-180);
-        var windowStartDate = DateOnly.FromDateTime(windowStartUtc);
-        var windowEndDate = DateOnly.FromDateTime(windowEndUtc);
-
-        var totalExpense = expenseDailyTotals
-            .Where(entry => entry.Key >= windowStartDate && entry.Key < windowEndDate)
-            .Sum(entry => entry.Value);
-
-        var effectiveStartUtc = earliestTrackedAtUtc.Value > windowStartUtc
-            ? earliestTrackedAtUtc.Value
-            : windowStartUtc;
-
-        var calendarDays = (decimal)(windowEndUtc - effectiveStartUtc).TotalDays;
-
-        if (calendarDays <= 0m)
-            return 0m;
-
-        return totalExpense / calendarDays;
-    }
-
-    public decimal ComputeLiquidMonths(decimal liquidAssets, decimal averageDailyExpense)
+    public static decimal ComputeLiquidMonths(decimal liquidAssets, decimal averageDailyExpense)
     {
         var monthlyExpense = averageDailyExpense * 30.44m;
-
-        if (monthlyExpense <= 0m)
-            return 0m;
-
-        return Math.Max(0m, Math.Round(liquidAssets / monthlyExpense, 2, MidpointRounding.AwayFromZero));
+        return monthlyExpense <= 0m ? 0m : Math.Max(0m, liquidAssets / monthlyExpense);
     }
 }

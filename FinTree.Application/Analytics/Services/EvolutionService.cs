@@ -14,14 +14,16 @@ public sealed class EvolutionService(
     TransactionsService transactionsService,
     UserService userService,
     CurrencyConverter currencyConverter,
-    LiquidityService liquidityService)
+    ExpenseService expenseService)
 {
+    private const int RollingWindowDays = 180;
+    
     public async Task<List<EvolutionMonthDto>> GetEvolutionAsync(int months, CancellationToken ct)
     {
         var baseCurrencyCode = await userService.GetCurrentUserBaseCurrencyCodeAsync(ct);
 
         var now = DateTime.UtcNow;
-        var windowMonths = months > 0 ? months : 120;
+        var windowMonths = months > 0 ? months : 12;
         var windowStart = new DateTime(now.Year, now.Month, 1, 0, 0, 0, DateTimeKind.Utc)
             .AddMonths(-(windowMonths - 1));
         var liquidityWindowStart = windowStart.AddDays(-180);
@@ -104,7 +106,7 @@ public sealed class EvolutionService(
             ct);
 
         var liquidityExpenseDailyTotals = liquidityExpenseTransactions
-            .GroupBy(transaction => DateOnly.FromDateTime(transaction.OccurredAtUtc))
+            .GroupBy(transaction => transaction.OccurredAtUtc)
             .ToDictionary(
                 group => group.Key,
                 group => group.Sum(transaction =>
@@ -195,20 +197,15 @@ public sealed class EvolutionService(
                 ConvertAmount(account.CurrencyCode, balancesByAccount[account.Id], rateAtUtc));
             liquidAssets = MathService.Round2(liquidAssets);
 
-            var averageDailyExpense = liquidityService.ComputeAverageDailyExpense(
-                liquidityExpenseDailyTotals,
-                earliestTrackedAtUtc,
-                monthEnd);
-            var liquidMonths = liquidityService.ComputeLiquidMonths(liquidAssets, averageDailyExpense);
-            var totalMonthScore = MonthlyScoreService.CalculateTotalMonthScore(
-                rawSavingsRate,
-                liquidMonths,
-                stability?.Score,
-                rawDiscretionaryPercent,
-                peakSpendSharePercent);
+            var fromUtc = monthEnd.AddDays(-RollingWindowDays);
+            var averageDailyExpense = ExpenseService.ComputeAverageDailyExpense(liquidityExpenseDailyTotals,
+                earliestTrackedAtUtc, fromUtc, monthEnd);
+            
+            var liquidMonths = LiquidityService.ComputeLiquidMonths(liquidAssets, averageDailyExpense);
+            var totalMonthScore = MonthlyScoreService.CalculateTotalMonthScore(rawSavingsRate, liquidMonths,
+                stability?.Score, rawDiscretionaryPercent, peakSpendSharePercent);
 
-            result.Add(new EvolutionMonthDto(
-                monthStart.Year,
+            result.Add(new EvolutionMonthDto(monthStart.Year,
                 monthStart.Month,
                 true,
                 savingsRate,
