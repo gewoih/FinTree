@@ -1,4 +1,5 @@
 using FinTree.Application.Accounts;
+using FinTree.Application.Analytics.Shared;
 using FinTree.Application.Currencies;
 using FinTree.Application.Transactions;
 using FinTree.Domain.Transactions;
@@ -6,25 +7,10 @@ using FinTree.Domain.ValueObjects;
 
 namespace FinTree.Application.Analytics;
 
-internal interface ILiquidityMonthsService
-{
-    Task<decimal> GetLiquidAssetsAtAsync(string baseCurrencyCode, DateTime atUtc, CancellationToken ct);
-
-    Task<decimal> GetAverageDailyExpenseAsync(string baseCurrencyCode, DateTime windowEndUtc, CancellationToken ct);
-
-    decimal ComputeAverageDailyExpense(
-        IReadOnlyDictionary<DateOnly, decimal> expenseDailyTotals,
-        DateTime? earliestTrackedAtUtc,
-        DateTime windowEndUtc);
-
-    decimal ComputeLiquidMonths(decimal liquidAssets, decimal averageDailyExpense);
-}
-
-internal sealed class LiquidityMonthsService(
+public sealed class LiquidityService(
     AccountsService accountsService,
     TransactionsService transactionsService,
     CurrencyConverter currencyConverter)
-    : ILiquidityMonthsService
 {
     public async Task<decimal> GetLiquidAssetsAtAsync(string baseCurrencyCode, DateTime atUtc, CancellationToken ct)
     {
@@ -39,7 +25,8 @@ internal sealed class LiquidityMonthsService(
             .Select(account => account.Id)
             .ToList();
 
-        var rawAdjustments = await accountsService.GetAccountAdjustmentSnapshotsAsync(accountIds, beforeUtc: atUtc, ct: ct);
+        var rawAdjustments =
+            await accountsService.GetAccountAdjustmentSnapshotsAsync(accountIds, beforeUtc: atUtc, ct: ct);
 
         var rawTransactions = await transactionsService.GetTransactionSnapshotsAsync(
             toUtc: atUtc,
@@ -70,7 +57,8 @@ internal sealed class LiquidityMonthsService(
         var rateAtUtc = atUtc.AddTicks(-1);
         var rateByCurrency = new Dictionary<string, decimal>(StringComparer.OrdinalIgnoreCase);
 
-        foreach (var currency in liquidAccounts.Select(account => account.CurrencyCode).Distinct(StringComparer.OrdinalIgnoreCase))
+        foreach (var currency in liquidAccounts.Select(account => account.CurrencyCode)
+                     .Distinct(StringComparer.OrdinalIgnoreCase))
         {
             if (string.Equals(currency, baseCurrencyCode, StringComparison.OrdinalIgnoreCase))
             {
@@ -94,14 +82,16 @@ internal sealed class LiquidityMonthsService(
             var balance = 0m;
             DateTime? anchorAt = null;
 
-            if (adjustmentsByAccount.TryGetValue(account.Id, out var accountAdjustments) && accountAdjustments.Count > 0)
+            if (adjustmentsByAccount.TryGetValue(account.Id, out var accountAdjustments) &&
+                accountAdjustments.Count > 0)
             {
                 var latestAdjustment = accountAdjustments[^1];
                 balance = latestAdjustment.Amount;
                 anchorAt = latestAdjustment.OccurredAtUtc;
             }
 
-            if (transactionsByAccount.TryGetValue(account.Id, out var accountTransactions) && accountTransactions.Count > 0)
+            if (transactionsByAccount.TryGetValue(account.Id, out var accountTransactions) &&
+                accountTransactions.Count > 0)
             {
                 var delta = accountTransactions
                     .Where(transaction => !anchorAt.HasValue || transaction.OccurredAtUtc > anchorAt.Value)
@@ -117,7 +107,8 @@ internal sealed class LiquidityMonthsService(
         return AnalyticsMath.Round2(total);
     }
 
-    public async Task<decimal> GetAverageDailyExpenseAsync(string baseCurrencyCode, DateTime windowEndUtc, CancellationToken ct)
+    public async Task<decimal> GetAverageDailyExpenseAsync(string baseCurrencyCode, DateTime windowEndUtc,
+        CancellationToken ct)
     {
         var windowStartUtc = windowEndUtc.AddDays(-180);
 
@@ -148,11 +139,7 @@ internal sealed class LiquidityMonthsService(
 
         foreach (var expense in rawExpenses)
         {
-            ct.ThrowIfCancellationRequested();
-
-            var rateKey = (
-                AnalyticsNormalization.NormalizeCurrencyCode(expense.Money.CurrencyCode),
-                expense.OccurredAtUtc.Date);
+            var rateKey = (expense.Money.CurrencyCode, expense.OccurredAtUtc.Date);
 
             var amountInBaseCurrency = expense.Money.Amount * rateByCurrencyAndDay[rateKey];
             var dayKey = DateOnly.FromDateTime(expense.OccurredAtUtc);

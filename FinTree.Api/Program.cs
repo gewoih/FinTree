@@ -235,13 +235,19 @@ builder.Services.AddScoped<AccountsService>();
 builder.Services.AddScoped<UserService>();
 builder.Services.AddScoped<AuthService>();
 builder.Services.AddScoped<ICurrentUser, HttpCurrentUser>();
-builder.Services.AddAnalyticsServices();
 builder.Services.AddScoped<RetrospectiveService>();
 builder.Services.AddScoped<AdminService>();
 builder.Services.AddScoped<CurrencyConverter>();
 builder.Services.AddScoped<TelegramOperationsService>();
 builder.Services.AddScoped<DatabaseInitializer>();
 builder.Services.AddScoped<OwnerRoleBootstrapper>();
+
+builder.Services.AddScoped<MonthlyScoreService>();
+builder.Services.AddScoped<PeakDaysService>();
+builder.Services.AddScoped<LiquidityService>();
+builder.Services.AddScoped<DashboardService>();
+builder.Services.AddScoped<NetWorthService>();
+builder.Services.AddScoped<EvolutionService>();
 
 if (!string.IsNullOrWhiteSpace(telegramToken))
     builder.Services.AddHostedService<TelegramBotHostedService>();

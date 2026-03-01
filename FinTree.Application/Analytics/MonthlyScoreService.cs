@@ -1,20 +1,10 @@
 namespace FinTree.Application.Analytics;
 
-internal interface ITotalMonthScoreService
-{
-    int? CalculateTotalMonthScore(
-        decimal? savingsRate,
-        decimal? liquidMonths,
-        int? stabilityScore,
-        decimal? discretionarySharePercent,
-        decimal? peakSpendSharePercent);
-}
-
-internal sealed class TotalMonthScoreService : ITotalMonthScoreService
+public sealed class MonthlyScoreService
 {
     private const decimal CushionSaturationMonths = 12m;
 
-    public int? CalculateTotalMonthScore(
+    public static int? CalculateTotalMonthScore(
         decimal? savingsRate,
         decimal? liquidMonths,
         int? stabilityScore,

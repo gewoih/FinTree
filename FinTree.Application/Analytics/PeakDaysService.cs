@@ -1,22 +1,17 @@
+using FinTree.Application.Analytics.Dto;
+using FinTree.Application.Analytics.Shared;
+
 namespace FinTree.Application.Analytics;
 
-internal interface IPeakMetricsService
-{
-    PeakMetricsResult Calculate(
-        IReadOnlyDictionary<DateOnly, decimal> discretionaryDailyTotals,
-        decimal monthTotal,
-        int daysInMonth);
-}
-
-internal readonly record struct PeakMetricsResult(
+public readonly record struct PeakMetricsResult(
     PeakDaysSummaryDto Summary,
     IReadOnlyList<PeakDayDto> Days,
     decimal? PeakSpendSharePercent,
     decimal? PeakDayRatioPercent);
 
-internal sealed class PeakMetricsService : IPeakMetricsService
+public sealed class PeakDaysService
 {
-    public PeakMetricsResult Calculate(
+    public static PeakMetricsResult Calculate(
         IReadOnlyDictionary<DateOnly, decimal> discretionaryDailyTotals,
         decimal monthTotal,
         int daysInMonth)
@@ -72,6 +67,6 @@ internal sealed class PeakMetricsService : IPeakMetricsService
     private static PeakMetricsResult Empty(decimal monthTotal)
     {
         var summary = new PeakDaysSummaryDto(0, 0m, null, monthTotal);
-        return new PeakMetricsResult(summary, Array.Empty<PeakDayDto>(), null, null);
+        return new PeakMetricsResult(summary, [], null, null);
     }
 }

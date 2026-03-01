@@ -1,4 +1,6 @@
 using FinTree.Application.Accounts;
+using FinTree.Application.Analytics.Dto;
+using FinTree.Application.Analytics.Shared;
 using FinTree.Application.Currencies;
 using FinTree.Application.Transactions;
 using FinTree.Application.Users;
@@ -7,12 +9,11 @@ using FinTree.Domain.ValueObjects;
 
 namespace FinTree.Application.Analytics;
 
-internal sealed class NetWorthTrendAnalyticsCalculator(
+public sealed class NetWorthService(
     AccountsService accountsService,
     TransactionsService transactionsService,
     UserService userService,
     CurrencyConverter currencyConverter)
-    : INetWorthTrendAnalyticsCalculator
 {
     public async Task<List<NetWorthSnapshotDto>> GetNetWorthTrendAsync(int months, CancellationToken ct)
     {
@@ -140,7 +141,7 @@ internal sealed class NetWorthTrendAnalyticsCalculator(
             foreach (var account in accounts)
             {
                 var balance = balancesByAccount[account.Id];
-                var rate = rateByCurrency.TryGetValue(account.CurrencyCode, out var foundRate) ? foundRate : 1m;
+                var rate = rateByCurrency.GetValueOrDefault(account.CurrencyCode, 1m);
                 netWorth += balance * rate;
             }
 

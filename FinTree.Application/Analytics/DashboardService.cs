@@ -1,3 +1,6 @@
+using System.Globalization;
+using FinTree.Application.Analytics.Dto;
+using FinTree.Application.Analytics.Shared;
 using FinTree.Application.Currencies;
 using FinTree.Application.Transactions;
 using FinTree.Application.Users;
@@ -5,22 +8,18 @@ using FinTree.Domain.Transactions;
 
 namespace FinTree.Application.Analytics;
 
-internal sealed class DashboardAnalyticsCalculator(
+public sealed class DashboardService(
     TransactionsService transactionsService,
     CurrencyConverter currencyConverter,
     UserService userService,
-    IPeakMetricsService peakMetricsService,
-    ILiquidityMonthsService liquidityMonthsService,
-    ITotalMonthScoreService totalMonthScoreService)
-    : IDashboardAnalyticsCalculator
+    LiquidityService liquidityService)
 {
     private readonly record struct CategoryMeta(string Name, string Color, bool IsMandatory);
+
     private readonly record struct CategoryTotals(decimal Total, decimal MandatoryTotal, decimal DiscretionaryTotal);
 
     public async Task<AnalyticsDashboardDto> GetDashboardAsync(int year, int month, CancellationToken ct)
     {
-        AnalyticsNormalization.ValidateYearMonth(year, month);
-
         var baseCurrencyCode = await userService.GetCurrentUserBaseCurrencyCodeAsync(ct);
 
         var monthStartUtc = new DateTime(year, month, 1, 0, 0, 0, DateTimeKind.Utc);
@@ -64,7 +63,7 @@ internal sealed class DashboardAnalyticsCalculator(
         {
             ct.ThrowIfCancellationRequested();
 
-            var rateKey = (AnalyticsNormalization.NormalizeCurrencyCode(txn.Money.CurrencyCode), txn.OccurredAtUtc.Date);
+            var rateKey = (txn.Money.CurrencyCode, txn.OccurredAtUtc.Date);
             var amount = txn.Money.Amount * rateByCurrencyAndDay[rateKey];
             var occurredUtc = txn.OccurredAtUtc;
             var isCurrentMonth = occurredUtc >= monthStartUtc && occurredUtc < monthEndUtc;
@@ -106,12 +105,9 @@ internal sealed class DashboardAnalyticsCalculator(
 
                 if (currentExpenseCategoryTotals.TryGetValue(txn.CategoryId, out var categoryTotals))
                 {
-                    categoryTotals = categoryTotals with
-                    {
-                        Total = categoryTotals.Total + amount,
-                        MandatoryTotal = categoryTotals.MandatoryTotal + (txn.IsMandatory ? amount : 0m),
-                        DiscretionaryTotal = categoryTotals.DiscretionaryTotal + (txn.IsMandatory ? 0m : amount)
-                    };
+                    categoryTotals = new CategoryTotals(Total: categoryTotals.Total + amount,
+                        MandatoryTotal: categoryTotals.MandatoryTotal + (txn.IsMandatory ? amount : 0m),
+                        DiscretionaryTotal: categoryTotals.DiscretionaryTotal + (txn.IsMandatory ? 0m : amount));
                     currentExpenseCategoryTotals[txn.CategoryId] = categoryTotals;
                 }
                 else
@@ -150,7 +146,7 @@ internal sealed class DashboardAnalyticsCalculator(
         for (var day = 1; day <= observedDaysInMonth; day++)
         {
             var dateKey = new DateOnly(year, month, day);
-            var dayAmount = dailyTotals.TryGetValue(dateKey, out var value) ? value : 0m;
+            var dayAmount = dailyTotals.GetValueOrDefault(dateKey, 0m);
             observedDailyValues.Add(dayAmount);
         }
 
@@ -196,7 +192,7 @@ internal sealed class DashboardAnalyticsCalculator(
             ? (netCashflow - previousNetCashflow) / Math.Abs(previousNetCashflow) * 100
             : (decimal?)null;
 
-        var peaks = peakMetricsService.Calculate(dailyTotalsDiscretionary, totalExpenses, daysInMonth);
+        var peaks = PeakDaysService.Calculate(dailyTotalsDiscretionary, totalExpenses, daysInMonth);
 
         var categoryItems = currentExpenseCategoryTotals.Select(kv =>
         {
@@ -252,11 +248,12 @@ internal sealed class DashboardAnalyticsCalculator(
         var forecast = await BuildForecastAsync(year, month, dailyTotals, baseCurrencyCode, ct);
 
         var todayMidnightUtc = new DateTime(nowUtc.Year, nowUtc.Month, nowUtc.Day, 0, 0, 0, DateTimeKind.Utc);
-        var liquidAssets = await liquidityMonthsService.GetLiquidAssetsAtAsync(baseCurrencyCode, nowUtc, ct);
-        var averageDailyExpense = await liquidityMonthsService.GetAverageDailyExpenseAsync(baseCurrencyCode, todayMidnightUtc, ct);
-        var liquidMonths = liquidityMonthsService.ComputeLiquidMonths(liquidAssets, averageDailyExpense);
+        var liquidAssets = await liquidityService.GetLiquidAssetsAtAsync(baseCurrencyCode, nowUtc, ct);
+        var averageDailyExpense =
+            await liquidityService.GetAverageDailyExpenseAsync(baseCurrencyCode, todayMidnightUtc, ct);
+        var liquidMonths = liquidityService.ComputeLiquidMonths(liquidAssets, averageDailyExpense);
         var liquidStatus = AnalyticsMath.ResolveLiquidStatus(liquidMonths);
-        var totalMonthScore = totalMonthScoreService.CalculateTotalMonthScore(
+        var totalMonthScore = MonthlyScoreService.CalculateTotalMonthScore(
             savingsRate,
             liquidMonths,
             stabilityScore,
@@ -309,8 +306,8 @@ internal sealed class DashboardAnalyticsCalculator(
         var entries = new List<CategoryDeltaItemDto>();
         foreach (var id in allIds)
         {
-            var current = currentTotals.TryGetValue(id, out var currentValue) ? currentValue : 0m;
-            var previous = previousTotals.TryGetValue(id, out var previousValue) ? previousValue : 0m;
+            var current = currentTotals.GetValueOrDefault(id, 0m);
+            var previous = previousTotals.GetValueOrDefault(id, 0m);
             if (current == 0m && previous == 0m)
                 continue;
             if (previous <= 0m)
@@ -373,7 +370,7 @@ internal sealed class DashboardAnalyticsCalculator(
         {
             ct.ThrowIfCancellationRequested();
 
-            var rateKey = (AnalyticsNormalization.NormalizeCurrencyCode(expense.Money.CurrencyCode), expense.OccurredAtUtc.Date);
+            var rateKey = (expense.Money.CurrencyCode, expense.OccurredAtUtc.Date);
             var amountInBaseCurrency = expense.Money.Amount * rateByCurrencyAndDay[rateKey];
 
             var dayKey = DateOnly.FromDateTime(expense.OccurredAtUtc);
@@ -398,7 +395,7 @@ internal sealed class DashboardAnalyticsCalculator(
                  dateCursor.DayNumber <= monthEndDate.DayNumber;
                  dateCursor = dateCursor.AddDays(1))
             {
-                var amount = dailyTotals.TryGetValue(dateCursor, out var value) ? value : 0m;
+                var amount = dailyTotals.GetValueOrDefault(dateCursor, 0m);
                 days.Add(new MonthlyExpensesDto(
                     dateCursor.Year,
                     dateCursor.Month,
@@ -419,10 +416,10 @@ internal sealed class DashboardAnalyticsCalculator(
         var dayCursor = weeksWindowStart;
         while (dayCursor.DayNumber < weeksWindowEndExclusive.DayNumber)
         {
-            var dayAmount = dailyTotals.TryGetValue(dayCursor, out var value) ? value : 0m;
+            var dayAmount = dailyTotals.GetValueOrDefault(dayCursor, 0m);
             var dayDateTime = dayCursor.ToDateTime(TimeOnly.MinValue, DateTimeKind.Utc);
-            var isoYear = System.Globalization.ISOWeek.GetYear(dayDateTime);
-            var isoWeek = System.Globalization.ISOWeek.GetWeekOfYear(dayDateTime);
+            var isoYear = ISOWeek.GetYear(dayDateTime);
+            var isoWeek = ISOWeek.GetWeekOfYear(dayDateTime);
             var key = (isoYear, isoWeek);
 
             if (weekTotals.TryGetValue(key, out var currentTotal))
@@ -436,7 +433,8 @@ internal sealed class DashboardAnalyticsCalculator(
         var weeksResult = weekTotals
             .Select(kv =>
             {
-                var weekStart = System.Globalization.ISOWeek.ToDateTime(kv.Key.IsoYear, kv.Key.IsoWeek, DayOfWeek.Monday);
+                var weekStart =
+                    System.Globalization.ISOWeek.ToDateTime(kv.Key.IsoYear, kv.Key.IsoWeek, DayOfWeek.Monday);
                 return new MonthlyExpensesDto(
                     kv.Key.IsoYear,
                     weekStart.Month,
@@ -470,7 +468,7 @@ internal sealed class DashboardAnalyticsCalculator(
             while (monthCursor.DayNumber <= monthStartDate.DayNumber)
             {
                 var monthKey = (monthCursor.Year, monthCursor.Month);
-                var monthTotal = monthTotals.TryGetValue(monthKey, out var value) ? value : 0m;
+                var monthTotal = monthTotals.GetValueOrDefault(monthKey, 0m);
                 months.Add(new MonthlyExpensesDto(
                     monthCursor.Year,
                     monthCursor.Month,
@@ -517,7 +515,7 @@ internal sealed class DashboardAnalyticsCalculator(
         {
             ct.ThrowIfCancellationRequested();
 
-            var rateKey = (AnalyticsNormalization.NormalizeCurrencyCode(txn.Money.CurrencyCode), txn.OccurredAtUtc.Date);
+            var rateKey = (txn.Money.CurrencyCode, txn.OccurredAtUtc.Date);
             var amountInBaseCurrency = txn.Money.Amount * rateByCurrencyAndDay[rateKey];
 
             var dateKey = DateOnly.FromDateTime(txn.OccurredAtUtc);
@@ -533,34 +531,35 @@ internal sealed class DashboardAnalyticsCalculator(
             if (firstDay > forecastStart)
                 forecastStart = firstDay;
         }
-        
+
         // Build pool — exclude today (partial day) when viewing current month
         var poolEnd = isCurrentMonth ? forecastEnd.AddDays(-1) : forecastEnd;
         var poolDays = Math.Clamp((int)(poolEnd - forecastStart).TotalDays + 1, 0, 180);
-        
+
         var pool = new decimal[poolDays];
         for (var i = 0; i < poolDays; i++)
         {
             var dateKey = DateOnly.FromDateTime(forecastStart.AddDays(i));
-            pool[i] = forecastDailyTotals.TryGetValue(dateKey, out var v) ? v : 0m;
+            pool[i] = forecastDailyTotals.GetValueOrDefault(dateKey, 0m);
         }
-        
+
         var daysInMonth = DateTime.DaysInMonth(year, month);
         var observedDays = isCurrentMonth
             ? Math.Min(nowUtc.Day, daysInMonth)
             : daysInMonth;
-        
+
         var observedCumulativeActual = 0m;
         {
             var runningTotal = 0m;
             for (var day = 1; day <= observedDays; day++)
             {
                 var dateKey = new DateOnly(year, month, day);
-                runningTotal += dailyTotals.TryGetValue(dateKey, out var v) ? v : 0m;
+                runningTotal += dailyTotals.GetValueOrDefault(dateKey, 0m);
             }
+
             observedCumulativeActual = runningTotal;
         }
-        
+
         decimal? optimisticTotal = null;
         decimal? riskTotal = null;
         decimal? optimisticDaily = null;
@@ -592,6 +591,7 @@ internal sealed class DashboardAnalyticsCalculator(
                 weightSum += Math.Exp(-lambda * age);
                 cdf[i] = weightSum;
             }
+
             for (var i = 0; i < pool.Length; i++)
                 cdf[i] /= weightSum;
 
@@ -607,6 +607,7 @@ internal sealed class DashboardAnalyticsCalculator(
                     if (idx < 0) idx = ~idx;
                     total += pool[Math.Clamp(idx, 0, pool.Length - 1)];
                 }
+
                 simTotals[s] = total;
             }
 
@@ -659,9 +660,10 @@ internal sealed class DashboardAnalyticsCalculator(
         var currentSpent = isCurrentMonth
             ? AnalyticsMath.Round2(observedCumulativeActual)
             : AnalyticsMath.Round2(cumulative);
-        
+
         var todayMidnightUtc = new DateTime(nowUtc.Year, nowUtc.Month, nowUtc.Day, 0, 0, 0, DateTimeKind.Utc);
-        var baselineDailyRate = await liquidityMonthsService.GetAverageDailyExpenseAsync(baseCurrencyCode, todayMidnightUtc, ct);
+        var baselineDailyRate =
+            await liquidityService.GetAverageDailyExpenseAsync(baseCurrencyCode, todayMidnightUtc, ct);
         var baselineLimit = baselineDailyRate > 0m
             ? AnalyticsMath.Round2(baselineDailyRate * 30.44m)
             : (decimal?)null;
@@ -696,5 +698,4 @@ internal sealed class DashboardAnalyticsCalculator(
 
         return AnalyticsMath.Round2(projectedDaily.Value * day);
     }
-
 }

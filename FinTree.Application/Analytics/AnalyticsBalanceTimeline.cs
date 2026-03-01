@@ -4,7 +4,7 @@ internal static class AnalyticsBalanceTimeline
 {
     private static readonly TimeSpan OpeningBalanceDetectionWindow = TimeSpan.FromSeconds(5);
 
-    internal readonly record struct BalanceEvent(DateTime OccurredAt, decimal Amount, bool IsAdjustment);
+    public readonly record struct BalanceEvent(DateTime OccurredAt, decimal Amount, bool IsAdjustment);
 
     public static Dictionary<Guid, List<BalanceEvent>> BuildBalanceEventsByAccount(
         IReadOnlyCollection<Guid> accountIds,

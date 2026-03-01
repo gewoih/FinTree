@@ -1,4 +1,6 @@
 using FinTree.Application.Accounts;
+using FinTree.Application.Analytics.Dto;
+using FinTree.Application.Analytics.Shared;
 using FinTree.Application.Currencies;
 using FinTree.Application.Transactions;
 using FinTree.Application.Users;
@@ -6,20 +8,16 @@ using FinTree.Domain.Transactions;
 
 namespace FinTree.Application.Analytics;
 
-internal sealed class EvolutionAnalyticsCalculator(
+public sealed class EvolutionService(
     AccountsService accountsService,
     TransactionsService transactionsService,
     UserService userService,
     CurrencyConverter currencyConverter,
-    IPeakMetricsService peakMetricsService,
-    ILiquidityMonthsService liquidityMonthsService,
-    ITotalMonthScoreService totalMonthScoreService)
-    : IEvolutionAnalyticsCalculator
+    LiquidityService liquidityService)
 {
     public async Task<List<EvolutionMonthDto>> GetEvolutionAsync(int months, CancellationToken ct)
     {
         var baseCurrencyCode = await userService.GetCurrentUserBaseCurrencyCodeAsync(ct);
-        var baseCurrencyCodeNormalized = AnalyticsNormalization.NormalizeCurrencyCode(baseCurrencyCode);
 
         var now = DateTime.UtcNow;
         var windowMonths = months > 0 ? months : 120;
@@ -59,15 +57,15 @@ internal sealed class EvolutionAnalyticsCalculator(
             .ToHashSet();
 
         var distinctAccountCurrencies = accountSnapshots
-            .Select(a => AnalyticsNormalization.NormalizeCurrencyCode(a.CurrencyCode))
+            .Select(a => a.CurrencyCode)
             .Distinct(StringComparer.OrdinalIgnoreCase)
             .ToArray();
 
         var fxRateRequests = new HashSet<(string CurrencyCode, DateTime DayStartUtc)>();
         foreach (var txn in windowTransactions)
-            fxRateRequests.Add((AnalyticsNormalization.NormalizeCurrencyCode(txn.Money.CurrencyCode), txn.OccurredAtUtc.Date));
+            fxRateRequests.Add((txn.Money.CurrencyCode, txn.OccurredAtUtc.Date));
         foreach (var txn in liquidityExpenseTransactions)
-            fxRateRequests.Add((AnalyticsNormalization.NormalizeCurrencyCode(txn.Money.CurrencyCode), txn.OccurredAtUtc.Date));
+            fxRateRequests.Add((txn.Money.CurrencyCode, txn.OccurredAtUtc.Date));
 
         foreach (var monthStart in monthStartsWithData)
         {
@@ -104,34 +102,13 @@ internal sealed class EvolutionAnalyticsCalculator(
             eventIndexByAccount,
             ct);
 
-        decimal ConvertAmount(string currencyCode, decimal amount, DateTime occurredAtUtc)
-        {
-            var normalizedCurrencyCode = AnalyticsNormalization.NormalizeCurrencyCode(currencyCode);
-            if (string.Equals(normalizedCurrencyCode, baseCurrencyCodeNormalized, StringComparison.OrdinalIgnoreCase))
-                return amount;
-
-            var rateKey = (normalizedCurrencyCode, occurredAtUtc.Date);
-            return rateByCurrencyAndDay.TryGetValue(rateKey, out var rate)
-                ? amount * rate
-                : amount;
-        }
-
-        decimal ConvertAmountWithRate(string currencyCode, decimal amount, DateTime occurredAtUtc)
-        {
-            var normalizedCurrencyCode = AnalyticsNormalization.NormalizeCurrencyCode(currencyCode);
-            if (string.Equals(normalizedCurrencyCode, baseCurrencyCodeNormalized, StringComparison.OrdinalIgnoreCase))
-                return amount;
-
-            var rate = rateByCurrencyAndDay[(normalizedCurrencyCode, occurredAtUtc.Date)];
-            return amount * rate;
-        }
-
         var liquidityExpenseDailyTotals = liquidityExpenseTransactions
             .GroupBy(transaction => DateOnly.FromDateTime(transaction.OccurredAtUtc))
             .ToDictionary(
                 group => group.Key,
                 group => group.Sum(transaction =>
-                    ConvertAmount(transaction.Money.CurrencyCode, transaction.Money.Amount, transaction.OccurredAtUtc)));
+                    ConvertAmount(transaction.Money.CurrencyCode, transaction.Money.Amount,
+                        transaction.OccurredAtUtc)));
 
         var result = new List<EvolutionMonthDto>(windowMonths);
 
@@ -210,25 +187,25 @@ internal sealed class EvolutionAnalyticsCalculator(
             var stabilityScore = AnalyticsMath.ComputeStabilityScore(stabilityIndex);
 
             var daysInMonth = DateTime.DaysInMonth(monthStart.Year, monthStart.Month);
-            var peakMetrics = peakMetricsService.Calculate(dailyDiscretionary, monthTotal, daysInMonth);
+            var peakMetrics = PeakDaysService.Calculate(dailyDiscretionary, monthTotal, daysInMonth);
             var peakDayRatio = peakMetrics.PeakDayRatioPercent;
             var peakSpendSharePercent = peakMetrics.PeakSpendSharePercent;
 
             var rateAtUtc = monthEnd.AddTicks(-1);
             var netWorth = accountSnapshots.Sum(account =>
-                ConvertAmountWithRate(account.CurrencyCode, balancesByAccount[account.Id], rateAtUtc));
+                ConvertAmount(account.CurrencyCode, balancesByAccount[account.Id], rateAtUtc));
             netWorth = AnalyticsMath.Round2(netWorth);
 
             var liquidAssets = liquidAccounts.Sum(account =>
-                ConvertAmountWithRate(account.CurrencyCode, balancesByAccount[account.Id], rateAtUtc));
+                ConvertAmount(account.CurrencyCode, balancesByAccount[account.Id], rateAtUtc));
             liquidAssets = AnalyticsMath.Round2(liquidAssets);
 
-            var averageDailyExpense = liquidityMonthsService.ComputeAverageDailyExpense(
+            var averageDailyExpense = liquidityService.ComputeAverageDailyExpense(
                 liquidityExpenseDailyTotals,
                 earliestTrackedAtUtc,
                 monthEnd);
-            var liquidMonths = liquidityMonthsService.ComputeLiquidMonths(liquidAssets, averageDailyExpense);
-            var totalMonthScore = totalMonthScoreService.CalculateTotalMonthScore(
+            var liquidMonths = liquidityService.ComputeLiquidMonths(liquidAssets, averageDailyExpense);
+            var totalMonthScore = MonthlyScoreService.CalculateTotalMonthScore(
                 rawSavingsRate,
                 liquidMonths,
                 stabilityScore,
@@ -254,5 +231,13 @@ internal sealed class EvolutionAnalyticsCalculator(
         }
 
         return result;
+
+        decimal ConvertAmount(string currencyCode, decimal amount, DateTime occurredAtUtc)
+        {
+            var rateKey = (currencyCode, occurredAtUtc.Date);
+            return rateByCurrencyAndDay.TryGetValue(rateKey, out var rate)
+                ? amount * rate
+                : amount;
+        }
     }
 }

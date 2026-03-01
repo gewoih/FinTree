@@ -1,6 +1,4 @@
-using FinTree.Application.Exceptions;
-
-namespace FinTree.Application.Analytics;
+namespace FinTree.Application.Analytics.Shared;
 
 internal static class AnalyticsMath
 {
@@ -20,16 +18,19 @@ internal static class AnalyticsMath
             : sorted[mid];
     }
 
-    public static decimal? ComputeQuantile(IReadOnlyList<decimal> values, double quantile)
+    private static decimal? ComputeQuantile(IReadOnlyList<decimal> values, double quantile)
     {
         if (values.Count == 0)
             return null;
 
         var sorted = values.OrderBy(v => v).ToList();
-        if (quantile <= 0d)
-            return sorted[0];
-        if (quantile >= 1d)
-            return sorted[^1];
+        switch (quantile)
+        {
+            case <= 0d:
+                return sorted[0];
+            case >= 1d:
+                return sorted[^1];
+        }
 
         var position = (sorted.Count - 1) * quantile;
         var lowerIndex = (int)Math.Floor(position);
@@ -39,7 +40,7 @@ internal static class AnalyticsMath
             return sorted[lowerIndex];
 
         var weight = (decimal)(position - lowerIndex);
-        return sorted[lowerIndex] + ((sorted[upperIndex] - sorted[lowerIndex]) * weight);
+        return sorted[lowerIndex] + (sorted[upperIndex] - sorted[lowerIndex]) * weight;
     }
 
     public static decimal ComputePeakThreshold(IReadOnlyList<decimal> positiveDailyTotals, decimal medianDaily)
@@ -125,26 +126,5 @@ internal static class AnalyticsMath
             >= 3m => "average",
             _ => "poor"
         };
-    }
-}
-
-internal static class AnalyticsNormalization
-{
-    public static string NormalizeCurrencyCode(string value)
-        => string.IsNullOrWhiteSpace(value) ? string.Empty : value.Trim().ToUpperInvariant();
-
-    public static void ValidateYearMonth(int year, int month)
-    {
-        if (year is < 2000 or > 2100)
-            throw new DomainValidationException(
-                "Некорректный год.",
-                "invalid_year",
-                new { year });
-
-        if (month is < 1 or > 12)
-            throw new DomainValidationException(
-                "Некорректный месяц.",
-                "invalid_month",
-                new { month });
     }
 }

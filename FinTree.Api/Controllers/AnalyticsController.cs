@@ -7,19 +7,23 @@ namespace FinTree.Api.Controllers
     [Authorize]
     [Route("api/[controller]")]
     [ApiController]
-    public class AnalyticsController(AnalyticsService analyticsService) : ControllerBase
+    public class AnalyticsController(
+        DashboardService dashboardService,
+        NetWorthService netWorthService,
+        EvolutionService evolutionService)
+        : ControllerBase
     {
         [HttpGet("dashboard")]
         public async Task<IActionResult> GetDashboard([FromQuery] int year, [FromQuery] int month, CancellationToken ct)
         {
-            var data = await analyticsService.GetDashboardAsync(year, month, ct);
+            var data = await dashboardService.GetDashboardAsync(year, month, ct);
             return Ok(data);
         }
 
         [HttpGet("net-worth")]
         public async Task<IActionResult> GetNetWorthTrend([FromQuery] int months = 12, CancellationToken ct = default)
         {
-            var data = await analyticsService.GetNetWorthTrendAsync(months, ct);
+            var data = await netWorthService.GetNetWorthTrendAsync(months, ct);
             return Ok(data);
         }
 
@@ -28,7 +32,7 @@ namespace FinTree.Api.Controllers
             [FromQuery] int months = 12,
             CancellationToken ct = default)
         {
-            var data = await analyticsService.GetEvolutionAsync(months, ct);
+            var data = await evolutionService.GetEvolutionAsync(months, ct);
             return Ok(data);
         }
     }
