@@ -29,7 +29,7 @@ internal sealed class TotalMonthScoreService : ITotalMonthScoreService
         AddIfPresent(normalizedScores, InvertPercent(discretionarySharePercent));
         AddIfPresent(normalizedScores, InvertPercent(peakSpendSharePercent));
 
-        if (normalizedScores.Count == 0)
+        if (normalizedScores.Count < 3)
             return null;
 
         var weightedMean = normalizedScores.Average();
