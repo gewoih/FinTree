@@ -574,12 +574,26 @@ internal sealed class DashboardAnalyticsCalculator(
         if (remainingDays > 0 && pool.Length >= 10)
         {
             static long ToCents(decimal x) => (long)Math.Round(x * 100m, MidpointRounding.AwayFromZero);
-            
-            const int simCount = 1000;
+
+            const int simCount = 10_000;
             var simTotals = new decimal[simCount];
             var seed = 42;
             seed = HashCode.Combine(seed, year, month, observedDays, remainingDays, ToCents(observedCumulativeActual));
             seed = pool.Aggregate(seed, (current, t) => HashCode.Combine(current, ToCents(t)));
+
+            // Exponential decay weights: λ=0.02 → half-life ≈ 35 days.
+            // pool[0] is the oldest day, pool[^1] is the most recent.
+            const double lambda = 0.02;
+            var cdf = new double[pool.Length];
+            var weightSum = 0.0;
+            for (var i = 0; i < pool.Length; i++)
+            {
+                var age = pool.Length - 1 - i; // 0 = most recent
+                weightSum += Math.Exp(-lambda * age);
+                cdf[i] = weightSum;
+            }
+            for (var i = 0; i < pool.Length; i++)
+                cdf[i] /= weightSum;
 
             var rng = new Random(seed);
 
@@ -587,13 +601,18 @@ internal sealed class DashboardAnalyticsCalculator(
             {
                 var total = observedCumulativeActual;
                 for (var r = 0; r < remainingDays; r++)
-                    total += pool[rng.Next(pool.Length)];
+                {
+                    var u = rng.NextDouble();
+                    var idx = Array.BinarySearch(cdf, u);
+                    if (idx < 0) idx = ~idx;
+                    total += pool[Math.Clamp(idx, 0, pool.Length - 1)];
+                }
                 simTotals[s] = total;
             }
 
             Array.Sort(simTotals);
-            optimisticTotal = simTotals[350]; // P35
-            riskTotal = simTotals[850]; // P85
+            optimisticTotal = simTotals[3_500]; // P35
+            riskTotal = simTotals[8_500]; // P85
 
             optimisticDaily = (optimisticTotal.Value - observedCumulativeActual) / remainingDays;
             riskDaily = (riskTotal.Value - observedCumulativeActual) / remainingDays;
