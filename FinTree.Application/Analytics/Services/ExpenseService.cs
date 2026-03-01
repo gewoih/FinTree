@@ -1,3 +1,4 @@
+using FinTree.Application.Analytics.Shared;
 using FinTree.Application.Currencies;
 using FinTree.Application.Transactions;
 using FinTree.Domain.Transactions;
@@ -6,16 +7,17 @@ namespace FinTree.Application.Analytics.Services;
 
 public sealed class ExpenseService(TransactionsService transactionsService, CurrencyConverter currencyConverter)
 {
-    public async Task<decimal> GetAverageDailyExpenseAsync(string baseCurrencyCode, DateTime fromUtc, DateTime toUtc,
+    public async Task<decimal> GetAverageDailyExpenseAsync(string baseCurrencyCode, DateTime atUtc,
         CancellationToken ct)
     {
-        var earliestTrackedAtUtc = await transactionsService.GetEarliestOccurredAtBeforeAsync(toUtc,true, ct);
+        var earliestTrackedAtUtc = await transactionsService.GetEarliestOccurredAtBeforeAsync(atUtc,true, ct);
         if (!earliestTrackedAtUtc.HasValue)
             return 0m;
 
+        var fromUtc = atUtc.AddDays(-AnalyticsCommon.AverageExpenseRollingWindowDays);
         var rawExpenses = await transactionsService.GetTransactionSnapshotsAsync(
             fromUtc: fromUtc,
-            toUtc: toUtc,
+            toUtc: atUtc,
             excludeTransfers: true,
             type: TransactionType.Expense,
             ct: ct);
@@ -41,7 +43,7 @@ public sealed class ExpenseService(TransactionsService transactionsService, Curr
                 dailyTotals[date] = amountInBaseCurrency;
         }
 
-        return ComputeAverageDailyExpense(dailyTotals, earliestTrackedAtUtc, fromUtc, toUtc);
+        return ComputeAverageDailyExpense(dailyTotals, earliestTrackedAtUtc, fromUtc, atUtc);
     }
 
     public static decimal ComputeAverageDailyExpense(IReadOnlyDictionary<DateTime, decimal> expenseDailyTotals,

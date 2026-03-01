@@ -6,7 +6,7 @@ public sealed class MonthlyScoreService
 
     public static decimal? CalculateTotalMonthScore(
         decimal? savingsRate,
-        decimal? liquidMonths,
+        decimal liquidMonths,
         decimal? stabilityScore,
         decimal? discretionaryShare,
         decimal? peakSpendShare)

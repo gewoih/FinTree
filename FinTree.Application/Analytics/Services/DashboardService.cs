@@ -14,11 +14,8 @@ public sealed class DashboardService(
     CurrencyConverter currencyConverter,
     UserService userService,
     LiquidityService liquidityService,
-    ForecastService forecastService,
-    ExpenseService expenseService)
+    ForecastService forecastService)
 {
-    private const int RollingWindowDays = 180;
-
     public async Task<AnalyticsDashboardDto> GetDashboardAsync(int year, int month, CancellationToken ct)
     {
         var baseCurrencyCode = await userService.GetCurrentUserBaseCurrencyCodeAsync(ct);
@@ -236,18 +233,15 @@ public sealed class DashboardService(
         var spending = await BuildSpendingBreakdownAsync(year, month, baseCurrencyCode, monthStartUtc, monthEndUtc, ct);
 
         var forecast =
-            await forecastService.BuildForecastAsync(RollingWindowDays, year, month, dailyTotals, baseCurrencyCode, ct);
+            await forecastService.BuildForecastAsync(year, month, dailyTotals, baseCurrencyCode, ct);
 
-        var toUtc = new DateTime(nowUtc.Year, nowUtc.Month, nowUtc.Day, 0, 0, 0, DateTimeKind.Utc);
-        var fromUtc = toUtc.AddDays(-RollingWindowDays);
-        var liquidAssets = await liquidityService.GetLiquidAssetsAtAsync(baseCurrencyCode, nowUtc, ct);
+        var liquidityAtUtc = nowUtc;
+        if (!isSelectedCurrentMonth)
+            liquidityAtUtc = monthEndUtc;
+        
+        var liquidity = await liquidityService.ComputeLiquidity(baseCurrencyCode, liquidityAtUtc, ct);
 
-        var averageDailyExpense =
-            await expenseService.GetAverageDailyExpenseAsync(baseCurrencyCode, fromUtc, toUtc, ct);
-
-        var liquidMonths = LiquidityService.ComputeLiquidMonths(liquidAssets, averageDailyExpense);
-        var liquidStatus = MathService.ResolveLiquidStatus(liquidMonths);
-        var totalMonthScore = MonthlyScoreService.CalculateTotalMonthScore(savingsRate, liquidMonths,
+        var totalMonthScore = MonthlyScoreService.CalculateTotalMonthScore(savingsRate, liquidity.LiquidMonths,
             stability?.Index, discretionaryShare, peaks.PeakSpendSharePercent);
 
         var health = new FinancialHealthSummaryDto(
@@ -264,9 +258,9 @@ public sealed class DashboardService(
             DiscretionaryTotal: MathService.Round2(discretionaryTotal),
             DiscretionarySharePercent: discretionaryShare,
             MonthOverMonthChangePercent: monthOverMonth,
-            LiquidAssets: MathService.Round2(liquidAssets),
-            LiquidMonths: liquidMonths,
-            LiquidMonthsStatus: liquidStatus,
+            LiquidAssets: MathService.Round2(liquidity.LiquidAssets),
+            LiquidMonths: liquidity.LiquidMonths,
+            LiquidMonthsStatus: liquidity.Status,
             TotalMonthScore: (int?)totalMonthScore,
             IncomeMonthOverMonthChangePercent: incomeMoM,
             BalanceMonthOverMonthChangePercent: balanceMoM);

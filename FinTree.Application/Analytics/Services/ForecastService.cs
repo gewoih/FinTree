@@ -11,11 +11,9 @@ public class ForecastService(
     CurrencyConverter currencyConverter,
     ExpenseService expenseService)
 {
-    private const decimal AverageDaysInMonth = 30.44m;
     private const int BootstrapingSimulationsCount = 10_000;
 
-    public async Task<ForecastDto> BuildForecastAsync(int rollingWindowDays, int year, int month,
-        Dictionary<DateOnly, decimal> dailyTotals,
+    public async Task<ForecastDto> BuildForecastAsync(int year, int month, Dictionary<DateOnly, decimal> dailyTotals,
         string baseCurrencyCode, CancellationToken ct)
     {
         var nowUtc = DateTime.UtcNow;
@@ -24,7 +22,7 @@ public class ForecastService(
         var isCurrentMonth = monthStartUtc.Year == nowUtc.Year && monthStartUtc.Month == nowUtc.Month;
         var lastDate = isCurrentMonth ? nowUtc.Date : monthEndUtc.AddDays(-1).Date;
 
-        var forecastStart = lastDate.AddDays(-rollingWindowDays);
+        var forecastStart = lastDate.AddDays(-AnalyticsCommon.AverageExpenseRollingWindowDays);
 
         var forecastTransactions = await transactionsService.GetTransactionSnapshotsAsync(forecastStart, lastDate, true,
             type: TransactionType.Expense, ct: ct);
@@ -177,12 +175,12 @@ public class ForecastService(
             ? observedCumulativeActual
             : cumulative;
 
-        var fromUtc = nowUtc.AddDays(-rollingWindowDays);
+        var fromUtc = nowUtc.AddDays(-AnalyticsCommon.AverageExpenseRollingWindowDays);
         var baselineDailyRate =
-            await expenseService.GetAverageDailyExpenseAsync(baseCurrencyCode, fromUtc, nowUtc, ct);
+            await expenseService.GetAverageDailyExpenseAsync(baseCurrencyCode, nowUtc, ct);
 
         var baselineLimit = baselineDailyRate > 0m
-            ? baselineDailyRate * AverageDaysInMonth
+            ? baselineDailyRate * (decimal)AnalyticsCommon.AverageDaysInMonth
             : (decimal?)null;
 
         var summary = new ForecastSummaryDto(optimisticTotal, riskTotal, currentSpent, baselineLimit);

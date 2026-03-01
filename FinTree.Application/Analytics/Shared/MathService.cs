@@ -42,15 +42,4 @@ internal static class MathService
         var weight = (decimal)(position - lowerIndex);
         return sorted[lowerIndex] + (sorted[upperIndex] - sorted[lowerIndex]) * weight;
     }
-
-    public static string? ResolveLiquidStatus(decimal? liquidMonths)
-    {
-        return liquidMonths switch
-        {
-            null => null,
-            > 6m => "good",
-            >= 3m => "average",
-            _ => "poor"
-        };
-    }
 }

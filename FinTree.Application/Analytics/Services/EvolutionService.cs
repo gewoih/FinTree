@@ -14,10 +14,8 @@ public sealed class EvolutionService(
     TransactionsService transactionsService,
     UserService userService,
     CurrencyConverter currencyConverter,
-    ExpenseService expenseService)
+    LiquidityService liquidityService)
 {
-    private const int RollingWindowDays = 180;
-    
     public async Task<List<EvolutionMonthDto>> GetEvolutionAsync(int months, CancellationToken ct)
     {
         var baseCurrencyCode = await userService.GetCurrentUserBaseCurrencyCodeAsync(ct);
@@ -34,9 +32,6 @@ public sealed class EvolutionService(
             .ToArray();
         var accountCreatedAtById = accountSnapshots
             .ToDictionary(a => a.Id, a => a.CreatedAtUtc);
-        var liquidAccounts = accountSnapshots
-            .Where(a => a.IsLiquid)
-            .ToList();
 
         var adjustmentSnapshots = await accountsService.GetAccountAdjustmentSnapshotsAsync(accountIds, ct: ct);
 
@@ -45,15 +40,12 @@ public sealed class EvolutionService(
         var windowTransactions = transactionSnapshots
             .Where(t => !t.IsTransfer && t.OccurredAtUtc >= windowStart)
             .ToList();
+        
         var liquidityExpenseTransactions = transactionSnapshots
             .Where(t => !t.IsTransfer &&
                         t.Type == TransactionType.Expense &&
                         t.OccurredAtUtc >= liquidityWindowStart)
             .ToList();
-        var earliestTrackedAtUtc = transactionSnapshots
-            .Where(t => !t.IsTransfer)
-            .Select(t => (DateTime?)t.OccurredAtUtc)
-            .Min();
 
         var monthStartsWithData = windowTransactions
             .Select(t => new DateTime(t.OccurredAtUtc.Year, t.OccurredAtUtc.Month, 1, 0, 0, 0, DateTimeKind.Utc))
@@ -104,14 +96,6 @@ public sealed class EvolutionService(
             balancesByAccount,
             eventIndexByAccount,
             ct);
-
-        var liquidityExpenseDailyTotals = liquidityExpenseTransactions
-            .GroupBy(transaction => transaction.OccurredAtUtc)
-            .ToDictionary(
-                group => group.Key,
-                group => group.Sum(transaction =>
-                    ConvertAmount(transaction.Money.CurrencyCode, transaction.Money.Amount,
-                        transaction.OccurredAtUtc)));
 
         var result = new List<EvolutionMonthDto>(windowMonths);
 
@@ -175,7 +159,7 @@ public sealed class EvolutionService(
                 ? MathService.Round2(rawSavingsRate.Value)
                 : (decimal?)null;
             var rawDiscretionaryPercent = monthTotal > 0
-                ? (discretionaryTotal / monthTotal) * 100m
+                ? discretionaryTotal / monthTotal * 100m
                 : (decimal?)null;
             var discretionaryPercent = rawDiscretionaryPercent.HasValue
                 ? MathService.Round2(rawDiscretionaryPercent.Value)
@@ -193,16 +177,8 @@ public sealed class EvolutionService(
                 ConvertAmount(account.CurrencyCode, balancesByAccount[account.Id], rateAtUtc));
             netWorth = MathService.Round2(netWorth);
 
-            var liquidAssets = liquidAccounts.Sum(account =>
-                ConvertAmount(account.CurrencyCode, balancesByAccount[account.Id], rateAtUtc));
-            liquidAssets = MathService.Round2(liquidAssets);
-
-            var fromUtc = monthEnd.AddDays(-RollingWindowDays);
-            var averageDailyExpense = ExpenseService.ComputeAverageDailyExpense(liquidityExpenseDailyTotals,
-                earliestTrackedAtUtc, fromUtc, monthEnd);
-            
-            var liquidMonths = LiquidityService.ComputeLiquidMonths(liquidAssets, averageDailyExpense);
-            var totalMonthScore = MonthlyScoreService.CalculateTotalMonthScore(rawSavingsRate, liquidMonths,
+            var liquidity = await liquidityService.ComputeLiquidity(baseCurrencyCode, monthEnd, ct);
+            var totalMonthScore = MonthlyScoreService.CalculateTotalMonthScore(rawSavingsRate, liquidity.LiquidMonths,
                 stability?.Score, rawDiscretionaryPercent, peakSpendSharePercent);
 
             result.Add(new EvolutionMonthDto(monthStart.Year,
@@ -215,7 +191,7 @@ public sealed class EvolutionService(
                 stability?.ActionCode,
                 discretionaryPercent,
                 netWorth,
-                liquidMonths,
+                liquidity.LiquidMonths,
                 meanDaily,
                 peakDayRatio,
                 peakSpendSharePercent,

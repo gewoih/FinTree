@@ -7,12 +7,28 @@ using FinTree.Domain.ValueObjects;
 
 namespace FinTree.Application.Analytics.Services.Metrics;
 
+public readonly record struct Liquidity(decimal LiquidAssets, decimal LiquidMonths, string? Status);
+
 public sealed class LiquidityService(
     AccountsService accountsService,
     TransactionsService transactionsService,
-    CurrencyConverter currencyConverter)
+    CurrencyConverter currencyConverter,
+    ExpenseService expenseService)
 {
-    public async Task<decimal> GetLiquidAssetsAtAsync(string baseCurrencyCode, DateTime atUtc, CancellationToken ct)
+    public async Task<Liquidity> ComputeLiquidity(string baseCurrencyCode, DateTime atUtc, CancellationToken ct)
+    {
+        var liquidAssets = await GetLiquidAssetsAtAsync(baseCurrencyCode, atUtc, ct);
+
+        var averageDailyExpense =
+            await expenseService.GetAverageDailyExpenseAsync(baseCurrencyCode, atUtc, ct);
+
+        var monthlyExpense = averageDailyExpense * 30.44m;
+        var liquidMonths = monthlyExpense <= 0m ? 0m : Math.Max(0m, liquidAssets / monthlyExpense);
+        var status = ResolveLiquidStatus(liquidMonths);
+        return new Liquidity(liquidAssets, liquidMonths, status);
+    }
+
+    private async Task<decimal> GetLiquidAssetsAtAsync(string baseCurrencyCode, DateTime atUtc, CancellationToken ct)
     {
         var liquidAccounts = (await accountsService.GetAccountSnapshotsAsync(includeArchived: false, ct))
             .Where(account => account.IsLiquid)
@@ -107,9 +123,14 @@ public sealed class LiquidityService(
         return MathService.Round2(total);
     }
 
-    public static decimal ComputeLiquidMonths(decimal liquidAssets, decimal averageDailyExpense)
+    private static string? ResolveLiquidStatus(decimal? liquidMonths)
     {
-        var monthlyExpense = averageDailyExpense * 30.44m;
-        return monthlyExpense <= 0m ? 0m : Math.Max(0m, liquidAssets / monthlyExpense);
+        return liquidMonths switch
+        {
+            null => null,
+            > 6m => "good",
+            >= 3m => "average",
+            _ => "poor"
+        };
     }
 }
