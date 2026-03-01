@@ -9,6 +9,8 @@ using FinTree.Application.Abstractions;
 using FinTree.Application.Accounts;
 using FinTree.Application.Admin;
 using FinTree.Application.Analytics;
+using FinTree.Application.Analytics.Services;
+using FinTree.Application.Analytics.Services.Metrics;
 using FinTree.Application.Currencies;
 using FinTree.Application.Exceptions;
 using FinTree.Application.Retrospectives;
@@ -235,13 +237,21 @@ builder.Services.AddScoped<AccountsService>();
 builder.Services.AddScoped<UserService>();
 builder.Services.AddScoped<AuthService>();
 builder.Services.AddScoped<ICurrentUser, HttpCurrentUser>();
-builder.Services.AddAnalyticsServices();
 builder.Services.AddScoped<RetrospectiveService>();
 builder.Services.AddScoped<AdminService>();
 builder.Services.AddScoped<CurrencyConverter>();
 builder.Services.AddScoped<TelegramOperationsService>();
 builder.Services.AddScoped<DatabaseInitializer>();
 builder.Services.AddScoped<OwnerRoleBootstrapper>();
+
+builder.Services.AddScoped<MonthlyScoreService>();
+builder.Services.AddScoped<PeakDaysService>();
+builder.Services.AddScoped<LiquidityService>();
+builder.Services.AddScoped<DashboardService>();
+builder.Services.AddScoped<NetWorthService>();
+builder.Services.AddScoped<EvolutionService>();
+builder.Services.AddScoped<ForecastService>();
+builder.Services.AddScoped<ExpenseService>();
 
 if (!string.IsNullOrWhiteSpace(telegramToken))
     builder.Services.AddHostedService<TelegramBotHostedService>();

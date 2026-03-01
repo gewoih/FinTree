@@ -1,4 +1,4 @@
-namespace FinTree.Application.Admin;
+namespace FinTree.Application.Admin.Dto;
 
 public readonly record struct AdminOverviewDto(
     AdminKpisDto Kpis,

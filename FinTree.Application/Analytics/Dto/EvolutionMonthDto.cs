@@ -1,4 +1,4 @@
-namespace FinTree.Application.Analytics;
+namespace FinTree.Application.Analytics.Dto;
 
 public sealed record EvolutionMonthDto(
     int Year,
