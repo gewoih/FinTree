@@ -244,9 +244,8 @@ builder.Services.AddScoped<TelegramOperationsService>();
 builder.Services.AddScoped<DatabaseInitializer>();
 builder.Services.AddScoped<OwnerRoleBootstrapper>();
 
-builder.Services.AddScoped<MonthlyScoreService>();
-builder.Services.AddScoped<PeakDaysService>();
 builder.Services.AddScoped<LiquidityService>();
+builder.Services.AddScoped<SpendingBreakdownService>();
 builder.Services.AddScoped<DashboardService>();
 builder.Services.AddScoped<NetWorthService>();
 builder.Services.AddScoped<EvolutionService>();
