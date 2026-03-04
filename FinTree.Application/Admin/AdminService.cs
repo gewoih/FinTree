@@ -1,4 +1,5 @@
 using FinTree.Application.Abstractions;
+using FinTree.Application.Admin.Dto;
 using FinTree.Domain.Identity;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
