@@ -13,6 +13,7 @@ using FinTree.Application.Analytics.Services;
 using FinTree.Application.Analytics.Services.Metrics;
 using FinTree.Application.Currencies;
 using FinTree.Application.Exceptions;
+using FinTree.Application.Goals.Services;
 using FinTree.Application.Retrospectives;
 using FinTree.Application.Transactions;
 using FinTree.Application.Users;
@@ -251,6 +252,8 @@ builder.Services.AddScoped<NetWorthService>();
 builder.Services.AddScoped<EvolutionService>();
 builder.Services.AddScoped<ForecastService>();
 builder.Services.AddScoped<ExpenseService>();
+builder.Services.AddScoped<GoalService>();
+builder.Services.AddScoped<GoalSimulationService>();
 
 if (!string.IsNullOrWhiteSpace(telegramToken))
     builder.Services.AddHostedService<TelegramBotHostedService>();

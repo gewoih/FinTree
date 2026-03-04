@@ -75,6 +75,12 @@ export const router = createRouter({
       meta: { title: 'Инвестиции', requiresAuth: true },
     },
     {
+      path: '/goals',
+      name: 'goals',
+      component: () => import('../pages/GoalsPage.vue'),
+      meta: { title: 'Цели', requiresAuth: true },
+    },
+    {
       path: '/categories',
       name: 'categories',
       component: () => import('../pages/CategoriesPage.vue'),

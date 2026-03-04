@@ -3,6 +3,7 @@ using FinTree.Domain.Accounts;
 using FinTree.Domain.Base;
 using FinTree.Domain.Categories;
 using FinTree.Domain.Currencies;
+using FinTree.Domain.Goals;
 using FinTree.Domain.Identity;
 using FinTree.Domain.Retrospectives;
 using FinTree.Domain.Subscriptions;
@@ -25,6 +26,7 @@ public sealed class AppDbContext(DbContextOptions<AppDbContext> options) : Ident
     public DbSet<Transaction> Transactions => Set<Transaction>();
     public DbSet<FxUsdRate> FxUsdRates => Set<FxUsdRate>();
     public DbSet<MonthlyRetrospective> Retrospectives => Set<MonthlyRetrospective>();
+    public DbSet<Goal> Goals => Set<Goal>();
 
     public Task<IDbContextTransaction> BeginTransactionAsync(CancellationToken cancellationToken = default)
         => Database.BeginTransactionAsync(cancellationToken);
@@ -41,6 +43,7 @@ public sealed class AppDbContext(DbContextOptions<AppDbContext> options) : Ident
         ConfigureSubscriptionPayments(modelBuilder);
         ConfigureUsers(modelBuilder);
         ConfigureRetrospectives(modelBuilder);
+        ConfigureGoals(modelBuilder);
         ApplySoftDeleteQueryFilters(modelBuilder);
     }
 
@@ -108,6 +111,24 @@ public sealed class AppDbContext(DbContextOptions<AppDbContext> options) : Ident
             entity.Property(x => x.Wins).HasMaxLength(1000);
             entity.Property(x => x.SavingsOpportunities).HasMaxLength(2000);
             entity.HasIndex(x => new { x.UserId, x.MonthDate }).IsUnique();
+            entity.HasOne<User>()
+                .WithMany()
+                .HasForeignKey(x => x.UserId)
+                .OnDelete(DeleteBehavior.Cascade)
+                .IsRequired();
+        });
+    }
+
+    private static void ConfigureGoals(ModelBuilder modelBuilder)
+    {
+        modelBuilder.Entity<Goal>(entity =>
+        {
+            entity.ToTable("Goals");
+            entity.Property(x => x.Name).HasMaxLength(100);
+            entity.Property(x => x.CurrencyCode).HasMaxLength(3);
+            entity.Property(x => x.TargetAmount).HasPrecision(18, 2);
+            entity.Property(x => x.ParameterOverridesJson).HasMaxLength(2000);
+            entity.HasIndex(x => x.UserId);
             entity.HasOne<User>()
                 .WithMany()
                 .HasForeignKey(x => x.UserId)

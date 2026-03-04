@@ -43,6 +43,7 @@ export function useAppShellState() {
     { label: 'Счета', icon: 'pi-wallet', to: '/accounts', badge: null },
     { label: 'Транзакции', icon: 'pi-list', to: '/transactions', badge: null },
     { label: 'Инвестиции', icon: 'pi-briefcase', to: '/investments', badge: null },
+    { label: 'Цели', icon: 'pi-bullseye', to: '/goals', badge: null },
     { label: 'Рефлексии', icon: 'pi-book', to: '/reflections', badge: null }
   ]
 

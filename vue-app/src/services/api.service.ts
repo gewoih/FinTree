@@ -27,7 +27,12 @@ import type {
     AccountBalanceAdjustmentDto,
     CreateTransferPayload,
     UpdateTransferPayload,
-    UpsertRetrospectivePayload
+    UpsertRetrospectivePayload,
+    GoalDto,
+    GoalSimulationRequestDto,
+    GoalSimulationResultDto,
+    CreateGoalPayload,
+    UpdateGoalPayload
 } from '../types.ts';
 
 type AuthRedirectConfig = AxiosRequestConfig & {
@@ -447,6 +452,30 @@ export const apiService = {
 
     async dismissBanner(month: string): Promise<void> {
         await apiClient.post(`/retrospectives/${month}/dismiss`);
+    },
+
+    async getGoals(): Promise<GoalDto[]> {
+        const response = await apiClient.get<GoalDto[]>('/goals');
+        return response.data;
+    },
+
+    async createGoal(payload: CreateGoalPayload): Promise<GoalDto> {
+        const response = await apiClient.post<GoalDto>('/goals', payload);
+        return response.data;
+    },
+
+    async updateGoal(id: string, payload: UpdateGoalPayload): Promise<GoalDto> {
+        const response = await apiClient.put<GoalDto>(`/goals/${id}`, payload);
+        return response.data;
+    },
+
+    async deleteGoal(id: string): Promise<void> {
+        await apiClient.delete(`/goals/${id}`);
+    },
+
+    async simulateGoal(id: string, request: GoalSimulationRequestDto): Promise<GoalSimulationResultDto> {
+        const response = await apiClient.post<GoalSimulationResultDto>(`/goals/${id}/simulate`, request);
+        return response.data;
     },
 
     // Текущий пользователь
