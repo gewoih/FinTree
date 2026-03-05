@@ -1,3 +1,4 @@
+using System.Globalization;
 using FinTree.Application.Analytics.Services;
 using FinTree.Application.Goals.Dto;
 using FinTree.Application.Users;
@@ -10,6 +11,8 @@ public sealed class GoalSimulationService(
     UserService userService,
     BootstrapSamplerService bootstrapSamplerService)
 {
+    private static readonly CultureInfo RuCulture = CultureInfo.GetCultureInfo("ru-RU");
+
     public async Task<GoalSimulationParametersDto> GetDefaultParametersAsync(CancellationToken ct)
     {
         var nowUtc = DateTime.UtcNow;
@@ -746,7 +749,7 @@ public sealed class GoalSimulationService(
         for (var month = 0; month <= count; month++)
         {
             var date = simulationStartDate.AddMonths(month).ToDateTime(TimeOnly.MinValue);
-            labels[month] = $"{date:MMM yyyy}";
+            labels[month] = date.ToString("MMM yyyy", RuCulture);
         }
 
         return labels;
