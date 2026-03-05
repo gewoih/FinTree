@@ -67,7 +67,7 @@ namespace FinTree.Infrastructure.Migrations
 
                     b.HasIndex("UserId");
 
-                    b.ToTable("Accounts");
+                    b.ToTable("Accounts", (string)null);
                 });
 
             modelBuilder.Entity("FinTree.Domain.Accounts.AccountBalanceAdjustment", b =>
@@ -101,7 +101,7 @@ namespace FinTree.Infrastructure.Migrations
 
                     b.HasIndex("AccountId");
 
-                    b.ToTable("AccountBalanceAdjustments");
+                    b.ToTable("AccountBalanceAdjustments", (string)null);
                 });
 
             modelBuilder.Entity("FinTree.Domain.Categories.TransactionCategory", b =>
@@ -153,7 +153,7 @@ namespace FinTree.Infrastructure.Migrations
 
                     b.HasIndex("UserId");
 
-                    b.ToTable("TransactionCategories");
+                    b.ToTable("TransactionCategories", (string)null);
                 });
 
             modelBuilder.Entity("FinTree.Domain.Currencies.FxUsdRate", b =>
@@ -178,7 +178,7 @@ namespace FinTree.Infrastructure.Migrations
                     b.HasIndex("CurrencyCode", "EffectiveDate")
                         .IsUnique();
 
-                    b.ToTable("FxUsdRates");
+                    b.ToTable("FxUsdRates", (string)null);
                 });
 
             modelBuilder.Entity("FinTree.Domain.Identity.RefreshToken", b =>
@@ -214,7 +214,7 @@ namespace FinTree.Infrastructure.Migrations
 
                     b.HasIndex("UserId", "ExpiresAt");
 
-                    b.ToTable("RefreshTokens");
+                    b.ToTable("RefreshTokens", (string)null);
                 });
 
             modelBuilder.Entity("FinTree.Domain.Identity.Role", b =>
@@ -462,7 +462,7 @@ namespace FinTree.Infrastructure.Migrations
 
                     b.HasIndex("UserId", "Status");
 
-                    b.ToTable("SubscriptionPayments");
+                    b.ToTable("SubscriptionPayments", (string)null);
                 });
 
             modelBuilder.Entity("FinTree.Domain.Transactions.Transaction", b =>
@@ -524,7 +524,7 @@ namespace FinTree.Infrastructure.Migrations
 
                     b.HasIndex("AccountId");
 
-                    b.ToTable("Transactions");
+                    b.ToTable("Transactions", (string)null);
                 });
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRoleClaim<System.Guid>", b =>
