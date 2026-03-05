@@ -47,7 +47,7 @@ const fields: ParameterField[] = [
   {
     key: 'monthlyIncome',
     label: 'Ежемесячный доход',
-    hint: '/мес',
+    hint: '',
     isPercent: false,
     min: 0,
     max: 1_000_000_000,
@@ -55,7 +55,7 @@ const fields: ParameterField[] = [
   {
     key: 'monthlyExpenses',
     label: 'Ежемесячные расходы',
-    hint: '/мес',
+    hint: '',
     isPercent: false,
     min: 0,
     max: 1_000_000_000,
@@ -63,7 +63,7 @@ const fields: ParameterField[] = [
   {
     key: 'annualReturnRate',
     label: 'Доходность инвестиций',
-    hint: '/год',
+    hint: '(% годовых)',
     isPercent: true,
     min: 0,
     max: 100,

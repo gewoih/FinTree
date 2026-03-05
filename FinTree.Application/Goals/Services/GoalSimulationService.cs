@@ -123,49 +123,58 @@ public sealed class GoalSimulationService(
             .Select(BootstrapSamplerService.ToCents));
         var seed = bootstrapSamplerService.BuildDeterministicSeed(GoalSimulationDefaults.GoalDeterministicSeedBase, seedParts);
 
-        var rng = new Random(seed);
-        var monthlyPaths = new List<decimal[]>(GoalSimulationDefaults.MaxSimulations);
-        var hitDays = new List<int>(GoalSimulationDefaults.MaxSimulations);
+        var incomePoolDouble = incomePool.Select(value => (double)value).ToArray();
+        var expensePoolDouble = expensePool.Select(value => (double)value).ToArray();
+
+        var monthlyPaths = new double[GoalSimulationDefaults.MaxSimulations][];
+        var hitDays = new int[GoalSimulationDefaults.MaxSimulations];
+        Array.Fill(hitDays, -1);
 
         var totalSimulations = 0;
         var stableIterations = 0;
         double? previousProbability = null;
         int? previousMedianHitDay = null;
+        var parallelOptions = new ParallelOptions
+        {
+            CancellationToken = ct
+        };
 
         while (totalSimulations < GoalSimulationDefaults.MaxSimulations)
         {
             var batchSize = Math.Min(GoalSimulationDefaults.BatchSize, GoalSimulationDefaults.MaxSimulations - totalSimulations);
+            var batchStartIndex = totalSimulations;
 
-            for (var index = 0; index < batchSize; index++)
+            Parallel.For(0, batchSize, parallelOptions, index =>
             {
+                var simulationIndex = batchStartIndex + index;
+                var simulationSeed = HashCode.Combine(seed, simulationIndex);
+                var rng = new Random(simulationSeed);
+
                 var simulationResult = SimulateSinglePath(
-                    initialCapital,
-                    targetAmount,
+                    (double)initialCapital,
+                    (double)targetAmount,
                     horizonDays,
                     monthOffsets,
-                    incomePool,
+                    incomePoolDouble,
                     incomeCdf,
-                    incomeDriftAdjustment,
-                    expensePool,
+                    (double)incomeDriftAdjustment,
+                    expensePoolDouble,
                     expenseCdf,
-                    expenseDriftAdjustment,
+                    (double)expenseDriftAdjustment,
                     meanDailyReturn,
                     dailyReturnVolatility,
                     rng);
 
-                monthlyPaths.Add(simulationResult.MonthlyPath);
-                hitDays.Add(simulationResult.HitDay);
-            }
+                monthlyPaths[simulationIndex] = simulationResult.MonthlyPath;
+                hitDays[simulationIndex] = simulationResult.HitDay;
+            });
 
             totalSimulations += batchSize;
             if (totalSimulations < GoalSimulationDefaults.MinSimulations)
                 continue;
 
-            var checkpointProbability = hitDays.Count(day => day >= 0) / (double)totalSimulations;
-            var checkpointSuccessDays = hitDays
-                .Where(day => day >= 0)
-                .OrderBy(day => day)
-                .ToArray();
+            var checkpointSuccessDays = BuildSortedSuccessDays(hitDays, totalSimulations);
+            var checkpointProbability = checkpointSuccessDays.Length / (double)totalSimulations;
 
             var checkpointMedianDay = GetQuantileValue(checkpointSuccessDays, GoalSimulationDefaults.QuantileP50);
 
@@ -192,10 +201,7 @@ public sealed class GoalSimulationService(
             previousMedianHitDay = checkpointMedianDay;
         }
 
-        var successDays = hitDays
-            .Where(day => day >= 0)
-            .OrderBy(day => day)
-            .ToArray();
+        var successDays = BuildSortedSuccessDays(hitDays, totalSimulations);
 
         var rawProbability = successDays.Length / (double)totalSimulations;
         var probability = Math.Clamp(rawProbability, 0d, 1d);
@@ -204,7 +210,7 @@ public sealed class GoalSimulationService(
         var p25HitDay = GetQuantileValue(successDays, GoalSimulationDefaults.QuantileP25);
         var p75HitDay = GetQuantileValue(successDays, GoalSimulationDefaults.QuantileP75);
 
-        var fullPercentilePaths = ComputePercentilePaths(monthlyPaths, horizonMonths);
+        var fullPercentilePaths = ComputePercentilePaths(monthlyPaths, totalSimulations, horizonMonths);
         var displayMonths = ResolveDisplayMonths(fullPercentilePaths, targetAmount, horizonMonths);
         displayMonths = Math.Clamp(displayMonths, 1, horizonMonths);
 
@@ -464,7 +470,7 @@ public sealed class GoalSimulationService(
         return Math.Max(0d, cdf[index] - previous);
     }
 
-    private static IReadOnlyList<int> BuildMonthOffsets(DateOnly startDate, int horizonMonths, int horizonDays)
+    private static int[] BuildMonthOffsets(DateOnly startDate, int horizonMonths, int horizonDays)
     {
         var offsets = new int[horizonMonths + 1];
 
@@ -479,70 +485,71 @@ public sealed class GoalSimulationService(
     }
 
     private SimulationPathResult SimulateSinglePath(
-        decimal initialCapital,
-        decimal targetAmount,
+        double initialCapital,
+        double targetAmount,
         int horizonDays,
-        IReadOnlyList<int> monthOffsets,
-        IReadOnlyList<decimal> incomePool,
+        int[] monthOffsets,
+        double[] incomePool,
         double[] incomeCdf,
-        decimal incomeDriftAdjustment,
-        IReadOnlyList<decimal> expensePool,
+        double incomeDriftAdjustment,
+        double[] expensePool,
         double[] expenseCdf,
-        decimal expenseDriftAdjustment,
+        double expenseDriftAdjustment,
         double meanDailyReturn,
         double dailyReturnVolatility,
         Random rng)
     {
-        var monthlyPath = new decimal[monthOffsets.Count];
+        var monthlyPath = new double[monthOffsets.Length];
         monthlyPath[0] = initialCapital;
 
         var capital = initialCapital;
         var hitDay = initialCapital >= targetAmount ? 0 : -1;
 
         var nextMonthIndex = 1;
-        var nextMonthOffset = nextMonthIndex < monthOffsets.Count ? monthOffsets[nextMonthIndex] : int.MaxValue;
-
-        decimal[] currentIncomeBlock = [];
-        decimal[] currentExpenseBlock = [];
+        var nextMonthOffset = nextMonthIndex < monthOffsets.Length ? monthOffsets[nextMonthIndex] : int.MaxValue;
+        var incomeBlockStartIndex = 0;
+        var expenseBlockStartIndex = 0;
 
         for (var day = 1; day <= horizonDays; day++)
         {
             if ((day - 1) % GoalSimulationDefaults.BootstrapBlockDays == 0)
             {
-                currentIncomeBlock = bootstrapSamplerService.SampleBlock(
-                    incomePool,
+                incomeBlockStartIndex = SampleBlockStartIndex(
+                    incomePool.Length,
                     incomeCdf,
                     GoalSimulationDefaults.BootstrapBlockDays,
                     rng);
 
-                currentExpenseBlock = bootstrapSamplerService.SampleBlock(
-                    expensePool,
+                expenseBlockStartIndex = SampleBlockStartIndex(
+                    expensePool.Length,
                     expenseCdf,
                     GoalSimulationDefaults.BootstrapBlockDays,
                     rng);
             }
 
             var blockIndex = (day - 1) % GoalSimulationDefaults.BootstrapBlockDays;
-            var dailyIncome = Math.Max(0m, currentIncomeBlock[blockIndex] + incomeDriftAdjustment);
-            var dailyExpense = Math.Max(0m, currentExpenseBlock[blockIndex] + expenseDriftAdjustment);
+            var incomeIndex = Math.Min(incomeBlockStartIndex + blockIndex, incomePool.Length - 1);
+            var expenseIndex = Math.Min(expenseBlockStartIndex + blockIndex, expensePool.Length - 1);
+            var dailyIncome = Math.Max(0d, incomePool[incomeIndex] + incomeDriftAdjustment);
+            var dailyExpense = Math.Max(0d, expensePool[expenseIndex] + expenseDriftAdjustment);
 
             var dailyReturn = meanDailyReturn + dailyReturnVolatility * NextStandardNormal(rng);
             dailyReturn = Math.Max(GoalSimulationDefaults.DailyReturnFloor, dailyReturn);
 
-            capital = capital * (1m + (decimal)dailyReturn) + (dailyIncome - dailyExpense);
+            capital = capital * (1d + dailyReturn) + (dailyIncome - dailyExpense);
 
             if (hitDay == -1 && capital >= targetAmount)
                 hitDay = day;
 
-            while (day >= nextMonthOffset && nextMonthIndex < monthOffsets.Count)
+            while (day >= nextMonthOffset && nextMonthIndex < monthOffsets.Length)
             {
                 monthlyPath[nextMonthIndex] = capital;
                 nextMonthIndex++;
-                nextMonthOffset = nextMonthIndex < monthOffsets.Count ? monthOffsets[nextMonthIndex] : int.MaxValue;
+                nextMonthOffset = nextMonthIndex < monthOffsets.Length ? monthOffsets[nextMonthIndex] : int.MaxValue;
             }
         }
 
-        while (nextMonthIndex < monthOffsets.Count)
+        while (nextMonthIndex < monthOffsets.Length)
         {
             monthlyPath[nextMonthIndex] = capital;
             nextMonthIndex++;
@@ -559,6 +566,52 @@ public sealed class GoalSimulationService(
         return Math.Sqrt(-2d * Math.Log(u1)) * Math.Sin(2d * Math.PI * u2);
     }
 
+    private static int SampleBlockStartIndex(int poolLength, double[] cdf, int blockDays, Random rng)
+    {
+        if (poolLength <= 0)
+            return 0;
+
+        var maxStartIndex = Math.Max(poolLength - blockDays, 0);
+        var startCount = maxStartIndex + 1;
+
+        var randomValue = rng.NextDouble();
+        var startIndex = cdf.Length == startCount
+            ? Array.BinarySearch(cdf, randomValue)
+            : (int)Math.Floor(randomValue * startCount);
+
+        if (startIndex < 0)
+            startIndex = ~startIndex;
+
+        return Math.Clamp(startIndex, 0, maxStartIndex);
+    }
+
+    private static int[] BuildSortedSuccessDays(int[] hitDays, int count)
+    {
+        var successCount = 0;
+        for (var index = 0; index < count; index++)
+        {
+            if (hitDays[index] >= 0)
+                successCount++;
+        }
+
+        if (successCount == 0)
+            return [];
+
+        var successDays = new int[successCount];
+        var writeIndex = 0;
+        for (var index = 0; index < count; index++)
+        {
+            if (hitDays[index] < 0)
+                continue;
+
+            successDays[writeIndex] = hitDays[index];
+            writeIndex++;
+        }
+
+        Array.Sort(successDays);
+        return successDays;
+    }
+
     private static double ComputeDataQualityScore(int observedHistoryDays)
     {
         if (observedHistoryDays <= 0)
@@ -568,27 +621,84 @@ public sealed class GoalSimulationService(
         return GoalSimulationDefaults.QualityFactorMin + (1d - GoalSimulationDefaults.QualityFactorMin) * progress;
     }
 
-    private static GoalPercentilePathsDto ComputePercentilePaths(IReadOnlyList<decimal[]> paths, int horizonMonths)
+    private static GoalPercentilePathsDto ComputePercentilePaths(double[][] paths, int pathCount, int horizonMonths)
     {
+        if (pathCount <= 0)
+            return new GoalPercentilePathsDto([], [], []);
+
         var p25 = new decimal[horizonMonths + 1];
         var p50 = new decimal[horizonMonths + 1];
         var p75 = new decimal[horizonMonths + 1];
 
-        var pathCount = paths.Count;
-        var sortBuffer = new decimal[pathCount];
+        var sortBuffer = new double[pathCount];
+        var p25Index = (int)Math.Floor((pathCount - 1) * GoalSimulationDefaults.QuantileP25);
+        var p50Index = (int)Math.Floor((pathCount - 1) * GoalSimulationDefaults.QuantileP50);
+        var p75Index = (int)Math.Floor((pathCount - 1) * GoalSimulationDefaults.QuantileP75);
 
         for (var month = 0; month <= horizonMonths; month++)
         {
             for (var simulationIndex = 0; simulationIndex < pathCount; simulationIndex++)
                 sortBuffer[simulationIndex] = paths[simulationIndex][month];
 
-            Array.Sort(sortBuffer);
-            p25[month] = sortBuffer[(int)Math.Floor((pathCount - 1) * GoalSimulationDefaults.QuantileP25)];
-            p50[month] = sortBuffer[(int)Math.Floor((pathCount - 1) * GoalSimulationDefaults.QuantileP50)];
-            p75[month] = sortBuffer[(int)Math.Floor((pathCount - 1) * GoalSimulationDefaults.QuantileP75)];
+            p25[month] = (decimal)QuickSelect(sortBuffer, p25Index);
+            p50[month] = (decimal)QuickSelect(sortBuffer, p50Index);
+            p75[month] = (decimal)QuickSelect(sortBuffer, p75Index);
         }
 
         return new GoalPercentilePathsDto(p25, p50, p75);
+    }
+
+    private static double QuickSelect(double[] values, int targetIndex)
+    {
+        if (values.Length == 0)
+            return 0d;
+
+        var left = 0;
+        var right = values.Length - 1;
+        targetIndex = Math.Clamp(targetIndex, 0, values.Length - 1);
+
+        while (left < right)
+        {
+            var pivotIndex = Partition(values, left, right);
+
+            if (pivotIndex == targetIndex)
+                return values[pivotIndex];
+
+            if (targetIndex < pivotIndex)
+                right = pivotIndex - 1;
+            else
+                left = pivotIndex + 1;
+        }
+
+        return values[left];
+    }
+
+    private static int Partition(double[] values, int left, int right)
+    {
+        var pivotIndex = left + ((right - left) / 2);
+        var pivotValue = values[pivotIndex];
+        Swap(values, pivotIndex, right);
+
+        var storeIndex = left;
+        for (var index = left; index < right; index++)
+        {
+            if (values[index] <= pivotValue)
+            {
+                Swap(values, storeIndex, index);
+                storeIndex++;
+            }
+        }
+
+        Swap(values, storeIndex, right);
+        return storeIndex;
+    }
+
+    private static void Swap(double[] values, int left, int right)
+    {
+        if (left == right)
+            return;
+
+        (values[left], values[right]) = (values[right], values[left]);
     }
 
     private static int ResolveDisplayMonths(GoalPercentilePathsDto percentilePaths, decimal targetAmount,
@@ -681,5 +791,5 @@ public sealed class GoalSimulationService(
             []);
     }
 
-    private readonly record struct SimulationPathResult(decimal[] MonthlyPath, int HitDay);
+    private readonly record struct SimulationPathResult(double[] MonthlyPath, int HitDay);
 }
