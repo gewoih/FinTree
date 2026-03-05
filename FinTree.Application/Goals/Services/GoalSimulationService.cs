@@ -1,48 +1,36 @@
-using FinTree.Application.Abstractions;
 using FinTree.Application.Analytics.Services;
 using FinTree.Application.Analytics.Shared;
 using FinTree.Application.Currencies;
-using FinTree.Application.Exceptions;
 using FinTree.Application.Goals.Dto;
 using FinTree.Application.Transactions;
 using FinTree.Application.Users;
-using FinTree.Domain.Goals;
 using FinTree.Domain.Transactions;
-using Microsoft.EntityFrameworkCore;
 
 namespace FinTree.Application.Goals.Services;
 
 public sealed class GoalSimulationService(
-    IAppDbContext context,
-    ICurrentUser currentUser,
     TransactionsService transactionsService,
     CurrencyConverter currencyConverter,
-    ExpenseService expenseService,
+    CashflowAverageService cashflowAverageService,
     NetWorthService netWorthService,
     UserService userService)
 {
-    private const int SimulationCount = 10_000;
+    private const int SimulationCount = 6_000;
     private const int MaxHorizonMonths = 360;
-    private const int DisplayMonths = 120;
+    private const int MinHorizonMonths = 24;
+    private const int HorizonBufferMonths = 48;
+    private const int MinHistoryDaysForVariance = 30;
+    private const int SyntheticPoolSize = 120;
+    private const decimal SyntheticNoiseLevel = 0.18m;
     private const double Lambda = 0.02;
-    private const int BaselineMonthsBack = 3;
-
-    public async Task<Goal> LoadGoalForSimulationAsync(Guid goalId, CancellationToken ct)
-    {
-        var userId = currentUser.Id;
-
-        return await context.Goals
-            .AsNoTracking()
-            .Where(g => g.Id == goalId && g.UserId == userId)
-            .FirstOrDefaultAsync(ct)
-            ?? throw new NotFoundException(nameof(Goal), goalId);
-    }
 
     public async Task<GoalSimulationResultDto> SimulateAsync(
-        Goal goal,
         GoalSimulationRequestDto request,
         CancellationToken ct)
     {
+        if (request.TargetAmount <= 0m)
+            throw new ArgumentOutOfRangeException(nameof(request.TargetAmount), "TargetAmount must be greater than zero.");
+
         var nowUtc = DateTime.UtcNow;
         var baseCurrencyCode = await userService.GetCurrentUserBaseCurrencyCodeAsync(ct);
 
@@ -51,39 +39,19 @@ public sealed class GoalSimulationService(
 
         var incomeFromAnalytics = !request.MonthlyIncome.HasValue;
         var monthlyIncome = request.MonthlyIncome
-            ?? await ResolveMonthlyAverageAsync(baseCurrencyCode, nowUtc, TransactionType.Income, ct);
+            ?? await cashflowAverageService.GetAverageMonthlyIncomeAsync(baseCurrencyCode, nowUtc, ct);
 
         var expensesFromAnalytics = !request.MonthlyExpenses.HasValue;
-        decimal monthlyExpenses;
-        decimal[] bootstrapPool;
+        var monthlyExpenses = request.MonthlyExpenses
+            ?? await cashflowAverageService.GetAverageMonthlyExpenseAsync(baseCurrencyCode, nowUtc, ct);
 
-        if (request.MonthlyExpenses.HasValue)
-        {
-            monthlyExpenses = request.MonthlyExpenses.Value;
-            var avgDailyExpense = monthlyExpenses / (decimal)AnalyticsCommon.AverageDaysInMonth;
-            bootstrapPool = Enumerable.Repeat(avgDailyExpense, 90).ToArray();
-        }
-        else
-        {
-            monthlyExpenses = await ResolveMonthlyAverageAsync(baseCurrencyCode, nowUtc, TransactionType.Expense, ct);
-            bootstrapPool = await BuildBootstrapPoolAsync(baseCurrencyCode, nowUtc, ct);
-
-            // Rescale the pool so that its mean aligns with the baseline monthly average.
-            // The pool captures variance from a long window; we normalise it to avoid drift.
-            var targetDailyMean = monthlyExpenses / (decimal)AnalyticsCommon.AverageDaysInMonth;
-            if (bootstrapPool.Length > 0 && targetDailyMean > 0m)
-            {
-                var poolMean = bootstrapPool.Sum() / bootstrapPool.Length;
-                if (poolMean > 0m)
-                {
-                    var scale = targetDailyMean / poolMean;
-                    for (var i = 0; i < bootstrapPool.Length; i++)
-                        bootstrapPool[i] *= scale;
-                }
-            }
-        }
+        var bootstrapSource = await BuildBootstrapPoolAsync(baseCurrencyCode, nowUtc, ct);
+        var targetDailyMean = monthlyExpenses / (decimal)AnalyticsCommon.AverageDaysInMonth;
+        var bootstrapPool = BuildExpensePool(bootstrapSource.Pool, targetDailyMean, bootstrapSource.ObservedDays);
 
         var annualReturnRate = request.AnnualReturnRate ?? 0m;
+        var monthlyReturn = (double)annualReturnRate / 12d;
+        var targetAmount = request.TargetAmount;
 
         var resolvedParams = new GoalSimulationParametersDto(
             initialCapital,
@@ -95,7 +63,7 @@ public sealed class GoalSimulationService(
             expensesFromAnalytics);
 
         var avgMonthlySavings = monthlyIncome - monthlyExpenses;
-        var isAchievable = avgMonthlySavings > 0 || initialCapital >= goal.TargetAmount;
+        var isAchievable = avgMonthlySavings > 0m || initialCapital >= targetAmount;
 
         if (!isAchievable)
             return BuildUnachievableResult(resolvedParams);
@@ -103,19 +71,25 @@ public sealed class GoalSimulationService(
         var cdf = BuildWeightedCdf(bootstrapPool);
         var rng = new Random(42);
 
-        var horizonMonths = Math.Clamp(request.HorizonMonths ?? MaxHorizonMonths, 1, MaxHorizonMonths);
-        var monthlyReturn = (double)annualReturnRate / 12d;
+        var horizonMonths = EstimateHorizonMonths(
+            initialCapital,
+            targetAmount,
+            monthlyIncome,
+            monthlyExpenses,
+            monthlyReturn);
 
-        var displayLen = Math.Min(horizonMonths, DisplayMonths);
         var allPaths = new decimal[SimulationCount][];
         var hitMonths = new int[SimulationCount];
         Array.Fill(hitMonths, -1);
 
         for (var simulationIndex = 0; simulationIndex < SimulationCount; simulationIndex++)
         {
-            allPaths[simulationIndex] = new decimal[displayLen + 1];
+            allPaths[simulationIndex] = new decimal[horizonMonths + 1];
             allPaths[simulationIndex][0] = initialCapital;
             var capital = initialCapital;
+
+            if (initialCapital >= targetAmount)
+                hitMonths[simulationIndex] = 0;
 
             for (var month = 1; month <= horizonMonths; month++)
             {
@@ -124,11 +98,9 @@ public sealed class GoalSimulationService(
                 var savings = monthlyIncome - sampledMonthlyExpense;
 
                 capital = capital * (1m + (decimal)monthlyReturn) + savings;
+                allPaths[simulationIndex][month] = capital;
 
-                if (month <= displayLen)
-                    allPaths[simulationIndex][month] = capital;
-
-                if (capital >= goal.TargetAmount && hitMonths[simulationIndex] == -1)
+                if (capital >= targetAmount && hitMonths[simulationIndex] == -1)
                     hitMonths[simulationIndex] = month;
             }
         }
@@ -139,21 +111,16 @@ public sealed class GoalSimulationService(
             .ToArray();
 
         var probability = (double)successMonths.Length / SimulationCount;
-        var medianMonths = successMonths.Length > 0 ? successMonths[successMonths.Length / 2] : -1;
-        var p25Months = successMonths.Length > 0 ? successMonths[(int)(successMonths.Length * 0.25)] : -1;
-        var p75Months = successMonths.Length > 0 ? successMonths[(int)(successMonths.Length * 0.75)] : -1;
+        var medianMonths = GetQuantileMonth(successMonths, 0.50);
+        var p25Months = GetQuantileMonth(successMonths, 0.25);
+        var p75Months = GetQuantileMonth(successMonths, 0.75);
 
-        var percentilePaths = ComputePercentilePaths(allPaths, displayLen);
+        var fullPercentilePaths = ComputePercentilePaths(allPaths, horizonMonths);
+        var displayLen = ResolveDisplayLength(fullPercentilePaths, targetAmount, horizonMonths);
+        displayLen = Math.Clamp(displayLen, 1, horizonMonths);
+
+        var percentilePaths = TrimPercentilePaths(fullPercentilePaths, displayLen);
         var monthLabels = BuildMonthLabels(nowUtc, displayLen);
-
-        var insights = GenerateInsights(
-            probability,
-            successMonths,
-            monthlyIncome,
-            monthlyExpenses,
-            annualReturnRate,
-            goal.TargetAmount,
-            initialCapital);
 
         return new GoalSimulationResultDto(
             probability,
@@ -162,7 +129,6 @@ public sealed class GoalSimulationService(
             p75Months,
             percentilePaths,
             resolvedParams,
-            insights,
             true,
             monthLabels);
     }
@@ -173,49 +139,8 @@ public sealed class GoalSimulationService(
         return snapshots.LastOrDefault()?.NetWorth ?? 0m;
     }
 
-    /// <summary>
-    /// Returns the average monthly total for the given transaction type over the last
-    /// <see cref="BaselineMonthsBack"/> complete calendar months.
-    /// </summary>
-    private async Task<decimal> ResolveMonthlyAverageAsync(
-        string baseCurrencyCode,
-        DateTime nowUtc,
-        TransactionType type,
+    private async Task<ExpenseBootstrapPool> BuildBootstrapPoolAsync(string baseCurrencyCode, DateTime nowUtc,
         CancellationToken ct)
-    {
-        var monthlyTotals = new List<decimal>(BaselineMonthsBack);
-
-        for (var i = 1; i <= BaselineMonthsBack; i++)
-        {
-            var refDate = nowUtc.AddMonths(-i);
-            var monthStart = new DateTime(refDate.Year, refDate.Month, 1, 0, 0, 0, DateTimeKind.Utc);
-            var monthEnd = monthStart.AddMonths(1);
-
-            var transactions = await transactionsService.GetTransactionSnapshotsAsync(
-                monthStart,
-                monthEnd,
-                excludeTransfers: true,
-                type: type,
-                ct: ct);
-
-            if (transactions.Count == 0)
-                continue;
-
-            var rates = await currencyConverter.GetCrossRatesAsync(
-                transactions.Select(t => (t.Money.CurrencyCode, t.OccurredAtUtc)),
-                baseCurrencyCode,
-                ct);
-
-            var total = transactions.Sum(t =>
-                t.Money.Amount * rates[(t.Money.CurrencyCode, t.OccurredAtUtc.Date)]);
-
-            monthlyTotals.Add(total);
-        }
-
-        return monthlyTotals.Count > 0 ? monthlyTotals.Average() : 0m;
-    }
-
-    private async Task<decimal[]> BuildBootstrapPoolAsync(string baseCurrencyCode, DateTime nowUtc, CancellationToken ct)
     {
         var fromUtc = nowUtc.AddDays(-AnalyticsCommon.AverageExpenseRollingWindowDays);
         var transactions = await transactionsService.GetTransactionSnapshotsAsync(
@@ -225,8 +150,9 @@ public sealed class GoalSimulationService(
             type: TransactionType.Expense,
             ct: ct);
 
+        var poolDays = Math.Max((int)(nowUtc - fromUtc).TotalDays + 1, 1);
         if (transactions.Count == 0)
-            return [0m];
+            return new ExpenseBootstrapPool(new decimal[poolDays], 0);
 
         var rates = await currencyConverter.GetCrossRatesAsync(
             transactions.Select(t => (t.Money.CurrencyCode, t.OccurredAtUtc)),
@@ -242,7 +168,6 @@ public sealed class GoalSimulationService(
             dailyTotals[day] = dailyTotals.GetValueOrDefault(day, 0m) + amount;
         }
 
-        var poolDays = (int)(nowUtc - fromUtc).TotalDays + 1;
         var pool = new decimal[poolDays];
         for (var dayIndex = 0; dayIndex < poolDays; dayIndex++)
         {
@@ -250,7 +175,98 @@ public sealed class GoalSimulationService(
             pool[dayIndex] = dailyTotals.GetValueOrDefault(day, 0m);
         }
 
-        return pool;
+        return new ExpenseBootstrapPool(pool, dailyTotals.Count);
+    }
+
+    private static decimal[] BuildExpensePool(decimal[] historicalPool, decimal targetDailyMean, int observedDays)
+    {
+        if (targetDailyMean <= 0m)
+            return [0m];
+
+        var alignedPool = AlignPoolToTargetMean(historicalPool, targetDailyMean);
+        if (observedDays < MinHistoryDaysForVariance || HasLowVariance(alignedPool, targetDailyMean))
+            return BuildSyntheticPool(targetDailyMean, Math.Max(SyntheticPoolSize, alignedPool.Length));
+
+        return alignedPool;
+    }
+
+    private static decimal[] AlignPoolToTargetMean(decimal[] pool, decimal targetDailyMean)
+    {
+        if (pool.Length == 0)
+            return [targetDailyMean];
+
+        var mean = pool.Sum() / pool.Length;
+        if (mean <= 0m)
+            return pool.ToArray();
+
+        var scale = targetDailyMean / mean;
+        var aligned = new decimal[pool.Length];
+        for (var i = 0; i < pool.Length; i++)
+            aligned[i] = Math.Max(0m, pool[i] * scale);
+
+        return aligned;
+    }
+
+    private static bool HasLowVariance(decimal[] pool, decimal mean)
+    {
+        if (pool.Length < 2 || mean <= 0m)
+            return true;
+
+        var variance = 0d;
+        for (var i = 0; i < pool.Length; i++)
+        {
+            var delta = (double)(pool[i] - mean);
+            variance += delta * delta;
+        }
+
+        variance /= pool.Length;
+        var stdDev = (decimal)Math.Sqrt(variance);
+        return stdDev <= mean * 0.03m;
+    }
+
+    private static decimal[] BuildSyntheticPool(decimal targetDailyMean, int size)
+    {
+        var poolSize = Math.Max(size, 30);
+        var synthetic = new decimal[poolSize];
+        var rng = new Random(137);
+
+        for (var i = 0; i < poolSize; i++)
+        {
+            var randomShift = (decimal)(rng.NextDouble() * 2d - 1d);
+            var factor = 1m + randomShift * SyntheticNoiseLevel;
+
+            var dayOfWeek = i % 7;
+            if (dayOfWeek is 5 or 6)
+                factor += 0.04m;
+
+            factor = Math.Clamp(factor, 0.55m, 1.55m);
+            synthetic[i] = Math.Max(0m, targetDailyMean * factor);
+        }
+
+        return synthetic;
+    }
+
+    private static int EstimateHorizonMonths(
+        decimal initialCapital,
+        decimal targetAmount,
+        decimal monthlyIncome,
+        decimal monthlyExpenses,
+        double monthlyReturn)
+    {
+        if (initialCapital >= targetAmount)
+            return 1;
+
+        var monthlySavings = monthlyIncome - monthlyExpenses;
+        var capital = initialCapital;
+
+        for (var month = 1; month <= MaxHorizonMonths; month++)
+        {
+            capital = capital * (1m + (decimal)monthlyReturn) + monthlySavings;
+            if (capital >= targetAmount)
+                return Math.Clamp(month + HorizonBufferMonths, MinHorizonMonths, MaxHorizonMonths);
+        }
+
+        return MaxHorizonMonths;
     }
 
     private static double[] BuildWeightedCdf(decimal[] pool)
@@ -282,36 +298,28 @@ public sealed class GoalSimulationService(
         return pool[Math.Clamp(index, 0, pool.Length - 1)];
     }
 
-    private static GoalPercentilePathsDto ComputePercentilePaths(decimal[][] allPaths, int displayLen)
+    private static GoalPercentilePathsDto ComputePercentilePaths(decimal[][] allPaths, int horizonMonths)
     {
-        var p10 = new decimal[displayLen + 1];
-        var p20 = new decimal[displayLen + 1];
-        var p40 = new decimal[displayLen + 1];
-        var p50 = new decimal[displayLen + 1];
-        var p60 = new decimal[displayLen + 1];
-        var p80 = new decimal[displayLen + 1];
-        var p90 = new decimal[displayLen + 1];
+        var p25 = new decimal[horizonMonths + 1];
+        var p50 = new decimal[horizonMonths + 1];
+        var p75 = new decimal[horizonMonths + 1];
 
         var pathCount = allPaths.Length;
         var sortBuffer = new decimal[pathCount];
 
-        for (var month = 0; month <= displayLen; month++)
+        for (var month = 0; month <= horizonMonths; month++)
         {
             for (var simulationIndex = 0; simulationIndex < pathCount; simulationIndex++)
                 sortBuffer[simulationIndex] = allPaths[simulationIndex][month];
 
             Array.Sort(sortBuffer);
 
-            p10[month] = sortBuffer[(int)(pathCount * 0.10)];
-            p20[month] = sortBuffer[(int)(pathCount * 0.20)];
-            p40[month] = sortBuffer[(int)(pathCount * 0.40)];
+            p25[month] = sortBuffer[(int)(pathCount * 0.25)];
             p50[month] = sortBuffer[pathCount / 2];
-            p60[month] = sortBuffer[(int)(pathCount * 0.60)];
-            p80[month] = sortBuffer[(int)(pathCount * 0.80)];
-            p90[month] = sortBuffer[(int)(pathCount * 0.90)];
+            p75[month] = sortBuffer[(int)(pathCount * 0.75)];
         }
 
-        return new GoalPercentilePathsDto(p10, p20, p40, p50, p60, p80, p90);
+        return new GoalPercentilePathsDto(p25, p50, p75);
     }
 
     private static IReadOnlyList<string> BuildMonthLabels(DateTime nowUtc, int count)
@@ -326,65 +334,59 @@ public sealed class GoalSimulationService(
         return labels;
     }
 
-    private static IReadOnlyList<string> GenerateInsights(
-        double probability,
-        int[] successMonths,
-        decimal monthlyIncome,
-        decimal monthlyExpenses,
-        decimal annualReturnRate,
-        decimal targetAmount,
-        decimal initialCapital)
+    private static int GetQuantileMonth(int[] successMonths, double percentile)
     {
-        var insights = new List<string>();
+        if (successMonths.Length == 0)
+            return -1;
 
-        if (initialCapital > 0 && targetAmount > 0)
-        {
-            var progressPercent = Math.Round((double)initialCapital / (double)targetAmount * 100, 1);
-            insights.Add($"Уже накоплено {progressPercent}% от цели ({initialCapital:N0} из {targetAmount:N0})");
-        }
+        var index = (int)Math.Floor(successMonths.Length * percentile);
+        index = Math.Clamp(index, 0, successMonths.Length - 1);
+        return successMonths[index];
+    }
 
-        if (monthlyExpenses > 0)
-        {
-            var reducedExpenses = monthlyExpenses * 0.9m;
-            var reduction = monthlyExpenses - reducedExpenses;
-            insights.Add($"Снижение расходов на {reduction:N0}/мес даст заметный прирост вероятности");
-        }
+    private static int ResolveDisplayLength(
+        GoalPercentilePathsDto percentilePaths,
+        decimal targetAmount,
+        int fallbackHorizonMonths)
+    {
+        var conservativeHit = FindHitMonth(percentilePaths.P25, targetAmount);
+        if (conservativeHit >= 0)
+            return conservativeHit;
 
-        if (annualReturnRate == 0m)
-        {
-            insights.Add("Инвестирование сбережений под 10%/год значительно ускорит достижение цели");
-        }
-        else if (annualReturnRate < 0.10m)
-        {
-            var higherReturn = annualReturnRate + 0.05m;
-            insights.Add($"Увеличение доходности до {higherReturn:P0} ускорит накопление");
-        }
+        var medianHit = FindHitMonth(percentilePaths.P50, targetAmount);
+        if (medianHit >= 0)
+            return medianHit;
 
-        if (probability < 0.5)
-        {
-            insights.Add("Вероятность ниже 50% — рассмотрите увеличение взносов или снижение расходов");
-        }
-        else if (probability >= 0.9)
-        {
-            insights.Add("Высокая вероятность — цель хорошо согласована с вашими финансами");
-        }
+        var optimisticHit = FindHitMonth(percentilePaths.P75, targetAmount);
+        if (optimisticHit >= 0)
+            return optimisticHit;
 
-        if (successMonths.Length == 0 && monthlyIncome <= monthlyExpenses)
+        return fallbackHorizonMonths;
+    }
+
+    private static int FindHitMonth(IReadOnlyList<decimal> path, decimal targetAmount)
+    {
+        for (var month = 0; month < path.Count; month++)
         {
-            insights.Add("Текущий денежный поток не формирует устойчивого запаса для достижения цели");
+            if (path[month] >= targetAmount)
+                return month;
         }
 
-        return insights;
+        return -1;
+    }
+
+    private static GoalPercentilePathsDto TrimPercentilePaths(GoalPercentilePathsDto percentilePaths, int displayLen)
+    {
+        var visibleLength = displayLen + 1;
+        return new GoalPercentilePathsDto(
+            percentilePaths.P25.Take(visibleLength).ToArray(),
+            percentilePaths.P50.Take(visibleLength).ToArray(),
+            percentilePaths.P75.Take(visibleLength).ToArray());
     }
 
     private static GoalSimulationResultDto BuildUnachievableResult(GoalSimulationParametersDto resolvedParams)
     {
-        var emptyPaths = new GoalPercentilePathsDto([], [], [], [], [], [], []);
-        var insights = new List<string>
-        {
-            "Текущие расходы превышают доходы — накопление невозможно при таких параметрах",
-            "Попробуйте увеличить доход или снизить расходы"
-        };
+        var emptyPaths = new GoalPercentilePathsDto([], [], []);
 
         return new GoalSimulationResultDto(
             0,
@@ -393,8 +395,9 @@ public sealed class GoalSimulationService(
             -1,
             emptyPaths,
             resolvedParams,
-            insights,
             false,
             []);
     }
+
+    private sealed record ExpenseBootstrapPool(decimal[] Pool, int ObservedDays);
 }

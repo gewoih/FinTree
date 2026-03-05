@@ -2,16 +2,17 @@
 import { computed, ref, watch } from 'vue'
 import Message from 'primevue/message'
 import GoalFanChartCard from './GoalFanChartCard.vue'
-import GoalInsightsPanel from './GoalInsightsPanel.vue'
 import GoalParametersPanel from './GoalParametersPanel.vue'
 import { useGoalSimulation } from '../composables/useGoalSimulation.ts'
 import type {
-  GoalDto,
   GoalParameterOverrides,
   GoalSimulationRequestDto,
 } from '@/types.ts'
 
-const props = defineProps<{ goal: GoalDto }>()
+const props = defineProps<{
+  targetAmount: number
+  currencyCode: string
+}>()
 
 const {
   result,
@@ -21,65 +22,51 @@ const {
   reset,
 } = useGoalSimulation()
 
-function parseOverrides(rawJson: string | null): GoalParameterOverrides {
-  if (!rawJson)
-    return {}
-
-  try {
-    const parsed = JSON.parse(rawJson) as GoalParameterOverrides
-    return {
-      initialCapital: parsed.initialCapital ?? null,
-      monthlyIncome: parsed.monthlyIncome ?? null,
-      monthlyExpenses: parsed.monthlyExpenses ?? null,
-      annualReturnRate: parsed.annualReturnRate ?? null,
-    }
-  }
-  catch {
-    return {}
-  }
-}
-
-const storedOverrides = computed(() => parseOverrides(props.goal.parameterOverridesJson))
 const overrides = ref<GoalParameterOverrides>({})
 
 function buildRequest(): GoalSimulationRequestDto {
   return {
+    targetAmount: props.targetAmount,
     initialCapital: overrides.value.initialCapital ?? null,
     monthlyIncome: overrides.value.monthlyIncome ?? null,
     monthlyExpenses: overrides.value.monthlyExpenses ?? null,
     annualReturnRate: overrides.value.annualReturnRate ?? null,
-    horizonMonths: null,
   }
 }
 
 function runSimulation(debounce = false) {
+  if (!Number.isFinite(props.targetAmount) || props.targetAmount <= 0)
+    return
+
   const request = buildRequest()
   if (debounce) {
-    simulateDebounced(props.goal.id, request)
+    simulateDebounced(request)
     return
   }
 
-  simulateDebounced(props.goal.id, request, 0)
+  simulateDebounced(request, 0)
 }
 
 watch(
-  () => props.goal.id,
+  () => props.targetAmount,
   () => {
-    overrides.value = { ...storedOverrides.value }
     reset()
-    runSimulation()
+    runSimulation(true)
   },
   { immediate: true },
 )
 
-watch(
-  () => props.goal.parameterOverridesJson,
-  rawValue => {
-    overrides.value = { ...parseOverrides(rawValue) }
-  },
-)
+function areOverridesEqual(a: GoalParameterOverrides, b: GoalParameterOverrides): boolean {
+  return (a.initialCapital ?? null) === (b.initialCapital ?? null)
+    && (a.monthlyIncome ?? null) === (b.monthlyIncome ?? null)
+    && (a.monthlyExpenses ?? null) === (b.monthlyExpenses ?? null)
+    && (a.annualReturnRate ?? null) === (b.annualReturnRate ?? null)
+}
 
 function onOverridesChange(newOverrides: GoalParameterOverrides) {
+  if (areOverridesEqual(overrides.value, newOverrides))
+    return
+
   overrides.value = { ...newOverrides }
   runSimulation(true)
 }
@@ -87,14 +74,17 @@ function onOverridesChange(newOverrides: GoalParameterOverrides) {
 const targetAmountLabel = computed(() =>
   new Intl.NumberFormat('ru-RU', {
     style: 'currency',
-    currency: props.goal.currencyCode,
+    currency: props.currencyCode,
     maximumFractionDigits: 0,
-  }).format(props.goal.targetAmount),
+  }).format(props.targetAmount),
 )
 
 function formatDate(monthsFromNow: number): string {
-  if (monthsFromNow <= 0)
+  if (monthsFromNow < 0)
     return '—'
+
+  if (monthsFromNow === 0)
+    return 'сейчас'
 
   const date = new Date()
   date.setMonth(date.getMonth() + monthsFromNow)
@@ -110,53 +100,60 @@ function formatDate(monthsFromNow: number): string {
   <div class="goal-detail">
     <div class="goal-detail__header">
       <h2 class="goal-detail__name">
-        {{ goal.name }}
+        Прогноз достижения
       </h2>
       <span class="goal-detail__target">{{ targetAmountLabel }}</span>
     </div>
 
     <Message
-      v-if="error"
+      v-if="targetAmount <= 0"
+      severity="warn"
+    >
+      Укажите целевую сумму больше нуля.
+    </Message>
+
+    <Message
+      v-else-if="error"
       severity="error"
     >
       {{ error }}
     </Message>
 
     <Message
-      v-if="result && !result.isAchievable"
+      v-if="targetAmount > 0 && result && !result.isAchievable"
       severity="warn"
     >
       При текущих параметрах цель недостижима: расходы превышают доходы.
     </Message>
 
     <div
-      v-if="result && result.isAchievable"
+      v-if="targetAmount > 0 && result && result.isAchievable"
       class="goal-kpis"
     >
-      <div class="kpi">
-        <div class="kpi__value">
-          {{ Math.round(result.probability * 100) }}%
-        </div>
-        <div class="kpi__label">
-          вероятность
-        </div>
-      </div>
-
-      <div class="kpi">
+      <div class="kpi kpi--primary">
         <div class="kpi__value">
           {{ formatDate(result.medianMonths) }}
         </div>
         <div class="kpi__label">
-          медианный срок
+          медианный срок достижения
         </div>
       </div>
 
-      <div class="kpi">
+      <div class="kpi kpi--secondary">
+        <div class="kpi__value">
+          {{ Math.round(result.probability * 100) }}%
+        </div>
+        <div class="kpi__label">
+          вероятность достижения
+        </div>
+      </div>
+
+      <div class="kpi kpi--secondary">
         <div class="kpi__value">
           {{ formatDate(result.p25Months) }} — {{ formatDate(result.p75Months) }}
         </div>
         <div class="kpi__label">
-          диапазон P25–P75
+          оптимистичный — консервативный
         </div>
       </div>
     </div>
@@ -164,19 +161,14 @@ function formatDate(monthsFromNow: number): string {
     <GoalFanChartCard
       :loading="loading"
       :result="result"
-      :target-amount="goal.targetAmount"
-      :currency-code="goal.currencyCode"
+      :target-amount="targetAmount"
+      :currency-code="currencyCode"
     />
 
     <GoalParametersPanel
       :resolved-params="result?.resolvedParameters ?? null"
       :model-value="overrides"
       @update:model-value="onOverridesChange"
-    />
-
-    <GoalInsightsPanel
-      v-if="result?.insights?.length"
-      :insights="result.insights"
     />
   </div>
 </template>
@@ -231,6 +223,20 @@ function formatDate(monthsFromNow: number): string {
   color: var(--ft-text-secondary);
   text-transform: uppercase;
   letter-spacing: 0.04em;
+}
+
+.kpi--primary .kpi__value {
+  font-size: clamp(1.6rem, 2.2vw, 2rem);
+  color: var(--ft-primary-300);
+}
+
+.kpi--secondary .kpi__value {
+  font-size: var(--ft-text-lg);
+  color: var(--ft-text-secondary);
+}
+
+.kpi--secondary .kpi__label {
+  color: var(--ft-text-tertiary);
 }
 
 @media (width <= 768px) {

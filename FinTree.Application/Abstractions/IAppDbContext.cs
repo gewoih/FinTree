@@ -1,7 +1,6 @@
 using FinTree.Domain.Accounts;
 using FinTree.Domain.Categories;
 using FinTree.Domain.Currencies;
-using FinTree.Domain.Goals;
 using FinTree.Domain.Identity;
 using FinTree.Domain.Retrospectives;
 using FinTree.Domain.Subscriptions;
@@ -22,7 +21,6 @@ public interface IAppDbContext
     DbSet<Transaction> Transactions { get; }
     DbSet<FxUsdRate> FxUsdRates { get; }
     DbSet<MonthlyRetrospective> Retrospectives { get; }
-    DbSet<Goal> Goals { get; }
 
     Task<int> SaveChangesAsync(CancellationToken cancellationToken = default);
     Task<IDbContextTransaction> BeginTransactionAsync(CancellationToken cancellationToken = default);

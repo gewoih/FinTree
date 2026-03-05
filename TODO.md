@@ -43,7 +43,7 @@
 
 - [ ] `FT-TODO-053` Прямой индексатор `rateByCurrencyAndDay[rateKey]` без защиты в нескольких сервисах — `KeyNotFoundException` если конвертер не вернул курс (edge case: новая валюта без исторических данных).
   **Fix:** Заменить на `TryGetValue` + явный выброс с контекстом (валюта, дата).
-  **Files:** `FinTree.Application/Analytics/Services/SpendingBreakdownService.cs:39`, `ExpenseService.cs:37`, `ForecastService.cs:39`, `EvolutionService.cs:206`
+  **Files:** `FinTree.Application/Analytics/Services/SpendingBreakdownService.cs:39`, `CashflowAverageService.cs:64`, `ForecastService.cs:39`, `EvolutionService.cs:206`
 
 ### Performance
 

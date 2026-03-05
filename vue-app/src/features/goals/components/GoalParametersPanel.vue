@@ -103,6 +103,9 @@ function onFieldChange(field: ParameterField, value: number | null) {
         ? value / 100
         : value
 
+  if ((overrides[field.key] ?? null) === normalizedValue)
+    return
+
   overrides[field.key] = normalizedValue
   emit('update:modelValue', { ...overrides })
 }

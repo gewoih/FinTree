@@ -9,7 +9,7 @@ namespace FinTree.Application.Analytics.Services;
 public class ForecastService(
     TransactionsService transactionsService,
     CurrencyConverter currencyConverter,
-    ExpenseService expenseService)
+    CashflowAverageService cashflowAverageService)
 {
     private const int BootstrapingSimulationsCount = 10_000;
 
@@ -175,9 +175,8 @@ public class ForecastService(
             ? observedCumulativeActual
             : cumulative;
 
-        var fromUtc = nowUtc.AddDays(-AnalyticsCommon.AverageExpenseRollingWindowDays);
         var baselineDailyRate =
-            await expenseService.GetAverageDailyExpenseAsync(baseCurrencyCode, nowUtc, ct);
+            await cashflowAverageService.GetAverageDailyExpenseAsync(baseCurrencyCode, nowUtc, ct);
 
         var baselineLimit = baselineDailyRate > 0m
             ? baselineDailyRate * (decimal)AnalyticsCommon.AverageDaysInMonth

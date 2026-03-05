@@ -251,8 +251,7 @@ builder.Services.AddScoped<DashboardService>();
 builder.Services.AddScoped<NetWorthService>();
 builder.Services.AddScoped<EvolutionService>();
 builder.Services.AddScoped<ForecastService>();
-builder.Services.AddScoped<ExpenseService>();
-builder.Services.AddScoped<GoalService>();
+builder.Services.AddScoped<CashflowAverageService>();
 builder.Services.AddScoped<GoalSimulationService>();
 
 if (!string.IsNullOrWhiteSpace(telegramToken))

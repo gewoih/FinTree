@@ -7,18 +7,13 @@ public sealed record GoalSimulationResultDto(
     int P75Months,
     GoalPercentilePathsDto PercentilePaths,
     GoalSimulationParametersDto ResolvedParameters,
-    IReadOnlyList<string> Insights,
     bool IsAchievable,
     IReadOnlyList<string> MonthLabels);
 
 public sealed record GoalPercentilePathsDto(
-    IReadOnlyList<decimal> P10,
-    IReadOnlyList<decimal> P20,
-    IReadOnlyList<decimal> P40,
+    IReadOnlyList<decimal> P25,
     IReadOnlyList<decimal> P50,
-    IReadOnlyList<decimal> P60,
-    IReadOnlyList<decimal> P80,
-    IReadOnlyList<decimal> P90);
+    IReadOnlyList<decimal> P75);
 
 public sealed record GoalSimulationParametersDto(
     decimal InitialCapital,

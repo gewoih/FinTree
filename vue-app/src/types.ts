@@ -467,16 +467,6 @@ export interface UpsertRetrospectivePayload {
     confidenceRating?: number | null;
 }
 
-// Goals
-export interface GoalDto {
-    id: string;
-    name: string;
-    targetAmount: number;
-    currencyCode: string;
-    parameterOverridesJson: string | null;
-    createdAt: string;
-}
-
 export interface GoalParameterOverrides {
     initialCapital?: number | null;
     monthlyIncome?: number | null;
@@ -485,11 +475,11 @@ export interface GoalParameterOverrides {
 }
 
 export interface GoalSimulationRequestDto {
+    targetAmount: number;
     initialCapital?: number | null;
     monthlyIncome?: number | null;
     monthlyExpenses?: number | null;
     annualReturnRate?: number | null;
-    horizonMonths?: number | null;
 }
 
 export interface GoalSimulationParametersDto {
@@ -503,13 +493,9 @@ export interface GoalSimulationParametersDto {
 }
 
 export interface GoalPercentilePathsDto {
-    p10: number[];
-    p20: number[];
-    p40: number[];
+    p25: number[];
     p50: number[];
-    p60: number[];
-    p80: number[];
-    p90: number[];
+    p75: number[];
 }
 
 export interface GoalSimulationResultDto {
@@ -519,19 +505,6 @@ export interface GoalSimulationResultDto {
     p75Months: number;
     percentilePaths: GoalPercentilePathsDto;
     resolvedParameters: GoalSimulationParametersDto;
-    insights: string[];
     isAchievable: boolean;
     monthLabels: string[];
-}
-
-export interface CreateGoalPayload {
-    name: string;
-    targetAmount: number;
-    currencyCode: string;
-}
-
-export interface UpdateGoalPayload {
-    name: string;
-    targetAmount: number;
-    parameterOverridesJson?: string | null;
 }
