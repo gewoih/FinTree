@@ -10,6 +10,13 @@ namespace FinTree.Api.Controllers;
 [ApiController]
 public sealed class GoalsController(GoalSimulationService simulationService) : ControllerBase
 {
+    [HttpGet("simulation-defaults")]
+    public async Task<IActionResult> GetSimulationDefaults(CancellationToken ct)
+    {
+        var result = await simulationService.GetDefaultParametersAsync(ct);
+        return Ok(result);
+    }
+
     [HttpPost("simulate")]
     public async Task<IActionResult> Simulate([FromBody] GoalSimulationRequestDto dto, CancellationToken ct)
     {

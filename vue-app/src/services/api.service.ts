@@ -29,7 +29,8 @@ import type {
     UpdateTransferPayload,
     UpsertRetrospectivePayload,
     GoalSimulationRequestDto,
-    GoalSimulationResultDto
+    GoalSimulationResultDto,
+    GoalSimulationParametersDto
 } from '../types.ts';
 
 type AuthRedirectConfig = AxiosRequestConfig & {
@@ -453,6 +454,11 @@ export const apiService = {
 
     async simulateGoal(request: GoalSimulationRequestDto): Promise<GoalSimulationResultDto> {
         const response = await apiClient.post<GoalSimulationResultDto>('/goals/simulate', request);
+        return response.data;
+    },
+
+    async getGoalSimulationDefaults(): Promise<GoalSimulationParametersDto> {
+        const response = await apiClient.get<GoalSimulationParametersDto>('/goals/simulation-defaults');
         return response.data;
     },
 

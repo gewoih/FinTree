@@ -500,6 +500,7 @@ export interface GoalPercentilePathsDto {
 
 export interface GoalSimulationResultDto {
     probability: number;
+    dataQualityScore: number;
     medianMonths: number;
     p25Months: number;
     p75Months: number;

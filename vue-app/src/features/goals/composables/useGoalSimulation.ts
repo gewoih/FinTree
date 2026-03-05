@@ -2,13 +2,21 @@ import { ref } from 'vue'
 import { apiService } from '@/services/api.service.ts'
 import type { GoalSimulationRequestDto, GoalSimulationResultDto } from '@/types.ts'
 
+function roundNullable(value: number | null | undefined, digits = 6): number | null {
+  if (value == null || !Number.isFinite(value))
+    return null
+
+  const factor = 10 ** digits
+  return Math.round(value * factor) / factor
+}
+
 function normalizeRequest(request: GoalSimulationRequestDto): GoalSimulationRequestDto {
   return {
-    targetAmount: request.targetAmount,
-    initialCapital: request.initialCapital ?? null,
-    monthlyIncome: request.monthlyIncome ?? null,
-    monthlyExpenses: request.monthlyExpenses ?? null,
-    annualReturnRate: request.annualReturnRate ?? null,
+    targetAmount: Math.max(0, Math.round(request.targetAmount ?? 0)),
+    initialCapital: roundNullable(request.initialCapital, 2),
+    monthlyIncome: roundNullable(request.monthlyIncome, 2),
+    monthlyExpenses: roundNullable(request.monthlyExpenses, 2),
+    annualReturnRate: roundNullable(request.annualReturnRate, 6),
   }
 }
 
@@ -25,6 +33,7 @@ export function useGoalSimulation() {
   let requestId = 0
   let lastQueuedRequestKey: string | null = null
   let lastCompletedRequestKey: string | null = null
+  let inFlightRequestKey: string | null = null
 
   const clearDebounce = () => {
     if (debounceTimer !== null) {
@@ -37,13 +46,14 @@ export function useGoalSimulation() {
     const normalized = normalizeRequest(request)
     const key = requestKey ?? getRequestKey(normalized)
 
-    if (key === lastCompletedRequestKey) {
+    if (key === lastCompletedRequestKey || key === inFlightRequestKey) {
       loading.value = false
       return
     }
 
     loading.value = true
     error.value = null
+    inFlightRequestKey = key
     const currentRequestId = ++requestId
 
     try {
@@ -64,6 +74,9 @@ export function useGoalSimulation() {
     finally {
       if (currentRequestId === requestId) {
         loading.value = false
+        if (inFlightRequestKey === key)
+          inFlightRequestKey = null
+
         if (lastQueuedRequestKey === key)
           lastQueuedRequestKey = null
       }
@@ -74,7 +87,7 @@ export function useGoalSimulation() {
     const normalized = normalizeRequest(request)
     const requestKey = getRequestKey(normalized)
 
-    if (requestKey === lastCompletedRequestKey || requestKey === lastQueuedRequestKey)
+    if (requestKey === lastCompletedRequestKey || requestKey === lastQueuedRequestKey || requestKey === inFlightRequestKey)
       return
 
     clearDebounce()
@@ -95,6 +108,7 @@ export function useGoalSimulation() {
     loading.value = false
     lastQueuedRequestKey = null
     lastCompletedRequestKey = null
+    inFlightRequestKey = null
   }
 
   return {

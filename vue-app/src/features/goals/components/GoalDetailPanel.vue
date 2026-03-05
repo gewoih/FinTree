@@ -1,11 +1,14 @@
 <script setup lang="ts">
-import { computed, ref, watch } from 'vue'
+import { computed, onMounted, ref } from 'vue'
 import Message from 'primevue/message'
 import GoalFanChartCard from './GoalFanChartCard.vue'
 import GoalParametersPanel from './GoalParametersPanel.vue'
 import { useGoalSimulation } from '../composables/useGoalSimulation.ts'
+import { apiService } from '@/services/api.service.ts'
+import UiButton from '@/ui/UiButton.vue'
 import type {
   GoalParameterOverrides,
+  GoalSimulationParametersDto,
   GoalSimulationRequestDto,
 } from '@/types.ts'
 
@@ -18,11 +21,74 @@ const {
   result,
   loading,
   error,
-  simulateDebounced,
-  reset,
+  simulate,
 } = useGoalSimulation()
 
 const overrides = ref<GoalParameterOverrides>({})
+const defaultParams = ref<GoalSimulationParametersDto | null>(null)
+const defaultsLoading = ref(false)
+const defaultsError = ref<string | null>(null)
+const baselineRequestKey = ref<string | null>(null)
+
+const resolvedParamsForPanel = computed(() =>
+  result.value?.resolvedParameters ?? defaultParams.value,
+)
+
+function roundNullable(value: number | null | undefined, digits = 6): number | null {
+  if (value == null || !Number.isFinite(value))
+    return null
+
+  const factor = 10 ** digits
+  return Math.round(value * factor) / factor
+}
+
+function getRequestKey(request: GoalSimulationRequestDto): string {
+  return JSON.stringify({
+    targetAmount: Math.max(0, Math.round(request.targetAmount ?? 0)),
+    initialCapital: roundNullable(request.initialCapital, 2),
+    monthlyIncome: roundNullable(request.monthlyIncome, 2),
+    monthlyExpenses: roundNullable(request.monthlyExpenses, 2),
+    annualReturnRate: roundNullable(request.annualReturnRate, 6),
+  })
+}
+
+const currentRequestKey = computed(() => getRequestKey(buildRequest()))
+const hasPendingChanges = computed(() =>
+  baselineRequestKey.value != null && currentRequestKey.value !== baselineRequestKey.value,
+)
+
+const canRunInitialSimulation = computed(() =>
+  result.value == null && !defaultsLoading.value,
+)
+
+const canRunSimulation = computed(() =>
+  Number.isFinite(props.targetAmount)
+  && props.targetAmount > 0
+  && !loading.value
+  && (canRunInitialSimulation.value || hasPendingChanges.value),
+)
+
+async function loadDefaultParams() {
+  defaultsLoading.value = true
+  defaultsError.value = null
+
+  try {
+    defaultParams.value = await apiService.getGoalSimulationDefaults()
+    baselineRequestKey.value = getRequestKey(buildRequest())
+  }
+  catch {
+    defaultsError.value = 'Не удалось загрузить параметры по данным пользователя.'
+    if (baselineRequestKey.value == null)
+      baselineRequestKey.value = getRequestKey(buildRequest())
+  }
+  finally {
+    defaultsLoading.value = false
+  }
+}
+
+onMounted(() => {
+  void loadDefaultParams()
+})
 
 function buildRequest(): GoalSimulationRequestDto {
   return {
@@ -34,27 +100,17 @@ function buildRequest(): GoalSimulationRequestDto {
   }
 }
 
-function runSimulation(debounce = false) {
-  if (!Number.isFinite(props.targetAmount) || props.targetAmount <= 0)
+async function runSimulation() {
+  if (!canRunSimulation.value)
     return
 
   const request = buildRequest()
-  if (debounce) {
-    simulateDebounced(request)
-    return
-  }
+  const requestKey = getRequestKey(request)
+  await simulate(request)
 
-  simulateDebounced(request, 0)
+  if (!error.value)
+    baselineRequestKey.value = requestKey
 }
-
-watch(
-  () => props.targetAmount,
-  () => {
-    reset()
-    runSimulation(true)
-  },
-  { immediate: true },
-)
 
 function areOverridesEqual(a: GoalParameterOverrides, b: GoalParameterOverrides): boolean {
   return (a.initialCapital ?? null) === (b.initialCapital ?? null)
@@ -68,7 +124,6 @@ function onOverridesChange(newOverrides: GoalParameterOverrides) {
     return
 
   overrides.value = { ...newOverrides }
-  runSimulation(true)
 }
 
 const targetAmountLabel = computed(() =>
@@ -78,6 +133,37 @@ const targetAmountLabel = computed(() =>
     maximumFractionDigits: 0,
   }).format(props.targetAmount),
 )
+
+const dataQuality = computed(() => {
+  const score = result.value?.dataQualityScore
+  if (!Number.isFinite(score))
+    return null
+
+  if (score >= 0.95) {
+    return {
+      score,
+      tone: 'high' as const,
+      label: 'Высокое качество данных',
+      description: 'Истории операций достаточно для более стабильной симуляции.',
+    }
+  }
+
+  if (score >= 0.85) {
+    return {
+      score,
+      tone: 'medium' as const,
+      label: 'Среднее качество данных',
+      description: 'Прогноз может заметно меняться по мере накопления новой истории.',
+    }
+  }
+
+  return {
+    score,
+    tone: 'low' as const,
+    label: 'Низкое качество данных',
+    description: 'Истории пока мало, результат симуляции ориентировочный.',
+  }
+})
 
 function formatDate(monthsFromNow: number): string {
   if (monthsFromNow < 0)
@@ -126,6 +212,44 @@ function formatDate(monthsFromNow: number): string {
       При текущих параметрах цель недостижима: расходы превышают доходы.
     </Message>
 
+    <GoalParametersPanel
+      v-if="resolvedParamsForPanel"
+      :resolved-params="resolvedParamsForPanel"
+      :model-value="overrides"
+      @update:model-value="onOverridesChange"
+    />
+
+    <Message
+      v-else-if="defaultsLoading"
+      severity="info"
+    >
+      Загружаем ориентиры по данным пользователя…
+    </Message>
+
+    <Message
+      v-else-if="defaultsError"
+      severity="warn"
+    >
+      {{ defaultsError }}
+    </Message>
+
+    <div class="goal-detail__actions">
+      <UiButton
+        label="Пересчитать прогноз"
+        :disabled="!canRunSimulation"
+        :loading="loading"
+        variant="primary"
+        @click="runSimulation"
+      />
+    </div>
+
+    <Message
+      v-if="targetAmount > 0 && !loading && !result && !error && !defaultsLoading && !defaultsError"
+      severity="info"
+    >
+      Нажмите «Пересчитать прогноз», чтобы запустить симуляцию.
+    </Message>
+
     <div
       v-if="targetAmount > 0 && result && result.isAchievable"
       class="goal-kpis"
@@ -153,7 +277,7 @@ function formatDate(monthsFromNow: number): string {
           {{ formatDate(result.p25Months) }} — {{ formatDate(result.p75Months) }}
         </div>
         <div class="kpi__label">
-          оптимистичный — консервативный
+          диапазон P25–P75
         </div>
       </div>
     </div>
@@ -165,11 +289,19 @@ function formatDate(monthsFromNow: number): string {
       :currency-code="currencyCode"
     />
 
-    <GoalParametersPanel
-      :resolved-params="result?.resolvedParameters ?? null"
-      :model-value="overrides"
-      @update:model-value="onOverridesChange"
-    />
+    <div
+      v-if="targetAmount > 0 && result && dataQuality"
+      class="data-quality"
+      :class="`data-quality--${dataQuality.tone}`"
+    >
+      <div class="data-quality__row">
+        <span class="data-quality__label">{{ dataQuality.label }}</span>
+        <strong class="data-quality__score">{{ Math.round(dataQuality.score * 100) }}%</strong>
+      </div>
+      <p class="data-quality__description">
+        {{ dataQuality.description }}
+      </p>
+    </div>
   </div>
 </template>
 
@@ -198,6 +330,11 @@ function formatDate(monthsFromNow: number): string {
   font-size: var(--ft-text-base);
   font-variant-numeric: tabular-nums;
   color: var(--ft-text-secondary);
+}
+
+.goal-detail__actions {
+  display: flex;
+  justify-content: flex-start;
 }
 
 .goal-kpis {
@@ -237,6 +374,61 @@ function formatDate(monthsFromNow: number): string {
 
 .kpi--secondary .kpi__label {
   color: var(--ft-text-tertiary);
+}
+
+.data-quality {
+  padding: var(--ft-space-3) var(--ft-space-4);
+  border: 1px solid transparent;
+  border-radius: var(--ft-radius-md);
+  background: color-mix(in srgb, var(--ft-surface-raised) 85%, transparent);
+}
+
+.data-quality__row {
+  display: flex;
+  gap: var(--ft-space-3);
+  align-items: center;
+  justify-content: space-between;
+}
+
+.data-quality__label {
+  font-size: var(--ft-text-sm);
+  font-weight: var(--ft-font-semibold);
+  color: var(--ft-text-primary);
+}
+
+.data-quality__score {
+  font-size: var(--ft-text-sm);
+  font-variant-numeric: tabular-nums;
+}
+
+.data-quality__description {
+  margin: var(--ft-space-2) 0 0;
+  font-size: var(--ft-text-xs);
+  color: var(--ft-text-secondary);
+}
+
+.data-quality--high {
+  border-color: color-mix(in srgb, var(--ft-success-500) 45%, transparent);
+}
+
+.data-quality--high .data-quality__score {
+  color: var(--ft-success-500);
+}
+
+.data-quality--medium {
+  border-color: color-mix(in srgb, var(--ft-warning-500) 45%, transparent);
+}
+
+.data-quality--medium .data-quality__score {
+  color: var(--ft-warning-500);
+}
+
+.data-quality--low {
+  border-color: color-mix(in srgb, var(--ft-danger-500) 45%, transparent);
+}
+
+.data-quality--low .data-quality__score {
+  color: var(--ft-danger-500);
 }
 
 @media (width <= 768px) {

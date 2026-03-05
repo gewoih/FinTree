@@ -24,11 +24,13 @@ const emit = defineEmits<{
 }>()
 
 const overrides = reactive<GoalParameterOverrides>({ ...props.modelValue })
+const overrideKeys: OverrideField[] = ['initialCapital', 'monthlyIncome', 'monthlyExpenses', 'annualReturnRate']
 
 watch(
   () => props.modelValue,
   value => {
-    Object.assign(overrides, value)
+    for (const key of overrideKeys)
+      overrides[key] = value[key] ?? null
   },
   { deep: true },
 )
@@ -95,6 +97,13 @@ function getDisplayValue(field: ParameterField): number {
   return field.isPercent ? rawValue * 100 : rawValue
 }
 
+function areSameNumber(a: number | null | undefined, b: number | null | undefined): boolean {
+  if (a == null || b == null)
+    return a == null && b == null
+
+  return Math.abs(a - b) < 0.000001
+}
+
 function onFieldChange(field: ParameterField, value: number | null) {
   const normalizedValue =
     value == null
@@ -103,7 +112,11 @@ function onFieldChange(field: ParameterField, value: number | null) {
         ? value / 100
         : value
 
-  if ((overrides[field.key] ?? null) === normalizedValue)
+  const currentOverride = overrides[field.key] ?? null
+  if (areSameNumber(currentOverride, normalizedValue))
+    return
+
+  if (currentOverride == null && normalizedValue != null && areSameNumber(normalizedValue, getResolvedValue(field.key)))
     return
 
   overrides[field.key] = normalizedValue

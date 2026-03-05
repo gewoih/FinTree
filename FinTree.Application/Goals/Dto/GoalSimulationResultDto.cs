@@ -2,6 +2,7 @@ namespace FinTree.Application.Goals.Dto;
 
 public sealed record GoalSimulationResultDto(
     double Probability,
+    double DataQualityScore,
     int MedianMonths,
     int P25Months,
     int P75Months,

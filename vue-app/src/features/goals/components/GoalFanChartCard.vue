@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { computed } from 'vue'
-import type { ChartData, TooltipItem } from 'chart.js'
+import type { ChartData, Plugin, TooltipItem } from 'chart.js'
 import Chart from 'primevue/chart'
 import Skeleton from 'primevue/skeleton'
 import { useChartColors } from '@/composables/useChartColors.ts'
@@ -14,6 +14,33 @@ const props = defineProps<{
 }>()
 
 const { colors, tooltipConfig } = useChartColors()
+
+const hoverGuidePlugin: Plugin<'line'> = {
+  id: 'goalSimulationHoverGuide',
+  afterDatasetsDraw(chart) {
+    const activeElements = chart.tooltip?.getActiveElements()
+    if (!activeElements || activeElements.length === 0)
+      return
+
+    const x = activeElements[0]?.element?.x
+    if (typeof x !== 'number')
+      return
+
+    const { top, bottom } = chart.chartArea
+    const ctx = chart.ctx
+    ctx.save()
+    ctx.beginPath()
+    ctx.moveTo(x, top)
+    ctx.lineTo(x, bottom)
+    ctx.lineWidth = 1
+    ctx.setLineDash([5, 4])
+    ctx.strokeStyle = colorWithAlpha(colors.text, 0.55)
+    ctx.stroke()
+    ctx.restore()
+  },
+}
+
+const chartPlugins = [hoverGuidePlugin]
 
 function colorWithAlpha(color: string, alpha: number): string {
   const normalized = color.trim()
@@ -64,26 +91,24 @@ const chartData = computed((): ChartData<'line', number[], string> | null => {
     labels,
     datasets: [
       {
-        label: 'Оптимистичный сценарий',
-        data: percentilePaths.p75,
+        label: '__band-lower',
+        data: percentilePaths.p25,
         borderColor: colorWithAlpha(base, 0.34),
         backgroundColor: 'transparent',
-        borderWidth: 1.25,
-        borderDash: [5, 5],
+        borderWidth: 1,
         pointRadius: 0,
         fill: false,
-        tension: 0.28,
+        tension: 0.22,
       },
       {
-        label: 'Консервативный сценарий',
-        data: percentilePaths.p25,
-        borderColor: colorWithAlpha(base, 0.28),
-        backgroundColor: colorWithAlpha(base, 0.12),
-        borderWidth: 1.25,
-        borderDash: [5, 5],
+        label: '__band-upper',
+        data: percentilePaths.p75,
+        borderColor: colorWithAlpha(base, 0.34),
+        backgroundColor: colorWithAlpha(base, 0.14),
+        borderWidth: 1,
         pointRadius: 0,
         fill: '-1',
-        tension: 0.28,
+        tension: 0.22,
       },
       {
         label: 'Медианный сценарий',
@@ -92,6 +117,10 @@ const chartData = computed((): ChartData<'line', number[], string> | null => {
         backgroundColor: 'transparent',
         borderWidth: 3,
         pointRadius: 0,
+        pointHoverRadius: 4,
+        pointHoverBackgroundColor: base,
+        pointHoverBorderColor: colorWithAlpha(base, 0.35),
+        pointHoverBorderWidth: 3,
         fill: false,
         tension: 0.28,
       },
@@ -112,6 +141,10 @@ const chartData = computed((): ChartData<'line', number[], string> | null => {
 const chartOptions = computed(() => ({
   maintainAspectRatio: false,
   animation: false,
+  interaction: {
+    mode: 'index',
+    intersect: false,
+  },
   scales: {
     x: {
       ticks: {
@@ -138,6 +171,9 @@ const chartOptions = computed(() => ({
     legend: { display: false },
     tooltip: {
       ...tooltipConfig(),
+      mode: 'index',
+      intersect: false,
+      filter: (context: TooltipItem<'line'>) => !String(context.dataset.label ?? '').startsWith('__'),
       callbacks: {
         label: (context: TooltipItem<'line'>) => {
           const rawValue = typeof context.raw === 'number' ? context.raw : Number(context.raw)
@@ -175,6 +211,7 @@ const chartOptions = computed(() => ({
         type="line"
         :data="chartData"
         :options="chartOptions"
+        :plugins="chartPlugins"
         :style="{ height: '360px', width: '100%' }"
       />
     </div>
