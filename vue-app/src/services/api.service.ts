@@ -27,7 +27,10 @@ import type {
     AccountBalanceAdjustmentDto,
     CreateTransferPayload,
     UpdateTransferPayload,
-    UpsertRetrospectivePayload
+    UpsertRetrospectivePayload,
+    GoalSimulationRequestDto,
+    GoalSimulationResultDto,
+    GoalSimulationParametersDto
 } from '../types.ts';
 
 type AuthRedirectConfig = AxiosRequestConfig & {
@@ -447,6 +450,16 @@ export const apiService = {
 
     async dismissBanner(month: string): Promise<void> {
         await apiClient.post(`/retrospectives/${month}/dismiss`);
+    },
+
+    async simulateGoal(request: GoalSimulationRequestDto): Promise<GoalSimulationResultDto> {
+        const response = await apiClient.post<GoalSimulationResultDto>('/goals/simulate', request);
+        return response.data;
+    },
+
+    async getGoalSimulationDefaults(): Promise<GoalSimulationParametersDto> {
+        const response = await apiClient.get<GoalSimulationParametersDto>('/goals/simulation-defaults');
+        return response.data;
     },
 
     // Текущий пользователь

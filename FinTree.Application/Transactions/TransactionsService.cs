@@ -177,6 +177,7 @@ public sealed class TransactionsService(IAppDbContext context, ICurrentUser curr
     internal async Task<DateTime?> GetEarliestOccurredAtBeforeAsync(
         DateTime beforeUtc,
         bool excludeTransfers,
+        TransactionType? type = null,
         CancellationToken ct = default)
     {
         var query = context.Transactions
@@ -185,6 +186,9 @@ public sealed class TransactionsService(IAppDbContext context, ICurrentUser curr
 
         if (excludeTransfers)
             query = query.Where(t => !t.IsTransfer);
+
+        if (type.HasValue)
+            query = query.Where(t => t.Type == type.Value);
 
         var raw = await query
             .Select(t => (DateTime?)t.OccurredAt)

@@ -43,7 +43,7 @@
 
 - [ ] `FT-TODO-053` Прямой индексатор `rateByCurrencyAndDay[rateKey]` без защиты в нескольких сервисах — `KeyNotFoundException` если конвертер не вернул курс (edge case: новая валюта без исторических данных).
   **Fix:** Заменить на `TryGetValue` + явный выброс с контекстом (валюта, дата).
-  **Files:** `FinTree.Application/Analytics/Services/SpendingBreakdownService.cs:39`, `ExpenseService.cs:37`, `ForecastService.cs:39`, `EvolutionService.cs:206`
+  **Files:** `FinTree.Application/Analytics/Services/SpendingBreakdownService.cs:39`, `CashflowAverageService.cs:64`, `ForecastService.cs:39`, `EvolutionService.cs:206`
 
 ### Performance
 
@@ -102,6 +102,12 @@
 
 - [ ] `FT-TODO-032` Split TransactionForm.vue into smaller units and remove temporary `max-lines` suppression
   **Acceptance criteria:** `src/components/TransactionForm.vue` no longer uses file-level `eslint-disable max-lines`; logic/template are extracted into focused child components or composables, and `npm run lint` passes without that suppression.
+
+- [ ] `FT-TODO-063` Restore frontend lint/style baseline so CI gates can pass for new features.
+  **Context:** `npm run lint` currently fails on `src/pages/RetroDetailPage.vue` (`max-lines`), and `npm run lint:style` fails on unrelated pre-existing issues (including `:deep` selector errors in `src/styles/components/spending-pie-card.css` plus large property-order drift across legacy files).
+  **Priority:** P1
+  **Fix:** Resolve existing lint/style violations in legacy files or adjust rules/configs consistently with project standards, then enforce zero-warning baseline.
+  **Files:** `vue-app/src/pages/RetroDetailPage.vue`, `vue-app/src/styles/components/spending-pie-card.css`, `vue-app/src/styles/components/transaction-form.css`, `vue-app/src/styles/components/transaction-list.css`, `vue-app/src/styles/pages/reflections-page.css`, `vue-app/src/components/analytics/EvolutionKpiCard.vue`, `vue-app/src/components/analytics/SpendingBarsCard.vue`, `vue-app/src/styles/components/forecast-card.css`
 
 ## Analytics Page UX Improvements
 

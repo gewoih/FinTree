@@ -13,16 +13,16 @@ public sealed class LiquidityService(
     AccountsService accountsService,
     TransactionsService transactionsService,
     CurrencyConverter currencyConverter,
-    ExpenseService expenseService)
+    CashflowAverageService cashflowAverageService)
 {
     public async Task<Liquidity> ComputeLiquidity(string baseCurrencyCode, DateTime atUtc, CancellationToken ct)
     {
         var liquidAssets = await GetLiquidAssetsAtAsync(baseCurrencyCode, atUtc, ct);
 
         var averageDailyExpense =
-            await expenseService.GetAverageDailyExpenseAsync(baseCurrencyCode, atUtc, ct);
+            await cashflowAverageService.GetAverageDailyExpenseAsync(baseCurrencyCode, atUtc, ct);
 
-        var monthlyExpense = averageDailyExpense * 30.44m;
+        var monthlyExpense = averageDailyExpense * (decimal)AnalyticsCommon.AverageDaysInMonth;
         var liquidMonths = monthlyExpense <= 0m ? 0m : Math.Max(0m, liquidAssets / monthlyExpense);
         var status = ResolveLiquidStatus(liquidMonths);
         return new Liquidity(liquidAssets, liquidMonths, status);

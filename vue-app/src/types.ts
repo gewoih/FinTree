@@ -466,3 +466,46 @@ export interface UpsertRetrospectivePayload {
     impulseControlRating?: number | null;
     confidenceRating?: number | null;
 }
+
+export interface GoalParameterOverrides {
+    initialCapital?: number | null;
+    monthlyIncome?: number | null;
+    monthlyExpenses?: number | null;
+    annualReturnRate?: number | null;
+}
+
+export interface GoalSimulationRequestDto {
+    targetAmount: number;
+    initialCapital?: number | null;
+    monthlyIncome?: number | null;
+    monthlyExpenses?: number | null;
+    annualReturnRate?: number | null;
+}
+
+export interface GoalSimulationParametersDto {
+    initialCapital: number;
+    monthlyIncome: number;
+    monthlyExpenses: number;
+    annualReturnRate: number;
+    isCapitalFromAnalytics: boolean;
+    isIncomeFromAnalytics: boolean;
+    isExpensesFromAnalytics: boolean;
+}
+
+export interface GoalPercentilePathsDto {
+    p25: number[];
+    p50: number[];
+    p75: number[];
+}
+
+export interface GoalSimulationResultDto {
+    probability: number;
+    dataQualityScore: number;
+    medianMonths: number;
+    p25Months: number;
+    p75Months: number;
+    percentilePaths: GoalPercentilePathsDto;
+    resolvedParameters: GoalSimulationParametersDto;
+    isAchievable: boolean;
+    monthLabels: string[];
+}
