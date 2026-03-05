@@ -206,11 +206,11 @@ public sealed class GoalSimulationService(
         var rawProbability = successDays.Length / (double)totalSimulations;
         var probability = Math.Clamp(rawProbability, 0d, 1d);
 
-        var medianHitDay = GetQuantileValue(successDays, GoalSimulationDefaults.QuantileP50);
-        var p25HitDay = GetQuantileValue(successDays, GoalSimulationDefaults.QuantileP25);
-        var p75HitDay = GetQuantileValue(successDays, GoalSimulationDefaults.QuantileP75);
-
         var fullPercentilePaths = ComputePercentilePaths(monthlyPaths, totalSimulations, horizonMonths);
+        var medianHitMonth = FindHitMonth(fullPercentilePaths.P50, targetAmount);
+        var p25HitMonth = FindHitMonth(fullPercentilePaths.P25, targetAmount);
+        var p75HitMonth = FindHitMonth(fullPercentilePaths.P75, targetAmount);
+
         var displayMonths = ResolveDisplayMonths(fullPercentilePaths, targetAmount, horizonMonths);
         displayMonths = Math.Clamp(displayMonths, 1, horizonMonths);
 
@@ -220,9 +220,9 @@ public sealed class GoalSimulationService(
         return new GoalSimulationResultDto(
             probability,
             dataQualityScore,
-            DayToMonth(medianHitDay),
-            DayToMonth(p25HitDay),
-            DayToMonth(p75HitDay),
+            medianHitMonth,
+            p25HitMonth,
+            p75HitMonth,
             percentilePaths,
             resolvedParams,
             true,
@@ -760,17 +760,6 @@ public sealed class GoalSimulationService(
         var index = (int)Math.Floor((sortedValues.Length - 1) * percentile);
         index = Math.Clamp(index, 0, sortedValues.Length - 1);
         return sortedValues[index];
-    }
-
-    private static int DayToMonth(int days)
-    {
-        if (days < 0)
-            return -1;
-
-        if (days == 0)
-            return 0;
-
-        return Math.Max(1, (int)Math.Ceiling(days / (double)GoalSimulationDefaults.AverageDaysInMonth));
     }
 
     private static GoalSimulationResultDto BuildUnachievableResult(

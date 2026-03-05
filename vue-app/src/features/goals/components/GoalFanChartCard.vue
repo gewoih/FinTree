@@ -98,7 +98,7 @@ const chartData = computed((): ChartData<'line', number[], string> | null => {
         borderWidth: 1,
         pointRadius: 0,
         fill: false,
-        tension: 0.22,
+        tension: 0,
       },
       {
         label: '__band-upper',
@@ -108,7 +108,7 @@ const chartData = computed((): ChartData<'line', number[], string> | null => {
         borderWidth: 1,
         pointRadius: 0,
         fill: '-1',
-        tension: 0.22,
+        tension: 0,
       },
       {
         label: 'Медианный сценарий',
@@ -122,7 +122,7 @@ const chartData = computed((): ChartData<'line', number[], string> | null => {
         pointHoverBorderColor: colorWithAlpha(base, 0.35),
         pointHoverBorderWidth: 3,
         fill: false,
-        tension: 0.28,
+        tension: 0,
       },
       {
         label: 'Цель',

@@ -104,19 +104,43 @@ function areSameNumber(a: number | null | undefined, b: number | null | undefine
   return Math.abs(a - b) < 0.000001
 }
 
+function getFractionDigits(field: ParameterField): number {
+  return field.isPercent ? 1 : 0
+}
+
+function roundToDigits(value: number, digits: number): number {
+  const factor = 10 ** digits
+  return Math.round(value * factor) / factor
+}
+
+function normalizeModelValueByFieldPrecision(field: ParameterField, modelValue: number): number {
+  const displayValue = field.isPercent ? modelValue * 100 : modelValue
+  const roundedDisplayValue = roundToDigits(displayValue, getFractionDigits(field))
+  return field.isPercent ? roundedDisplayValue / 100 : roundedDisplayValue
+}
+
 function onFieldChange(field: ParameterField, value: number | null) {
-  const normalizedValue =
+  const modelValue =
     value == null
       ? null
       : field.isPercent
         ? value / 100
         : value
+  const normalizedValue =
+    modelValue == null
+      ? null
+      : normalizeModelValueByFieldPrecision(field, modelValue)
 
-  const currentOverride = overrides[field.key] ?? null
+  const currentOverrideRaw = overrides[field.key] ?? null
+  const currentOverride =
+    currentOverrideRaw == null
+      ? null
+      : normalizeModelValueByFieldPrecision(field, currentOverrideRaw)
   if (areSameNumber(currentOverride, normalizedValue))
     return
 
-  if (currentOverride == null && normalizedValue != null && areSameNumber(normalizedValue, getResolvedValue(field.key)))
+  const normalizedResolvedValue = normalizeModelValueByFieldPrecision(field, getResolvedValue(field.key))
+  if (currentOverrideRaw == null && normalizedValue != null && areSameNumber(normalizedValue, normalizedResolvedValue))
     return
 
   overrides[field.key] = normalizedValue

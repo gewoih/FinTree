@@ -136,7 +136,7 @@ const targetAmountLabel = computed(() =>
 
 const dataQuality = computed(() => {
   const score = result.value?.dataQualityScore
-  if (!Number.isFinite(score))
+  if (typeof score !== 'number' || !Number.isFinite(score))
     return null
 
   if (score >= 0.95) {
@@ -165,12 +165,34 @@ const dataQuality = computed(() => {
   }
 })
 
+function monthOrderValue(monthsFromNow: number): number {
+  return monthsFromNow < 0 ? Number.POSITIVE_INFINITY : monthsFromNow
+}
+
+const achievementRangeText = computed(() => {
+  const simulationResult = result.value
+  if (!simulationResult)
+    return '—'
+
+  const firstMonth = simulationResult.p25Months
+  const secondMonth = simulationResult.p75Months
+  const isFirstEarlier = monthOrderValue(firstMonth) <= monthOrderValue(secondMonth)
+  const earlierMonth = isFirstEarlier ? firstMonth : secondMonth
+  const laterMonth = isFirstEarlier ? secondMonth : firstMonth
+
+  return `${formatDate(earlierMonth)} — ${formatDate(laterMonth)}`
+})
+
 function formatDate(monthsFromNow: number): string {
   if (monthsFromNow < 0)
     return '—'
 
   if (monthsFromNow === 0)
     return 'сейчас'
+
+  const monthLabel = result.value?.monthLabels?.[monthsFromNow]
+  if (monthLabel)
+    return monthLabel
 
   const date = new Date()
   date.setMonth(date.getMonth() + monthsFromNow)
@@ -274,10 +296,10 @@ function formatDate(monthsFromNow: number): string {
 
       <div class="kpi kpi--secondary">
         <div class="kpi__value">
-          {{ formatDate(result.p25Months) }} — {{ formatDate(result.p75Months) }}
+          {{ achievementRangeText }}
         </div>
         <div class="kpi__label">
-          диапазон P25–P75
+          диапазон P25–P75 (по хронологии)
         </div>
       </div>
     </div>
