@@ -30,7 +30,10 @@ import type {
     UpsertRetrospectivePayload,
     GoalSimulationRequestDto,
     GoalSimulationResultDto,
-    GoalSimulationParametersDto
+    GoalSimulationParametersDto,
+    FreedomCalculatorDefaultsDto,
+    FreedomCalculatorRequestDto,
+    FreedomCalculatorResultDto
 } from '../types.ts';
 
 type AuthRedirectConfig = AxiosRequestConfig & {
@@ -459,6 +462,16 @@ export const apiService = {
 
     async getGoalSimulationDefaults(): Promise<GoalSimulationParametersDto> {
         const response = await apiClient.get<GoalSimulationParametersDto>('/goals/simulation-defaults');
+        return response.data;
+    },
+
+    async getFreedomCalculatorDefaults(): Promise<FreedomCalculatorDefaultsDto> {
+        const response = await apiClient.get<FreedomCalculatorDefaultsDto>('/freedom-calculator/defaults');
+        return response.data;
+    },
+
+    async calculateFreedom(request: FreedomCalculatorRequestDto): Promise<FreedomCalculatorResultDto> {
+        const response = await apiClient.post<FreedomCalculatorResultDto>('/freedom-calculator/calculate', request);
         return response.data;
     },
 

@@ -509,3 +509,23 @@ export interface GoalSimulationResultDto {
     isAchievable: boolean;
     monthLabels: string[];
 }
+
+export interface FreedomCalculatorDefaultsDto {
+    capital: number;
+    monthlyExpenses: number;
+}
+
+export interface FreedomCalculatorRequestDto {
+    capital: number;
+    monthlyExpenses: number;
+    swrPercent: number;
+    inflationRatePercent: number;
+    inflationEnabled: boolean;
+}
+
+export interface FreedomCalculatorResultDto {
+    freeDaysPerYear: number;
+    percentToFi: number;
+    annualPassiveIncome: number;
+    annualEffectiveExpenses: number;
+}

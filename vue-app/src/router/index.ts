@@ -81,6 +81,12 @@ export const router = createRouter({
       meta: { title: 'Цели', requiresAuth: true },
     },
     {
+      path: '/freedom',
+      name: 'freedom',
+      component: () => import('../pages/FreedomCalculatorPage.vue'),
+      meta: { title: 'Калькулятор свободы', requiresAuth: true },
+    },
+    {
       path: '/categories',
       name: 'categories',
       component: () => import('../pages/CategoriesPage.vue'),

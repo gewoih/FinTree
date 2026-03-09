@@ -12,8 +12,10 @@ const primaryTabs = [
 ]
 
 const moreMenuItems = [
+  { label: 'Цели', icon: 'pi-bullseye', to: '/goals' },
+  { label: 'Свобода', icon: 'pi-sun', to: '/freedom' },
+  { label: 'Рефлексии', icon: 'pi-book', to: '/reflections' },
   { label: 'Профиль', icon: 'pi-user', to: '/profile' },
-  { label: 'Рефлексии', icon: 'pi-book', to: '/reflections' }
 ]
 
 const moreMenuRef = ref<HTMLElement | null>(null)
