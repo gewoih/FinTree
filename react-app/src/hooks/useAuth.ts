@@ -1,17 +1,19 @@
 import { useAuthStore } from '@/stores/authStore';
+import { useShallow } from 'zustand/react/shallow';
 
 export function useAuth() {
-  const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
-  const userId = useAuthStore((state) => state.userId);
-  const email = useAuthStore((state) => state.email);
-  const setAuthenticated = useAuthStore((state) => state.setAuthenticated);
-  const clearAuth = useAuthStore((state) => state.clearAuth);
-
-  return {
-    isAuthenticated,
-    userId,
-    email,
-    setAuthenticated,
-    clearAuth,
-  };
+  return useAuthStore(
+    useShallow((state) => ({
+      isAuthenticated: state.isAuthenticated,
+      isLoading: state.isLoading,
+      error: state.error,
+      isSessionChecked: state.isSessionChecked,
+      login: state.login,
+      register: state.register,
+      loginWithTelegram: state.loginWithTelegram,
+      logout: state.logout,
+      ensureSession: state.ensureSession,
+      clearError: state.clearError,
+    }))
+  );
 }

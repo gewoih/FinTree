@@ -1,50 +1,61 @@
 import { create } from 'zustand';
-import { persist } from 'zustand/middleware';
 
-type Theme = 'dark' | 'light';
+const STORAGE_KEY = 'ft-theme';
+
+function applyThemeToDOM(theme: 'dark' | 'light') {
+  if (theme === 'light') {
+    document.documentElement.classList.add('light-mode');
+  } else {
+    document.documentElement.classList.remove('light-mode');
+  }
+}
+
+function readThemeFromStorage(): 'dark' | 'light' {
+  try {
+    const stored = localStorage.getItem(STORAGE_KEY);
+    if (stored === 'light' || stored === 'dark') {
+      return stored;
+    }
+  } catch {
+    // Ignore storage errors (private mode / disabled storage).
+  }
+
+  return 'dark';
+}
 
 interface UiState {
-  theme: Theme;
-  setTheme: (theme: Theme) => void;
-  toggleTheme: () => void;
-  sidebarCollapsed: boolean;
-  setSidebarCollapsed: (collapsed: boolean) => void;
+  theme: 'dark' | 'light';
 }
 
-export const useUiStore = create<UiState>()(
-  persist(
-    (set, get) => ({
-      theme: 'dark',
-      setTheme: (theme) => {
-        set({ theme });
-        applyTheme(theme);
-      },
-      toggleTheme: () => {
-        const next: Theme = get().theme === 'dark' ? 'light' : 'dark';
-        set({ theme: next });
-        applyTheme(next);
-      },
-      sidebarCollapsed: false,
-      setSidebarCollapsed: (collapsed) => set({ sidebarCollapsed: collapsed }),
-    }),
-    { name: 'ft-theme', partialize: (s) => ({ theme: s.theme }) }
-  )
-);
-
-function applyTheme(theme: Theme) {
-  const html = document.documentElement;
-
-  if (theme === 'light') {
-    html.classList.add('light-mode');
-  } else {
-    html.classList.remove('light-mode');
-  }
+interface UiActions {
+  toggleTheme(): void;
+  setTheme(theme: 'dark' | 'light'): void;
+  initTheme(): void;
 }
 
-const savedTheme = (
-  JSON.parse(localStorage.getItem('ft-theme') ?? '{}') as {
-    state?: { theme?: Theme };
-  }
-).state?.theme ?? 'dark';
+export const useUiStore = create<UiState & UiActions>((set, get) => ({
+  theme: 'dark',
 
-applyTheme(savedTheme);
+  initTheme() {
+    const theme = readThemeFromStorage();
+    set({ theme });
+    applyThemeToDOM(theme);
+  },
+
+  toggleTheme() {
+    const next = get().theme === 'dark' ? 'light' : 'dark';
+    get().setTheme(next);
+  },
+
+  setTheme(theme) {
+    set({ theme });
+
+    try {
+      localStorage.setItem(STORAGE_KEY, theme);
+    } catch {
+      // Ignore storage errors (private mode / disabled storage).
+    }
+
+    applyThemeToDOM(theme);
+  },
+}));

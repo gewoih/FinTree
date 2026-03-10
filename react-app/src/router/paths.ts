@@ -2,25 +2,21 @@ export const PATHS = {
   HOME: '/',
   LOGIN: '/login',
   REGISTER: '/register',
-
-  ACCOUNTS: '/accounts',
-  EXPENSES: '/expenses',
-  CATEGORIES: '/categories',
-
-  ANALYTICS: '/analytics',
-  GOALS: '/goals',
-  FREEDOM: '/freedom',
-  INVESTMENTS: '/investments',
-  REFLECTIONS: '/reflections',
-  RETRO_DETAIL: '/reflections/:month',
-
-  PROFILE: '/profile',
-  ADMIN: '/admin',
-
-  TERMS: '/terms',
   PRIVACY: '/privacy',
+  TERMS: '/terms',
   BLOG: '/blog',
   CAREERS: '/careers',
+  ANALYTICS: '/analytics',
+  ACCOUNTS: '/accounts',
+  TRANSACTIONS: '/transactions',
+  CATEGORIES: '/categories',
+  INVESTMENTS: '/investments',
+  REFLECTIONS: '/reflections',
+  RETRO_DETAIL: '/reflections/$month',
+  FREEDOM: '/freedom',
+  GOALS: '/goals',
+  PROFILE: '/profile',
+  ADMIN: '/admin',
 } as const;
 
-export type AppPath = (typeof PATHS)[keyof typeof PATHS];
+export type PathValues = (typeof PATHS)[keyof typeof PATHS];
