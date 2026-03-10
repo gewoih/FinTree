@@ -16,7 +16,7 @@ export interface ViewportState {
 function getViewportState(width: number): ViewportState {
   return {
     isMobile: width < BREAKPOINTS.mobile,
-    isTablet: width < BREAKPOINTS.tablet,
+    isTablet: width >= BREAKPOINTS.mobile && width < BREAKPOINTS.desktop,
     isDesktop: width >= BREAKPOINTS.desktop,
     width,
   };

@@ -6,6 +6,9 @@
 @import "tailwindcss";
 @import "tw-animate-css";
 
+/* Dark mode: active when NOT in .light-mode — dark is the default theme */
+@custom-variant dark (&:not(.light-mode, .light-mode *));
+
 @theme inline {
   --font-sans: var(--ft-font-base);
 

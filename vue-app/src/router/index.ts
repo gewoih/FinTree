@@ -95,7 +95,7 @@ export const router = createRouter({
     {
       path: '/transactions',
       name: 'transactions',
-      component: () => import('../pages/ExpensesPage.vue'),
+      component: () => import('../pages/TransactionsPage.vue'),
       meta: { title: 'Транзакции', requiresAuth: true },
     },
     {

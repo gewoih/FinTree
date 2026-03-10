@@ -48,7 +48,7 @@ export function FormField({
       return child;
     }
 
-    const childElement = child as ReactElement<AriaAttributes & { id?: string }>;
+    const childElement = child as ReactElement<AriaAttributes & { id?: string; required?: boolean }>;
 
     return cloneElement(childElement, {
       id: childElement.props.id ?? fieldId,

@@ -35,12 +35,21 @@ export function KPICard({
             : trend.direction === 'down'
               ? '↓'
               : '—',
-        colorClass:
+        style:
           trend.direction === 'up'
-            ? 'bg-green-500/10 text-green-500'
+            ? {
+                backgroundColor: 'color-mix(in srgb, var(--ft-success-500) 10%, transparent)',
+                color: 'var(--ft-success-500)',
+              }
             : trend.direction === 'down'
-              ? 'bg-red-500/10 text-red-500'
-              : 'bg-muted/30 text-muted-foreground',
+              ? {
+                  backgroundColor: 'color-mix(in srgb, var(--ft-danger-500) 10%, transparent)',
+                  color: 'var(--ft-danger-500)',
+                }
+              : {
+                  backgroundColor: 'color-mix(in srgb, var(--ft-bg-elevated) 30%, transparent)',
+                  color: 'var(--ft-text-secondary)',
+                },
       }
     : null;
 
@@ -48,9 +57,9 @@ export function KPICard({
     <div
       className={cn(
         'flex flex-col gap-3 rounded-lg border border-border bg-card p-4',
-        variant === 'success' && 'border-l-4 border-l-green-500',
-        variant === 'warning' && 'border-l-4 border-l-yellow-500',
-        variant === 'danger' && 'border-l-4 border-l-red-500',
+        variant === 'success' && 'border-l-4 border-l-[var(--ft-success-500)]',
+        variant === 'warning' && 'border-l-4 border-l-[var(--ft-warning-500)]',
+        variant === 'danger' && 'border-l-4 border-l-[var(--ft-danger-500)]',
         className
       )}
     >
@@ -79,10 +88,8 @@ export function KPICard({
           {trend && trendConfig && (
             <div className="flex items-center gap-2 text-sm">
               <span
-                className={cn(
-                  'inline-flex items-center gap-1 rounded-md px-2 py-0.5 font-semibold',
-                  trendConfig.colorClass
-                )}
+                className="inline-flex items-center gap-1 rounded-md px-2 py-0.5 font-semibold"
+                style={trendConfig.style}
               >
                 <span aria-hidden="true">{trendConfig.icon}</span>
                 <span>{Math.abs(trend.value)}%</span>

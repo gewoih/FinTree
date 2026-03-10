@@ -8,6 +8,7 @@ import {
 } from '@tanstack/react-router';
 import AppShell from '../components/layout/AppShell';
 import PublicPageLayout from '../components/layout/PublicPageLayout';
+import { ErrorBoundary } from '../components/common/ErrorBoundary';
 import { useAuthStore } from '../stores/authStore';
 import { useUiStore } from '../stores/uiStore';
 import { useUserStore } from '../stores/userStore';
@@ -23,7 +24,7 @@ const CareersPage = React.lazy(() => import('../pages/CareersPage'));
 
 const AnalyticsPage = React.lazy(() => import('../pages/AnalyticsPage'));
 const AccountsPage = React.lazy(() => import('../pages/AccountsPage'));
-const TransactionsPage = React.lazy(() => import('../pages/TransactionsPage'));
+const TransactionsPage = React.lazy(() => import('../pages/TransactionsPage.tsx'));
 const CategoriesPage = React.lazy(() => import('../pages/CategoriesPage'));
 const InvestmentsPage = React.lazy(() => import('../pages/InvestmentsPage'));
 const ReflectionsPage = React.lazy(() => import('../pages/ReflectionsPage'));
@@ -48,13 +49,26 @@ const pageLoaderFallback = React.createElement(
   })
 );
 
+const pageErrorFallback = React.createElement(
+  'div',
+  {
+    className: 'flex min-h-[60vh] flex-col items-center justify-center gap-3 p-8 text-center',
+    role: 'alert',
+  },
+  React.createElement('p', { className: 'text-base font-medium text-foreground' }, 'Что-то пошло не так'),
+  React.createElement('p', { className: 'text-sm text-muted-foreground' }, 'Обновите страницу или попробуйте позже')
+);
+
 function withSuspense(Component: React.LazyExoticComponent<React.ComponentType>) {
   return function SuspenseWrapper() {
-    return React.createElement(
-      Suspense,
-      { fallback: pageLoaderFallback },
-      React.createElement(Component)
-    );
+    return React.createElement(ErrorBoundary, {
+      fallback: pageErrorFallback,
+      children: React.createElement(
+        Suspense,
+        { fallback: pageLoaderFallback },
+        React.createElement(Component)
+      ),
+    });
   };
 }
 
