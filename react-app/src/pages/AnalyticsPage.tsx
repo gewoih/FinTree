@@ -1,5 +1,5 @@
 import { useState, useMemo, useCallback } from 'react';
-import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { useQuery } from '@tanstack/react-query';
 import { useNavigate } from '@tanstack/react-router';
 import { ChevronLeft, ChevronRight, X } from 'lucide-react';
 import { Popover } from 'radix-ui';
@@ -12,7 +12,8 @@ import { apiClient } from '@/api';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { ErrorBoundary } from '@/components/common/ErrorBoundary';
-import { SummaryStrip, type SummaryMetric } from '@/components/analytics/SummaryStrip';
+import { PageHeader } from '@/components/common/PageHeader';
+import { SummaryStrip } from '@/components/analytics/SummaryStrip';
 import { GlobalMonthScoreCard } from '@/components/analytics/GlobalMonthScoreCard';
 import { HealthScoreCard } from '@/components/analytics/HealthScoreCard';
 import { SpendingPieCard } from '@/components/analytics/SpendingPieCard';
@@ -22,8 +23,13 @@ import { CategoryDeltaCard } from '@/components/analytics/CategoryDeltaCard';
 import { ForecastCard } from '@/components/analytics/ForecastCard';
 import { EvolutionTab } from '@/components/analytics/EvolutionTab';
 import { OnboardingStepper, type OnboardingStep } from '@/components/analytics/OnboardingStepper';
-import { formatCurrency, formatPercent, formatYearMonth } from '@/utils/format';
-import type { FinancialHealthSummaryDto } from '@/types';
+import {
+  buildGlobalScoreModel,
+  buildHealthMetricCards,
+  buildSummaryMetrics,
+  type GlobalScoreModel,
+} from '@/components/analytics/models';
+import { formatYearMonth } from '@/utils/format';
 import { cn } from '@/utils/cn';
 
 // ─── Types ───────────────────────────────────────────────────────────────────
@@ -32,8 +38,6 @@ type ActiveTab = 'now' | 'evolution';
 type CategoryDatasetMode = 'expenses' | 'income';
 type CategoryScope = 'all' | 'mandatory' | 'discretionary';
 type ExpenseGranularity = 'days' | 'weeks' | 'months';
-
-// ─── Helpers ─────────────────────────────────────────────────────────────────
 
 function startOfMonth(date: Date): Date {
   return new Date(date.getFullYear(), date.getMonth(), 1);
@@ -47,49 +51,13 @@ function isSameMonth(a: Date, b: Date): boolean {
   return a.getFullYear() === b.getFullYear() && a.getMonth() === b.getMonth();
 }
 
-function buildSummaryMetrics(health: FinancialHealthSummaryDto): SummaryMetric[] {
-  const savingsAccent =
-    health.savingsRate === null ? 'neutral'
-    : health.savingsRate > 15 ? 'good'
-    : health.savingsRate < 0 ? 'poor'
-    : 'neutral';
-
-  const liquidAccent =
-    health.liquidMonthsStatus === 'good' ? 'good'
-    : health.liquidMonthsStatus === 'poor' ? 'poor'
-    : 'neutral';
-
-  const stabilityAccent =
-    health.stabilityStatus === 'good' ? 'good'
-    : health.stabilityStatus === 'poor' ? 'poor'
-    : 'neutral';
-
-  return [
-    {
-      key: 'savings_rate',
-      label: 'Норма сбережений',
-      value: health.savingsRate !== null ? formatPercent(health.savingsRate) : '—',
-      icon: 'PiggyBank',
-      accent: savingsAccent,
-      tooltip: 'Доля дохода, которая остаётся после всех расходов за месяц.',
-    },
-    {
-      key: 'liquid_months',
-      label: 'Финансовая подушка',
-      value: health.liquidMonths !== null ? `${health.liquidMonths.toFixed(1)} мес` : '—',
-      icon: 'Shield',
-      accent: liquidAccent,
-      tooltip: 'На сколько месяцев хватит ликвидных активов при текущих расходах.',
-    },
-    {
-      key: 'stability',
-      label: 'Стабильность расходов',
-      value: health.stabilityScore !== null ? `${health.stabilityScore} / 100` : '—',
-      icon: 'Activity',
-      accent: stabilityAccent,
-      tooltip: 'Насколько равномерны расходы по дням. 100 = идеальная стабильность.',
-    },
-  ];
+function formatMonthHeading(date: Date): string {
+  const label = new Intl.DateTimeFormat('ru-RU', {
+    month: 'long',
+    year: 'numeric',
+  }).format(date);
+  const cleaned = label.replace(/\s*г\.$/i, '');
+  return cleaned.charAt(0).toUpperCase() + cleaned.slice(1);
 }
 
 // ─── Month Picker ─────────────────────────────────────────────────────────────
@@ -161,7 +129,6 @@ function MonthPicker({ value, onChange }: MonthPickerProps) {
 
 export default function AnalyticsPage() {
   const { currentUser } = useUserStore();
-  const queryClient = useQueryClient();
   const navigate = useNavigate();
 
   const [selectedDate, setSelectedDate] = useState<Date>(() => startOfMonth(new Date()));
@@ -224,11 +191,8 @@ export default function AnalyticsPage() {
   const handleMonthSelect = useCallback(
     (date: Date) => {
       setSelectedDate(date);
-      queryClient.invalidateQueries({
-        queryKey: ['analytics-dashboard', date.getFullYear(), date.getMonth() + 1],
-      });
     },
-    [queryClient],
+    [],
   );
 
   const handleSkipOnboarding = useCallback(async () => {
@@ -285,13 +249,33 @@ export default function AnalyticsPage() {
   ]);
 
   // ── Computed ──
-  const summaryMetrics = useMemo<SummaryMetric[]>(
-    () => (dashboardQuery.data ? buildSummaryMetrics(dashboardQuery.data.health) : []),
+  const summaryMetrics = useMemo(
+    () => (dashboardQuery.data ? buildSummaryMetrics(dashboardQuery.data.health, currency) : []),
+    [dashboardQuery.data, currency],
+  );
+  const globalScoreModel = useMemo<GlobalScoreModel>(
+    () =>
+      dashboardQuery.data
+        ? buildGlobalScoreModel(dashboardQuery.data.health)
+        : {
+            score: null,
+            scoreLabel: '—',
+            description: 'Добавьте больше операций за месяц, чтобы оценка стала точнее.',
+            accent: 'neutral',
+            deltaLabel: null,
+            deltaTone: null,
+          },
     [dashboardQuery.data],
+  );
+  const healthCards = useMemo(
+    () =>
+      dashboardQuery.data
+        ? buildHealthMetricCards(dashboardQuery.data.health, dashboardQuery.data.readiness, currency)
+        : [],
+    [dashboardQuery.data, currency],
   );
 
   const data = dashboardQuery.data;
-  const health = data?.health ?? null;
   const dashboardError = dashboardQuery.error
     ? ((dashboardQuery.error as Error).message ?? 'Ошибка загрузки')
     : null;
@@ -319,66 +303,68 @@ export default function AnalyticsPage() {
     );
   }
 
-  const monthLabel = new Intl.DateTimeFormat('ru-RU', {
-    month: 'long',
-    year: 'numeric',
-  }).format(selectedDate);
+  const monthLabel = formatMonthHeading(selectedDate);
 
   const retroPath = `/reflections/${selectedYear}-${String(selectedMonth).padStart(2, '0')}`;
 
   return (
     <ErrorBoundary>
-      <div className="flex flex-col gap-6 p-4 sm:p-6">
+      <div className="flex flex-col gap-8 p-4 sm:p-6 lg:gap-10 lg:px-8">
 
-        {/* Header */}
         <div className="flex flex-col gap-4">
-          <div className="flex items-center justify-between">
-            <h1 className="text-2xl font-bold text-foreground">Аналитика</h1>
-
-            <div className="flex items-center gap-1">
-              <Button
-                variant="ghost"
-                size="icon-sm"
-                onClick={handlePrevMonth}
-                aria-label="Предыдущий месяц"
-                className="min-h-[44px] min-w-[44px]"
+          <PageHeader
+            title="Главная"
+            actions={(
+              <div
+                className="flex items-center rounded-full border border-[var(--ft-border-subtle)] px-1.5 py-1 shadow-[var(--ft-shadow-sm)]"
+                style={{
+                  background:
+                    'linear-gradient(180deg, color-mix(in srgb, var(--ft-surface-raised) 92%, var(--ft-bg-base)) 0%, var(--ft-surface-base) 100%)',
+                }}
               >
-                <ChevronLeft className="size-4" />
-              </Button>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={handlePrevMonth}
+                  aria-label="Предыдущий месяц"
+                  className="rounded-full text-[var(--ft-text-secondary)]"
+                >
+                  <ChevronLeft className="size-5" />
+                </Button>
 
-              <Popover.Root>
-                <Popover.Trigger asChild>
-                  <button
-                    className="px-3 py-1.5 rounded-md text-sm font-medium hover:bg-muted transition-colors min-h-[44px] capitalize"
-                    aria-label="Выбрать месяц"
-                  >
-                    {monthLabel}
-                  </button>
-                </Popover.Trigger>
-                <Popover.Portal>
-                  <Popover.Content
-                    className="z-50 rounded-lg border border-border bg-popover shadow-lg outline-none"
-                    sideOffset={4}
-                  >
-                    <MonthPicker value={selectedDate} onChange={handleMonthSelect} />
-                  </Popover.Content>
-                </Popover.Portal>
-              </Popover.Root>
+                <Popover.Root>
+                  <Popover.Trigger asChild>
+                    <button
+                      className="min-h-[44px] min-w-[168px] rounded-full px-5 text-center text-lg font-semibold capitalize text-foreground transition-colors hover:bg-[color-mix(in_srgb,var(--ft-text-primary)_4%,transparent)]"
+                      aria-label="Выбрать месяц"
+                    >
+                      {monthLabel}
+                    </button>
+                  </Popover.Trigger>
+                  <Popover.Portal>
+                    <Popover.Content
+                      className="z-50 rounded-2xl border border-border bg-popover shadow-lg outline-none"
+                      sideOffset={8}
+                    >
+                      <MonthPicker value={selectedDate} onChange={handleMonthSelect} />
+                    </Popover.Content>
+                  </Popover.Portal>
+                </Popover.Root>
 
-              <Button
-                variant="ghost"
-                size="icon-sm"
-                onClick={handleNextMonth}
-                disabled={isCurrentMonth}
-                aria-label="Следующий месяц"
-                className="min-h-[44px] min-w-[44px]"
-              >
-                <ChevronRight className="size-4" />
-              </Button>
-            </div>
-          </div>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={handleNextMonth}
+                  disabled={isCurrentMonth}
+                  aria-label="Следующий месяц"
+                  className="rounded-full text-[var(--ft-text-secondary)]"
+                >
+                  <ChevronRight className="size-5" />
+                </Button>
+              </div>
+            )}
+          />
 
-          {/* Retrospective banner */}
           {isPreviousMonth && !retrospectiveDismissed && (
             <div className="flex items-center justify-between gap-3 rounded-lg border border-border bg-muted/50 px-4 py-3 text-sm">
               <span className="text-foreground">
@@ -402,8 +388,7 @@ export default function AnalyticsPage() {
             </div>
           )}
 
-          {/* Tabs */}
-          <div role="tablist" className="flex gap-1 border-b border-border">
+          <div role="tablist" className="flex gap-1 border-b border-[var(--ft-border-subtle)]">
             {(
               [
                 { id: 'now' as ActiveTab, label: 'Сейчас' },
@@ -416,10 +401,10 @@ export default function AnalyticsPage() {
                 aria-selected={activeTab === tab.id}
                 onClick={() => setActiveTab(tab.id)}
                 className={cn(
-                  'px-4 py-2.5 text-sm font-medium transition-colors border-b-2 -mb-px min-h-[44px]',
+                  'min-h-[44px] px-5 py-3 text-base font-semibold transition-colors border-b-2 -mb-px',
                   activeTab === tab.id
-                    ? 'border-primary text-foreground'
-                    : 'border-transparent text-muted-foreground hover:text-foreground',
+                    ? 'border-[var(--ft-primary-400)] text-[var(--ft-primary-400)]'
+                    : 'border-transparent text-[var(--ft-text-tertiary)] hover:text-foreground',
                 )}
               >
                 {tab.label}
@@ -428,7 +413,6 @@ export default function AnalyticsPage() {
           </div>
         </div>
 
-        {/* Tab: Сейчас */}
         <div hidden={activeTab !== 'now'} className="flex flex-col gap-6">
           <SummaryStrip
             loading={dashboardQuery.isLoading}
@@ -440,83 +424,29 @@ export default function AnalyticsPage() {
           <GlobalMonthScoreCard
             loading={dashboardQuery.isLoading}
             error={dashboardError}
-            score={health?.totalMonthScore ?? null}
-            scoreStatus={health?.stabilityStatus ?? null}
+            model={globalScoreModel}
             onRetry={() => dashboardQuery.refetch()}
           >
-            {health && (
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mt-4">
-                <HealthScoreCard
-                  title="Доходы"
-                  icon="Banknote"
-                  mainValue={health.monthIncome !== null ? formatCurrency(health.monthIncome, currency) : '—'}
-                  mainLabel="Доход за месяц"
-                  accent="income"
-                  tooltip="Сумма всех доходных транзакций за месяц."
-                  secondaryValue={
-                    health.incomeMonthOverMonthChangePercent !== null
-                      ? formatPercent(Math.abs(health.incomeMonthOverMonthChangePercent))
-                      : undefined
-                  }
-                  secondaryLabel={
-                    health.incomeMonthOverMonthChangePercent !== null
-                      ? health.incomeMonthOverMonthChangePercent >= 0
-                        ? 'рост vs прошлый месяц'
-                        : 'снижение vs прошлый месяц'
-                      : undefined
-                  }
-                />
-                <HealthScoreCard
-                  title="Расходы"
-                  icon="TrendingDown"
-                  mainValue={health.monthTotal !== null ? formatCurrency(health.monthTotal, currency) : '—'}
-                  mainLabel="Расходы за месяц"
-                  accent={health.savingsRate !== null && health.savingsRate >= 0 ? 'good' : 'expense'}
-                  tooltip="Сумма всех расходных транзакций за месяц."
-                  secondaryValue={
-                    health.monthOverMonthChangePercent !== null
-                      ? formatPercent(Math.abs(health.monthOverMonthChangePercent))
-                      : undefined
-                  }
-                  secondaryLabel={
-                    health.monthOverMonthChangePercent !== null
-                      ? health.monthOverMonthChangePercent >= 0
-                        ? 'рост vs прошлый месяц'
-                        : 'снижение vs прошлый месяц'
-                      : undefined
-                  }
-                />
-                <HealthScoreCard
-                  title="Сбережения"
-                  icon="PiggyBank"
-                  mainValue={health.savingsRate !== null ? formatPercent(health.savingsRate) : '—'}
-                  mainLabel="Норма сбережений"
-                  accent={
-                    health.savingsRate !== null
-                      ? health.savingsRate > 15 ? 'good' : health.savingsRate < 0 ? 'poor' : 'neutral'
-                      : 'neutral'
-                  }
-                  tooltip="Доля дохода, которая остаётся после расходов."
-                />
-                <HealthScoreCard
-                  title="Подушка"
-                  icon="Shield"
-                  mainValue={health.liquidMonths !== null ? `${health.liquidMonths.toFixed(1)}` : '—'}
-                  mainLabel="Месяцев запаса"
-                  accent={
-                    health.liquidMonthsStatus === 'good' ? 'good'
-                    : health.liquidMonthsStatus === 'poor' ? 'poor'
-                    : 'neutral'
-                  }
-                  tooltip="На сколько месяцев хватит ликвидных активов."
-                  secondaryValue={health.liquidAssets !== null ? formatCurrency(health.liquidAssets, currency) : undefined}
-                  secondaryLabel="ликвидные активы"
-                />
-              </div>
+            {healthCards.length > 0 && (
+              <>
+                {healthCards.map((card) => (
+                  <HealthScoreCard
+                    key={card.key}
+                    title={card.title}
+                    icon={card.icon}
+                    value={card.value}
+                    supportingValue={card.supportingValue}
+                    supportingLabel={card.supportingLabel}
+                    accent={card.accent}
+                    tooltip={card.tooltip}
+                    zoneBar={card.zoneBar}
+                  />
+                ))}
+              </>
             )}
           </GlobalMonthScoreCard>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+          <div className="grid grid-cols-1 gap-6 xl:grid-cols-2">
             <SpendingPieCard
               loading={dashboardQuery.isLoading}
               error={dashboardError}
@@ -545,16 +475,16 @@ export default function AnalyticsPage() {
               currency={currency}
               granularity={granularity}
               granularityOptions={[
-                { label: 'По дням', value: 'days' },
-                { label: 'По неделям', value: 'weeks' },
-                { label: 'По месяцам', value: 'months' },
+                { label: 'День', value: 'days' },
+                { label: 'Неделя', value: 'weeks' },
+                { label: 'Месяц', value: 'months' },
               ]}
               onGranularityChange={setGranularity}
               onRetry={() => dashboardQuery.refetch()}
             />
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+          <div className="grid grid-cols-1 gap-6 xl:grid-cols-2">
             <PeakDaysCard
               loading={dashboardQuery.isLoading}
               error={dashboardError}
@@ -589,7 +519,6 @@ export default function AnalyticsPage() {
           />
         </div>
 
-        {/* Tab: Динамика */}
         <div hidden={activeTab !== 'evolution'}>
           <EvolutionTab isActive={activeTab === 'evolution'} />
         </div>

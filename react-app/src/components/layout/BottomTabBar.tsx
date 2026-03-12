@@ -38,8 +38,9 @@ export default function BottomTabBar() {
   const routerState = useRouterState();
   const currentPath = routerState.location.pathname;
 
-  const [isMoreOpen, setIsMoreOpen] = useState(false);
+  const [moreMenuPath, setMoreMenuPath] = useState<string | null>(null);
   const moreRef = useRef<HTMLDivElement>(null);
+  const isMoreOpen = moreMenuPath === currentPath;
 
   const isActive = (to: string) =>
     currentPath === to || currentPath.startsWith(`${to}/`);
@@ -53,17 +54,13 @@ export default function BottomTabBar() {
 
     const handleOutsideClick = (event: MouseEvent) => {
       if (moreRef.current && !moreRef.current.contains(event.target as Node)) {
-        setIsMoreOpen(false);
+        setMoreMenuPath(null);
       }
     };
 
     document.addEventListener('mousedown', handleOutsideClick);
     return () => document.removeEventListener('mousedown', handleOutsideClick);
   }, [isMoreOpen]);
-
-  useEffect(() => {
-    setIsMoreOpen(false);
-  }, [currentPath]);
 
   return (
     <nav
@@ -108,7 +105,9 @@ export default function BottomTabBar() {
           aria-expanded={isMoreOpen}
           aria-haspopup="true"
           aria-controls="mobile-more-menu"
-          onClick={() => setIsMoreOpen((prev) => !prev)}
+          onClick={() =>
+            setMoreMenuPath((prev) => (prev === currentPath ? null : currentPath))
+          }
           className={cn(
             'relative flex min-h-[44px] w-full flex-1 cursor-pointer select-none flex-col items-center justify-center gap-0.5 border-0 bg-transparent text-xs font-medium transition-colors active:scale-95',
             'focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-[-2px]',
@@ -139,7 +138,7 @@ export default function BottomTabBar() {
                 key={item.to}
                 to={item.to}
                 aria-current={isActive(item.to) ? 'page' : undefined}
-                onClick={() => setIsMoreOpen(false)}
+                onClick={() => setMoreMenuPath(null)}
                 className={cn(
                   'flex min-h-[44px] items-center gap-2 rounded-md px-3 py-2 text-sm font-medium transition-colors',
                   isActive(item.to)

@@ -1,148 +1,134 @@
 import type { ReactNode } from 'react';
 import { AlertCircle, Info } from 'lucide-react';
+
 import { cn } from '@/utils/cn';
-import type { StabilityStatusCode } from '@/types';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 
-// ─── Types ────────────────────────────────────────────────────────────────────
+import type { GlobalScoreModel } from './models';
 
 interface GlobalMonthScoreCardProps {
   loading: boolean;
   error: string | null;
-  score: number | null;
-  scoreStatus: StabilityStatusCode | null;
+  model: GlobalScoreModel;
   children?: ReactNode;
   onRetry: () => void;
 }
 
-// ─── Score color helper ───────────────────────────────────────────────────────
-
-function scoreColor(score: number): string {
-  if (score < 40) return 'var(--ft-danger-500)';
-  if (score <= 70) return 'var(--ft-warning-500)';
-  return 'var(--ft-success-500)';
-}
-
-// ─── Score label ──────────────────────────────────────────────────────────────
-
-function scoreStatusLabel(status: StabilityStatusCode | null): string {
-  switch (status) {
+function scoreColor(accent: GlobalScoreModel['accent']): string {
+  switch (accent) {
+    case 'excellent':
+      return 'var(--ft-success-400)';
     case 'good':
-      return 'Отличное состояние';
+      return 'var(--ft-primary-400)';
     case 'average':
-      return 'Удовлетворительно';
+      return 'var(--ft-warning-300)';
     case 'poor':
-      return 'Требует внимания';
+      return 'var(--ft-warning-400)';
+    case 'critical':
+      return 'var(--ft-danger-400)';
     default:
-      return 'Финансовое здоровье';
+      return 'var(--ft-text-primary)';
   }
 }
 
-// ─── Loading skeleton ─────────────────────────────────────────────────────────
+function deltaColor(tone: GlobalScoreModel['deltaTone']): string {
+  switch (tone) {
+    case 'better':
+      return 'var(--ft-success-400)';
+    case 'worse':
+      return 'var(--ft-danger-400)';
+    default:
+      return 'var(--ft-text-secondary)';
+  }
+}
 
 const CHILD_SKELETON_KEYS = ['sk-a', 'sk-b', 'sk-c', 'sk-d'] as const;
 
 function ScoreLoadingSkeleton() {
   return (
     <div
-      className="flex flex-col gap-6"
+      className="overflow-hidden rounded-[28px] border border-[var(--ft-border-default)] shadow-[var(--ft-shadow-lg)]"
+      style={{
+        background:
+          'linear-gradient(180deg, color-mix(in srgb, var(--ft-surface-raised) 84%, var(--ft-bg-base)) 0%, var(--ft-surface-base) 100%)',
+      }}
       role="status"
       aria-busy="true"
       aria-label="Загрузка данных"
     >
-      {/* Score circle */}
-      <div className="flex flex-col items-center gap-3">
-        <Skeleton className="size-32 rounded-full" />
-        <Skeleton className="h-4 w-40" />
-      </div>
+      <div className="grid grid-cols-1 gap-4 px-7 py-7 lg:grid-cols-[minmax(260px,0.9fr)_minmax(0,1.6fr)]">
+        <div className="flex flex-col justify-between gap-6">
+          <div className="space-y-3">
+            <Skeleton className="h-4 w-40" />
+            <Skeleton className="h-16 w-44" />
+            <Skeleton className="h-8 w-full" />
+            <Skeleton className="h-8 w-3/4" />
+          </div>
+          <Skeleton className="h-6 w-44" />
+        </div>
 
-      {/* Children placeholders */}
-      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-        {CHILD_SKELETON_KEYS.map((key) => (
-          <Skeleton key={key} className="h-[72px] rounded-xl" />
-        ))}
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+          {CHILD_SKELETON_KEYS.map((key) => (
+            <Skeleton key={key} className="h-[210px] rounded-[24px]" />
+          ))}
+        </div>
       </div>
     </div>
   );
 }
 
-// ─── Score circle ─────────────────────────────────────────────────────────────
-
-interface ScoreCircleProps {
-  score: number;
-  status: StabilityStatusCode | null;
-}
-
-function ScoreCircle({ score, status }: ScoreCircleProps) {
-  const color = scoreColor(score);
-  const label = scoreStatusLabel(status);
-
-  // SVG ring parameters
-  const radius = 54;
-  const circumference = 2 * Math.PI * radius;
-  const dashOffset = circumference - (score / 100) * circumference;
-
+function EmptyState() {
   return (
-    <div className="flex flex-col items-center gap-2">
-      <div
-        className="relative flex items-center justify-center"
-        style={{ width: 128, height: 128 }}
-        role="img"
-        aria-label={`Финансовый score: ${score} из 100`}
-      >
-        {/* Track */}
-        <svg
-          className="absolute inset-0 -rotate-90"
-          width={128}
-          height={128}
-          viewBox="0 0 128 128"
-          aria-hidden="true"
-        >
-          <circle
-            cx={64}
-            cy={64}
-            r={radius}
-            fill="none"
-            stroke="currentColor"
-            strokeWidth={8}
-            className="text-border"
-          />
-          <circle
-            cx={64}
-            cy={64}
-            r={radius}
-            fill="none"
-            stroke={color}
-            strokeWidth={8}
-            strokeLinecap="round"
-            strokeDasharray={circumference}
-            strokeDashoffset={dashOffset}
-            style={{ transition: 'stroke-dashoffset 0.6s ease' }}
-          />
-        </svg>
-
-        {/* Value */}
-        <span
-          className="text-4xl font-bold leading-none"
-          style={{ color, fontVariantNumeric: 'tabular-nums' }}
-        >
-          {score}
-        </span>
-      </div>
-
-      <span className="text-sm font-medium text-muted-foreground">{label}</span>
+    <div
+      className="flex flex-col items-center gap-3 rounded-[28px] border border-border bg-card p-6 text-center"
+      role="status"
+    >
+      <Info className="size-8 text-muted-foreground" aria-hidden="true" />
+      <p className="text-sm text-muted-foreground">
+        Добавьте несколько транзакций, чтобы увидеть метрики
+      </p>
     </div>
   );
 }
 
-// ─── GlobalMonthScoreCard ─────────────────────────────────────────────────────
+function ScoreMainBlock({ model }: { model: GlobalScoreModel }) {
+  return (
+    <div className="flex min-w-0 flex-col justify-between gap-5">
+      <div className="space-y-4">
+        <p className="text-xs font-semibold uppercase tracking-[0.08em] text-[var(--ft-text-secondary)]">
+          Общий рейтинг месяца
+        </p>
+
+        <p
+          className="text-[clamp(3rem,6vw,4.2rem)] font-bold leading-none"
+          style={{
+            color: scoreColor(model.accent),
+            fontVariantNumeric: 'tabular-nums',
+          }}
+        >
+          {model.scoreLabel}
+        </p>
+
+        <p className="max-w-[24rem] text-base leading-7 text-[var(--ft-text-secondary)]">
+          {model.description}
+        </p>
+      </div>
+
+      <p
+        className="text-sm font-semibold"
+        style={{ color: deltaColor(model.deltaTone) }}
+      >
+        {model.deltaLabel ?? 'Нет данных для сравнения с предыдущим месяцем'}
+      </p>
+    </div>
+  );
+}
 
 export function GlobalMonthScoreCard({
   loading,
   error,
-  score,
-  scoreStatus,
+  model,
   children,
   onRetry,
 }: GlobalMonthScoreCardProps) {
@@ -153,12 +139,12 @@ export function GlobalMonthScoreCard({
   if (error) {
     return (
       <div
-        className="flex flex-col items-center gap-4 rounded-xl border border-destructive/30 bg-destructive/10 p-6 text-center"
+        className="flex min-h-[220px] flex-col items-center justify-center gap-4 rounded-[28px] border border-destructive/30 bg-destructive/10 p-6 text-center"
         role="alert"
       >
         <AlertCircle className="size-8 text-destructive" aria-hidden="true" />
         <div className="flex flex-col gap-1">
-          <p className="font-medium text-foreground">Не удалось загрузить данные</p>
+          <p className="font-medium text-foreground">Не удалось загрузить общий рейтинг месяца</p>
           <p className="text-sm text-muted-foreground">{error}</p>
         </div>
         <Button
@@ -173,31 +159,27 @@ export function GlobalMonthScoreCard({
     );
   }
 
-  if (score === null) {
-    return (
-      <div
-        className="flex flex-col items-center gap-3 rounded-xl border border-border bg-card p-6 text-center"
-        role="status"
-      >
-        <Info className="size-8 text-muted-foreground" aria-hidden="true" />
-        <p className="text-sm text-muted-foreground">
-          Добавьте несколько транзакций, чтобы увидеть метрики
-        </p>
-      </div>
-    );
+  if (model.score === null) {
+    return <EmptyState />;
   }
 
   return (
-    <div className="flex flex-col gap-6">
-      <ScoreCircle score={score} status={scoreStatus} />
+    <section
+      className="overflow-hidden rounded-[28px] border border-[var(--ft-border-default)] shadow-[var(--ft-shadow-lg)]"
+      style={{
+        background:
+          'linear-gradient(180deg, color-mix(in srgb, var(--ft-surface-raised) 88%, var(--ft-bg-base)) 0%, color-mix(in srgb, var(--ft-surface-base) 96%, var(--ft-bg-base)) 100%)',
+      }}
+    >
+      <div className="grid grid-cols-1 gap-5 px-6 py-6 lg:grid-cols-[minmax(260px,0.9fr)_minmax(0,1.55fr)]">
+        <ScoreMainBlock model={model} />
 
-      {children && (
-        <div
-          className={cn('grid grid-cols-1 gap-3 sm:grid-cols-2')}
-        >
-          {children}
-        </div>
-      )}
-    </div>
+        {children && (
+          <div className={cn('grid grid-cols-1 gap-4 sm:grid-cols-2')}>
+            {children}
+          </div>
+        )}
+      </div>
+    </section>
   );
 }

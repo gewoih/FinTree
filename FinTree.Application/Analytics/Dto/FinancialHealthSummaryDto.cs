@@ -18,5 +18,6 @@ public readonly record struct FinancialHealthSummaryDto(
     decimal? LiquidMonths,
     string? LiquidMonthsStatus,
     int? TotalMonthScore,
+    int? TotalMonthScoreDeltaPoints,
     decimal? IncomeMonthOverMonthChangePercent,
     decimal? BalanceMonthOverMonthChangePercent);

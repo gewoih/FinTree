@@ -45,7 +45,6 @@ export function useViewport(): ViewportState {
         setState(getViewportState(window.innerWidth));
       };
 
-      handleResize();
       window.addEventListener('resize', handleResize);
       return () => window.removeEventListener('resize', handleResize);
     }
@@ -56,7 +55,6 @@ export function useViewport(): ViewportState {
     });
 
     observer.observe(document.documentElement);
-    setState(getViewportState(window.innerWidth));
 
     return () => observer.disconnect();
   }, []);

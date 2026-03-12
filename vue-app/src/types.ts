@@ -210,6 +210,7 @@ export interface FinancialHealthSummaryDto {
     liquidMonths: number | null;
     liquidMonthsStatus: 'good' | 'average' | 'poor' | null;
     totalMonthScore: number | null;
+    totalMonthScoreDeltaPoints: number | null;
     incomeMonthOverMonthChangePercent: number | null;
     balanceMonthOverMonthChangePercent: number | null;
 }

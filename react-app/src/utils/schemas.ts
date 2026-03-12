@@ -12,12 +12,13 @@ export type LoginFormValues = z.infer<typeof loginSchema>;
 export const registerSchema = z
   .object({
     email: z.string().min(1, 'Введите email').email('Некорректный email'),
-    password: z.string().min(6, 'Минимум 6 символов'),
-    passwordConfirmation: z.string().min(1, 'Подтвердите пароль'),
-  })
-  .refine((data) => data.password === data.passwordConfirmation, {
-    message: 'Пароли не совпадают',
-    path: ['passwordConfirmation'],
+    password: z
+      .string()
+      .min(8, 'Минимум 8 символов')
+      .regex(/[a-z]/, 'Добавьте строчную букву')
+      .regex(/[A-Z]/, 'Добавьте заглавную букву')
+      .regex(/\d/, 'Добавьте цифру')
+      .regex(/[^a-zA-Z0-9]/, 'Добавьте спецсимвол'),
   });
 
 export type RegisterFormValues = z.infer<typeof registerSchema>;

@@ -6,21 +6,23 @@ import {
   Tooltip,
   ResponsiveContainer,
   ReferenceLine,
-  LabelList,
+  CartesianGrid,
 } from 'recharts';
-import {
-  Card,
-  CardHeader,
-  CardTitle,
-  CardAction,
-  CardContent,
-} from '@/components/ui/card';
+
+import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
-import { formatCurrency } from '@/utils/format';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 import type { SpendingBreakdownDto, MonthlyExpenseDto } from '@/types';
 
-// ─── Types ────────────────────────────────────────────────────────────────────
+import { InfoTooltip } from './InfoTooltip';
+import { formatAnalyticsMetaMoney } from './models';
 
 type ExpenseGranularity = 'days' | 'weeks' | 'months';
 
@@ -35,134 +37,68 @@ interface SpendingBarsCardProps {
   onRetry: () => void;
 }
 
-// ─── Helpers ──────────────────────────────────────────────────────────────────
-
 const SHORT_MONTH_FMT = new Intl.DateTimeFormat('ru-RU', { month: 'short' });
 
 function buildXLabel(entry: MonthlyExpenseDto, granularity: ExpenseGranularity): string {
   if (granularity === 'days') {
-    return String(entry.day ?? '');
+    const date = new Date(entry.year, entry.month - 1, entry.day ?? 1);
+    return new Intl.DateTimeFormat('ru-RU', {
+      day: 'numeric',
+      month: 'short',
+    }).format(date);
   }
+
   if (granularity === 'weeks') {
-    return `Нед ${entry.week ?? ''}`;
+    return `${entry.week ?? ''} нед.`;
   }
-  // months
-  const date = new Date(entry.year, entry.month - 1, 1);
-  return SHORT_MONTH_FMT.format(date);
+
+  return SHORT_MONTH_FMT.format(new Date(entry.year, entry.month - 1, 1));
 }
 
 function computeAverage(values: number[]): number {
   if (!values.length) return 0;
-  return values.reduce((s, v) => s + v, 0) / values.length;
+  return values.reduce((sum, value) => sum + value, 0) / values.length;
 }
 
 function percentile(sorted: number[], p: number): number {
   if (!sorted.length) return 0;
   const idx = Math.floor((p / 100) * (sorted.length - 1));
-  return sorted[idx];
+  return sorted[idx] ?? 0;
 }
-
-// ─── Formatted tick for Y axis ────────────────────────────────────────────────
 
 function formatYTick(value: number, currency: string): string {
-  if (value === 0) return '0';
-  if (value >= 1_000_000) {
-    return new Intl.NumberFormat('ru-RU', {
-      style: 'currency',
-      currency,
-      maximumFractionDigits: 0,
-      notation: 'compact',
-    }).format(value);
-  }
-  return new Intl.NumberFormat('ru-RU', {
-    style: 'currency',
-    currency,
-    maximumFractionDigits: 0,
-  }).format(value);
+  return formatAnalyticsMetaMoney(value, currency);
 }
 
-// ─── Custom Tooltip ───────────────────────────────────────────────────────────
-
-interface BarPayload {
-  label: string;
-  amount: number;
-  isOutlier: boolean;
+function getAverageLabel(granularity: ExpenseGranularity): string {
+  if (granularity === 'days') return 'Средний расход в день';
+  if (granularity === 'weeks') return 'Средний расход в неделю';
+  return 'Средний расход в месяц';
 }
 
-interface BarsTooltipProps {
+function BarsTooltip({
+  active,
+  payload,
+  currency,
+}: {
   active?: boolean;
-  payload?: Array<{ payload: BarPayload }>;
+  payload?: Array<{ payload: { label: string; amount: number } }>;
   currency: string;
-}
-
-function BarsTooltip({ active, payload, currency }: BarsTooltipProps) {
-  if (!active || !payload?.length) return null;
-  const entry = payload[0]?.payload;
-  if (!entry) return null;
+}) {
+  const entry = payload?.[0]?.payload;
+  if (!active || !entry) {
+    return null;
+  }
 
   return (
-    <div className="rounded-lg bg-card px-3 py-2 text-sm shadow-lg ring-1 ring-foreground/10">
-      <p className="text-muted-foreground">{entry.label}</p>
+    <div className="rounded-xl border border-border bg-popover px-3 py-2 text-sm shadow-md">
+      <p className="text-[var(--ft-text-secondary)]">{entry.label}</p>
       <p className="font-semibold tabular-nums text-foreground">
-        {formatCurrency(entry.amount, currency)}
+        {formatAnalyticsMetaMoney(entry.amount, currency)}
       </p>
     </div>
   );
 }
-
-// ─── Outlier top label ────────────────────────────────────────────────────────
-
-interface OutlierLabelProps {
-  x?: number;
-  y?: number;
-  width?: number;
-  value?: number;
-  currency: string;
-  isOutlier: boolean;
-}
-
-function OutlierLabel({ x = 0, y = 0, width = 0, value, currency, isOutlier }: OutlierLabelProps) {
-  if (!isOutlier || value == null) return null;
-  return (
-    <text
-      x={x + width / 2}
-      y={y - 4}
-      fill="var(--color-foreground)"
-      fontSize={10}
-      textAnchor="middle"
-      opacity={0.7}
-    >
-      {formatCurrency(value, currency)}
-    </text>
-  );
-}
-
-// ─── Toggle Group ─────────────────────────────────────────────────────────────
-
-interface ToggleGroupProps<T extends string> {
-  options: Array<{ label: string; value: T }>;
-  value: T;
-  onChange: (v: T) => void;
-}
-
-function ToggleGroup<T extends string>({ options, value, onChange }: ToggleGroupProps<T>) {
-  return (
-    <div className="flex gap-1">
-      {options.map((opt) => (
-        <Button
-          key={opt.value}
-          size="sm"
-          variant={opt.value === value ? 'default' : 'ghost'}
-          onClick={() => onChange(opt.value)}
-        >
-          {opt.label}
-        </Button>
-      ))}
-    </div>
-  );
-}
-
-// ─── Main Component ───────────────────────────────────────────────────────────
 
 export function SpendingBarsCard({
   loading,
@@ -175,123 +111,142 @@ export function SpendingBarsCard({
   onRetry,
 }: SpendingBarsCardProps) {
   const rawItems: MonthlyExpenseDto[] = spending?.[granularity] ?? [];
-  const amounts = rawItems.map((it) => it.amount);
+  const amounts = rawItems.map((item) => item.amount);
   const average = computeAverage(amounts);
 
-  const sorted = [...amounts].sort((a, b) => a - b);
+  const sorted = [...amounts].sort((left, right) => left - right);
   const p85 = percentile(sorted, 85);
   const hasOutliers = amounts.length > 0 && Math.max(...amounts) > average * 3;
   const yMax = hasOutliers ? p85 * 1.2 : undefined;
 
-  const chartData = rawItems.map((it) => ({
-    label: buildXLabel(it, granularity),
-    amount: it.amount,
-    isOutlier: hasOutliers && it.amount > (yMax ?? Infinity),
-    // clamp bar to domain max when outlier
-    barAmount: hasOutliers && yMax != null && it.amount > yMax ? yMax : it.amount,
+  const chartData = rawItems.map((item) => ({
+    label: buildXLabel(item, granularity),
+    amount: item.amount,
+    barAmount: hasOutliers && yMax != null && item.amount > yMax ? yMax : item.amount,
   }));
 
   const isEmpty = !loading && !error && rawItems.length === 0;
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle>Расходы по периодам</CardTitle>
-        <CardAction>
-          <ToggleGroup
-            options={granularityOptions}
-            value={granularity}
-            onChange={onGranularityChange}
+    <Card
+      className="gap-0 rounded-[28px] border border-[var(--ft-border-default)] shadow-[var(--ft-shadow-lg)]"
+      style={{
+        background:
+          'linear-gradient(180deg, color-mix(in srgb, var(--ft-surface-raised) 84%, var(--ft-bg-base)) 0%, var(--ft-surface-base) 100%)',
+      }}
+    >
+      <div className="flex flex-col gap-4 px-6 py-6 sm:flex-row sm:items-start sm:justify-between">
+        <div className="flex items-start gap-2">
+          <h2 className="text-[1.75rem] font-semibold leading-tight text-foreground">
+            Динамика расходов
+          </h2>
+          <InfoTooltip
+            content="Показывает динамику расходных операций внутри выбранного месяца."
+            className="-mt-1"
+            ariaLabel="Подробнее о динамике расходов"
           />
-        </CardAction>
-      </CardHeader>
+        </div>
+
+        <Select value={granularity} onValueChange={(value) => onGranularityChange(value as ExpenseGranularity)}>
+          <SelectTrigger className="h-12 min-w-[144px] rounded-2xl border-[var(--ft-border-default)] bg-transparent px-4 text-base">
+            <SelectValue placeholder="День" />
+          </SelectTrigger>
+          <SelectContent className="rounded-2xl border-[var(--ft-border-default)] bg-popover">
+            {granularityOptions.map((option) => (
+              <SelectItem key={option.value} value={option.value}>
+                {option.label}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      </div>
 
       {loading && (
-        <CardContent>
-          <Skeleton className="h-[280px] w-full rounded-md" />
-        </CardContent>
+        <div className="px-7 pb-7">
+          <Skeleton className="h-[360px] rounded-2xl" />
+        </div>
       )}
 
       {!loading && error && (
-        <CardContent className="flex flex-col items-center gap-3 py-8 text-center">
+        <div className="flex flex-col items-center gap-4 px-7 pb-7 text-center">
           <p className="text-sm text-destructive">{error}</p>
-          <Button variant="outline" size="sm" onClick={onRetry}>
+          <Button variant="outline" onClick={onRetry}>
             Повторить
           </Button>
-        </CardContent>
+        </div>
       )}
 
       {!loading && !error && isEmpty && (
-        <CardContent className="flex items-center justify-center py-12 text-center">
-          <p className="max-w-[240px] text-sm text-muted-foreground">
+        <div className="px-7 pb-7">
+          <p className="rounded-2xl border border-[var(--ft-border-subtle)] px-5 py-10 text-center text-base text-[var(--ft-text-secondary)]">
             Нет данных за выбранный период
           </p>
-        </CardContent>
+        </div>
       )}
 
       {!loading && !error && !isEmpty && (
-        <CardContent>
-          <div
-            role="img"
-            aria-label={`Столбчатая диаграмма расходов по ${granularity === 'days' ? 'дням' : granularity === 'weeks' ? 'неделям' : 'месяцам'}`}
-          >
-            <ResponsiveContainer width="100%" height={280}>
-              <BarChart
-                data={chartData}
-                margin={{ top: 20, right: 4, left: 0, bottom: 0 }}
-                barCategoryGap="30%"
-              >
+        <div className="px-5 pb-6 sm:px-6">
+          <div role="img" aria-label="Столбчатая диаграмма расходов">
+            <ResponsiveContainer width="100%" height={376}>
+              <BarChart data={chartData} margin={{ top: 26, right: 12, left: 10, bottom: 10 }}>
+                <CartesianGrid
+                  vertical={false}
+                  stroke="color-mix(in srgb, var(--ft-border-subtle) 92%, transparent)"
+                />
                 <XAxis
                   dataKey="label"
-                  tick={{ fontSize: 11, fill: 'var(--color-muted-foreground)' }}
+                  tick={{ fontSize: 13, fill: 'var(--ft-text-secondary)' }}
                   axisLine={false}
                   tickLine={false}
+                  angle={-36}
+                  textAnchor="end"
+                  height={76}
                 />
                 <YAxis
                   domain={yMax != null ? [0, yMax] : ['auto', 'auto']}
-                  tickFormatter={(v: number) => formatYTick(v, currency)}
-                  tick={{ fontSize: 11, fill: 'var(--color-muted-foreground)' }}
+                  tickFormatter={(value: number) => formatYTick(value, currency)}
+                  tick={{ fontSize: 13, fill: 'var(--ft-text-secondary)' }}
                   axisLine={false}
                   tickLine={false}
-                  width={72}
+                  width={78}
                 />
                 <Tooltip
                   content={(props) => (
                     <BarsTooltip
                       active={props.active}
-                      payload={props.payload as unknown as BarsTooltipProps['payload']}
+                      payload={props.payload as Array<{ payload: { label: string; amount: number } }>}
                       currency={currency}
                     />
                   )}
-                  cursor={{ fill: 'var(--color-muted)', opacity: 0.4 }}
+                  cursor={{ fill: 'color-mix(in srgb, var(--ft-primary-400) 10%, transparent)' }}
                 />
                 {average > 0 && (
                   <ReferenceLine
                     y={average}
-                    stroke="var(--color-muted-foreground)"
-                    strokeDasharray="4 2"
+                    stroke="var(--ft-text-secondary)"
+                    strokeDasharray="6 4"
                     strokeWidth={1}
                   />
                 )}
-                <Bar dataKey="barAmount" fill="var(--color-primary)" radius={[3, 3, 0, 0]}>
-                  <LabelList
-                    dataKey="amount"
-                    position="top"
-                    content={(props) => (
-                      <OutlierLabel
-                        {...(props as OutlierLabelProps)}
-                        currency={currency}
-                        isOutlier={
-                          chartData.find((d) => d.amount === props.value)?.isOutlier ?? false
-                        }
-                      />
-                    )}
-                  />
-                </Bar>
+                <Bar
+                  dataKey="barAmount"
+                  fill="var(--ft-chart-expense)"
+                  radius={[8, 8, 0, 0]}
+                  maxBarSize={24}
+                />
               </BarChart>
             </ResponsiveContainer>
           </div>
-        </CardContent>
+
+          <div className="mt-4 flex items-center gap-3 px-2 text-sm text-foreground">
+            <span
+              className="inline-block h-px w-9 border-t border-dashed"
+              style={{ borderColor: 'var(--ft-text-secondary)' }}
+            />
+            <span className="text-[var(--ft-text-secondary)]">{getAverageLabel(granularity)}</span>
+            <span className="font-semibold tabular-nums">{formatAnalyticsMetaMoney(average, currency)}</span>
+          </div>
+        </div>
       )}
     </Card>
   );

@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import {
   PieChart,
   Pie,
@@ -7,19 +7,25 @@ import {
   ResponsiveContainer,
   type TooltipProps,
 } from 'recharts';
-import {
-  Card,
-  CardHeader,
-  CardTitle,
-  CardAction,
-  CardContent,
-} from '@/components/ui/card';
+
+import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
-import { formatCurrency, formatPercent } from '@/utils/format';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 import type { CategoryBreakdownDto, CategoryBreakdownItemDto } from '@/types';
 
-// ─── Types ────────────────────────────────────────────────────────────────────
+import { InfoTooltip } from './InfoTooltip';
+import {
+  formatAnalyticsHeroMoney,
+  formatAnalyticsMetaMoney,
+  formatAnalyticsPercent,
+} from './models';
 
 type CategoryDatasetMode = 'expenses' | 'income';
 type CategoryScope = 'all' | 'mandatory' | 'discretionary';
@@ -39,121 +45,134 @@ interface SpendingPieCardProps {
   onRetry: () => void;
 }
 
-// ─── Helpers ──────────────────────────────────────────────────────────────────
-
-function getDisplayAmount(
-  item: CategoryBreakdownItemDto,
-  scope: CategoryScope
-): number {
+function getDisplayAmount(item: CategoryBreakdownItemDto, scope: CategoryScope): number {
   if (scope === 'mandatory') return item.mandatoryAmount;
   if (scope === 'discretionary') return item.discretionaryAmount;
   return item.amount;
 }
 
-// ─── Custom Tooltip ───────────────────────────────────────────────────────────
-
-interface TooltipEntry {
-  payload?: CategoryBreakdownItemDto & { displayAmount: number };
+function getDisplayTitle(mode: CategoryDatasetMode): string {
+  return mode === 'income' ? 'Доходы по категориям' : 'Расходы по категориям';
 }
 
-function PieTooltip({ active, payload }: TooltipProps<number, string> & { payload?: TooltipEntry[] }) {
-  if (!active || !payload?.length) return null;
-  const entry = payload[0]?.payload as (CategoryBreakdownItemDto & { displayAmount: number }) | undefined;
-  if (!entry) return null;
+function ChartTooltip({
+  active,
+  payload,
+  currency,
+}: TooltipProps<number, string> & { currency: string }) {
+  const entry = payload?.[0]?.payload as
+    | (CategoryBreakdownItemDto & { displayAmount: number })
+    | undefined;
+
+  if (!active || !entry) {
+    return null;
+  }
 
   return (
-    <div className="rounded-lg bg-card px-3 py-2 text-sm shadow-lg ring-1 ring-foreground/10">
+    <div className="rounded-xl border border-border bg-popover px-3 py-2 text-sm text-popover-foreground shadow-md">
       <div className="flex items-center gap-2">
         <span
-          className="inline-block size-2.5 shrink-0 rounded-full"
+          className="inline-block size-2.5 rounded-full"
           style={{ backgroundColor: entry.color }}
         />
-        <span className="font-medium text-foreground">{entry.name}</span>
+        <span className="font-semibold text-foreground">{entry.name}</span>
       </div>
+      <p className="mt-2 tabular-nums text-foreground">
+        {formatAnalyticsMetaMoney(entry.displayAmount, currency)}
+      </p>
+      <p className="text-xs text-muted-foreground">
+        {formatAnalyticsPercent(entry.percent)}
+      </p>
     </div>
   );
 }
 
-// ─── Legend Row ───────────────────────────────────────────────────────────────
-
-interface LegendRowProps {
-  item: CategoryBreakdownItemDto;
-  displayAmount: number;
-  currency: string;
-  isActive: boolean;
-  onHover: (id: string | null) => void;
-  onClick: (item: CategoryBreakdownItemDto) => void;
-}
-
-function LegendRow({ item, displayAmount, currency, isActive, onHover, onClick }: LegendRowProps) {
-  return (
-    <button
-      type="button"
-      key={item.id}
-      className="flex w-full min-h-[44px] cursor-pointer items-center gap-3 rounded-md px-2 py-1 text-left transition-colors hover:bg-muted/50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-      style={{ opacity: isActive ? 1 : 0.6 }}
-      onMouseEnter={() => onHover(item.id)}
-      onMouseLeave={() => onHover(null)}
-      onClick={() => onClick(item)}
-    >
-      <span
-        className="inline-block size-2.5 shrink-0 rounded-full"
-        style={{ backgroundColor: item.color }}
-      />
-      <span className="min-w-0 flex-1 truncate text-sm text-foreground">
-        {item.name}
-      </span>
-      <span className="ml-auto shrink-0 text-right text-sm tabular-nums text-foreground">
-        {formatCurrency(displayAmount, currency)}
-      </span>
-      <span className="w-12 shrink-0 text-right text-xs tabular-nums text-muted-foreground">
-        {item.percent != null ? formatPercent(item.percent) : '—'}
-      </span>
-    </button>
-  );
-}
-
-// ─── Loading Skeleton ─────────────────────────────────────────────────────────
-
-function PieSkeleton() {
-  return (
-    <CardContent className="flex flex-col items-center gap-4">
-      <Skeleton className="size-[220px] rounded-full" />
-      <div className="w-full space-y-2">
-        {[1, 2, 3, 4].map((n) => (
-          <Skeleton key={n} className="h-[44px] w-full rounded-md" />
-        ))}
-      </div>
-    </CardContent>
-  );
-}
-
-// ─── ToggleGroup helper ───────────────────────────────────────────────────────
-
-interface ToggleGroupProps<T extends string> {
+function ModeToggle<T extends string>({
+  options,
+  value,
+  onChange,
+}: {
   options: Array<{ label: string; value: T }>;
   value: T;
-  onChange: (v: T) => void;
-}
-
-function ToggleGroup<T extends string>({ options, value, onChange }: ToggleGroupProps<T>) {
+  onChange: (value: T) => void;
+}) {
   return (
-    <div className="flex gap-1">
-      {options.map((opt) => (
+    <div className="flex rounded-2xl border border-[var(--ft-border-subtle)] bg-[color-mix(in_srgb,var(--ft-bg-base)_32%,transparent)] p-1">
+      {options.map((option) => (
         <Button
-          key={opt.value}
-          size="sm"
-          variant={opt.value === value ? 'default' : 'ghost'}
-          onClick={() => onChange(opt.value)}
+          key={option.value}
+          type="button"
+          variant="ghost"
+          onClick={() => onChange(option.value)}
+          className={
+            option.value === value
+              ? 'rounded-xl bg-card text-foreground shadow-[var(--ft-shadow-xs)]'
+              : 'rounded-xl text-[var(--ft-text-tertiary)] hover:text-foreground'
+          }
         >
-          {opt.label}
+          {option.label}
         </Button>
       ))}
     </div>
   );
 }
 
-// ─── Main Component ───────────────────────────────────────────────────────────
+function LegendRow({
+  item,
+  currency,
+  isActive,
+  onHover,
+  onClick,
+}: {
+  item: CategoryBreakdownItemDto & { displayAmount: number };
+  currency: string;
+  isActive: boolean;
+  onHover: (id: string | null) => void;
+  onClick: (item: CategoryBreakdownItemDto) => void;
+}) {
+  return (
+    <button
+      type="button"
+      className="grid min-h-[64px] w-full grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-3 rounded-2xl px-3 py-3 text-left transition-colors hover:bg-[color-mix(in_srgb,var(--ft-primary-400)_8%,transparent)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+      style={{ opacity: isActive ? 1 : 0.45 }}
+      onMouseEnter={() => onHover(item.id)}
+      onMouseLeave={() => onHover(null)}
+      onClick={() => onClick(item)}
+    >
+      <span
+        className="inline-block size-4 rounded-full"
+        style={{ backgroundColor: item.color }}
+        aria-hidden="true"
+      />
+
+      <div className="min-w-0">
+        <p className="truncate text-base font-semibold text-foreground">{item.name}</p>
+        <p className="truncate text-sm font-semibold tabular-nums text-[var(--ft-text-secondary)]">
+          {formatAnalyticsMetaMoney(item.displayAmount, currency)}
+        </p>
+      </div>
+
+      <p className="text-right text-base font-semibold tabular-nums text-foreground">
+        {formatAnalyticsPercent(item.percent)}
+      </p>
+    </button>
+  );
+}
+
+function PieSkeleton() {
+  return (
+    <div className="grid grid-cols-1 gap-6 px-7 pb-7 pt-3 lg:grid-cols-[minmax(280px,1fr)_minmax(280px,0.9fr)]">
+      <div className="flex items-center justify-center">
+        <Skeleton className="size-[320px] rounded-full" />
+      </div>
+      <div className="space-y-3">
+        {[1, 2, 3, 4].map((key) => (
+          <Skeleton key={key} className="h-[72px] rounded-2xl" />
+        ))}
+      </div>
+    </div>
+  );
+}
 
 export function SpendingPieCard({
   loading,
@@ -171,108 +190,143 @@ export function SpendingPieCard({
 }: SpendingPieCardProps) {
   const [activeId, setActiveId] = useState<string | null>(null);
 
-  const items = data?.items ?? [];
-  const chartData = items.map((item) => ({
-    ...item,
-    displayAmount: getDisplayAmount(item, scope),
-  }));
-  const total = chartData.reduce((sum, it) => sum + it.displayAmount, 0);
+  const chartData = useMemo(
+    () =>
+      (data?.items ?? [])
+        .map((item) => ({
+          ...item,
+          displayAmount: getDisplayAmount(item, scope),
+        }))
+        .filter((item) => item.displayAmount > 0)
+        .sort((left, right) => right.displayAmount - left.displayAmount),
+    [data?.items, scope],
+  );
 
+  const total = chartData.reduce((sum, item) => sum + item.displayAmount, 0);
   const isEmpty = !loading && !error && total === 0;
-  const emptyLabel =
-    mode === 'income'
-      ? 'Добавьте доходы, чтобы увидеть распределение по категориям'
-      : 'Добавьте расходы, чтобы увидеть распределение по категориям';
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle>Категории</CardTitle>
-        <CardAction>
-          <ToggleGroup options={modeOptions} value={mode} onChange={onModeChange} />
-        </CardAction>
-        {mode === 'expenses' && (
-          <div className="col-span-2 mt-1">
-            <ToggleGroup options={scopeOptions} value={scope} onChange={onScopeChange} />
+    <Card
+      className="gap-0 rounded-[28px] border border-[var(--ft-border-default)] shadow-[var(--ft-shadow-lg)]"
+      style={{
+        background:
+          'linear-gradient(180deg, color-mix(in srgb, var(--ft-surface-raised) 84%, var(--ft-bg-base)) 0%, var(--ft-surface-base) 100%)',
+      }}
+    >
+      <div className="flex flex-col gap-5 px-6 py-6">
+        <div className="grid gap-4 xl:grid-cols-[minmax(16rem,1fr)_auto] xl:items-start">
+          <div className="flex min-w-0 items-start gap-2">
+            <h2 className="max-w-[11ch] text-[1.75rem] font-semibold leading-tight text-foreground">
+              {getDisplayTitle(mode)}
+            </h2>
+            <InfoTooltip
+              content="Показывает распределение операций по категориям за выбранный месяц."
+              className="-mt-1"
+              ariaLabel="Подробнее о распределении по категориям"
+            />
           </div>
-        )}
-      </CardHeader>
+
+          <div className="flex flex-wrap gap-3 xl:justify-end">
+            <ModeToggle options={modeOptions} value={mode} onChange={onModeChange} />
+
+            {mode === 'expenses' && (
+              <Select value={scope} onValueChange={(value) => onScopeChange(value as CategoryScope)}>
+                <SelectTrigger className="h-12 min-w-[156px] rounded-2xl border-[var(--ft-border-default)] bg-transparent px-4 text-base">
+                  <SelectValue placeholder="Все" />
+                </SelectTrigger>
+                <SelectContent className="rounded-2xl border-[var(--ft-border-default)] bg-popover">
+                  {scopeOptions.map((option) => (
+                    <SelectItem key={option.value} value={option.value}>
+                      {option.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            )}
+          </div>
+        </div>
+      </div>
 
       {loading && <PieSkeleton />}
 
       {!loading && error && (
-        <CardContent className="flex flex-col items-center gap-3 py-8 text-center">
+        <div className="flex flex-col items-center gap-4 px-7 pb-7 text-center">
           <p className="text-sm text-destructive">{error}</p>
-          <Button variant="outline" size="sm" onClick={onRetry}>
+          <Button variant="outline" onClick={onRetry}>
             Повторить
           </Button>
-        </CardContent>
+        </div>
       )}
 
       {!loading && !error && isEmpty && (
-        <CardContent className="flex items-center justify-center py-12 text-center">
-          <p className="max-w-[240px] text-sm text-muted-foreground">{emptyLabel}</p>
-        </CardContent>
+        <div className="px-7 pb-7">
+          <p className="rounded-2xl border border-[var(--ft-border-subtle)] px-5 py-10 text-center text-base text-[var(--ft-text-secondary)]">
+            Нет данных за выбранный период
+          </p>
+        </div>
       )}
 
       {!loading && !error && !isEmpty && (
-        <CardContent className="flex flex-col gap-4">
-          {/* Chart */}
+        <div className="grid grid-cols-1 gap-7 px-6 pb-6 pt-1 lg:grid-cols-[minmax(320px,1.05fr)_minmax(280px,0.95fr)]">
           <div
-            className="relative"
+            className="relative min-h-[372px]"
             role="img"
-            aria-label={`Круговая диаграмма: распределение по категориям`}
+            aria-label="Кольцевая диаграмма распределения по категориям"
           >
-            <ResponsiveContainer width="100%" height={220}>
+            <ResponsiveContainer width="100%" height={372}>
               <PieChart>
                 <Pie
                   data={chartData}
                   dataKey="displayAmount"
                   cx="50%"
                   cy="50%"
-                  innerRadius="65%"
-                  outerRadius="85%"
-                  paddingAngle={2}
-                  strokeWidth={0}
+                  innerRadius="70%"
+                  outerRadius="88%"
+                  paddingAngle={1.2}
+                  stroke="none"
                 >
                   {chartData.map((entry) => (
                     <Cell
                       key={entry.id}
                       fill={entry.color}
-                      opacity={activeId === null || activeId === entry.id ? 1 : 0.35}
+                      opacity={activeId === null || activeId === entry.id ? 1 : 0.32}
                     />
                   ))}
                 </Pie>
-                <Tooltip content={<PieTooltip />} />
+                <Tooltip content={(props) => <ChartTooltip {...props} currency={currency} />} />
               </PieChart>
             </ResponsiveContainer>
-            {/* Donut center label */}
-            <div
-              className="pointer-events-none absolute inset-0 flex flex-col items-center justify-center"
-              aria-hidden="true"
-            >
-              <span className="text-xs text-muted-foreground">Итого</span>
-              <span className="text-base font-semibold tabular-nums text-foreground">
-                {formatCurrency(total, currency)}
-              </span>
+
+            <div className="pointer-events-none absolute inset-0 flex items-center justify-center">
+              <div className="flex flex-col items-center gap-1 text-center">
+                <span className="text-xs font-medium uppercase tracking-[0.08em] text-[var(--ft-text-tertiary)]">
+                  Всего
+                </span>
+                <span
+                  className="text-[clamp(1.85rem,3.2vw,2.45rem)] font-bold leading-none text-foreground"
+                  style={{ fontVariantNumeric: 'tabular-nums' }}
+                >
+                  {formatAnalyticsHeroMoney(total, currency)}
+                </span>
+              </div>
             </div>
           </div>
 
-          {/* Legend */}
-          <div className="flex flex-col">
-            {chartData.map((item) => (
-              <LegendRow
-                key={item.id}
-                item={item}
-                displayAmount={item.displayAmount}
-                currency={currency}
-                isActive={activeId === null || activeId === item.id}
-                onHover={setActiveId}
-                onClick={onCategorySelect}
-              />
-            ))}
+          <div className="rounded-[24px] border border-[var(--ft-border-subtle)] bg-[color-mix(in_srgb,var(--ft-surface-base)_82%,transparent)] p-2.5">
+            <div className="max-h-[372px] space-y-1 overflow-y-auto pr-1">
+              {chartData.map((item) => (
+                <LegendRow
+                  key={item.id}
+                  item={item}
+                  currency={currency}
+                  isActive={activeId === null || activeId === item.id}
+                  onHover={setActiveId}
+                  onClick={onCategorySelect}
+                />
+              ))}
+            </div>
           </div>
-        </CardContent>
+        </div>
       )}
     </Card>
   );

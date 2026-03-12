@@ -100,6 +100,14 @@
 
 ## Frontend UX
 
+- [ ] `FT-TODO-063` React migration still has placeholder pages that render `null`, so some public/protected routes remain blank after navigation.
+  **Fix:** Port the remaining Vue implementations for landing/profile into `react-app` or add explicit placeholder states instead of empty renders.
+  **Files:** `react-app/src/pages/LandingPage.tsx`, `react-app/src/pages/ProfilePage.tsx`
+
+- [ ] `FT-TODO-064` `EvolutionTab` still uses ad hoc `toFixed` / raw analytics values, so the `Динамика` tab now diverges from the normalized dashboard display contract.
+  **Fix:** Reuse the analytics formatting helpers from `react-app/src/components/analytics/models.ts` for percentages, months, mean daily spend, and month table cells.
+  **Files:** `react-app/src/components/analytics/EvolutionTab.tsx`
+
 - [ ] `FT-TODO-040` SummaryStrip — zone progress bar for the 4 metric cards
   **Context:** Metric cards (Сбережения, Финансовая подушка, Стабильность трат, Необязательные) show numbers with no benchmark context. A segmented zone bar with a position marker communicates the quality of each value at a glance.
   **Zone definitions:**

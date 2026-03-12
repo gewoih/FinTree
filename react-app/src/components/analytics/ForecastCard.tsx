@@ -1,20 +1,27 @@
 import {
-  LineChart,
+  Area,
+  CartesianGrid,
+  ComposedChart,
   Line,
-  XAxis,
-  YAxis,
-  Tooltip,
   ReferenceLine,
   ResponsiveContainer,
+  Tooltip,
+  XAxis,
+  YAxis,
 } from 'recharts';
-import { AlertCircle, RefreshCw, Info } from 'lucide-react';
-import { Skeleton } from '@/components/ui/skeleton';
+import { AlertCircle, ArrowDown, ArrowUp, Info } from 'lucide-react';
+
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { formatCurrency, formatPercent } from '@/utils/format';
+import { Card } from '@/components/ui/card';
+import { Skeleton } from '@/components/ui/skeleton';
 import type { ForecastDto } from '@/types';
 
-// ─── Types ────────────────────────────────────────────────────────────────────
+import { InfoTooltip } from './InfoTooltip';
+import {
+  formatAnalyticsHeroMoney,
+  formatAnalyticsMetaMoney,
+  formatAnalyticsMoneyRange,
+} from './models';
 
 interface ForecastCardProps {
   loading: boolean;
@@ -32,127 +39,211 @@ interface ForecastCardProps {
 interface ChartDataPoint {
   day: number;
   actual: number | null;
+  corridorBase: number | null;
+  corridorBand: number | null;
   optimistic: number | null;
   risk: number | null;
 }
 
-// ─── Helpers ──────────────────────────────────────────────────────────────────
-
-function buildChartData(forecast: ForecastDto): ChartDataPoint[] {
-  const { days, actual, optimistic, risk } = forecast.series;
-  return days.map((day, i) => ({
-    day,
-    actual: actual[i] ?? null,
-    optimistic: optimistic[i] ?? null,
-    risk: risk[i] ?? null,
-  }));
-}
-
 function hasActualData(forecast: ForecastDto): boolean {
-  return forecast.series.actual.some((v) => v !== null);
+  return forecast.series.actual.some((value) => value !== null);
 }
 
-// ─── Sub-components ───────────────────────────────────────────────────────────
+function buildChartData(forecast: ForecastDto, showCorridor: boolean): ChartDataPoint[] {
+  const { days, actual, optimistic, risk } = forecast.series;
 
-interface KpiRowProps {
-  forecast: ForecastDto;
-  currency: string;
-  isCurrentMonth: boolean;
+  return days.map((day, index) => {
+    const optimisticValue = showCorridor ? (optimistic[index] ?? null) : null;
+    const riskValue = showCorridor ? (risk[index] ?? null) : null;
+
+    return {
+      day,
+      actual: actual[index] ?? null,
+      corridorBase: optimisticValue,
+      corridorBand:
+        optimisticValue !== null && riskValue !== null
+          ? Math.max(0, riskValue - optimisticValue)
+          : null,
+      optimistic: optimisticValue,
+      risk: riskValue,
+    };
+  });
 }
 
-function KpiRow({ forecast, currency, isCurrentMonth }: KpiRowProps) {
-  const { summary } = forecast;
-
-  let label: string;
-  let value: string;
-
-  if (isCurrentMonth && summary.optimisticTotal != null && summary.riskTotal != null) {
-    label = 'Прогноз до конца месяца';
-    value = `${formatCurrency(summary.optimisticTotal, currency)} — ${formatCurrency(summary.riskTotal, currency)}`;
-  } else {
-    label = 'Итого за месяц';
-    value = summary.currentSpent != null ? formatCurrency(summary.currentSpent, currency) : '—';
+function buildXAxisTicks(days: number[]): number[] {
+  if (days.length <= 1) {
+    return days;
   }
 
-  let baselineNote: { text: string; positive: boolean } | null = null;
-  if (summary.baselineLimit != null && summary.currentSpent != null) {
-    const diff = summary.baselineLimit - summary.currentSpent;
-    const pct = summary.currentSpent !== 0 ? Math.abs(diff / summary.currentSpent) * 100 : 0;
-    const below = diff > 0;
-    baselineNote = {
-      text: `На ${formatCurrency(Math.abs(diff), currency)} (${formatPercent(pct)}) ${below ? 'ниже' : 'выше'} базовых расходов`,
-      positive: below,
-    };
+  const ticks = days.filter((day) => (day - 1) % 3 === 0);
+  const last = days[days.length - 1];
+
+  if (ticks[ticks.length - 1] !== last) {
+    ticks.push(last);
+  }
+
+  return ticks;
+}
+
+function formatYAxisTick(value: number, currency: string): string {
+  return formatAnalyticsMetaMoney(value, currency);
+}
+
+function getChartMax(forecast: ForecastDto, showCorridor: boolean): number | undefined {
+  const values = [
+    ...forecast.series.actual.filter((value): value is number => value !== null),
+  ];
+
+  if (showCorridor) {
+    values.push(
+      ...forecast.series.optimistic.filter((value): value is number => value !== null),
+      ...forecast.series.risk.filter((value): value is number => value !== null),
+    );
+  }
+
+  if (forecast.series.baseline !== null) {
+    values.push(forecast.series.baseline);
+  }
+
+  if (values.length === 0) {
+    return undefined;
+  }
+
+  const maxValue = Math.max(...values);
+  if (maxValue <= 0) {
+    return undefined;
+  }
+
+  const padded = maxValue * 1.12;
+  if (padded <= 50_000) return Math.ceil(padded / 5_000) * 5_000;
+  if (padded <= 150_000) return Math.ceil(padded / 10_000) * 10_000;
+  return Math.ceil(padded / 25_000) * 25_000;
+}
+
+function buildBaselineNote(
+  forecast: ForecastDto,
+  currency: string,
+  showForecastCorridor: boolean,
+) {
+  const { optimisticTotal, riskTotal, baselineLimit, currentSpent } = forecast.summary;
+  const comparisonTarget =
+    showForecastCorridor && optimisticTotal !== null && riskTotal !== null
+      ? (optimisticTotal + riskTotal) / 2
+      : currentSpent;
+
+  if (baselineLimit === null || comparisonTarget === null || baselineLimit <= 0) {
+    return null;
+  }
+
+  const diff = comparisonTarget - baselineLimit;
+
+  return {
+    tone: diff <= 0 ? 'below' : 'above',
+    text:
+      diff <= 0
+        ? `Ниже базового уровня на ${formatAnalyticsMetaMoney(Math.abs(diff), currency)}`
+        : `Выше базового уровня на ${formatAnalyticsMetaMoney(Math.abs(diff), currency)}`,
+  } as const;
+}
+
+function ForecastTooltip({
+  active,
+  label,
+  payload,
+  currency,
+  showCorridor,
+}: {
+  active?: boolean;
+  label?: number | string;
+  payload?: Array<{ payload: ChartDataPoint }>;
+  currency: string;
+  showCorridor: boolean;
+}) {
+  const point = payload?.find((entry) => entry?.payload)?.payload;
+
+  if (!active || !point) {
+    return null;
   }
 
   return (
-    <div className="flex flex-col gap-1 px-4 pt-1">
-      <span className="text-xs text-muted-foreground">{label}</span>
-      <span
-        className="text-xl font-bold text-foreground"
-        style={{ fontVariantNumeric: 'tabular-nums' }}
-      >
-        {value}
-      </span>
-      {baselineNote && (
-        <span
-          className="text-xs font-medium"
-          style={{
-            color: baselineNote.positive
-              ? 'var(--ft-success-500)'
-              : 'var(--ft-danger-500)',
-          }}
-        >
-          {baselineNote.text}
-        </span>
+    <div className="rounded-2xl border border-border bg-popover px-4 py-3 text-sm text-popover-foreground shadow-md">
+      <p className="mb-2 text-[var(--ft-text-secondary)]">День {label}</p>
+
+      {point.actual !== null && (
+        <p className="tabular-nums">
+          Факт: <span className="font-semibold">{formatAnalyticsMetaMoney(point.actual, currency)}</span>
+        </p>
       )}
+
+      {showCorridor &&
+        point.optimistic !== null &&
+        point.risk !== null &&
+        point.risk !== point.optimistic && (
+          <>
+            <p className="tabular-nums">
+              Нижняя граница:{' '}
+              <span className="font-semibold">{formatAnalyticsMetaMoney(point.optimistic, currency)}</span>
+            </p>
+            <p className="tabular-nums">
+              Верхняя граница:{' '}
+              <span className="font-semibold">{formatAnalyticsMetaMoney(point.risk, currency)}</span>
+            </p>
+          </>
+        )}
     </div>
   );
 }
 
-interface ChartLegendProps {
+function ChartLegend({
+  hasBaseline,
+  showCorridor,
+}: {
   hasBaseline: boolean;
-}
+  showCorridor: boolean;
+}) {
+  if (!hasBaseline && !showCorridor) {
+    return null;
+  }
 
-function ChartLegend({ hasBaseline }: ChartLegendProps) {
   return (
-    <div className="mt-2 flex flex-wrap items-center gap-x-4 gap-y-1 px-4 pb-1 text-xs text-muted-foreground">
-      <span className="flex items-center gap-1.5">
+    <div className="mt-5 flex flex-wrap items-center gap-x-5 gap-y-2 text-sm text-[var(--ft-text-secondary)]">
+      <span className="flex items-center gap-2">
         <span
-          className="inline-block h-0.5 w-5 rounded"
-          style={{ backgroundColor: 'var(--color-primary)' }}
+          className="inline-block h-0.5 w-7 rounded"
+          style={{ backgroundColor: 'var(--ft-warning-300)' }}
         />
         Факт
       </span>
-      <span className="flex items-center gap-1.5">
-        <span
-          className="inline-block h-0.5 w-5 rounded border-t-2"
-          style={{
-            borderStyle: 'dashed',
-            borderColor: 'var(--ft-warning-500)',
-            background: 'none',
-          }}
-        />
-        Коридор прогноза
-      </span>
-      {hasBaseline && (
-        <span className="flex items-center gap-1.5">
+
+      {showCorridor && (
+        <span className="flex items-center gap-2">
           <span
-            className="inline-block h-0.5 w-5 rounded border-t-2"
+            className="inline-block h-3 w-7 rounded-md border"
+            style={{
+              borderColor: 'var(--ft-success-400)',
+              backgroundColor: 'color-mix(in srgb, var(--ft-success-500) 14%, transparent)',
+            }}
+          />
+          Коридор прогноза
+        </span>
+      )}
+
+      {hasBaseline && (
+        <span className="flex items-center gap-2">
+          <span
+            className="inline-block h-0.5 w-7 rounded border-t-2"
             style={{
               borderStyle: 'dashed',
-              borderColor: 'var(--ft-primary-400)',
+              borderColor: 'var(--ft-primary-200)',
               background: 'none',
             }}
           />
-          Базовые расходы
+          Базовый уровень
         </span>
       )}
     </div>
   );
 }
-
-// ─── ForecastCard ─────────────────────────────────────────────────────────────
 
 export function ForecastCard({
   loading,
@@ -166,190 +257,309 @@ export function ForecastCard({
   requiredExpenseDays,
   onRetry,
 }: ForecastCardProps) {
-  // Priority 1: readiness not met
+  const title = isCurrentMonth ? 'Прогноз расходов' : 'Расходы за месяц';
+  const tooltipText = isCurrentMonth
+    ? 'Прогноз до конца месяца на основе текущего темпа трат и исторического окна расходов.'
+    : 'Фактические расходы за выбранный месяц и сравнение с базовым уровнем.';
+
   if (!readinessMet) {
     return (
-      <Card>
-        <CardHeader>
-          <CardTitle>Прогноз расходов</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="flex gap-3 rounded-lg border border-border bg-muted/40 p-3 text-sm text-muted-foreground">
-            <Info className="mt-0.5 size-4 shrink-0" aria-hidden="true" />
+      <Card
+        className="gap-0 rounded-[28px] border border-[var(--ft-border-default)] shadow-[var(--ft-shadow-lg)]"
+        style={{
+          background:
+            'linear-gradient(180deg, color-mix(in srgb, var(--ft-surface-raised) 84%, var(--ft-bg-base)) 0%, var(--ft-surface-base) 100%)',
+        }}
+      >
+        <div className="flex items-start gap-2 px-6 py-6">
+          <h2 className="text-[1.75rem] font-semibold leading-tight text-foreground">{title}</h2>
+          <InfoTooltip content={tooltipText} className="-mt-1" ariaLabel="Подробнее о прогнозе расходов" />
+        </div>
+
+        <div className="px-6 pb-6">
+          <div className="flex min-h-[280px] gap-3 rounded-[24px] border border-[var(--ft-border-subtle)] bg-[color-mix(in_srgb,var(--ft-surface-base)_75%,transparent)] p-5 text-base leading-7 text-[var(--ft-text-secondary)]">
+            <Info className="mt-1 size-5 shrink-0" aria-hidden="true" />
             <p>
-              {readinessMessage}. Нужны расходы минимум в {requiredExpenseDays} днях. Сейчас:{' '}
+              {readinessMessage}. Нужны расходы минимум в {requiredExpenseDays} днях. Сейчас есть данные за{' '}
               {observedExpenseDays}.
             </p>
           </div>
-        </CardContent>
+        </div>
       </Card>
     );
   }
 
-  // Priority 2: loading
   if (loading) {
     return (
-      <Card>
-        <CardHeader>
-          <Skeleton className="h-5 w-40" />
-        </CardHeader>
-        <CardContent>
-          <Skeleton className="mb-2 h-6 w-56" />
-          <Skeleton className="h-[280px] w-full" />
-        </CardContent>
+      <Card
+        className="gap-0 rounded-[28px] border border-[var(--ft-border-default)] shadow-[var(--ft-shadow-lg)]"
+        style={{
+          background:
+            'linear-gradient(180deg, color-mix(in srgb, var(--ft-surface-raised) 84%, var(--ft-bg-base)) 0%, var(--ft-surface-base) 100%)',
+        }}
+      >
+        <div className="space-y-5 px-6 py-6">
+          <div className="flex items-start gap-2">
+            <Skeleton className="h-9 w-56" />
+            <Skeleton className="mt-1 size-10 rounded-full" />
+          </div>
+          <Skeleton className="h-4 w-40" />
+          <Skeleton className="h-14 w-[22rem]" />
+          <Skeleton className="h-[408px] rounded-[24px]" />
+        </div>
       </Card>
     );
   }
 
-  // Priority 3: error
   if (error) {
     return (
-      <Card>
-        <CardHeader>
-          <CardTitle>Прогноз расходов</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="flex flex-col items-start gap-3">
-            <div className="flex items-center gap-2 text-sm text-destructive">
-              <AlertCircle className="size-4 shrink-0" aria-hidden="true" />
-              <span>{error}</span>
-            </div>
-            <Button variant="outline" size="sm" onClick={onRetry} className="min-h-[44px]">
-              <RefreshCw className="size-3.5" aria-hidden="true" />
-              Повторить
-            </Button>
+      <Card
+        className="gap-0 rounded-[28px] border border-[var(--ft-border-default)] shadow-[var(--ft-shadow-lg)]"
+        style={{
+          background:
+            'linear-gradient(180deg, color-mix(in srgb, var(--ft-surface-raised) 84%, var(--ft-bg-base)) 0%, var(--ft-surface-base) 100%)',
+        }}
+      >
+        <div className="flex items-start gap-2 px-6 py-6">
+          <h2 className="text-[1.75rem] font-semibold leading-tight text-foreground">{title}</h2>
+          <InfoTooltip content={tooltipText} className="-mt-1" ariaLabel="Подробнее о прогнозе расходов" />
+        </div>
+
+        <div className="flex min-h-[280px] flex-col items-center justify-center gap-4 px-6 pb-6 text-center">
+          <AlertCircle className="size-8 text-destructive" aria-hidden="true" />
+          <div className="space-y-1">
+            <p className="text-base font-medium text-foreground">Не удалось построить график</p>
+            <p className="text-sm text-[var(--ft-text-secondary)]">{error}</p>
           </div>
-        </CardContent>
+          <Button variant="outline" className="min-h-[44px]" onClick={onRetry}>
+            Повторить
+          </Button>
+        </div>
       </Card>
     );
   }
 
-  // Priority 4: empty
   if (!forecast || !hasActualData(forecast)) {
     return (
-      <Card>
-        <CardHeader>
-          <CardTitle>Прогноз расходов</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <p className="text-sm text-muted-foreground">Недостаточно данных для прогноза</p>
-        </CardContent>
+      <Card
+        className="gap-0 rounded-[28px] border border-[var(--ft-border-default)] shadow-[var(--ft-shadow-lg)]"
+        style={{
+          background:
+            'linear-gradient(180deg, color-mix(in srgb, var(--ft-surface-raised) 84%, var(--ft-bg-base)) 0%, var(--ft-surface-base) 100%)',
+        }}
+      >
+        <div className="flex items-start gap-2 px-6 py-6">
+          <h2 className="text-[1.75rem] font-semibold leading-tight text-foreground">{title}</h2>
+          <InfoTooltip content={tooltipText} className="-mt-1" ariaLabel="Подробнее о прогнозе расходов" />
+        </div>
+
+        <div className="px-6 pb-6">
+          <div className="flex min-h-[280px] items-center justify-center rounded-[24px] border border-[var(--ft-border-subtle)] bg-[color-mix(in_srgb,var(--ft-surface-base)_75%,transparent)] px-8 text-center">
+            <p className="max-w-md text-base leading-7 text-[var(--ft-text-secondary)]">
+              {isCurrentMonth
+                ? 'Недостаточно данных для прогноза. Продолжайте добавлять транзакции в течение месяца.'
+                : 'Недостаточно данных, чтобы показать итог и сравнение с базовым уровнем.'}
+            </p>
+          </div>
+        </div>
       </Card>
     );
   }
 
-  // Priority 5: success
-  const data = buildChartData(forecast);
+  const showForecastCorridor =
+    isCurrentMonth &&
+    forecast.summary.optimisticTotal !== null &&
+    forecast.summary.riskTotal !== null;
+  const data = buildChartData(forecast, showForecastCorridor);
   const baseline = forecast.series.baseline;
+  const xTicks = buildXAxisTicks(forecast.series.days);
+  const yMax = getChartMax(forecast, showForecastCorridor);
+  const heroLabel = showForecastCorridor ? 'До конца месяца' : 'Итог за месяц';
+  const heroValue = showForecastCorridor
+    ? formatAnalyticsMoneyRange(
+        forecast.summary.optimisticTotal,
+        forecast.summary.riskTotal,
+        currency,
+      )
+    : formatAnalyticsHeroMoney(forecast.summary.currentSpent, currency);
+  const baselineNote = buildBaselineNote(forecast, currency, showForecastCorridor);
+  const baselineLabel =
+    forecast.summary.baselineLimit !== null
+      ? `Базовый уровень · ${formatAnalyticsMetaMoney(forecast.summary.baselineLimit, currency)}`
+      : baseline !== null
+        ? `Базовый уровень · ${formatAnalyticsMetaMoney(baseline, currency)}`
+        : null;
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle>Прогноз расходов</CardTitle>
-      </CardHeader>
-      <KpiRow forecast={forecast} currency={currency} isCurrentMonth={isCurrentMonth} />
-      <CardContent className="pt-4">
-        <div
-          role="img"
-          aria-label="График прогноза расходов по дням месяца"
-        >
-          <ResponsiveContainer width="100%" height={280}>
-            <LineChart data={data} margin={{ top: 4, right: 8, left: 0, bottom: 0 }}>
+    <Card
+      className="gap-0 rounded-[28px] border border-[var(--ft-border-default)] shadow-[var(--ft-shadow-lg)]"
+      style={{
+        background:
+          'linear-gradient(180deg, color-mix(in srgb, var(--ft-surface-raised) 84%, var(--ft-bg-base)) 0%, var(--ft-surface-base) 100%)',
+      }}
+    >
+      <div className="space-y-5 px-6 py-6">
+        <div className="flex items-start gap-2">
+          <h2 className="text-[1.75rem] font-semibold leading-tight text-foreground">{title}</h2>
+          <InfoTooltip content={tooltipText} className="-mt-1" ariaLabel="Подробнее о прогнозе расходов" />
+        </div>
+
+        <div className="space-y-3">
+          <p className="text-base text-[var(--ft-text-secondary)]">{heroLabel}</p>
+          <p
+            className="text-[clamp(2.45rem,5vw,3.5rem)] font-bold leading-none text-[var(--ft-warning-300)]"
+            style={{ fontVariantNumeric: 'tabular-nums' }}
+          >
+            {heroValue}
+          </p>
+
+          {(baselineNote || baselineLabel) && (
+            <div className="flex flex-wrap items-center gap-x-4 gap-y-2 text-sm">
+              {baselineNote && (
+                <div
+                  className="flex items-center gap-2 font-medium"
+                  style={{
+                    color:
+                      baselineNote.tone === 'below'
+                        ? 'var(--ft-success-400)'
+                        : 'var(--ft-warning-400)',
+                  }}
+                >
+                  {baselineNote.tone === 'below' ? (
+                    <ArrowDown className="size-4" aria-hidden="true" />
+                  ) : (
+                    <ArrowUp className="size-4" aria-hidden="true" />
+                  )}
+                  <span>{baselineNote.text}</span>
+                </div>
+              )}
+
+              {baselineLabel && (
+                <span className="text-[var(--ft-text-tertiary)]">{baselineLabel}</span>
+              )}
+            </div>
+          )}
+        </div>
+
+        <div role="img" aria-label="График расходов по дням месяца">
+          <ResponsiveContainer width="100%" height={showForecastCorridor ? 500 : 476}>
+            <ComposedChart data={data} margin={{ top: 24, right: 14, left: 4, bottom: 12 }}>
+              <defs>
+                <linearGradient id="ft-forecast-actual-fill" x1="0" y1="0" x2="0" y2="1">
+                  <stop
+                    offset="0%"
+                    stopColor="color-mix(in srgb, var(--ft-warning-300) 24%, transparent)"
+                  />
+                  <stop
+                    offset="100%"
+                    stopColor="color-mix(in srgb, var(--ft-warning-300) 5%, transparent)"
+                  />
+                </linearGradient>
+              </defs>
+
+              <CartesianGrid
+                vertical={false}
+                stroke="color-mix(in srgb, var(--ft-border-subtle) 92%, transparent)"
+              />
               <XAxis
                 dataKey="day"
-                tick={{ fontSize: 11 }}
+                ticks={xTicks}
+                tick={{ fontSize: 13, fill: 'var(--ft-text-secondary)' }}
                 tickLine={false}
                 axisLine={false}
-                stroke="var(--color-muted-foreground)"
+                interval={0}
               />
               <YAxis
-                tick={{ fontSize: 11 }}
+                domain={yMax != null ? [0, yMax] : [0, 'auto']}
+                tickFormatter={(value: number) => formatYAxisTick(value, currency)}
+                tick={{ fontSize: 13, fill: 'var(--ft-text-secondary)' }}
                 tickLine={false}
                 axisLine={false}
-                width={52}
-                tickFormatter={(v: number) => formatCurrency(v, currency)}
-                stroke="var(--color-muted-foreground)"
+                width={88}
               />
               <Tooltip
                 content={(props) => {
-                  const { active, payload, label } = props as unknown as {
+                  const { active, label, payload } = props as unknown as {
                     active?: boolean;
-                    payload?: Array<{ name: string; value: number | null }>;
-                    label?: number;
+                    label?: number | string;
+                    payload?: Array<{ payload: ChartDataPoint }>;
                   };
-                  if (!active || !payload?.length) return null;
-                  const lineLabels: Record<string, string> = {
-                    actual: 'Факт',
-                    optimistic: 'Оптимистично',
-                    risk: 'Пессимистично',
-                  };
+
                   return (
-                    <div
-                      style={{
-                        background: 'var(--color-card)',
-                        border: '1px solid var(--color-border)',
-                        borderRadius: '8px',
-                        fontSize: '12px',
-                        padding: '8px 12px',
-                      }}
-                    >
-                      <p style={{ marginBottom: 4, color: 'var(--color-muted-foreground)' }}>
-                        День {label}
-                      </p>
-                      {payload.map((p) => (
-                        <p key={p.name} style={{ margin: '2px 0' }}>
-                          {lineLabels[p.name] ?? p.name}:{' '}
-                          {p.value !== null ? formatCurrency(p.value, currency) : '—'}
-                        </p>
-                      ))}
-                    </div>
+                    <ForecastTooltip
+                      active={active}
+                      label={label}
+                      payload={payload}
+                      currency={currency}
+                      showCorridor={showForecastCorridor}
+                    />
                   );
                 }}
               />
-              {baseline != null && (
-                <ReferenceLine
-                  y={baseline}
-                  stroke="var(--ft-primary-400)"
-                  strokeDasharray="4 2"
-                  label={{
-                    value: formatCurrency(baseline, currency),
-                    position: 'insideTopRight',
-                    fontSize: 11,
-                    fill: 'var(--ft-primary-400)',
-                  }}
-                />
+
+              <Area
+                type="monotone"
+                dataKey="actual"
+                stroke="none"
+                fill="url(#ft-forecast-actual-fill)"
+                isAnimationActive={false}
+              />
+
+              {showForecastCorridor && (
+                <>
+                  <Area
+                    type="monotone"
+                    dataKey="corridorBase"
+                    stackId="forecast"
+                    stroke="none"
+                    fill="transparent"
+                    isAnimationActive={false}
+                  />
+                  <Area
+                    type="monotone"
+                    dataKey="corridorBand"
+                    stackId="forecast"
+                    stroke="none"
+                    fill="color-mix(in srgb, var(--ft-success-500) 18%, transparent)"
+                    isAnimationActive={false}
+                  />
+                </>
               )}
+
               <Line
                 type="monotone"
                 dataKey="actual"
-                stroke="var(--color-primary)"
-                strokeWidth={2}
-                dot={false}
+                stroke="var(--ft-warning-300)"
+                strokeWidth={3}
                 connectNulls={false}
+                dot={{
+                  r: 4,
+                  fill: 'var(--ft-warning-300)',
+                  stroke: 'var(--ft-surface-base)',
+                  strokeWidth: 2,
+                }}
+                activeDot={{
+                  r: 5.5,
+                  fill: 'var(--ft-warning-300)',
+                  stroke: 'var(--ft-surface-base)',
+                  strokeWidth: 2,
+                }}
+                isAnimationActive={false}
               />
-              <Line
-                type="monotone"
-                dataKey="optimistic"
-                stroke="var(--ft-warning-500)"
-                strokeWidth={1.5}
-                strokeDasharray="4 2"
-                dot={false}
-                connectNulls={false}
-              />
-              <Line
-                type="monotone"
-                dataKey="risk"
-                stroke="var(--ft-danger-500)"
-                strokeWidth={1.5}
-                strokeDasharray="4 2"
-                dot={false}
-                connectNulls={false}
-              />
-            </LineChart>
+
+              {baseline !== null && (
+                <ReferenceLine
+                  y={baseline}
+                  stroke="var(--ft-primary-200)"
+                  strokeDasharray="6 5"
+                />
+              )}
+            </ComposedChart>
           </ResponsiveContainer>
         </div>
-        <ChartLegend hasBaseline={baseline != null} />
-      </CardContent>
+
+        <ChartLegend hasBaseline={baseline !== null} showCorridor={showForecastCorridor} />
+      </div>
     </Card>
   );
 }
