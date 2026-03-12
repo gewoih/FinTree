@@ -19,9 +19,11 @@ export const queryKeys = {
   transactions: {
     all: () => ['transactions'] as const,
     lists: () => [...queryKeys.transactions.all(), 'list'] as const,
+    // `filters` is wrapped in an object so React Query compares by value, not reference.
     list: (filters: TransactionsQuery | Record<string, unknown>) =>
-      [...queryKeys.transactions.lists(), filters] as const,
+      [...queryKeys.transactions.lists(), { filters }] as const,
     detail: (id: string) => [...queryKeys.transactions.all(), 'detail', id] as const,
+    check: () => [...queryKeys.transactions.all(), 'check'] as const,
   },
 
   // Categories
@@ -34,9 +36,10 @@ export const queryKeys = {
   // Analytics
   analytics: {
     all: () => ['analytics'] as const,
-    dashboard: () => [...queryKeys.analytics.all(), 'dashboard'] as const,
+    dashboard: (year: number, month: number) =>
+      [...queryKeys.analytics.all(), 'dashboard', { year, month }] as const,
     netWorth: (params?: { from?: string; to?: string }) =>
-      [...queryKeys.analytics.all(), 'netWorth', params] as const,
+      [...queryKeys.analytics.all(), 'netWorth', { params }] as const,
     evolution: (year?: number) =>
       [...queryKeys.analytics.all(), 'evolution', { year }] as const,
   },
@@ -53,7 +56,7 @@ export const queryKeys = {
   goals: {
     all: () => ['goals'] as const,
     simulation: (params: Record<string, unknown>) =>
-      [...queryKeys.goals.all(), 'simulation', params] as const,
+      [...queryKeys.goals.all(), 'simulation', { params }] as const,
   },
 
   // Freedom
@@ -61,7 +64,7 @@ export const queryKeys = {
     all: () => ['freedom'] as const,
     defaults: () => [...queryKeys.freedom.all(), 'defaults'] as const,
     calculate: (params: Record<string, unknown>) =>
-      [...queryKeys.freedom.all(), 'calculate', params] as const,
+      [...queryKeys.freedom.all(), 'calculate', { params }] as const,
   },
 
   // Investments

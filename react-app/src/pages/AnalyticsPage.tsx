@@ -9,6 +9,7 @@ import * as analyticsApi from '@/api/analytics';
 import * as accountsApi from '@/api/accounts';
 import * as userApi from '@/api/user';
 import { apiClient } from '@/api';
+import { queryKeys } from '@/api/queryKeys';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { ErrorBoundary } from '@/components/common/ErrorBoundary';
@@ -31,6 +32,7 @@ import {
 } from '@/components/analytics/models';
 import { formatYearMonth } from '@/utils/format';
 import { cn } from '@/utils/cn';
+import type { PathValues } from '@/router/paths';
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
@@ -156,14 +158,14 @@ export default function AnalyticsPage() {
 
   // ── Queries ──
   const dashboardQuery = useQuery({
-    queryKey: ['analytics-dashboard', selectedYear, selectedMonth],
+    queryKey: queryKeys.analytics.dashboard(selectedYear, selectedMonth),
     queryFn: () => analyticsApi.getAnalyticsDashboard(selectedYear, selectedMonth),
     staleTime: 60_000,
     enabled: !isFirstRun,
   });
 
   const transactionsCheckQuery = useQuery({
-    queryKey: ['transactions-check'],
+    queryKey: queryKeys.transactions.check(),
     queryFn: async () => {
       const res = await apiClient.get<{ total: number; items: unknown[] }>(
         '/transactions?page=1&size=1',
@@ -175,7 +177,7 @@ export default function AnalyticsPage() {
   });
 
   const accountsQuery = useQuery({
-    queryKey: ['accounts', 'active'],
+    queryKey: queryKeys.accounts.active(),
     queryFn: () => accountsApi.getAccounts(false),
     staleTime: 60_000,
     enabled: isFirstRun,
@@ -277,7 +279,9 @@ export default function AnalyticsPage() {
 
   const data = dashboardQuery.data;
   const dashboardError = dashboardQuery.error
-    ? ((dashboardQuery.error as Error).message ?? 'Ошибка загрузки')
+    ? (dashboardQuery.error instanceof Error
+        ? dashboardQuery.error.message
+        : 'Ошибка загрузки')
     : null;
 
   // ── Render: first run / onboarding ──
@@ -296,7 +300,7 @@ export default function AnalyticsPage() {
         <OnboardingStepper
           steps={onboardingSteps}
           loading={false}
-          onStepClick={(step) => navigate({ to: step.actionTo as never })}
+          onStepClick={(step) => navigate({ to: step.actionTo as PathValues })}
           onSkip={handleSkipOnboarding}
         />
       </div>
@@ -370,7 +374,7 @@ export default function AnalyticsPage() {
               <span className="text-foreground">
                 Прошлый месяц завершён. Хотите подвести итоги?{' '}
                 <button
-                  onClick={() => navigate({ to: retroPath as never })}
+                  onClick={() => navigate({ to: retroPath as PathValues })}
                   className="text-primary underline-offset-2 hover:underline font-medium"
                 >
                   Открыть итоги

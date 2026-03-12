@@ -3,6 +3,9 @@
 /** 0 = Bank, 2 = Crypto, 3 = Brokerage, 4 = Deposit */
 export type AccountType = 0 | 2 | 3 | 4;
 
+/** Runtime array of all valid AccountType values — use instead of duplicating literals. */
+export const ACCOUNT_TYPE_VALUES = [0, 2, 3, 4] as const satisfies readonly AccountType[];
+
 export const CATEGORY_TYPE = {
   Income: 'Income',
   Expense: 'Expense',

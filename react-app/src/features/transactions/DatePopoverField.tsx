@@ -43,7 +43,7 @@ export function DatePopoverField({
             </span>
           </Button>
         </PopoverTrigger>
-        <PopoverContent className="w-auto min-w-64 rounded-2xl p-4">
+        <PopoverContent className="w-auto min-w-64 max-w-[calc(100vw-2rem)] rounded-2xl p-4">
           <div className="space-y-2">
             <div className="text-sm font-medium text-foreground">{label}</div>
             <Input

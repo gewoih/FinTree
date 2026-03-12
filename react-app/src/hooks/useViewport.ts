@@ -6,6 +6,8 @@ const BREAKPOINTS = {
   desktop: 1024,
 } as const;
 
+export type Breakpoint = keyof typeof BREAKPOINTS;
+
 export interface ViewportState {
   isMobile: boolean;
   isTablet: boolean;
@@ -40,23 +42,24 @@ export function useViewport(): ViewportState {
       return;
     }
 
-    if (typeof ResizeObserver === 'undefined') {
-      const handleResize = () => {
-        setState(getViewportState(window.innerWidth));
-      };
+    // Prefer ResizeObserver (fires on element resize, not just window resize).
+    // Falls back to a window resize listener on environments where it is unavailable.
+    if (typeof ResizeObserver !== 'undefined') {
+      const observer = new ResizeObserver((entries) => {
+        const width = entries[0]?.contentRect.width ?? window.innerWidth;
+        setState(getViewportState(width));
+      });
 
-      window.addEventListener('resize', handleResize);
-      return () => window.removeEventListener('resize', handleResize);
+      observer.observe(document.documentElement);
+      return () => observer.disconnect();
     }
 
-    const observer = new ResizeObserver((entries) => {
-      const width = entries[0]?.contentRect.width ?? window.innerWidth;
-      setState(getViewportState(width));
-    });
+    const handleResize = () => {
+      setState(getViewportState(window.innerWidth));
+    };
 
-    observer.observe(document.documentElement);
-
-    return () => observer.disconnect();
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
   }, []);
 
   return state;

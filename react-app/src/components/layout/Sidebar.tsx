@@ -1,44 +1,15 @@
 import { Link, useNavigate, useRouterState } from '@tanstack/react-router';
-import {
-  BarChart2,
-  BookOpen,
-  Briefcase,
-  List,
-  LogOut,
-  Settings,
-  Shield,
-  Sun,
-  Tags,
-  Target,
-  Wallet,
-} from 'lucide-react';
-import type { ComponentType } from 'react';
+import { LogOut, Settings, Shield } from 'lucide-react';
 import { PATHS } from '../../router/paths';
 import { useAuthStore } from '../../stores/authStore';
 import { useUserStore } from '../../stores/userStore';
 import { cn } from '../../utils/cn';
 import { Button } from '../ui/button';
-
-interface NavItem {
-  label: string;
-  icon: ComponentType<{ className?: string }>;
-  to: string;
-}
-
-const primaryNavItems: NavItem[] = [
-  { label: 'Главная', icon: BarChart2, to: PATHS.ANALYTICS },
-  { label: 'Счета', icon: Wallet, to: PATHS.ACCOUNTS },
-  { label: 'Транзакции', icon: List, to: PATHS.TRANSACTIONS },
-  { label: 'Инвестиции', icon: Briefcase, to: PATHS.INVESTMENTS },
-  { label: 'Цели', icon: Target, to: PATHS.GOALS },
-  { label: 'Свобода', icon: Sun, to: PATHS.FREEDOM },
-  { label: 'Рефлексии', icon: BookOpen, to: PATHS.REFLECTIONS },
-];
-
-const secondaryNavItems: NavItem[] = [
-  { label: 'Категории', icon: Tags, to: PATHS.CATEGORIES },
-  { label: 'Настройки', icon: Settings, to: PATHS.PROFILE },
-];
+import {
+  PRIMARY_NAV_ITEMS,
+  SECONDARY_NAV_ITEMS,
+  type NavItem,
+} from '../../constants/navigation';
 
 interface SidebarProps {
   collapsed: boolean;
@@ -94,6 +65,9 @@ export default function Sidebar({ collapsed }: SidebarProps) {
   const isActive = (to: string) =>
     currentPath === to || currentPath.startsWith(`${to}/`);
 
+  const settingsItem: NavItem = { label: 'Настройки', icon: Settings, to: PATHS.PROFILE };
+  const adminItem: NavItem = { label: 'Админ', icon: Shield, to: PATHS.ADMIN };
+
   return (
     <aside
       className="app-shell__sidebar flex h-full flex-shrink-0 flex-col overflow-hidden border-r border-border bg-background transition-all duration-200"
@@ -102,7 +76,7 @@ export default function Sidebar({ collapsed }: SidebarProps) {
     >
       <div className="flex flex-1 flex-col gap-1 overflow-y-auto px-2 py-3">
         <nav aria-label="Основная навигация" className="flex flex-col gap-0.5">
-          {primaryNavItems.map((item) => (
+          {PRIMARY_NAV_ITEMS.map((item) => (
             <NavLink
               key={item.to}
               item={item}
@@ -115,7 +89,7 @@ export default function Sidebar({ collapsed }: SidebarProps) {
         <div className="my-2 border-t border-border" role="separator" />
 
         <nav aria-label="Дополнительная навигация" className="flex flex-col gap-0.5">
-          {secondaryNavItems.map((item) => (
+          {SECONDARY_NAV_ITEMS.map((item) => (
             <NavLink
               key={item.to}
               item={item}
@@ -124,9 +98,15 @@ export default function Sidebar({ collapsed }: SidebarProps) {
             />
           ))}
 
+          <NavLink
+            item={settingsItem}
+            collapsed={collapsed}
+            isActive={isActive(PATHS.PROFILE)}
+          />
+
           {isOwner && (
             <NavLink
-              item={{ label: 'Админ', icon: Shield, to: PATHS.ADMIN }}
+              item={adminItem}
               collapsed={collapsed}
               isActive={isActive(PATHS.ADMIN)}
             />

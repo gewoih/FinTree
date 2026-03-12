@@ -37,9 +37,7 @@ export async function updateAccount(payload: UpdateAccountPayload): Promise<void
 }
 
 export async function setPrimaryAccount(accountId: string): Promise<void> {
-  await apiClient.patch('/users/main-account', JSON.stringify(accountId), {
-    headers: { 'Content-Type': 'application/json' },
-  });
+  await apiClient.patch('/users/main-account', { accountId });
 }
 
 export async function updateAccountLiquidity(

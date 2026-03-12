@@ -35,7 +35,8 @@ export const useUserStore = create<UserState & UserActions>((set, get) => ({
         const user = await apiClient.getCurrentUser();
         set({ currentUser: user });
         return true;
-      } catch {
+      } catch (err) {
+        console.warn('[userStore] fetchCurrentUser failed:', err);
         set({ currentUser: null });
         return false;
       } finally {

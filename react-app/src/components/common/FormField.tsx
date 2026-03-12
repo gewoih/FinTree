@@ -48,7 +48,10 @@ export function FormField({
       return child;
     }
 
-    const childElement = child as ReactElement<AriaAttributes & { id?: string; required?: boolean }>;
+    // Safe: isValidElement confirmed above. Cast only adds the props we know we're injecting.
+    const childElement = child as ReactElement<
+      AriaAttributes & { id?: string; required?: boolean }
+    >;
 
     return cloneElement(childElement, {
       id: childElement.props.id ?? fieldId,

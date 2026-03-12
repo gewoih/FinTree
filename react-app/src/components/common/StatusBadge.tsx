@@ -7,10 +7,10 @@ interface StatusBadgeProps {
 }
 
 const variantClasses: Record<StatusBadgeProps['variant'], string> = {
-  success: 'border-green-500/30 bg-green-500/10 text-green-600',
-  warning: 'border-yellow-500/30 bg-yellow-500/10 text-yellow-600',
-  danger: 'border-red-500/30 bg-red-500/10 text-red-600',
-  info: 'border-blue-500/30 bg-blue-500/10 text-blue-600',
+  success: 'border-[var(--ft-success-500)]/30 bg-[var(--ft-success-500)]/10 text-[var(--ft-success-700,var(--ft-success-500))]',
+  warning: 'border-[var(--ft-warning-500)]/30 bg-[var(--ft-warning-500)]/10 text-[var(--ft-warning-700,var(--ft-warning-500))]',
+  danger:  'border-[var(--ft-danger-500)]/30  bg-[var(--ft-danger-500)]/10  text-[var(--ft-danger-700,var(--ft-danger-500))]',
+  info:    'border-[var(--ft-info-500)]/30    bg-[var(--ft-info-500)]/10    text-[var(--ft-info-700,var(--ft-info-500))]',
   neutral: 'border-border bg-muted text-muted-foreground',
 };
 

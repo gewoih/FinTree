@@ -1,22 +1,25 @@
 /**
  * Утилиты форматирования для FinTree
- * Locale: ru-RU
+ * Locale: ru-RU (hardcoded — the app targets Russian-speaking users)
  */
 
 import type { AccountType } from '@/types';
+import { ACCOUNT_TYPE_VALUES } from '@/types';
 
-const RU_NUMBER = new Intl.NumberFormat('ru-RU');
+const LOCALE = 'ru-RU';
+
+const RU_NUMBER = new Intl.NumberFormat(LOCALE);
 const RU_CURRENCY_BASE = (currency: string) =>
-  new Intl.NumberFormat('ru-RU', {
+  new Intl.NumberFormat(LOCALE, {
     style: 'currency',
     currency,
     minimumFractionDigits: 0,
     maximumFractionDigits: 2,
   });
 
-const ACCOUNT_TYPE_MAP: Record<string, AccountType> = {
+/** Maps the string representation used by the backend to a numeric AccountType. */
+const ACCOUNT_TYPE_STRING_MAP: Record<string, AccountType> = {
   Bank: 0,
-  Cash: 0,
   Crypto: 2,
   Brokerage: 3,
   Deposit: 4,
@@ -27,14 +30,21 @@ export function normalizeAccountType(
   raw: AccountType | string | number
 ): AccountType {
   if (typeof raw === 'number') {
-    if (raw === 0 || raw === 2 || raw === 3 || raw === 4) {
-      return raw;
+    if ((ACCOUNT_TYPE_VALUES as readonly number[]).includes(raw)) {
+      return raw as AccountType;
     }
 
+    console.warn(`[normalizeAccountType] Unknown numeric account type: ${raw}, defaulting to 0`);
     return 0;
   }
 
-  return ACCOUNT_TYPE_MAP[raw] ?? 0;
+  const mapped = ACCOUNT_TYPE_STRING_MAP[raw];
+  if (mapped === undefined) {
+    console.warn(`[normalizeAccountType] Unknown string account type: "${raw}", defaulting to 0`);
+    return 0;
+  }
+
+  return mapped;
 }
 
 /** Форматирует сумму с символом валюты. Пример: "1 234,56 ₽" */
@@ -48,7 +58,7 @@ export function formatCurrency(amount: number, currencyCode = 'RUB'): string {
 
 /** Форматирует число без валюты. Пример: "1 234,56" */
 export function formatNumber(value: number, fractionDigits = 2): string {
-  return new Intl.NumberFormat('ru-RU', {
+  return new Intl.NumberFormat(LOCALE, {
     minimumFractionDigits: 0,
     maximumFractionDigits: fractionDigits,
   }).format(value);
@@ -56,7 +66,7 @@ export function formatNumber(value: number, fractionDigits = 2): string {
 
 /** Форматирует процент. Пример: "12,5%" */
 export function formatPercent(value: number, fractionDigits = 1): string {
-  return new Intl.NumberFormat('ru-RU', {
+  return new Intl.NumberFormat(LOCALE, {
     style: 'percent',
     minimumFractionDigits: 0,
     maximumFractionDigits: fractionDigits,
@@ -65,7 +75,7 @@ export function formatPercent(value: number, fractionDigits = 1): string {
 
 /** Форматирует ISO-дату в читаемый формат. Пример: "15 янв 2025" */
 export function formatDate(isoDate: string): string {
-  return new Intl.DateTimeFormat('ru-RU', {
+  return new Intl.DateTimeFormat(LOCALE, {
     day: 'numeric',
     month: 'short',
     year: 'numeric',
@@ -74,12 +84,12 @@ export function formatDate(isoDate: string): string {
 
 /** Форматирует ISO-дату коротко. Пример: "15.01.2025" */
 export function formatDateShort(isoDate: string): string {
-  return new Intl.DateTimeFormat('ru-RU').format(new Date(isoDate));
+  return new Intl.DateTimeFormat(LOCALE).format(new Date(isoDate));
 }
 
 /** Форматирует ISO-дату вместе со временем. Пример: "15.01.2025, 14:35" */
 export function formatDateTime(isoDate: string): string {
-  return new Intl.DateTimeFormat('ru-RU', {
+  return new Intl.DateTimeFormat(LOCALE, {
     day: '2-digit',
     month: '2-digit',
     year: 'numeric',
@@ -90,7 +100,7 @@ export function formatDateTime(isoDate: string): string {
 
 /** Форматирует дату с полным названием месяца. Пример: "15 января 2025" */
 export function formatDateLong(isoDate: string): string {
-  return new Intl.DateTimeFormat('ru-RU', {
+  return new Intl.DateTimeFormat(LOCALE, {
     day: 'numeric',
     month: 'long',
     year: 'numeric',
@@ -99,7 +109,7 @@ export function formatDateLong(isoDate: string): string {
 
 /** Форматирует год и месяц. Пример: "Январь 2025" */
 export function formatYearMonth(year: number, month: number): string {
-  return new Intl.DateTimeFormat('ru-RU', {
+  return new Intl.DateTimeFormat(LOCALE, {
     year: 'numeric',
     month: 'long',
   }).format(new Date(year, month - 1));

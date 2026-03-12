@@ -184,7 +184,7 @@ export function OnboardingStepper({
     <div
       className="flex flex-col overflow-hidden rounded-xl border border-border"
       style={{
-        background: `linear-gradient(135deg, color-mix(in srgb, var(--ft-primary-400) 10%, var(--color-card)), color-mix(in srgb, var(--ft-info-500, #38bdf8) 8%, var(--color-card)))`,
+        background: `linear-gradient(135deg, color-mix(in srgb, var(--ft-primary-400) 10%, var(--color-card)), color-mix(in srgb, var(--ft-info-500, #488fa7) 8%, var(--color-card)))`,
       }}
     >
       <div className="px-4 pt-5 pb-1">

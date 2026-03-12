@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { ACCOUNT_TYPE_VALUES } from '@/types';
 
 // ━━━ AUTH ━━━
 
@@ -27,9 +28,16 @@ export type RegisterFormValues = z.infer<typeof registerSchema>;
 
 export const createAccountSchema = z.object({
   name: z.string().min(1, 'Введите название').max(100, 'Максимум 100 символов'),
-  type: z.union([z.literal(0), z.literal(2), z.literal(3), z.literal(4)], {
-    error: 'Выберите тип счёта',
-  }),
+  // Values are derived from ACCOUNT_TYPE_VALUES — single source of truth.
+  type: z.union(
+    ACCOUNT_TYPE_VALUES.map((v) => z.literal(v)) as [
+      z.ZodLiteral<0>,
+      z.ZodLiteral<2>,
+      z.ZodLiteral<3>,
+      z.ZodLiteral<4>,
+    ],
+    { error: 'Выберите тип счёта' }
+  ),
   currencyCode: z.string().min(1, 'Выберите валюту'),
   isLiquid: z.boolean().optional(),
 });

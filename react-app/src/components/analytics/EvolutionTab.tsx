@@ -104,7 +104,7 @@ function KpiCard({ label, value, trend, accent }: KpiCardProps) {
       </div>
       <span
         className="text-lg font-bold"
-        style={{ fontVariantNumeric: 'tabular-nums', color: accent ?? 'var(--color-foreground)' }}
+        style={{ fontVariantNumeric: 'tabular-nums', color: accent ?? 'var(--ft-text-primary)' }}
       >
         {value}
       </span>

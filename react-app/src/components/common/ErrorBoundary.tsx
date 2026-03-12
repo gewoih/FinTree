@@ -15,14 +15,13 @@ export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundarySt
     this.state = { hasError: false };
   }
 
-  public static getDerivedStateFromError(): ErrorBoundaryState {
+  public static getDerivedStateFromError(_error: Error): ErrorBoundaryState {
     return { hasError: true };
   }
 
-  public componentDidCatch(_error: Error, _errorInfo: ErrorInfo): void {
-    void _error;
-    void _errorInfo;
-    // placeholder for logging integration
+  public componentDidCatch(error: Error, errorInfo: ErrorInfo): void {
+    // TODO: wire up to a logging service (Sentry, etc.)
+    console.error('[ErrorBoundary]', error, errorInfo);
   }
 
   public render(): ReactNode {

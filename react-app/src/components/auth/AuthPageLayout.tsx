@@ -18,10 +18,14 @@ export function AuthPageLayout({
     <section className="relative isolate overflow-hidden">
       <div
         aria-hidden="true"
-        className="pointer-events-none absolute inset-x-0 top-0 h-72 bg-[radial-gradient(circle_at_top,_rgb(185_203_124_/_0.22),_transparent_60%)]"
+        className="pointer-events-none absolute inset-x-0 top-0 h-72"
+        style={{
+          background:
+            'radial-gradient(circle at top, color-mix(in srgb, var(--ft-primary-400) 22%, transparent), transparent 60%)',
+        }}
       />
 
-      <div className="mx-auto flex min-h-[calc(100vh-12rem)] w-full max-w-6xl items-center justify-center px-4 py-10 sm:px-6 lg:px-8">
+      <div className="mx-auto flex min-h-dvh w-full max-w-6xl items-center justify-center px-4 py-10 sm:px-6 lg:px-8">
         <div className="w-full max-w-md space-y-4">
           <Link
             to={PATHS.HOME}

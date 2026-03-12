@@ -6,6 +6,7 @@ import type {
   TelegramLoginPayload,
 } from '../types';
 import { useUserStore } from './userStore';
+import { resolveApiErrorMessage } from '../utils/errors';
 
 interface AuthState {
   isAuthenticated: boolean;
@@ -23,26 +24,34 @@ interface AuthActions {
   clearError(): void;
 }
 
-function resolveAuthErrorMessage(err: unknown, fallback: string): string {
-  if (!err || typeof err !== 'object') {
-    return fallback;
+type SetFn = (partial: Partial<AuthState>) => void;
+
+/**
+ * Shared auth flow: calls the given API method, then hydrates the user store.
+ * Returns `true` on success, `false` on any error (error message is stored in state).
+ */
+async function authenticateAndHydrate(
+  set: SetFn,
+  apiCall: () => Promise<void>,
+  errorFallback: string
+): Promise<boolean> {
+  set({ isLoading: true, error: null });
+
+  try {
+    await apiCall();
+    const isHydrated = await useUserStore.getState().fetchCurrentUser();
+    if (!isHydrated) {
+      throw new Error('User hydration failed');
+    }
+
+    set({ isAuthenticated: true, isSessionChecked: true });
+    return true;
+  } catch (err) {
+    set({ error: resolveApiErrorMessage(err, errorFallback) });
+    return false;
+  } finally {
+    set({ isLoading: false });
   }
-
-  const error = err as {
-    response?: { data?: { error?: string; message?: string } };
-    userMessage?: string;
-  };
-
-  const backendMessage = error.response?.data?.error ?? error.response?.data?.message;
-  if (typeof backendMessage === 'string' && backendMessage.trim()) {
-    return backendMessage;
-  }
-
-  if (typeof error.userMessage === 'string' && error.userMessage.trim()) {
-    return error.userMessage;
-  }
-
-  return fallback;
 }
 
 export const useAuthStore = create<AuthState & AuthActions>((set, get) => ({
@@ -51,85 +60,39 @@ export const useAuthStore = create<AuthState & AuthActions>((set, get) => ({
   error: null,
   isSessionChecked: false,
 
-  async login(payload) {
-    set({ isLoading: true, error: null });
-
-    try {
-      await apiClient.login(payload);
-      const isHydrated = await useUserStore.getState().fetchCurrentUser();
-      if (!isHydrated) {
-        throw new Error('User hydration failed');
-      }
-
-      set({ isAuthenticated: true, isSessionChecked: true });
-      return true;
-    } catch (err) {
-      set({
-        error: resolveAuthErrorMessage(
-          err,
-          'Не удалось войти. Проверьте Email и пароль.'
-        ),
-      });
-      return false;
-    } finally {
-      set({ isLoading: false });
-    }
+  login(payload) {
+    return authenticateAndHydrate(
+      set,
+      () => apiClient.login(payload),
+      'Не удалось войти. Проверьте Email и пароль.'
+    );
   },
 
-  async register(payload) {
-    set({ isLoading: true, error: null });
-
-    try {
-      await apiClient.register(payload);
-      const isHydrated = await useUserStore.getState().fetchCurrentUser();
-      if (!isHydrated) {
-        throw new Error('User hydration failed');
-      }
-
-      set({ isAuthenticated: true, isSessionChecked: true });
-      return true;
-    } catch (err) {
-      set({
-        error: resolveAuthErrorMessage(
-          err,
-          'Не удалось зарегистрироваться. Попробуйте ещё раз.'
-        ),
-      });
-      return false;
-    } finally {
-      set({ isLoading: false });
-    }
+  register(payload) {
+    return authenticateAndHydrate(
+      set,
+      () => apiClient.register(payload),
+      'Не удалось зарегистрироваться. Попробуйте ещё раз.'
+    );
   },
 
-  async loginWithTelegram(payload) {
-    set({ isLoading: true, error: null });
-
-    try {
-      await apiClient.loginWithTelegram(payload);
-      const isHydrated = await useUserStore.getState().fetchCurrentUser();
-      if (!isHydrated) {
-        throw new Error('User hydration failed');
-      }
-
-      set({ isAuthenticated: true, isSessionChecked: true });
-      return true;
-    } catch (err) {
-      set({
-        error: resolveAuthErrorMessage(err, 'Не удалось войти через Telegram.'),
-      });
-      return false;
-    } finally {
-      set({ isLoading: false });
-    }
+  loginWithTelegram(payload) {
+    return authenticateAndHydrate(
+      set,
+      () => apiClient.loginWithTelegram(payload),
+      'Не удалось войти через Telegram.'
+    );
   },
 
   async logout() {
+    // Cancel any in-flight user fetch so it cannot re-hydrate after logout.
+    useUserStore.getState().clearUser();
+
     try {
       await apiClient.logout();
     } catch {
-      // Игнорируем ошибки logout — локальное состояние всё равно очищается.
+      // Ignore logout API errors — local state is already cleared.
     } finally {
-      useUserStore.getState().clearUser();
       set({
         isAuthenticated: false,
         isSessionChecked: true,

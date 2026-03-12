@@ -1,60 +1,42 @@
 import { Link, useRouterState } from '@tanstack/react-router';
-import {
-  BarChart2,
-  BookOpen,
-  Briefcase,
-  Ellipsis,
-  List,
-  Sun,
-  Target,
-  User,
-  Wallet,
-} from 'lucide-react';
+import { Ellipsis, User } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 import { PATHS } from '../../router/paths';
 import { cn } from '../../utils/cn';
+import { MOBILE_MORE_ITEMS, MOBILE_PRIMARY_TABS, type NavItem } from '../../constants/navigation';
 
-interface TabItem {
-  label: string;
-  icon: React.ComponentType<{ className?: string }>;
-  to: string;
-}
+const PROFILE_ITEM: NavItem = { label: 'Профиль', icon: User, to: PATHS.PROFILE };
 
-const primaryTabs: TabItem[] = [
-  { label: 'Главная', icon: BarChart2, to: PATHS.ANALYTICS },
-  { label: 'Счета', icon: Wallet, to: PATHS.ACCOUNTS },
-  { label: 'Транзакции', icon: List, to: PATHS.TRANSACTIONS },
-  { label: 'Инвестиции', icon: Briefcase, to: PATHS.INVESTMENTS },
-];
-
-const moreMenuItems: TabItem[] = [
-  { label: 'Цели', icon: Target, to: PATHS.GOALS },
-  { label: 'Свобода', icon: Sun, to: PATHS.FREEDOM },
-  { label: 'Рефлексии', icon: BookOpen, to: PATHS.REFLECTIONS },
-  { label: 'Профиль', icon: User, to: PATHS.PROFILE },
-];
+/** All items reachable via the "More" overflow menu */
+const MORE_MENU_ITEMS: NavItem[] = [...MOBILE_MORE_ITEMS, PROFILE_ITEM];
 
 export default function BottomTabBar() {
   const routerState = useRouterState();
   const currentPath = routerState.location.pathname;
 
-  const [moreMenuPath, setMoreMenuPath] = useState<string | null>(null);
+  // Store the path at which the "More" menu was opened.
+  // When currentPath changes (navigation), openAtPath no longer matches → menu closes automatically.
+  const [openAtPath, setOpenAtPath] = useState<string | null>(null);
   const moreRef = useRef<HTMLDivElement>(null);
-  const isMoreOpen = moreMenuPath === currentPath;
+
+  const isMoreOpen = openAtPath === currentPath;
 
   const isActive = (to: string) =>
     currentPath === to || currentPath.startsWith(`${to}/`);
 
-  const isMoreActive = moreMenuItems.some((item) => isActive(item.to));
+  const isMoreActive = MORE_MENU_ITEMS.some((item) => isActive(item.to));
 
+  const closeMoreMenu = () => setOpenAtPath(null);
+  const toggleMoreMenu = () =>
+    setOpenAtPath((prev) => (prev === currentPath ? null : currentPath));
+
+  // Close the "More" menu when user clicks outside
   useEffect(() => {
-    if (!isMoreOpen) {
-      return;
-    }
+    if (!isMoreOpen) return;
 
     const handleOutsideClick = (event: MouseEvent) => {
       if (moreRef.current && !moreRef.current.contains(event.target as Node)) {
-        setMoreMenuPath(null);
+        closeMoreMenu();
       }
     };
 
@@ -64,14 +46,14 @@ export default function BottomTabBar() {
 
   return (
     <nav
-      className="fixed right-0 bottom-0 left-0 z-[1000] flex items-stretch border-t border-border bg-background"
+      className="fixed right-0 bottom-0 left-0 z-[var(--ft-z-dropdown,1000)] flex items-stretch border-t border-border bg-background"
       style={{
         height: 'calc(64px + env(safe-area-inset-bottom, 0px))',
         paddingBottom: 'env(safe-area-inset-bottom, 0px)',
       }}
       aria-label="Основная навигация"
     >
-      {primaryTabs.map((tab) => (
+      {MOBILE_PRIMARY_TABS.map((tab) => (
         <Link
           key={tab.to}
           to={tab.to}
@@ -105,9 +87,7 @@ export default function BottomTabBar() {
           aria-expanded={isMoreOpen}
           aria-haspopup="true"
           aria-controls="mobile-more-menu"
-          onClick={() =>
-            setMoreMenuPath((prev) => (prev === currentPath ? null : currentPath))
-          }
+          onClick={toggleMoreMenu}
           className={cn(
             'relative flex min-h-[44px] w-full flex-1 cursor-pointer select-none flex-col items-center justify-center gap-0.5 border-0 bg-transparent text-xs font-medium transition-colors active:scale-95',
             'focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-[-2px]',
@@ -130,15 +110,15 @@ export default function BottomTabBar() {
         {isMoreOpen && (
           <nav
             id="mobile-more-menu"
-            className="absolute right-2 bottom-[calc(100%+8px)] z-50 flex min-w-[168px] flex-col gap-1 rounded-lg border border-border bg-popover p-2 shadow-md"
+            className="absolute right-2 bottom-[calc(100%+8px)] z-[var(--ft-z-dropdown,1000)] flex min-w-[168px] flex-col gap-1 rounded-lg border border-border bg-popover p-2 shadow-md"
             aria-label="Дополнительная навигация"
           >
-            {moreMenuItems.map((item) => (
+            {MORE_MENU_ITEMS.map((item) => (
               <Link
                 key={item.to}
                 to={item.to}
                 aria-current={isActive(item.to) ? 'page' : undefined}
-                onClick={() => setMoreMenuPath(null)}
+                onClick={closeMoreMenu}
                 className={cn(
                   'flex min-h-[44px] items-center gap-2 rounded-md px-3 py-2 text-sm font-medium transition-colors',
                   isActive(item.to)

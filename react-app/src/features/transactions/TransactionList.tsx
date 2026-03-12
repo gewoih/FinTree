@@ -139,7 +139,10 @@ export function TransactionList({
   const pageCount = Math.max(1, Math.ceil(data.total / filters.pageSize));
   const rangeStart = (filters.page - 1) * filters.pageSize + 1;
   const rangeEnd = Math.min(filters.page * filters.pageSize, data.total);
-  const groupColSpan = isMobile ? (readonly ? 3 : 4) : readonly ? 4 : 5;
+  // Columns: Description + (Account on desktop) + Date + Amount + (Actions when not readonly)
+  const groupColSpan = isMobile
+    ? readonly ? 3 : 4
+    : readonly ? 4 : 5;
 
   return (
     <>

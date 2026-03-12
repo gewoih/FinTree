@@ -1,13 +1,12 @@
+import { useShallow } from 'zustand/shallow';
 import { useUiStore } from '@/stores/uiStore';
 
 export function useTheme() {
-  const theme = useUiStore((state) => state.theme);
-  const setTheme = useUiStore((state) => state.setTheme);
-  const toggleTheme = useUiStore((state) => state.toggleTheme);
-
-  return {
-    theme,
-    setTheme,
-    toggleTheme,
-  };
+  return useUiStore(
+    useShallow((state) => ({
+      theme: state.theme,
+      setTheme: state.setTheme,
+      toggleTheme: state.toggleTheme,
+    }))
+  );
 }

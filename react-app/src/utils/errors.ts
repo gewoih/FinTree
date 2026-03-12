@@ -1,23 +1,39 @@
+import axios from 'axios';
+
+/**
+ * Extracts a user-facing error message from an unknown error value.
+ *
+ * Priority:
+ *   1. `userMessage` — set by the API interceptor on AxiosErrors
+ *   2. Backend body: `response.data.error` or `response.data.message`
+ *   3. Native Error `.message`
+ *   4. `fallback`
+ */
 export function resolveApiErrorMessage(error: unknown, fallback: string): string {
-  if (!error || typeof error !== "object") {
-    return fallback
+  if (!error) {
+    return fallback;
   }
 
-  const normalized = error as {
-    response?: { data?: { error?: string; message?: string } }
-    userMessage?: string
+  // Axios errors augmented by the API interceptor carry a ready `userMessage`.
+  if (axios.isAxiosError(error)) {
+    const userMsg = (error as { userMessage?: string }).userMessage;
+    if (typeof userMsg === 'string' && userMsg.trim()) {
+      return userMsg;
+    }
+
+    const data = error.response?.data as { error?: string; message?: string } | undefined;
+    const backendMsg = data?.error ?? data?.message;
+    if (typeof backendMsg === 'string' && backendMsg.trim()) {
+      return backendMsg;
+    }
+
+    return fallback;
   }
 
-  const backendMessage =
-    normalized.response?.data?.error ?? normalized.response?.data?.message
-
-  if (typeof backendMessage === "string" && backendMessage.trim()) {
-    return backendMessage
+  // Native JS Error
+  if (error instanceof Error && error.message.trim()) {
+    return error.message;
   }
 
-  if (typeof normalized.userMessage === "string" && normalized.userMessage.trim()) {
-    return normalized.userMessage
-  }
-
-  return fallback
+  return fallback;
 }
