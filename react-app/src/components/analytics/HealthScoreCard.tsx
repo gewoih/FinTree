@@ -79,7 +79,7 @@ function resolveZoneColors(inverted = false) {
     'var(--ft-success-500)',
   ];
 
-  return inverted ? forward.toReversed() : forward;
+  return inverted ? [...forward].reverse() : forward;
 }
 
 function ZoneBar({ model }: { model: ZoneBarModel }) {

@@ -77,6 +77,26 @@ export function formatDateShort(isoDate: string): string {
   return new Intl.DateTimeFormat('ru-RU').format(new Date(isoDate));
 }
 
+/** Форматирует ISO-дату вместе со временем. Пример: "15.01.2025, 14:35" */
+export function formatDateTime(isoDate: string): string {
+  return new Intl.DateTimeFormat('ru-RU', {
+    day: '2-digit',
+    month: '2-digit',
+    year: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit',
+  }).format(new Date(isoDate));
+}
+
+/** Форматирует дату с полным названием месяца. Пример: "15 января 2025" */
+export function formatDateLong(isoDate: string): string {
+  return new Intl.DateTimeFormat('ru-RU', {
+    day: 'numeric',
+    month: 'long',
+    year: 'numeric',
+  }).format(new Date(isoDate));
+}
+
 /** Форматирует год и месяц. Пример: "Январь 2025" */
 export function formatYearMonth(year: number, month: number): string {
   return new Intl.DateTimeFormat('ru-RU', {

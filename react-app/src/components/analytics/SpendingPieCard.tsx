@@ -5,7 +5,6 @@ import {
   Cell,
   Tooltip,
   ResponsiveContainer,
-  type TooltipProps,
 } from 'recharts';
 
 import { Card } from '@/components/ui/card';
@@ -59,7 +58,13 @@ function ChartTooltip({
   active,
   payload,
   currency,
-}: TooltipProps<number, string> & { currency: string }) {
+}: {
+  active?: boolean;
+  payload?: ReadonlyArray<{
+    payload: CategoryBreakdownItemDto & { displayAmount: number };
+  }>;
+  currency: string;
+}) {
   const entry = payload?.[0]?.payload as
     | (CategoryBreakdownItemDto & { displayAmount: number })
     | undefined;
@@ -293,7 +298,19 @@ export function SpendingPieCard({
                     />
                   ))}
                 </Pie>
-                <Tooltip content={(props) => <ChartTooltip {...props} currency={currency} />} />
+                <Tooltip
+                  content={(props) => (
+                    <ChartTooltip
+                      active={props.active}
+                      payload={
+                        props.payload as unknown as ReadonlyArray<{
+                          payload: CategoryBreakdownItemDto & { displayAmount: number };
+                        }>
+                      }
+                      currency={currency}
+                    />
+                  )}
+                />
               </PieChart>
             </ResponsiveContainer>
 

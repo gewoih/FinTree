@@ -1,3 +1,5 @@
+import type { TransactionsQuery } from '@/types';
+
 export const queryKeys = {
   // Auth
   currentUser: () => ['currentUser'] as const,
@@ -17,7 +19,7 @@ export const queryKeys = {
   transactions: {
     all: () => ['transactions'] as const,
     lists: () => [...queryKeys.transactions.all(), 'list'] as const,
-    list: (filters: Record<string, unknown>) =>
+    list: (filters: TransactionsQuery | Record<string, unknown>) =>
       [...queryKeys.transactions.lists(), filters] as const,
     detail: (id: string) => [...queryKeys.transactions.all(), 'detail', id] as const,
   },

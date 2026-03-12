@@ -2,9 +2,20 @@ import { apiClient } from './index';
 import type {
   AccountBalanceAdjustmentDto,
   AccountDto,
+  AccountType,
   CreateAccountPayload,
   UpdateAccountPayload,
 } from '@/types';
+
+const ACCOUNT_TYPE_API_VALUES: Record<
+  AccountType,
+  'Bank' | 'Crypto' | 'Brokerage' | 'Deposit'
+> = {
+  0: 'Bank',
+  2: 'Crypto',
+  3: 'Brokerage',
+  4: 'Deposit',
+};
 
 export async function getAccounts(archived = false): Promise<AccountDto[]> {
   const res = await apiClient.get<AccountDto[]>('/users/accounts', {
@@ -14,7 +25,10 @@ export async function getAccounts(archived = false): Promise<AccountDto[]> {
 }
 
 export async function createAccount(payload: CreateAccountPayload): Promise<string> {
-  const res = await apiClient.post<string>('/accounts', payload);
+  const res = await apiClient.post<string>('/accounts', {
+    ...payload,
+    type: ACCOUNT_TYPE_API_VALUES[payload.type],
+  });
   return res.data;
 }
 

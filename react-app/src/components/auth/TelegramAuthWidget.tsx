@@ -35,7 +35,7 @@ export function TelegramAuthWidget({
       'financetree_bot';
     const callbackName =
       mode === 'login' ? '__ftTelegramLoginAuth' : '__ftTelegramRegisterAuth';
-    const windowWithCallback = window as Window & Record<string, unknown>;
+    const windowWithCallback = window as unknown as Window & Record<string, unknown>;
     let isLoaded = false;
 
     windowWithCallback[callbackName] = async (payload: TelegramLoginPayload) => {

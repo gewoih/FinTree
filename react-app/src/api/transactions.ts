@@ -7,6 +7,18 @@ import type {
   UpdateTransactionPayload,
 } from '@/types';
 
+type RawTransactionDto = Omit<TransactionDto, 'occurredAt'> & {
+  occurredAt?: string;
+  occuredAt?: string;
+};
+
+function normalizeTransactionDto(transaction: RawTransactionDto): TransactionDto {
+  return {
+    ...transaction,
+    occurredAt: transaction.occurredAt ?? transaction.occuredAt ?? '',
+  };
+}
+
 export async function getTransactions(
   query: TransactionsQuery = {}
 ): Promise<PagedResult<TransactionDto>> {
@@ -40,10 +52,13 @@ export async function getTransactions(
     params.size = query.size;
   }
 
-  const res = await apiClient.get<PagedResult<TransactionDto>>('/transaction', {
+  const res = await apiClient.get<PagedResult<RawTransactionDto>>('/transaction', {
     params,
   });
-  return res.data;
+  return {
+    ...res.data,
+    items: res.data.items.map(normalizeTransactionDto),
+  };
 }
 
 export async function createTransaction(

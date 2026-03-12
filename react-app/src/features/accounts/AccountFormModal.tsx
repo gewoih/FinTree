@@ -1,0 +1,227 @@
+import { zodResolver } from '@hookform/resolvers/zod';
+import { Check, Plus } from 'lucide-react';
+import { useEffect } from 'react';
+import { Controller, useForm } from 'react-hook-form';
+import { z } from 'zod';
+import * as accountsApi from '@/api/accounts';
+import { queryKeys } from '@/api/queryKeys';
+import { FormField } from '@/components/common/FormField';
+import { Button } from '@/components/ui/button';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
+import { Input } from '@/components/ui/input';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
+import { useQueryClient } from '@tanstack/react-query';
+import { toast } from 'sonner';
+import type { Currency } from '@/types';
+import { resolveApiErrorMessage } from '@/utils/errors';
+import type { ManagedAccount } from './accountModels';
+import {
+  ACCOUNT_TYPE_OPTIONS,
+  getCurrencyOptionLabel,
+} from './accountUtils';
+
+const createSchema = z.object({
+  name: z.string().trim().min(1, 'Введите название счёта').max(100),
+  type: z.enum(['0', '2', '3', '4']),
+  currencyCode: z.string().trim().min(1, 'Выберите валюту'),
+});
+
+const editSchema = z.object({
+  name: z.string().trim().min(1, 'Введите название счёта').max(100),
+});
+
+type CreateFormValues = z.infer<typeof createSchema>;
+type EditFormValues = z.infer<typeof editSchema>;
+
+interface AccountFormModalProps {
+  open: boolean;
+  account: ManagedAccount | null;
+  currencies: Currency[];
+  onClose: () => void;
+  onSuccess: () => void;
+}
+
+export function AccountFormModal({
+  open,
+  account,
+  currencies,
+  onClose,
+  onSuccess,
+}: AccountFormModalProps) {
+  const isEditMode = account !== null;
+  const queryClient = useQueryClient();
+
+  const form = useForm<CreateFormValues | EditFormValues>({
+    resolver: zodResolver(isEditMode ? editSchema : createSchema),
+    defaultValues: isEditMode
+      ? { name: account.name }
+      : {
+          name: '',
+          type: '0',
+          currencyCode: currencies[0]?.code ?? '',
+        },
+  });
+
+  useEffect(() => {
+    if (!open) {
+      return;
+    }
+
+    form.reset(
+      isEditMode
+        ? { name: account.name }
+        : {
+            name: '',
+            type: '0',
+            currencyCode: currencies[0]?.code ?? '',
+          }
+    );
+  }, [account, currencies, form, isEditMode, open]);
+
+  const handleSubmit = form.handleSubmit(async (values) => {
+    try {
+      if (isEditMode) {
+        await accountsApi.updateAccount({
+          id: account.id,
+          name: values.name.trim(),
+        });
+      } else {
+        const createValues = values as CreateFormValues;
+
+        await accountsApi.createAccount({
+          name: createValues.name.trim(),
+          type: Number(createValues.type) as 0 | 2 | 3 | 4,
+          currencyCode: createValues.currencyCode,
+        });
+      }
+
+      await queryClient.invalidateQueries({ queryKey: queryKeys.accounts.all() });
+      onSuccess();
+      onClose();
+      toast.success(isEditMode ? 'Счёт переименован' : 'Счёт создан');
+    } catch (error) {
+      toast.error(
+        resolveApiErrorMessage(
+          error,
+          isEditMode ? 'Не удалось сохранить изменения.' : 'Не удалось создать счёт.'
+        )
+      );
+    }
+  });
+
+  return (
+    <Dialog open={open} onOpenChange={(nextOpen) => !nextOpen && onClose()}>
+      <DialogContent className="max-w-[calc(100vw-1rem)] sm:max-w-[400px]">
+        <DialogHeader>
+          <DialogTitle>
+            {isEditMode ? 'Переименование счета' : 'Добавить счёт'}
+          </DialogTitle>
+          <DialogDescription>
+            {isEditMode
+              ? 'Измените название, чтобы счёт было проще узнавать в списках.'
+              : 'Укажите название, тип и валюту нового счёта.'}
+          </DialogDescription>
+        </DialogHeader>
+
+        <form className="space-y-4" onSubmit={handleSubmit} noValidate>
+          <FormField
+            label="Название"
+            required
+            error={form.formState.errors.name?.message}
+          >
+            <Input
+              autoFocus
+              placeholder="Например, «Основная карта»"
+              {...form.register('name')}
+            />
+          </FormField>
+
+          {isEditMode ? (
+            <p className="rounded-xl border border-border bg-muted/40 px-3 py-2 text-sm text-muted-foreground">
+              Валюту и тип нельзя изменить после создания счёта.
+            </p>
+          ) : (
+            <>
+              <FormField
+                label="Тип счёта"
+                required
+                error={'type' in form.formState.errors ? form.formState.errors.type?.message : null}
+              >
+                <Controller
+                  control={form.control}
+                  name="type"
+                  render={({ field }) => (
+                    <Select value={field.value} onValueChange={field.onChange}>
+                      <SelectTrigger className="h-11 w-full rounded-xl">
+                        <SelectValue placeholder="Выберите тип" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {ACCOUNT_TYPE_OPTIONS.map((option) => (
+                          <SelectItem key={option.value} value={String(option.value)}>
+                            {option.label}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  )}
+                />
+              </FormField>
+
+              <FormField
+                label="Валюта"
+                required
+                error={
+                  'currencyCode' in form.formState.errors
+                    ? form.formState.errors.currencyCode?.message
+                    : null
+                }
+              >
+                <Controller
+                  control={form.control}
+                  name="currencyCode"
+                  render={({ field }) => (
+                    <Select value={field.value} onValueChange={field.onChange}>
+                      <SelectTrigger className="h-11 w-full rounded-xl">
+                        <SelectValue placeholder="Выберите валюту" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {currencies.map((currency) => (
+                          <SelectItem key={currency.code} value={currency.code}>
+                            {getCurrencyOptionLabel(currency)}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  )}
+                />
+              </FormField>
+            </>
+          )}
+
+          <DialogFooter>
+            <Button type="button" variant="outline" onClick={onClose}>
+              Отмена
+            </Button>
+            <Button type="submit" disabled={form.formState.isSubmitting}>
+              {isEditMode ? <Check className="size-4" /> : <Plus className="size-4" />}
+              {isEditMode ? 'Сохранить' : 'Создать'}
+            </Button>
+          </DialogFooter>
+        </form>
+      </DialogContent>
+    </Dialog>
+  );
+}

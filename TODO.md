@@ -108,6 +108,12 @@
   **Fix:** Reuse the analytics formatting helpers from `react-app/src/components/analytics/models.ts` for percentages, months, mean daily spend, and month table cells.
   **Files:** `react-app/src/components/analytics/EvolutionTab.tsx`
 
+- [ ] `FT-TODO-065` React migration for accounts/transactions needs one cleanup pass to split oversized orchestration files and modal sections into smaller feature components/hooks.
+  **Why:** `TransactionsPage`, `TransactionFormModal`, `TransactionList`, and `AccountsPage` now ship working behavior, but they exceed the block guideline of keeping components around 200 lines and will get harder to evolve in later migration blocks.
+  **Fix:** Extract page-level query/mutation orchestration into feature hooks and move repeated form/date/summary sections into focused presentational components.
+  **Priority:** P2
+  **Files:** `react-app/src/pages/AccountsPage.tsx`, `react-app/src/pages/TransactionsPage.tsx`, `react-app/src/features/transactions/TransactionFormModal.tsx`, `react-app/src/features/transactions/TransactionList.tsx`
+
 - [ ] `FT-TODO-040` SummaryStrip — zone progress bar for the 4 metric cards
   **Context:** Metric cards (Сбережения, Финансовая подушка, Стабильность трат, Необязательные) show numbers with no benchmark context. A segmented zone bar with a position marker communicates the quality of each value at a glance.
   **Zone definitions:**

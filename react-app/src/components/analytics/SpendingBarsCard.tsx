@@ -82,7 +82,7 @@ function BarsTooltip({
   currency,
 }: {
   active?: boolean;
-  payload?: Array<{ payload: { label: string; amount: number } }>;
+  payload?: ReadonlyArray<{ payload: { label: string; amount: number } }>;
   currency: string;
 }) {
   const entry = payload?.[0]?.payload;
@@ -214,7 +214,11 @@ export function SpendingBarsCard({
                   content={(props) => (
                     <BarsTooltip
                       active={props.active}
-                      payload={props.payload as Array<{ payload: { label: string; amount: number } }>}
+                      payload={
+                        props.payload as unknown as ReadonlyArray<{
+                          payload: { label: string; amount: number };
+                        }>
+                      }
                       currency={currency}
                     />
                   )}

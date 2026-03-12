@@ -58,6 +58,7 @@ export interface AccountDto {
   isMain: boolean;
   balance: number;
   balanceInBaseCurrency: number;
+  currency?: Currency | null;
 }
 
 /** Фронтенд-модель с нормализованным типом */
@@ -180,7 +181,6 @@ export interface NewTransactionPayload {
 
 export interface UpdateTransactionPayload {
   id: string;
-  type: TransactionType;
   accountId: string;
   categoryId: string;
   amount: number;
