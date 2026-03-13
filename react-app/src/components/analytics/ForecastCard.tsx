@@ -9,19 +9,22 @@ import {
   XAxis,
   YAxis,
 } from 'recharts';
-import { AlertCircle, ArrowDown, ArrowUp, Info } from 'lucide-react';
+import { ArrowDown, ArrowUp, Info } from 'lucide-react';
 
-import { Button } from '@/components/ui/button';
-import { Card } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import type { ForecastDto } from '@/types';
 
-import { InfoTooltip } from './InfoTooltip';
+import {
+  AnalyticsInset,
+  AnalyticsPanel,
+  AnalyticsSectionHeader,
+  AnalyticsState,
+} from './analyticsTheme';
+import { analyticsHeroStyle } from './analyticsTokens';
 import {
   formatAnalyticsHeroMoney,
   formatAnalyticsMetaMoney,
   formatAnalyticsMoneyRange,
-  ANALYTICS_CARD_BG,
 } from './models';
 
 interface ForecastCardProps {
@@ -211,7 +214,7 @@ function ChartLegend({
       <span className="flex items-center gap-2">
         <span
           className="inline-block h-0.5 w-7 rounded"
-          style={{ backgroundColor: 'var(--ft-warning-300)' }}
+          style={{ backgroundColor: 'var(--ft-chart-1)' }}
         />
         Факт
       </span>
@@ -235,7 +238,7 @@ function ChartLegend({
             className="inline-block h-0.5 w-7 rounded border-t-2"
             style={{
               borderStyle: 'dashed',
-              borderColor: 'var(--ft-primary-200)',
+              borderColor: 'var(--ft-chart-baseline)',
               background: 'none',
             }}
           />
@@ -265,38 +268,29 @@ export function ForecastCard({
 
   if (!readinessMet) {
     return (
-      <Card
-        className="gap-0 rounded-[28px] border border-[var(--ft-border-default)] shadow-[var(--ft-shadow-lg)]"
-        style={{
-          background: ANALYTICS_CARD_BG,
-        }}
-      >
-        <div className="flex items-start gap-2 px-6 py-6">
-          <h2 className="text-[1.75rem] font-semibold leading-tight text-foreground">{title}</h2>
-          <InfoTooltip content={tooltipText} className="-mt-1" ariaLabel="Подробнее о прогнозе расходов" />
-        </div>
+      <AnalyticsPanel>
+        <AnalyticsSectionHeader
+          title={title}
+          tooltip={tooltipText}
+          ariaLabel="Подробнее о прогнозе расходов"
+        />
 
         <div className="px-6 pb-6">
-          <div className="flex min-h-[280px] gap-3 rounded-[24px] border border-[var(--ft-border-subtle)] bg-[color-mix(in_srgb,var(--ft-surface-base)_75%,transparent)] p-5 text-base leading-7 text-[var(--ft-text-secondary)]">
+          <AnalyticsInset className="flex min-h-[280px] gap-3 p-5 text-base leading-7 text-[var(--ft-text-secondary)]">
             <Info className="mt-1 size-5 shrink-0" aria-hidden="true" />
             <p>
               {readinessMessage}. Нужны расходы минимум в {requiredExpenseDays} днях. Сейчас есть данные за{' '}
               {observedExpenseDays}.
             </p>
-          </div>
+          </AnalyticsInset>
         </div>
-      </Card>
+      </AnalyticsPanel>
     );
   }
 
   if (loading) {
     return (
-      <Card
-        className="gap-0 rounded-[28px] border border-[var(--ft-border-default)] shadow-[var(--ft-shadow-lg)]"
-        style={{
-          background: ANALYTICS_CARD_BG,
-        }}
-      >
+      <AnalyticsPanel>
         <div className="space-y-5 px-6 py-6">
           <div className="flex items-start gap-2">
             <Skeleton className="h-9 w-56" />
@@ -304,62 +298,44 @@ export function ForecastCard({
           </div>
           <Skeleton className="h-4 w-40" />
           <Skeleton className="h-14 w-[22rem]" />
-          <Skeleton className="h-[408px] rounded-[24px]" />
+          <Skeleton className="h-[408px] rounded-lg" />
         </div>
-      </Card>
+      </AnalyticsPanel>
     );
   }
 
   if (error) {
     return (
-      <Card
-        className="gap-0 rounded-[28px] border border-[var(--ft-border-default)] shadow-[var(--ft-shadow-lg)]"
-        style={{
-          background: ANALYTICS_CARD_BG,
-        }}
-      >
-        <div className="flex items-start gap-2 px-6 py-6">
-          <h2 className="text-[1.75rem] font-semibold leading-tight text-foreground">{title}</h2>
-          <InfoTooltip content={tooltipText} className="-mt-1" ariaLabel="Подробнее о прогнозе расходов" />
-        </div>
-
-        <div className="flex min-h-[280px] flex-col items-center justify-center gap-4 px-6 pb-6 text-center">
-          <AlertCircle className="size-8 text-destructive" aria-hidden="true" />
-          <div className="space-y-1">
-            <p className="text-base font-medium text-foreground">Не удалось построить график</p>
-            <p className="text-sm text-[var(--ft-text-secondary)]">{error}</p>
-          </div>
-          <Button variant="outline" className="min-h-[44px]" onClick={onRetry}>
-            Повторить
-          </Button>
-        </div>
-      </Card>
+      <AnalyticsPanel>
+        <AnalyticsSectionHeader
+          title={title}
+          tooltip={tooltipText}
+          ariaLabel="Подробнее о прогнозе расходов"
+        />
+        <AnalyticsState title="Не удалось построить график" description={error} onRetry={onRetry} />
+      </AnalyticsPanel>
     );
   }
 
   if (!forecast || !hasActualData(forecast)) {
     return (
-      <Card
-        className="gap-0 rounded-[28px] border border-[var(--ft-border-default)] shadow-[var(--ft-shadow-lg)]"
-        style={{
-          background: ANALYTICS_CARD_BG,
-        }}
-      >
-        <div className="flex items-start gap-2 px-6 py-6">
-          <h2 className="text-[1.75rem] font-semibold leading-tight text-foreground">{title}</h2>
-          <InfoTooltip content={tooltipText} className="-mt-1" ariaLabel="Подробнее о прогнозе расходов" />
-        </div>
+      <AnalyticsPanel>
+        <AnalyticsSectionHeader
+          title={title}
+          tooltip={tooltipText}
+          ariaLabel="Подробнее о прогнозе расходов"
+        />
 
         <div className="px-6 pb-6">
-          <div className="flex min-h-[280px] items-center justify-center rounded-[24px] border border-[var(--ft-border-subtle)] bg-[color-mix(in_srgb,var(--ft-surface-base)_75%,transparent)] px-8 text-center">
+          <AnalyticsInset className="flex min-h-[280px] items-center justify-center px-8 text-center">
             <p className="max-w-md text-base leading-7 text-[var(--ft-text-secondary)]">
               {isCurrentMonth
                 ? 'Недостаточно данных для прогноза. Продолжайте добавлять транзакции в течение месяца.'
                 : 'Недостаточно данных, чтобы показать итог и сравнение с базовым уровнем.'}
             </p>
-          </div>
+          </AnalyticsInset>
         </div>
-      </Card>
+      </AnalyticsPanel>
     );
   }
 
@@ -380,59 +356,50 @@ export function ForecastCard({
       )
     : formatAnalyticsHeroMoney(forecast.summary.currentSpent, currency);
   const baselineNote = buildBaselineNote(forecast, currency, showForecastCorridor);
-  const baselineLabel =
+  const baselineValueLabel =
     forecast.summary.baselineLimit !== null
-      ? `Базовый уровень · ${formatAnalyticsMetaMoney(forecast.summary.baselineLimit, currency)}`
+      ? formatAnalyticsMetaMoney(forecast.summary.baselineLimit, currency)
       : baseline !== null
-        ? `Базовый уровень · ${formatAnalyticsMetaMoney(baseline, currency)}`
+        ? formatAnalyticsMetaMoney(baseline, currency)
         : null;
 
   return (
-    <Card
-      className="gap-0 rounded-[28px] border border-[var(--ft-border-default)] shadow-[var(--ft-shadow-lg)]"
-      style={{
-        background: ANALYTICS_CARD_BG,
-      }}
-    >
+    <AnalyticsPanel>
       <div className="space-y-5 px-6 py-6">
-        <div className="flex items-start gap-2">
-          <h2 className="text-[1.75rem] font-semibold leading-tight text-foreground">{title}</h2>
-          <InfoTooltip content={tooltipText} className="-mt-1" ariaLabel="Подробнее о прогнозе расходов" />
-        </div>
+        <AnalyticsSectionHeader
+          title={title}
+          tooltip={tooltipText}
+          ariaLabel="Подробнее о прогнозе расходов"
+          className="px-0 py-0"
+        />
 
         <div className="space-y-3">
           <p className="text-base text-[var(--ft-text-secondary)]">{heroLabel}</p>
           <p
-            className="text-[clamp(2.45rem,5vw,3.5rem)] font-bold leading-none text-[var(--ft-warning-300)]"
-            style={{ fontVariantNumeric: 'tabular-nums' }}
+            className="text-[var(--ft-chart-1)]"
+            style={analyticsHeroStyle}
           >
             {heroValue}
           </p>
 
-          {(baselineNote || baselineLabel) && (
+          {baselineNote && (
             <div className="flex flex-wrap items-center gap-x-4 gap-y-2 text-sm">
-              {baselineNote && (
-                <div
-                  className="flex items-center gap-2 font-medium"
-                  style={{
-                    color:
-                      baselineNote.tone === 'below'
-                        ? 'var(--ft-success-400)'
-                        : 'var(--ft-warning-400)',
-                  }}
-                >
-                  {baselineNote.tone === 'below' ? (
-                    <ArrowDown className="size-4" aria-hidden="true" />
-                  ) : (
-                    <ArrowUp className="size-4" aria-hidden="true" />
-                  )}
-                  <span>{baselineNote.text}</span>
-                </div>
-              )}
-
-              {baselineLabel && (
-                <span className="text-[var(--ft-text-tertiary)]">{baselineLabel}</span>
-              )}
+              <div
+                className="flex items-center gap-2 font-medium"
+                style={{
+                  color:
+                    baselineNote.tone === 'below'
+                      ? 'var(--ft-success-400)'
+                      : 'var(--ft-warning-400)',
+                }}
+              >
+                {baselineNote.tone === 'below' ? (
+                  <ArrowDown className="size-4" aria-hidden="true" />
+                ) : (
+                  <ArrowUp className="size-4" aria-hidden="true" />
+                )}
+                <span>{baselineNote.text}</span>
+              </div>
             </div>
           )}
         </div>
@@ -444,11 +411,11 @@ export function ForecastCard({
                 <linearGradient id="ft-forecast-actual-fill" x1="0" y1="0" x2="0" y2="1">
                   <stop
                     offset="0%"
-                    stopColor="color-mix(in srgb, var(--ft-warning-300) 24%, transparent)"
+                    stopColor="color-mix(in srgb, var(--ft-chart-1) 24%, transparent)"
                   />
                   <stop
                     offset="100%"
-                    stopColor="color-mix(in srgb, var(--ft-warning-300) 5%, transparent)"
+                    stopColor="color-mix(in srgb, var(--ft-chart-1) 5%, transparent)"
                   />
                 </linearGradient>
               </defs>
@@ -525,18 +492,18 @@ export function ForecastCard({
               <Line
                 type="monotone"
                 dataKey="actual"
-                stroke="var(--ft-warning-300)"
+                stroke="var(--ft-chart-1)"
                 strokeWidth={3}
                 connectNulls={false}
                 dot={{
                   r: 4,
-                  fill: 'var(--ft-warning-300)',
+                  fill: 'var(--ft-chart-1)',
                   stroke: 'var(--ft-surface-base)',
                   strokeWidth: 2,
                 }}
                 activeDot={{
                   r: 5.5,
-                  fill: 'var(--ft-warning-300)',
+                  fill: 'var(--ft-chart-1)',
                   stroke: 'var(--ft-surface-base)',
                   strokeWidth: 2,
                 }}
@@ -546,8 +513,19 @@ export function ForecastCard({
               {baseline !== null && (
                 <ReferenceLine
                   y={baseline}
-                  stroke="var(--ft-primary-200)"
+                  stroke="var(--ft-chart-baseline)"
                   strokeDasharray="6 5"
+                  label={
+                    baselineValueLabel
+                      ? {
+                          value: baselineValueLabel,
+                          position: 'insideTopLeft',
+                          fill: 'var(--ft-chart-baseline)',
+                          fontSize: 12,
+                          fontWeight: 600,
+                        }
+                      : undefined
+                  }
                 />
               )}
             </ComposedChart>
@@ -556,6 +534,6 @@ export function ForecastCard({
 
         <ChartLegend hasBaseline={baseline !== null} showCorridor={showForecastCorridor} />
       </div>
-    </Card>
+    </AnalyticsPanel>
   );
 }

@@ -50,7 +50,7 @@ export default function AppShell() {
 
   return (
     <div
-      className="app-shell flex min-h-screen flex-col bg-background text-foreground"
+      className="app-shell flex h-dvh min-h-dvh flex-col overflow-hidden bg-background text-foreground"
       data-collapsed={isDesktop && sidebarCollapsed ? 'true' : undefined}
     >
       <a
@@ -92,13 +92,13 @@ export default function AppShell() {
 
       {isReadOnlyMode && <ReadOnlyBanner onPayClick={handlePayClick} />}
 
-      <div className="app-shell__body flex flex-1 overflow-hidden">
+      <div className="app-shell__body flex min-h-0 flex-1 overflow-hidden">
         {isDesktop && <Sidebar collapsed={sidebarCollapsed} />}
 
         <main
           id="main-content"
           tabIndex={-1}
-          className="flex-1 overflow-y-auto focus:outline-none"
+          className="min-h-0 flex-1 overflow-y-auto focus:outline-none"
           style={{
             paddingBottom: isDesktop
               ? undefined

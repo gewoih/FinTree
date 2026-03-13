@@ -50,11 +50,33 @@ async function loadAllTransactions(filters: ReturnType<typeof toTransactionsQuer
 
 const EMPTY_ACCOUNTS: AccountDto[] = [];
 
+function getInitialTransactionFilters() {
+  if (typeof window === 'undefined') {
+    return DEFAULT_TRANSACTION_FILTERS;
+  }
+
+  const params = new URLSearchParams(window.location.search);
+  const dateFrom = params.get('dateFrom')?.trim() || undefined;
+  const dateTo = params.get('dateTo')?.trim() || undefined;
+  const categoryId = params.get('categoryId')?.trim() || undefined;
+  const accountId = params.get('accountId')?.trim() || undefined;
+  const search = params.get('search')?.trim() || undefined;
+
+  return {
+    ...DEFAULT_TRANSACTION_FILTERS,
+    dateFrom,
+    dateTo,
+    categoryId,
+    accountId,
+    search,
+  };
+}
+
 export default function TransactionsPage() {
   const currentUser = useUserStore((state) => state.currentUser);
   const baseCurrencyCode = currentUser?.baseCurrencyCode ?? 'RUB';
   const isReadOnlyMode = currentUser?.subscription?.isReadOnlyMode ?? false;
-  const [filters, setFilters] = useState(DEFAULT_TRANSACTION_FILTERS);
+  const [filters, setFilters] = useState(getInitialTransactionFilters);
   const [modalMode, setModalMode] = useState<TransactionModalMode>({ type: 'closed' });
   const debouncedSearch = useDebouncedValue(filters.search ?? '', 400);
 

@@ -2,6 +2,7 @@ import { CheckCircle2, Lock } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/utils/cn';
+import { analyticsInsetClassName, analyticsPanelClassName } from './analyticsTokens';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -47,7 +48,7 @@ interface StepBadgeProps {
 
 function StepBadge({ index, status }: StepBadgeProps) {
   const base =
-    'flex size-9 shrink-0 items-center justify-center rounded-full text-xs font-bold transition-colors';
+    'flex size-9 shrink-0 items-center justify-center rounded-md text-xs font-bold transition-colors';
 
   if (status === 'completed') {
     return (
@@ -182,10 +183,7 @@ export function OnboardingStepper({
 
   return (
     <div
-      className="flex flex-col overflow-hidden rounded-xl border border-border"
-      style={{
-        background: `linear-gradient(135deg, color-mix(in srgb, var(--ft-primary-400) 10%, var(--color-card)), color-mix(in srgb, var(--ft-info-500, #488fa7) 8%, var(--color-card)))`,
-      }}
+      className={cn('flex flex-col overflow-hidden', analyticsPanelClassName)}
     >
       <div className="px-4 pt-5 pb-1">
         <h2 className="text-base font-semibold text-foreground">Начало работы</h2>
@@ -210,7 +208,7 @@ export function OnboardingStepper({
         })}
       </ol>
 
-      <div className="flex justify-center px-4 py-3">
+      <div className={cn('mx-4 mb-4 mt-2 flex justify-center rounded-lg px-4 py-3', analyticsInsetClassName)}>
         <Button
           variant="ghost"
           size="sm"

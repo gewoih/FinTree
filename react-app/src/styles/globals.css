@@ -256,6 +256,8 @@
     --ft-text-2xl: 1.5rem;
     --ft-text-3xl: 2rem;
     --ft-text-4xl: 2.5rem;
+    --ft-text-metric: var(--ft-text-3xl);
+    --ft-text-hero: var(--ft-text-4xl);
 
     --ft-font-normal: 400;
     --ft-font-medium: 500;
@@ -297,11 +299,27 @@
     --ft-chart-3: #5bd490;
     --ft-chart-4: #f2b766;
     --ft-chart-5: #c1a3ff;
+    --ft-chart-category-1: var(--ft-info-500);
+    --ft-chart-category-2: var(--ft-primary-600);
+    --ft-chart-category-3: var(--ft-danger-600);
+    --ft-chart-category-4: var(--ft-success-500);
+    --ft-chart-category-5: var(--ft-warning-500);
+    --ft-chart-category-6: #9b7fd4;
+    --ft-chart-category-7: var(--ft-chart-2);
+    --ft-chart-category-8: #c4689a;
+    --ft-chart-category-9: var(--ft-orange-300);
+    --ft-chart-category-10: var(--ft-info-600);
     --ft-chart-risk: #ffb454;
     --ft-chart-expense: #d4de95;
     --ft-chart-forecast: #7da6e8;
     --ft-chart-optimistic: #5bd490;
     --ft-chart-baseline: #90a5c2;
+    --ft-analytics-surface: var(--ft-surface-base);
+    --ft-analytics-surface-subtle: color-mix(
+      in srgb,
+      var(--ft-surface-raised) 62%,
+      var(--ft-surface-base)
+    );
 
     /* Status Badges (dark) */
     --ft-status-badge-success-text: var(--ft-success-400);

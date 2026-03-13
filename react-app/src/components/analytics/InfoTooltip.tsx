@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import type { ReactNode } from 'react';
 import { Tooltip as TooltipPrimitive } from 'radix-ui';
 import { HelpCircle } from 'lucide-react';
 
@@ -8,32 +8,37 @@ interface InfoTooltipProps {
   content: string;
   ariaLabel?: string;
   className?: string;
+  children?: ReactNode;
 }
 
 export function InfoTooltip({
   content,
   ariaLabel = 'Подробнее',
   className,
+  children,
 }: InfoTooltipProps) {
-  const [open, setOpen] = useState(false);
-
   return (
     <TooltipPrimitive.Provider delayDuration={200}>
-      <TooltipPrimitive.Root open={open} onOpenChange={setOpen}>
-        <TooltipPrimitive.Trigger asChild>
-          <button
-            type="button"
-            aria-label={ariaLabel}
-            className={cn(
-              'inline-flex min-h-[44px] min-w-[44px] items-center justify-center rounded-full text-[var(--ft-text-tertiary)] transition-colors',
-              'hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring',
-              className,
-            )}
-            onClick={() => setOpen((prev) => !prev)}
-          >
-            <HelpCircle className="size-4" aria-hidden="true" />
-          </button>
-        </TooltipPrimitive.Trigger>
+      <TooltipPrimitive.Root>
+        {children ? (
+          <TooltipPrimitive.Trigger asChild>
+            {children}
+          </TooltipPrimitive.Trigger>
+        ) : (
+          <TooltipPrimitive.Trigger asChild>
+            <button
+              type="button"
+              aria-label={ariaLabel}
+              className={cn(
+                'inline-flex min-h-[44px] min-w-[44px] items-center justify-center rounded-md text-[var(--ft-text-tertiary)] transition-colors',
+                'hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring',
+                className,
+              )}
+            >
+              <HelpCircle className="size-4" aria-hidden="true" />
+            </button>
+          </TooltipPrimitive.Trigger>
+        )}
         <TooltipPrimitive.Portal>
           <TooltipPrimitive.Content
             side="top"

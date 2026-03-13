@@ -13,7 +13,8 @@ import {
 import { cn } from '@/utils/cn';
 
 import { InfoTooltip } from './InfoTooltip';
-import type { MetricAccent, ZoneBarModel } from './models';
+import { analyticsHeroStyle, analyticsInsetClassName } from './analyticsTokens';
+import type { MetricAccent } from './models';
 
 interface HealthScoreCardProps {
   title: string;
@@ -23,7 +24,6 @@ interface HealthScoreCardProps {
   supportingLabel: string;
   accent: MetricAccent;
   tooltip: string;
-  zoneBar?: ZoneBarModel;
 }
 
 const ICON_MAP: Record<string, LucideIcon> = {
@@ -72,46 +72,6 @@ function accentBgColor(accent: MetricAccent): string {
   }
 }
 
-function resolveZoneColors(inverted = false) {
-  const forward = [
-    'var(--ft-danger-500)',
-    'var(--ft-warning-500)',
-    'var(--ft-success-500)',
-  ];
-
-  return inverted ? [...forward].reverse() : forward;
-}
-
-function ZoneBar({ model }: { model: ZoneBarModel }) {
-  const colors = resolveZoneColors(model.inverted);
-  const [warnStart, goodStart] = model.thresholds;
-  const poorWidth = `${Math.max((warnStart / model.scaleMax) * 100, 0)}%`;
-  const warningWidth = `${Math.max(((goodStart - warnStart) / model.scaleMax) * 100, 0)}%`;
-  const goodWidth = `${Math.max(((model.scaleMax - goodStart) / model.scaleMax) * 100, 0)}%`;
-  const markerPosition = `${Math.min(
-    100,
-    Math.max(0, ((model.value ?? 0) / model.scaleMax) * 100),
-  )}%`;
-
-  return (
-    <div className="mt-auto pt-5">
-      <div className="relative h-1.5 overflow-hidden rounded-full bg-[color-mix(in_srgb,var(--ft-surface-overlay)_72%,transparent)]">
-        <div className="flex h-full w-full">
-          <div style={{ width: poorWidth, backgroundColor: colors[0] }} />
-          <div style={{ width: warningWidth, backgroundColor: colors[1] }} />
-          <div style={{ width: goodWidth, backgroundColor: colors[2] }} />
-        </div>
-
-        <span
-          className="absolute top-1/2 h-3.5 w-1.5 -translate-y-1/2 rounded-full border border-[var(--ft-surface-base)] bg-[var(--ft-text-primary)] shadow-[var(--ft-shadow-xs)]"
-          style={{ left: `calc(${markerPosition} - 0.1875rem)` }}
-          aria-hidden="true"
-        />
-      </div>
-    </div>
-  );
-}
-
 export function HealthScoreCard({
   title,
   icon,
@@ -120,24 +80,20 @@ export function HealthScoreCard({
   supportingLabel,
   accent,
   tooltip,
-  zoneBar,
 }: HealthScoreCardProps) {
   const color = accentColor(accent);
 
   return (
     <div
       className={cn(
-        'flex h-full flex-col gap-4 rounded-[24px] border border-[var(--ft-border-subtle)] px-5 py-5 shadow-[var(--ft-shadow-xs)]',
+        'flex h-full flex-col gap-4 px-5 py-5 shadow-[var(--ft-shadow-xs)]',
+        analyticsInsetClassName,
       )}
-      style={{
-        background:
-          'linear-gradient(180deg, color-mix(in srgb, var(--ft-surface-base) 94%, var(--ft-bg-base)) 0%, color-mix(in srgb, var(--ft-surface-raised) 92%, var(--ft-bg-base)) 100%)',
-      }}
     >
       <div className="flex items-start justify-between gap-3">
         <div className="flex items-start gap-3">
           <div
-            className="flex size-14 shrink-0 items-center justify-center rounded-full"
+            className="flex size-12 shrink-0 items-center justify-center rounded-lg"
             style={{
               color,
               backgroundColor: accentBgColor(accent),
@@ -159,8 +115,8 @@ export function HealthScoreCard({
 
       <div className="flex flex-1 flex-col gap-3">
         <span
-          className="text-[clamp(2.1rem,3.5vw,2.45rem)] font-bold leading-none"
-          style={{ fontVariantNumeric: 'tabular-nums', color }}
+          className="text-foreground"
+          style={{ ...analyticsHeroStyle, color, fontSize: 'var(--ft-text-3xl)' }}
         >
           {value}
         </span>
@@ -180,8 +136,6 @@ export function HealthScoreCard({
 
           {!supportingValue && <p className="leading-6">{supportingLabel}</p>}
         </div>
-
-        {zoneBar && <ZoneBar model={zoneBar} />}
       </div>
     </div>
   );

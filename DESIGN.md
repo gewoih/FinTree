@@ -26,6 +26,8 @@ Rules:
 - Never use arbitrary fallback colors like `var(--token, #xxxxxx)`.
 - Add new visual values to the token system before using them in feature styles.
 - The token system is the single source of truth for the visual language.
+- Do not use feature-level arbitrary visual literals such as `rounded-[...]`, `text-[...]`, `clamp(...)`, or ad hoc inline gradients when a tokenized value is intended.
+- When chart/category colors must be deterministic, resolve them from the global token palette in the frontend instead of trusting backend-provided decorative colors.
 
 When integrating with a component library (e.g. shadcn, MUI, Ant Design), map `--ft-*` tokens to the library's semantic variables in a single mapping layer. Do not maintain two parallel token sets.
 
@@ -52,6 +54,7 @@ Rules:
 - Before editing any style: identify every place styles are defined for that component. If styles are spread across multiple files, co-locate them first, then make the change.
 - Shared layout patterns (cards, sections, stat blocks) belong in shared style utilities, not in feature components.
 - Visual state theming (hover, focus, disabled) is centralized in the design system layer, not per-component ad hoc.
+- Do not introduce feature-local visual tokens or pseudo-tokens inside a page/component. If existing global tokens are insufficient, extend the global token system first.
 
 CSS verification after any style change:
 1. Verify the component in dark mode (default) and light mode (`.light-mode` on `<html>`)
@@ -161,6 +164,7 @@ Typography:
 Surfaces:
 - Cards and panels use semantic surface, border, and shadow tokens.
 - Avoid random mixing of glass or gradient treatments across adjacent sections.
+- Page-level or card-level gradients are prohibited unless they are explicitly defined as reusable design-system surfaces.
 
 Motion:
 - Use transition tokens.
@@ -169,5 +173,6 @@ Motion:
 
 Charts:
 - Do not hardcode color arrays in feature components — use design token values.
+- Do not consume backend chart/decorative colors directly in feature rendering without passing through a frontend token/palette resolver.
 - Chart containers must have `role="img"` and `aria-label`.
 - Use `ResponsiveContainer` (or equivalent) for adaptive sizing.

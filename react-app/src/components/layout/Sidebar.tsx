@@ -70,8 +70,8 @@ export default function Sidebar({ collapsed }: SidebarProps) {
 
   return (
     <aside
-      className="app-shell__sidebar flex h-full flex-shrink-0 flex-col overflow-hidden border-r border-border bg-background transition-all duration-200"
-      style={{ width: collapsed ? '56px' : '240px' }}
+      className="app-shell__sidebar sticky top-0 flex h-full min-h-0 flex-shrink-0 self-stretch flex-col overflow-hidden border-r border-border bg-background transition-all duration-200"
+      style={{ width: collapsed ? '64px' : '280px' }}
       aria-label="Боковое меню"
     >
       <div className="flex flex-1 flex-col gap-1 overflow-y-auto px-2 py-3">

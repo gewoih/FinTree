@@ -1,4 +1,4 @@
-import { useState, useMemo, useCallback } from 'react';
+import { startTransition, useState, useMemo, useCallback } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { useNavigate } from '@tanstack/react-router';
 import { ChevronLeft, ChevronRight, X } from 'lucide-react';
@@ -60,6 +60,13 @@ function formatMonthHeading(date: Date): string {
   }).format(date);
   const cleaned = label.replace(/\s*г\.$/i, '');
   return cleaned.charAt(0).toUpperCase() + cleaned.slice(1);
+}
+
+function formatDateParam(date: Date): string {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const day = String(date.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
 }
 
 // ─── Month Picker ─────────────────────────────────────────────────────────────
@@ -205,6 +212,40 @@ export default function AnalyticsPage() {
     }));
   }, []);
 
+  const openTransactions = useCallback(
+    (search: Record<string, string>) => {
+      void navigate({
+        to: '/transactions' as PathValues,
+        search: search as never,
+      });
+    },
+    [navigate],
+  );
+
+  const handleCategorySelect = useCallback(
+    (item: { id: string }) => {
+      openTransactions({
+        categoryId: item.id,
+        dateFrom: formatDateParam(new Date(selectedYear, selectedMonth - 1, 1)),
+        dateTo: formatDateParam(new Date(selectedYear, selectedMonth, 0)),
+      });
+    },
+    [openTransactions, selectedMonth, selectedYear],
+  );
+
+  const handlePeakSelect = useCallback(
+    (peak: { year: number; month: number; day: number }) => {
+      const date = new Date(peak.year, peak.month - 1, peak.day);
+      const value = formatDateParam(date);
+
+      openTransactions({
+        dateFrom: value,
+        dateTo: value,
+      });
+    },
+    [openTransactions],
+  );
+
   // ── Onboarding steps ──
   const onboardingSteps = useMemo<OnboardingStep[]>(() => {
     const hasMain = accountsQuery.data?.some((a) => a.isMain) ?? false;
@@ -314,25 +355,21 @@ export default function AnalyticsPage() {
 
   return (
     <ErrorBoundary>
-      <div className="flex flex-col gap-8 p-4 sm:p-6 lg:gap-10 lg:px-8">
+      <div className="flex flex-col gap-6 p-4 sm:p-5 lg:gap-7 lg:px-6">
 
         <div className="flex flex-col gap-4">
           <PageHeader
             title="Главная"
             actions={(
               <div
-                className="flex items-center rounded-full border border-[var(--ft-border-subtle)] px-1.5 py-1 shadow-[var(--ft-shadow-sm)]"
-                style={{
-                  background:
-                    'linear-gradient(180deg, color-mix(in srgb, var(--ft-surface-raised) 92%, var(--ft-bg-base)) 0%, var(--ft-surface-base) 100%)',
-                }}
+                className="flex items-center rounded-lg border border-[var(--ft-border-default)] bg-[var(--ft-analytics-surface-subtle)] px-1.5 py-1 shadow-[var(--ft-shadow-xs)]"
               >
                 <Button
                   variant="ghost"
                   size="icon"
                   onClick={handlePrevMonth}
                   aria-label="Предыдущий месяц"
-                  className="rounded-full text-[var(--ft-text-secondary)]"
+                  className="rounded-md text-[var(--ft-text-secondary)]"
                 >
                   <ChevronLeft className="size-5" />
                 </Button>
@@ -341,13 +378,13 @@ export default function AnalyticsPage() {
                   <PopoverTrigger asChild>
                     <button
                       type="button"
-                      className="min-h-[44px] min-w-[168px] rounded-full px-5 text-center text-lg font-semibold capitalize text-foreground transition-colors hover:bg-[color-mix(in_srgb,var(--ft-text-primary)_4%,transparent)]"
+                      className="min-h-[44px] min-w-[168px] rounded-md px-5 text-center text-sm font-semibold capitalize text-foreground transition-colors hover:bg-[color-mix(in_srgb,var(--ft-text-primary)_4%,transparent)]"
                       aria-label="Выбрать месяц"
                     >
                       {monthLabel}
                     </button>
                   </PopoverTrigger>
-                  <PopoverContent className="w-auto rounded-2xl p-0" sideOffset={8}>
+                  <PopoverContent className="w-auto rounded-lg p-0" sideOffset={8}>
                     <MonthPicker value={selectedDate} onChange={handleMonthSelect} />
                   </PopoverContent>
                 </Popover>
@@ -358,7 +395,7 @@ export default function AnalyticsPage() {
                   onClick={handleNextMonth}
                   disabled={isCurrentMonth}
                   aria-label="Следующий месяц"
-                  className="rounded-full text-[var(--ft-text-secondary)]"
+                  className="rounded-md text-[var(--ft-text-secondary)]"
                 >
                   <ChevronRight className="size-5" />
                 </Button>
@@ -414,7 +451,7 @@ export default function AnalyticsPage() {
           </div>
         </div>
 
-        <div hidden={activeTab !== 'now'} className="flex flex-col gap-6">
+        <div hidden={activeTab !== 'now'} className="flex flex-col gap-5">
           <SummaryStrip
             loading={dashboardQuery.isLoading}
             error={dashboardError}
@@ -433,21 +470,20 @@ export default function AnalyticsPage() {
                 {healthCards.map((card) => (
                   <HealthScoreCard
                     key={card.key}
-                    title={card.title}
-                    icon={card.icon}
-                    value={card.value}
-                    supportingValue={card.supportingValue}
-                    supportingLabel={card.supportingLabel}
-                    accent={card.accent}
-                    tooltip={card.tooltip}
-                    zoneBar={card.zoneBar}
-                  />
-                ))}
-              </>
+                  title={card.title}
+                  icon={card.icon}
+                  value={card.value}
+                  supportingValue={card.supportingValue}
+                  supportingLabel={card.supportingLabel}
+                  accent={card.accent}
+                  tooltip={card.tooltip}
+                />
+              ))}
+            </>
             )}
           </GlobalMonthScoreCard>
 
-          <div className="grid grid-cols-1 gap-6 xl:grid-cols-2">
+          <div className="grid grid-cols-1 gap-5 xl:grid-cols-2">
             <SpendingPieCard
               loading={dashboardQuery.isLoading}
               error={dashboardError}
@@ -464,9 +500,9 @@ export default function AnalyticsPage() {
                 { label: 'Обязательные', value: 'mandatory' },
                 { label: 'По желанию', value: 'discretionary' },
               ]}
-              onModeChange={setPieMode}
-              onScopeChange={setPieScope}
-              onCategorySelect={() => {}}
+              onModeChange={(value) => startTransition(() => setPieMode(value))}
+              onScopeChange={(value) => startTransition(() => setPieScope(value))}
+              onCategorySelect={handleCategorySelect}
               onRetry={() => dashboardQuery.refetch()}
             />
             <SpendingBarsCard
@@ -480,12 +516,12 @@ export default function AnalyticsPage() {
                 { label: 'Неделя', value: 'weeks' },
                 { label: 'Месяц', value: 'months' },
               ]}
-              onGranularityChange={setGranularity}
+              onGranularityChange={(value) => startTransition(() => setGranularity(value))}
               onRetry={() => dashboardQuery.refetch()}
             />
           </div>
 
-          <div className="grid grid-cols-1 gap-6 xl:grid-cols-2">
+          <div className="grid grid-cols-1 gap-5 xl:grid-cols-2">
             <PeakDaysCard
               loading={dashboardQuery.isLoading}
               error={dashboardError}
@@ -493,7 +529,7 @@ export default function AnalyticsPage() {
               summary={data?.peaks ?? { count: 0, total: 0, sharePercent: null, monthTotal: null }}
               currency={currency}
               onRetry={() => dashboardQuery.refetch()}
-              onPeakSelect={() => {}}
+              onPeakSelect={handlePeakSelect}
             />
             <CategoryDeltaCard
               loading={dashboardQuery.isLoading}

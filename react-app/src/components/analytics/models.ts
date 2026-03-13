@@ -6,9 +6,8 @@ import type {
 } from '@/types';
 import { formatNumber } from '@/utils/format';
 
-/** Shared card-level gradient used across all analytics cards. */
-export const ANALYTICS_CARD_BG =
-  'linear-gradient(180deg, color-mix(in srgb, var(--ft-surface-raised) 84%, var(--ft-bg-base)) 0%, var(--ft-surface-base) 100%)';
+/** Shared analytics surface token. */
+export const ANALYTICS_CARD_BG = 'var(--ft-analytics-surface)';
 
 export type MetricAccent =
   | 'income'
@@ -47,13 +46,6 @@ export interface GlobalScoreModel {
   deltaTone: GlobalScoreDeltaTone;
 }
 
-export interface ZoneBarModel {
-  value: number | null;
-  thresholds: [number, number];
-  scaleMax: number;
-  inverted?: boolean;
-}
-
 export interface HealthMetricCardModel {
   key: 'savings' | 'cushion' | 'stability' | 'discretionary';
   title: string;
@@ -63,7 +55,6 @@ export interface HealthMetricCardModel {
   supportingLabel: string;
   accent: MetricAccent;
   tooltip: string;
-  zoneBar?: ZoneBarModel;
 }
 
 const STABILITY_ACTION_TEXTS: Record<StabilityActionCode, string> = {
@@ -326,11 +317,6 @@ export function buildHealthMetricCards(
       supportingLabel: 'сохранено',
       accent: resolveSavingsAccent(health.savingsRate, health.monthIncome, health.monthTotal),
       tooltip: 'Ваша сэкономленная часть от доходов.',
-      zoneBar: {
-        value: health.savingsRate,
-        thresholds: [0.1, 0.2],
-        scaleMax: 0.5,
-      },
     },
     {
       key: 'cushion',
@@ -342,11 +328,6 @@ export function buildHealthMetricCards(
       supportingLabel: 'сумма подушки',
       accent: resolveCushionAccent(health.liquidMonthsStatus),
       tooltip: 'На сколько месяцев жизни хватит средств из подушки безопасности.',
-      zoneBar: {
-        value: health.liquidMonths,
-        thresholds: [1, 3],
-        scaleMax: 12,
-      },
     },
     {
       key: 'stability',
@@ -358,11 +339,6 @@ export function buildHealthMetricCards(
       tooltip: stabilityReady
         ? 'Показывает, насколько стабильны ваши расходы за месяц. Чем выше балл, тем лучше.'
         : `Нужны расходы хотя бы в ${readiness.requiredStabilityDays} днях этого месяца. Сейчас: ${readiness.observedStabilityDaysInSelectedMonth} из ${readiness.requiredStabilityDays}.`,
-      zoneBar: {
-        value: health.stabilityScore,
-        thresholds: [40, 70],
-        scaleMax: 100,
-      },
     },
     {
       key: 'discretionary',
@@ -376,12 +352,6 @@ export function buildHealthMetricCards(
       supportingLabel: 'сумма',
       accent: resolveDiscretionaryAccent(health.discretionarySharePercent),
       tooltip: 'Ваши необязательные расходы.',
-      zoneBar: {
-        value: health.discretionarySharePercent,
-        thresholds: [25, 45],
-        scaleMax: 60,
-        inverted: true,
-      },
     },
   ];
 }

@@ -4,9 +4,10 @@ import { AlertCircle, Info } from 'lucide-react';
 import { cn } from '@/utils/cn';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
+import { AnalyticsPanel } from './analyticsTheme';
+import { analyticsHeroStyle } from './analyticsTokens';
 
 import type { GlobalScoreModel } from './models';
-import { ANALYTICS_CARD_BG } from './models';
 
 interface GlobalMonthScoreCardProps {
   loading: boolean;
@@ -48,17 +49,9 @@ const CHILD_SKELETON_KEYS = ['sk-a', 'sk-b', 'sk-c', 'sk-d'] as const;
 
 function ScoreLoadingSkeleton() {
   return (
-    <div
-      className="overflow-hidden rounded-[28px] border border-[var(--ft-border-default)] shadow-[var(--ft-shadow-lg)]"
-      style={{
-        background: ANALYTICS_CARD_BG,
-      }}
-      role="status"
-      aria-busy="true"
-      aria-label="Загрузка данных"
-    >
-      <div className="grid grid-cols-1 gap-4 px-7 py-7 lg:grid-cols-[minmax(260px,0.9fr)_minmax(0,1.6fr)]">
-        <div className="flex flex-col justify-between gap-6">
+    <AnalyticsPanel ariaLabel="Загрузка данных">
+      <div className="grid grid-cols-1 gap-4 px-6 py-6 lg:grid-cols-[minmax(260px,0.9fr)_minmax(0,1.6fr)]">
+        <div className="flex h-full flex-col justify-center gap-5">
           <div className="space-y-3">
             <Skeleton className="h-4 w-40" />
             <Skeleton className="h-16 w-44" />
@@ -70,18 +63,18 @@ function ScoreLoadingSkeleton() {
 
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
           {CHILD_SKELETON_KEYS.map((key) => (
-            <Skeleton key={key} className="h-[210px] rounded-[24px]" />
+            <Skeleton key={key} className="h-[210px] rounded-lg" />
           ))}
         </div>
       </div>
-    </div>
+    </AnalyticsPanel>
   );
 }
 
 function EmptyState() {
   return (
     <div
-      className="flex flex-col items-center gap-3 rounded-[28px] border border-border bg-card p-6 text-center"
+      className="flex flex-col items-center gap-3 rounded-xl border border-border bg-card p-6 text-center"
       role="status"
     >
       <Info className="size-8 text-muted-foreground" aria-hidden="true" />
@@ -94,33 +87,36 @@ function EmptyState() {
 
 function ScoreMainBlock({ model }: { model: GlobalScoreModel }) {
   return (
-    <div className="flex min-w-0 flex-col justify-between gap-5">
+    <div className="flex h-full min-w-0 flex-col justify-center gap-4">
       <div className="space-y-4">
         <p className="text-xs font-semibold uppercase tracking-[0.08em] text-[var(--ft-text-secondary)]">
           Общий рейтинг месяца
         </p>
 
-        <p
-          className="text-[clamp(3rem,6vw,4.2rem)] font-bold leading-none"
-          style={{
-            color: scoreColor(model.accent),
-            fontVariantNumeric: 'tabular-nums',
-          }}
-        >
-          {model.scoreLabel}
-        </p>
+        <div className="flex flex-wrap items-end gap-x-4 gap-y-2">
+          <p
+            className="text-foreground"
+            style={{
+              ...analyticsHeroStyle,
+              color: scoreColor(model.accent),
+              fontVariantNumeric: 'tabular-nums',
+            }}
+          >
+            {model.scoreLabel}
+          </p>
+
+          <span
+            className="pb-2 text-sm font-semibold"
+            style={{ color: deltaColor(model.deltaTone) }}
+          >
+            {model.deltaLabel ?? 'Нет данных для сравнения'}
+          </span>
+        </div>
 
         <p className="max-w-[24rem] text-base leading-7 text-[var(--ft-text-secondary)]">
           {model.description}
         </p>
       </div>
-
-      <p
-        className="text-sm font-semibold"
-        style={{ color: deltaColor(model.deltaTone) }}
-      >
-        {model.deltaLabel ?? 'Нет данных для сравнения с предыдущим месяцем'}
-      </p>
     </div>
   );
 }
@@ -139,7 +135,7 @@ export function GlobalMonthScoreCard({
   if (error) {
     return (
       <div
-        className="flex min-h-[220px] flex-col items-center justify-center gap-4 rounded-[28px] border border-destructive/30 bg-destructive/10 p-6 text-center"
+        className="flex min-h-[220px] flex-col items-center justify-center gap-4 rounded-xl border border-destructive/30 bg-destructive/10 p-6 text-center"
         role="alert"
       >
         <AlertCircle className="size-8 text-destructive" aria-hidden="true" />
@@ -164,22 +160,16 @@ export function GlobalMonthScoreCard({
   }
 
   return (
-    <section
-      className="overflow-hidden rounded-[28px] border border-[var(--ft-border-default)] shadow-[var(--ft-shadow-lg)]"
-      style={{
-        background:
-          'linear-gradient(180deg, color-mix(in srgb, var(--ft-surface-raised) 88%, var(--ft-bg-base)) 0%, color-mix(in srgb, var(--ft-surface-base) 96%, var(--ft-bg-base)) 100%)',
-      }}
-    >
-      <div className="grid grid-cols-1 gap-5 px-6 py-6 lg:grid-cols-[minmax(260px,0.9fr)_minmax(0,1.55fr)]">
+    <AnalyticsPanel>
+      <div className="grid grid-cols-1 gap-4 px-6 py-6 lg:grid-cols-[minmax(260px,0.9fr)_minmax(0,1.55fr)]">
         <ScoreMainBlock model={model} />
 
         {children && (
-          <div className={cn('grid grid-cols-1 gap-4 sm:grid-cols-2')}>
+          <div className={cn('grid grid-cols-1 gap-3.5 sm:grid-cols-2')}>
             {children}
           </div>
         )}
       </div>
-    </section>
+    </AnalyticsPanel>
   );
 }

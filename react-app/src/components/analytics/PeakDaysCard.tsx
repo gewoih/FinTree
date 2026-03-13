@@ -1,17 +1,20 @@
 import { useState } from 'react';
-import { AlertCircle, Bolt } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
-import { Card } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { cn } from '@/utils/cn';
 import type { PeakDayDto, PeakDaysSummaryDto } from '@/types';
 
-import { InfoTooltip } from './InfoTooltip';
+import {
+  AnalyticsInset,
+  AnalyticsPanel,
+  AnalyticsSectionHeader,
+  AnalyticsState,
+} from './analyticsTheme';
+import { analyticsHeroStyle } from './analyticsTokens';
 import {
   formatAnalyticsMetaMoney,
   formatAnalyticsPercent,
-  ANALYTICS_CARD_BG,
 } from './models';
 
 interface PeakDaysCardProps {
@@ -78,10 +81,10 @@ function PeakDaysSkeleton() {
       aria-label="Загрузка пиковых дней"
       className="space-y-4 px-7 pb-7"
     >
-      <Skeleton className="h-[148px] rounded-[24px]" />
-      <Skeleton className="h-[68px] rounded-2xl" />
-      <Skeleton className="h-[68px] rounded-2xl" />
-      <Skeleton className="h-[68px] rounded-2xl" />
+      <Skeleton className="h-[148px] rounded-lg" />
+      <Skeleton className="h-[68px] rounded-lg" />
+      <Skeleton className="h-[68px] rounded-lg" />
+      <Skeleton className="h-[68px] rounded-lg" />
     </div>
   );
 }
@@ -98,15 +101,15 @@ function SummaryBlock({
 
   return (
     <div
-      className="rounded-[24px] border px-6 py-6"
+      className="rounded-lg border px-6 py-6"
       style={{
         borderColor: styles.border,
         backgroundColor: styles.background,
       }}
     >
       <p
-        className="text-[clamp(2.45rem,5vw,3.25rem)] font-bold leading-[0.96]"
-        style={{ color: styles.value, fontVariantNumeric: 'tabular-nums' }}
+        className="text-foreground"
+        style={{ ...analyticsHeroStyle, color: styles.value, fontSize: 'var(--ft-text-4xl)' }}
       >
         {shareLabel}
       </p>
@@ -171,53 +174,31 @@ export function PeakDaysCard({
   const hasMore = peaks.length > DEFAULT_VISIBLE;
 
   return (
-    <Card
-      className="gap-0 rounded-[28px] border border-[var(--ft-border-default)] shadow-[var(--ft-shadow-lg)]"
-      style={{
-        background: ANALYTICS_CARD_BG,
-      }}
-    >
-      <div className="flex items-center gap-2 px-6 py-6">
-        <div className="flex items-center gap-3">
-          <Bolt className="size-5 text-[var(--ft-warning-400)]" aria-hidden="true" />
-          <h2 className="text-[1.75rem] font-semibold leading-tight text-foreground">Пиковые дни</h2>
-        </div>
-        <InfoTooltip
-          content="Дни, когда расходы заметно превысили привычный темп месяца."
-          className="-mt-1"
-          ariaLabel="Подробнее о пиковых днях"
-        />
-      </div>
+    <AnalyticsPanel>
+      <AnalyticsSectionHeader
+        title="Пиковые дни"
+        tooltip="Дни, когда расходы заметно превысили привычный темп месяца."
+        ariaLabel="Подробнее о пиковых днях"
+        className="pb-4"
+      />
 
       {loading ? (
         <PeakDaysSkeleton />
       ) : error ? (
-        <div
-          className="flex min-h-[296px] flex-col items-center justify-center gap-4 px-7 pb-7 text-center"
-          role="alert"
-        >
-          <AlertCircle className="size-8 text-destructive" aria-hidden="true" />
-          <div className="space-y-1">
-            <p className="text-base font-medium text-foreground">Не удалось загрузить данные</p>
-            <p className="text-sm text-[var(--ft-text-secondary)]">{error}</p>
-          </div>
-          <Button variant="outline" className="min-h-[44px]" onClick={onRetry}>
-            Повторить
-          </Button>
-        </div>
+        <AnalyticsState title="Не удалось загрузить данные" description={error} onRetry={onRetry} className="min-h-[296px]" />
       ) : peaks.length === 0 ? (
         <div className="px-7 pb-7">
-          <div className="flex min-h-[296px] items-center justify-center rounded-[24px] border border-[var(--ft-border-subtle)] bg-[color-mix(in_srgb,var(--ft-surface-base)_75%,transparent)] px-8 text-center">
+          <AnalyticsInset className="flex min-h-[296px] items-center justify-center px-8 text-center">
             <p className="max-w-md text-base leading-7 text-[var(--ft-text-secondary)]">
               Пиковых дней нет. Расходы распределены по месяцу достаточно равномерно.
             </p>
-          </div>
+          </AnalyticsInset>
         </div>
       ) : (
         <div className="space-y-4 px-7 pb-7">
           <SummaryBlock summary={summary} currency={currency} />
 
-          <div className="divide-y divide-[var(--ft-border-subtle)] rounded-[24px] border border-[var(--ft-border-subtle)] bg-[color-mix(in_srgb,var(--ft-surface-base)_75%,transparent)]">
+          <AnalyticsInset className="divide-y divide-[var(--ft-border-subtle)]">
             {visiblePeaks.map((peak) => (
               <PeakItem
                 key={`${peak.year}-${peak.month}-${peak.day}`}
@@ -226,12 +207,12 @@ export function PeakDaysCard({
                 onSelect={onPeakSelect}
               />
             ))}
-          </div>
+          </AnalyticsInset>
 
           {hasMore && (
             <Button
               variant="ghost"
-              className="min-h-[44px] w-full rounded-2xl text-[var(--ft-text-secondary)]"
+              className="min-h-[44px] w-full rounded-md text-[var(--ft-text-secondary)]"
               onClick={() => setExpanded((prev) => !prev)}
             >
               {expanded ? 'Свернуть' : `Показать все (${peaks.length})`}
@@ -239,6 +220,6 @@ export function PeakDaysCard({
           )}
         </div>
       )}
-    </Card>
+    </AnalyticsPanel>
   );
 }

@@ -1,12 +1,16 @@
-import { AlertCircle, ArrowDown, ArrowUp } from 'lucide-react';
+import { ArrowDown, ArrowUp } from 'lucide-react';
 
-import { Button } from '@/components/ui/button';
-import { Card } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import type { CategoryDeltaItemDto } from '@/types';
 
-import { InfoTooltip } from './InfoTooltip';
-import { formatAnalyticsMetaMoney, formatAnalyticsPercent, ANALYTICS_CARD_BG } from './models';
+import {
+  AnalyticsInset,
+  AnalyticsPanel,
+  AnalyticsSectionHeader,
+  AnalyticsState,
+} from './analyticsTheme';
+import { getAnalyticsCategoryColor } from './chartPalette';
+import { formatAnalyticsMetaMoney, formatAnalyticsPercent } from './models';
 
 interface CategoryDeltaCardProps {
   loading: boolean;
@@ -26,30 +30,30 @@ function DeltaSkeleton() {
       role="status"
       aria-busy="true"
       aria-label="Загрузка изменений по категориям"
-      className="space-y-7 px-7 pb-7"
+      className="space-y-5 px-6 pb-6"
     >
-      <div className="space-y-4">
+      <div className="space-y-3">
         <Skeleton className="h-5 w-20" />
         {SKELETON_KEYS.slice(0, 2).map((key) => (
-          <div key={key} className="space-y-3">
+          <div key={key} className="space-y-2">
             <div className="flex items-center justify-between gap-4">
-              <Skeleton className="h-7 w-40" />
-              <Skeleton className="h-7 w-32" />
+              <Skeleton className="h-6 w-36" />
+              <Skeleton className="h-6 w-28" />
             </div>
-            <Skeleton className="h-1.5 w-full rounded-full" />
+            <Skeleton className="h-1 w-full rounded-md" />
           </div>
         ))}
       </div>
 
-      <div className="space-y-4">
+      <div className="space-y-3">
         <Skeleton className="h-5 w-28" />
         {SKELETON_KEYS.slice(2).map((key) => (
-          <div key={key} className="space-y-3">
+          <div key={key} className="space-y-2">
             <div className="flex items-center justify-between gap-4">
-              <Skeleton className="h-7 w-40" />
-              <Skeleton className="h-7 w-32" />
+              <Skeleton className="h-6 w-36" />
+              <Skeleton className="h-6 w-28" />
             </div>
-            <Skeleton className="h-1.5 w-full rounded-full" />
+            <Skeleton className="h-1 w-full rounded-md" />
           </div>
         ))}
       </div>
@@ -98,12 +102,12 @@ function DeltaRow({ item, currency, direction, maxDelta }: DeltaRowProps) {
   );
 
   return (
-    <div className="space-y-2.5">
-      <div className="grid grid-cols-[minmax(0,1fr)_minmax(8rem,8.75rem)] items-start gap-4">
-        <div className="flex min-w-0 items-center gap-3">
+    <div className="space-y-1">
+      <div className="grid grid-cols-[minmax(0,1fr)_minmax(6.5rem,7.5rem)] items-start gap-3">
+        <div className="flex min-w-0 items-center gap-2">
           <span
             className="inline-block size-3 shrink-0 rounded-full"
-            style={{ backgroundColor: item.color }}
+            style={{ backgroundColor: getAnalyticsCategoryColor(item.id) }}
             aria-hidden="true"
           />
           <span className="truncate text-base font-semibold text-foreground">
@@ -112,7 +116,7 @@ function DeltaRow({ item, currency, direction, maxDelta }: DeltaRowProps) {
         </div>
 
         <div className="text-right" style={{ color: toneColor(direction) }}>
-          <p className="text-base font-semibold tabular-nums">
+          <p className="text-base font-semibold tabular-nums leading-5">
             {formatDelta(item, direction, currency)}
           </p>
           {percentLabel !== '—' && (
@@ -122,11 +126,11 @@ function DeltaRow({ item, currency, direction, maxDelta }: DeltaRowProps) {
       </div>
 
       <div
-        className="h-1.5 overflow-hidden rounded-full"
+        className="h-1 overflow-hidden rounded-md"
         style={{ backgroundColor: 'color-mix(in srgb, var(--ft-primary-500) 10%, transparent)' }}
       >
         <div
-          className="h-full rounded-full"
+          className="h-full rounded-md"
           style={{
             width: barWidth(item, maxDelta),
             backgroundColor: toneFill(direction),
@@ -153,7 +157,7 @@ function DeltaSection({ title, items, currency, direction }: DeltaSectionProps) 
   const Icon = direction === 'up' ? ArrowUp : ArrowDown;
 
   return (
-    <section className="space-y-4">
+    <section className="space-y-3">
       <div
         className="flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.08em]"
         style={{ color: direction === 'up' ? 'var(--ft-danger-300)' : 'var(--ft-success-300)' }}
@@ -162,7 +166,7 @@ function DeltaSection({ title, items, currency, direction }: DeltaSectionProps) 
         <span>{title}</span>
       </div>
 
-      <div className="space-y-4">
+      <div className="space-y-3.5">
         {items.map((item) => (
           <DeltaRow
             key={item.id}
@@ -189,54 +193,36 @@ export function CategoryDeltaCard({
   const isEmpty = increased.length === 0 && decreased.length === 0;
 
   return (
-    <Card
-      className="gap-0 rounded-[28px] border border-[var(--ft-border-default)] shadow-[var(--ft-shadow-lg)]"
-      style={{
-        background: ANALYTICS_CARD_BG,
-      }}
-      aria-label={`Изменения по категориям за ${periodLabel}`}
-    >
-      <div className="flex items-start gap-2 px-6 py-6">
-        <h2 className="text-[1.75rem] font-semibold leading-tight text-foreground">
-          Изменения по категориям
-        </h2>
-        <InfoTooltip
-          content="Какие категории выросли или снизились по сравнению с предыдущим месяцем."
-          className="-mt-1"
-          ariaLabel="Подробнее об изменениях по категориям"
-        />
-      </div>
+    <AnalyticsPanel ariaLabel={`Изменения по категориям за ${periodLabel}`}>
+      <AnalyticsSectionHeader
+        title="Изменения по категориям"
+        tooltip="Какие категории выросли или снизились по сравнению с предыдущим месяцем."
+        ariaLabel="Подробнее об изменениях по категориям"
+      />
 
       {loading ? (
         <DeltaSkeleton />
       ) : error ? (
-        <div
-          className="flex min-h-[320px] flex-col items-center justify-center gap-4 px-7 pb-7 text-center"
-          role="alert"
-        >
-          <AlertCircle className="size-8 text-destructive" aria-hidden="true" />
-          <div className="space-y-1">
-            <p className="text-base font-medium text-foreground">Не удалось загрузить сравнение</p>
-            <p className="text-sm text-[var(--ft-text-secondary)]">{error}</p>
-          </div>
-          <Button variant="outline" className="min-h-[44px]" onClick={onRetry}>
-            Повторить
-          </Button>
-        </div>
+        <AnalyticsState
+          title="Не удалось загрузить сравнение"
+          description={error}
+          onRetry={onRetry}
+          className="min-h-[320px]"
+        />
       ) : isEmpty ? (
-        <div className="px-7 pb-7">
-          <div className="flex min-h-[320px] items-center justify-center rounded-[24px] border border-[var(--ft-border-subtle)] bg-[color-mix(in_srgb,var(--ft-surface-base)_75%,transparent)] px-8 text-center">
+        <div className="px-6 pb-6">
+          <AnalyticsInset className="flex min-h-[320px] items-center justify-center px-8 text-center">
             <p className="max-w-md text-base leading-7 text-[var(--ft-text-secondary)]">
               Нет данных для сравнения. Нужен предыдущий период расходов, чтобы показать заметные изменения по категориям.
             </p>
-          </div>
+          </AnalyticsInset>
         </div>
       ) : (
-        <div className="space-y-7 px-6 pb-6">
+        <div className="space-y-5 px-5 pb-5">
           <DeltaSection title="Рост" items={increased} currency={currency} direction="up" />
           <DeltaSection title="Снижение" items={decreased} currency={currency} direction="down" />
         </div>
       )}
-    </Card>
+    </AnalyticsPanel>
   );
 }

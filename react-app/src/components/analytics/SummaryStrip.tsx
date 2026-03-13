@@ -10,8 +10,9 @@ import {
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { InfoTooltip } from './InfoTooltip';
+import { AnalyticsPanel } from './analyticsTheme';
+import { analyticsMetricStyle } from './analyticsTokens';
 import type { MetricAccent, SummaryMetric } from './models';
-import { ANALYTICS_CARD_BG } from './models';
 
 interface SummaryStripProps {
   loading: boolean;
@@ -81,45 +82,32 @@ function MetricCard({ metric }: MetricCardProps) {
           : 'var(--ft-text-primary)';
 
   return (
-    <div className="flex min-h-[156px] flex-col justify-between gap-5 px-6 py-5">
-      <div className="flex items-start justify-between gap-4">
-        <div className="flex items-start gap-4">
-          <div
-            className="flex size-14 shrink-0 items-center justify-center rounded-full"
-            style={iconStyle}
-            aria-hidden="true"
-          >
-            {createElement(resolveIcon(metric.icon), { className: 'size-6' })}
-          </div>
-
-          <span className="pt-2 text-xs font-semibold uppercase tracking-[0.08em] text-[var(--ft-text-secondary)]">
-            {metric.label}
-          </span>
-        </div>
-
-        <InfoTooltip
-          content={metric.tooltip}
-          className="-mt-2 -mr-2"
-          ariaLabel={`Подробнее: ${metric.label}`}
-        />
-      </div>
-
-      <div
-        className="flex min-w-0 flex-1 flex-col justify-end gap-2"
-        style={{ fontVariantNumeric: 'tabular-nums' }}
+    <div className="flex min-h-[126px] items-center gap-3 px-5 py-4" style={{ fontVariantNumeric: 'tabular-nums' }}>
+      <InfoTooltip
+        content={metric.tooltip}
+        ariaLabel={`Подробнее: ${metric.label}`}
       >
+        <button
+          type="button"
+          aria-label={`Подробнее: ${metric.label}`}
+          className="flex size-12 shrink-0 items-center justify-center rounded-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+          style={iconStyle}
+        >
+          {createElement(resolveIcon(metric.icon), { className: 'size-5' })}
+        </button>
+      </InfoTooltip>
+
+      <div className="flex min-w-0 flex-col justify-center gap-1">
         <span
-          className="text-[clamp(2.1rem,3vw,2.65rem)] font-bold leading-none"
-          style={{ color: valueColor }}
+          className="min-w-0 text-foreground"
+          style={{ ...analyticsMetricStyle, color: valueColor }}
         >
           {metric.value}
         </span>
 
-        {metric.secondary && (
-          <span className="text-sm text-[var(--ft-text-secondary)]">
-            {metric.secondary}
-          </span>
-        )}
+        <span className="text-sm leading-5 text-[var(--ft-text-secondary)]">
+          {metric.secondary ?? '\u00A0'}
+        </span>
       </div>
     </div>
   );
@@ -131,33 +119,19 @@ const SKELETON_KEYS = ['alpha', 'beta', 'gamma'] as const;
 
 function StripSkeleton() {
   return (
-    <div
-      className="overflow-hidden rounded-[28px] border border-[var(--ft-border-default)] shadow-[var(--ft-shadow-lg)]"
-      style={{
-        background: ANALYTICS_CARD_BG,
-      }}
-      role="status"
-      aria-busy="true"
-      aria-label="Загрузка метрик"
-    >
+    <AnalyticsPanel role="status" aria-busy="true" ariaLabel="Загрузка метрик">
       <div className="grid grid-cols-1 divide-y divide-[var(--ft-border-subtle)] md:grid-cols-3 md:divide-x md:divide-y-0">
         {SKELETON_KEYS.map((key) => (
-          <div key={key} className="flex min-h-[156px] flex-col justify-between gap-5 px-6 py-5">
-            <div className="flex items-start justify-between gap-4">
-              <div className="flex items-start gap-4">
-                <Skeleton className="size-14 rounded-full" />
-                <Skeleton className="mt-2 h-4 w-28" />
-              </div>
-              <Skeleton className="size-10 rounded-full" />
-            </div>
-            <div className="flex flex-col gap-3">
+          <div key={key} className="flex min-h-[126px] items-center gap-3 px-5 py-4">
+            <Skeleton className="size-12 rounded-lg" />
+            <div className="flex flex-col gap-1">
               <Skeleton className="h-10 w-44" />
               <Skeleton className="h-5 w-36" />
             </div>
           </div>
         ))}
       </div>
-    </div>
+    </AnalyticsPanel>
   );
 }
 
@@ -171,7 +145,7 @@ export function SummaryStrip({ loading, error, metrics, onRetry }: SummaryStripP
   if (error) {
     return (
       <div
-        className="flex min-h-[170px] flex-col items-center justify-center gap-4 rounded-[28px] border border-destructive/30 bg-destructive/10 p-6 text-center"
+        className="flex min-h-[170px] flex-col items-center justify-center gap-4 rounded-xl border border-destructive/30 bg-destructive/10 p-6 text-center"
         role="alert"
       >
         <AlertCircle className="size-8 text-destructive" aria-hidden="true" />
@@ -192,17 +166,12 @@ export function SummaryStrip({ loading, error, metrics, onRetry }: SummaryStripP
   }
 
   return (
-    <section
-      className="overflow-hidden rounded-[28px] border border-[var(--ft-border-default)] shadow-[var(--ft-shadow-lg)]"
-      style={{
-        background: ANALYTICS_CARD_BG,
-      }}
-    >
+    <AnalyticsPanel>
       <div className="grid grid-cols-1 divide-y divide-[var(--ft-border-subtle)] md:grid-cols-3 md:divide-x md:divide-y-0">
         {metrics.map((metric) => (
           <MetricCard key={metric.key} metric={metric} />
         ))}
       </div>
-    </section>
+    </AnalyticsPanel>
   );
 }

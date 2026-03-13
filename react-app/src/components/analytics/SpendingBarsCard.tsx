@@ -7,10 +7,9 @@ import {
   ResponsiveContainer,
   ReferenceLine,
   CartesianGrid,
+  LabelList,
 } from 'recharts';
 
-import { Card } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import {
   Select,
@@ -21,10 +20,13 @@ import {
 } from '@/components/ui/select';
 import type { SpendingBreakdownDto, MonthlyExpenseDto } from '@/types';
 
-import { InfoTooltip } from './InfoTooltip';
-import { formatAnalyticsMetaMoney, ANALYTICS_CARD_BG } from './models';
-
-type ExpenseGranularity = 'days' | 'weeks' | 'months';
+import {
+  AnalyticsPanel,
+  AnalyticsSectionHeader,
+  AnalyticsState,
+} from './analyticsTheme';
+import { buildSpendingBarsModel, type ExpenseGranularity } from './chartModels';
+import { formatAnalyticsMetaMoney } from './models';
 
 interface SpendingBarsCardProps {
   loading: boolean;
@@ -35,35 +37,6 @@ interface SpendingBarsCardProps {
   granularityOptions: Array<{ label: string; value: ExpenseGranularity }>;
   onGranularityChange: (g: ExpenseGranularity) => void;
   onRetry: () => void;
-}
-
-const SHORT_MONTH_FMT = new Intl.DateTimeFormat('ru-RU', { month: 'short' });
-
-function buildXLabel(entry: MonthlyExpenseDto, granularity: ExpenseGranularity): string {
-  if (granularity === 'days') {
-    const date = new Date(entry.year, entry.month - 1, entry.day ?? 1);
-    return new Intl.DateTimeFormat('ru-RU', {
-      day: 'numeric',
-      month: 'short',
-    }).format(date);
-  }
-
-  if (granularity === 'weeks') {
-    return `${entry.week ?? ''} нед.`;
-  }
-
-  return SHORT_MONTH_FMT.format(new Date(entry.year, entry.month - 1, 1));
-}
-
-function computeAverage(values: number[]): number {
-  if (!values.length) return 0;
-  return values.reduce((sum, value) => sum + value, 0) / values.length;
-}
-
-function percentile(sorted: number[], p: number): number {
-  if (!sorted.length) return 0;
-  const idx = Math.floor((p / 100) * (sorted.length - 1));
-  return sorted[idx] ?? 0;
 }
 
 function formatYTick(value: number, currency: string): string {
@@ -82,7 +55,7 @@ function BarsTooltip({
   currency,
 }: {
   active?: boolean;
-  payload?: ReadonlyArray<{ payload: { label: string; amount: number } }>;
+  payload?: ReadonlyArray<{ payload: { label: string; rawAmount: number } }>;
   currency: string;
 }) {
   const entry = payload?.[0]?.payload;
@@ -94,9 +67,55 @@ function BarsTooltip({
     <div className="rounded-xl border border-border bg-popover px-3 py-2 text-sm shadow-md">
       <p className="text-[var(--ft-text-secondary)]">{entry.label}</p>
       <p className="font-semibold tabular-nums text-foreground">
-        {formatAnalyticsMetaMoney(entry.amount, currency)}
+        {formatAnalyticsMetaMoney(entry.rawAmount, currency)}
       </p>
     </div>
+  );
+}
+
+function CappedBarShape(props: {
+  fill?: string;
+  x?: number;
+  y?: number;
+  width?: number;
+  height?: number;
+  payload?: {
+    isCapped: boolean;
+  };
+}) {
+  const { fill = 'var(--ft-chart-expense)', x = 0, y = 0, width = 0, height = 0, payload } = props;
+  const isCapped = payload?.isCapped ?? false;
+
+  if (height <= 0 || width <= 0) {
+    return null;
+  }
+
+  if (!isCapped) {
+    return <rect x={x} y={y} width={width} height={height} rx={6} fill={fill} />;
+  }
+
+  const visibleTop = y + 8;
+  const zigTop = y + 1.5;
+  const teeth = 4;
+  const toothWidth = width / teeth;
+  const zigPoints = Array.from({ length: teeth }, (_, index) => {
+    const startX = x + toothWidth * index;
+    const midX = startX + toothWidth / 2;
+    const endX = startX + toothWidth;
+    return `L${midX},${zigTop + 6} L${endX},${zigTop}`;
+  });
+
+  return (
+    <g>
+      <rect x={x} y={visibleTop} width={width} height={height - (visibleTop - y)} rx={6} fill={fill} />
+      <path
+        d={`M${x},${zigTop} ${zigPoints.join(' ')}`}
+        fill="none"
+        stroke="var(--ft-analytics-surface)"
+        strokeWidth={2.5}
+        strokeLinejoin="miter"
+      />
+    </g>
   );
 }
 
@@ -111,73 +130,44 @@ export function SpendingBarsCard({
   onRetry,
 }: SpendingBarsCardProps) {
   const rawItems: MonthlyExpenseDto[] = spending?.[granularity] ?? [];
-  const amounts = rawItems.map((item) => item.amount);
-  const average = computeAverage(amounts);
-
-  const sorted = [...amounts].sort((left, right) => left - right);
-  const p85 = percentile(sorted, 85);
-  const hasOutliers = amounts.length > 0 && Math.max(...amounts) > average * 3;
-  const yMax = hasOutliers ? p85 * 1.2 : undefined;
-
-  const chartData = rawItems.map((item) => ({
-    label: buildXLabel(item, granularity),
-    amount: item.amount,
-    barAmount: hasOutliers && yMax != null && item.amount > yMax ? yMax : item.amount,
-  }));
+  const barsModel = buildSpendingBarsModel(rawItems, granularity);
+  const { average, cap, data: chartData } = barsModel;
 
   const isEmpty = !loading && !error && rawItems.length === 0;
 
   return (
-    <Card
-      className="gap-0 rounded-[28px] border border-[var(--ft-border-default)] shadow-[var(--ft-shadow-lg)]"
-      style={{
-        background: ANALYTICS_CARD_BG,
-      }}
-    >
-      <div className="flex flex-col gap-4 px-6 py-6 sm:flex-row sm:items-start sm:justify-between">
-        <div className="flex items-start gap-2">
-          <h2 className="text-[1.75rem] font-semibold leading-tight text-foreground">
-            Динамика расходов
-          </h2>
-          <InfoTooltip
-            content="Показывает динамику расходных операций внутри выбранного месяца."
-            className="-mt-1"
-            ariaLabel="Подробнее о динамике расходов"
-          />
-        </div>
-
-        <Select value={granularity} onValueChange={(value) => onGranularityChange(value as ExpenseGranularity)}>
-          <SelectTrigger className="h-12 min-w-[144px] rounded-2xl border-[var(--ft-border-default)] bg-transparent px-4 text-base">
-            <SelectValue placeholder="День" />
-          </SelectTrigger>
-          <SelectContent className="rounded-2xl border-[var(--ft-border-default)] bg-popover">
-            {granularityOptions.map((option) => (
-              <SelectItem key={option.value} value={option.value}>
-                {option.label}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-      </div>
+    <AnalyticsPanel>
+      <AnalyticsSectionHeader
+        title="Динамика расходов"
+        tooltip="Показывает динамику расходных операций внутри выбранного месяца."
+        ariaLabel="Подробнее о динамике расходов"
+        actions={(
+          <Select value={granularity} onValueChange={(value) => onGranularityChange(value as ExpenseGranularity)}>
+            <SelectTrigger className="h-11 min-w-[144px] rounded-md border-[var(--ft-border-default)] bg-transparent px-4 text-sm">
+              <SelectValue placeholder="День" />
+            </SelectTrigger>
+            <SelectContent className="rounded-md border-[var(--ft-border-default)] bg-popover">
+              {granularityOptions.map((option) => (
+                <SelectItem key={option.value} value={option.value}>
+                  {option.label}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        )}
+      />
 
       {loading && (
         <div className="px-7 pb-7">
-          <Skeleton className="h-[360px] rounded-2xl" />
+          <Skeleton className="h-[360px] rounded-lg" />
         </div>
       )}
 
-      {!loading && error && (
-        <div className="flex flex-col items-center gap-4 px-7 pb-7 text-center">
-          <p className="text-sm text-destructive">{error}</p>
-          <Button variant="outline" onClick={onRetry}>
-            Повторить
-          </Button>
-        </div>
-      )}
+      {!loading && error && <AnalyticsState title="Не удалось загрузить динамику расходов" description={error} onRetry={onRetry} />}
 
       {!loading && !error && isEmpty && (
         <div className="px-7 pb-7">
-          <p className="rounded-2xl border border-[var(--ft-border-subtle)] px-5 py-10 text-center text-base text-[var(--ft-text-secondary)]">
+          <p className="rounded-lg border border-[var(--ft-border-subtle)] px-5 py-10 text-center text-base text-[var(--ft-text-secondary)]">
             Нет данных за выбранный период
           </p>
         </div>
@@ -187,7 +177,7 @@ export function SpendingBarsCard({
         <div className="px-5 pb-6 sm:px-6">
           <div role="img" aria-label="Столбчатая диаграмма расходов">
             <ResponsiveContainer width="100%" height={376}>
-              <BarChart data={chartData} margin={{ top: 26, right: 12, left: 10, bottom: 10 }}>
+              <BarChart data={chartData} margin={{ top: 42, right: 12, left: 10, bottom: 10 }}>
                 <CartesianGrid
                   vertical={false}
                   stroke="color-mix(in srgb, var(--ft-border-subtle) 92%, transparent)"
@@ -202,7 +192,7 @@ export function SpendingBarsCard({
                   height={76}
                 />
                 <YAxis
-                  domain={yMax != null ? [0, yMax] : ['auto', 'auto']}
+                  domain={cap !== null ? [0, cap] : ['auto', 'auto']}
                   tickFormatter={(value: number) => formatYTick(value, currency)}
                   tick={{ fontSize: 13, fill: 'var(--ft-text-secondary)' }}
                   axisLine={false}
@@ -215,7 +205,7 @@ export function SpendingBarsCard({
                       active={props.active}
                       payload={
                         props.payload as unknown as ReadonlyArray<{
-                          payload: { label: string; amount: number };
+                          payload: { label: string; rawAmount: number };
                         }>
                       }
                       currency={currency}
@@ -232,11 +222,58 @@ export function SpendingBarsCard({
                   />
                 )}
                 <Bar
-                  dataKey="barAmount"
+                  dataKey="displayAmount"
                   fill="var(--ft-chart-expense)"
-                  radius={[8, 8, 0, 0]}
-                  maxBarSize={24}
-                />
+                  maxBarSize={28}
+                  shape={<CappedBarShape />}
+                  isAnimationActive={false}
+                >
+                  <LabelList
+                    dataKey="rawAmount"
+                    content={(props) => {
+                      const { x = 0, y = 0, width = 0, value, payload } = props as {
+                        x?: number;
+                        y?: number;
+                        width?: number;
+                        value?: number;
+                        payload?: { isCapped?: boolean };
+                      };
+
+                      if (!payload?.isCapped || value === undefined) {
+                        return null;
+                      }
+
+                      const label = formatAnalyticsMetaMoney(value, currency);
+                      const pillWidth = Math.max(68, label.length * 7.25 + 16);
+
+                      return (
+                        <g>
+                          <rect
+                            x={x + width / 2 - pillWidth / 2}
+                            y={Math.max(6, y - 30)}
+                            width={pillWidth}
+                            height={20}
+                            rx={4}
+                            style={{ fill: 'var(--ft-surface-overlay)' }}
+                          />
+                          <text
+                            x={x + width / 2}
+                            y={Math.max(6, y - 30) + 13}
+                            textAnchor="middle"
+                            fontSize="11"
+                            fontWeight="700"
+                            style={{
+                              fill: 'var(--ft-text-primary)',
+                              fontFamily: 'Inter, sans-serif',
+                            }}
+                          >
+                            {label}
+                          </text>
+                        </g>
+                      );
+                    }}
+                  />
+                </Bar>
               </BarChart>
             </ResponsiveContainer>
           </div>
@@ -251,6 +288,6 @@ export function SpendingBarsCard({
           </div>
         </div>
       )}
-    </Card>
+    </AnalyticsPanel>
   );
 }
