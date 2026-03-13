@@ -1,8 +1,7 @@
-import { ArrowRightLeft, Trash2 } from 'lucide-react';
-import { Fragment, useState } from 'react';
+import { ArrowRightLeft, Lock, LockOpen, Trash2 } from 'lucide-react';
+import { useState } from 'react';
 import { ConfirmDialog } from '@/components/common/ConfirmDialog';
 import { EmptyState } from '@/components/common/EmptyState';
-import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import {
   Pagination,
@@ -14,15 +13,6 @@ import {
   PaginationPrevious,
 } from '@/components/ui/pagination';
 import { Skeleton } from '@/components/ui/skeleton';
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from '@/components/ui/table';
-import { useViewport } from '@/hooks/useViewport';
 import { cn } from '@/utils/cn';
 import { formatCurrency, formatDateTime } from '@/utils/format';
 import type {
@@ -37,7 +27,7 @@ import {
   groupRowsByDate,
   hasActiveTransactionFilters,
 } from './transactionUtils';
-import { getCategoryIcon } from '@/features/categories/categoryIcons';
+import { renderCategoryIcon } from '@/features/categories/categoryIcons';
 
 interface TransactionListProps {
   data: PagedResult<TransactionDto> | undefined;
@@ -45,12 +35,16 @@ interface TransactionListProps {
   categories: TransactionCategoryDto[];
   loading: boolean;
   error: string | null;
+  baseCurrencyCode: string;
   filters: TransactionFiltersValue;
   readonly?: boolean;
   deletingId?: string | null;
+  togglingMandatoryId?: string | null;
   onFiltersChange: (f: Partial<TransactionFiltersValue>) => void;
+  onAdd?: () => void;
   onEdit: (transaction: TransactionDto) => void;
   onEditTransfer: (transferId: string, occurredAt: string) => void;
+  onToggleMandatory?: (transaction: TransactionDto, isMandatory: boolean) => void;
   onDeleteTransaction: (transaction: TransactionDto) => void;
   onDeleteTransfer: (transferId: string) => void;
   onRetry: () => void;
@@ -79,18 +73,21 @@ export function TransactionList({
   categories,
   loading,
   error,
+  baseCurrencyCode,
   filters,
   readonly = false,
   deletingId,
+  togglingMandatoryId = null,
   onFiltersChange,
+  onAdd,
   onEdit,
   onEditTransfer,
+  onToggleMandatory,
   onDeleteTransaction,
   onDeleteTransfer,
   onRetry,
   onClear,
 }: TransactionListProps) {
-  const { isMobile } = useViewport();
   const [deleteTarget, setDeleteTarget] = useState<
     | { type: 'transaction'; transaction: TransactionDto }
     | { type: 'transfer'; transferId: string }
@@ -125,11 +122,18 @@ export function TransactionList({
         title="Ничего не найдено"
         description="Измените фильтры или очистите их, чтобы снова увидеть операции."
         action={{ label: 'Сбросить фильтры', onClick: onClear }}
+        className="min-h-[300px] rounded-xl border border-border bg-card/70"
       />
     ) : (
       <EmptyState
         title="Транзакций пока нет"
         description="Добавьте первую транзакцию или перевод, чтобы заполнить историю."
+        action={
+          readonly || !onAdd
+            ? undefined
+            : { label: 'Добавить транзакцию', onClick: onAdd }
+        }
+        className="min-h-[300px] rounded-xl border border-border bg-card/70"
       />
     );
   }
@@ -139,165 +143,252 @@ export function TransactionList({
   const pageCount = Math.max(1, Math.ceil(data.total / filters.pageSize));
   const rangeStart = (filters.page - 1) * filters.pageSize + 1;
   const rangeEnd = Math.min(filters.page * filters.pageSize, data.total);
-  // Mobile columns: Description + Amount + (Actions when not readonly)
-  // Desktop columns: Description + Account + Date + Amount + (Actions when not readonly)
-  const groupColSpan = isMobile
-    ? readonly ? 2 : 3
-    : readonly ? 4 : 5;
+
+  const getSignedAmountLabel = (amount: number, currencyCode: string) => {
+    if (amount === 0) {
+      return formatCurrency(0, currencyCode);
+    }
+
+    return `${amount > 0 ? '+' : '−'}${formatCurrency(Math.abs(amount), currencyCode)}`;
+  };
+
+  const getGroupNetAmount = (items: typeof rows) =>
+    items.reduce((sum, row) => {
+      if (row.kind !== 'transaction') {
+        return sum;
+      }
+
+      const baseAmount = row.transaction.amountInBaseCurrency ?? row.amount;
+      return sum + (row.tone === 'Income' ? baseAmount : -baseAmount);
+    }, 0);
 
   return (
     <>
-      <div className="overflow-hidden rounded-2xl border border-border bg-card/80 shadow-[var(--ft-shadow-sm)]">
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead>Описание</TableHead>
-              {!isMobile ? <TableHead>Счёт</TableHead> : null}
-              {!isMobile ? <TableHead>Дата</TableHead> : null}
-              <TableHead className="text-right">Сумма</TableHead>
-              {!readonly ? <TableHead className="w-16" /> : null}
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {groups.map((group) => (
-              <Fragment key={group.dateKey}>
-                <TableRow className="bg-muted/35 hover:bg-muted/35">
-                  <TableCell
-                    colSpan={groupColSpan}
-                    className="px-4 py-3 text-sm font-semibold capitalize text-foreground"
-                  >
-                    {group.label}
-                  </TableCell>
-                </TableRow>
+      <div className="mx-auto flex w-full max-w-[960px] flex-col gap-4">
+        {groups.map((group) => {
+          const groupNetAmount = getGroupNetAmount(group.items);
 
+          return (
+            <section
+              key={group.dateKey}
+              className="overflow-hidden rounded-xl border border-border bg-card/80 shadow-[var(--ft-shadow-sm)]"
+            >
+              <header className="sticky top-0 z-[1] flex items-center justify-between border-b border-border/70 bg-card/95 px-4 py-2 text-xs font-semibold tracking-[0.06em] text-muted-foreground uppercase backdrop-blur-sm">
+                <span className="capitalize">{group.label}</span>
+                <span className="tabular-nums normal-case">
+                  {getSignedAmountLabel(groupNetAmount, baseCurrencyCode)}
+                </span>
+              </header>
+
+              <div className="divide-y divide-border/70">
                 {group.items.map((row) => {
-                  const CategoryIcon =
-                    row.kind === 'transaction'
-                      ? getCategoryIcon(row.categoryIcon)
-                      : ArrowRightLeft;
+                  const isTransaction = row.kind === 'transaction';
+                  const isExpense = isTransaction && row.tone === 'Expense';
+                  const metaText = isTransaction
+                    ? [row.accountName, row.transaction.description?.trim()]
+                        .filter(Boolean)
+                        .join(' · ')
+                    : [row.accountName, row.caption].filter(Boolean).join(' · ');
+                  const originalAmountLabel =
+                    isTransaction &&
+                    row.transaction.originalAmount != null &&
+                    row.transaction.originalCurrencyCode &&
+                    (row.transaction.originalCurrencyCode !== row.currencyCode ||
+                      row.transaction.originalAmount !== row.amount)
+                      ? formatCurrency(
+                          Math.abs(row.transaction.originalAmount),
+                          row.transaction.originalCurrencyCode,
+                        )
+                      : null;
+                  const isDeletingCurrentRow =
+                    deletingId === row.id ||
+                    (row.kind === 'transfer' && deletingId === row.transferId);
 
                   return (
-                    <TableRow
+                    <div
                       key={row.id}
-                      className={cn(!readonly && 'group cursor-pointer')}
-                      onClick={() => {
-                        if (readonly) {
-                          return;
-                        }
-
-                        if (row.kind === 'transaction') {
-                          onEdit(row.transaction);
-                          return;
-                        }
-
-                        onEditTransfer(row.transferId, row.occurredAt);
-                      }}
+                      className={cn(
+                        'group flex items-center justify-between gap-3 border-l-2 border-l-transparent px-4 py-4 transition-colors',
+                        !readonly && 'hover:bg-[var(--ft-table-row-hover-bg)]',
+                        isExpense && row.transaction.isMandatory && 'border-l-primary',
+                      )}
                     >
-                      <TableCell>
-                        <div className="space-y-2">
-                          <div className="font-medium text-foreground">{row.title}</div>
-                          <div className="flex flex-wrap items-center gap-2 text-sm text-muted-foreground">
-                            {row.kind === 'transaction' ? (
-                              <Badge
-                                variant="outline"
-                                className="gap-1 rounded-full border-border/80"
-                              >
-                                <span
-                                  className="size-2 rounded-full"
-                                  style={{ backgroundColor: row.categoryColor }}
-                                />
-                                <CategoryIcon className="size-3.5" />
-                                {row.categoryName}
-                              </Badge>
-                            ) : (
-                              <Badge variant="outline" className="gap-1 rounded-full">
-                                <ArrowRightLeft className="size-3.5" />
-                                Перевод
-                              </Badge>
-                            )}
-                            {isMobile ? (
-                              <span>{formatDateTime(row.occurredAt)}</span>
+                      <div
+                        className={cn(
+                          'flex min-w-0 flex-1 items-center gap-3 text-left',
+                          !readonly ? 'cursor-pointer' : 'cursor-default',
+                        )}
+                        role={!readonly ? 'button' : undefined}
+                        tabIndex={!readonly ? 0 : undefined}
+                        onClick={() => {
+                          if (readonly) {
+                            return;
+                          }
+
+                          if (row.kind === 'transaction') {
+                            onEdit(row.transaction);
+                            return;
+                          }
+
+                          onEditTransfer(row.transferId, row.occurredAt);
+                        }}
+                        onKeyDown={(event) => {
+                          if (
+                            readonly ||
+                            (event.key !== 'Enter' && event.key !== ' ')
+                          ) {
+                            return;
+                          }
+
+                          event.preventDefault();
+
+                          if (row.kind === 'transaction') {
+                            onEdit(row.transaction);
+                            return;
+                          }
+
+                          onEditTransfer(row.transferId, row.occurredAt);
+                        }}
+                      >
+                        <span
+                          className={cn(
+                            'flex size-11 shrink-0 items-center justify-center rounded-md border border-border/80',
+                            row.kind === 'transfer' && 'bg-primary/10 text-primary',
+                          )}
+                          style={
+                            row.kind === 'transaction'
+                              ? {
+                                  backgroundColor: `color-mix(in srgb, ${row.categoryColor} 16%, transparent)`,
+                                  color: row.categoryColor,
+                                }
+                              : undefined
+                          }
+                          aria-hidden="true"
+                        >
+                          {row.kind === 'transaction' ? (
+                            renderCategoryIcon(row.categoryIcon, { className: 'size-4' })
+                          ) : (
+                            <ArrowRightLeft className="size-4" />
+                          )}
+                        </span>
+
+                        <div className="min-w-0">
+                          <div className="flex items-center gap-2">
+                            <span className="truncate text-base font-semibold text-foreground">
+                              {row.kind === 'transaction' ? row.categoryName : row.title}
+                            </span>
+
+                            {isExpense ? (
+                              readonly ? (
+                                row.transaction.isMandatory ? (
+                                  <Lock className="size-4 shrink-0 text-[var(--ft-warning-400)]" />
+                                ) : null
+                              ) : (
+                                <button
+                                  type="button"
+                                  className={cn(
+                                    'inline-flex size-8 shrink-0 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-[color-mix(in_srgb,var(--ft-warning-500)_12%,transparent)] hover:text-[var(--ft-warning-400)]',
+                                    row.transaction.isMandatory &&
+                                      'text-[var(--ft-warning-400)]',
+                                  )}
+                                  disabled={
+                                    togglingMandatoryId === row.id || !onToggleMandatory
+                                  }
+                                  title={
+                                    row.transaction.isMandatory
+                                      ? 'Снять обязательный'
+                                      : 'Пометить обязательным'
+                                  }
+                                  onClick={(event) => {
+                                    event.stopPropagation();
+                                    onToggleMandatory?.(
+                                      row.transaction,
+                                      !row.transaction.isMandatory,
+                                    );
+                                  }}
+                                >
+                                  {row.transaction.isMandatory ? (
+                                    <Lock className="size-4" />
+                                  ) : (
+                                    <LockOpen className="size-4" />
+                                  )}
+                                </button>
+                              )
                             ) : null}
-                            {row.caption ? <span>{row.caption}</span> : null}
+                          </div>
+
+                          <div className="truncate text-sm text-muted-foreground">
+                            {metaText || formatDateTime(row.occurredAt)}
                           </div>
                         </div>
-                      </TableCell>
+                      </div>
 
-                      {!isMobile ? <TableCell>{row.accountName}</TableCell> : null}
-
-                      {!isMobile ? (
-                        <TableCell>{formatDateTime(row.occurredAt)}</TableCell>
-                      ) : null}
-
-                      <TableCell className="text-right [font-variant-numeric:tabular-nums]">
-                        {row.kind === 'transaction' ? (
-                          <div
-                            className={cn(
-                              'font-semibold',
-                              row.tone === 'Income'
-                                ? 'text-[var(--ft-success-400)]'
-                                : 'text-[var(--ft-danger-400)]'
-                            )}
-                          >
-                            {row.tone === 'Income' ? '+' : '-'}
-                            {formatCurrency(row.amount, row.currencyCode)}
-                          </div>
-                        ) : (
-                          <div className="space-y-1 text-[var(--ft-text-secondary)]">
-                            <div className="font-semibold text-muted-foreground">
-                              {formatCurrency(row.primaryAmount, row.primaryCurrencyCode)}
-                            </div>
-                            {row.secondaryAmount !== null &&
-                            row.secondaryCurrencyCode &&
-                            (row.secondaryAmount !== row.primaryAmount ||
-                              row.secondaryCurrencyCode !== row.primaryCurrencyCode) ? (
-                              <div className="text-xs">
-                                → {formatCurrency(row.secondaryAmount, row.secondaryCurrencyCode)}
+                      <div className="flex shrink-0 items-center gap-2 pl-2">
+                        <div className="text-right">
+                          {row.kind === 'transaction' ? (
+                            <>
+                              <div
+                                className={cn(
+                                  'text-base font-semibold [font-variant-numeric:tabular-nums]',
+                                  row.tone === 'Income'
+                                    ? 'text-[var(--ft-success-400)]'
+                                    : 'text-[var(--ft-danger-400)]',
+                                )}
+                              >
+                                {row.tone === 'Income' ? '+' : '−'}
+                                {formatCurrency(row.amount, row.currencyCode)}
                               </div>
-                            ) : null}
-                          </div>
-                        )}
-                      </TableCell>
+                              {originalAmountLabel ? (
+                                <div className="text-xs text-muted-foreground [font-variant-numeric:tabular-nums]">
+                                  {originalAmountLabel}
+                                </div>
+                              ) : null}
+                            </>
+                          ) : (
+                            <>
+                              <div className="text-sm font-semibold text-[var(--ft-danger-400)] [font-variant-numeric:tabular-nums]">
+                                −{formatCurrency(row.primaryAmount, row.primaryCurrencyCode)}
+                              </div>
+                              <div className="text-sm font-semibold text-[var(--ft-success-400)] [font-variant-numeric:tabular-nums]">
+                                +{formatCurrency(row.secondaryAmount ?? 0, row.secondaryCurrencyCode ?? row.primaryCurrencyCode)}
+                              </div>
+                              {row.caption ? (
+                                <div className="text-xs text-muted-foreground">{row.caption}</div>
+                              ) : null}
+                            </>
+                          )}
+                        </div>
 
-                      {!readonly ? (
-                        <TableCell>
-                          <div className="flex justify-end">
-                            <Button
-                              type="button"
-                              variant="ghost"
-                              size="icon"
-                              className={cn(
-                                'min-h-[44px] min-w-[44px] rounded-full transition-opacity',
-                                !isMobile && 'opacity-0 group-hover:opacity-100'
-                              )}
-                              disabled={
-                                deletingId === row.id ||
-                                (row.kind === 'transfer' && deletingId === row.transferId)
-                              }
-                              onClick={(event) => {
-                                event.stopPropagation();
-                                setDeleteTarget(
-                                  row.kind === 'transaction'
-                                    ? { type: 'transaction', transaction: row.transaction }
-                                    : { type: 'transfer', transferId: row.transferId }
-                                );
-                              }}
-                            >
-                              <Trash2 className="size-4 text-destructive" />
-                            </Button>
-                          </div>
-                        </TableCell>
-                      ) : null}
-                    </TableRow>
+                        {!readonly ? (
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="icon"
+                            className="min-h-[40px] min-w-[40px] rounded-md opacity-100 transition-opacity sm:opacity-0 sm:group-hover:opacity-100"
+                            disabled={isDeletingCurrentRow}
+                            onClick={(event) => {
+                              event.stopPropagation();
+                              setDeleteTarget(
+                                row.kind === 'transaction'
+                                  ? { type: 'transaction', transaction: row.transaction }
+                                  : { type: 'transfer', transferId: row.transferId },
+                              );
+                            }}
+                          >
+                            <Trash2 className="size-4 text-destructive" />
+                          </Button>
+                        ) : null}
+                      </div>
+                    </div>
                   );
                 })}
-              </Fragment>
-            ))}
-          </TableBody>
-        </Table>
+              </div>
+            </section>
+          );
+        })}
       </div>
 
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+      <div className="mx-auto flex w-full max-w-[960px] flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div className="text-sm text-muted-foreground">
           Показано {rangeStart}–{rangeEnd} из {data.total}
         </div>

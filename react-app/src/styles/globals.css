@@ -44,7 +44,7 @@
   --radius-md: var(--ft-radius-md);
   --radius-lg: var(--ft-radius-lg);
   --radius-xl: var(--ft-radius-xl);
-  --radius-2xl: var(--ft-radius-full);
+  --radius-2xl: var(--ft-radius-2xl);
 }
 
 @layer base {
@@ -235,6 +235,7 @@
     --ft-radius-md: 0.25rem;
     --ft-radius-lg: 0.375rem;
     --ft-radius-xl: 0.5rem;
+    --ft-radius-2xl: 0.75rem;
     --ft-radius-full: 9999px;
 
     /* Typography */

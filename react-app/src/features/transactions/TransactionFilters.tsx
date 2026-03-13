@@ -177,7 +177,7 @@ export function TransactionFilters(props: TransactionFiltersProps) {
 
   if (isMobile) {
     return (
-      <Accordion type="single" collapsible>
+      <Accordion type="single" collapsible className="mx-auto w-full max-w-[960px]">
         <AccordionItem value="filters">
           <AccordionTrigger>Фильтры</AccordionTrigger>
           <AccordionContent>
@@ -189,7 +189,7 @@ export function TransactionFilters(props: TransactionFiltersProps) {
   }
 
   return (
-    <div className="rounded-2xl border border-border bg-card/80 p-4 shadow-[var(--ft-shadow-sm)]">
+    <div className="mx-auto w-full max-w-[960px] rounded-xl border border-border bg-card/80 p-4 shadow-[var(--ft-shadow-sm)]">
       <FiltersContent {...props} />
     </div>
   );
