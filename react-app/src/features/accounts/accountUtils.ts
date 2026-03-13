@@ -31,6 +31,8 @@ const ACCOUNT_TYPE_API_VALUES: Record<AccountType, 'Bank' | 'Crypto' | 'Brokerag
   4: 'Deposit',
 };
 
+export const BANK_ACCOUNT_TYPE: AccountType = 0;
+
 export const ACCOUNT_TYPE_OPTIONS: AccountTypeOption[] = [
   { label: 'Банк', value: 0 },
   { label: 'Криптовалюта', value: 2 },
@@ -83,6 +85,10 @@ export function sortAccounts(accounts: Account[]): Account[] {
 
     return right.balanceInBaseCurrency - left.balanceInBaseCurrency;
   });
+}
+
+export function filterBankAccounts(accounts: Account[]): Account[] {
+  return accounts.filter((account) => account.type === BANK_ACCOUNT_TYPE);
 }
 
 export function filterAccounts(accounts: Account[], searchText: string): Account[] {

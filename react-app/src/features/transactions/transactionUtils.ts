@@ -1,24 +1,3 @@
-import {
-  BookOpen,
-  Briefcase,
-  Building2,
-  Car,
-  CreditCard,
-  Gift,
-  Globe,
-  Heart,
-  House,
-  Monitor,
-  Palette,
-  Percent,
-  RefreshCw,
-  ShoppingBag,
-  ShoppingCart,
-  Smile,
-  Tag,
-  TrendingUp,
-  type LucideIcon,
-} from 'lucide-react';
 import type {
   AccountDto,
   TransactionCategoryDto,
@@ -31,32 +10,7 @@ import type {
   TransactionDisplayRow,
   TransactionFiltersValue,
 } from './transactionModels';
-
-const CATEGORY_ICON_MAP: Record<string, LucideIcon> = {
-  'pi-tag': Tag,
-  'pi-shopping-cart': ShoppingCart,
-  'pi-face-smile': Smile,
-  'pi-heart': Heart,
-  'pi-car': Car,
-  'pi-home': House,
-  'pi-star': TrendingUp,
-  'pi-refresh': RefreshCw,
-  'pi-book': BookOpen,
-  'pi-globe': Globe,
-  'pi-gift': Gift,
-  'pi-credit-card': CreditCard,
-  'pi-shopping-bag': ShoppingBag,
-  'pi-palette': Palette,
-  'pi-briefcase': Briefcase,
-  'pi-desktop': Monitor,
-  'pi-chart-line': TrendingUp,
-  'pi-percentage': Percent,
-  'pi-building': Building2,
-};
-
-export function getCategoryIcon(iconName: string): LucideIcon {
-  return CATEGORY_ICON_MAP[iconName] ?? Tag;
-}
+import { normalizeCategoryIconKey } from '@/features/categories/categoryIcons';
 
 export function toTransactionsQuery(
   filters: TransactionFiltersValue
@@ -222,7 +176,7 @@ export function buildTransactionRows(
       tone: transaction.type === 'Income' ? 'Income' : 'Expense',
       categoryName: category?.name ?? 'Без категории',
       categoryColor: category?.color ?? '#9e9e9e',
-      categoryIcon: category?.icon ?? 'pi-tag',
+      categoryIcon: normalizeCategoryIconKey(category?.icon),
       transaction,
     });
   }

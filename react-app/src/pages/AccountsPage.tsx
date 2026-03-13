@@ -11,9 +11,9 @@ import { ErrorBoundary } from '@/components/common/ErrorBoundary';
 import { PageHeader } from '@/components/common/PageHeader';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
-import { useDebouncedValue } from '@/hooks/useDebouncedValue';
 import { useUserStore } from '@/stores/userStore';
 import { resolveApiErrorMessage } from '@/utils/errors';
+import { cn } from '@/utils/cn';
 import { AccountBalanceAdjustmentsModal } from '@/features/accounts/AccountBalanceAdjustmentsModal';
 import { AccountCard } from '@/features/accounts/AccountCard';
 import { AccountFormModal } from '@/features/accounts/AccountFormModal';
@@ -21,6 +21,7 @@ import { AccountsToolbar } from '@/features/accounts/AccountsToolbar';
 import type { ManagedAccount, AccountsView } from '@/features/accounts/accountModels';
 import {
   filterAccounts,
+  filterBankAccounts,
   normalizeAccount,
   sortAccounts,
 } from '@/features/accounts/accountUtils';
@@ -37,7 +38,6 @@ export default function AccountsPage() {
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [adjustmentsAccount, setAdjustmentsAccount] = useState<ManagedAccount | null>(null);
   const [archiveTarget, setArchiveTarget] = useState<ManagedAccount | null>(null);
-  const debouncedSearch = useDebouncedValue(searchInput, 300);
 
   const accountsQuery = useQuery({
     queryKey: queryKeys.accounts.active(),
@@ -57,22 +57,42 @@ export default function AccountsPage() {
     staleTime: Infinity,
   });
 
-  const activeAccounts = filterAccounts(
-    sortAccounts(
+  const activeBankAccounts = sortAccounts(
+    filterBankAccounts(
       (accountsQuery.data ?? []).map((account) =>
         normalizeAccount(account, currenciesQuery.data)
       )
-    ),
-    debouncedSearch
+    )
   );
-  const archivedAccounts = filterAccounts(
-    sortAccounts(
+  const archivedBankAccounts = sortAccounts(
+    filterBankAccounts(
       (archivedAccountsQuery.data ?? []).map((account) =>
         normalizeAccount(account, currenciesQuery.data)
       )
-    ),
-    debouncedSearch
+    )
   );
+  const currentSourceAccounts = view === 'active' ? activeBankAccounts : archivedBankAccounts;
+  const currentAccounts = filterAccounts(currentSourceAccounts, searchInput);
+
+  const currentError =
+    currenciesQuery.error ??
+    (view === 'active' ? accountsQuery.error : archivedAccountsQuery.error);
+  const isCurrentViewLoading =
+    view === 'active' ? accountsQuery.isLoading : archivedAccountsQuery.isLoading;
+  const isLoading =
+    currenciesQuery.isLoading ||
+    (isCurrentViewLoading && currentSourceAccounts.length === 0);
+  const hasSearch = searchInput.trim().length > 0;
+  const hasVisibleAccounts = currentSourceAccounts.length > 0;
+  const showInlineError = Boolean(currentError) && hasVisibleAccounts;
+  const showBlockingError = Boolean(currentError) && !hasVisibleAccounts && !isLoading;
+  const compactGridMaxWidth =
+    currentAccounts.length < 3
+      ? `${currentAccounts.length * 360 + Math.max(currentAccounts.length - 1, 0) * 16}px`
+      : undefined;
+
+  const activeCount = activeBankAccounts.length;
+  const archivedCount = archivedBankAccounts.length;
 
   const setPrimaryMutation = useMutation({
     mutationFn: accountsApi.setPrimaryAccount,
@@ -128,16 +148,6 @@ export default function AccountsPage() {
     },
   });
 
-  const currentAccounts = view === 'active' ? activeAccounts : archivedAccounts;
-  const currentError =
-    currenciesQuery.error ??
-    (view === 'active' ? accountsQuery.error : archivedAccountsQuery.error);
-  const isLoading =
-    currenciesQuery.isLoading ||
-    accountsQuery.isLoading ||
-    archivedAccountsQuery.isLoading;
-  const hasSearch = debouncedSearch.trim().length > 0;
-
   const handleRetry = () => {
     void currenciesQuery.refetch();
     void accountsQuery.refetch();
@@ -146,13 +156,14 @@ export default function AccountsPage() {
 
   return (
     <ErrorBoundary>
-      <div className="flex flex-col gap-6 p-4 sm:p-6 lg:px-8">
+      <div className="flex flex-col gap-5 p-4 sm:p-6 lg:px-8">
         <PageHeader
           title="Счета"
+          className="mb-0"
           actions={
             !isReadOnlyMode ? (
               <Button
-                className="min-h-[44px] rounded-full px-5"
+                className="min-h-[44px] rounded-lg px-5 shadow-[var(--ft-shadow-sm)]"
                 onClick={() => {
                   setEditingAccount(null);
                   setIsFormOpen(true);
@@ -166,14 +177,26 @@ export default function AccountsPage() {
 
         <AccountsToolbar
           view={view}
-          activeCount={accountsQuery.data?.length ?? 0}
-          archivedCount={archivedAccountsQuery.data?.length ?? 0}
+          activeCount={activeCount}
+          archivedCount={archivedCount}
           searchValue={searchInput}
           onSearchChange={setSearchInput}
           onViewChange={setView}
         />
 
-        {currentError ? (
+        {showInlineError ? (
+          <div className="rounded-xl border border-destructive/30 bg-destructive/10 px-4 py-3 text-sm">
+            <div className="font-medium text-foreground">Не удалось обновить счета</div>
+            <div className="mt-1 text-muted-foreground">
+              {resolveApiErrorMessage(currentError, 'Попробуйте повторить запрос.')}
+            </div>
+            <Button className="mt-3 min-h-[44px]" variant="outline" onClick={handleRetry}>
+              Повторить
+            </Button>
+          </div>
+        ) : null}
+
+        {showBlockingError ? (
           <div className="rounded-2xl border border-destructive/30 bg-destructive/10 p-4 text-sm">
             <div className="font-medium text-foreground">Не удалось загрузить счета</div>
             <div className="mt-1 text-muted-foreground">
@@ -184,9 +207,9 @@ export default function AccountsPage() {
             </Button>
           </div>
         ) : isLoading ? (
-          <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+          <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4">
             {SKELETON_KEYS.map((key) => (
-              <Skeleton key={key} className="h-[220px] rounded-3xl" />
+              <Skeleton key={key} className="h-[184px] rounded-xl" />
             ))}
           </div>
         ) : currentAccounts.length === 0 ? (
@@ -200,7 +223,7 @@ export default function AccountsPage() {
             <EmptyState
               icon={<Wallet />}
               title="Нет активных счетов"
-              description="Добавьте счёт, чтобы начать отслеживать баланс и операции."
+              description="Добавьте банковский счёт, чтобы начать отслеживать баланс и операции."
               action={
                 isReadOnlyMode
                   ? undefined
@@ -222,7 +245,13 @@ export default function AccountsPage() {
             />
           )
         ) : (
-          <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+          <div
+            className={cn(
+              'grid gap-4 md:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4',
+              currentAccounts.length < 3 && 'justify-start',
+            )}
+            style={{ maxWidth: compactGridMaxWidth }}
+          >
             {currentAccounts.map((account) => (
               <AccountCard
                 key={account.id}

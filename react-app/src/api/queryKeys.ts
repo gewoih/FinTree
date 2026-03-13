@@ -81,4 +81,10 @@ export const queryKeys = {
 
   // Currencies
   currencies: () => ['currencies'] as const,
+
+  // Subscription
+  subscription: {
+    all: () => ['subscription'] as const,
+    payments: () => [...queryKeys.subscription.all(), 'payments'] as const,
+  },
 } as const;

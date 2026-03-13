@@ -34,10 +34,10 @@ import type {
 import type { TransactionFiltersValue } from './transactionModels';
 import {
   buildTransactionRows,
-  getCategoryIcon,
   groupRowsByDate,
   hasActiveTransactionFilters,
 } from './transactionUtils';
+import { getCategoryIcon } from '@/features/categories/categoryIcons';
 
 interface TransactionListProps {
   data: PagedResult<TransactionDto> | undefined;

@@ -225,8 +225,19 @@ const profileRoute = createRoute({
 const adminRoute = createRoute({
   getParentRoute: () => protectedLayoutRoute,
   path: PATHS.ADMIN,
-  beforeLoad() {
-    const isOwner = useUserStore.getState().currentUser?.isOwner === true;
+  async beforeLoad() {
+    let currentUser = useUserStore.getState().currentUser;
+
+    if (!currentUser) {
+      const ok = await useUserStore.getState().fetchCurrentUser();
+      currentUser = useUserStore.getState().currentUser;
+
+      if (!ok || !currentUser) {
+        throw redirect({ to: PATHS.PROFILE });
+      }
+    }
+
+    const isOwner = currentUser.isOwner === true;
     if (!isOwner) {
       throw redirect({ to: PATHS.PROFILE });
     }
