@@ -60,7 +60,7 @@ export default function BottomTabBar() {
           aria-current={isActive(tab.to) ? 'page' : undefined}
           className={cn(
             'relative flex min-h-[44px] flex-1 select-none flex-col items-center justify-center gap-0.5 text-xs font-medium transition-colors active:scale-95',
-            'focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-[-2px]',
+            'focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-inset',
             isActive(tab.to)
               ? 'text-primary'
               : 'text-muted-foreground hover:bg-accent/50 hover:text-foreground'
@@ -90,7 +90,7 @@ export default function BottomTabBar() {
           onClick={toggleMoreMenu}
           className={cn(
             'relative flex min-h-[44px] w-full flex-1 cursor-pointer select-none flex-col items-center justify-center gap-0.5 border-0 bg-transparent text-xs font-medium transition-colors active:scale-95',
-            'focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-[-2px]',
+            'focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-inset',
             isMoreActive
               ? 'text-primary'
               : 'text-muted-foreground hover:bg-accent/50 hover:text-foreground'

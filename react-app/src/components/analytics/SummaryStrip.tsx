@@ -11,6 +11,7 @@ import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { InfoTooltip } from './InfoTooltip';
 import type { MetricAccent, SummaryMetric } from './models';
+import { ANALYTICS_CARD_BG } from './models';
 
 interface SummaryStripProps {
   loading: boolean;
@@ -133,8 +134,7 @@ function StripSkeleton() {
     <div
       className="overflow-hidden rounded-[28px] border border-[var(--ft-border-default)] shadow-[var(--ft-shadow-lg)]"
       style={{
-        background:
-          'linear-gradient(180deg, color-mix(in srgb, var(--ft-surface-raised) 84%, var(--ft-bg-base)) 0%, var(--ft-surface-base) 100%)',
+        background: ANALYTICS_CARD_BG,
       }}
       role="status"
       aria-busy="true"
@@ -195,8 +195,7 @@ export function SummaryStrip({ loading, error, metrics, onRetry }: SummaryStripP
     <section
       className="overflow-hidden rounded-[28px] border border-[var(--ft-border-default)] shadow-[var(--ft-shadow-lg)]"
       style={{
-        background:
-          'linear-gradient(180deg, color-mix(in srgb, var(--ft-surface-raised) 84%, var(--ft-bg-base)) 0%, var(--ft-surface-base) 100%)',
+        background: ANALYTICS_CARD_BG,
       }}
     >
       <div className="grid grid-cols-1 divide-y divide-[var(--ft-border-subtle)] md:grid-cols-3 md:divide-x md:divide-y-0">

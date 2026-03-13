@@ -6,6 +6,10 @@ import type {
 } from '@/types';
 import { formatNumber } from '@/utils/format';
 
+/** Shared card-level gradient used across all analytics cards. */
+export const ANALYTICS_CARD_BG =
+  'linear-gradient(180deg, color-mix(in srgb, var(--ft-surface-raised) 84%, var(--ft-bg-base)) 0%, var(--ft-surface-base) 100%)';
+
 export type MetricAccent =
   | 'income'
   | 'expense'

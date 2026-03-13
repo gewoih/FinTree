@@ -139,9 +139,10 @@ export function TransactionList({
   const pageCount = Math.max(1, Math.ceil(data.total / filters.pageSize));
   const rangeStart = (filters.page - 1) * filters.pageSize + 1;
   const rangeEnd = Math.min(filters.page * filters.pageSize, data.total);
-  // Columns: Description + (Account on desktop) + Date + Amount + (Actions when not readonly)
+  // Mobile columns: Description + Amount + (Actions when not readonly)
+  // Desktop columns: Description + Account + Date + Amount + (Actions when not readonly)
   const groupColSpan = isMobile
-    ? readonly ? 3 : 4
+    ? readonly ? 2 : 3
     : readonly ? 4 : 5;
 
   return (
@@ -152,7 +153,7 @@ export function TransactionList({
             <TableRow>
               <TableHead>Описание</TableHead>
               {!isMobile ? <TableHead>Счёт</TableHead> : null}
-              <TableHead>Дата</TableHead>
+              {!isMobile ? <TableHead>Дата</TableHead> : null}
               <TableHead className="text-right">Сумма</TableHead>
               {!readonly ? <TableHead className="w-16" /> : null}
             </TableRow>
@@ -224,9 +225,9 @@ export function TransactionList({
 
                       {!isMobile ? <TableCell>{row.accountName}</TableCell> : null}
 
-                      <TableCell className={cn(isMobile && 'hidden')}>
-                        {!isMobile ? formatDateTime(row.occurredAt) : null}
-                      </TableCell>
+                      {!isMobile ? (
+                        <TableCell>{formatDateTime(row.occurredAt)}</TableCell>
+                      ) : null}
 
                       <TableCell className="text-right [font-variant-numeric:tabular-nums]">
                         {row.kind === 'transaction' ? (

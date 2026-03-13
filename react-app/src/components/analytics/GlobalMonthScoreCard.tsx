@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 
 import type { GlobalScoreModel } from './models';
+import { ANALYTICS_CARD_BG } from './models';
 
 interface GlobalMonthScoreCardProps {
   loading: boolean;
@@ -50,8 +51,7 @@ function ScoreLoadingSkeleton() {
     <div
       className="overflow-hidden rounded-[28px] border border-[var(--ft-border-default)] shadow-[var(--ft-shadow-lg)]"
       style={{
-        background:
-          'linear-gradient(180deg, color-mix(in srgb, var(--ft-surface-raised) 84%, var(--ft-bg-base)) 0%, var(--ft-surface-base) 100%)',
+        background: ANALYTICS_CARD_BG,
       }}
       role="status"
       aria-busy="true"

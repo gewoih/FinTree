@@ -179,7 +179,7 @@ export function AccountCard({
                 onCheckedChange={onLiquidityChange}
                 disabled={isLiquidityLoading}
                 aria-label={
-                  account.isLiquid ? 'Счёт ликвидный' : 'Счёт неликвидный'
+                  account.isLiquid ? 'Сделать счёт неликвидным' : 'Сделать счёт ликвидным'
                 }
               />
               <span>{account.isLiquid ? 'Ликвидный' : 'Неликвидный'}</span>

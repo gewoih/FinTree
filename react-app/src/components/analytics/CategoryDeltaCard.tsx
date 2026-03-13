@@ -6,7 +6,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import type { CategoryDeltaItemDto } from '@/types';
 
 import { InfoTooltip } from './InfoTooltip';
-import { formatAnalyticsMetaMoney, formatAnalyticsPercent } from './models';
+import { formatAnalyticsMetaMoney, formatAnalyticsPercent, ANALYTICS_CARD_BG } from './models';
 
 interface CategoryDeltaCardProps {
   loading: boolean;
@@ -192,8 +192,7 @@ export function CategoryDeltaCard({
     <Card
       className="gap-0 rounded-[28px] border border-[var(--ft-border-default)] shadow-[var(--ft-shadow-lg)]"
       style={{
-        background:
-          'linear-gradient(180deg, color-mix(in srgb, var(--ft-surface-raised) 84%, var(--ft-bg-base)) 0%, var(--ft-surface-base) 100%)',
+        background: ANALYTICS_CARD_BG,
       }}
       aria-label={`Изменения по категориям за ${periodLabel}`}
     >

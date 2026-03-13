@@ -2,7 +2,7 @@ import { useState, useMemo, useCallback } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { useNavigate } from '@tanstack/react-router';
 import { ChevronLeft, ChevronRight, X } from 'lucide-react';
-import { Popover } from 'radix-ui';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 
 import { useUserStore } from '@/stores/userStore';
 import * as analyticsApi from '@/api/analytics';
@@ -108,6 +108,7 @@ function MonthPicker({ value, onChange }: MonthPickerProps) {
           return (
             <button
               key={name}
+              type="button"
               disabled={isDisabled}
               onClick={() => onChange(d)}
               className={cn(
@@ -336,24 +337,20 @@ export default function AnalyticsPage() {
                   <ChevronLeft className="size-5" />
                 </Button>
 
-                <Popover.Root>
-                  <Popover.Trigger asChild>
+                <Popover>
+                  <PopoverTrigger asChild>
                     <button
+                      type="button"
                       className="min-h-[44px] min-w-[168px] rounded-full px-5 text-center text-lg font-semibold capitalize text-foreground transition-colors hover:bg-[color-mix(in_srgb,var(--ft-text-primary)_4%,transparent)]"
                       aria-label="Выбрать месяц"
                     >
                       {monthLabel}
                     </button>
-                  </Popover.Trigger>
-                  <Popover.Portal>
-                    <Popover.Content
-                      className="z-50 rounded-2xl border border-border bg-popover shadow-lg outline-none"
-                      sideOffset={8}
-                    >
-                      <MonthPicker value={selectedDate} onChange={handleMonthSelect} />
-                    </Popover.Content>
-                  </Popover.Portal>
-                </Popover.Root>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-auto rounded-2xl p-0" sideOffset={8}>
+                    <MonthPicker value={selectedDate} onChange={handleMonthSelect} />
+                  </PopoverContent>
+                </Popover>
 
                 <Button
                   variant="ghost"

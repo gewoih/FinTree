@@ -114,6 +114,10 @@
   **Priority:** P2
   **Files:** `react-app/src/pages/AccountsPage.tsx`, `react-app/src/pages/TransactionsPage.tsx`, `react-app/src/features/transactions/TransactionFormModal.tsx`, `react-app/src/features/transactions/TransactionList.tsx`
 
+- [ ] `FT-TODO-066` `TransactionList` — кликабельные строки таблицы не доступны с клавиатуры: нет `tabIndex`, `onKeyDown` и `aria-label` на строках-редакторах. При read-only режиме строки не интерактивны — норма. При edit-режиме нужен способ открыть форму без мыши.
+  **Fix:** Добавить в `TableRow` (только не-readonly режим): `tabIndex={0}`, `onKeyDown={(e) => e.key === 'Enter' && handleEditRow(...)}`, `aria-label={...}`. Либо добавить явную кнопку редактирования рядом с кнопкой удаления.
+  **Files:** `react-app/src/features/transactions/TransactionList.tsx`
+
 - [ ] `FT-TODO-040` SummaryStrip — zone progress bar for the 4 metric cards
   **Context:** Metric cards (Сбережения, Финансовая подушка, Стабильность трат, Необязательные) show numbers with no benchmark context. A segmented zone bar with a position marker communicates the quality of each value at a glance.
   **Zone definitions:**

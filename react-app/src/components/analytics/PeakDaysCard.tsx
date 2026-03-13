@@ -11,6 +11,7 @@ import { InfoTooltip } from './InfoTooltip';
 import {
   formatAnalyticsMetaMoney,
   formatAnalyticsPercent,
+  ANALYTICS_CARD_BG,
 } from './models';
 
 interface PeakDaysCardProps {
@@ -173,8 +174,7 @@ export function PeakDaysCard({
     <Card
       className="gap-0 rounded-[28px] border border-[var(--ft-border-default)] shadow-[var(--ft-shadow-lg)]"
       style={{
-        background:
-          'linear-gradient(180deg, color-mix(in srgb, var(--ft-surface-raised) 84%, var(--ft-bg-base)) 0%, var(--ft-surface-base) 100%)',
+        background: ANALYTICS_CARD_BG,
       }}
     >
       <div className="flex items-center gap-2 px-6 py-6">
