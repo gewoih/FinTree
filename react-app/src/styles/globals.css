@@ -660,12 +660,15 @@
   }
 
   html {
+    height: 100%;
     font-size: 16px;
     -webkit-text-size-adjust: 100%;
     scroll-behavior: smooth;
   }
 
   body {
+    min-height: 100%;
+    margin: 0;
     background-color: var(--ft-bg-base);
     color: var(--ft-text-primary);
     font-family: var(--ft-font-base);
@@ -673,6 +676,10 @@
     line-height: var(--ft-leading-normal);
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
+  }
+
+  #root {
+    min-height: 100%;
   }
 
   button,

@@ -25,16 +25,9 @@ interface DataStateWrapperProps {
 const BASE_SKELETON_KEYS = ['one', 'two', 'three', 'four', 'five', 'six'];
 
 function getSkeletonKeys(loadingRows: number): string[] {
-  if (loadingRows <= BASE_SKELETON_KEYS.length) {
-    return BASE_SKELETON_KEYS.slice(0, loadingRows);
-  }
-
-  const generatedKeys = Array.from(
-    { length: loadingRows - BASE_SKELETON_KEYS.length },
-    () => `extra-${Math.random().toString(36).slice(2, 10)}`
+  return Array.from({ length: loadingRows }, (_, index) =>
+    BASE_SKELETON_KEYS[index] ?? `extra-${index + 1}`
   );
-
-  return [...BASE_SKELETON_KEYS, ...generatedKeys];
 }
 
 export function DataStateWrapper({

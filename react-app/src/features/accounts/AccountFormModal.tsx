@@ -25,7 +25,7 @@ import {
 } from '@/components/ui/select';
 import { useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
-import type { Currency } from '@/types';
+import type { AccountType, Currency } from '@/types';
 import { resolveApiErrorMessage } from '@/utils/errors';
 import type { ManagedAccount } from './accountModels';
 import {
@@ -50,19 +50,25 @@ interface AccountFormModalProps {
   open: boolean;
   account: ManagedAccount | null;
   currencies: Currency[];
+  allowedTypes?: readonly AccountType[];
   onClose: () => void;
-  onSuccess: () => void;
+  onSuccess: () => void | Promise<void>;
 }
 
 export function AccountFormModal({
   open,
   account,
   currencies,
+  allowedTypes = [0, 2, 3, 4],
   onClose,
   onSuccess,
 }: AccountFormModalProps) {
   const isEditMode = account !== null;
   const queryClient = useQueryClient();
+  const availableTypeOptions = ACCOUNT_TYPE_OPTIONS.filter((option) =>
+    allowedTypes.includes(option.value)
+  );
+  const defaultCreateType = String(availableTypeOptions[0]?.value ?? 0);
 
   const form = useForm<CreateFormValues | EditFormValues>({
     resolver: zodResolver(isEditMode ? editSchema : createSchema),
@@ -70,7 +76,7 @@ export function AccountFormModal({
       ? { name: account.name }
       : {
           name: '',
-          type: '0',
+          type: defaultCreateType,
           currencyCode: currencies[0]?.code ?? '',
         },
   });
@@ -85,11 +91,11 @@ export function AccountFormModal({
         ? { name: account.name }
         : {
             name: '',
-            type: '0',
+            type: defaultCreateType,
             currencyCode: currencies[0]?.code ?? '',
           }
     );
-  }, [account, currencies, form, isEditMode, open]);
+  }, [account, currencies, defaultCreateType, form, isEditMode, open]);
 
   const handleSubmit = form.handleSubmit(async (values) => {
     try {
@@ -109,7 +115,7 @@ export function AccountFormModal({
       }
 
       await queryClient.invalidateQueries({ queryKey: queryKeys.accounts.all() });
-      onSuccess();
+      await onSuccess();
       onClose();
       toast.success(isEditMode ? 'Счёт переименован' : 'Счёт создан');
     } catch (error) {
@@ -169,7 +175,7 @@ export function AccountFormModal({
                         <SelectValue placeholder="Выберите тип" />
                       </SelectTrigger>
                       <SelectContent>
-                        {ACCOUNT_TYPE_OPTIONS.map((option) => (
+                        {availableTypeOptions.map((option) => (
                           <SelectItem key={option.value} value={String(option.value)}>
                             {option.label}
                           </SelectItem>

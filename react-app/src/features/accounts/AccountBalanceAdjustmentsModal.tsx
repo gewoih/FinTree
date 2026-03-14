@@ -36,6 +36,7 @@ interface AccountBalanceAdjustmentsModalProps {
   account: ManagedAccount | null;
   readonly?: boolean;
   onClose: () => void;
+  onSuccess?: () => void | Promise<void>;
 }
 
 export function AccountBalanceAdjustmentsModal({
@@ -43,6 +44,7 @@ export function AccountBalanceAdjustmentsModal({
   account,
   readonly = false,
   onClose,
+  onSuccess,
 }: AccountBalanceAdjustmentsModalProps) {
   const queryClient = useQueryClient();
 
@@ -80,6 +82,7 @@ export function AccountBalanceAdjustmentsModal({
       await queryClient.invalidateQueries({
         queryKey: queryKeys.accounts.adjustments(account.id),
       });
+      await onSuccess?.();
       toast.success('Баланс скорректирован');
       onClose();
     } catch (error) {

@@ -1,6 +1,6 @@
 import { Link, Outlet, useNavigate } from '@tanstack/react-router';
 import { Menu } from 'lucide-react';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import ThemeToggle from '../common/ThemeToggle';
 import { useViewport } from '../../hooks/useViewport';
 import { PATHS } from '../../router/paths';
@@ -47,6 +47,19 @@ export default function AppShell() {
       hash: 'subscription',
     });
   };
+
+  useEffect(() => {
+    const previousBodyOverflow = document.body.style.overflow;
+    const previousHtmlOverflow = document.documentElement.style.overflow;
+
+    document.body.style.overflow = 'hidden';
+    document.documentElement.style.overflow = 'hidden';
+
+    return () => {
+      document.body.style.overflow = previousBodyOverflow;
+      document.documentElement.style.overflow = previousHtmlOverflow;
+    };
+  }, []);
 
   return (
     <div

@@ -64,6 +64,25 @@ export function formatNumber(value: number, fractionDigits = 2): string {
   }).format(value);
 }
 
+/** Форматирует число для editable input без группировки и без лишних нулей. */
+export function formatEditableNumber(
+  value: number | null | undefined,
+  fractionDigits = 2
+): string {
+  if (value == null || !Number.isFinite(value)) {
+    return '';
+  }
+
+  if (fractionDigits <= 0) {
+    return Math.round(value).toString();
+  }
+
+  return value
+    .toFixed(fractionDigits)
+    .replace(/(\.\d*?[1-9])0+$/u, '$1')
+    .replace(/\.0+$/u, '');
+}
+
 /** Форматирует процент. Пример: "12,5%" */
 export function formatPercent(value: number, fractionDigits = 1): string {
   return new Intl.NumberFormat(LOCALE, {

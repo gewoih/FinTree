@@ -18,7 +18,7 @@ export type MetricAccent =
   | 'neutral';
 
 export interface SummaryMetric {
-  key: 'income' | 'expense' | 'balance';
+  key: string;
   label: string;
   value: string;
   icon: string;
