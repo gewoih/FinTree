@@ -1,5 +1,5 @@
 import { startTransition, useState, useMemo, useCallback } from 'react';
-import { useQuery } from '@tanstack/react-query';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useNavigate } from '@tanstack/react-router';
 import { ChevronLeft, ChevronRight, X } from 'lucide-react';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
@@ -7,6 +7,7 @@ import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover
 import { useUserStore } from '@/stores/userStore';
 import * as analyticsApi from '@/api/analytics';
 import * as accountsApi from '@/api/accounts';
+import * as retrospectivesApi from '@/api/retrospectives';
 import * as userApi from '@/api/user';
 import { apiClient } from '@/api';
 import { queryKeys } from '@/api/queryKeys';
@@ -140,22 +141,27 @@ function MonthPicker({ value, onChange }: MonthPickerProps) {
 export default function AnalyticsPage() {
   const { currentUser } = useUserStore();
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
 
   const [selectedDate, setSelectedDate] = useState<Date>(() => startOfMonth(new Date()));
   const [activeTab, setActiveTab] = useState<ActiveTab>('now');
   const [pieMode, setPieMode] = useState<CategoryDatasetMode>('expenses');
   const [pieScope, setPieScope] = useState<CategoryScope>('all');
   const [granularity, setGranularity] = useState<ExpenseGranularity>('days');
-  const [retrospectiveDismissed, setRetrospectiveDismissed] = useState(false);
+  const [dismissedRetrospectiveBannerKey, setDismissedRetrospectiveBannerKey] = useState<string | null>(null);
   const [categoriesStepDone] = useState(
     () => sessionStorage.getItem('ft_categories_visited') === 'true',
   );
 
   const selectedYear = selectedDate.getFullYear();
   const selectedMonth = selectedDate.getMonth() + 1;
-  const now = startOfMonth(new Date());
+  const today = new Date();
+  const now = startOfMonth(today);
   const isCurrentMonth = isSameMonth(selectedDate, now);
-  const isPreviousMonth = isSameMonth(selectedDate, addMonths(now, -1));
+  const isRetrospectiveBannerPeriod = today.getDate() <= 7;
+  const previousMonthDate = addMonths(now, -1);
+  const previousMonthStr = `${previousMonthDate.getFullYear()}-${String(previousMonthDate.getMonth() + 1).padStart(2, '0')}`;
+  const retrospectiveBannerKey = `${currentUser?.id ?? 'anonymous'}:${previousMonthStr}`;
 
   const isFirstRun = Boolean(
     currentUser &&
@@ -189,6 +195,29 @@ export default function AnalyticsPage() {
     queryFn: () => accountsApi.getAccounts(false),
     staleTime: 60_000,
     enabled: isFirstRun,
+  });
+
+  const retrospectiveBannerQuery = useQuery({
+    queryKey: queryKeys.retrospectives.bannerStatus(previousMonthStr),
+    queryFn: () => retrospectivesApi.getBannerStatus(previousMonthStr),
+    staleTime: 300_000,
+    enabled: !isFirstRun && isRetrospectiveBannerPeriod,
+  });
+
+  const dismissRetrospectiveBannerMutation = useMutation({
+    mutationFn: () => retrospectivesApi.dismissBanner(previousMonthStr),
+    onMutate: () => {
+      setDismissedRetrospectiveBannerKey(retrospectiveBannerKey);
+    },
+    onSuccess: () => {
+      queryClient.setQueryData(
+        queryKeys.retrospectives.bannerStatus(previousMonthStr),
+        { showBanner: false },
+      );
+    },
+    onError: () => {
+      // Keep banner hidden for the current session to avoid flicker if the dismiss request fails.
+    },
   });
 
   // ── Handlers ──
@@ -351,7 +380,12 @@ export default function AnalyticsPage() {
 
   const monthLabel = formatMonthHeading(selectedDate);
 
-  const retroPath = `/reflections/${selectedYear}-${String(selectedMonth).padStart(2, '0')}`;
+  const retroPath = `/reflections/${previousMonthStr}`;
+  const shouldShowRetrospectiveBanner =
+    activeTab === 'now' &&
+    isRetrospectiveBannerPeriod &&
+    dismissedRetrospectiveBannerKey !== retrospectiveBannerKey &&
+    (retrospectiveBannerQuery.data?.showBanner ?? false);
 
   return (
     <ErrorBoundary>
@@ -403,7 +437,7 @@ export default function AnalyticsPage() {
             )}
           />
 
-          {isPreviousMonth && !retrospectiveDismissed && (
+          {shouldShowRetrospectiveBanner && (
             <div className="flex items-center justify-between gap-3 rounded-lg border border-border bg-muted/50 px-4 py-3 text-sm">
               <span className="text-foreground">
                 Прошлый месяц завершён. Хотите подвести итоги?{' '}
@@ -417,7 +451,7 @@ export default function AnalyticsPage() {
               <Button
                 variant="ghost"
                 size="icon-sm"
-                onClick={() => setRetrospectiveDismissed(true)}
+                onClick={() => dismissRetrospectiveBannerMutation.mutate()}
                 aria-label="Закрыть баннер"
                 className="min-h-[44px] min-w-[44px] shrink-0"
               >

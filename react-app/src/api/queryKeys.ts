@@ -48,6 +48,10 @@ export const queryKeys = {
   retrospectives: {
     all: () => ['retrospectives'] as const,
     list: () => [...queryKeys.retrospectives.all(), 'list'] as const,
+    availableMonths: () =>
+      [...queryKeys.retrospectives.all(), 'availableMonths'] as const,
+    bannerStatus: (month: string) =>
+      [...queryKeys.retrospectives.all(), 'bannerStatus', month] as const,
     detail: (month: string) =>
       [...queryKeys.retrospectives.all(), 'detail', month] as const,
   },
