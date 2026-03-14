@@ -165,15 +165,15 @@ export default function RetroDetailPage() {
   });
 
   const normalizedPayload = normalizeRetrospectivePayload({
-    month,
     ...watchedValues,
+    month,
   } satisfies UpsertRetrospectivePayload);
   const hasMeaningfulContent = hasMeaningfulRetrospectivePayload(normalizedPayload);
 
   const handleSubmit = form.handleSubmit(async (values) => {
     const payload = normalizeRetrospectivePayload({
-      month,
       ...values,
+      month,
     });
 
     if (!hasMeaningfulRetrospectivePayload(payload)) {

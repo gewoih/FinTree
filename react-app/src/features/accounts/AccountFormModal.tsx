@@ -1,6 +1,6 @@
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Check, Plus } from 'lucide-react';
-import { useEffect } from 'react';
+import { useEffect, useMemo } from 'react';
 import { Controller, useForm } from 'react-hook-form';
 import { z } from 'zod';
 import * as accountsApi from '@/api/accounts';
@@ -39,12 +39,7 @@ const createSchema = z.object({
   currencyCode: z.string().trim().min(1, 'Выберите валюту'),
 });
 
-const editSchema = z.object({
-  name: z.string().trim().min(1, 'Введите название счёта').max(100),
-});
-
-type CreateFormValues = z.infer<typeof createSchema>;
-type EditFormValues = z.infer<typeof editSchema>;
+type AccountFormValues = z.infer<typeof createSchema>;
 
 interface AccountFormModalProps {
   open: boolean;
@@ -68,17 +63,29 @@ export function AccountFormModal({
   const availableTypeOptions = ACCOUNT_TYPE_OPTIONS.filter((option) =>
     allowedTypes.includes(option.value)
   );
-  const defaultCreateType = String(availableTypeOptions[0]?.value ?? 0);
+  const defaultCreateType = String(
+    availableTypeOptions[0]?.value ?? 0
+  ) as AccountFormValues['type'];
 
-  const form = useForm<CreateFormValues | EditFormValues>({
-    resolver: zodResolver(isEditMode ? editSchema : createSchema),
-    defaultValues: isEditMode
-      ? { name: account.name }
-      : {
-          name: '',
-          type: defaultCreateType,
-          currencyCode: currencies[0]?.code ?? '',
-        },
+  const defaultValues = useMemo<AccountFormValues>(() => {
+    if (isEditMode) {
+      return {
+        name: account.name,
+        type: String(account.type) as AccountFormValues['type'],
+        currencyCode: account.currencyCode,
+      };
+    }
+
+    return {
+      name: '',
+      type: defaultCreateType,
+      currencyCode: currencies[0]?.code ?? '',
+    };
+  }, [account, currencies, defaultCreateType, isEditMode]);
+
+  const form = useForm<AccountFormValues>({
+    resolver: zodResolver(createSchema),
+    defaultValues,
   });
 
   useEffect(() => {
@@ -86,16 +93,8 @@ export function AccountFormModal({
       return;
     }
 
-    form.reset(
-      isEditMode
-        ? { name: account.name }
-        : {
-            name: '',
-            type: defaultCreateType,
-            currencyCode: currencies[0]?.code ?? '',
-          }
-    );
-  }, [account, currencies, defaultCreateType, form, isEditMode, open]);
+    form.reset(defaultValues);
+  }, [defaultValues, form, open]);
 
   const handleSubmit = form.handleSubmit(async (values) => {
     try {
@@ -105,12 +104,10 @@ export function AccountFormModal({
           name: values.name.trim(),
         });
       } else {
-        const createValues = values as CreateFormValues;
-
         await accountsApi.createAccount({
-          name: createValues.name.trim(),
-          type: Number(createValues.type) as 0 | 2 | 3 | 4,
-          currencyCode: createValues.currencyCode,
+          name: values.name.trim(),
+          type: Number(values.type) as 0 | 2 | 3 | 4,
+          currencyCode: values.currencyCode,
         });
       }
 

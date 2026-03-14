@@ -1,7 +1,9 @@
 /// <reference types="vite/client" />
 
 interface ImportMetaEnv {
-  /** Base URL for the backend API, used in the Vite dev server proxy. */
+  /** Target URL for the backend API proxy used by the Vite dev server. */
+  readonly VITE_API_PROXY_TARGET?: string;
+  /** Legacy alias kept for backward compatibility with earlier local setups. */
   readonly VITE_API_BASE_URL?: string;
 }
 

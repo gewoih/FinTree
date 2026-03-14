@@ -20,10 +20,13 @@ import {
   REFLECTION_RANGE_OPTIONS,
   sortReflectionsAscending,
   sortReflectionsDescending,
+  type ReflectionMonthOption,
   type ReflectionChartRange,
 } from '@/features/reflections/reflectionModels';
 
-const EMPTY_RETROSPECTIVES = [];
+const EMPTY_RETROSPECTIVES: Awaited<
+  ReturnType<typeof retrospectivesApi.getRetrospectives>
+> = [];
 
 export default function ReflectionsPage() {
   const navigate = useNavigate();
@@ -64,7 +67,7 @@ export default function ReflectionsPage() {
     () => new Set(retrospectives.map((item) => item.month)),
     [retrospectives]
   );
-  const monthOptions = useMemo(
+  const monthOptions = useMemo<ReflectionMonthOption[]>(
     () =>
       (availableMonthsQuery.data ?? []).map((month) => ({
         label: formatReflectionMonth(month),

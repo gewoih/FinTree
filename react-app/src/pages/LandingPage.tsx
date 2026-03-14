@@ -55,7 +55,18 @@ const features = [
   },
 ] as const;
 
-const pricing = [
+interface PricingPlan {
+  name: string;
+  price: string;
+  period: string;
+  note: string;
+  description: string;
+  accent: boolean;
+  oldPrice?: string;
+  badge?: string;
+}
+
+const pricing: PricingPlan[] = [
   {
     name: 'Месяц',
     price: '390 ₽',
@@ -74,7 +85,7 @@ const pricing = [
     accent: true,
     badge: 'Лучший выбор',
   },
-] as const;
+];
 
 const trustPoints = [
   { icon: ShieldCheck, label: 'Данные под защитой' },
