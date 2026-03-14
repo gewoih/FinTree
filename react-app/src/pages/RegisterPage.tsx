@@ -42,7 +42,7 @@ const PASSWORD_RULES = [
   },
   {
     key: 'special',
-    label: 'Спецсимвол (!@#$...)',
+    label: 'Хотя бы один спецсимвол',
     check: (value: string) => /[^a-zA-Z0-9]/.test(value),
   },
 ] as const;
