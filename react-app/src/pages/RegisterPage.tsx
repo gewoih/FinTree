@@ -115,8 +115,10 @@ export default function RegisterPage() {
       title="Начните учет финансов"
       description="Создайте аккаунт через Telegram или откройте email-регистрацию."
     >
-      <Card className="border-border/70 bg-card/90 shadow-2xl backdrop-blur">
-        <CardContent className="space-y-6 px-5 pt-5 sm:px-6 sm:pt-6">
+      <Card
+        className="overflow-hidden rounded-[1.75rem] border border-border/70 bg-[color-mix(in_srgb,var(--ft-surface-raised)_88%,transparent)] shadow-[var(--ft-shadow-2xl)] backdrop-blur-xl"
+      >
+        <CardContent className="space-y-6 px-5 pt-5 pb-6 sm:px-6 sm:pt-6">
           <TelegramAuthWidget
             mode="register"
             label="Регистрация через Telegram"
@@ -142,7 +144,7 @@ export default function RegisterPage() {
               type="button"
               variant="outline"
               size="lg"
-              className="w-full"
+              className="min-h-12 w-full rounded-xl"
               onClick={() => setShowEmailForm(true)}
             >
               Зарегистрироваться через Email
@@ -207,7 +209,7 @@ export default function RegisterPage() {
               <Button
                 type="submit"
                 size="lg"
-                className="w-full"
+                className="min-h-12 w-full rounded-xl"
                 disabled={isLoading || !email || !password || !allRulesMet}
               >
                 {isLoading ? 'Создаём аккаунт…' : 'Создать аккаунт'}
@@ -216,7 +218,7 @@ export default function RegisterPage() {
           )}
         </CardContent>
 
-        <CardFooter className="justify-center gap-2 border-t border-border/60 bg-muted/30 text-sm">
+        <CardFooter className="justify-center gap-2 border-t border-border/60 bg-background/25 text-sm">
           <span className="text-muted-foreground">Уже есть аккаунт?</span>
           <Link
             to={PATHS.LOGIN}

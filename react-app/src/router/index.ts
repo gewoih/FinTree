@@ -17,10 +17,6 @@ import { PATHS } from './paths';
 const LandingPage = React.lazy(() => import('../pages/LandingPage'));
 const LoginPage = React.lazy(() => import('../pages/LoginPage'));
 const RegisterPage = React.lazy(() => import('../pages/RegisterPage'));
-const PrivacyPolicyPage = React.lazy(() => import('../pages/PrivacyPolicyPage'));
-const TermsPage = React.lazy(() => import('../pages/TermsPage'));
-const BlogPage = React.lazy(() => import('../pages/BlogPage'));
-const CareersPage = React.lazy(() => import('../pages/CareersPage'));
 
 const AnalyticsPage = React.lazy(() => import('../pages/AnalyticsPage'));
 const AccountsPage = React.lazy(() => import('../pages/AccountsPage'));
@@ -93,6 +89,12 @@ const publicLayoutRoute = createRoute({
   component: PublicPageLayout,
 });
 
+const authLayoutRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  id: 'auth-layout',
+  component: Outlet,
+});
+
 const protectedLayoutRoute = createRoute({
   getParentRoute: () => rootRoute,
   id: 'protected-layout',
@@ -117,7 +119,7 @@ const landingRoute = createRoute({
 });
 
 const loginRoute = createRoute({
-  getParentRoute: () => publicLayoutRoute,
+  getParentRoute: () => authLayoutRoute,
   path: PATHS.LOGIN,
   beforeLoad() {
     if (useAuthStore.getState().isAuthenticated) {
@@ -128,7 +130,7 @@ const loginRoute = createRoute({
 });
 
 const registerRoute = createRoute({
-  getParentRoute: () => publicLayoutRoute,
+  getParentRoute: () => authLayoutRoute,
   path: PATHS.REGISTER,
   beforeLoad() {
     if (useAuthStore.getState().isAuthenticated) {
@@ -136,30 +138,6 @@ const registerRoute = createRoute({
     }
   },
   component: withSuspense(RegisterPage),
-});
-
-const privacyRoute = createRoute({
-  getParentRoute: () => publicLayoutRoute,
-  path: PATHS.PRIVACY,
-  component: withSuspense(PrivacyPolicyPage),
-});
-
-const termsRoute = createRoute({
-  getParentRoute: () => publicLayoutRoute,
-  path: PATHS.TERMS,
-  component: withSuspense(TermsPage),
-});
-
-const blogRoute = createRoute({
-  getParentRoute: () => publicLayoutRoute,
-  path: PATHS.BLOG,
-  component: withSuspense(BlogPage),
-});
-
-const careersRoute = createRoute({
-  getParentRoute: () => publicLayoutRoute,
-  path: PATHS.CAREERS,
-  component: withSuspense(CareersPage),
 });
 
 const analyticsRoute = createRoute({
@@ -248,12 +226,10 @@ const adminRoute = createRoute({
 const routeTree = rootRoute.addChildren([
   publicLayoutRoute.addChildren([
     landingRoute,
+  ]),
+  authLayoutRoute.addChildren([
     loginRoute,
     registerRoute,
-    privacyRoute,
-    termsRoute,
-    blogRoute,
-    careersRoute,
   ]),
   protectedLayoutRoute.addChildren([
     analyticsRoute,

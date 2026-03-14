@@ -73,8 +73,10 @@ export default function LoginPage() {
       title="С возвращением!"
       description="Войдите через Telegram или продолжите работу по email."
     >
-      <Card className="border-border/70 bg-card/90 shadow-2xl backdrop-blur">
-        <CardContent className="space-y-6 px-5 pt-5 sm:px-6 sm:pt-6">
+      <Card
+        className="overflow-hidden rounded-[1.75rem] border border-border/70 bg-[color-mix(in_srgb,var(--ft-surface-raised)_88%,transparent)] shadow-[var(--ft-shadow-2xl)] backdrop-blur-xl"
+      >
+        <CardContent className="space-y-6 px-5 pt-5 pb-6 sm:px-6 sm:pt-6">
           <TelegramAuthWidget
             mode="login"
             label="Войти через Telegram"
@@ -121,7 +123,7 @@ export default function LoginPage() {
             <Button
               type="submit"
               size="lg"
-              className="w-full"
+              className="min-h-12 w-full rounded-xl"
               disabled={isLoading || !email || !password}
             >
               {isLoading ? 'Входим…' : 'Войти'}
@@ -129,7 +131,7 @@ export default function LoginPage() {
           </form>
         </CardContent>
 
-        <CardFooter className="justify-center gap-2 border-t border-border/60 bg-muted/30 text-sm">
+        <CardFooter className="justify-center gap-2 border-t border-border/60 bg-background/25 text-sm">
           <span className="text-muted-foreground">Нет аккаунта?</span>
           <Link
             to={PATHS.REGISTER}

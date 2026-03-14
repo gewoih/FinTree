@@ -7,6 +7,7 @@ interface TelegramAuthWidgetProps {
   mode: 'login' | 'register';
   label: string;
   fallback?: ReactNode;
+  helper?: ReactNode;
   onAuthenticate: (payload: TelegramLoginPayload) => Promise<boolean>;
 }
 
@@ -14,6 +15,7 @@ export function TelegramAuthWidget({
   mode,
   label,
   fallback,
+  helper,
   onAuthenticate,
 }: TelegramAuthWidgetProps) {
   const mountRef = useRef<HTMLDivElement | null>(null);
@@ -82,7 +84,13 @@ export function TelegramAuthWidget({
   return (
     <div className="space-y-3 text-center">
       <p className="text-sm font-medium text-foreground">{label}</p>
-      <div ref={mountRef} className="flex min-h-11 justify-center" />
+      <div className="rounded-2xl border border-border/60 bg-background/30 px-4 py-4 shadow-[var(--ft-shadow-inner)]">
+        <div ref={mountRef} className="flex min-h-11 justify-center" />
+      </div>
+
+      {helper ? (
+        <p className="text-xs leading-5 text-muted-foreground">{helper}</p>
+      ) : null}
 
       {status === 'error' && fallback ? (
         <p className="text-xs leading-5 text-muted-foreground">{fallback}</p>
