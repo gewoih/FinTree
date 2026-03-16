@@ -94,6 +94,11 @@ public class ForecastService(
 
         if (remainingDays > 0 && pool.Length >= 10)
         {
+            var winsorizedPool = BootstrapSamplerService.Winsorize(
+                pool,
+                GoalSimulationDefaults.ExpenseWinsorizeLowerQuantile,
+                GoalSimulationDefaults.ExpenseWinsorizeUpperQuantile);
+
             var simTotals = new decimal[BootstrapingSimulationsCount];
             var seedParts = new List<long>
             {
@@ -109,14 +114,23 @@ public class ForecastService(
                 GoalSimulationDefaults.ForecastDeterministicSeedBase,
                 seedParts);
 
-            var cdf = BootstrapSamplerService.BuildRecencyCdf(pool.Length, GoalSimulationDefaults.ForecastRecencyLambda);
+            var blockStartCount = BootstrapSamplerService.GetBlockStartCount(
+                winsorizedPool.Length,
+                GoalSimulationDefaults.BootstrapBlockDays);
+            var cdf = BootstrapSamplerService.BuildRecencyCdf(blockStartCount, GoalSimulationDefaults.ForecastRecencyLambda);
             var rng = new Random(seed);
 
             for (var s = 0; s < BootstrapingSimulationsCount; s++)
             {
                 var total = observedCumulativeActual;
-                for (var r = 0; r < remainingDays; r++)
-                    total += BootstrapSamplerService.SampleFromPool(pool, cdf, rng);
+                var r = 0;
+                while (r < remainingDays)
+                {
+                    var blockStart = BootstrapSamplerService.SampleBlockStartIndex(
+                        winsorizedPool.Length, cdf, GoalSimulationDefaults.BootstrapBlockDays, rng);
+                    for (var b = 0; b < GoalSimulationDefaults.BootstrapBlockDays && r < remainingDays; b++, r++)
+                        total += winsorizedPool[Math.Min(blockStart + b, winsorizedPool.Length - 1)];
+                }
 
                 simTotals[s] = total;
             }
