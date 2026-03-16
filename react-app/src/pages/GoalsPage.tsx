@@ -1,6 +1,6 @@
 import { PageHeader } from '@/components/common/PageHeader';
 import { Skeleton } from '@/components/ui/skeleton';
-import { useUserStore } from '@/stores/userStore';
+import { useCurrentUser } from '@/features/auth/session';
 import { GoalDataQualityCard } from '@/features/goals/GoalDataQualityCard';
 import { GoalFanChartCard } from '@/features/goals/GoalFanChartCard';
 import { GoalParametersPanel } from '@/features/goals/GoalParametersPanel';
@@ -9,8 +9,8 @@ import { GoalTargetForm } from '@/features/goals/GoalTargetForm';
 import { useGoalSimulation } from '@/features/goals/useGoalSimulation';
 
 export default function GoalsPage() {
-  const baseCurrencyCode =
-    useUserStore((state) => state.currentUser?.baseCurrencyCode) ?? 'RUB';
+  const currentUser = useCurrentUser();
+  const baseCurrencyCode = currentUser?.baseCurrencyCode ?? 'RUB';
   const {
     achievementRangeText,
     canRunSimulation,

@@ -1,18 +1,27 @@
 import React, { Suspense } from 'react';
 import {
+  type ErrorComponentProps,
   Outlet,
+  type RouterHistory,
   createRootRoute,
   createRoute,
   createRouter,
-  redirect,
+  useRouter,
 } from '@tanstack/react-router';
 import AppShell from '../components/layout/AppShell';
 import PublicPageLayout from '../components/layout/PublicPageLayout';
 import { ErrorBoundary } from '../components/common/ErrorBoundary';
+import { Button } from '../components/ui/button';
 import { validateTransactionsRouteSearch } from '../features/transactions/transactionSearch';
-import { useAuthStore } from '../stores/authStore';
 import { useUiStore } from '../stores/uiStore';
-import { useUserStore } from '../stores/userStore';
+import { resolveApiErrorMessage } from '../utils/errors';
+import {
+  bootstrapAppSession,
+  redirectAuthenticatedUser,
+  requireAuthenticatedUser,
+  requireOwnerUser,
+  validateRetroDetailMonth,
+} from './routeGuards';
 import { PATHS } from './paths';
 
 const LandingPage = React.lazy(() => import('../pages/LandingPage'));
@@ -69,190 +78,219 @@ function withSuspense(Component: React.LazyExoticComponent<React.ComponentType>)
   };
 }
 
+function RouteErrorFallback({ error, reset }: ErrorComponentProps) {
+  const router = useRouter();
+
+  return React.createElement(
+    'div',
+    {
+      className:
+        'flex min-h-[60vh] flex-col items-center justify-center gap-4 p-8 text-center',
+      role: 'alert',
+    },
+    React.createElement(
+      'div',
+      { className: 'space-y-2' },
+      React.createElement(
+        'p',
+        { className: 'text-base font-medium text-foreground' },
+        'Не удалось открыть страницу'
+      ),
+      React.createElement(
+        'p',
+        { className: 'max-w-md text-sm text-muted-foreground' },
+        resolveApiErrorMessage(
+          error,
+          'Проверьте соединение и повторите попытку.'
+        )
+      )
+    ),
+    React.createElement(
+      Button,
+      {
+        variant: 'outline',
+        className: 'min-h-[44px]',
+        onClick: () => {
+          reset();
+          void router.invalidate();
+        },
+      },
+      'Повторить'
+    )
+  );
+}
+
 let isAppBootstrapDone = false;
 
-const rootRoute = createRootRoute({
-  async beforeLoad() {
-    if (isAppBootstrapDone) {
-      return;
-    }
-
-    isAppBootstrapDone = true;
-    useUiStore.getState().initTheme();
-    await useAuthStore.getState().ensureSession();
-  },
-  component: Outlet,
-});
-
-const publicLayoutRoute = createRoute({
-  getParentRoute: () => rootRoute,
-  id: 'public-layout',
-  component: PublicPageLayout,
-});
-
-const authLayoutRoute = createRoute({
-  getParentRoute: () => rootRoute,
-  id: 'auth-layout',
-  component: Outlet,
-});
-
-const protectedLayoutRoute = createRoute({
-  getParentRoute: () => rootRoute,
-  id: 'protected-layout',
-  beforeLoad() {
-    const isAuthenticated = useAuthStore.getState().isAuthenticated;
-    if (!isAuthenticated) {
-      throw redirect({ to: PATHS.LOGIN });
-    }
-  },
-  component: AppShell,
-});
-
-const landingRoute = createRoute({
-  getParentRoute: () => publicLayoutRoute,
-  path: PATHS.HOME,
-  beforeLoad() {
-    if (useAuthStore.getState().isAuthenticated) {
-      throw redirect({ to: PATHS.ANALYTICS });
-    }
-  },
-  component: withSuspense(LandingPage),
-});
-
-const loginRoute = createRoute({
-  getParentRoute: () => authLayoutRoute,
-  path: PATHS.LOGIN,
-  beforeLoad() {
-    if (useAuthStore.getState().isAuthenticated) {
-      throw redirect({ to: PATHS.ANALYTICS });
-    }
-  },
-  component: withSuspense(LoginPage),
-});
-
-const registerRoute = createRoute({
-  getParentRoute: () => authLayoutRoute,
-  path: PATHS.REGISTER,
-  beforeLoad() {
-    if (useAuthStore.getState().isAuthenticated) {
-      throw redirect({ to: PATHS.ANALYTICS });
-    }
-  },
-  component: withSuspense(RegisterPage),
-});
-
-const analyticsRoute = createRoute({
-  getParentRoute: () => protectedLayoutRoute,
-  path: PATHS.ANALYTICS,
-  component: withSuspense(AnalyticsPage),
-});
-
-const accountsRoute = createRoute({
-  getParentRoute: () => protectedLayoutRoute,
-  path: PATHS.ACCOUNTS,
-  component: withSuspense(AccountsPage),
-});
-
-const transactionsRoute = createRoute({
-  getParentRoute: () => protectedLayoutRoute,
-  path: PATHS.TRANSACTIONS,
-  validateSearch: validateTransactionsRouteSearch,
-  component: withSuspense(TransactionsPage),
-});
-
-const categoriesRoute = createRoute({
-  getParentRoute: () => protectedLayoutRoute,
-  path: PATHS.CATEGORIES,
-  component: withSuspense(CategoriesPage),
-});
-
-const investmentsRoute = createRoute({
-  getParentRoute: () => protectedLayoutRoute,
-  path: PATHS.INVESTMENTS,
-  component: withSuspense(InvestmentsPage),
-});
-
-const reflectionsRoute = createRoute({
-  getParentRoute: () => protectedLayoutRoute,
-  path: PATHS.REFLECTIONS,
-  component: withSuspense(ReflectionsPage),
-});
-
-const retroDetailRoute = createRoute({
-  getParentRoute: () => protectedLayoutRoute,
-  path: PATHS.RETRO_DETAIL,
-  component: withSuspense(RetroDetailPage),
-});
-
-const freedomRoute = createRoute({
-  getParentRoute: () => protectedLayoutRoute,
-  path: PATHS.FREEDOM,
-  component: withSuspense(FreedomCalculatorPage),
-});
-
-const goalsRoute = createRoute({
-  getParentRoute: () => protectedLayoutRoute,
-  path: PATHS.GOALS,
-  component: withSuspense(GoalsPage),
-});
-
-const profileRoute = createRoute({
-  getParentRoute: () => protectedLayoutRoute,
-  path: PATHS.PROFILE,
-  component: withSuspense(ProfilePage),
-});
-
-const adminRoute = createRoute({
-  getParentRoute: () => protectedLayoutRoute,
-  path: PATHS.ADMIN,
-  async beforeLoad() {
-    let currentUser = useUserStore.getState().currentUser;
-
-    if (!currentUser) {
-      const ok = await useUserStore.getState().fetchCurrentUser();
-      currentUser = useUserStore.getState().currentUser;
-
-      if (!ok || !currentUser) {
-        throw redirect({ to: PATHS.PROFILE });
+function createRouteTree() {
+  const rootRoute = createRootRoute({
+    async beforeLoad() {
+      if (isAppBootstrapDone) {
+        return;
       }
-    }
 
-    const isOwner = currentUser.isOwner === true;
-    if (!isOwner) {
-      throw redirect({ to: PATHS.PROFILE });
-    }
-  },
-  component: withSuspense(AdminPage),
-});
+      isAppBootstrapDone = true;
+      useUiStore.getState().initTheme();
+      await bootstrapAppSession();
+    },
+    component: Outlet,
+    errorComponent: RouteErrorFallback,
+  });
 
-const routeTree = rootRoute.addChildren([
-  publicLayoutRoute.addChildren([
-    landingRoute,
-  ]),
-  authLayoutRoute.addChildren([
-    loginRoute,
-    registerRoute,
-  ]),
-  protectedLayoutRoute.addChildren([
-    analyticsRoute,
-    accountsRoute,
-    transactionsRoute,
-    categoriesRoute,
-    investmentsRoute,
-    reflectionsRoute,
-    retroDetailRoute,
-    freedomRoute,
-    goalsRoute,
-    profileRoute,
-    adminRoute,
-  ]),
-]);
+  const publicLayoutRoute = createRoute({
+    getParentRoute: () => rootRoute,
+    id: 'public-layout',
+    component: PublicPageLayout,
+  });
 
-export const router = createRouter({
-  routeTree,
-  defaultPreload: 'intent',
-  scrollRestoration: true,
-});
+  const authLayoutRoute = createRoute({
+    getParentRoute: () => rootRoute,
+    id: 'auth-layout',
+    component: Outlet,
+  });
+
+  const protectedLayoutRoute = createRoute({
+    getParentRoute: () => rootRoute,
+    id: 'protected-layout',
+    async beforeLoad() {
+      await requireAuthenticatedUser();
+    },
+    component: AppShell,
+  });
+
+  const landingRoute = createRoute({
+    getParentRoute: () => publicLayoutRoute,
+    path: PATHS.HOME,
+    beforeLoad() {
+      redirectAuthenticatedUser();
+    },
+    component: withSuspense(LandingPage),
+  });
+
+  const loginRoute = createRoute({
+    getParentRoute: () => authLayoutRoute,
+    path: PATHS.LOGIN,
+    beforeLoad() {
+      redirectAuthenticatedUser();
+    },
+    component: withSuspense(LoginPage),
+  });
+
+  const registerRoute = createRoute({
+    getParentRoute: () => authLayoutRoute,
+    path: PATHS.REGISTER,
+    beforeLoad() {
+      redirectAuthenticatedUser();
+    },
+    component: withSuspense(RegisterPage),
+  });
+
+  const analyticsRoute = createRoute({
+    getParentRoute: () => protectedLayoutRoute,
+    path: PATHS.ANALYTICS,
+    component: withSuspense(AnalyticsPage),
+  });
+
+  const accountsRoute = createRoute({
+    getParentRoute: () => protectedLayoutRoute,
+    path: PATHS.ACCOUNTS,
+    component: withSuspense(AccountsPage),
+  });
+
+  const transactionsRoute = createRoute({
+    getParentRoute: () => protectedLayoutRoute,
+    path: PATHS.TRANSACTIONS,
+    validateSearch: validateTransactionsRouteSearch,
+    component: withSuspense(TransactionsPage),
+  });
+
+  const categoriesRoute = createRoute({
+    getParentRoute: () => protectedLayoutRoute,
+    path: PATHS.CATEGORIES,
+    component: withSuspense(CategoriesPage),
+  });
+
+  const investmentsRoute = createRoute({
+    getParentRoute: () => protectedLayoutRoute,
+    path: PATHS.INVESTMENTS,
+    component: withSuspense(InvestmentsPage),
+  });
+
+  const reflectionsRoute = createRoute({
+    getParentRoute: () => protectedLayoutRoute,
+    path: PATHS.REFLECTIONS,
+    component: withSuspense(ReflectionsPage),
+  });
+
+  const retroDetailRoute = createRoute({
+    getParentRoute: () => protectedLayoutRoute,
+    path: PATHS.RETRO_DETAIL,
+    beforeLoad({ params }) {
+      validateRetroDetailMonth(params.month);
+    },
+    component: withSuspense(RetroDetailPage),
+  });
+
+  const freedomRoute = createRoute({
+    getParentRoute: () => protectedLayoutRoute,
+    path: PATHS.FREEDOM,
+    component: withSuspense(FreedomCalculatorPage),
+  });
+
+  const goalsRoute = createRoute({
+    getParentRoute: () => protectedLayoutRoute,
+    path: PATHS.GOALS,
+    component: withSuspense(GoalsPage),
+  });
+
+  const profileRoute = createRoute({
+    getParentRoute: () => protectedLayoutRoute,
+    path: PATHS.PROFILE,
+    component: withSuspense(ProfilePage),
+  });
+
+  const adminRoute = createRoute({
+    getParentRoute: () => protectedLayoutRoute,
+    path: PATHS.ADMIN,
+    async beforeLoad() {
+      await requireOwnerUser();
+    },
+    component: withSuspense(AdminPage),
+  });
+
+  return rootRoute.addChildren([
+    publicLayoutRoute.addChildren([landingRoute]),
+    authLayoutRoute.addChildren([loginRoute, registerRoute]),
+    protectedLayoutRoute.addChildren([
+      analyticsRoute,
+      accountsRoute,
+      transactionsRoute,
+      categoriesRoute,
+      investmentsRoute,
+      reflectionsRoute,
+      retroDetailRoute,
+      freedomRoute,
+      goalsRoute,
+      profileRoute,
+      adminRoute,
+    ]),
+  ]);
+}
+
+export function resetRouterBootstrapForTests() {
+  isAppBootstrapDone = false;
+}
+
+export function createAppRouter(options?: { history?: RouterHistory }) {
+  return createRouter({
+    routeTree: createRouteTree(),
+    history: options?.history,
+    defaultPreload: 'intent',
+    scrollRestoration: true,
+  });
+}
+
+export const router = createAppRouter();
 
 declare module '@tanstack/react-router' {
   interface Register {

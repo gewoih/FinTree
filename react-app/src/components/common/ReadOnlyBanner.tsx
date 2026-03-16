@@ -1,4 +1,4 @@
-import { useUserStore } from '../../stores/userStore';
+import { useCurrentUser } from '@/features/auth/session';
 import { Button } from '../ui/button';
 
 interface ReadOnlyBannerProps {
@@ -6,7 +6,7 @@ interface ReadOnlyBannerProps {
 }
 
 export function ReadOnlyBanner({ onPayClick }: ReadOnlyBannerProps) {
-  const subscription = useUserStore((state) => state.currentUser?.subscription);
+  const subscription = useCurrentUser()?.subscription;
   const expiresLabel = subscription?.expiresAtUtc
     ? new Date(subscription.expiresAtUtc).toLocaleDateString('ru-RU')
     : null;

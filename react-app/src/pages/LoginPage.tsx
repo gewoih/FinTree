@@ -13,7 +13,7 @@ import { FormField } from '@/components/common/FormField';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardFooter } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
-import { useAuth } from '@/hooks/useAuth';
+import { useAuthActions } from '@/features/auth/session';
 import { PATHS } from '@/router/paths';
 import type { TelegramLoginPayload } from '@/types';
 import { loginSchema, type LoginFormValues } from '@/utils/schemas';
@@ -26,7 +26,7 @@ export default function LoginPage() {
     isLoading,
     login,
     loginWithTelegram,
-  } = useAuth();
+  } = useAuthActions();
   const [showPassword, setShowPassword] = useState(false);
 
   const form = useForm<LoginFormValues>({

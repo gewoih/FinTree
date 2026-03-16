@@ -4,13 +4,13 @@ import { useNavigate } from '@tanstack/react-router';
 import { ChevronLeft, ChevronRight, X } from 'lucide-react';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 
-import { useUserStore } from '@/stores/userStore';
 import * as analyticsApi from '@/api/analytics';
 import * as accountsApi from '@/api/accounts';
 import * as retrospectivesApi from '@/api/retrospectives';
 import * as userApi from '@/api/user';
 import { apiClient } from '@/api';
 import { queryKeys } from '@/api/queryKeys';
+import { MonthPicker } from '@/components/analytics/MonthPicker';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { ErrorBoundary } from '@/components/common/ErrorBoundary';
@@ -31,6 +31,7 @@ import {
   buildSummaryMetrics,
   type GlobalScoreModel,
 } from '@/components/analytics/models';
+import { setCurrentUserSnapshot, useCurrentUser } from '@/features/auth/session';
 import { formatYearMonth } from '@/utils/format';
 import { cn } from '@/utils/cn';
 import type { PathValues } from '@/router/paths';
@@ -70,76 +71,10 @@ function formatDateParam(date: Date): string {
   return `${year}-${month}-${day}`;
 }
 
-// ─── Month Picker ─────────────────────────────────────────────────────────────
-
-const MONTHS_RU = [
-  'Январь', 'Февраль', 'Март', 'Апрель', 'Май', 'Июнь',
-  'Июль', 'Август', 'Сентябрь', 'Октябрь', 'Ноябрь', 'Декабрь',
-];
-
-interface MonthPickerProps {
-  value: Date;
-  onChange: (date: Date) => void;
-}
-
-function MonthPicker({ value, onChange }: MonthPickerProps) {
-  const [pickerYear, setPickerYear] = useState(value.getFullYear());
-  const now = startOfMonth(new Date());
-
-  return (
-    <div className="p-3 w-64">
-      <div className="flex items-center justify-between mb-3">
-        <Button
-          variant="ghost"
-          size="icon-sm"
-          onClick={() => setPickerYear((y) => y - 1)}
-          aria-label="Предыдущий год"
-        >
-          <ChevronLeft className="size-4" />
-        </Button>
-        <span className="text-sm font-semibold">{pickerYear}</span>
-        <Button
-          variant="ghost"
-          size="icon-sm"
-          onClick={() => setPickerYear((y) => y + 1)}
-          disabled={pickerYear >= now.getFullYear()}
-          aria-label="Следующий год"
-        >
-          <ChevronRight className="size-4" />
-        </Button>
-      </div>
-      <div className="grid grid-cols-3 gap-1">
-        {MONTHS_RU.map((name, idx) => {
-          const d = new Date(pickerYear, idx, 1);
-          const isDisabled = d > now;
-          const isSelected = isSameMonth(d, value);
-          return (
-            <button
-              key={name}
-              type="button"
-              disabled={isDisabled}
-              onClick={() => onChange(d)}
-              className={cn(
-                'rounded px-2 py-1.5 text-sm transition-colors min-h-[36px]',
-                isSelected
-                  ? 'bg-primary text-primary-foreground font-semibold'
-                  : 'hover:bg-muted text-foreground',
-                isDisabled && 'opacity-40 cursor-not-allowed',
-              )}
-            >
-              {name.slice(0, 3)}
-            </button>
-          );
-        })}
-      </div>
-    </div>
-  );
-}
-
 // ─── Page ─────────────────────────────────────────────────────────────────────
 
 export default function AnalyticsPage() {
-  const { currentUser } = useUserStore();
+  const currentUser = useCurrentUser();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
 
@@ -235,10 +170,8 @@ export default function AnalyticsPage() {
   );
 
   const handleSkipOnboarding = useCallback(async () => {
-    await userApi.skipOnboarding();
-    useUserStore.setState((s) => ({
-      currentUser: s.currentUser ? { ...s.currentUser, onboardingSkipped: true } : s.currentUser,
-    }));
+    const updatedUser = await userApi.skipOnboarding();
+    setCurrentUserSnapshot(updatedUser);
   }, []);
 
   const openTransactions = useCallback(

@@ -1,10 +1,10 @@
 import { Link, Outlet, useNavigate } from '@tanstack/react-router';
 import { Menu } from 'lucide-react';
 import { useEffect, useState } from 'react';
+import { useCurrentUser } from '@/features/auth/session';
 import ThemeToggle from '../common/ThemeToggle';
 import { useViewport } from '../../hooks/useViewport';
 import { PATHS } from '../../router/paths';
-import { useUserStore } from '../../stores/userStore';
 import { Button } from '../ui/button';
 import { ReadOnlyBanner } from '../common/ReadOnlyBanner';
 import BottomTabBar from './BottomTabBar';
@@ -15,9 +15,8 @@ const SIDEBAR_COLLAPSED_KEY = 'ft-sidebar-collapsed';
 export default function AppShell() {
   const { isDesktop } = useViewport();
   const navigate = useNavigate();
-  const isReadOnlyMode = useUserStore(
-    (state) => state.currentUser?.subscription?.isReadOnlyMode ?? false
-  );
+  const currentUser = useCurrentUser();
+  const isReadOnlyMode = currentUser?.subscription?.isReadOnlyMode ?? false;
 
   const [sidebarCollapsed, setSidebarCollapsed] = useState<boolean>(() => {
     try {

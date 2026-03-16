@@ -1,8 +1,7 @@
 import { Link, useNavigate, useRouterState } from '@tanstack/react-router';
 import { LogOut, Settings, Shield } from 'lucide-react';
+import { logoutCurrentUser, useCurrentUser } from '@/features/auth/session';
 import { PATHS } from '../../router/paths';
-import { useAuthStore } from '../../stores/authStore';
-import { useUserStore } from '../../stores/userStore';
 import { cn } from '../../utils/cn';
 import { Button } from '../ui/button';
 import {
@@ -50,7 +49,7 @@ export default function Sidebar({ collapsed }: SidebarProps) {
   const routerState = useRouterState();
   const currentPath = routerState.location.pathname;
 
-  const currentUser = useUserStore((state) => state.currentUser);
+  const currentUser = useCurrentUser();
   const isOwner = currentUser?.isOwner === true;
   const isReadOnlyMode = currentUser?.subscription?.isReadOnlyMode ?? false;
 
@@ -58,7 +57,7 @@ export default function Sidebar({ collapsed }: SidebarProps) {
   const initials = displayName.slice(0, 2).toUpperCase();
 
   const handleLogout = async () => {
-    await useAuthStore.getState().logout();
+    await logoutCurrentUser();
     await navigate({ to: PATHS.LOGIN });
   };
 

@@ -10,8 +10,8 @@ import { PageHeader } from '@/components/common/PageHeader';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
+import { useCurrentUser } from '@/features/auth/session';
 import { PATHS } from '@/router/paths';
-import { useUserStore } from '@/stores/userStore';
 import { resolveApiErrorMessage } from '@/utils/errors';
 import { ReflectionsHistoryChart } from '@/features/reflections/ReflectionsHistoryChart';
 import { RetrospectiveMonthCard } from '@/features/reflections/RetrospectiveMonthCard';
@@ -31,7 +31,7 @@ const EMPTY_RETROSPECTIVES: Awaited<
 
 export default function ReflectionsPage() {
   const navigate = useNavigate();
-  const currentUser = useUserStore((state) => state.currentUser);
+  const currentUser = useCurrentUser();
   const isReadOnlyMode = currentUser?.subscription?.isReadOnlyMode ?? false;
   const [selectedRange, setSelectedRange] = useState<ReflectionChartRange>(
     REFLECTION_RANGE_OPTIONS[1]?.value ?? 12

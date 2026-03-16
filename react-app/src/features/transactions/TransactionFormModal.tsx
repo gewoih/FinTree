@@ -351,13 +351,6 @@ export function TransactionFormModal({
               ))}
             </div>
 
-            {isTransactionEdit ? (
-              <p className="rounded-xl border border-border bg-muted/40 px-3 py-2 text-sm text-muted-foreground">
-                Тип существующей транзакции менять нельзя: backend обновляет её в
-                рамках текущего типа.
-              </p>
-            ) : null}
-
             <div className="grid gap-4 sm:grid-cols-2">
               <FormField
                 label="Сумма"

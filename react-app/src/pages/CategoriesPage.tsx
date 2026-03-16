@@ -8,18 +8,14 @@ import { ErrorBoundary } from '@/components/common/ErrorBoundary';
 import { PageHeader } from '@/components/common/PageHeader';
 import { Button } from '@/components/ui/button';
 import { CATEGORY_TYPE, type Category, type CategoryType } from '@/types';
+import { useCurrentUser } from '@/features/auth/session';
 import { resolveApiErrorMessage } from '@/utils/errors';
 import { CategoryFormModal } from '@/features/categories/CategoryFormModal';
 import { CategoryManager } from '@/features/categories/CategoryManager';
-import { useEnsureCurrentUser } from '@/hooks/useEnsureCurrentUser';
 
 export default function CategoriesPage() {
   const queryClient = useQueryClient();
-  const {
-    currentUser,
-    bootstrapError,
-    retryEnsureCurrentUser,
-  } = useEnsureCurrentUser();
+  const currentUser = useCurrentUser();
   const isReadOnlyMode = currentUser?.subscription?.isReadOnlyMode ?? true;
   const [selectedType, setSelectedType] = useState<CategoryType>(CATEGORY_TYPE.Expense);
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -121,22 +117,6 @@ export default function CategoriesPage() {
               className="mt-3 min-h-[44px]"
               variant="outline"
               onClick={() => void categoriesQuery.refetch()}
-            >
-              Повторить
-            </Button>
-          </div>
-        ) : null}
-
-        {bootstrapError ? (
-          <div className="rounded-xl border border-[var(--ft-warning-500)]/30 bg-[var(--ft-warning-500)]/10 px-4 py-3 text-sm">
-            <div className="font-medium text-foreground">Не удалось подтвердить режим доступа</div>
-            <div className="mt-1 text-muted-foreground">
-              {bootstrapError} Пока данные пользователя не загрузятся, редактирование категорий заблокировано.
-            </div>
-            <Button
-              className="mt-3 min-h-[44px]"
-              variant="outline"
-              onClick={() => void retryEnsureCurrentUser()}
             >
               Повторить
             </Button>

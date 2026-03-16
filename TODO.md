@@ -91,10 +91,6 @@
 
 ## Frontend UX
 
-- [ ] `FT-TODO-063` Invalid retrospective deep links can still fall through to a blank render before redirect because `RetroDetailPage` returns `null` when `month` is invalid.
-  **Fix:** Validate the route param in TanStack Router `beforeLoad` or render an explicit not-found / invalid-month state instead of `return null`.
-  **Files:** `react-app/src/pages/RetroDetailPage.tsx`, `react-app/src/router/index.ts`
-
 - [ ] `FT-TODO-064` `EvolutionTab` still formats and models KPI values through its own `evolutionModels.ts` pipeline instead of the shared analytics formatting layer. Direct `toFixed` calls are already gone, but the tab can still drift from the dashboard display contract because formatting rules now live in two places.
   **Fix:** Consolidate `EvolutionTab` onto the shared analytics formatting contract or extract a single reusable formatting layer used by both `models.ts` and `evolutionModels.ts`.
   **Files:** `react-app/src/components/analytics/EvolutionTab.tsx`, `react-app/src/components/analytics/evolutionModels.ts`, `react-app/src/components/analytics/models.ts`
@@ -104,14 +100,6 @@
   **Fix:** Extract page-level query/mutation orchestration into feature hooks and move repeated form/date/summary sections into focused presentational components.
   **Priority:** P2
   **Files:** `react-app/src/pages/AccountsPage.tsx`, `react-app/src/pages/TransactionsPage.tsx`, `react-app/src/features/transactions/TransactionFormModal.tsx`, `react-app/src/features/transactions/TransactionList.tsx`
-
-- [ ] `FT-TODO-070` Frontend regression safety net is missing: `react-app` has no test runner script, no `vitest`/browser test pipeline, and the repo currently contains no React `*.test.*` / `*.spec.*` files.
-  **Fix:** Add `vitest` + React Testing Library test scripts, cover critical auth/forms/cache-invalidations/accessibility flows, and wire the suite into the standard verification path.
-  **Files:** `react-app/package.json`, `react-app/` test config files, critical page/feature test files under `react-app/src/**`
-
-- [ ] `FT-TODO-071` Server state for session/user is duplicated outside React Query across `authStore`, `userStore`, and `useEnsureCurrentUser`, creating multiple bootstrap paths, custom in-flight deduplication, and manual cache hydration logic that will get harder to evolve.
-  **Fix:** Consolidate authenticated user/session loading behind a single query-backed hook and keep Zustand only for true client UI state (theme, ephemeral toggles).
-  **Files:** `react-app/src/stores/authStore.ts`, `react-app/src/stores/userStore.ts`, `react-app/src/hooks/useEnsureCurrentUser.ts`, `react-app/src/router/index.ts`
 
 - [ ] `FT-TODO-073` Third-party scripts are injected globally from `index.html` and runtime widget code without visible consent/CSP hardening (`Yandex Metrika`, Telegram widget). This increases privacy/security review surface and makes strict CSP adoption harder later.
   **Fix:** Add an explicit loading policy for third-party scripts (consent gate or documented exception), centralize script injection, and document the CSP allowances required for production.

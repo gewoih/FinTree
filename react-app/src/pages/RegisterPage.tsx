@@ -14,7 +14,7 @@ import { FormField } from '@/components/common/FormField';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardFooter } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
-import { useAuth } from '@/hooks/useAuth';
+import { useAuthActions } from '@/features/auth/session';
 import { PATHS } from '@/router/paths';
 import type { TelegramLoginPayload } from '@/types';
 import { registerSchema, type RegisterFormValues } from '@/utils/schemas';
@@ -55,7 +55,7 @@ export default function RegisterPage() {
     isLoading,
     loginWithTelegram,
     register,
-  } = useAuth();
+  } = useAuthActions();
   const [showEmailForm, setShowEmailForm] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
 
@@ -116,7 +116,7 @@ export default function RegisterPage() {
       description="Создайте аккаунт через Telegram или откройте email-регистрацию."
     >
       <Card
-        className="overflow-hidden rounded-[1.75rem] border border-border/70 bg-[color-mix(in_srgb,var(--ft-surface-raised)_88%,transparent)] shadow-(--ft-shadow-2xl) backdrop-blur-xl"
+        className="overflow-hidden rounded-[1.75rem] border border-border/70 bg-[color-mix(in_srgb,var(--ft-surface-raised)_88%,transparent)] shadow-[var(--ft-shadow-2xl)] backdrop-blur-xl"
       >
         <CardContent className="space-y-6 px-5 pt-5 pb-6 sm:px-6 sm:pt-6">
           <TelegramAuthWidget

@@ -7,8 +7,8 @@ import * as investmentsApi from '@/api/investments';
 import { queryKeys } from '@/api/queryKeys';
 import { getCurrencies } from '@/api/user';
 import type { ManagedAccount } from '@/features/accounts/accountModels';
+import { useCurrentUser } from '@/features/auth/session';
 import { normalizeAccount } from '@/features/accounts/accountUtils';
-import { useUserStore } from '@/stores/userStore';
 import { resolveApiErrorMessage } from '@/utils/errors';
 import type { Currency } from '@/types';
 import {
@@ -29,7 +29,7 @@ function getAccountErrorMessage(error: unknown): string {
 
 export function useInvestmentsPage() {
   const queryClient = useQueryClient();
-  const currentUser = useUserStore((state) => state.currentUser);
+  const currentUser = useCurrentUser();
   const baseCurrencyCode = currentUser?.baseCurrencyCode ?? 'RUB';
   const isReadOnlyMode = currentUser?.subscription?.isReadOnlyMode ?? false;
 

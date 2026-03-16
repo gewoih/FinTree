@@ -15,10 +15,11 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Textarea } from '@/components/ui/textarea';
+import { useCurrentUser } from '@/features/auth/session';
 import { PATHS } from '@/router/paths';
-import { useUserStore } from '@/stores/userStore';
 import type { RetrospectiveDto, UpsertRetrospectivePayload } from '@/types';
 import { resolveApiErrorMessage } from '@/utils/errors';
+import { useHydrateFormValues } from '@/hooks/useHydrateFormValues';
 import {
   upsertRetrospectiveSchema,
   type UpsertRetrospectiveFormValues,
@@ -28,7 +29,6 @@ import { RetrospectiveSummarySnapshot } from '@/features/reflections/Retrospecti
 import {
   formatReflectionMonth,
   hasMeaningfulRetrospectivePayload,
-  isValidReflectionMonth,
   normalizeRetrospectivePayload,
   parseReflectionMonth,
   REFLECTION_RATING_FIELDS,
@@ -71,7 +71,7 @@ export default function RetroDetailPage() {
   const queryClient = useQueryClient();
   const routeParams = useParams({ strict: false });
   const month = typeof routeParams.month === 'string' ? routeParams.month : '';
-  const currentUser = useUserStore((state) => state.currentUser);
+  const currentUser = useCurrentUser();
   const currencyCode = currentUser?.baseCurrencyCode ?? 'RUB';
   const isReadOnlyMode = currentUser?.subscription?.isReadOnlyMode ?? false;
   const parsedMonth = useMemo(() => parseReflectionMonth(month), [month]);
@@ -90,12 +90,6 @@ export default function RetroDetailPage() {
     control: form.control,
     defaultValue: initialFormValues,
   }) ?? initialFormValues;
-
-  useEffect(() => {
-    if (!isValidReflectionMonth(month)) {
-      void navigate({ to: PATHS.REFLECTIONS, replace: true });
-    }
-  }, [month, navigate]);
 
   const detailQuery = useQuery({
     queryKey: queryKeys.retrospectives.detail(month),
@@ -127,9 +121,11 @@ export default function RetroDetailPage() {
     },
   });
 
-  useEffect(() => {
-    form.reset(buildFormDefaults(month, detailQuery.data ?? null));
-  }, [detailQuery.data, form, month]);
+  useHydrateFormValues({
+    form,
+    values: buildFormDefaults(month, detailQuery.data ?? null),
+    identityKey: month,
+  });
 
   useEffect(() => {
     const payload = normalizeRetrospectivePayload({
@@ -192,7 +188,32 @@ export default function RetroDetailPage() {
     detailQuery.isLoading && detailQuery.data === undefined && !detailQuery.isError;
 
   if (!parsedMonth) {
-    return null;
+    return (
+      <ErrorBoundary>
+        <div className="mx-auto flex max-w-3xl flex-col gap-5 p-4 sm:p-6 lg:px-8">
+          <PageHeader title="Некорректный месяц" className="mb-0" />
+          <Card className="rounded-2xl border border-destructive/30 bg-destructive/10 shadow-[var(--ft-shadow-sm)]">
+            <CardHeader>
+              <CardTitle className="text-lg font-semibold text-foreground">
+                Не удалось открыть рефлексию
+              </CardTitle>
+              <CardDescription>
+                Ссылка содержит некорректный месяц. Вернитесь к списку и выберите период заново.
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <Button
+                className="min-h-[44px]"
+                variant="outline"
+                onClick={() => void navigate({ to: PATHS.REFLECTIONS, replace: true })}
+              >
+                Вернуться к списку
+              </Button>
+            </CardContent>
+          </Card>
+        </div>
+      </ErrorBoundary>
+    );
   }
 
   return (

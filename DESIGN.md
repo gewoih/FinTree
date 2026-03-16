@@ -114,6 +114,8 @@ Rules:
 - Validation errors must be shown inline, associated with the specific field.
 - Destructive actions require explicit user confirmation (confirmation dialog).
 - Form submission must show a loading state while in progress.
+- Long or high-effort forms must preserve dirty local edits during background revalidation.
+- Server refreshes may update untouched fields, but must not overwrite unsaved user input unless the record identity changed or the user explicitly confirmed a reset.
 
 ---
 
@@ -176,3 +178,52 @@ Charts:
 - Do not consume backend chart/decorative colors directly in feature rendering without passing through a frontend token/palette resolver.
 - Chart containers must have `role="img"` and `aria-label`.
 - Use `ResponsiveContainer` (or equivalent) for adaptive sizing.
+
+---
+
+## 11) Route and State Boundaries
+
+Route validation:
+- Shareable route params and search params must be validated at the route boundary before the screen renders.
+- Invalid route/search input must redirect to a safe location or render an explicit invalid-state UI. It must never degrade to a blank screen.
+
+State ownership:
+- Server state has a single frontend source of truth. Do not mirror the same remote entity across parallel stores, caches, or bootstrap paths.
+- Client stores are for UI-only state (theme, toggles, ephemeral layout state), not for duplicating server-state orchestration.
+- Before adding a new state container, first reuse or extend the existing shared primitive that already owns that concern.
+
+---
+
+## 12) Overlay and Interaction Rules
+
+- Dialogs, sheets, popovers, and menus must expose an accessible title or label and a clear close action.
+- Overlays must support `Escape` when appropriate, manage focus while open, and restore focus to the triggering control when closed.
+- Overlay content must remain usable on mobile without clipped actions or inaccessible bottom controls.
+- Icon-only controls inside overlays must still meet the global accessible-name and `44×44` target rules.
+
+---
+
+## 13) AI / Editor Guardrails
+
+- Reuse existing shared components, layout primitives, and state owners before creating new feature-local variants.
+- Do not move route/search validation into leaf pages when it belongs at the route boundary.
+- Do not introduce duplicate sources of truth for authenticated user/session or other shared server entities.
+- Refactors must preserve behavior first; if behavior changes intentionally, the change must be explicit in the task output.
+- Do not mark frontend work complete without verification evidence that matches the change scope.
+
+---
+
+## 14) Frontend Definition of Done
+
+Every frontend task is done only when all applicable checks below are satisfied:
+
+1. The target UI works in dark mode and light mode, and at minimum on `360px`, `768px`, and desktop widths.
+2. Keyboard flow is verified for the changed area: focus order, visible focus, escape/close behavior, and no keyboard trap.
+3. All affected data states are verified: `loading`, `error`, `empty`, and `success`, plus `idle` where the screen has a precondition.
+4. Destructive and high-risk actions have explicit confirmation and a visible pending state.
+5. Long forms and drafts preserve unsaved user edits during background refresh unless an intentional reset condition applies.
+6. Interactive controls meet the `44×44` target minimum and icon-only controls expose accessible names.
+7. Copy stays Russian by default, uses consistent terminology, and keeps localized date/number/currency formatting aligned with the product contract.
+8. Route params/search validation, redirects, and invalid-state handling are verified for any changed shareable URL surface.
+9. Shared primitives are reused where applicable; no new duplicate server-state path or ad hoc design-system fork was introduced.
+10. If code changed, run the relevant verification commands for the frontend workspace, including lint, tests, and production build, before claiming completion.

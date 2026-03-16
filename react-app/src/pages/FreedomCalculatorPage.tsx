@@ -1,12 +1,12 @@
 import { PageHeader } from '@/components/common/PageHeader';
-import { useUserStore } from '@/stores/userStore';
+import { useCurrentUser } from '@/features/auth/session';
 import { FreedomCalendarHeatmap } from '@/features/freedom/FreedomCalendarHeatmap';
 import { FreedomHeroCard } from '@/features/freedom/FreedomHeroCard';
 import { FreedomParametersForm } from '@/features/freedom/FreedomParametersForm';
 import { useFreedomCalculator } from '@/features/freedom/useFreedomCalculator';
 
 export default function FreedomCalculatorPage() {
-  useUserStore((state) => state.currentUser?.baseCurrencyCode);
+  useCurrentUser();
 
   const {
     calculationError,

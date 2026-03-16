@@ -7,9 +7,9 @@ import { getCategories } from '@/api/categories';
 import { queryKeys } from '@/api/queryKeys';
 import * as transactionsApi from '@/api/transactions';
 import * as transfersApi from '@/api/transfers';
+import { useCurrentUser } from '@/features/auth/session';
 import { useDebouncedValue } from '@/hooks/useDebouncedValue';
 import { PATHS, ROUTE_IDS } from '@/router/paths';
-import { useUserStore } from '@/stores/userStore';
 import type { AccountDto, TransactionDto } from '@/types';
 import { resolveApiErrorMessage } from '@/utils/errors';
 import {
@@ -53,7 +53,7 @@ export function useTransactionsPage() {
   const navigate = useNavigate();
   const routeSearch = useSearch({ from: ROUTE_IDS.TRANSACTIONS });
   const queryClient = useQueryClient();
-  const currentUser = useUserStore((state) => state.currentUser);
+  const currentUser = useCurrentUser();
   const baseCurrencyCode = currentUser?.baseCurrencyCode ?? 'RUB';
   const isReadOnlyMode = currentUser?.subscription?.isReadOnlyMode ?? false;
   const [modalMode, setModalMode] = useState<TransactionModalMode>({ type: 'closed' });

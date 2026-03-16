@@ -1,7 +1,7 @@
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { AlertCircle, Check, CreditCard, Shield } from 'lucide-react';
-import { useEffect, useState, type ReactNode } from 'react';
+import { useMemo, useState, type ReactNode } from 'react';
 import { Controller, useForm, useWatch } from 'react-hook-form';
 import { useNavigate } from '@tanstack/react-router';
 import { toast } from 'sonner';
@@ -28,8 +28,12 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
+import {
+  setCurrentUserSnapshot,
+  useCurrentUserQuery,
+} from '@/features/auth/session';
+import { useHydrateFormValues } from '@/hooks/useHydrateFormValues';
 import { PATHS } from '@/router/paths';
-import { useUserStore } from '@/stores/userStore';
 import type {
   CurrentUserDto,
   Currency,
@@ -39,7 +43,6 @@ import type {
 import { resolveApiErrorMessage } from '@/utils/errors';
 import { formatCurrency } from '@/utils/format';
 import { cn } from '@/utils/cn';
-import { useEnsureCurrentUser } from '@/hooks/useEnsureCurrentUser';
 
 const profileSchema = z.object({
   baseCurrencyCode: z.string().trim().min(1, 'Выберите базовую валюту'),
@@ -214,36 +217,34 @@ function PaymentHistoryList({
 export default function ProfilePage() {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
-  const {
-    currentUser,
-    isBootstrapping: isBootstrappingUser,
-    bootstrapError,
-    retryEnsureCurrentUser,
-  } = useEnsureCurrentUser();
+  const currentUserQuery = useCurrentUserQuery();
+  const currentUser = currentUserQuery.data ?? null;
   const [subscriptionError, setSubscriptionError] = useState<string | null>(null);
+  const hydratedFormValues = useMemo(
+    () => ({
+      baseCurrencyCode: currentUser?.baseCurrencyCode ?? '',
+      telegramUserId:
+        currentUser?.telegramUserId != null
+          ? String(currentUser.telegramUserId)
+          : '',
+    }),
+    [currentUser?.baseCurrencyCode, currentUser?.telegramUserId],
+  );
 
   const form = useForm<ProfileFormValues>({
     resolver: zodResolver(profileSchema),
-    defaultValues: {
-      baseCurrencyCode: currentUser?.baseCurrencyCode ?? '',
-      telegramUserId: currentUser?.telegramUserId != null ? String(currentUser.telegramUserId) : '',
-    },
+    defaultValues: hydratedFormValues,
   });
   const telegramUserIdValue = useWatch({
     control: form.control,
     name: 'telegramUserId',
   });
 
-  useEffect(() => {
-    if (!currentUser) {
-      return;
-    }
-
-    form.reset({
-      baseCurrencyCode: currentUser.baseCurrencyCode,
-      telegramUserId: currentUser.telegramUserId != null ? String(currentUser.telegramUserId) : '',
-    });
-  }, [currentUser, form]);
+  useHydrateFormValues({
+    form,
+    values: hydratedFormValues,
+    identityKey: currentUser?.id,
+  });
 
   const currenciesQuery = useQuery({
     queryKey: queryKeys.currencies(),
@@ -261,7 +262,7 @@ export default function ProfilePage() {
   const saveProfileMutation = useMutation({
     mutationFn: userApi.updateUserProfile,
     onSuccess: (updatedUser) => {
-      useUserStore.setState({ currentUser: updatedUser });
+      setCurrentUserSnapshot(updatedUser);
       setSubscriptionError(null);
       form.reset({
         baseCurrencyCode: updatedUser.baseCurrencyCode,
@@ -274,7 +275,7 @@ export default function ProfilePage() {
   const simulatePaymentMutation = useMutation({
     mutationFn: userApi.simulateSubscriptionPayment,
     onSuccess: async (updatedUser) => {
-      useUserStore.setState({ currentUser: updatedUser });
+      setCurrentUserSnapshot(updatedUser);
       setSubscriptionError(null);
       await queryClient.invalidateQueries({ queryKey: queryKeys.subscription.payments() });
       toast.success('Подписка активирована');
@@ -304,7 +305,7 @@ export default function ProfilePage() {
     }
   };
 
-  if (isBootstrappingUser) {
+  if (currentUserQuery.isPending && !currentUser) {
     return (
       <ErrorBoundary>
         <div className="flex flex-col gap-5 p-4 sm:p-6 lg:px-8">
@@ -324,9 +325,17 @@ export default function ProfilePage() {
           <PageHeader title="Настройки" className="mb-0" />
           <PageCard
             title="Не удалось загрузить настройки"
-            description={bootstrapError ?? 'Попробуйте обновить данные пользователя ещё раз.'}
+            description={
+              resolveApiErrorMessage(
+                currentUserQuery.error,
+                'Попробуйте обновить данные пользователя ещё раз.',
+              )
+            }
             actions={
-              <Button className="min-h-[44px] rounded-lg px-4" onClick={() => void retryEnsureCurrentUser()}>
+              <Button
+                className="min-h-[44px] rounded-lg px-4"
+                onClick={() => void currentUserQuery.refetch()}
+              >
                 Повторить
               </Button>
             }

@@ -12,7 +12,7 @@ import { ErrorBoundary } from '@/components/common/ErrorBoundary';
 import { PageHeader } from '@/components/common/PageHeader';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
-import { useUserStore } from '@/stores/userStore';
+import { useCurrentUser } from '@/features/auth/session';
 import { resolveApiErrorMessage } from '@/utils/errors';
 import { cn } from '@/utils/cn';
 import { AccountBalanceAdjustmentsModal } from '@/features/accounts/AccountBalanceAdjustmentsModal';
@@ -30,7 +30,7 @@ import {
 const SKELETON_KEYS = ['one', 'two', 'three', 'four'];
 
 export default function AccountsPage() {
-  const currentUser = useUserStore((state) => state.currentUser);
+  const currentUser = useCurrentUser();
   const baseCurrencyCode = currentUser?.baseCurrencyCode ?? 'RUB';
   const isReadOnlyMode = currentUser?.subscription?.isReadOnlyMode ?? false;
   const [view, setView] = useState<AccountsView>('active');
