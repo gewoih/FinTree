@@ -28,11 +28,11 @@ import {
 import { analyticsHeroStyle } from './analyticsTokens';
 import {
   buildAnalyticsCategoryModel,
-  calculateDonutStartAngle,
   type AnalyticsCategoryLegendItem,
   type AnalyticsCategorySlice,
   type CategoryScope,
 } from './chartModels';
+import { getTopAnchoredDonutAngles } from './donutAngles';
 import {
   formatAnalyticsHeroMoney,
   formatAnalyticsMetaMoney,
@@ -269,7 +269,7 @@ export function SpendingPieCard({
   };
 
   const isEmpty = !loading && !error && total === 0;
-  const startAngle = calculateDonutStartAngle(chartData);
+  const { startAngle, endAngle } = getTopAnchoredDonutAngles();
 
   return (
     <AnalyticsPanel>
@@ -330,7 +330,7 @@ export function SpendingPieCard({
                   paddingAngle={1.2}
                   stroke="none"
                   startAngle={startAngle}
-                  endAngle={startAngle - 360}
+                  endAngle={endAngle}
                   isAnimationActive={false}
                 >
                   {chartData.map((entry) => (

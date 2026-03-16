@@ -6,6 +6,7 @@ import * as accountsApi from '@/api/accounts';
 import { queryKeys } from '@/api/queryKeys';
 import { getCurrencies } from '@/api/user';
 import { ConfirmDialog } from '@/components/common/ConfirmDialog';
+import { DataStateWrapper, type DataState } from '@/components/common/DataStateWrapper';
 import { EmptyState } from '@/components/common/EmptyState';
 import { ErrorBoundary } from '@/components/common/ErrorBoundary';
 import { PageHeader } from '@/components/common/PageHeader';
@@ -154,6 +155,14 @@ export default function AccountsPage() {
     void archivedAccountsQuery.refetch();
   };
 
+  const contentState: DataState = isLoading
+    ? 'loading'
+    : showBlockingError
+      ? 'error'
+      : currentAccounts.length === 0
+        ? 'empty'
+        : 'success';
+
   return (
     <ErrorBoundary>
       <div className="flex flex-col gap-5 p-4 sm:p-6 lg:px-8">
@@ -196,55 +205,56 @@ export default function AccountsPage() {
           </div>
         ) : null}
 
-        {showBlockingError ? (
-          <div className="rounded-2xl border border-destructive/30 bg-destructive/10 p-4 text-sm">
-            <div className="font-medium text-foreground">Не удалось загрузить счета</div>
-            <div className="mt-1 text-muted-foreground">
-              {resolveApiErrorMessage(currentError, 'Попробуйте повторить запрос.')}
+        <DataStateWrapper
+          state={contentState}
+          errorTitle="Не удалось загрузить счета"
+          error={
+            currentError
+              ? resolveApiErrorMessage(currentError, 'Попробуйте повторить запрос.')
+              : null
+          }
+          onRetry={handleRetry}
+          loadingFallback={(
+            <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4">
+              {SKELETON_KEYS.map((key) => (
+                <Skeleton key={key} className="h-[184px] rounded-xl" />
+              ))}
             </div>
-            <Button className="mt-3 min-h-[44px]" variant="outline" onClick={handleRetry}>
-              Повторить
-            </Button>
-          </div>
-        ) : isLoading ? (
-          <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4">
-            {SKELETON_KEYS.map((key) => (
-              <Skeleton key={key} className="h-[184px] rounded-xl" />
-            ))}
-          </div>
-        ) : currentAccounts.length === 0 ? (
-          hasSearch ? (
-            <EmptyState
-              title="Ничего не найдено"
-              description="Попробуйте изменить запрос или сбросить поиск."
-              action={{ label: 'Сбросить фильтры', onClick: () => setSearchInput('') }}
-            />
-          ) : view === 'active' ? (
-            <EmptyState
-              icon={<Wallet />}
-              title="Нет активных счетов"
-              description="Добавьте банковский счёт, чтобы начать отслеживать баланс и операции."
-              action={
-                isReadOnlyMode
-                  ? undefined
-                  : {
-                      label: 'Добавить счёт',
-                      onClick: () => {
-                        setEditingAccount(null);
-                        setIsFormOpen(true);
-                      },
-                    }
-              }
-            />
-          ) : (
-            <EmptyState
-              icon={<Inbox />}
-              title="Архив пуст"
-              description="Здесь будут отображаться архивированные счета."
-              action={{ label: 'К активным счетам', onClick: () => setView('active') }}
-            />
-          )
-        ) : (
+          )}
+          emptyFallback={
+            hasSearch ? (
+              <EmptyState
+                title="Ничего не найдено"
+                description="Попробуйте изменить запрос или сбросить поиск."
+                action={{ label: 'Сбросить фильтры', onClick: () => setSearchInput('') }}
+              />
+            ) : view === 'active' ? (
+              <EmptyState
+                icon={<Wallet />}
+                title="Нет активных счетов"
+                description="Добавьте банковский счёт, чтобы начать отслеживать баланс и операции."
+                action={
+                  isReadOnlyMode
+                    ? undefined
+                    : {
+                        label: 'Добавить счёт',
+                        onClick: () => {
+                          setEditingAccount(null);
+                          setIsFormOpen(true);
+                        },
+                      }
+                }
+              />
+            ) : (
+              <EmptyState
+                icon={<Inbox />}
+                title="Архив пуст"
+                description="Здесь будут отображаться архивированные счета."
+                action={{ label: 'К активным счетам', onClick: () => setView('active') }}
+              />
+            )
+          }
+        >
           <div
             className={cn(
               'grid gap-4 md:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4',
@@ -286,7 +296,7 @@ export default function AccountsPage() {
               />
             ))}
           </div>
-        )}
+        </DataStateWrapper>
 
         <AccountFormModal
           open={isFormOpen}

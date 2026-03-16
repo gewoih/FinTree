@@ -1,5 +1,7 @@
 import { create } from 'zustand';
-import { apiClient } from '../api/apiClient';
+import { queryClient } from '@/api/queryClient';
+import { queryKeys } from '@/api/queryKeys';
+import * as userApi from '@/api/user';
 import type { CurrentUserDto, UpdateUserProfilePayload } from '../types';
 
 interface UserState {
@@ -8,7 +10,7 @@ interface UserState {
 }
 
 interface UserActions {
-  fetchCurrentUser(): Promise<boolean>;
+  fetchCurrentUser(force?: boolean): Promise<boolean>;
   updateProfile(payload: UpdateUserProfilePayload): Promise<boolean>;
   clearUser(): void;
 }
@@ -19,8 +21,8 @@ export const useUserStore = create<UserState & UserActions>((set, get) => ({
   currentUser: null,
   isLoading: false,
 
-  async fetchCurrentUser() {
-    if (get().currentUser) {
+  async fetchCurrentUser(force = false) {
+    if (!force && get().currentUser) {
       return true;
     }
 
@@ -32,11 +34,22 @@ export const useUserStore = create<UserState & UserActions>((set, get) => ({
       set({ isLoading: true });
 
       try {
-        const user = await apiClient.getCurrentUser();
+        const user = force
+          ? await queryClient.fetchQuery({
+              queryKey: queryKeys.currentUser(),
+              queryFn: userApi.getCurrentUser,
+              staleTime: 0,
+            })
+          : await queryClient.ensureQueryData({
+              queryKey: queryKeys.currentUser(),
+              queryFn: userApi.getCurrentUser,
+            });
+
         set({ currentUser: user });
         return true;
       } catch (err) {
         console.warn('[userStore] fetchCurrentUser failed:', err);
+        queryClient.removeQueries({ queryKey: queryKeys.currentUser() });
         set({ currentUser: null });
         return false;
       } finally {
@@ -50,7 +63,8 @@ export const useUserStore = create<UserState & UserActions>((set, get) => ({
 
   async updateProfile(payload) {
     try {
-      const updated = await apiClient.updateUserProfile(payload);
+      const updated = await userApi.updateUserProfile(payload);
+      queryClient.setQueryData(queryKeys.currentUser(), updated);
       set({ currentUser: updated });
       return true;
     } catch {
@@ -60,6 +74,7 @@ export const useUserStore = create<UserState & UserActions>((set, get) => ({
 
   clearUser() {
     pendingFetch = null;
+    queryClient.removeQueries({ queryKey: queryKeys.currentUser() });
     set({ currentUser: null, isLoading: false });
   },
 }));

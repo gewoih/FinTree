@@ -1,5 +1,7 @@
 import axios, { type AxiosError, type AxiosRequestConfig } from 'axios';
 
+export const AUTH_EXPIRED_EVENT = 'ft:auth-expired';
+
 export type AuthRequestConfig = AxiosRequestConfig & {
   skipAuthRefresh?: boolean;
   skipAuthRedirect?: boolean;
@@ -19,6 +21,14 @@ const apiClient = axios.create({
 });
 
 let refreshRequest: Promise<void> | null = null;
+
+function notifyAuthExpired() {
+  if (typeof window === 'undefined') {
+    return;
+  }
+
+  window.dispatchEvent(new Event(AUTH_EXPIRED_EVENT));
+}
 
 async function refreshSession(): Promise<void> {
   if (!refreshRequest) {
@@ -89,7 +99,7 @@ apiClient.interceptors.response.use(
       }
 
       if (!config.skipAuthRedirect && window.location.pathname !== '/login') {
-        window.location.href = '/login';
+        notifyAuthExpired();
       }
     }
 

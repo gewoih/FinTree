@@ -9,6 +9,7 @@ import {
 import AppShell from '../components/layout/AppShell';
 import PublicPageLayout from '../components/layout/PublicPageLayout';
 import { ErrorBoundary } from '../components/common/ErrorBoundary';
+import { validateTransactionsRouteSearch } from '../features/transactions/transactionSearch';
 import { useAuthStore } from '../stores/authStore';
 import { useUiStore } from '../stores/uiStore';
 import { useUserStore } from '../stores/userStore';
@@ -155,6 +156,7 @@ const accountsRoute = createRoute({
 const transactionsRoute = createRoute({
   getParentRoute: () => protectedLayoutRoute,
   path: PATHS.TRANSACTIONS,
+  validateSearch: validateTransactionsRouteSearch,
   component: withSuspense(TransactionsPage),
 });
 

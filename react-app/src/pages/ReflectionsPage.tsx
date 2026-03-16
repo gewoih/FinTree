@@ -4,6 +4,7 @@ import { useQuery } from '@tanstack/react-query';
 import { Plus } from 'lucide-react';
 import * as retrospectivesApi from '@/api/retrospectives';
 import { queryKeys } from '@/api/queryKeys';
+import { DataStateWrapper, type DataState } from '@/components/common/DataStateWrapper';
 import { ErrorBoundary } from '@/components/common/ErrorBoundary';
 import { PageHeader } from '@/components/common/PageHeader';
 import { Button } from '@/components/ui/button';
@@ -113,6 +114,15 @@ export default function ReflectionsPage() {
     openRetrospective(selectedCreateMonth);
   };
 
+  const contentState: DataState =
+    retrospectivesQuery.isLoading && !hasRetrospectives
+      ? 'loading'
+      : retrospectivesQuery.isError && !hasRetrospectives
+        ? 'error'
+        : !hasRetrospectives
+          ? 'empty'
+          : 'success';
+
   return (
     <ErrorBoundary>
       <div className="flex flex-col gap-5 p-4 sm:p-6 lg:px-8">
@@ -167,59 +177,56 @@ export default function ReflectionsPage() {
           </div>
         ) : null}
 
-        {retrospectivesQuery.isLoading && !hasRetrospectives ? (
-          <>
-            <Card className="rounded-2xl border border-border/80 bg-card/95 shadow-[var(--ft-shadow-sm)]">
-              <CardContent className="space-y-4 pt-6">
-                <Skeleton className="h-[320px] rounded-2xl" />
-                <div className="flex gap-3">
-                  {Array.from({ length: 3 }, (_, index) => (
-                    <Skeleton key={index} className="h-5 w-28 rounded-full" />
-                  ))}
+        <DataStateWrapper
+          state={contentState}
+          errorTitle="Не удалось загрузить рефлексии"
+          error={
+            retrospectivesQuery.isError
+              ? resolveApiErrorMessage(
+                  retrospectivesQuery.error,
+                  'Попробуйте повторить запрос.',
+                )
+              : null
+          }
+          onRetry={() => void retrospectivesQuery.refetch()}
+          loadingFallback={(
+            <>
+              <Card className="rounded-2xl border border-border/80 bg-card/95 shadow-[var(--ft-shadow-sm)]">
+                <CardContent className="space-y-4 pt-6">
+                  <Skeleton className="h-[320px] rounded-2xl" />
+                  <div className="flex gap-3">
+                    {Array.from({ length: 3 }, (_, index) => (
+                      <Skeleton key={index} className="h-5 w-28 rounded-full" />
+                    ))}
+                  </div>
+                </CardContent>
+              </Card>
+              <div className="grid gap-4 xl:grid-cols-3">
+                {Array.from({ length: 3 }, (_, index) => (
+                  <Skeleton key={index} className="h-[248px] rounded-2xl" />
+                ))}
+              </div>
+            </>
+          )}
+          emptyFallback={(
+            <Card className="rounded-2xl border border-dashed border-border/80 bg-background/20 shadow-[var(--ft-shadow-sm)]">
+              <CardContent className="flex flex-col items-center gap-4 px-6 py-10 text-center">
+                <div className="space-y-2">
+                  <h2 className="text-xl font-semibold text-foreground">Пока нет рефлексий</h2>
+                  <p className="max-w-xl text-sm leading-6 text-muted-foreground">
+                    Подведите итоги любого прошедшего месяца, чтобы видеть свой прогресс не только по цифрам, но и по собственным выводам.
+                  </p>
                 </div>
+                {!isReadOnlyMode ? (
+                  <Button className="min-h-[44px] rounded-xl px-4" onClick={handleOpenCreateDialog}>
+                    <Plus className="size-4" />
+                    Добавить первую рефлексию
+                  </Button>
+                ) : null}
               </CardContent>
             </Card>
-            <div className="grid gap-4 xl:grid-cols-3">
-              {Array.from({ length: 3 }, (_, index) => (
-                <Skeleton key={index} className="h-[248px] rounded-2xl" />
-              ))}
-            </div>
-          </>
-        ) : retrospectivesQuery.isError && !hasRetrospectives ? (
-          <div className="rounded-2xl border border-destructive/30 bg-destructive/10 px-4 py-4 text-sm">
-            <div className="font-medium text-foreground">Не удалось загрузить рефлексии</div>
-            <div className="mt-1 text-muted-foreground">
-              {resolveApiErrorMessage(
-                retrospectivesQuery.error,
-                'Попробуйте повторить запрос.',
-              )}
-            </div>
-            <Button
-              className="mt-3 min-h-[44px]"
-              variant="outline"
-              onClick={() => void retrospectivesQuery.refetch()}
-            >
-              Повторить
-            </Button>
-          </div>
-        ) : !hasRetrospectives ? (
-          <Card className="rounded-2xl border border-dashed border-border/80 bg-background/20 shadow-[var(--ft-shadow-sm)]">
-            <CardContent className="flex flex-col items-center gap-4 px-6 py-10 text-center">
-              <div className="space-y-2">
-                <h2 className="text-xl font-semibold text-foreground">Пока нет рефлексий</h2>
-                <p className="max-w-xl text-sm leading-6 text-muted-foreground">
-                  Подведите итоги любого прошедшего месяца, чтобы видеть свой прогресс не только по цифрам, но и по собственным выводам.
-                </p>
-              </div>
-              {!isReadOnlyMode ? (
-                <Button className="min-h-[44px] rounded-xl px-4" onClick={handleOpenCreateDialog}>
-                  <Plus className="size-4" />
-                  Добавить первую рефлексию
-                </Button>
-              ) : null}
-            </CardContent>
-          </Card>
-        ) : (
+          )}
+        >
           <>
             <ReflectionsHistoryChart
               items={chartItems}
@@ -237,7 +244,7 @@ export default function ReflectionsPage() {
               ))}
             </div>
           </>
-        )}
+        </DataStateWrapper>
 
         <RetrospectiveMonthDialog
           open={isCreateDialogOpen}

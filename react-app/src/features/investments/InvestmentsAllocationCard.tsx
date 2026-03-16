@@ -3,6 +3,7 @@ import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { InfoTooltip } from '@/components/analytics/InfoTooltip';
+import { getTopAnchoredDonutAngles } from '@/components/analytics/donutAngles';
 import { formatCurrency, formatNumber } from '@/utils/format';
 import type { InvestmentAllocationSlice } from './investmentModels';
 
@@ -58,6 +59,7 @@ export function InvestmentsAllocationCard({
   error,
   onRetry,
 }: InvestmentsAllocationCardProps) {
+  const { startAngle, endAngle } = getTopAnchoredDonutAngles();
   const totalValue = slices.reduce((sum, item) => sum + item.value, 0);
   const hasData = slices.length > 0;
   const showInlineError = Boolean(error) && hasData;
@@ -133,6 +135,8 @@ export function InvestmentsAllocationCard({
                     paddingAngle={2}
                     stroke="var(--ft-surface-base)"
                     strokeWidth={2}
+                    startAngle={startAngle}
+                    endAngle={endAngle}
                     isAnimationActive={false}
                   >
                     {slices.map((slice, index) => (

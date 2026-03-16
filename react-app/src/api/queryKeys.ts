@@ -22,6 +22,8 @@ export const queryKeys = {
     // `filters` is wrapped in an object so React Query compares by value, not reference.
     list: (filters: TransactionsQuery | Record<string, unknown>) =>
       [...queryKeys.transactions.lists(), { filters }] as const,
+    summary: (filters: TransactionsQuery | Record<string, unknown>) =>
+      [...queryKeys.transactions.all(), 'summary', { filters }] as const,
     detail: (id: string) => [...queryKeys.transactions.all(), 'detail', id] as const,
     check: () => [...queryKeys.transactions.all(), 'check'] as const,
   },
@@ -40,8 +42,8 @@ export const queryKeys = {
       [...queryKeys.analytics.all(), 'dashboard', { year, month }] as const,
     netWorth: (params?: { from?: string; to?: string }) =>
       [...queryKeys.analytics.all(), 'netWorth', { params }] as const,
-    evolution: (year?: number) =>
-      [...queryKeys.analytics.all(), 'evolution', { year }] as const,
+    evolution: (months?: number) =>
+      [...queryKeys.analytics.all(), 'evolution', { months }] as const,
   },
 
   // Retrospectives
@@ -54,6 +56,8 @@ export const queryKeys = {
       [...queryKeys.retrospectives.all(), 'bannerStatus', month] as const,
     detail: (month: string) =>
       [...queryKeys.retrospectives.all(), 'detail', month] as const,
+    summary: (month: string) =>
+      [...queryKeys.retrospectives.detail(month), 'summary'] as const,
   },
 
   // Goals

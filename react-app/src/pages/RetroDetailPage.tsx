@@ -115,7 +115,7 @@ export default function RetroDetailPage() {
   });
 
   const summaryQuery = useQuery({
-    queryKey: [...queryKeys.retrospectives.detail(month), 'summary'] as const,
+    queryKey: queryKeys.retrospectives.summary(month),
     enabled: parsedMonth !== null,
     staleTime: 30_000,
     queryFn: async () => {
@@ -147,9 +147,7 @@ export default function RetroDetailPage() {
     onSuccess: async () => {
       await Promise.all([
         queryClient.invalidateQueries({ queryKey: queryKeys.retrospectives.all() }),
-        queryClient.invalidateQueries({
-          queryKey: [...queryKeys.retrospectives.detail(month), 'summary'] as const,
-        }),
+        queryClient.invalidateQueries({ queryKey: queryKeys.retrospectives.summary(month) }),
         queryClient.invalidateQueries({
           queryKey: queryKeys.retrospectives.availableMonths(),
         }),

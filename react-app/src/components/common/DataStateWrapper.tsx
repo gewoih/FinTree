@@ -11,6 +11,8 @@ interface DataStateWrapperProps {
   state: DataState;
   error?: string | null;
   onRetry?: () => void;
+  errorTitle?: string;
+  retryLabel?: string;
   emptyTitle?: string;
   emptyDescription?: string;
   emptyAction?: {
@@ -18,6 +20,9 @@ interface DataStateWrapperProps {
     onClick: () => void;
   };
   loadingRows?: number;
+  loadingFallback?: ReactNode;
+  errorFallback?: ReactNode;
+  emptyFallback?: ReactNode;
   children: ReactNode;
   className?: string;
 }
@@ -34,10 +39,15 @@ export function DataStateWrapper({
   state,
   error,
   onRetry,
+  errorTitle = 'Не удалось загрузить данные',
+  retryLabel = 'Повторить',
   emptyTitle = 'Нет данных',
   emptyDescription,
   emptyAction,
   loadingRows = 3,
+  loadingFallback,
+  errorFallback,
+  emptyFallback,
   children,
   className,
 }: DataStateWrapperProps) {
@@ -46,6 +56,10 @@ export function DataStateWrapper({
   }
 
   if (state === 'loading') {
+    if (loadingFallback) {
+      return <>{loadingFallback}</>;
+    }
+
     return (
       <div
         className={cn('flex flex-col gap-2', className)}
@@ -61,6 +75,10 @@ export function DataStateWrapper({
   }
 
   if (state === 'error') {
+    if (errorFallback) {
+      return <>{errorFallback}</>;
+    }
+
     return (
       <div
         className={cn(
@@ -72,7 +90,7 @@ export function DataStateWrapper({
         <AlertCircle className="h-8 w-8 text-destructive" aria-hidden="true" />
 
         <div className="flex flex-col gap-1">
-          <p className="font-medium text-foreground">Не удалось загрузить данные</p>
+          <p className="font-medium text-foreground">{errorTitle}</p>
           {error && <p className="text-sm text-muted-foreground">{error}</p>}
         </div>
 
@@ -83,7 +101,7 @@ export function DataStateWrapper({
             className="min-h-[44px]"
             onClick={onRetry}
           >
-            Повторить
+            {retryLabel}
           </Button>
         )}
       </div>
@@ -91,6 +109,10 @@ export function DataStateWrapper({
   }
 
   if (state === 'empty') {
+    if (emptyFallback) {
+      return <>{emptyFallback}</>;
+    }
+
     return (
       <EmptyState
         title={emptyTitle}

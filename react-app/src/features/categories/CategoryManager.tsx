@@ -4,6 +4,7 @@ import { Badge } from '@/components/ui/badge';
 import { EmptyState } from '@/components/common/EmptyState';
 import { Skeleton } from '@/components/ui/skeleton';
 import { cn } from '@/utils/cn';
+import { getCategoryColorToken } from '@/utils/categoryPalette';
 import { CATEGORY_TYPE, type Category, type CategoryType } from '@/types';
 import { getCategoryIcon } from './categoryIcons';
 
@@ -117,7 +118,7 @@ export function CategoryManager({
                     <div className="flex min-w-0 items-center gap-3">
                       <span
                         className="size-3 rounded-full"
-                        style={{ backgroundColor: category.color }}
+                        style={{ backgroundColor: getCategoryColorToken(category.id) }}
                         aria-hidden="true"
                       />
                       <span className="flex size-9 items-center justify-center rounded-lg border border-border bg-background/40 text-muted-foreground">

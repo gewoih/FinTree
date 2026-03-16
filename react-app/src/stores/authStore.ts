@@ -1,5 +1,6 @@
 import { create } from 'zustand';
 import { apiClient } from '../api/apiClient';
+import { queryClient } from '@/api/queryClient';
 import type {
   LoginPayload,
   RegisterPayload,
@@ -39,7 +40,7 @@ async function authenticateAndHydrate(
 
   try {
     await apiCall();
-    const isHydrated = await useUserStore.getState().fetchCurrentUser();
+    const isHydrated = await useUserStore.getState().fetchCurrentUser(true);
     if (!isHydrated) {
       throw new Error('User hydration failed');
     }
@@ -85,14 +86,13 @@ export const useAuthStore = create<AuthState & AuthActions>((set, get) => ({
   },
 
   async logout() {
-    // Cancel any in-flight user fetch so it cannot re-hydrate after logout.
-    useUserStore.getState().clearUser();
-
     try {
       await apiClient.logout();
     } catch {
       // Ignore logout API errors — local state is already cleared.
     } finally {
+      queryClient.clear();
+      useUserStore.getState().clearUser();
       set({
         isAuthenticated: false,
         isSessionChecked: true,

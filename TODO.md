@@ -63,15 +63,6 @@
   **Fix:** Собрать все уникальные пары (валюта, дата) до цикла, получить курсы одним запросом.
   **Files:** `FinTree.Application/Analytics/Services/NetWorthService.cs` lines 115–130
 
-### Observability
-
-- [ ] `FT-TODO-058` Отсутствует `ILogger<T>` во всех аналитических сервисах — нет трейса для: недостаточно данных для прогноза, currency fallback, пустые пулы bootstrap. При расследовании инцидентов нет аудит-трейла.
-  **Files:** `FinTree.Application/Analytics/Services/*`
-
-- [ ] `FT-TODO-059` 500-е ошибки не содержат уникального ID для корреляции с логами — пользователь видит "Произошла ошибка" без возможности передать ID в support.
-  **Fix:** Генерировать `errorId = Guid.NewGuid()`, включать в ответ и в `logger.LogError(...)`.
-  **Files:** `FinTree.Api/Program.cs` ~line 298
-
 ### Maintainability
 
 - [ ] `FT-TODO-060` `TelegramOperationsService`: `AccountsService` и `UserService` создаются вручную через `new` в обход DI — нарушает тестируемость, жёстко привязывает конструкторы.
@@ -100,13 +91,13 @@
 
 ## Frontend UX
 
-- [ ] `FT-TODO-063` React migration still has placeholder pages that render `null`, so some public/protected routes remain blank after navigation.
-  **Fix:** Port the remaining Vue implementations for landing/profile into `react-app` or add explicit placeholder states instead of empty renders.
-  **Files:** `react-app/src/pages/LandingPage.tsx`, `react-app/src/pages/ProfilePage.tsx`
+- [ ] `FT-TODO-063` Invalid retrospective deep links can still fall through to a blank render before redirect because `RetroDetailPage` returns `null` when `month` is invalid.
+  **Fix:** Validate the route param in TanStack Router `beforeLoad` or render an explicit not-found / invalid-month state instead of `return null`.
+  **Files:** `react-app/src/pages/RetroDetailPage.tsx`, `react-app/src/router/index.ts`
 
-- [ ] `FT-TODO-064` `EvolutionTab` still uses ad hoc `toFixed` / raw analytics values, so the `Динамика` tab now diverges from the normalized dashboard display contract.
-  **Fix:** Reuse the analytics formatting helpers from `react-app/src/components/analytics/models.ts` for percentages, months, mean daily spend, and month table cells.
-  **Files:** `react-app/src/components/analytics/EvolutionTab.tsx`
+- [ ] `FT-TODO-064` `EvolutionTab` still formats and models KPI values through its own `evolutionModels.ts` pipeline instead of the shared analytics formatting layer. Direct `toFixed` calls are already gone, but the tab can still drift from the dashboard display contract because formatting rules now live in two places.
+  **Fix:** Consolidate `EvolutionTab` onto the shared analytics formatting contract or extract a single reusable formatting layer used by both `models.ts` and `evolutionModels.ts`.
+  **Files:** `react-app/src/components/analytics/EvolutionTab.tsx`, `react-app/src/components/analytics/evolutionModels.ts`, `react-app/src/components/analytics/models.ts`
 
 - [ ] `FT-TODO-065` React migration for accounts/transactions needs one cleanup pass to split oversized orchestration files and modal sections into smaller feature components/hooks.
   **Why:** `TransactionsPage`, `TransactionFormModal`, `TransactionList`, and `AccountsPage` now ship working behavior, but they exceed the block guideline of keeping components around 200 lines and will get harder to evolve in later migration blocks.
@@ -114,18 +105,14 @@
   **Priority:** P2
   **Files:** `react-app/src/pages/AccountsPage.tsx`, `react-app/src/pages/TransactionsPage.tsx`, `react-app/src/features/transactions/TransactionFormModal.tsx`, `react-app/src/features/transactions/TransactionList.tsx`
 
-- [ ] `FT-TODO-066` `TransactionList` — кликабельные строки таблицы не доступны с клавиатуры: нет `tabIndex`, `onKeyDown` и `aria-label` на строках-редакторах. При read-only режиме строки не интерактивны — норма. При edit-режиме нужен способ открыть форму без мыши.
-  **Fix:** Добавить в `TableRow` (только не-readonly режим): `tabIndex={0}`, `onKeyDown={(e) => e.key === 'Enter' && handleEditRow(...)}`, `aria-label={...}`. Либо добавить явную кнопку редактирования рядом с кнопкой удаления.
-  **Files:** `react-app/src/features/transactions/TransactionList.tsx`
+- [ ] `FT-TODO-070` Frontend regression safety net is missing: `react-app` has no test runner script, no `vitest`/browser test pipeline, and the repo currently contains no React `*.test.*` / `*.spec.*` files.
+  **Fix:** Add `vitest` + React Testing Library test scripts, cover critical auth/forms/cache-invalidations/accessibility flows, and wire the suite into the standard verification path.
+  **Files:** `react-app/package.json`, `react-app/` test config files, critical page/feature test files under `react-app/src/**`
 
-- [ ] `FT-TODO-040` SummaryStrip — zone progress bar for the 4 metric cards
-  **Context:** Metric cards (Сбережения, Финансовая подушка, Стабильность трат, Необязательные) show numbers with no benchmark context. A segmented zone bar with a position marker communicates the quality of each value at a glance.
-  **Zone definitions:**
-  | Key | Thresholds (poor/avg, avg/good) | scaleMax | inverted |
-  |-----|--------------------------------|---------|---------|
-  | savings | 0.1, 0.2 | 0.5 | false |
-  | cushion | 1, 3 | 12 | false |
-  | stability | 40, 70 | 100 | false |
-  | discretionary | 25, 45 | 60 | true |
-  Zone widths = `(zoneEnd - zoneStart) / scaleMax × 100%`. Marker = `clamp(value/scaleMax, 0, 1) × 100%`. Inverted = color order flips (green left → red right).
-  **Acceptance criteria:** Each of the 4 metric cards has a zone bar at the bottom. Marker position reflects current value. Cards without zone config are unaffected.
+- [ ] `FT-TODO-071` Server state for session/user is duplicated outside React Query across `authStore`, `userStore`, and `useEnsureCurrentUser`, creating multiple bootstrap paths, custom in-flight deduplication, and manual cache hydration logic that will get harder to evolve.
+  **Fix:** Consolidate authenticated user/session loading behind a single query-backed hook and keep Zustand only for true client UI state (theme, ephemeral toggles).
+  **Files:** `react-app/src/stores/authStore.ts`, `react-app/src/stores/userStore.ts`, `react-app/src/hooks/useEnsureCurrentUser.ts`, `react-app/src/router/index.ts`
+
+- [ ] `FT-TODO-073` Third-party scripts are injected globally from `index.html` and runtime widget code without visible consent/CSP hardening (`Yandex Metrika`, Telegram widget). This increases privacy/security review surface and makes strict CSP adoption harder later.
+  **Fix:** Add an explicit loading policy for third-party scripts (consent gate or documented exception), centralize script injection, and document the CSP allowances required for production.
+  **Files:** `react-app/index.html`, `react-app/src/components/auth/TelegramAuthWidget.tsx`

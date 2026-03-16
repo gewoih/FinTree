@@ -216,6 +216,7 @@ export function TransactionFormModal({
     await Promise.all([
       queryClient.invalidateQueries({ queryKey: queryKeys.transactions.all() }),
       queryClient.invalidateQueries({ queryKey: queryKeys.accounts.all() }),
+      queryClient.invalidateQueries({ queryKey: queryKeys.analytics.all() }),
     ]);
     toast.success(message);
     onSuccess();

@@ -12,6 +12,7 @@ import {
 } from 'recharts';
 import { Skeleton } from '@/components/ui/skeleton';
 import * as analyticsApi from '@/api/analytics';
+import { queryKeys } from '@/api/queryKeys';
 import {
   AnalyticsInset,
   AnalyticsPanel,
@@ -350,7 +351,7 @@ export function EvolutionTab({ isActive }: EvolutionTabProps) {
   const [selectedRange, setSelectedRange] = useState<EvolutionRange>(6);
 
   const evolutionQuery = useQuery({
-    queryKey: ['analytics-evolution', selectedRange],
+    queryKey: queryKeys.analytics.evolution(selectedRange),
     queryFn: () => analyticsApi.getEvolution(selectedRange),
     staleTime: 60_000,
     enabled: isActive,

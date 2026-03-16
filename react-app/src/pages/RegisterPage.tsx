@@ -189,7 +189,7 @@ export default function RegisterPage() {
                       key={rule.key}
                       className={
                         rule.met
-                          ? 'flex items-center gap-2 text-emerald-500'
+                          ? 'flex items-center gap-2 text-[var(--ft-success-500)]'
                           : 'flex items-center gap-2 text-destructive'
                       }
                     >

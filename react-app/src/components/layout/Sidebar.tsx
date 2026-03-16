@@ -132,7 +132,9 @@ export default function Sidebar({ collapsed }: SidebarProps) {
                 <span
                   className={cn(
                     'inline-block h-1.5 w-1.5 flex-shrink-0 rounded-full',
-                    isReadOnlyMode ? 'bg-muted-foreground' : 'bg-green-500'
+                    isReadOnlyMode
+                      ? 'bg-muted-foreground'
+                      : 'bg-[var(--ft-success-500)]'
                   )}
                   aria-hidden="true"
                 />

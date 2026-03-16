@@ -130,22 +130,6 @@ export function buildAnalyticsCategoryModel(
   };
 }
 
-export function calculateDonutStartAngle(items: readonly AnalyticsCategorySlice[]): number {
-  if (items.length === 0) {
-    return 90;
-  }
-
-  const total = items.reduce((sum, item) => sum + item.displayAmount, 0);
-  if (total <= 0) {
-    return 90;
-  }
-
-  const largestSlice = items[0];
-  const arcDegrees = (largestSlice.displayAmount / total) * 360;
-
-  return arcDegrees / 2;
-}
-
 function computeAverage(values: number[]): number {
   if (values.length === 0) {
     return 0;

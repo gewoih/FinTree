@@ -216,39 +216,7 @@ export function TransactionList({
                       <div
                         className={cn(
                           'flex min-w-0 flex-1 items-center gap-3 text-left',
-                          !readonly ? 'cursor-pointer' : 'cursor-default',
                         )}
-                        role={!readonly ? 'button' : undefined}
-                        tabIndex={!readonly ? 0 : undefined}
-                        onClick={() => {
-                          if (readonly) {
-                            return;
-                          }
-
-                          if (row.kind === 'transaction') {
-                            onEdit(row.transaction);
-                            return;
-                          }
-
-                          onEditTransfer(row.transferId, row.occurredAt);
-                        }}
-                        onKeyDown={(event) => {
-                          if (
-                            readonly ||
-                            (event.key !== 'Enter' && event.key !== ' ')
-                          ) {
-                            return;
-                          }
-
-                          event.preventDefault();
-
-                          if (row.kind === 'transaction') {
-                            onEdit(row.transaction);
-                            return;
-                          }
-
-                          onEditTransfer(row.transferId, row.occurredAt);
-                        }}
                       >
                         <span
                           className={cn(
@@ -278,42 +246,8 @@ export function TransactionList({
                               {row.kind === 'transaction' ? row.categoryName : row.title}
                             </span>
 
-                            {isExpense ? (
-                              readonly ? (
-                                row.transaction.isMandatory ? (
-                                  <Lock className="size-4 shrink-0 text-[var(--ft-warning-400)]" />
-                                ) : null
-                              ) : (
-                                <button
-                                  type="button"
-                                  className={cn(
-                                    'inline-flex size-8 shrink-0 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-[color-mix(in_srgb,var(--ft-warning-500)_12%,transparent)] hover:text-[var(--ft-warning-400)]',
-                                    row.transaction.isMandatory &&
-                                      'text-[var(--ft-warning-400)]',
-                                  )}
-                                  disabled={
-                                    togglingMandatoryId === row.id || !onToggleMandatory
-                                  }
-                                  title={
-                                    row.transaction.isMandatory
-                                      ? 'Снять обязательный'
-                                      : 'Пометить обязательным'
-                                  }
-                                  onClick={(event) => {
-                                    event.stopPropagation();
-                                    onToggleMandatory?.(
-                                      row.transaction,
-                                      !row.transaction.isMandatory,
-                                    );
-                                  }}
-                                >
-                                  {row.transaction.isMandatory ? (
-                                    <Lock className="size-4" />
-                                  ) : (
-                                    <LockOpen className="size-4" />
-                                  )}
-                                </button>
-                              )
+                            {isExpense && readonly && row.transaction.isMandatory ? (
+                              <Lock className="size-4 shrink-0 text-[var(--ft-warning-400)]" />
                             ) : null}
                           </div>
 
@@ -323,7 +257,7 @@ export function TransactionList({
                         </div>
                       </div>
 
-                      <div className="flex shrink-0 items-center gap-2 pl-2">
+                      <div className="flex shrink-0 flex-col items-end gap-2 pl-2 sm:flex-row sm:items-center">
                         <div className="text-right">
                           {row.kind === 'transaction' ? (
                             <>
@@ -363,11 +297,64 @@ export function TransactionList({
                           <Button
                             type="button"
                             variant="ghost"
+                            size="sm"
+                            className="rounded-md"
+                            onClick={() => {
+                              if (row.kind === 'transaction') {
+                                onEdit(row.transaction);
+                                return;
+                              }
+
+                              onEditTransfer(row.transferId, row.occurredAt);
+                            }}
+                          >
+                            {row.kind === 'transaction' ? 'Изменить' : 'Открыть'}
+                          </Button>
+                        ) : null}
+
+                        {!readonly && isExpense ? (
+                          <Button
+                            type="button"
+                            variant="ghost"
                             size="icon"
-                            className="min-h-[40px] min-w-[40px] rounded-md opacity-100 transition-opacity sm:opacity-0 sm:group-hover:opacity-100"
+                            className={cn(
+                              'rounded-md text-muted-foreground hover:bg-[color-mix(in_srgb,var(--ft-warning-500)_12%,transparent)] hover:text-[var(--ft-warning-400)]',
+                              row.transaction.isMandatory && 'text-[var(--ft-warning-400)]',
+                            )}
+                            disabled={togglingMandatoryId === row.id || !onToggleMandatory}
+                            aria-label={
+                              row.transaction.isMandatory
+                                ? 'Снять признак обязательного платежа'
+                                : 'Пометить как обязательный платёж'
+                            }
+                            onClick={() =>
+                              onToggleMandatory?.(
+                                row.transaction,
+                                !row.transaction.isMandatory,
+                              )
+                            }
+                          >
+                            {row.transaction.isMandatory ? (
+                              <Lock className="size-4" />
+                            ) : (
+                              <LockOpen className="size-4" />
+                            )}
+                          </Button>
+                        ) : null}
+
+                        {!readonly ? (
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="icon"
+                            className="rounded-md opacity-100 transition-opacity sm:opacity-0 sm:group-hover:opacity-100"
                             disabled={isDeletingCurrentRow}
-                            onClick={(event) => {
-                              event.stopPropagation();
+                            aria-label={
+                              row.kind === 'transaction'
+                                ? 'Удалить транзакцию'
+                                : 'Удалить перевод'
+                            }
+                            onClick={() => {
                               setDeleteTarget(
                                 row.kind === 'transaction'
                                   ? { type: 'transaction', transaction: row.transaction }

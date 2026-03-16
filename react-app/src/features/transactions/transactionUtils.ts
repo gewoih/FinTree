@@ -6,6 +6,7 @@ import type {
   UpdateTransferPayload,
 } from '@/types';
 import { formatDateLong, normalizeAccountType } from '@/utils/format';
+import { getCategoryColorToken } from '@/utils/categoryPalette';
 import type {
   TransactionDisplayRow,
   TransactionFiltersValue,
@@ -175,7 +176,7 @@ export function buildTransactionRows(
       currencyCode: account?.currencyCode ?? transaction.originalCurrencyCode ?? 'RUB',
       tone: transaction.type === 'Income' ? 'Income' : 'Expense',
       categoryName: category?.name ?? 'Без категории',
-      categoryColor: category?.color ?? '#9e9e9e',
+      categoryColor: getCategoryColorToken(category?.id ?? category?.name ?? 'uncategorized'),
       categoryIcon: normalizeCategoryIconKey(category?.icon),
       transaction,
     });

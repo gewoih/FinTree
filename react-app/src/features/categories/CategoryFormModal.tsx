@@ -23,6 +23,7 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { cn } from '@/utils/cn';
+import { getDefaultCategoryHexColor } from '@/utils/categoryPalette';
 import {
   CATEGORY_TYPE,
   type Category,
@@ -62,7 +63,7 @@ interface CategoryFormModalProps {
   onDelete: (category: Category) => Promise<void>;
 }
 
-const DEFAULT_COLOR = '#2fc470';
+const DEFAULT_COLOR = getDefaultCategoryHexColor();
 
 function getDefaultValues(
   category: Category | null,
