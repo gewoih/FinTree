@@ -264,7 +264,7 @@ export function SpendingBarsCard({
                             fontWeight="700"
                             style={{
                               fill: 'var(--ft-text-primary)',
-                              fontFamily: 'Inter, sans-serif',
+                              fontFamily: 'Golos Text, sans-serif',
                             }}
                           >
                             {label}

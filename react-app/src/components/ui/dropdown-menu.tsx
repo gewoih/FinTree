@@ -89,7 +89,7 @@ function DropdownMenuItem({
       data-inset={inset}
       data-destructive={destructive}
       className={cn(
-        "relative flex min-h-[44px] cursor-default items-center gap-2 rounded-md px-2 py-2 text-sm outline-hidden select-none focus:bg-accent focus:text-accent-foreground data-[inset=true]:pl-8 data-[disabled]:pointer-events-none data-[disabled]:opacity-50 data-[destructive=true]:text-destructive data-[destructive=true]:focus:bg-destructive/10 data-[destructive=true]:focus:text-destructive [&_svg]:pointer-events-none [&_svg]:shrink-0",
+        "relative flex min-h-[44px] cursor-pointer items-center gap-2 rounded-md px-2 py-2 text-sm outline-hidden select-none focus:bg-accent focus:text-accent-foreground data-[inset=true]:pl-8 data-[disabled]:pointer-events-none data-[disabled]:opacity-50 data-[destructive=true]:text-destructive data-[destructive=true]:focus:bg-destructive/10 data-[destructive=true]:focus:text-destructive [&_svg]:pointer-events-none [&_svg]:shrink-0",
         className
       )}
       {...props}

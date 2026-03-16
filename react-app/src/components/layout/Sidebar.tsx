@@ -27,7 +27,7 @@ function NavLink({ item, collapsed, isActive }: NavLinkProps) {
       aria-current={isActive ? 'page' : undefined}
       title={collapsed ? item.label : undefined}
       className={cn(
-        'flex min-h-[44px] items-center gap-3 rounded-md px-3 py-2 text-sm font-medium transition-colors',
+        'relative flex min-h-[44px] items-center gap-3 rounded-md px-3 py-2 text-sm font-medium transition-colors',
         'focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2',
         isActive
           ? 'bg-primary/10 text-primary'
@@ -35,6 +35,12 @@ function NavLink({ item, collapsed, isActive }: NavLinkProps) {
         collapsed && 'justify-center px-2'
       )}
     >
+      {isActive && (
+        <span
+          className="absolute left-0 top-1/2 h-4 w-[3px] -translate-y-1/2 rounded-r-sm bg-primary"
+          aria-hidden="true"
+        />
+      )}
       <item.icon
         className={cn('h-5 w-5 flex-shrink-0', isActive && 'text-primary')}
         aria-hidden="true"

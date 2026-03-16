@@ -140,17 +140,17 @@
     /* ━━━ SEMANTIC TOKENS — DARK THEME (DEFAULT) ━━━ */
 
     /* Backgrounds */
-    --ft-bg-base: #0f1117;
-    --ft-bg-subtle: #141820;
-    --ft-bg-muted: #181d28;
-    --ft-bg-elevated: #1c2233;
-    --ft-bg-overlay: rgb(8 10 16 / 80%);
+    --ft-bg-base: #111114;
+    --ft-bg-subtle: #161619;
+    --ft-bg-muted: #1a1a1d;
+    --ft-bg-elevated: #1e1e23;
+    --ft-bg-overlay: rgb(8 8 10 / 80%);
 
     /* Surfaces */
-    --ft-surface-base: #161b26;
-    --ft-surface-raised: #1c2334;
-    --ft-surface-overlay: #222b3e;
-    --ft-surface-soft: #121722;
+    --ft-surface-base: #18181b;
+    --ft-surface-raised: #202025;
+    --ft-surface-overlay: #28282e;
+    --ft-surface-soft: #141416;
     --ft-surface-muted: var(--ft-surface-overlay);
 
     /* Text */
@@ -163,21 +163,21 @@
     --ft-text-link-hover: var(--ft-primary-200);
 
     /* Borders */
-    --ft-border-subtle: #1e2330;
-    --ft-border-default: #2a3242;
-    --ft-border-strong: #3a4558;
-    --ft-border-soft: #181f2e;
+    --ft-border-subtle: #222226;
+    --ft-border-default: #2e2e34;
+    --ft-border-strong: #3e3e46;
+    --ft-border-soft: #1c1c1f;
     --ft-border-inverse: rgb(240 242 245 / 10%);
 
     /* Interactive */
     --ft-interactive-default: var(--ft-primary-400);
     --ft-interactive-hover: var(--ft-primary-200);
     --ft-interactive-active: var(--ft-primary-500);
-    --ft-interactive-disabled: #1e2330;
+    --ft-interactive-disabled: #222226;
 
     /* Focus */
     --ft-focus-ring: #d4de95;
-    --ft-focus-ring-offset: #0f1117;
+    --ft-focus-ring-offset: #111114;
 
     /* Shadows */
     --ft-shadow-xs: 0 1px 2px rgb(0 0 0 / 40%);
@@ -239,8 +239,8 @@
     --ft-radius-full: 9999px;
 
     /* Typography */
-    --ft-font-base: 'Inter', sans-serif;
-    --ft-font-display: 'Inter', sans-serif;
+    --ft-font-base: 'Golos Text', sans-serif;
+    --ft-font-display: 'Golos Text', sans-serif;
     --ft-font-mono: 'JetBrains Mono', 'Fira Code', monospace;
 
     --ft-letter-spacing-display: -0.02em;
@@ -450,33 +450,33 @@
     --ft-form-field-label-error-color: var(--ft-danger-400);
 
     /* ━━━ SHADCN VARIABLE MAPPING — DARK THEME (DEFAULT) ━━━ */
-    --background: 222 17% 8%;
+    --background: 240 1% 7%;
     --foreground: 216 20% 95%;
 
-    --card: 222 22% 12%;
+    --card: 240 1% 10%;
     --card-foreground: 216 20% 95%;
 
-    --popover: 222 25% 15%;
+    --popover: 240 3% 14%;
     --popover-foreground: 216 20% 95%;
 
-    --primary: 74 55% 85%;
+    --primary: 68 53% 73%;
     --primary-foreground: 228 22% 10%;
 
-    --secondary: 220 28% 19%;
+    --secondary: 240 3% 17%;
     --secondary-foreground: 216 20% 95%;
 
-    --muted: 222 22% 12%;
+    --muted: 240 1% 10%;
     --muted-foreground: 220 9% 69%;
 
-    --accent: 222 25% 15%;
+    --accent: 240 3% 14%;
     --accent-foreground: 216 20% 95%;
 
     --destructive: 3 76% 61%;
     --destructive-foreground: 216 20% 95%;
 
-    --border: 222 22% 16%;
-    --input: 222 22% 16%;
-    --ring: 74 55% 85%;
+    --border: 240 2% 14%;
+    --input: 240 2% 14%;
+    --ring: 68 53% 73%;
 
     --radius: 0.25rem;
 
@@ -688,6 +688,11 @@
   select,
   textarea {
     min-height: 44px;
+  }
+
+  /* Sonner toast close button must not inherit the 44px touch target */
+  [data-sonner-toaster] button {
+    min-height: unset;
   }
 
   /* Scrollbars */

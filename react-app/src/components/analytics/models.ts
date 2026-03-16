@@ -55,6 +55,7 @@ export interface HealthMetricCardModel {
   supportingLabel: string;
   accent: MetricAccent;
   tooltip: string;
+  progress?: number;
 }
 
 const STABILITY_ACTION_TEXTS: Record<StabilityActionCode, string> = {
@@ -317,6 +318,9 @@ export function buildHealthMetricCards(
       supportingLabel: 'сохранено',
       accent: resolveSavingsAccent(health.savingsRate, health.monthIncome, health.monthTotal),
       tooltip: 'Ваша сэкономленная часть от доходов.',
+      progress: health.savingsRate !== null && !Number.isNaN(health.savingsRate)
+        ? Math.min(100, Math.max(0, health.savingsRate * 100))
+        : undefined,
     },
     {
       key: 'cushion',
@@ -336,6 +340,9 @@ export function buildHealthMetricCards(
       value: formatAnalyticsScore(health.stabilityScore),
       supportingLabel: stabilityAdvice,
       accent: resolveStabilityAccent(health.stabilityStatus, stabilityReady),
+      progress: health.stabilityScore !== null && !Number.isNaN(health.stabilityScore) && stabilityReady
+        ? Math.min(100, Math.max(0, health.stabilityScore))
+        : undefined,
       tooltip: stabilityReady
         ? 'Показывает, насколько стабильны ваши расходы за месяц. Чем выше балл, тем лучше.'
         : `Нужны расходы хотя бы в ${readiness.requiredStabilityDays} днях этого месяца. Сейчас: ${readiness.observedStabilityDaysInSelectedMonth} из ${readiness.requiredStabilityDays}.`,

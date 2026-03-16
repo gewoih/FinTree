@@ -138,6 +138,7 @@ export function AccountCard({
           <span className="text-sm text-muted-foreground">{liquidityLabel}</span>
         ) : (
           <label className="flex min-h-[44px] items-center gap-3 text-sm text-muted-foreground">
+            <span>{liquidityLabel}</span>
             <Switch
               checked={account.isLiquid}
               onCheckedChange={onLiquidityChange}
@@ -146,7 +147,6 @@ export function AccountCard({
                 account.isLiquid ? 'Сделать счёт неликвидным' : 'Сделать счёт ликвидным'
               }
             />
-            <span>{liquidityLabel}</span>
           </label>
         )}
       </div>

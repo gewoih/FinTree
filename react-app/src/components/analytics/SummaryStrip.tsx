@@ -64,6 +64,15 @@ function accentBgStyle(accent: MetricAccent): React.CSSProperties {
   }
 }
 
+// ─── Delta badge ──────────────────────────────────────────────────────────────
+
+function parseDelta(text: string): { badge: string; context: string; isPositive: boolean } | null {
+  const idx = text.indexOf(' к ');
+  if (idx === -1) return null;
+  const badge = text.slice(0, idx).trim();
+  return { badge, context: text.slice(idx).trim(), isPositive: badge.startsWith('+') };
+}
+
 // ─── MetricCard ───────────────────────────────────────────────────────────────
 
 interface MetricCardProps {
@@ -80,6 +89,8 @@ function MetricCard({ metric }: MetricCardProps) {
         : metric.accent === 'warning'
           ? 'var(--ft-warning-300)'
           : 'var(--ft-text-primary)';
+
+  const delta = metric.secondary ? parseDelta(metric.secondary) : null;
 
   return (
     <div className="flex min-h-[126px] items-center gap-3 px-5 py-4" style={{ fontVariantNumeric: 'tabular-nums' }}>
@@ -105,9 +116,25 @@ function MetricCard({ metric }: MetricCardProps) {
           {metric.value}
         </span>
 
-        <span className="text-sm leading-5 text-[var(--ft-text-secondary)]">
-          {metric.secondary ?? '\u00A0'}
-        </span>
+        {delta ? (
+          <span className="flex flex-wrap items-center gap-1.5">
+            <span
+              className="inline-flex items-center gap-1 rounded-[4px] px-1.5 py-0.5 text-xs font-semibold"
+              style={{
+                color: 'var(--ft-text-secondary)',
+                backgroundColor: 'color-mix(in srgb, var(--ft-text-secondary) 12%, transparent)',
+              }}
+            >
+              <span aria-hidden="true">{delta.isPositive ? '↑' : '↓'}</span>
+              {delta.badge}
+            </span>
+            <span className="text-xs text-[var(--ft-text-tertiary)]">{delta.context}</span>
+          </span>
+        ) : (
+          <span className="text-sm leading-5 text-[var(--ft-text-secondary)]">
+            {metric.secondary ?? '\u00A0'}
+          </span>
+        )}
       </div>
     </div>
   );

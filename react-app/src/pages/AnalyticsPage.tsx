@@ -437,14 +437,15 @@ export default function AnalyticsPage() {
                 {healthCards.map((card) => (
                   <HealthScoreCard
                     key={card.key}
-                  title={card.title}
-                  icon={card.icon}
-                  value={card.value}
-                  supportingValue={card.supportingValue}
-                  supportingLabel={card.supportingLabel}
-                  accent={card.accent}
-                  tooltip={card.tooltip}
-                />
+                    title={card.title}
+                    icon={card.icon}
+                    value={card.value}
+                    supportingValue={card.supportingValue}
+                    supportingLabel={card.supportingLabel}
+                    accent={card.accent}
+                    tooltip={card.tooltip}
+                    progress={card.progress}
+                  />
               ))}
             </>
             )}

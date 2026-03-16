@@ -113,6 +113,23 @@ function ScoreMainBlock({ model }: { model: GlobalScoreModel }) {
           </span>
         </div>
 
+        {model.score !== null && (
+          <div
+            className="h-1 w-full overflow-hidden rounded-full"
+            style={{ backgroundColor: 'var(--ft-border-default)' }}
+            role="progressbar"
+            aria-valuenow={model.score}
+            aria-valuemin={0}
+            aria-valuemax={100}
+            aria-label={`Рейтинг: ${model.scoreLabel}`}
+          >
+            <div
+              className="h-full rounded-full transition-all duration-500"
+              style={{ width: `${model.score}%`, backgroundColor: scoreColor(model.accent) }}
+            />
+          </div>
+        )}
+
         <p className="max-w-[24rem] text-base leading-7 text-[var(--ft-text-secondary)]">
           {model.description}
         </p>

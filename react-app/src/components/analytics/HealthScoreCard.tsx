@@ -24,6 +24,7 @@ interface HealthScoreCardProps {
   supportingLabel: string;
   accent: MetricAccent;
   tooltip: string;
+  progress?: number;
 }
 
 const ICON_MAP: Record<string, LucideIcon> = {
@@ -80,6 +81,7 @@ export function HealthScoreCard({
   supportingLabel,
   accent,
   tooltip,
+  progress,
 }: HealthScoreCardProps) {
   const color = accentColor(accent);
 
@@ -120,6 +122,23 @@ export function HealthScoreCard({
         >
           {value}
         </span>
+
+        {progress !== undefined && (
+          <div
+            className="h-1 w-full overflow-hidden rounded-full"
+            style={{ backgroundColor: 'var(--ft-border-default)' }}
+            role="progressbar"
+            aria-valuenow={progress}
+            aria-valuemin={0}
+            aria-valuemax={100}
+            aria-label={`${title}: ${value}`}
+          >
+            <div
+              className="h-full rounded-full"
+              style={{ width: `${Math.min(100, Math.max(0, progress))}%`, backgroundColor: color }}
+            />
+          </div>
+        )}
 
         <div className="space-y-1 text-sm text-[var(--ft-text-secondary)]">
           {supportingValue && (
