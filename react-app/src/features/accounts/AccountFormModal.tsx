@@ -1,5 +1,5 @@
 import { zodResolver } from '@hookform/resolvers/zod';
-import { Check, Plus } from 'lucide-react';
+import { Check, Loader2, Plus } from 'lucide-react';
 import { useEffect, useMemo } from 'react';
 import { Controller, useForm } from 'react-hook-form';
 import { z } from 'zod';
@@ -219,7 +219,13 @@ export function AccountFormModal({
               Отмена
             </Button>
             <Button type="submit" disabled={form.formState.isSubmitting}>
-              {isEditMode ? <Check className="size-4" /> : <Plus className="size-4" />}
+              {form.formState.isSubmitting ? (
+                <Loader2 className="size-4 animate-spin" />
+              ) : isEditMode ? (
+                <Check className="size-4" />
+              ) : (
+                <Plus className="size-4" />
+              )}
               {isEditMode ? 'Сохранить' : 'Создать'}
             </Button>
           </DialogFooter>

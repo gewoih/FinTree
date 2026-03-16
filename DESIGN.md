@@ -26,7 +26,7 @@ Rules:
 - Never use arbitrary fallback colors like `var(--token, #xxxxxx)`.
 - Add new visual values to the token system before using them in feature styles.
 - The token system is the single source of truth for the visual language.
-- Do not use feature-level arbitrary visual literals such as `rounded-[...]`, `text-[...]`, `clamp(...)`, or ad hoc inline gradients when a tokenized value is intended.
+- Follow patterns already established in the codebase for how tokens are applied (e.g. Tailwind opacity modifiers, color-mix, CSS variable references). Do not mix approaches ad hoc.
 - When chart/category colors must be deterministic, resolve them from the global token palette in the frontend instead of trusting backend-provided decorative colors.
 
 When integrating with a component library (e.g. shadcn, MUI, Ant Design), map `--ft-*` tokens to the library's semantic variables in a single mapping layer. Do not maintain two parallel token sets.
@@ -40,6 +40,8 @@ When integrating with a component library (e.g. shadcn, MUI, Ant Design), map `-
 - Theme preference is persisted in `localStorage`.
 - Theme class is applied before app mount to prevent flash of unstyled content.
 
+Implementation pattern: dark is the default (`:root` contains dark values). Light mode is the override (`.light-mode` on `<html>` overrides those values). This is an inverted pattern — do not assume dark needs special selectors.
+
 Rules:
 - Feature-level styles must not hard-code dark or light mode values — use semantic tokens that change with theme.
 - Do not use `.dark-mode` or `.light-mode` selectors inside feature components.
@@ -50,17 +52,19 @@ Rules:
 ## 4) Style Ownership
 
 Rules:
-- **One component, one file.** A component's styles live only in that component's file.
+- A component's styles live only in that component's file. In React+Tailwind, this means Tailwind utility classes in JSX — not scattered across globals.css.
+- `globals.css` is for design tokens, CSS reset, and base layer only. Do not add feature-specific styles there.
 - Before editing any style: identify every place styles are defined for that component. If styles are spread across multiple files, co-locate them first, then make the change.
-- Shared layout patterns (cards, sections, stat blocks) belong in shared style utilities, not in feature components.
-- Visual state theming (hover, focus, disabled) is centralized in the design system layer, not per-component ad hoc.
+- Shared layout patterns (cards, sections, stat blocks) belong in shared components, not duplicated per feature.
+- Visual state theming (hover, focus, disabled) is centralized in the design system layer (ui/ components), not per-feature ad hoc.
 - Do not introduce feature-local visual tokens or pseudo-tokens inside a page/component. If existing global tokens are insufficient, extend the global token system first.
 
 CSS verification after any style change:
 1. Verify the component in dark mode (default) and light mode (`.light-mode` on `<html>`)
 2. Verify at mobile (360px) and desktop (1280px) breakpoints
 3. Verify no horizontal overflow at 360px, 768px, and desktop widths
-4. Do not mark a task complete without this verification
+4. Verify text and interactive element contrast meets minimums (4.5:1 normal text, 3:1 large text and UI components) in both themes
+5. Do not mark a task complete without this verification
 
 ---
 
@@ -87,6 +91,10 @@ Semantics and assistive tech:
   - `polite` for non-blocking updates
   - `assertive` for blocking/critical errors
 - Meaning must not be conveyed by color alone.
+
+Opacity modifiers on colors:
+- Low-opacity tints (e.g. `/10`, `/20` as backgrounds) are decorative and exempt from contrast requirements. The text rendered on top of them must still meet 4.5:1.
+- Verify in both themes — the same opacity modifier can yield very different results in dark vs. light.
 
 Motion accessibility:
 - Respect `prefers-reduced-motion: reduce` by disabling or minimizing non-essential motion.
@@ -159,7 +167,7 @@ Exception rules:
 ## 10) Visual and Motion Patterns
 
 Typography:
-- UI font: Inter
+- UI font: Golos Text
 - Sizes and weights must come from tokens.
 - Financial amounts: `font-variant-numeric: tabular-nums`, right-aligned in tables.
 
@@ -171,7 +179,7 @@ Surfaces:
 Motion:
 - Use transition tokens.
 - Keep animations short and functional.
-- Non-essential UI transitions: `120ms` to `300ms` range.
+- Non-essential UI transitions: `150ms` to `350ms` range.
 
 Charts:
 - Do not hardcode color arrays in feature components — use design token values.

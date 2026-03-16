@@ -1,5 +1,5 @@
 import { zodResolver } from '@hookform/resolvers/zod';
-import { Trash2 } from 'lucide-react';
+import { Loader2, Trash2 } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { Controller, useForm, useWatch } from 'react-hook-form';
 import { useQueryClient } from '@tanstack/react-query';
@@ -517,6 +517,9 @@ export function TransactionFormModal({
                   type="submit"
                   disabled={transactionForm.formState.isSubmitting || isDeletePending}
                 >
+                  {transactionForm.formState.isSubmitting && (
+                    <Loader2 className="size-4 animate-spin" />
+                  )}
                   Сохранить
                 </Button>
               </DialogFooter>
@@ -679,6 +682,9 @@ export function TransactionFormModal({
                   type="submit"
                   disabled={transferForm.formState.isSubmitting || isDeletePending}
                 >
+                  {transferForm.formState.isSubmitting && (
+                    <Loader2 className="size-4 animate-spin" />
+                  )}
                   Сохранить
                 </Button>
               </DialogFooter>

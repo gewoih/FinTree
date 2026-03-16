@@ -695,7 +695,13 @@
     min-height: unset;
   }
 
-  /* Scrollbars */
+  /* Scrollbars — Firefox */
+  * {
+    scrollbar-width: thin;
+    scrollbar-color: var(--ft-scrollbar-thumb) var(--ft-scrollbar-track);
+  }
+
+  /* Scrollbars — WebKit */
   ::-webkit-scrollbar {
     width: var(--ft-scrollbar-size);
     height: var(--ft-scrollbar-size);
@@ -756,7 +762,7 @@
 }
 
 /* High contrast */
-@media (prefers-contrast: high) {
+@media (prefers-contrast: more) {
   :root {
     --ft-border-default: var(--ft-gray-200);
     --ft-text-secondary: var(--ft-gray-100);

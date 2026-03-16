@@ -159,7 +159,10 @@ export function TransactionList({
               key={group.dateKey}
               className="overflow-hidden rounded-xl border border-border bg-card/80 shadow-[var(--ft-shadow-sm)]"
             >
-              <header className="sticky top-0 z-[1] flex items-center justify-between border-b border-border/70 bg-card/95 px-4 py-2 text-xs font-semibold tracking-[0.06em] text-muted-foreground uppercase backdrop-blur-sm">
+              <header
+                className="sticky top-0 flex items-center justify-between border-b border-border/70 bg-card/95 px-4 py-2 text-xs font-semibold tracking-[0.06em] text-muted-foreground uppercase backdrop-blur-sm"
+                style={{ zIndex: 'var(--ft-z-above)' }}
+              >
                 <span className="capitalize">{group.label}</span>
                 <span className="tabular-nums normal-case">
                   {getSignedAmountLabel(groupNetAmount, baseCurrencyCode)}

@@ -406,7 +406,7 @@ export default function AnalyticsPage() {
                 aria-selected={activeTab === tab.id}
                 onClick={() => setActiveTab(tab.id)}
                 className={cn(
-                  'min-h-[44px] px-5 py-3 text-base font-semibold transition-colors border-b-2 -mb-px',
+                  'min-h-[44px] cursor-pointer px-5 py-3 text-base font-semibold transition-colors border-b-2 -mb-px outline-none focus-visible:ring-2 focus-visible:ring-ring/50 focus-visible:rounded-sm',
                   activeTab === tab.id
                     ? 'border-[var(--ft-primary-400)] text-[var(--ft-primary-400)]'
                     : 'border-transparent text-[var(--ft-text-tertiary)] hover:text-foreground',
