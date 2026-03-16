@@ -1,116 +1,74 @@
 # DESIGN.md
 
-Frontend UI/UX and design specification for FinTree.
+Frontend UI/UX specification for FinTree.
 Goal: consistent, predictable, accessible frontend behavior without design regressions when edited by humans or AI agents.
 
 ---
 
 ## 1) Scope and Authority
 
-- This file is authoritative for frontend work in `vue-app/src/**`.
-- It owns:
-  - UI/UX behavior
-  - visual system and styling rules
-  - frontend accessibility and responsive requirements
-  - localization UX rules
-  - frontend Definition of Done
-- It does not define backend architecture or backend implementation rules.
+- This file is authoritative for frontend UI/UX behavior across all frontend implementations.
+- It owns: UI/UX behavior, visual system rules, accessibility and responsive requirements, localization UX rules, and the frontend Definition of Done.
+- It does not define backend architecture or implementation details.
+- It does not prescribe a specific frontend framework or component library.
 - If this file conflicts with `CLAUDE.md` on frontend topics, this file takes precedence.
 
 ---
 
-## 2) Source of Truth and Style Ownership
+## 2) Design Tokens
 
-CSS layer order:
+All visual values (colors, spacing, radius, shadows, fonts, transitions) must come from the design token system, not hardcoded values.
 
-```css
-@layer reset, tokens, base, components, primevue, overrides;
-```
-
-Ownership by file:
-- `vue-app/src/assets/design-tokens.css` — all `--ft-*` tokens. No visual rules.
-- `vue-app/src/style.css` — global reset, `html`/`body`, typography base, scrollbar, and shared Prime utility classes where component tokens are insufficient (for example SelectButton contract).
-- `vue-app/src/styles/theme.css` — shared layout patterns (`.ft-card`, `.ft-section`, `.ft-stat`, etc.). No feature-specific Prime visual theming.
-- `vue-app/src/ui/Ui*.vue` `<style scoped>` — wrapper-level visual contracts and `:deep()` for internal Prime nodes when wrappers are used.
-- `vue-app/src/styles/components/` — feature components too large for inline scoped styles; may include Prime layout constraints, but not Prime visual state theming.
-- `vue-app/src/styles/pages/` — page-level layout only
+Token prefix: `--ft-*`
 
 Rules:
-- **One component, one file.** A component's styles live only in that component's file.
-- When touching `UiButton`, edit `UiButton.vue` only. Never touch a shared file to fix a specific component's appearance.
-- Before editing any CSS: identify every file that contains styles for the target component. If more than one file, co-locate first, then make the visual change.
-- Prime visual state theming must be centralized in the preset (`src/theme/fintree-prime-preset.ts`), wrappers, or explicit shared utility contracts in `style.css`.
+- Never use raw hex, rgb, or hsl values in feature-level styles.
+- Never use arbitrary fallback colors like `var(--token, #xxxxxx)`.
+- Add new visual values to the token system before using them in feature styles.
+- The token system is the single source of truth for the visual language.
+- Follow patterns already established in the codebase for how tokens are applied (e.g. Tailwind opacity modifiers, color-mix, CSS variable references). Do not mix approaches ad hoc.
+- When chart/category colors must be deterministic, resolve them from the global token palette in the frontend instead of trusting backend-provided decorative colors.
 
-### CSS Verification Gate
-
-After any CSS change:
-1. Run `cd vue-app && npm run lint:style` — must pass with 0 warnings
-2. Verify the component in dark mode (default) and light mode (`.light-mode` on `<html>`)
-3. Verify at mobile (360px) and desktop (1280px) breakpoints
-4. Do not mark a task complete without this verification
+When integrating with a component library (e.g. shadcn, MUI, Ant Design), map `--ft-*` tokens to the library's semantic variables in a single mapping layer. Do not maintain two parallel token sets.
 
 ---
 
-## 3) Tokens and Variables
+## 3) Theming
 
-Required:
-- Use only `--ft-*` variables for colors, spacing, radius, shadows, fonts, and transitions.
-- Add new visual values to tokens before usage in feature styles.
+- Dark theme is the default.
+- Light theme is activated via the `.light-mode` class on `<html>`.
+- Theme preference is persisted in `localStorage`.
+- Theme class is applied before app mount to prevent flash of unstyled content.
 
-Forbidden in feature layer:
-- raw hex/rgb/hsl values
-- arbitrary fallback colors like `var(--token, #xxxxxx)`
-- fallbacks to non-existing tokens
-
-Allowed exceptions:
-- token files and centralized theme/Prime style layers.
-
-Debugging note:
-- Temporary raw colors are allowed only in local uncommitted experiments. They must never be committed.
-
----
-
-## 4) Theming
-
-- Dark theme is default (`:root`).
-- Light theme is activated via `.light-mode` on `<html>`.
-- Theme class is applied before app mount in `vue-app/src/main.ts`.
+Implementation pattern: dark is the default (`:root` contains dark values). Light mode is the override (`.light-mode` on `<html>` overrides those values). This is an inverted pattern — do not assume dark needs special selectors.
 
 Rules:
-- Do not use `.dark-mode` or `.light-mode` selectors inside feature `pages/`, feature `components/`, or `ui/` wrappers.
-- Theme behavior must come from semantic tokens.
+- Feature-level styles must not hard-code dark or light mode values — use semantic tokens that change with theme.
+- Do not use `.dark-mode` or `.light-mode` selectors inside feature components.
+- All interactive states (hover, focus, disabled, active) must respect both themes via semantic tokens.
 
 ---
 
-## 5) PrimeVue (Styled Hybrid) Contract
+## 4) Style Ownership
 
-- PrimeVue runtime config lives in `vue-app/src/main.ts`.
-- PrimeVue runs in styled mode with a custom preset bridge that maps to `--ft-*` tokens.
-- Wrappers are preferred for shared UX/API contracts, but direct Prime component imports in feature files are allowed when a wrapper does not provide additional value.
-- Local `unstyled` overrides are allowed only for targeted testing or compatibility edge cases.
+Rules:
+- A component's styles live only in that component's file. In React+Tailwind, this means Tailwind utility classes in JSX — not scattered across globals.css.
+- `globals.css` is for design tokens, CSS reset, and base layer only. Do not add feature-specific styles there.
+- Before editing any style: identify every place styles are defined for that component. If styles are spread across multiple files, co-locate them first, then make the change.
+- Shared layout patterns (cards, sections, stat blocks) belong in shared components, not duplicated per feature.
+- Visual state theming (hover, focus, disabled) is centralized in the design system layer (ui/ components), not per-feature ad hoc.
+- Do not introduce feature-local visual tokens or pseudo-tokens inside a page/component. If existing global tokens are insufficient, extend the global token system first.
 
-Direct imports in feature files are allowed for PrimeVue components used by the app, plus core services/utilities:
-- `primevue/config`
-- `primevue/toastservice`
-- `primevue/confirmationservice`
-- `primevue/tooltip`
-- `primevue/usetoast`
-- `primevue/useconfirm`
-- component imports from `primevue/*` (e.g. `dialog`, `inputtext`, `inputnumber`, `select`, `datepicker`, `chart`, `message`, `paginator`, `selectbutton`, `skeleton`, `tag`, `menu`, `drawer`, `datatable`, `column`, `checkbox`, `toggleswitch`)
-- type-only imports (e.g. `primevue/menuitem`)
-
-Styling rules:
-- PT (`pt` / `ptOptions` / `data-pc-section` driven theming) is not used in this codebase.
-- Visual states (`hover`, `focus`, `disabled`, `invalid`, `active`) must be centralized in the preset, wrapper styles, or shared contracts; do not style these states ad hoc inside feature files.
-
-`:deep(.p-...)` rules:
-- Allowed in wrappers for internal Prime nodes.
-- Allowed in feature files only for local layout constraints.
-- Forbidden in feature files for Prime visual theming (color, border, hover, focus, overlays).
+CSS verification after any style change:
+1. Verify the component in dark mode (default) and light mode (`.light-mode` on `<html>`)
+2. Verify at mobile (360px) and desktop (1280px) breakpoints
+3. Verify no horizontal overflow at 360px, 768px, and desktop widths
+4. Verify text and interactive element contrast meets minimums (4.5:1 normal text, 3:1 large text and UI components) in both themes
+5. Do not mark a task complete without this verification
 
 ---
 
-## 6) Accessibility Standards (Measurable)
+## 5) Accessibility Standards (Measurable)
 
 Keyboard and focus:
 - All interactive controls must be reachable and operable by keyboard.
@@ -119,136 +77,161 @@ Keyboard and focus:
 - Focus indicator contrast against adjacent colors must be at least `3:1`.
 
 Touch and pointer targets:
-- Minimum touch target for actionable controls is `44x44` CSS px.
+- Minimum touch target for actionable controls is `44×44` CSS px.
 
 Contrast:
-- Text and text-in-images must satisfy WCAG 2.2 AA:
-  - normal text: at least `4.5:1`
-  - large text (>= 24px regular or >= 18.66px bold): at least `3:1`
-- Non-text UI components and focus indicators must be at least `3:1` against adjacent colors.
+- Normal text: at least `4.5:1` (WCAG 2.2 AA)
+- Large text (≥24px regular or ≥18.66px bold): at least `3:1`
+- Non-text UI components and focus indicators: at least `3:1` against adjacent colors
 
 Semantics and assistive tech:
 - Icon-only actions must have an accessible name (`aria-label` or equivalent).
-- Form errors must be programmatically associated with fields (for example via `aria-describedby`).
+- Form errors must be programmatically associated with fields (e.g. `aria-describedby`).
 - Validation and async status messages must be announced via `aria-live`:
   - `polite` for non-blocking updates
   - `assertive` for blocking/critical errors
 - Meaning must not be conveyed by color alone.
+
+Opacity modifiers on colors:
+- Low-opacity tints (e.g. `/10`, `/20` as backgrounds) are decorative and exempt from contrast requirements. The text rendered on top of them must still meet 4.5:1.
+- Verify in both themes — the same opacity modifier can yield very different results in dark vs. light.
 
 Motion accessibility:
 - Respect `prefers-reduced-motion: reduce` by disabling or minimizing non-essential motion.
 
 ---
 
-## 7) Responsive Contract
+## 6) Responsive Contract
 
 - Supported viewport floor is `360px`.
-- Core breakpoints used across the design system are:
+- Core breakpoints:
   - `640px` (small/mobile transition)
   - `768px` (tablet)
   - `1024px` (desktop)
 
 Rules:
-- New/changed layouts must not introduce horizontal page overflow at `360px`, `768px`, and desktop widths (`>=1280px`).
-- Dense data UI (tables/charts) must remain usable on mobile via responsive reflow or explicit scroll containers.
+- New/changed layouts must not introduce horizontal page overflow at `360px`, `768px`, and desktop widths (`≥1280px`).
+- Dense data UI (tables, charts) must remain usable on mobile via responsive reflow or explicit scroll containers.
 
 ---
 
-## 8) Forms and Validation UX
+## 7) Forms and Validation UX
 
-- Form controls must expose a clear validation API (`invalid` and optional `error`) either through wrappers or consistent direct component usage.
-- Feature `pages/` and `components/` must not set `p-invalid` classes manually.
-- Shared invalid-state visuals are token-driven and owned by preset/wrappers/shared contracts, not per-page ad hoc CSS.
-- Label, hint, error, and focus behavior must be visually consistent across screens.
-- Destructive actions require explicit user confirmation.
+- Form controls must expose a clear validation API with error state and message.
+- Label, hint, error, and focus behavior must be visually consistent across all screens.
+- Validation errors must be shown inline, associated with the specific field.
+- Destructive actions require explicit user confirmation (confirmation dialog).
+- Form submission must show a loading state while in progress.
+- Long or high-effort forms must preserve dirty local edits during background revalidation.
+- Server refreshes may update untouched fields, but must not overwrite unsaved user input unless the record identity changed or the user explicitly confirmed a reset.
 
 ---
 
-## 9) Data-State UX Contract
+## 8) Data-State UX Contract
 
-Every data-driven screen must explicitly handle:
-- `idle` (before first fetch or precondition not met)
-- `loading`
-- `error` (with retry)
-- `empty`
-- `success`
+Every data-driven screen must explicitly handle all 5 states:
+- `idle` — before first fetch or precondition not met
+- `loading` — fetch in progress (show skeleton, not spinner where possible)
+- `error` — fetch failed, with a retry action
+- `empty` — fetch succeeded but no data exists
+- `success` — data available, render content
 
 Rules:
 - Avoid hidden intermediate states.
-- Avoid side effects inside computed values.
+- Avoid side effects inside derived/computed values.
 - Avoid duplicate or redundant requests.
-- When revalidating in background, keep last known good data visible unless data is no longer valid.
+- When revalidating in the background, keep last known good data visible unless data is no longer valid.
 
 ---
 
-## 10) Content and Localization
+## 9) Content and Localization
 
 Default:
 - End-user UI copy is Russian.
-- Financial terms should include clear hints/tooltips in plain Russian when needed.
-- Date/number/currency formatting uses `ru-RU`.
+- Financial terms include clear hints or tooltips in plain Russian when needed.
+- Date, number, and currency formatting uses `ru-RU` locale.
 
 Scoped English exceptions allowed:
-- brand and product names (`PrimeVue`, `Mastercard`)
-- financial tickers/codes and currency codes (`AAPL`, `ETF`, `USD`, `EUR`)
-- legally mandated terms or third-party proper nouns
-- standardized acronyms that are materially clearer in established form (`PIN`, `IBAN`)
+- Brand and product names
+- Financial tickers, codes, and currency codes (`AAPL`, `ETF`, `USD`, `EUR`)
+- Legally mandated terms or third-party proper nouns
+- Standardized acronyms that are materially clearer in established form (`PIN`, `IBAN`)
 
 Exception rules:
 - The surrounding sentence remains Russian.
-- On first use of a non-obvious English term, provide a brief Russian hint/tooltip.
+- On first use of a non-obvious English term, provide a brief Russian hint or tooltip.
 - Avoid mixed-language phrasing when a clear Russian equivalent exists.
 
-Meta rule:
-- Agent-facing technical documentation is written in English.
-
 ---
 
-## 11) Visual and Motion Patterns
+## 10) Visual and Motion Patterns
 
 Typography:
-- UI font: Inter
-- Numeric/code contexts: JetBrains Mono
-- Sizes and weights must come from tokens
+- UI font: Golos Text
+- Sizes and weights must come from tokens.
+- Financial amounts: `font-variant-numeric: tabular-nums`, right-aligned in tables.
 
 Surfaces:
-- Cards and panels use semantic surface/border/shadow tokens.
-- Avoid random mixing of glass/gradient treatments across adjacent sections.
+- Cards and panels use semantic surface, border, and shadow tokens.
+- Avoid random mixing of glass or gradient treatments across adjacent sections.
+- Page-level or card-level gradients are prohibited unless they are explicitly defined as reusable design-system surfaces.
 
 Motion:
-- Use `--ft-transition-*` tokens.
+- Use transition tokens.
 - Keep animations short and functional.
-- Non-essential UI transitions should generally stay in the `120ms` to `300ms` range.
+- Non-essential UI transitions: `150ms` to `350ms` range.
 
 Charts:
-- Use palette from `useChartColors` and tokens.
-- Do not use local random hex arrays in feature components.
+- Do not hardcode color arrays in feature components — use design token values.
+- Do not consume backend chart/decorative colors directly in feature rendering without passing through a frontend token/palette resolver.
+- Chart containers must have `role="img"` and `aria-label`.
+- Use `ResponsiveContainer` (or equivalent) for adaptive sizing.
 
 ---
 
-## 12) Frontend Definition of Done (Canonical)
+## 11) Route and State Boundaries
 
-Before completion, run:
+Route validation:
+- Shareable route params and search params must be validated at the route boundary before the screen renders.
+- Invalid route/search input must redirect to a safe location or render an explicit invalid-state UI. It must never degrade to a blank screen.
 
-```bash
-cd vue-app && npm run type-check
-cd vue-app && npm run lint
-cd vue-app && npm run lint:style
-cd vue-app && npm run lint:design-contract
-cd vue-app && npm run lint:api-boundaries
-cd vue-app && npm run build
-```
+State ownership:
+- Server state has a single frontend source of truth. Do not mirror the same remote entity across parallel stores, caches, or bootstrap paths.
+- Client stores are for UI-only state (theme, toggles, ephemeral layout state), not for duplicating server-state orchestration.
+- Before adding a new state container, first reuse or extend the existing shared primitive that already owns that concern.
 
-Additional required checks:
-- If CSS/SCSS/Vue styles changed, run `cd vue-app && npm run lint:style:fix` before the final `lint:style`.
-- `cd vue-app && npm run lint:style` must pass with zero warnings.
-- No new Prime visual theming rules in feature files via `:deep(.p-...)`.
-- No new hardcoded colors in feature layer.
-- No unintended RU/EN mixing in end-user copy outside allowed exception categories.
-- Manual verification for changed UI:
-  - no horizontal overflow at `360px`, `768px`, and desktop
-  - keyboard navigation and visible focus are intact
-  - contrast and reduced-motion expectations are met
+---
 
-Completion rule:
-- If any required check fails, the frontend task is not complete.
+## 12) Overlay and Interaction Rules
+
+- Dialogs, sheets, popovers, and menus must expose an accessible title or label and a clear close action.
+- Overlays must support `Escape` when appropriate, manage focus while open, and restore focus to the triggering control when closed.
+- Overlay content must remain usable on mobile without clipped actions or inaccessible bottom controls.
+- Icon-only controls inside overlays must still meet the global accessible-name and `44×44` target rules.
+
+---
+
+## 13) AI / Editor Guardrails
+
+- Reuse existing shared components, layout primitives, and state owners before creating new feature-local variants.
+- Do not move route/search validation into leaf pages when it belongs at the route boundary.
+- Do not introduce duplicate sources of truth for authenticated user/session or other shared server entities.
+- Refactors must preserve behavior first; if behavior changes intentionally, the change must be explicit in the task output.
+- Do not mark frontend work complete without verification evidence that matches the change scope.
+
+---
+
+## 14) Frontend Definition of Done
+
+Every frontend task is done only when all applicable checks below are satisfied:
+
+1. The target UI works in dark mode and light mode, and at minimum on `360px`, `768px`, and desktop widths.
+2. Keyboard flow is verified for the changed area: focus order, visible focus, escape/close behavior, and no keyboard trap.
+3. All affected data states are verified: `loading`, `error`, `empty`, and `success`, plus `idle` where the screen has a precondition.
+4. Destructive and high-risk actions have explicit confirmation and a visible pending state.
+5. Long forms and drafts preserve unsaved user edits during background refresh unless an intentional reset condition applies.
+6. Interactive controls meet the `44×44` target minimum and icon-only controls expose accessible names.
+7. Copy stays Russian by default, uses consistent terminology, and keeps localized date/number/currency formatting aligned with the product contract.
+8. Route params/search validation, redirects, and invalid-state handling are verified for any changed shareable URL surface.
+9. Shared primitives are reused where applicable; no new duplicate server-state path or ad hoc design-system fork was introduced.
+10. If code changed, run the relevant verification commands for the frontend workspace, including lint, tests, and production build, before claiming completion.

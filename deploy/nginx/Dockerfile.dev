@@ -1,8 +1,8 @@
 FROM node:25-alpine AS build
 WORKDIR /app
-COPY vue-app/package*.json ./
+COPY react-app/package*.json ./
 RUN npm ci
-COPY vue-app/ ./
+COPY react-app/ ./
 ARG VITE_API_BASE_URL=/api
 ENV VITE_API_BASE_URL=${VITE_API_BASE_URL}
 RUN npm run build

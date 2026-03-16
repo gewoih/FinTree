@@ -2,7 +2,7 @@ namespace FinTree.Application.Analytics.Services;
 
 public sealed class BootstrapSamplerService
 {
-    public double[] BuildRecencyCdf(int poolLength, double lambda)
+    public static double[] BuildRecencyCdf(int poolLength, double lambda)
     {
         if (poolLength <= 0)
             return [];
@@ -26,7 +26,7 @@ public sealed class BootstrapSamplerService
         return cdf;
     }
 
-    public decimal SampleFromPool(IReadOnlyList<decimal> pool, double[] cdf, Random rng)
+    public static decimal SampleFromPool(IReadOnlyList<decimal> pool, double[] cdf, Random rng)
     {
         if (pool.Count == 0)
             return 0m;
@@ -40,44 +40,9 @@ public sealed class BootstrapSamplerService
         return pool[Math.Clamp(index, 0, pool.Count - 1)];
     }
 
-    public decimal[] SampleBlock(IReadOnlyList<decimal> pool, double[] cdf, int blockDays, Random rng)
+    public static int BuildDeterministicSeed(int baseSeed, IEnumerable<long> parts)
     {
-        if (blockDays <= 0)
-            throw new ArgumentOutOfRangeException(nameof(blockDays), "blockDays must be greater than zero.");
-
-        var block = new decimal[blockDays];
-
-        if (pool.Count == 0)
-            return block;
-
-        var maxStartIndex = Math.Max(pool.Count - blockDays, 0);
-        var startCount = maxStartIndex + 1;
-        var randomValue = rng.NextDouble();
-        var startIndex = cdf.Length == startCount
-            ? Array.BinarySearch(cdf, randomValue)
-            : (int)Math.Floor(randomValue * startCount);
-
-        if (startIndex < 0)
-            startIndex = ~startIndex;
-
-        startIndex = Math.Clamp(startIndex, 0, maxStartIndex);
-
-        for (var day = 0; day < blockDays; day++)
-        {
-            var index = Math.Min(startIndex + day, pool.Count - 1);
-            block[day] = pool[index];
-        }
-
-        return block;
-    }
-
-    public int BuildDeterministicSeed(int baseSeed, IEnumerable<long> parts)
-    {
-        var hash = baseSeed;
-        foreach (var part in parts)
-            hash = HashCode.Combine(hash, part);
-
-        return hash;
+        return parts.Aggregate(baseSeed, HashCode.Combine);
     }
 
     public static long ToCents(decimal value)

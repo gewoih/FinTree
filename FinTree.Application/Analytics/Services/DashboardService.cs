@@ -113,7 +113,36 @@ public sealed class DashboardService(
         var liquidity = await liquidityService.ComputeLiquidity(baseCurrencyCode, liquidityAtUtc, ct);
 
         var totalMonthScore = MonthlyScoreService.CalculateTotalMonthScore(
-            savingsRate, liquidity.LiquidMonths, stability?.Index, discretionaryShare, peaks.PeakSpendSharePercent);
+            savingsRate, liquidity.LiquidMonths, stability?.Score, discretionaryShare, peaks.PeakSpendSharePercent);
+        var totalMonthScoreValue = ToScoreValue(totalMonthScore);
+
+        var previousSavingsRate = monthlyResult.PreviousMonthIncome > 0m
+            ? previousNetCashflow / monthlyResult.PreviousMonthIncome
+            : (decimal?)null;
+        var previousDiscretionaryShare = monthlyResult.PreviousMonthExpenses > 0m
+            ? (monthlyResult.PreviousMonthDiscretionaryTotal / monthlyResult.PreviousMonthExpenses) * 100
+            : (decimal?)null;
+        var previousMonthPositiveDailyValues = monthlyResult.PreviousMonthDailyTotals.Values
+            .Where(value => value > 0m)
+            .ToList();
+        var previousStability = StabilityService.ComputeStability(previousMonthPositiveDailyValues);
+        var previousMonthDaysCount = DateTime.DaysInMonth(previousMonthStartUtc.Year, previousMonthStartUtc.Month);
+        var previousMonthPeaks = PeakDaysService.Calculate(
+            monthlyResult.PreviousMonthDailyTotalsDiscretionary,
+            monthlyResult.PreviousMonthExpenses,
+            previousMonthDaysCount);
+        var previousLiquidity = await liquidityService.ComputeLiquidity(baseCurrencyCode, monthStartUtc, ct);
+        var previousTotalMonthScore = MonthlyScoreService.CalculateTotalMonthScore(
+            previousSavingsRate,
+            previousLiquidity.LiquidMonths,
+            previousStability?.Score,
+            previousDiscretionaryShare,
+            previousMonthPeaks.PeakSpendSharePercent);
+        var previousTotalMonthScoreValue = ToScoreValue(previousTotalMonthScore);
+        var totalMonthScoreDeltaPoints =
+            totalMonthScoreValue.HasValue && previousTotalMonthScoreValue.HasValue
+                ? totalMonthScoreValue.Value - previousTotalMonthScoreValue.Value
+                : (int?)null;
 
         var health = new FinancialHealthSummaryDto(
             MonthIncome: MathService.Round2(monthlyResult.TotalIncome),
@@ -132,7 +161,8 @@ public sealed class DashboardService(
             LiquidAssets: MathService.Round2(liquidity.LiquidAssets),
             LiquidMonths: liquidity.LiquidMonths,
             LiquidMonthsStatus: liquidity.Status,
-            TotalMonthScore: (int?)totalMonthScore,
+            TotalMonthScore: totalMonthScoreValue,
+            TotalMonthScoreDeltaPoints: totalMonthScoreDeltaPoints,
             IncomeMonthOverMonthChangePercent: incomeMoM,
             BalanceMonthOverMonthChangePercent: balanceMoM);
 
@@ -157,4 +187,7 @@ public sealed class DashboardService(
             forecast,
             readiness);
     }
+
+    private static int? ToScoreValue(decimal? score)
+        => score.HasValue ? (int?)score.Value : null;
 }

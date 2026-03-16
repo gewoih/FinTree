@@ -13,6 +13,7 @@ using FinTree.Application.Analytics.Services;
 using FinTree.Application.Analytics.Services.Metrics;
 using FinTree.Application.Currencies;
 using FinTree.Application.Exceptions;
+using FinTree.Application.FreedomCalculator.Services;
 using FinTree.Application.Goals.Services;
 using FinTree.Application.Retrospectives;
 using FinTree.Application.Transactions;
@@ -254,6 +255,7 @@ builder.Services.AddScoped<ForecastService>();
 builder.Services.AddScoped<CashflowAverageService>();
 builder.Services.AddScoped<BootstrapSamplerService>();
 builder.Services.AddScoped<GoalSimulationService>();
+builder.Services.AddScoped<FreedomCalculatorService>();
 
 if (!string.IsNullOrWhiteSpace(telegramToken))
     builder.Services.AddHostedService<TelegramBotHostedService>();

@@ -75,7 +75,7 @@ public sealed class GoalSimulationService(
         var targetDailyIncome = monthlyIncome / GoalSimulationDefaults.AverageDaysInMonth;
         var incomePool = BuildIncomePool(profile.DailyIncomeSeries, targetDailyIncome);
         var incomeStartCount = GetBlockStartCount(incomePool.Count, GoalSimulationDefaults.BootstrapBlockDays);
-        var incomeCdf = bootstrapSamplerService.BuildRecencyCdf(
+        var incomeCdf = BootstrapSamplerService.BuildRecencyCdf(
             incomeStartCount,
             GoalSimulationDefaults.GoalRecencyLambda);
         var expectedDailyIncomeFromSampling = ComputeExpectedBlockDailyAmount(
@@ -87,7 +87,7 @@ public sealed class GoalSimulationService(
         var targetDailyExpense = monthlyExpenses / GoalSimulationDefaults.AverageDaysInMonth;
         var expensePool = BuildExpensePool(profile.DailyExpenseSeries, targetDailyExpense);
         var expenseStartCount = GetBlockStartCount(expensePool.Count, GoalSimulationDefaults.BootstrapBlockDays);
-        var expenseCdf = bootstrapSamplerService.BuildRecencyCdf(
+        var expenseCdf = BootstrapSamplerService.BuildRecencyCdf(
             expenseStartCount,
             GoalSimulationDefaults.GoalRecencyLambda);
         var expectedDailyExpenseFromSampling = ComputeExpectedBlockDailyAmount(
@@ -124,7 +124,7 @@ public sealed class GoalSimulationService(
         seedParts.AddRange(expensePool
             .Take(seedPoolHalf)
             .Select(BootstrapSamplerService.ToCents));
-        var seed = bootstrapSamplerService.BuildDeterministicSeed(GoalSimulationDefaults.GoalDeterministicSeedBase, seedParts);
+        var seed = BootstrapSamplerService.BuildDeterministicSeed(GoalSimulationDefaults.GoalDeterministicSeedBase, seedParts);
 
         var incomePoolDouble = incomePool.Select(value => (double)value).ToArray();
         var expensePoolDouble = expensePool.Select(value => (double)value).ToArray();
