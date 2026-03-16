@@ -1,12 +1,10 @@
-import { ArrowRight, Plus, Tags } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
+import { useDeferredValue, useMemo, useState } from 'react';
+import { Tags } from 'lucide-react';
 import { EmptyState } from '@/components/common/EmptyState';
 import { Skeleton } from '@/components/ui/skeleton';
-import { cn } from '@/utils/cn';
-import { getCategoryColorToken } from '@/utils/categoryPalette';
 import { CATEGORY_TYPE, type Category, type CategoryType } from '@/types';
-import { getCategoryIcon } from './categoryIcons';
+import { CategoryGridItem } from './CategoryGridItem';
+import { CategoryToolbar } from './CategoryToolbar';
 
 interface CategoryManagerProps {
   categories: Category[];
@@ -18,10 +16,47 @@ interface CategoryManagerProps {
   onEdit: (category: Category) => void;
 }
 
-const TYPE_OPTIONS: Array<{ value: CategoryType; label: string }> = [
-  { value: CATEGORY_TYPE.Expense, label: 'Расходы' },
-  { value: CATEGORY_TYPE.Income, label: 'Доходы' },
-];
+const EMPTY_TYPE_COUNTS: Record<CategoryType, number> = {
+  [CATEGORY_TYPE.Expense]: 0,
+  [CATEGORY_TYPE.Income]: 0,
+};
+
+function getPluralizedWord(
+  count: number,
+  singular: string,
+  few: string,
+  many: string,
+): string {
+  const lastTwoDigits = Math.abs(count) % 100;
+  const lastDigit = lastTwoDigits % 10;
+
+  if (lastTwoDigits >= 11 && lastTwoDigits <= 14) {
+    return many;
+  }
+
+  if (lastDigit === 1) {
+    return singular;
+  }
+
+  if (lastDigit >= 2 && lastDigit <= 4) {
+    return few;
+  }
+
+  return many;
+}
+
+function formatCategoryCount(count: number): string {
+  return `${count} ${getPluralizedWord(count, 'категория', 'категории', 'категорий')}`;
+}
+
+function formatMandatoryCategoryCount(count: number): string {
+  return `${count} ${getPluralizedWord(
+    count,
+    'обязательная категория',
+    'обязательные категории',
+    'обязательных категорий',
+  )}`;
+}
 
 export function CategoryManager({
   categories,
@@ -32,63 +67,76 @@ export function CategoryManager({
   onCreate,
   onEdit,
 }: CategoryManagerProps) {
-  const filteredCategories = categories.filter((category) => category.type === selectedType);
+  const [searchInput, setSearchInput] = useState('');
+  const deferredSearch = useDeferredValue(searchInput);
+
+  const countsByType = useMemo(
+    () => {
+      const counts = { ...EMPTY_TYPE_COUNTS };
+
+      categories.forEach((category) => {
+        counts[category.type] += 1;
+      });
+
+      return counts;
+    },
+    [categories],
+  );
+  const selectedCategories = useMemo(
+    () => categories.filter((category) => category.type === selectedType),
+    [categories, selectedType],
+  );
+  const normalizedSearch = deferredSearch.trim().toLocaleLowerCase('ru-RU');
+  const filteredCategories = useMemo(() => {
+    if (!normalizedSearch) {
+      return selectedCategories;
+    }
+
+    return selectedCategories.filter((category) =>
+      category.name.toLocaleLowerCase('ru-RU').includes(normalizedSearch),
+    );
+  }, [normalizedSearch, selectedCategories]);
+  const hasSearch = searchInput.trim().length > 0;
+  const mandatoryCount = selectedCategories.filter((category) => category.isMandatory).length;
+  const visibleMandatoryCount = filteredCategories.filter((category) => category.isMandatory).length;
+  const statusParts = hasSearch
+    ? [`Найдено ${formatCategoryCount(filteredCategories.length)} из ${formatCategoryCount(selectedCategories.length)}`]
+    : [formatCategoryCount(selectedCategories.length)];
+
+  if (selectedType === CATEGORY_TYPE.Expense) {
+    const relevantMandatoryCount = hasSearch ? visibleMandatoryCount : mandatoryCount;
+
+    if (relevantMandatoryCount > 0) {
+      statusParts.push(formatMandatoryCategoryCount(relevantMandatoryCount));
+    }
+  }
+
+  const typeLabel = selectedType === CATEGORY_TYPE.Income ? 'доходов' : 'расходов';
 
   return (
     <section className="space-y-4">
-      <div className="rounded-xl border border-border bg-card/90 px-5 py-5 shadow-[var(--ft-shadow-sm)]">
-        <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
-          <div>
-            <h2 className="text-lg font-semibold text-foreground">Категории</h2>
-            <p className="mt-1 text-sm text-muted-foreground">
-              Организуйте транзакции в понятные группы, чтобы аналитика была точнее.
-            </p>
-          </div>
-
-          {!readonly ? (
-            <Button className="min-h-[44px] rounded-lg px-4" onClick={onCreate}>
-              <Plus className="size-4" />
-              Новая категория
-            </Button>
-          ) : null}
-        </div>
-
-        <div className="mt-5 flex flex-wrap items-center gap-2" role="tablist" aria-label="Фильтр по типу категорий">
-          {TYPE_OPTIONS.map((option) => {
-            const isActive = selectedType === option.value;
-
-            return (
-              <button
-                key={option.value}
-                type="button"
-                role="tab"
-                aria-selected={isActive}
-                className={cn(
-                  'inline-flex min-h-[44px] items-center justify-center rounded-lg border px-4 text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring',
-                  isActive
-                    ? 'border-primary bg-primary/12 text-primary shadow-[var(--ft-shadow-sm)]'
-                    : 'border-border bg-background/40 text-muted-foreground hover:border-primary/25 hover:text-foreground',
-                )}
-                onClick={() => onSelectedTypeChange(option.value)}
-              >
-                {option.label}
-              </button>
-            );
-          })}
-        </div>
-      </div>
+      <CategoryToolbar
+        readonly={readonly}
+        selectedType={selectedType}
+        searchValue={searchInput}
+        statusLabel={statusParts.join(' · ')}
+        countsByType={countsByType}
+        onSearchChange={setSearchInput}
+        onSelectedTypeChange={onSelectedTypeChange}
+        onCreate={onCreate}
+      />
 
       {loading ? (
-        <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
-          {Array.from({ length: 6 }, (_, index) => (
-            <Skeleton key={index} className="h-[116px] rounded-xl" />
+        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+          {Array.from({ length: 8 }, (_, index) => (
+            <Skeleton key={index} className="h-[88px] rounded-xl" />
           ))}
         </div>
-      ) : filteredCategories.length === 0 ? (
+      ) : selectedCategories.length === 0 ? (
         <EmptyState
           icon={<Tags />}
-          title="Нет категорий"
-          description={`Добавьте категорию для ${selectedType === CATEGORY_TYPE.Income ? 'доходов' : 'расходов'}.`}
+          title={`Пока нет категорий ${typeLabel}`}
+          description={`Добавьте первую категорию для ${typeLabel}, чтобы быстрее заполнять транзакции и видеть понятную аналитику.`}
           action={
             readonly
               ? undefined
@@ -97,48 +145,27 @@ export function CategoryManager({
                   onClick: onCreate,
                 }
           }
-          className="min-h-[280px] rounded-xl border border-border bg-card/70"
+          className="min-h-[280px] rounded-2xl border border-border bg-card/70"
+        />
+      ) : filteredCategories.length === 0 && hasSearch ? (
+        <EmptyState
+          icon={<Tags />}
+          title="Ничего не найдено"
+          description="Измените запрос или очистите поиск, чтобы снова увидеть категории."
+          action={{ label: 'Сбросить поиск', onClick: () => setSearchInput('') }}
+          className="min-h-[280px] rounded-2xl border border-border bg-card/70"
         />
       ) : (
-        <ul className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+        <ul className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
           {filteredCategories.map((category) => {
-            const Icon = getCategoryIcon(category.icon);
-
             return (
               <li key={category.id}>
-                <button
-                  type="button"
-                  disabled={readonly}
-                  onClick={() => onEdit(category)}
-                  className={cn(
-                    'flex min-h-[116px] w-full flex-col justify-between rounded-xl border border-border bg-card/90 p-4 text-left shadow-[var(--ft-shadow-sm)] transition-[border-color,box-shadow,transform] hover:-translate-y-0.5 hover:border-primary/30 hover:shadow-[var(--ft-shadow-md)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-default disabled:hover:translate-y-0 disabled:hover:border-border disabled:hover:shadow-[var(--ft-shadow-sm)]',
-                  )}
-                >
-                  <div className="flex items-start justify-between gap-3">
-                    <div className="flex min-w-0 items-center gap-3">
-                      <span
-                        className="size-3 rounded-full"
-                        style={{ backgroundColor: getCategoryColorToken(category.id) }}
-                        aria-hidden="true"
-                      />
-                      <span className="flex size-9 items-center justify-center rounded-lg border border-border bg-background/40 text-muted-foreground">
-                        <Icon className="size-4" />
-                      </span>
-                      <div className="min-w-0">
-                        <p className="truncate text-base font-semibold text-foreground">
-                          {category.name}
-                        </p>
-                        {category.isMandatory ? (
-                          <Badge variant="outline" className="mt-1 border-primary/25 bg-primary/10 text-primary">
-                            Обязательная
-                          </Badge>
-                        ) : null}
-                      </div>
-                    </div>
-
-                    {!readonly ? <ArrowRight className="size-4 text-muted-foreground" /> : null}
-                  </div>
-                </button>
+                <CategoryGridItem
+                  category={category}
+                  readonly={readonly}
+                  searchValue={searchInput}
+                  onEdit={onEdit}
+                />
               </li>
             );
           })}

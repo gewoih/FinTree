@@ -10,8 +10,7 @@ namespace FinTree.Application.Analytics.Services;
 public class ForecastService(
     TransactionsService transactionsService,
     CurrencyConverter currencyConverter,
-    CashflowAverageService cashflowAverageService,
-    BootstrapSamplerService bootstrapSamplerService)
+    CashflowAverageService cashflowAverageService)
 {
     private const int BootstrapingSimulationsCount = 10_000;
 
@@ -105,18 +104,18 @@ public class ForecastService(
             };
 
             seedParts.AddRange(pool.Select(BootstrapSamplerService.ToCents));
-            var seed = bootstrapSamplerService.BuildDeterministicSeed(
+            var seed = BootstrapSamplerService.BuildDeterministicSeed(
                 GoalSimulationDefaults.ForecastDeterministicSeedBase,
                 seedParts);
 
-            var cdf = bootstrapSamplerService.BuildRecencyCdf(pool.Length, GoalSimulationDefaults.ForecastRecencyLambda);
+            var cdf = BootstrapSamplerService.BuildRecencyCdf(pool.Length, GoalSimulationDefaults.ForecastRecencyLambda);
             var rng = new Random(seed);
 
             for (var s = 0; s < BootstrapingSimulationsCount; s++)
             {
                 var total = observedCumulativeActual;
                 for (var r = 0; r < remainingDays; r++)
-                    total += bootstrapSamplerService.SampleFromPool(pool, cdf, rng);
+                    total += BootstrapSamplerService.SampleFromPool(pool, cdf, rng);
 
                 simTotals[s] = total;
             }

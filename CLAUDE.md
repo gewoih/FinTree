@@ -15,3 +15,4 @@
 - Never create, edit, delete, or regenerate EF Migrations and never run `dotnet ef migrations`
 - Never run `dotnet build`, `dotnet test`, `dotnet run`, or `dotnet publish`
 - When you encounter a bug, inconsistency, incorrect pattern, or technical debt while working on any task — you must either fix it in place or add a concise item to `TODO.md` immediately
+- Do not write or run any tests in backend/frontend unless the user explicitly asks

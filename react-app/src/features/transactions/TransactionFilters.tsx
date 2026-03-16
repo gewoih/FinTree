@@ -89,8 +89,6 @@ function FiltersContent({
           max={getTodayDateValue()}
           placeholder="Выберите период…"
           triggerAriaLabel="Период"
-          fromInputAriaLabel="Дата от"
-          toInputAriaLabel="Дата до"
           onChange={({ from, to }) => handleDateRangeChange(from, to)}
         />
       </div>

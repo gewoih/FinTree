@@ -13,6 +13,21 @@ import { resolveApiErrorMessage } from '@/utils/errors';
 import { CategoryFormModal } from '@/features/categories/CategoryFormModal';
 import { CategoryManager } from '@/features/categories/CategoryManager';
 
+function compareCategories(left: Category, right: Category): number {
+  if (left.type !== right.type) {
+    return left.type === CATEGORY_TYPE.Expense ? -1 : 1;
+  }
+
+  const leftIsUncategorized = left.name.trim().toLocaleLowerCase('ru-RU') === 'без категории';
+  const rightIsUncategorized = right.name.trim().toLocaleLowerCase('ru-RU') === 'без категории';
+
+  if (leftIsUncategorized !== rightIsUncategorized) {
+    return leftIsUncategorized ? -1 : 1;
+  }
+
+  return left.name.localeCompare(right.name, 'ru-RU');
+}
+
 export default function CategoriesPage() {
   const queryClient = useQueryClient();
   const currentUser = useCurrentUser();
@@ -29,23 +44,9 @@ export default function CategoriesPage() {
   });
 
   const categories = useMemo(
-    () =>
-      (categoriesQuery.data ?? []).slice().sort((left, right) => {
-        if (left.type !== right.type) {
-          return left.type === CATEGORY_TYPE.Expense ? -1 : 1;
-        }
-
-        return left.name.localeCompare(right.name, 'ru-RU');
-      }),
+    () => (categoriesQuery.data ?? []).slice().sort(compareCategories),
     [categoriesQuery.data],
   );
-  const resolvedSelectedType = useMemo(() => {
-    if (categories.some((category) => category.type === selectedType)) {
-      return selectedType;
-    }
-
-    return categories[0]?.type ?? selectedType;
-  }, [categories, selectedType]);
 
   const invalidateCategoryData = async () => {
     await Promise.all([
@@ -102,7 +103,11 @@ export default function CategoriesPage() {
   return (
     <ErrorBoundary>
       <div className="flex flex-col gap-5 p-4 sm:p-6 lg:px-8">
-        <PageHeader title="Категории" className="mb-0" />
+        <PageHeader
+          title="Категории"
+          subtitle="Находите нужные категории быстрее и редактируйте их без лишних переходов."
+          className="mb-0"
+        />
 
         {showInlineError ? (
           <div className="rounded-xl border border-destructive/30 bg-destructive/10 px-4 py-3 text-sm">
@@ -142,7 +147,7 @@ export default function CategoriesPage() {
             categories={categories}
             loading={categoriesQuery.isLoading && !hasCategories}
             readonly={isReadOnlyMode}
-            selectedType={resolvedSelectedType}
+            selectedType={selectedType}
             onSelectedTypeChange={setSelectedType}
             onCreate={() => {
               setEditingCategory(null);
@@ -159,7 +164,7 @@ export default function CategoriesPage() {
         <CategoryFormModal
           open={isModalOpen}
           category={editingCategory}
-          defaultType={resolvedSelectedType}
+          defaultType={selectedType}
           readonly={isReadOnlyMode}
           isSaving={createCategoryMutation.isPending || updateCategoryMutation.isPending}
           isDeleting={deleteCategoryMutation.isPending}
