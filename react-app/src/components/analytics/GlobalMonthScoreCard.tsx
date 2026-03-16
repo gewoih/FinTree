@@ -155,7 +155,7 @@ export function GlobalMonthScoreCard({
     );
   }
 
-  if (model.score === null) {
+  if (model.score === null && !children) {
     return <EmptyState />;
   }
 
