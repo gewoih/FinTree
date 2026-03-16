@@ -323,8 +323,11 @@ export function useTransactionsPage() {
         description: transaction.description ?? null,
         isMandatory,
       }),
-    deleteTransaction: (transaction: TransactionDto) =>
-      deleteTransactionMutation.mutate(transaction.id),
-    deleteTransfer: (transferId: string) => deleteTransferMutation.mutate(transferId),
+    deleteTransaction: async (transaction: TransactionDto) => {
+      await deleteTransactionMutation.mutateAsync(transaction.id);
+    },
+    deleteTransfer: async (transferId: string) => {
+      await deleteTransferMutation.mutateAsync(transferId);
+    },
   };
 }

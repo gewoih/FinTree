@@ -206,13 +206,17 @@ export function groupRowsByDate(rows: TransactionDisplayRow[]) {
 }
 
 export function hasActiveTransactionFilters(filters: TransactionFiltersValue): boolean {
-  return Boolean(
-    filters.dateFrom ||
-      filters.dateTo ||
-      filters.categoryId ||
-      filters.accountId ||
-      filters.search
-  );
+  return countActiveTransactionFilters(filters) > 0;
+}
+
+export function countActiveTransactionFilters(filters: TransactionFiltersValue): number {
+  return [
+    filters.dateFrom,
+    filters.dateTo,
+    filters.categoryId,
+    filters.accountId,
+    filters.search,
+  ].filter(Boolean).length;
 }
 
 export function getTransferLookupDate(occurredAt: string): string {

@@ -1,5 +1,6 @@
 import { Search } from 'lucide-react';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
+import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import {
@@ -13,9 +14,13 @@ import {
 } from '@/components/ui/select';
 import { useViewport } from '@/hooks/useViewport';
 import type { AccountDto, TransactionCategoryDto } from '@/types';
-import { DatePopoverField } from './DatePopoverField';
+import { DateRangePopoverField } from './DateRangePopoverField';
 import type { TransactionFiltersValue } from './transactionModels';
-import { getTodayDateValue, hasActiveTransactionFilters } from './transactionUtils';
+import {
+  countActiveTransactionFilters,
+  getTodayDateValue,
+  hasActiveTransactionFilters,
+} from './transactionUtils';
 
 const ALL_VALUE = '__all__';
 
@@ -38,124 +43,121 @@ function FiltersContent({
   const incomeCategories = categories.filter((item) => item.type === 'Income');
   const expenseCategories = categories.filter((item) => item.type === 'Expense');
 
-  const handleDateChange = (
-    field: 'dateFrom' | 'dateTo',
-    nextValue?: string
-  ) => {
-    const currentFrom = value.dateFrom;
-    const currentTo = value.dateTo;
+  const handleDateRangeChange = (nextFrom?: string, nextTo?: string) => {
+    let dateFrom = nextFrom;
+    let dateTo = nextTo;
 
-    if (field === 'dateFrom') {
-      if (nextValue && currentTo && currentTo < nextValue) {
-        onChange({ dateFrom: currentTo, dateTo: nextValue, page: 1 });
-        return;
-      }
-
-      onChange({ dateFrom: nextValue, page: 1 });
-      return;
+    if (dateFrom && dateTo && dateTo < dateFrom) {
+      [dateFrom, dateTo] = [dateTo, dateFrom];
     }
 
-    if (nextValue && currentFrom && nextValue < currentFrom) {
-      onChange({ dateFrom: nextValue, dateTo: currentFrom, page: 1 });
-      return;
-    }
-
-    onChange({ dateTo: nextValue, page: 1 });
+    onChange({ dateFrom, dateTo, page: 1 });
   };
 
   return (
-    <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-[repeat(4,minmax(0,1fr))_auto]">
-      <DatePopoverField
-        label="От"
-        value={value.dateFrom}
-        max={getTodayDateValue()}
-        placeholder="Дата от"
-        onChange={(nextValue) => handleDateChange('dateFrom', nextValue)}
-      />
+    <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-[minmax(0,1.4fr)_minmax(0,1.1fr)_repeat(2,minmax(0,1fr))_auto]">
+      <div className="space-y-1.5">
+        <div className="text-sm font-semibold text-muted-foreground">Поиск</div>
+        <div className="relative">
+          <Search
+            className="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted-foreground"
+            aria-hidden="true"
+          />
+          <Input
+            value={value.search ?? ''}
+            onChange={(event) =>
+              onChange({
+                search: event.target.value || undefined,
+                page: 1,
+              })
+            }
+            name="transactions-search"
+            autoComplete="off"
+            aria-label="Поиск по транзакциям"
+            placeholder="Название или комментарий…"
+            className="h-11 rounded-xl pl-9"
+          />
+        </div>
+      </div>
 
-      <DatePopoverField
-        label="До"
-        value={value.dateTo}
-        max={getTodayDateValue()}
-        placeholder="Дата до"
-        onChange={(nextValue) => handleDateChange('dateTo', nextValue)}
-      />
-
-      <Select
-        value={value.categoryId ?? ALL_VALUE}
-        onValueChange={(nextValue) =>
-          onChange({
-            categoryId: nextValue === ALL_VALUE ? undefined : nextValue,
-            page: 1,
-          })
-        }
-      >
-        <SelectTrigger className="h-11 w-full rounded-xl">
-          <SelectValue placeholder="Все категории" />
-        </SelectTrigger>
-        <SelectContent>
-          <SelectItem value={ALL_VALUE}>Все категории</SelectItem>
-          {incomeCategories.length > 0 ? (
-            <SelectGroup>
-              <SelectLabel>Доходы</SelectLabel>
-              {incomeCategories.map((category) => (
-                <SelectItem key={category.id} value={category.id}>
-                  {category.name}
-                </SelectItem>
-              ))}
-            </SelectGroup>
-          ) : null}
-          {expenseCategories.length > 0 ? (
-            <SelectGroup>
-              <SelectLabel>Расходы</SelectLabel>
-              {expenseCategories.map((category) => (
-                <SelectItem key={category.id} value={category.id}>
-                  {category.name}
-                </SelectItem>
-              ))}
-            </SelectGroup>
-          ) : null}
-        </SelectContent>
-      </Select>
-
-      <Select
-        value={value.accountId ?? ALL_VALUE}
-        onValueChange={(nextValue) =>
-          onChange({
-            accountId: nextValue === ALL_VALUE ? undefined : nextValue,
-            page: 1,
-          })
-        }
-      >
-        <SelectTrigger className="h-11 w-full rounded-xl">
-          <SelectValue placeholder="Все счета" />
-        </SelectTrigger>
-        <SelectContent>
-          <SelectItem value={ALL_VALUE}>Все счета</SelectItem>
-          {accounts.map((account) => (
-            <SelectItem key={account.id} value={account.id}>
-              {account.name}
-            </SelectItem>
-          ))}
-        </SelectContent>
-      </Select>
-
-      <div className="relative">
-        <Search
-          className="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted-foreground"
-          aria-hidden="true"
+      <div className="space-y-1.5">
+        <div className="text-sm font-semibold text-muted-foreground">Период</div>
+        <DateRangePopoverField
+          label="Период"
+          from={value.dateFrom}
+          to={value.dateTo}
+          max={getTodayDateValue()}
+          placeholder="Выберите период…"
+          triggerAriaLabel="Период"
+          fromInputAriaLabel="Дата от"
+          toInputAriaLabel="Дата до"
+          onChange={({ from, to }) => handleDateRangeChange(from, to)}
         />
-        <Input
-          value={value.search ?? ''}
-          onChange={(event) =>
+      </div>
+
+      <div className="space-y-1.5">
+        <div className="text-sm font-semibold text-muted-foreground">Категория</div>
+        <Select
+          value={value.categoryId ?? ALL_VALUE}
+          onValueChange={(nextValue) =>
             onChange({
-              search: event.target.value || undefined,
+              categoryId: nextValue === ALL_VALUE ? undefined : nextValue,
               page: 1,
             })
           }
-          placeholder="Поиск"
-          className="h-11 rounded-xl pl-9"
-        />
+        >
+          <SelectTrigger className="h-11 w-full rounded-xl" aria-label="Фильтр по категории">
+            <SelectValue placeholder="Все категории" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value={ALL_VALUE}>Все категории</SelectItem>
+            {incomeCategories.length > 0 ? (
+              <SelectGroup>
+                <SelectLabel>Доходы</SelectLabel>
+                {incomeCategories.map((category) => (
+                  <SelectItem key={category.id} value={category.id}>
+                    {category.name}
+                  </SelectItem>
+                ))}
+              </SelectGroup>
+            ) : null}
+            {expenseCategories.length > 0 ? (
+              <SelectGroup>
+                <SelectLabel>Расходы</SelectLabel>
+                {expenseCategories.map((category) => (
+                  <SelectItem key={category.id} value={category.id}>
+                    {category.name}
+                  </SelectItem>
+                ))}
+              </SelectGroup>
+            ) : null}
+          </SelectContent>
+        </Select>
+      </div>
+
+      <div className="space-y-1.5">
+        <div className="text-sm font-semibold text-muted-foreground">Счёт</div>
+        <Select
+          value={value.accountId ?? ALL_VALUE}
+          onValueChange={(nextValue) =>
+            onChange({
+              accountId: nextValue === ALL_VALUE ? undefined : nextValue,
+              page: 1,
+            })
+          }
+        >
+          <SelectTrigger className="h-11 w-full rounded-xl" aria-label="Фильтр по счёту">
+            <SelectValue placeholder="Все счета" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value={ALL_VALUE}>Все счета</SelectItem>
+            {accounts.map((account) => (
+              <SelectItem key={account.id} value={account.id}>
+                {account.name}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
       </div>
 
       {hasFilters ? (
@@ -174,12 +176,25 @@ function FiltersContent({
 
 export function TransactionFilters(props: TransactionFiltersProps) {
   const { isMobile } = useViewport();
+  const activeFilterCount = countActiveTransactionFilters(props.value);
 
   if (isMobile) {
     return (
       <Accordion type="single" collapsible className="mx-auto w-full max-w-[960px]">
         <AccordionItem value="filters">
-          <AccordionTrigger>Фильтры</AccordionTrigger>
+          <AccordionTrigger aria-label="Фильтры транзакций">
+            <span className="flex items-center gap-2">
+              <span>Фильтры</span>
+              {activeFilterCount > 0 ? (
+                <Badge
+                  variant="outline"
+                  className="rounded-full border-primary/30 bg-primary/10 text-primary"
+                >
+                  {activeFilterCount}
+                </Badge>
+              ) : null}
+            </span>
+          </AccordionTrigger>
           <AccordionContent>
             <FiltersContent {...props} />
           </AccordionContent>

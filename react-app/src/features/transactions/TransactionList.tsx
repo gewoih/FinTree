@@ -1,6 +1,4 @@
-import { ArrowRightLeft, Lock, LockOpen, Trash2 } from 'lucide-react';
-import { useState } from 'react';
-import { ConfirmDialog } from '@/components/common/ConfirmDialog';
+import { ArrowRightLeft, Lock, LockOpen } from 'lucide-react';
 import { EmptyState } from '@/components/common/EmptyState';
 import { Button } from '@/components/ui/button';
 import {
@@ -38,15 +36,12 @@ interface TransactionListProps {
   baseCurrencyCode: string;
   filters: TransactionFiltersValue;
   readonly?: boolean;
-  deletingId?: string | null;
   togglingMandatoryId?: string | null;
   onFiltersChange: (f: Partial<TransactionFiltersValue>) => void;
   onAdd?: () => void;
   onEdit: (transaction: TransactionDto) => void;
   onEditTransfer: (transferId: string, occurredAt: string) => void;
   onToggleMandatory?: (transaction: TransactionDto, isMandatory: boolean) => void;
-  onDeleteTransaction: (transaction: TransactionDto) => void;
-  onDeleteTransfer: (transferId: string) => void;
   onRetry: () => void;
   onClear: () => void;
 }
@@ -76,24 +71,15 @@ export function TransactionList({
   baseCurrencyCode,
   filters,
   readonly = false,
-  deletingId,
   togglingMandatoryId = null,
   onFiltersChange,
   onAdd,
   onEdit,
   onEditTransfer,
   onToggleMandatory,
-  onDeleteTransaction,
-  onDeleteTransfer,
   onRetry,
   onClear,
 }: TransactionListProps) {
-  const [deleteTarget, setDeleteTarget] = useState<
-    | { type: 'transaction'; transaction: TransactionDto }
-    | { type: 'transfer'; transferId: string }
-    | null
-  >(null);
-
   if (loading) {
     return (
       <div className="space-y-3 rounded-2xl border border-border bg-card/70 p-4">
@@ -184,6 +170,7 @@ export function TransactionList({
                 {group.items.map((row) => {
                   const isTransaction = row.kind === 'transaction';
                   const isExpense = isTransaction && row.tone === 'Expense';
+                  const isMandatory = isExpense && row.transaction.isMandatory;
                   const metaText = isTransaction
                     ? [row.accountName, row.transaction.description?.trim()]
                         .filter(Boolean)
@@ -200,24 +187,14 @@ export function TransactionList({
                           row.transaction.originalCurrencyCode,
                         )
                       : null;
-                  const isDeletingCurrentRow =
-                    deletingId === row.id ||
-                    (row.kind === 'transfer' && deletingId === row.transferId);
+                  const rowAriaLabel =
+                    row.kind === 'transaction'
+                      ? `Открыть транзакцию ${row.categoryName}`
+                      : `Открыть перевод ${row.accountName}`;
 
-                  return (
-                    <div
-                      key={row.id}
-                      className={cn(
-                        'group flex items-center justify-between gap-3 border-l-2 border-l-transparent px-4 py-4 transition-colors',
-                        !readonly && 'hover:bg-[var(--ft-table-row-hover-bg)]',
-                        isExpense && row.transaction.isMandatory && 'border-l-primary',
-                      )}
-                    >
-                      <div
-                        className={cn(
-                          'flex min-w-0 flex-1 items-center gap-3 text-left',
-                        )}
-                      >
+                  const rowBody = (
+                    <>
+                      <div className="flex min-w-0 flex-1 items-center gap-3 text-left">
                         <span
                           className={cn(
                             'flex size-11 shrink-0 items-center justify-center rounded-md border border-border/80',
@@ -245,9 +222,11 @@ export function TransactionList({
                             <span className="truncate text-base font-semibold text-foreground">
                               {row.kind === 'transaction' ? row.categoryName : row.title}
                             </span>
-
-                            {isExpense && readonly && row.transaction.isMandatory ? (
-                              <Lock className="size-4 shrink-0 text-[var(--ft-warning-400)]" />
+                            {isMandatory ? (
+                              <Lock
+                                className="size-4 shrink-0 text-[var(--ft-warning-400)]"
+                                aria-hidden="true"
+                              />
                             ) : null}
                           </div>
 
@@ -257,115 +236,110 @@ export function TransactionList({
                         </div>
                       </div>
 
-                      <div className="flex shrink-0 flex-col items-end gap-2 pl-2 sm:flex-row sm:items-center">
-                        <div className="text-right">
-                          {row.kind === 'transaction' ? (
-                            <>
-                              <div
-                                className={cn(
-                                  'text-base font-semibold [font-variant-numeric:tabular-nums]',
-                                  row.tone === 'Income'
-                                    ? 'text-[var(--ft-success-400)]'
-                                    : 'text-[var(--ft-danger-400)]',
-                                )}
-                              >
-                                {row.tone === 'Income' ? '+' : '−'}
-                                {formatCurrency(row.amount, row.currencyCode)}
+                      <div className="shrink-0 text-right">
+                        {row.kind === 'transaction' ? (
+                          <>
+                            <div
+                              className={cn(
+                                'text-base font-semibold [font-variant-numeric:tabular-nums]',
+                                row.tone === 'Income'
+                                  ? 'text-[var(--ft-success-400)]'
+                                  : 'text-[var(--ft-danger-400)]',
+                              )}
+                            >
+                              {row.tone === 'Income' ? '+' : '−'}
+                              {formatCurrency(row.amount, row.currencyCode)}
+                            </div>
+                            {originalAmountLabel ? (
+                              <div className="text-xs text-muted-foreground [font-variant-numeric:tabular-nums]">
+                                {originalAmountLabel}
                               </div>
-                              {originalAmountLabel ? (
-                                <div className="text-xs text-muted-foreground [font-variant-numeric:tabular-nums]">
-                                  {originalAmountLabel}
-                                </div>
-                              ) : null}
-                            </>
-                          ) : (
-                            <>
-                              <div className="text-sm font-semibold text-[var(--ft-danger-400)] [font-variant-numeric:tabular-nums]">
-                                −{formatCurrency(row.primaryAmount, row.primaryCurrencyCode)}
-                              </div>
-                              <div className="text-sm font-semibold text-[var(--ft-success-400)] [font-variant-numeric:tabular-nums]">
-                                +{formatCurrency(row.secondaryAmount ?? 0, row.secondaryCurrencyCode ?? row.primaryCurrencyCode)}
-                              </div>
-                              {row.caption ? (
-                                <div className="text-xs text-muted-foreground">{row.caption}</div>
-                              ) : null}
-                            </>
-                          )}
-                        </div>
-
-                        {!readonly ? (
-                          <Button
-                            type="button"
-                            variant="ghost"
-                            size="sm"
-                            className="rounded-md"
-                            onClick={() => {
-                              if (row.kind === 'transaction') {
-                                onEdit(row.transaction);
-                                return;
-                              }
-
-                              onEditTransfer(row.transferId, row.occurredAt);
-                            }}
-                          >
-                            {row.kind === 'transaction' ? 'Изменить' : 'Открыть'}
-                          </Button>
-                        ) : null}
-
-                        {!readonly && isExpense ? (
-                          <Button
-                            type="button"
-                            variant="ghost"
-                            size="icon"
-                            className={cn(
-                              'rounded-md text-muted-foreground hover:bg-[color-mix(in_srgb,var(--ft-warning-500)_12%,transparent)] hover:text-[var(--ft-warning-400)]',
-                              row.transaction.isMandatory && 'text-[var(--ft-warning-400)]',
-                            )}
-                            disabled={togglingMandatoryId === row.id || !onToggleMandatory}
-                            aria-label={
-                              row.transaction.isMandatory
-                                ? 'Снять признак обязательного платежа'
-                                : 'Пометить как обязательный платёж'
-                            }
-                            onClick={() =>
-                              onToggleMandatory?.(
-                                row.transaction,
-                                !row.transaction.isMandatory,
-                              )
-                            }
-                          >
-                            {row.transaction.isMandatory ? (
-                              <Lock className="size-4" />
-                            ) : (
-                              <LockOpen className="size-4" />
-                            )}
-                          </Button>
-                        ) : null}
-
-                        {!readonly ? (
-                          <Button
-                            type="button"
-                            variant="ghost"
-                            size="icon"
-                            className="rounded-md opacity-100 transition-opacity sm:opacity-0 sm:group-hover:opacity-100"
-                            disabled={isDeletingCurrentRow}
-                            aria-label={
-                              row.kind === 'transaction'
-                                ? 'Удалить транзакцию'
-                                : 'Удалить перевод'
-                            }
-                            onClick={() => {
-                              setDeleteTarget(
-                                row.kind === 'transaction'
-                                  ? { type: 'transaction', transaction: row.transaction }
-                                  : { type: 'transfer', transferId: row.transferId },
-                              );
-                            }}
-                          >
-                            <Trash2 className="size-4 text-destructive" />
-                          </Button>
-                        ) : null}
+                            ) : null}
+                          </>
+                        ) : (
+                          <>
+                            <div className="text-sm font-semibold text-[var(--ft-danger-400)] [font-variant-numeric:tabular-nums]">
+                              −{formatCurrency(row.primaryAmount, row.primaryCurrencyCode)}
+                            </div>
+                            <div className="text-sm font-semibold text-[var(--ft-success-400)] [font-variant-numeric:tabular-nums]">
+                              +{formatCurrency(
+                                row.secondaryAmount ?? 0,
+                                row.secondaryCurrencyCode ?? row.primaryCurrencyCode,
+                              )}
+                            </div>
+                            {row.caption ? (
+                              <div className="text-xs text-muted-foreground">{row.caption}</div>
+                            ) : null}
+                          </>
+                        )}
                       </div>
+                    </>
+                  );
+
+                  return (
+                    <div key={row.id} className="flex items-center gap-2 px-3 py-2">
+                      {readonly ? (
+                        <div className="flex min-w-0 flex-1 items-center justify-between gap-3 rounded-xl px-2 py-2">
+                          {rowBody}
+                        </div>
+                      ) : (
+                        <button
+                          type="button"
+                          className={cn(
+                            'flex min-w-0 flex-1 items-center justify-between gap-3 rounded-xl px-2 py-2 text-left transition-colors',
+                            'hover:bg-[var(--ft-table-row-hover-bg)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/60',
+                          )}
+                          aria-label={rowAriaLabel}
+                          onClick={() => {
+                            if (row.kind === 'transaction') {
+                              onEdit(row.transaction);
+                              return;
+                            }
+
+                            onEditTransfer(row.transferId, row.occurredAt);
+                          }}
+                        >
+                          {rowBody}
+                        </button>
+                      )}
+
+                      {!readonly && isExpense ? (
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="icon-sm"
+                          className={cn(
+                            'shrink-0 cursor-pointer rounded-xl border border-transparent text-muted-foreground',
+                            'hover:border-[var(--ft-warning-400)]/25 hover:bg-[color-mix(in_srgb,var(--ft-warning-500)_12%,transparent)] hover:text-[var(--ft-warning-400)]',
+                            'focus-visible:border-[var(--ft-warning-400)]/35',
+                            isMandatory && 'text-[var(--ft-warning-400)]',
+                          )}
+                          disabled={togglingMandatoryId === row.id || !onToggleMandatory}
+                          aria-label={
+                            row.transaction.isMandatory
+                              ? 'Снять признак обязательного платежа'
+                              : 'Пометить как обязательный платёж'
+                          }
+                          aria-pressed={row.transaction.isMandatory}
+                          title={
+                            row.transaction.isMandatory
+                              ? 'Снять признак обязательного платежа'
+                              : 'Пометить как обязательный платёж'
+                          }
+                          onClick={() =>
+                            onToggleMandatory?.(
+                              row.transaction,
+                              !row.transaction.isMandatory,
+                            )
+                          }
+                        >
+                          {row.transaction.isMandatory ? (
+                            <Lock className="size-4" />
+                          ) : (
+                            <LockOpen className="size-4" />
+                          )}
+                        </Button>
+                      ) : null}
                     </div>
                   );
                 })}
@@ -419,35 +393,6 @@ export function TransactionList({
           </Pagination>
         ) : null}
       </div>
-
-      <ConfirmDialog
-        open={deleteTarget !== null}
-        onOpenChange={(isOpen) => !isOpen && setDeleteTarget(null)}
-        title={
-          deleteTarget?.type === 'transfer'
-            ? 'Удалить перевод?'
-            : 'Удалить транзакцию?'
-        }
-        description="Это действие нельзя отменить."
-        confirmLabel="Удалить"
-        isLoading={
-          deleteTarget?.type === 'transfer'
-            ? deletingId === deleteTarget.transferId
-            : deletingId === deleteTarget?.transaction.id
-        }
-        onConfirm={() => {
-          if (!deleteTarget) {
-            return;
-          }
-
-          if (deleteTarget.type === 'transfer') {
-            onDeleteTransfer(deleteTarget.transferId);
-            return;
-          }
-
-          onDeleteTransaction(deleteTarget.transaction);
-        }}
-      />
     </>
   );
 }

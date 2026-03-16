@@ -17,6 +17,8 @@ interface DatePopoverFieldProps {
   min?: string;
   placeholder?: string;
   className?: string;
+  triggerAriaLabel?: string;
+  inputAriaLabel?: string;
 }
 
 export function DatePopoverField({
@@ -27,6 +29,8 @@ export function DatePopoverField({
   min,
   placeholder,
   className,
+  triggerAriaLabel,
+  inputAriaLabel,
 }: DatePopoverFieldProps) {
   return (
     <div className={cn('flex items-center gap-2', className)}>
@@ -36,6 +40,7 @@ export function DatePopoverField({
             type="button"
             variant="outline"
             className="min-h-[44px] flex-1 justify-start rounded-xl px-3"
+            aria-label={triggerAriaLabel ?? label}
           >
             <CalendarDays className="size-4 text-muted-foreground" />
             <span className={cn(!value && 'text-muted-foreground')}>
@@ -52,6 +57,7 @@ export function DatePopoverField({
               min={min}
               max={max}
               className="h-11 rounded-xl"
+              aria-label={inputAriaLabel ?? label}
               onChange={(event) => onChange(event.target.value || undefined)}
             />
           </div>

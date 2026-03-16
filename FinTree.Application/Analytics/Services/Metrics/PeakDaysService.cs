@@ -11,18 +11,18 @@ public sealed class PeakDaysService
         int daysInMonth)
     {
         if (monthTotal <= 0m || dailyTotals.Count == 0)
-            return Empty(monthTotal);
+            return Empty(monthTotal, daysInMonth);
         
         var positiveDailyTotals = dailyTotals.Values
             .Where(value => value > 0m)
             .ToList();
         
         if (positiveDailyTotals.Count == 0)
-            return Empty(monthTotal);
+            return Empty(monthTotal, daysInMonth);
 
         var medianDaily = MathService.ComputeMedian(positiveDailyTotals);
         if (medianDaily is not > 0m)
-            return Empty(monthTotal);
+            return Empty(monthTotal, daysInMonth);
 
         var threshold = ComputePeakThreshold(positiveDailyTotals, medianDaily.Value);
         var peakDays = dailyTotals
@@ -41,9 +41,7 @@ public sealed class PeakDaysService
             .ToList();
 
         var totalPeakAmount = peakDays.Sum(day => day.Amount);
-        var peakSpendSharePercent = totalPeakAmount > 0m
-            ? totalPeakAmount / monthTotal * 100m
-            : (decimal?)null;
+        var peakSpendSharePercent = ResolvePeakSpendSharePercent(totalPeakAmount, monthTotal);
 
         var peakDayRatioPercent = daysInMonth > 0
             ? MathService.Round2((decimal)peakDays.Count / daysInMonth * 100m)
@@ -74,9 +72,21 @@ public sealed class PeakDaysService
         return Math.Max(p90, robustThreshold);
     }
     
-    private static PeakMetricsResult Empty(decimal monthTotal)
+    private static PeakMetricsResult Empty(decimal monthTotal, int daysInMonth)
     {
-        var summary = new PeakDaysSummaryDto(0, 0m, null, monthTotal);
-        return new PeakMetricsResult(summary, [], null, null);
+        var peakSpendSharePercent = ResolvePeakSpendSharePercent(0m, monthTotal);
+        var peakDayRatioPercent = ResolvePeakDayRatioPercent(monthTotal, daysInMonth);
+        var summary = new PeakDaysSummaryDto(0, 0m, peakSpendSharePercent, monthTotal);
+        return new PeakMetricsResult(summary, [], peakSpendSharePercent, peakDayRatioPercent);
     }
+
+    private static decimal? ResolvePeakSpendSharePercent(decimal totalPeakAmount, decimal monthTotal)
+        => monthTotal > 0m
+            ? totalPeakAmount / monthTotal * 100m
+            : (decimal?)null;
+
+    private static decimal? ResolvePeakDayRatioPercent(decimal monthTotal, int daysInMonth)
+        => monthTotal > 0m && daysInMonth > 0
+            ? 0m
+            : (decimal?)null;
 }
