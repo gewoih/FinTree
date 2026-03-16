@@ -64,13 +64,38 @@ export function buildGoalChartPoints(
   }
 
   return result.monthLabels.map((label, index) => ({
-    label: index === 0 ? 'сейчас' : label.slice(0, 3),
+    label: formatGoalAxisLabel(label, index, result.monthLabels[index - 1]),
     tooltipLabel: label,
     p25: result.percentilePaths.p25[index] ?? 0,
     p50: result.percentilePaths.p50[index] ?? 0,
     p75: result.percentilePaths.p75[index] ?? 0,
     target: targetAmount,
   }));
+}
+
+function formatGoalAxisLabel(
+  monthLabel: string,
+  index: number,
+  previousMonthLabel?: string
+): string {
+  if (index === 0) {
+    return 'сейчас';
+  }
+
+  const currentMatch = monthLabel.match(/^(\S+)\s+(\d{4})$/u);
+  const previousMatch = previousMonthLabel?.match(/^(\S+)\s+(\d{4})$/u);
+
+  if (!currentMatch) {
+    return monthLabel.slice(0, 3);
+  }
+
+  const [, month, year] = currentMatch;
+  const yearSuffix = year.slice(-2);
+  const normalizedMonth = month.replace(/\.$/u, '');
+  const monthShort = normalizedMonth.slice(0, 3);
+  const isYearBoundary = previousMatch?.[2] !== year;
+
+  return isYearBoundary ? `${monthShort} '${yearSuffix}` : monthShort;
 }
 
 export function formatGoalDate(

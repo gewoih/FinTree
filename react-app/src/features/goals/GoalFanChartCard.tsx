@@ -137,11 +137,12 @@ export function GoalFanChartCard({
                 stroke="color-mix(in srgb, var(--ft-border-default) 72%, transparent)"
               />
               <XAxis
-                dataKey="label"
+                dataKey="tooltipLabel"
                 tickLine={false}
                 axisLine={false}
                 tick={{ fill: 'var(--ft-text-secondary)', fontSize: 12 }}
-                minTickGap={20}
+                minTickGap={32}
+                tickFormatter={(_value: string, index: number) => chartData[index]?.label ?? ''}
               />
               <YAxis
                 type="number"
