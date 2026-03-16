@@ -75,12 +75,14 @@ public sealed class CashflowAverageService(TransactionsService transactionsServi
         var earliestIncome = await transactionsService.GetEarliestOccurredAtBeforeAsync(
             beforeUtc: toUtc,
             excludeTransfers: true,
+            excludeInvestmentAccounts: true,
             type: TransactionType.Income,
             ct: ct);
 
         var earliestExpense = await transactionsService.GetEarliestOccurredAtBeforeAsync(
             beforeUtc: toUtc,
             excludeTransfers: true,
+            excludeInvestmentAccounts: true,
             type: TransactionType.Expense,
             ct: ct);
 
@@ -101,6 +103,7 @@ public sealed class CashflowAverageService(TransactionsService transactionsServi
             fromUtc: fromUtc,
             toUtc: toUtc,
             excludeTransfers: true,
+            excludeInvestmentAccounts: true,
             type: TransactionType.Income,
             ct: ct);
 
@@ -108,6 +111,7 @@ public sealed class CashflowAverageService(TransactionsService transactionsServi
             fromUtc: fromUtc,
             toUtc: toUtc,
             excludeTransfers: true,
+            excludeInvestmentAccounts: true,
             type: TransactionType.Expense,
             ct: ct);
 
@@ -192,6 +196,7 @@ public sealed class CashflowAverageService(TransactionsService transactionsServi
         var earliestTrackedAtUtc = await transactionsService.GetEarliestOccurredAtBeforeAsync(
             beforeUtc: atUtc,
             excludeTransfers: true,
+            excludeInvestmentAccounts: true,
             type: type,
             ct: ct);
 
@@ -203,6 +208,7 @@ public sealed class CashflowAverageService(TransactionsService transactionsServi
             fromUtc: fromUtc,
             toUtc: atUtc,
             excludeTransfers: true,
+            excludeInvestmentAccounts: true,
             type: type,
             ct: ct);
 

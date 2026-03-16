@@ -15,14 +15,12 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { useCurrentUser } from '@/features/auth/session';
 import { resolveApiErrorMessage } from '@/utils/errors';
 import { cn } from '@/utils/cn';
-import { AccountBalanceAdjustmentsModal } from '@/features/accounts/AccountBalanceAdjustmentsModal';
 import { AccountCard } from '@/features/accounts/AccountCard';
 import { AccountFormModal } from '@/features/accounts/AccountFormModal';
 import { AccountsToolbar } from '@/features/accounts/AccountsToolbar';
 import type { ManagedAccount, AccountsView } from '@/features/accounts/accountModels';
 import {
   filterAccounts,
-  filterBankAccounts,
   normalizeAccount,
   sortAccounts,
 } from '@/features/accounts/accountUtils';
@@ -31,13 +29,11 @@ const SKELETON_KEYS = ['one', 'two', 'three', 'four'];
 
 export default function AccountsPage() {
   const currentUser = useCurrentUser();
-  const baseCurrencyCode = currentUser?.baseCurrencyCode ?? 'RUB';
   const isReadOnlyMode = currentUser?.subscription?.isReadOnlyMode ?? false;
   const [view, setView] = useState<AccountsView>('active');
   const [searchInput, setSearchInput] = useState('');
   const [editingAccount, setEditingAccount] = useState<ManagedAccount | null>(null);
   const [isFormOpen, setIsFormOpen] = useState(false);
-  const [adjustmentsAccount, setAdjustmentsAccount] = useState<ManagedAccount | null>(null);
   const [archiveTarget, setArchiveTarget] = useState<ManagedAccount | null>(null);
 
   const accountsQuery = useQuery({
@@ -59,17 +55,13 @@ export default function AccountsPage() {
   });
 
   const activeBankAccounts = sortAccounts(
-    filterBankAccounts(
-      (accountsQuery.data ?? []).map((account) =>
-        normalizeAccount(account, currenciesQuery.data)
-      )
+    (accountsQuery.data ?? []).map((account) =>
+      normalizeAccount(account, currenciesQuery.data)
     )
   );
   const archivedBankAccounts = sortAccounts(
-    filterBankAccounts(
-      (archivedAccountsQuery.data ?? []).map((account) =>
-        normalizeAccount(account, currenciesQuery.data)
-      )
+    (archivedAccountsQuery.data ?? []).map((account) =>
+      normalizeAccount(account, currenciesQuery.data)
     )
   );
   const currentSourceAccounts = view === 'active' ? activeBankAccounts : archivedBankAccounts;
@@ -106,23 +98,6 @@ export default function AccountsPage() {
     },
     onError: (error) => {
       toast.error(resolveApiErrorMessage(error, 'Не удалось сделать счёт основным.'));
-    },
-  });
-
-  const liquidityMutation = useMutation({
-    mutationFn: ({
-      accountId,
-      isLiquid,
-    }: {
-      accountId: string;
-      isLiquid: boolean;
-    }) => accountsApi.updateAccountLiquidity(accountId, isLiquid),
-    onSuccess: async () => {
-      await accountsQuery.refetch();
-      toast.success('Ликвидность счёта обновлена');
-    },
-    onError: (error) => {
-      toast.error(resolveApiErrorMessage(error, 'Не удалось обновить ликвидность.'));
     },
   });
 
@@ -266,16 +241,11 @@ export default function AccountsPage() {
               <AccountCard
                 key={account.id}
                 account={account}
-                baseCurrencyCode={baseCurrencyCode}
                 readonly={view === 'archived'}
                 interactionLocked={isReadOnlyMode}
                 isPrimaryLoading={
                   setPrimaryMutation.isPending &&
                   setPrimaryMutation.variables === account.id
-                }
-                isLiquidityLoading={
-                  liquidityMutation.isPending &&
-                  liquidityMutation.variables?.accountId === account.id
                 }
                 isArchiveLoading={
                   (archiveMutation.isPending && archiveMutation.variables === account.id) ||
@@ -289,10 +259,6 @@ export default function AccountsPage() {
                 }}
                 onArchive={() => setArchiveTarget(account)}
                 onUnarchive={() => unarchiveMutation.mutate(account.id)}
-                onAdjustBalance={() => setAdjustmentsAccount(account)}
-                onLiquidityChange={(isLiquid) =>
-                  liquidityMutation.mutate({ accountId: account.id, isLiquid })
-                }
               />
             ))}
           </div>
@@ -306,13 +272,6 @@ export default function AccountsPage() {
           onSuccess={() => {
             setEditingAccount(null);
           }}
-        />
-
-        <AccountBalanceAdjustmentsModal
-          open={adjustmentsAccount !== null}
-          account={adjustmentsAccount}
-          readonly={isReadOnlyMode}
-          onClose={() => setAdjustmentsAccount(null)}
         />
 
         <ConfirmDialog

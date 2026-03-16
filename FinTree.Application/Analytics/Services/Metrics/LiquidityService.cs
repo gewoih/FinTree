@@ -2,6 +2,7 @@ using FinTree.Application.Accounts;
 using FinTree.Application.Analytics.Shared;
 using FinTree.Application.Currencies;
 using FinTree.Application.Transactions;
+using FinTree.Domain.Accounts;
 using FinTree.Domain.Transactions;
 using FinTree.Domain.ValueObjects;
 
@@ -30,7 +31,10 @@ public sealed class LiquidityService(
 
     private async Task<decimal> GetLiquidAssetsAtAsync(string baseCurrencyCode, DateTime atUtc, CancellationToken ct)
     {
-        var liquidAccounts = (await accountsService.GetAccountSnapshotsAsync(includeArchived: false, ct))
+        var liquidAccounts = (await accountsService.GetAccountSnapshotsAsync(
+                includeArchived: false,
+                types: [AccountType.Crypto, AccountType.Brokerage, AccountType.Deposit],
+                ct))
             .Where(account => account.IsLiquid)
             .ToList();
 

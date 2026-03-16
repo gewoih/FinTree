@@ -1,4 +1,4 @@
-import { ArrowRightLeft, Lock, LockOpen } from 'lucide-react';
+import { Lock, LockOpen } from 'lucide-react';
 import { EmptyState } from '@/components/common/EmptyState';
 import { Button } from '@/components/ui/button';
 import {
@@ -40,7 +40,6 @@ interface TransactionListProps {
   onFiltersChange: (f: Partial<TransactionFiltersValue>) => void;
   onAdd?: () => void;
   onEdit: (transaction: TransactionDto) => void;
-  onEditTransfer: (transferId: string, occurredAt: string) => void;
   onToggleMandatory?: (transaction: TransactionDto, isMandatory: boolean) => void;
   onRetry: () => void;
   onClear: () => void;
@@ -75,7 +74,6 @@ export function TransactionList({
   onFiltersChange,
   onAdd,
   onEdit,
-  onEditTransfer,
   onToggleMandatory,
   onRetry,
   onClear,
@@ -113,7 +111,7 @@ export function TransactionList({
     ) : (
       <EmptyState
         title="Транзакций пока нет"
-        description="Добавьте первую транзакцию или перевод, чтобы заполнить историю."
+        description="Добавьте первую транзакцию, чтобы заполнить историю."
         action={
           readonly || !onAdd
             ? undefined
@@ -140,10 +138,6 @@ export function TransactionList({
 
   const getGroupNetAmount = (items: typeof rows) =>
     items.reduce((sum, row) => {
-      if (row.kind !== 'transaction') {
-        return sum;
-      }
-
       const baseAmount = row.transaction.amountInBaseCurrency ?? row.amount;
       return sum + (row.tone === 'Income' ? baseAmount : -baseAmount);
     }, 0);
@@ -171,16 +165,12 @@ export function TransactionList({
 
               <div className="divide-y divide-border/70">
                 {group.items.map((row) => {
-                  const isTransaction = row.kind === 'transaction';
-                  const isExpense = isTransaction && row.tone === 'Expense';
+                  const isExpense = row.tone === 'Expense';
                   const isMandatory = isExpense && row.transaction.isMandatory;
-                  const metaText = isTransaction
-                    ? [row.accountName, row.transaction.description?.trim()]
-                        .filter(Boolean)
-                        .join(' · ')
-                    : [row.accountName, row.caption].filter(Boolean).join(' · ');
+                  const metaText = [row.accountName, row.transaction.description?.trim()]
+                    .filter(Boolean)
+                    .join(' · ');
                   const originalAmountLabel =
-                    isTransaction &&
                     row.transaction.originalAmount != null &&
                     row.transaction.originalCurrencyCode &&
                     (row.transaction.originalCurrencyCode !== row.currencyCode ||
@@ -190,40 +180,26 @@ export function TransactionList({
                           row.transaction.originalCurrencyCode,
                         )
                       : null;
-                  const rowAriaLabel =
-                    row.kind === 'transaction'
-                      ? `Открыть транзакцию ${row.categoryName}`
-                      : `Открыть перевод ${row.accountName}`;
+                  const rowAriaLabel = `Открыть транзакцию ${row.categoryName}`;
 
                   const rowBody = (
                     <>
                       <div className="flex min-w-0 flex-1 items-center gap-3 text-left">
                         <span
-                          className={cn(
-                            'flex size-11 shrink-0 items-center justify-center rounded-md border border-border/80',
-                            row.kind === 'transfer' && 'bg-primary/10 text-primary',
-                          )}
-                          style={
-                            row.kind === 'transaction'
-                              ? {
-                                  backgroundColor: `color-mix(in srgb, ${row.categoryColor} 16%, transparent)`,
-                                  color: row.categoryColor,
-                                }
-                              : undefined
-                          }
+                          className="flex size-11 shrink-0 items-center justify-center rounded-md border border-border/80"
+                          style={{
+                            backgroundColor: `color-mix(in srgb, ${row.categoryColor} 16%, transparent)`,
+                            color: row.categoryColor,
+                          }}
                           aria-hidden="true"
                         >
-                          {row.kind === 'transaction' ? (
-                            renderCategoryIcon(row.categoryIcon, { className: 'size-4' })
-                          ) : (
-                            <ArrowRightLeft className="size-4" />
-                          )}
+                          {renderCategoryIcon(row.categoryIcon, { className: 'size-4' })}
                         </span>
 
                         <div className="min-w-0">
                           <div className="flex items-center gap-2">
                             <span className="truncate text-base font-semibold text-foreground">
-                              {row.kind === 'transaction' ? row.categoryName : row.title}
+                              {row.categoryName}
                             </span>
                             {isMandatory ? (
                               <Lock
@@ -240,41 +216,22 @@ export function TransactionList({
                       </div>
 
                       <div className="shrink-0 text-right">
-                        {row.kind === 'transaction' ? (
-                          <>
-                            <div
-                              className={cn(
-                                'text-base font-semibold [font-variant-numeric:tabular-nums]',
-                                row.tone === 'Income'
-                                  ? 'text-[var(--ft-success-400)]'
-                                  : 'text-[var(--ft-danger-400)]',
-                              )}
-                            >
-                              {row.tone === 'Income' ? '+' : '−'}
-                              {formatCurrency(row.amount, row.currencyCode)}
-                            </div>
-                            {originalAmountLabel ? (
-                              <div className="text-xs text-muted-foreground [font-variant-numeric:tabular-nums]">
-                                {originalAmountLabel}
-                              </div>
-                            ) : null}
-                          </>
-                        ) : (
-                          <>
-                            <div className="text-sm font-semibold text-[var(--ft-danger-400)] [font-variant-numeric:tabular-nums]">
-                              −{formatCurrency(row.primaryAmount, row.primaryCurrencyCode)}
-                            </div>
-                            <div className="text-sm font-semibold text-[var(--ft-success-400)] [font-variant-numeric:tabular-nums]">
-                              +{formatCurrency(
-                                row.secondaryAmount ?? 0,
-                                row.secondaryCurrencyCode ?? row.primaryCurrencyCode,
-                              )}
-                            </div>
-                            {row.caption ? (
-                              <div className="text-xs text-muted-foreground">{row.caption}</div>
-                            ) : null}
-                          </>
-                        )}
+                        <div
+                          className={cn(
+                            'text-base font-semibold [font-variant-numeric:tabular-nums]',
+                            row.tone === 'Income'
+                              ? 'text-[var(--ft-success-400)]'
+                              : 'text-[var(--ft-danger-400)]',
+                          )}
+                        >
+                          {row.tone === 'Income' ? '+' : '−'}
+                          {formatCurrency(row.amount, row.currencyCode)}
+                        </div>
+                        {originalAmountLabel ? (
+                          <div className="text-xs text-muted-foreground [font-variant-numeric:tabular-nums]">
+                            {originalAmountLabel}
+                          </div>
+                        ) : null}
                       </div>
                     </>
                   );
@@ -293,14 +250,7 @@ export function TransactionList({
                             'hover:bg-[var(--ft-table-row-hover-bg)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/60',
                           )}
                           aria-label={rowAriaLabel}
-                          onClick={() => {
-                            if (row.kind === 'transaction') {
-                              onEdit(row.transaction);
-                              return;
-                            }
-
-                            onEditTransfer(row.transferId, row.occurredAt);
-                          }}
+                          onClick={() => onEdit(row.transaction)}
                         >
                           {rowBody}
                         </button>

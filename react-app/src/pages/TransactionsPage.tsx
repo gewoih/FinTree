@@ -16,12 +16,10 @@ export default function TransactionsPage() {
     categories,
     closeModal,
     deleteTransaction,
-    deleteTransfer,
     deletingId,
     filters,
     handleClearFilters,
     handleEditTransaction,
-    handleEditTransfer,
     handleFiltersChange,
     isReadOnlyMode,
     isReady,
@@ -38,11 +36,7 @@ export default function TransactionsPage() {
     retryTransactions,
   } = useTransactionsPage();
   const activeModalDeleteId =
-    modalMode.type === 'edit-transaction'
-      ? modalMode.transaction.id
-      : modalMode.type === 'edit-transfer'
-        ? modalMode.payload.transferId
-        : null;
+    modalMode.type === 'edit-transaction' ? modalMode.transaction.id : null;
 
   return (
     <ErrorBoundary>
@@ -125,9 +119,6 @@ export default function TransactionsPage() {
                 onFiltersChange={handleFiltersChange}
                 onAdd={openCreateModal}
                 onEdit={handleEditTransaction}
-                onEditTransfer={(transferId, occurredAt) => {
-                  void handleEditTransfer(transferId, occurredAt);
-                }}
                 onToggleMandatory={toggleMandatory}
                 onRetry={retryTransactions}
                 onClear={handleClearFilters}
@@ -144,10 +135,8 @@ export default function TransactionsPage() {
             categories={categories}
             readonly={isReadOnlyMode}
             onDeleteTransaction={deleteTransaction}
-            onDeleteTransfer={deleteTransfer}
             isDeletePending={deletingId === activeModalDeleteId}
             onClose={closeModal}
-            onSuccess={closeModal}
           />
         ) : null}
       </div>

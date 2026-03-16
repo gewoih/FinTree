@@ -22,6 +22,7 @@ public sealed class SpendingBreakdownService(
             fromUtc: monthsWindowStartUtc,
             toUtc: monthEndUtc,
             excludeTransfers: true,
+            excludeInvestmentAccounts: true,
             type: TransactionType.Expense,
             ct: ct);
 

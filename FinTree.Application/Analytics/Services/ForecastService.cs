@@ -25,7 +25,8 @@ public class ForecastService(
 
         var forecastStart = lastDate.AddDays(-GoalSimulationDefaults.HistoryWindowDays);
 
-        var forecastTransactions = await transactionsService.GetTransactionSnapshotsAsync(forecastStart, lastDate, true,
+        var forecastTransactions = await transactionsService.GetTransactionSnapshotsAsync(forecastStart, lastDate,
+            excludeTransfers: true, excludeInvestmentAccounts: true,
             type: TransactionType.Expense, ct: ct);
 
         var rateByCurrencyAndDay = await currencyConverter.GetCrossRatesAsync(

@@ -752,21 +752,6 @@ public sealed partial class TelegramOperationsService(
                     results.Add(BuildTransactionResult(resolvedTransaction));
                     break;
 
-                case ResolvedTransfer resolvedTransfer:
-                    await transactionsService.CreateTransferAsync(
-                        new CreateTransfer(
-                            resolvedTransfer.FromAccount.Id,
-                            resolvedTransfer.ToAccount.Id,
-                            resolvedTransfer.FromAmount,
-                            resolvedTransfer.ToAmount,
-                            resolvedTransfer.OccurredAt,
-                            resolvedTransfer.FeeAmount,
-                            resolvedTransfer.Description),
-                        ct);
-
-                    results.Add(BuildTransferResult(resolvedTransfer));
-                    break;
-
                 default:
                     throw new InvalidOperationException("Unsupported operation type.");
             }

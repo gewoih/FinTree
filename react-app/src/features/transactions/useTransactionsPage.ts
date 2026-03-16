@@ -6,7 +6,6 @@ import * as accountsApi from '@/api/accounts';
 import { getCategories } from '@/api/categories';
 import { queryKeys } from '@/api/queryKeys';
 import * as transactionsApi from '@/api/transactions';
-import * as transfersApi from '@/api/transfers';
 import { useCurrentUser } from '@/features/auth/session';
 import { useDebouncedValue } from '@/hooks/useDebouncedValue';
 import { PATHS, ROUTE_IDS } from '@/router/paths';
@@ -21,14 +20,12 @@ import {
   getTransactionsRouteSearch,
 } from './transactionSearch';
 import {
-  buildTransferPayload,
   getExpenseSummaryAmount,
-  getTransferLookupDate,
   toTransactionsQuery,
 } from './transactionUtils';
 
 async function loadAllTransactions(filters: ReturnType<typeof toTransactionsQuery>) {
-  const items = [];
+  const items: TransactionDto[] = [];
   let page = 1;
   let total = 0;
 
@@ -164,17 +161,6 @@ export function useTransactionsPage() {
     },
   });
 
-  const deleteTransferMutation = useMutation({
-    mutationFn: (transferId: string) => transfersApi.deleteTransfer(transferId),
-    onSuccess: async () => {
-      await invalidateTransactionData();
-      toast.success('Перевод удалён');
-    },
-    onError: (error) => {
-      toast.error(resolveApiErrorMessage(error, 'Не удалось удалить перевод.'));
-    },
-  });
-
   const toggleMandatoryMutation = useMutation({
     mutationFn: transactionsApi.updateTransaction,
     onSuccess: async (_, variables) => {
@@ -226,49 +212,9 @@ export function useTransactionsPage() {
     [activeAccounts, isReadOnlyMode],
   );
 
-  const handleEditTransfer = useCallback(
-    async (transferId: string, occurredAt: string) => {
-      if (isReadOnlyMode) {
-        return;
-      }
-
-      let payload = buildTransferPayload(transferId, transactionsQuery.data?.items ?? []);
-
-      if (!payload) {
-        const lookupDate = getTransferLookupDate(occurredAt);
-        const lookupItems = await loadAllTransactions({
-          from: lookupDate,
-          to: lookupDate,
-          page: 1,
-          size: 200,
-        });
-        payload = buildTransferPayload(transferId, lookupItems);
-      }
-
-      if (!payload) {
-        toast.error('Не удалось восстановить данные перевода для редактирования.');
-        return;
-      }
-
-      const canEditTransfer =
-        activeAccounts.some((account) => account.id === payload.fromAccountId) &&
-        activeAccounts.some((account) => account.id === payload.toAccountId);
-
-      if (!canEditTransfer) {
-        toast.error('Перевод связан с архивным счётом и недоступен для редактирования.');
-        return;
-      }
-
-      setModalMode({ type: 'edit-transfer', payload });
-    },
-    [activeAccounts, isReadOnlyMode, transactionsQuery.data?.items],
-  );
-
   const deletingId = deleteTransactionMutation.isPending
     ? ((deleteTransactionMutation.variables as string | undefined) ?? null)
-    : deleteTransferMutation.isPending
-      ? ((deleteTransferMutation.variables as string | undefined) ?? null)
-      : null;
+    : null;
 
   const togglingMandatoryId = toggleMandatoryMutation.isPending
     ? ((toggleMandatoryMutation.variables as { id?: string } | undefined)?.id ?? null)
@@ -298,7 +244,6 @@ export function useTransactionsPage() {
     filters,
     handleClearFilters,
     handleEditTransaction,
-    handleEditTransfer,
     handleFiltersChange,
     isReadOnlyMode,
     isReady,
@@ -325,9 +270,6 @@ export function useTransactionsPage() {
       }),
     deleteTransaction: async (transaction: TransactionDto) => {
       await deleteTransactionMutation.mutateAsync(transaction.id);
-    },
-    deleteTransfer: async (transferId: string) => {
-      await deleteTransferMutation.mutateAsync(transferId);
     },
   };
 }

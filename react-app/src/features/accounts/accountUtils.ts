@@ -75,15 +75,9 @@ export function normalizeAccount(
 
 export function sortAccounts(accounts: Account[]): Account[] {
   return [...accounts].sort((left, right) => {
-    if (left.isMain && !right.isMain) {
-      return -1;
-    }
-
-    if (!left.isMain && right.isMain) {
-      return 1;
-    }
-
-    return right.balanceInBaseCurrency - left.balanceInBaseCurrency;
+    if (left.isMain && !right.isMain) return -1;
+    if (!left.isMain && right.isMain) return 1;
+    return left.name.localeCompare(right.name);
   });
 }
 

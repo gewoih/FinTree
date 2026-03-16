@@ -1,9 +1,9 @@
 import { apiClient } from './index';
 import type {
-  AccountBalanceAdjustmentDto,
   AccountDto,
   AccountType,
   CreateAccountPayload,
+  TransactionType,
   UpdateAccountPayload,
 } from '@/types';
 
@@ -17,10 +17,17 @@ const ACCOUNT_TYPE_API_VALUES: Record<
   4: 'Deposit',
 };
 
-export async function getAccounts(archived = false): Promise<AccountDto[]> {
-  const res = await apiClient.get<AccountDto[]>('/users/accounts', {
-    params: { archived },
-  });
+export async function getAccounts(
+  archived = false,
+  types?: readonly AccountType[]
+): Promise<AccountDto[]> {
+  const params = new URLSearchParams({ archived: String(archived) });
+
+  for (const type of types ?? []) {
+    params.append('types', ACCOUNT_TYPE_API_VALUES[type]);
+  }
+
+  const res = await apiClient.get<AccountDto[]>(`/users/accounts?${params.toString()}`);
   return res.data;
 }
 
@@ -59,15 +66,6 @@ export async function deleteAccount(accountId: string): Promise<void> {
   await apiClient.delete(`/accounts/${accountId}`);
 }
 
-export async function getAccountBalanceAdjustments(
-  accountId: string
-): Promise<AccountBalanceAdjustmentDto[]> {
-  const res = await apiClient.get<AccountBalanceAdjustmentDto[]>(
-    `/accounts/${accountId}/balance-adjustments`
-  );
-  return res.data;
-}
-
 export async function createAccountBalanceAdjustment(
   accountId: string,
   amount: number
@@ -75,6 +73,20 @@ export async function createAccountBalanceAdjustment(
   const res = await apiClient.post<string>(
     `/accounts/${accountId}/balance-adjustments`,
     { amount }
+  );
+  return res.data;
+}
+
+export async function createInvestmentCashFlow(
+  accountId: string,
+  type: TransactionType,
+  amount: number,
+  occurredAt: string,
+  description: string | null
+): Promise<string> {
+  const res = await apiClient.post<string>(
+    `/accounts/${accountId}/cash-flows`,
+    { type, amount, occurredAt, description }
   );
   return res.data;
 }

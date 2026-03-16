@@ -16,6 +16,8 @@ interface InvestmentActionsMenuProps {
   isArchived: boolean;
   isLiquidityLoading?: boolean;
   isArchiveLoading?: boolean;
+  onDeposit: () => void;
+  onWithdraw: () => void;
   onAdjustBalance: () => void;
   onRename: () => void;
   onToggleLiquidity: () => void;
@@ -31,6 +33,8 @@ export function InvestmentActionsMenu({
   isArchived,
   isLiquidityLoading = false,
   isArchiveLoading = false,
+  onDeposit,
+  onWithdraw,
   onAdjustBalance,
   onRename,
   onToggleLiquidity,
@@ -62,6 +66,13 @@ export function InvestmentActionsMenu({
           </DropdownMenuItem>
         ) : (
           <>
+            <DropdownMenuItem onSelect={onDeposit} disabled={isArchiveLoading}>
+              Пополнить счёт
+            </DropdownMenuItem>
+            <DropdownMenuItem onSelect={onWithdraw} disabled={isArchiveLoading}>
+              Вывести средства
+            </DropdownMenuItem>
+            <DropdownMenuSeparator />
             <DropdownMenuItem onSelect={onAdjustBalance}>
               Корректировать баланс
             </DropdownMenuItem>

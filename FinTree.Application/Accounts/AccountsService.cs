@@ -4,7 +4,6 @@ using FinTree.Application.Exceptions;
 using FinTree.Application.Users;
 using FinTree.Domain.Accounts;
 using FinTree.Domain.Transactions;
-using FinTree.Domain.ValueObjects;
 using Microsoft.EntityFrameworkCore;
 
 namespace FinTree.Application.Accounts;
@@ -18,131 +17,51 @@ public sealed class AccountsService(
     private static readonly DateTime OpeningBalanceAnchorUtc = DateTime.UnixEpoch;
     private readonly record struct CashFlowEvent(DateTime OccurredAt, decimal Amount);
     private readonly record struct BalanceAdjustmentEvent(DateTime OccurredAt, decimal Amount);
+    private readonly record struct ReturnInputs(
+        bool CanCompute,
+        DateTime StartAt,
+        decimal StartBalance,
+        decimal EndBalance,
+        List<CashFlowEvent> CashFlows);
+    private readonly record struct ReturnComponents(
+        decimal CapitalBase,
+        decimal Profit);
 
-    public async Task<List<AccountDto>> GetAccounts(bool archived = false, CancellationToken ct = default)
+    public async Task<List<AccountDto>> GetAccounts(
+        bool archived = false,
+        CancellationToken ct = default,
+        AccountType[]? types = null)
     {
         var currentUserId = currentUser.Id;
-        var userMeta = await context.Users
+        var mainAccountId = await context.Users
             .AsNoTracking()
             .Where(u => u.Id == currentUserId)
-            .Select(u => new { u.BaseCurrencyCode, u.MainAccountId })
+            .Select(u => u.MainAccountId)
             .SingleAsync(ct);
+
+        var accountTypes = types is { Length: > 0 } ? types : [AccountType.Bank];
 
         var accounts = await context.Accounts
             .AsNoTracking()
-            .Where(a => a.UserId == currentUserId && a.IsArchived == archived)
-            .Select(a => new { a.Id, a.CurrencyCode, a.Name, a.Type, a.IsLiquid, a.IsArchived, a.CreatedAt })
+            .Where(a => a.UserId == currentUserId && a.IsArchived == archived && accountTypes.Contains(a.Type))
+            .Select(a => new { a.Id, a.CurrencyCode, a.Name, a.Type, a.IsLiquid, a.IsArchived })
             .ToListAsync(ct);
 
-        if (accounts.Count == 0)
-            return [];
-
-        var accountIds = accounts.Select(a => a.Id).ToList();
-
-        var accountCreatedAtById = accounts
-            .ToDictionary(a => a.Id, a => NormalizeUtc(a.CreatedAt.UtcDateTime));
-
-        var latestAdjustments = await context.AccountBalanceAdjustments
-            .AsNoTracking()
-            .Where(a => accountIds.Contains(a.AccountId))
-            .Select(a => new { a.AccountId, a.Amount, a.OccurredAt })
-            .ToListAsync(ct);
-
-        var latestAdjustmentByAccount = latestAdjustments
-            .GroupBy(a => a.AccountId)
-            .ToDictionary(
-                g => g.Key,
-                g =>
-                {
-                    var timeline = BuildAdjustmentTimeline(
-                        g.Select(a => (a.OccurredAt, a.Amount)),
-                        accountCreatedAtById[g.Key]);
-                    return timeline[^1];
-                });
-
-        var transactions = await context.Transactions
-            .AsNoTracking()
-            .Where(t => accountIds.Contains(t.AccountId))
-            .Select(g => new
-            {
-                g.AccountId,
-                g.Type,
-                g.Money,
-                g.OccurredAt
-            })
-            .ToListAsync(ct);
-
-        var transactionDeltas = transactions
-            .GroupBy(t => t.AccountId)
-            .ToDictionary(
-                g => g.Key,
-                g => g.Select(t => new
-                {
-                    Delta = t.Type == TransactionType.Income ? t.Money.Amount : -t.Money.Amount,
-                    OccurredAt = NormalizeUtc(t.OccurredAt)
-                }).ToList());
-
-        var rateByCurrency = new Dictionary<string, decimal>(StringComparer.OrdinalIgnoreCase);
-        if (!string.IsNullOrWhiteSpace(userMeta.BaseCurrencyCode))
-        {
-            var nowUtc = DateTime.UtcNow;
-            foreach (var code in accounts.Select(a => a.CurrencyCode).Distinct())
-            {
-                if (string.Equals(code, userMeta.BaseCurrencyCode, StringComparison.OrdinalIgnoreCase))
-                {
-                    rateByCurrency[code] = 1m;
-                    continue;
-                }
-
-                var converted = await currencyConverter.ConvertAsync(
-                    new Money(code, 1m),
-                    userMeta.BaseCurrencyCode,
-                    nowUtc,
-                    ct);
-                rateByCurrency[code] = converted.Amount;
-            }
-        }
-
-        var result = new List<AccountDto>(accounts.Count);
-        foreach (var account in accounts)
-        {
-            decimal balance = 0m;
-            DateTime? lastAdjustmentAt = null;
-            if (latestAdjustmentByAccount.TryGetValue(account.Id, out var adjustment))
-            {
-                balance = adjustment.Amount;
-                lastAdjustmentAt = adjustment.OccurredAt;
-            }
-
-            if (transactionDeltas.TryGetValue(account.Id, out var deltas))
-            {
-                var deltaSum = deltas
-                    .Where(t => !lastAdjustmentAt.HasValue || t.OccurredAt > lastAdjustmentAt.Value)
-                    .Sum(t => t.Delta);
-                balance += deltaSum;
-            }
-
-            var rate = rateByCurrency.TryGetValue(account.CurrencyCode, out var foundRate) ? foundRate : 1m;
-            var balanceInBase = Math.Round(balance * rate, 2, MidpointRounding.AwayFromZero);
-            var roundedBalance = Math.Round(balance, 2, MidpointRounding.AwayFromZero);
-
-            result.Add(new AccountDto(
-                account.Id,
-                account.CurrencyCode,
-                account.Name,
-                account.Type,
-                account.IsLiquid,
-                account.IsArchived,
-                account.Id == userMeta.MainAccountId,
-                roundedBalance,
-                balanceInBase));
-        }
-
-        return result;
+        return accounts
+            .Select(a => new AccountDto(
+                a.Id,
+                a.CurrencyCode,
+                a.Name,
+                a.Type,
+                a.IsLiquid,
+                a.IsArchived,
+                a.Id == mainAccountId))
+            .ToList();
     }
 
     internal async Task<List<AccountAnalyticsSnapshot>> GetAccountSnapshotsAsync(
         bool includeArchived,
+        AccountType[]? types = null,
         CancellationToken ct = default)
     {
         var query = context.Accounts
@@ -151,6 +70,9 @@ public sealed class AccountsService(
 
         if (!includeArchived)
             query = query.Where(a => !a.IsArchived);
+
+        if (types is { Length: > 0 })
+            query = query.Where(a => types.Contains(a.Type));
 
         var accounts = await query
             .Select(a => new { a.Id, a.CurrencyCode, a.IsLiquid, a.IsArchived, a.CreatedAt })
@@ -164,6 +86,49 @@ public sealed class AccountsService(
                 a.IsArchived,
                 NormalizeUtc(a.CreatedAt.UtcDateTime)))
             .ToList();
+    }
+
+    public async Task<Guid> CreateInvestmentCashFlowAsync(
+        Guid accountId,
+        TransactionType type,
+        decimal amount,
+        DateTime occurredAt,
+        string? description,
+        CancellationToken ct = default)
+    {
+        if (type is not (TransactionType.Income or TransactionType.Expense))
+            throw new DomainValidationException("Допустимый тип операции: пополнение (0) или вывод (1).");
+        if (amount <= 0)
+            throw new DomainValidationException("Сумма должна быть больше нуля.");
+
+        var currentUserId = currentUser.Id;
+        var account = await context.Accounts
+            .FirstOrDefaultAsync(a => a.Id == accountId, ct);
+        if (account is null)
+            throw new NotFoundException("Счет не найден", accountId);
+        if (account.UserId != currentUserId)
+            throw new ForbiddenException();
+        if (account.Type == AccountType.Bank)
+            throw new DomainValidationException("Операция доступна только для инвестиционных счетов.");
+        EnsureAccountIsNotArchived(account);
+
+        var categories = await context.TransactionCategories
+            .AsNoTracking()
+            .Where(c => c.UserId == currentUserId)
+            .Select(c => new { c.Id, c.Name, c.IsDefault })
+            .ToListAsync(ct);
+
+        if (categories.Count == 0)
+            throw new ConflictException("Не удалось подобрать категорию для операции.");
+
+        var categoryId = categories.FirstOrDefault(c => c.Name == "Без категории")?.Id
+                         ?? categories.FirstOrDefault(c => c.IsDefault)?.Id
+                         ?? categories[0].Id;
+
+        var desc = string.IsNullOrWhiteSpace(description) ? null : description.Trim();
+        var transaction = account.AddTransaction(type, categoryId, amount, occurredAt, desc, isMandatory: false);
+        await context.SaveChangesAsync(ct);
+        return transaction.Id;
     }
 
     internal async Task<List<AccountAdjustmentAnalyticsSnapshot>> GetAccountAdjustmentSnapshotsAsync(
@@ -196,6 +161,7 @@ public sealed class AccountsService(
     public async Task<InvestmentsOverviewDto> GetInvestmentsOverviewAsync(
         DateTime? from,
         DateTime? to,
+        bool archived = false,
         CancellationToken ct = default)
     {
         var currentUserId = currentUser.Id;
@@ -210,6 +176,7 @@ public sealed class AccountsService(
         var accounts = await context.Accounts
             .AsNoTracking()
             .Where(a => a.UserId == currentUserId &&
+                        a.IsArchived == archived &&
                         (a.Type == AccountType.Brokerage || a.Type == AccountType.Crypto || a.Type == AccountType.Deposit))
             .Select(a => new { a.Id, a.Name, a.CurrencyCode, a.Type, a.IsLiquid, a.CreatedAt })
             .ToListAsync(ct);
@@ -226,6 +193,7 @@ public sealed class AccountsService(
         }
 
         var accountIds = accounts.Select(a => a.Id).ToList();
+        var accountCurrencyById = accounts.ToDictionary(a => a.Id, a => a.CurrencyCode);
         var accountCreatedAtById = accounts
             .ToDictionary(a => a.Id, a => NormalizeUtc(a.CreatedAt.UtcDateTime));
 
@@ -265,25 +233,18 @@ public sealed class AccountsService(
                     .OrderBy(x => x.OccurredAt)
                     .ToList());
 
-        var rateByCurrency = new Dictionary<string, decimal>(StringComparer.OrdinalIgnoreCase);
-        if (!string.IsNullOrWhiteSpace(baseCurrencyCode))
-        {
-            var nowUtc = DateTime.UtcNow;
-            foreach (var code in accounts.Select(a => a.CurrencyCode).Distinct())
-            {
-                if (string.Equals(code, baseCurrencyCode, StringComparison.OrdinalIgnoreCase))
-                {
-                    rateByCurrency[code] = 1m;
-                    continue;
-                }
+        var returnInputsByAccount = new Dictionary<Guid, ReturnInputs>(accounts.Count);
+        var fxRateRequests = new HashSet<(string CurrencyCode, DateTime DayStartUtc)>();
 
-                var converted = await currencyConverter.ConvertAsync(
-                    new Money(code, 1m),
-                    baseCurrencyCode,
-                    nowUtc,
-                    ct);
-                rateByCurrency[code] = converted.Amount;
-            }
+        foreach (var account in accounts)
+        {
+            cashFlowsByAccount.TryGetValue(account.Id, out var accountCashFlows);
+            accountCashFlows ??= [];
+
+            fxRateRequests.Add((account.CurrencyCode, periodTo.Date));
+
+            foreach (var flow in accountCashFlows.Where(flow => flow.OccurredAt >= periodFrom && flow.OccurredAt < periodToExclusive))
+                fxRateRequests.Add((account.CurrencyCode, flow.OccurredAt.Date));
         }
 
         var overviewAccounts = new List<InvestmentAccountOverviewDto>(accounts.Count);
@@ -307,42 +268,13 @@ public sealed class AccountsService(
                 .Where(flow => flow.OccurredAt >= periodFrom && flow.OccurredAt < periodToExclusive)
                 .ToList();
 
-            var hasAnchorAdjustment = accountAdjustments.Any(a => a.OccurredAt <= periodFrom);
-            var effectiveFrom = periodFrom;
-            var effectiveStartBalance = startBalance;
-            var effectiveCashFlows = periodCashFlows;
-            var canComputeReturn = true;
+            var returnInputs = ResolveReturnInputs(periodFrom, periodToExclusive, startBalance, endBalance, accountAdjustments, periodCashFlows);
+            returnInputsByAccount[account.Id] = returnInputs;
 
-            if (!hasAnchorAdjustment)
-            {
-                var firstAdjustmentInPeriod = accountAdjustments
-                    .FirstOrDefault(a => a.OccurredAt >= periodFrom && a.OccurredAt < periodToExclusive);
+            if (returnInputs.CanCompute)
+                fxRateRequests.Add((account.CurrencyCode, returnInputs.StartAt.Date));
 
-                if (firstAdjustmentInPeriod.OccurredAt == default)
-                {
-                    canComputeReturn = false;
-                }
-                else
-                {
-                    effectiveFrom = firstAdjustmentInPeriod.OccurredAt;
-                    effectiveStartBalance = firstAdjustmentInPeriod.Amount;
-                    effectiveCashFlows = periodCashFlows
-                        .Where(flow => flow.OccurredAt > effectiveFrom)
-                        .ToList();
-                }
-            }
-
-            var returnPercent = canComputeReturn
-                ? ComputeModifiedDietz(
-                    effectiveFrom,
-                    periodToExclusive,
-                    effectiveStartBalance,
-                    endBalance,
-                    effectiveCashFlows)
-                : null;
-
-            var rate = rateByCurrency.TryGetValue(account.CurrencyCode, out var foundRate) ? foundRate : 1m;
-            var balanceInBase = Round2(endBalance * rate);
+            var returnPercent = ComputeSimpleReturn(returnInputs);
             var roundedBalance = Round2(endBalance);
 
             overviewAccounts.Add(new InvestmentAccountOverviewDto(
@@ -352,25 +284,39 @@ public sealed class AccountsService(
                 account.Type,
                 account.IsLiquid,
                 roundedBalance,
-                balanceInBase,
+                0m,
                 hasLatestAdjustment ? latestAdjustmentAt : null,
                 returnPercent));
+        }
 
+        var rateByCurrencyAndDay = await BuildFxRateMapAsync(fxRateRequests, baseCurrencyCode, ct);
+        totalValueInBase = 0m;
+        liquidValueInBase = 0m;
+
+        for (var index = 0; index < overviewAccounts.Count; index++)
+        {
+            var overviewAccount = overviewAccounts[index];
+            var account = accounts[index];
+            var balanceInBase = Round2(ConvertToBaseCurrency(
+                account.CurrencyCode,
+                overviewAccount.Balance,
+                periodTo,
+                baseCurrencyCode,
+                rateByCurrencyAndDay));
+
+            overviewAccounts[index] = overviewAccount with { BalanceInBaseCurrency = balanceInBase };
             totalValueInBase += balanceInBase;
-            if (account.IsLiquid)
+
+            if (overviewAccount.IsLiquid)
                 liquidValueInBase += balanceInBase;
         }
 
-        var weightedAccounts = overviewAccounts
-            .Where(a => a.ReturnPercent.HasValue && a.BalanceInBaseCurrency > 0m)
-            .ToList();
-
-        var weightedReturnBase = weightedAccounts.Sum(a => a.BalanceInBaseCurrency);
-        var weightedReturnSum = weightedAccounts.Sum(a => a.ReturnPercent!.Value * a.BalanceInBaseCurrency);
-
-        var totalReturnPercent = weightedReturnBase > 0m
-            ? Math.Round(weightedReturnSum / weightedReturnBase, 4, MidpointRounding.AwayFromZero)
-            : (decimal?)null;
+        var totalReturnPercent = ComputePortfolioReturnPercent(
+            accountCurrencyById,
+            returnInputsByAccount,
+            periodToExclusive,
+            baseCurrencyCode,
+            rateByCurrencyAndDay);
 
         return new InvestmentsOverviewDto(
             periodFrom,
@@ -388,7 +334,8 @@ public sealed class AccountsService(
         if (user is null)
             throw new UnauthorizedAccessException();
         
-        var account = user.AddAccount(command.CurrencyCode, command.Type, command.Name, command.IsLiquid);
+        var isLiquid = command.Type == AccountType.Bank ? true : command.IsLiquid;
+        var account = user.AddAccount(command.CurrencyCode, command.Type, command.Name, isLiquid);
         await context.SaveChangesAsync(ct);
         
         return account.Id;
@@ -420,6 +367,8 @@ public sealed class AccountsService(
             throw new NotFoundException("Счет не найден", accountId);
         if (account.UserId != currentUserId)
             throw new ForbiddenException();
+        if (account.Type == AccountType.Bank)
+            throw new DomainValidationException("Банковские счета всегда ликвидны.");
         EnsureAccountIsNotArchived(account);
 
         account.SetLiquidity(isLiquid);
@@ -451,6 +400,8 @@ public sealed class AccountsService(
             throw new NotFoundException("Счет не найден", accountId);
         if (account.UserId != currentUserId)
             throw new ForbiddenException();
+        if (account.Type == AccountType.Bank)
+            throw new DomainValidationException("Корректировка баланса недоступна для банковских счетов.");
         EnsureAccountIsNotArchived(account);
 
         var adjustment = new AccountBalanceAdjustment(accountId, amount, DateTime.UtcNow);
@@ -650,39 +601,201 @@ public sealed class AccountsService(
         return balance;
     }
 
-    private static decimal? ComputeModifiedDietz(
+    private static decimal? ComputeSimpleReturn(ReturnInputs returnInputs)
+    {
+        if (!returnInputs.CanCompute)
+            return null;
+
+        var components = BuildReturnComponents(
+            returnInputs.StartBalance,
+            returnInputs.EndBalance,
+            returnInputs.CashFlows);
+
+        if (Math.Abs(components.CapitalBase) < 0.0001m)
+            return null;
+
+        return Math.Round(components.Profit / components.CapitalBase, 4, MidpointRounding.AwayFromZero);
+    }
+
+    private static ReturnInputs ResolveReturnInputs(
         DateTime periodFrom,
-        DateTime periodTo,
+        DateTime periodToExclusive,
+        decimal startBalance,
+        decimal endBalance,
+        List<BalanceAdjustmentEvent> accountAdjustments,
+        List<CashFlowEvent> periodCashFlows)
+    {
+        var hasAnchorAdjustment = accountAdjustments.Any(a => a.OccurredAt <= periodFrom);
+        if (hasAnchorAdjustment)
+            return new ReturnInputs(true, periodFrom, startBalance, endBalance, periodCashFlows);
+
+        var firstAdjustmentInPeriod = accountAdjustments
+            .FirstOrDefault(a => a.OccurredAt >= periodFrom && a.OccurredAt < periodToExclusive);
+        var firstCashFlowInPeriod = periodCashFlows.FirstOrDefault();
+
+        var hasFirstAdjustment = firstAdjustmentInPeriod.OccurredAt != default;
+        var hasFirstCashFlow = firstCashFlowInPeriod.OccurredAt != default;
+
+        if (!hasFirstAdjustment && !hasFirstCashFlow)
+            return new ReturnInputs(false, periodFrom, 0m, endBalance, new List<CashFlowEvent>());
+
+        var cashFlowStartsPeriod = !hasFirstAdjustment
+            || (hasFirstCashFlow && (
+                firstCashFlowInPeriod.OccurredAt <= firstAdjustmentInPeriod.OccurredAt
+                || firstCashFlowInPeriod.OccurredAt.Date == firstAdjustmentInPeriod.OccurredAt.Date));
+
+        if (cashFlowStartsPeriod)
+        {
+            var cashFlows = periodCashFlows
+                .Where(flow => flow.OccurredAt >= firstCashFlowInPeriod.OccurredAt)
+                .ToList();
+
+            return new ReturnInputs(
+                true,
+                firstCashFlowInPeriod.OccurredAt,
+                0m,
+                endBalance,
+                cashFlows);
+        }
+
+        var effectiveCashFlows = periodCashFlows
+            .Where(flow => flow.OccurredAt > firstAdjustmentInPeriod.OccurredAt)
+            .ToList();
+
+        return new ReturnInputs(
+            true,
+            firstAdjustmentInPeriod.OccurredAt,
+            firstAdjustmentInPeriod.Amount,
+            endBalance,
+            effectiveCashFlows);
+    }
+
+    private async Task<Dictionary<(string CurrencyCode, DateTime DayStartUtc), decimal>> BuildFxRateMapAsync(
+        HashSet<(string CurrencyCode, DateTime DayStartUtc)> fxRateRequests,
+        string baseCurrencyCode,
+        CancellationToken ct)
+    {
+        var normalizedRequests = fxRateRequests
+            .Where(request => !string.Equals(request.CurrencyCode, baseCurrencyCode, StringComparison.OrdinalIgnoreCase))
+            .ToArray();
+
+        var rateByCurrencyAndDay = normalizedRequests.Length == 0
+            ? new Dictionary<(string CurrencyCode, DateTime DayStartUtc), decimal>()
+            : await currencyConverter.GetCrossRatesAsync(normalizedRequests, baseCurrencyCode, ct);
+
+        foreach (var request in fxRateRequests.Where(request =>
+                     string.Equals(request.CurrencyCode, baseCurrencyCode, StringComparison.OrdinalIgnoreCase)))
+        {
+            rateByCurrencyAndDay[request] = 1m;
+        }
+
+        return rateByCurrencyAndDay;
+    }
+
+    private static decimal? ComputePortfolioReturnPercent(
+        IReadOnlyDictionary<Guid, string> accountCurrencyById,
+        IReadOnlyDictionary<Guid, ReturnInputs> returnInputsByAccount,
+        DateTime periodToExclusive,
+        string baseCurrencyCode,
+        IReadOnlyDictionary<(string CurrencyCode, DateTime DayStartUtc), decimal> rateByCurrencyAndDay)
+    {
+        decimal totalCapitalBase = 0m;
+        decimal totalProfit = 0m;
+        var hasContributions = false;
+
+        foreach (var (accountId, currencyCode) in accountCurrencyById)
+        {
+            if (!returnInputsByAccount.TryGetValue(accountId, out var returnInputs) || !returnInputs.CanCompute)
+                continue;
+
+            var startBalanceBase = ConvertToBaseCurrency(
+                currencyCode,
+                returnInputs.StartBalance,
+                returnInputs.StartAt,
+                baseCurrencyCode,
+                rateByCurrencyAndDay);
+            var endBalanceBase = ConvertToBaseCurrency(
+                currencyCode,
+                returnInputs.EndBalance,
+                periodToExclusive.AddTicks(-1),
+                baseCurrencyCode,
+                rateByCurrencyAndDay);
+
+            var convertedCashFlows = new List<CashFlowEvent>(returnInputs.CashFlows.Count);
+
+            foreach (var flow in returnInputs.CashFlows)
+            {
+                convertedCashFlows.Add(new CashFlowEvent(
+                    flow.OccurredAt,
+                    ConvertToBaseCurrency(
+                        currencyCode,
+                        flow.Amount,
+                        flow.OccurredAt,
+                        baseCurrencyCode,
+                        rateByCurrencyAndDay)));
+            }
+
+            var components = BuildReturnComponents(
+                startBalanceBase,
+                endBalanceBase,
+                convertedCashFlows);
+
+            if (Math.Abs(components.CapitalBase) < 0.0001m)
+                continue;
+
+            hasContributions = true;
+            totalCapitalBase += components.CapitalBase;
+            totalProfit += components.Profit;
+        }
+
+        if (!hasContributions || Math.Abs(totalCapitalBase) < 0.0001m)
+            return null;
+
+        return Math.Round(totalProfit / totalCapitalBase, 4, MidpointRounding.AwayFromZero);
+    }
+
+    private static ReturnComponents BuildReturnComponents(
         decimal startBalance,
         decimal endBalance,
         List<CashFlowEvent> cashFlows)
     {
-        var totalDays = (periodTo - periodFrom).TotalDays;
-        if (totalDays <= 0)
-            return null;
-
-        decimal totalFlow = 0m;
-        decimal weightedFlow = 0m;
+        decimal totalInflows = 0m;
+        decimal totalOutflows = 0m;
 
         foreach (var flow in cashFlows)
         {
-            var daysRemaining = (periodTo - flow.OccurredAt).TotalDays;
-            if (daysRemaining < 0)
-                continue;
-
-            var weight = (decimal)(daysRemaining / totalDays);
-            totalFlow += flow.Amount;
-            weightedFlow += flow.Amount * weight;
+            if (flow.Amount >= 0m)
+            {
+                totalInflows += flow.Amount;
+            }
+            else
+            {
+                totalOutflows += -flow.Amount;
+            }
         }
 
-        var denominator = startBalance + weightedFlow;
-        if (Math.Abs(denominator) < 0.0001m)
-            return null;
+        var capitalBase = startBalance + totalInflows;
+        var profit = endBalance + totalOutflows - startBalance - totalInflows;
 
-        var rate = (endBalance - startBalance - totalFlow) / denominator;
-        return Math.Round(rate, 4, MidpointRounding.AwayFromZero);
+        return new ReturnComponents(capitalBase, profit);
     }
 
+    private static decimal ConvertToBaseCurrency(
+        string currencyCode,
+        decimal amount,
+        DateTime atUtc,
+        string baseCurrencyCode,
+        IReadOnlyDictionary<(string CurrencyCode, DateTime DayStartUtc), decimal> rateByCurrencyAndDay)
+    {
+        if (amount == 0m || string.Equals(currencyCode, baseCurrencyCode, StringComparison.OrdinalIgnoreCase))
+            return amount;
+
+        var rateKey = (currencyCode, atUtc.Date);
+        if (!rateByCurrencyAndDay.TryGetValue(rateKey, out var rate))
+            throw new InvalidOperationException($"FX rate not found for {currencyCode} at {atUtc:yyyy-MM-dd}.");
+
+        return amount * rate;
+    }
 
     private static decimal Round2(decimal value)
         => Math.Round(value, 2, MidpointRounding.AwayFromZero);

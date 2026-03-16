@@ -26,6 +26,8 @@ interface InvestmentsAccountsSectionProps {
   onViewChange: (view: InvestmentsView) => void;
   onRetry: () => void;
   onEditAccount: (account: InvestmentAccountViewModel) => void;
+  onDeposit: (account: InvestmentAccountViewModel) => void;
+  onWithdraw: (account: InvestmentAccountViewModel) => void;
   onAdjustBalance: (account: InvestmentAccountViewModel) => void;
   onLiquidityChange: (account: InvestmentAccountViewModel, nextValue: boolean) => void;
   onArchive: (account: InvestmentAccountViewModel) => void;
@@ -54,6 +56,8 @@ export function InvestmentsAccountsSection({
   onViewChange,
   onRetry,
   onEditAccount,
+  onDeposit,
+  onWithdraw,
   onAdjustBalance,
   onLiquidityChange,
   onArchive,
@@ -160,6 +164,8 @@ export function InvestmentsAccountsSection({
               isLiquidityLoading={isLiquidityLoading(account.id)}
               isArchiveLoading={isArchiveLoading(account.id)}
               onEdit={() => onEditAccount(account)}
+              onDeposit={() => onDeposit(account)}
+              onWithdraw={() => onWithdraw(account)}
               onAdjustBalance={() => onAdjustBalance(account)}
               onLiquidityChange={(nextValue) => onLiquidityChange(account, nextValue)}
               onArchive={() => onArchive(account)}

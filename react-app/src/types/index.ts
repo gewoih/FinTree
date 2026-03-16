@@ -59,8 +59,6 @@ export interface AccountDto {
   isLiquid: boolean;
   isArchived: boolean;
   isMain: boolean;
-  balance: number;
-  balanceInBaseCurrency: number;
   currency?: Currency | null;
 }
 
@@ -87,13 +85,6 @@ export interface AccountFormPayload {
 export interface UpdateAccountPayload {
   id: string;
   name: string;
-}
-
-export interface AccountBalanceAdjustmentDto {
-  id: string;
-  accountId: string;
-  amount: number;
-  occurredAt: string;
 }
 
 // ━━━ CATEGORIES ━━━
@@ -150,16 +141,12 @@ export interface TransactionDto {
   occurredAt: string;
   description: string | null;
   isMandatory: boolean;
-  isTransfer?: boolean;
-  transferId?: string | null;
 }
 
 export interface Transaction extends Omit<TransactionDto, 'type'> {
   type: TransactionType;
   account?: Account;
   category?: Category | null;
-  isTransfer?: boolean;
-  transferId?: string | null;
 }
 
 export interface TransactionsQuery {
@@ -190,29 +177,6 @@ export interface UpdateTransactionPayload {
   occurredAt: string;
   description: string | null;
   isMandatory: boolean;
-}
-
-// ━━━ TRANSFERS ━━━
-
-export interface CreateTransferPayload {
-  fromAccountId: string;
-  toAccountId: string;
-  fromAmount: number;
-  toAmount: number;
-  occurredAt: string;
-  feeAmount?: number | null;
-  description?: string | null;
-}
-
-export interface UpdateTransferPayload {
-  transferId: string;
-  fromAccountId: string;
-  toAccountId: string;
-  fromAmount: number;
-  toAmount: number;
-  occurredAt: string;
-  feeAmount?: number | null;
-  description?: string | null;
 }
 
 // ━━━ USER & AUTH ━━━

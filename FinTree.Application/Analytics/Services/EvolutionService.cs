@@ -5,6 +5,7 @@ using FinTree.Application.Analytics.Shared;
 using FinTree.Application.Currencies;
 using FinTree.Application.Transactions;
 using FinTree.Application.Users;
+using FinTree.Domain.Accounts;
 using FinTree.Domain.Transactions;
 
 namespace FinTree.Application.Analytics.Services;
@@ -26,10 +27,16 @@ public sealed class EvolutionService(
             .AddMonths(-(windowMonths - 1));
         var liquidityWindowStart = windowStart.AddDays(-180);
 
-        var accountSnapshots = await accountsService.GetAccountSnapshotsAsync(includeArchived: false, ct);
+        var investmentTypes = new[] { AccountType.Crypto, AccountType.Brokerage, AccountType.Deposit };
+
+        var accountSnapshots = await accountsService.GetAccountSnapshotsAsync(
+            includeArchived: false,
+            types: investmentTypes,
+            ct);
         var accountIds = accountSnapshots
             .Select(a => a.Id)
             .ToArray();
+        var investmentAccountIds = accountIds.ToHashSet();
         var accountCreatedAtById = accountSnapshots
             .ToDictionary(a => a.Id, a => a.CreatedAtUtc);
 
@@ -38,11 +45,12 @@ public sealed class EvolutionService(
         var transactionSnapshots = await transactionsService.GetTransactionSnapshotsAsync(ct: ct);
 
         var windowTransactions = transactionSnapshots
-            .Where(t => !t.IsTransfer && t.OccurredAtUtc >= windowStart)
+            .Where(t => !t.IsTransfer && !investmentAccountIds.Contains(t.AccountId) && t.OccurredAtUtc >= windowStart)
             .ToList();
-        
+
         var liquidityExpenseTransactions = transactionSnapshots
             .Where(t => !t.IsTransfer &&
+                        !investmentAccountIds.Contains(t.AccountId) &&
                         t.Type == TransactionType.Expense &&
                         t.OccurredAtUtc >= liquidityWindowStart)
             .ToList();

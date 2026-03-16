@@ -36,6 +36,7 @@ public sealed class DashboardService(
             fromUtc: deltaWindowStartUtc,
             toUtc: monthEndUtc,
             excludeTransfers: true,
+            excludeInvestmentAccounts: true,
             ct: ct);
 
         var rateByCurrencyAndDay = await currencyConverter.GetCrossRatesAsync(

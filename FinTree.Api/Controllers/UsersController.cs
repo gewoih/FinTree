@@ -1,5 +1,6 @@
 using FinTree.Application.Accounts;
 using FinTree.Application.Users;
+using FinTree.Domain.Accounts;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
@@ -18,9 +19,12 @@ public class UsersController(AccountsService accountsService, UserService userSe
     }
     
     [HttpGet("accounts")]
-    public async Task<IActionResult> Get([FromQuery] bool archived = false, CancellationToken ct = default)
+    public async Task<IActionResult> Get(
+        [FromQuery] bool archived = false,
+        [FromQuery] AccountType[]? types = null,
+        CancellationToken ct = default)
     {
-        var accounts = await accountsService.GetAccounts(archived, ct);
+        var accounts = await accountsService.GetAccounts(archived, ct, types);
         return Ok(accounts);
     }
 
