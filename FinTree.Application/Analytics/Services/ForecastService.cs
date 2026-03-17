@@ -144,15 +144,12 @@ public class ForecastService(
         var actual = new List<decimal?>(daysInMonth);
 
         var cumulative = 0m;
-        var observedCumulative = 0m;
         for (var day = 1; day <= daysInMonth; day++)
         {
             days.Add(day);
             var dateKey = new DateOnly(year, month, day);
             var dayAmount = dailyTotals.GetValueOrDefault(dateKey, 0m);
             cumulative += dayAmount;
-            if (day <= observedDays)
-                observedCumulative = cumulative;
 
             if (isCurrentMonth && day > observedDays)
                 actual.Add(null);

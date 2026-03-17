@@ -18,7 +18,7 @@ public sealed class FreedomCalculatorService(
         return new FreedomCalculatorDefaultsDto(capital, monthlyExpenses);
     }
 
-    public Task<FreedomCalculatorResultDto> CalculateAsync(FreedomCalculatorRequestDto request, CancellationToken ct)
+    public static Task<FreedomCalculatorResultDto> CalculateAsync(FreedomCalculatorRequestDto request, CancellationToken ct)
     {
         var annualPassiveIncome = request.Capital * (request.SwrPercent / 100m);
 

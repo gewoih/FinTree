@@ -16,7 +16,6 @@ namespace FinTree.Infrastructure.Database;
 
 public sealed class AppDbContext(DbContextOptions<AppDbContext> options) : IdentityDbContext<User, Role, Guid>(options), IAppDbContext
 {
-    public DbSet<User> Users => Set<User>();
     public DbSet<RefreshToken> RefreshTokens => Set<RefreshToken>();
     public DbSet<SubscriptionPayment> SubscriptionPayments => Set<SubscriptionPayment>();
     public DbSet<TransactionCategory> TransactionCategories => Set<TransactionCategory>();

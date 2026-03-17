@@ -8,8 +8,7 @@ namespace FinTree.Application.Goals.Services;
 public sealed class GoalSimulationService(
     CashflowAverageService cashflowAverageService,
     NetWorthService netWorthService,
-    UserService userService,
-    BootstrapSamplerService bootstrapSamplerService)
+    UserService userService)
 {
     private static readonly CultureInfo RuCulture = CultureInfo.GetCultureInfo("ru-RU");
 

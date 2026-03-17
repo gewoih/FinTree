@@ -26,20 +26,6 @@ public sealed class BootstrapSamplerService
         return cdf;
     }
 
-    public static decimal SampleFromPool(IReadOnlyList<decimal> pool, double[] cdf, Random rng)
-    {
-        if (pool.Count == 0)
-            return 0m;
-
-        var randomValue = rng.NextDouble();
-        var index = Array.BinarySearch(cdf, randomValue);
-
-        if (index < 0)
-            index = ~index;
-
-        return pool[Math.Clamp(index, 0, pool.Count - 1)];
-    }
-
     public static int BuildDeterministicSeed(int baseSeed, IEnumerable<long> parts)
     {
         return parts.Aggregate(baseSeed, HashCode.Combine);

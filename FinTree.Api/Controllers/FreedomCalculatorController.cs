@@ -20,7 +20,7 @@ public sealed class FreedomCalculatorController(FreedomCalculatorService calcula
     [HttpPost("calculate")]
     public async Task<IActionResult> Calculate([FromBody] FreedomCalculatorRequestDto dto, CancellationToken ct)
     {
-        var result = await calculatorService.CalculateAsync(dto, ct);
+        var result = await FreedomCalculatorService.CalculateAsync(dto, ct);
         return Ok(result);
     }
 }
