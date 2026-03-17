@@ -170,15 +170,9 @@ export function TransactionList({
                   const metaText = [row.accountName, row.transaction.description?.trim()]
                     .filter(Boolean)
                     .join(' · ');
-                  const originalAmountLabel =
-                    row.transaction.originalAmount != null &&
-                    row.transaction.originalCurrencyCode &&
-                    (row.transaction.originalCurrencyCode !== row.currencyCode ||
-                      row.transaction.originalAmount !== row.amount)
-                      ? formatCurrency(
-                          Math.abs(row.transaction.originalAmount),
-                          row.transaction.originalCurrencyCode,
-                        )
+                  const accountAmountLabel =
+                    row.currencyCode !== baseCurrencyCode
+                      ? formatCurrency(Math.abs(row.amount), row.currencyCode)
                       : null;
                   const rowAriaLabel = `Открыть транзакцию ${row.categoryName}`;
 
@@ -225,11 +219,16 @@ export function TransactionList({
                           )}
                         >
                           {row.tone === 'Income' ? '+' : '−'}
-                          {formatCurrency(row.amount, row.currencyCode)}
+                          {formatCurrency(
+                            Math.abs(row.transaction.amountInBaseCurrency ?? row.amount),
+                            row.transaction.amountInBaseCurrency != null
+                              ? baseCurrencyCode
+                              : row.currencyCode,
+                          )}
                         </div>
-                        {originalAmountLabel ? (
+                        {accountAmountLabel ? (
                           <div className="text-xs text-muted-foreground [font-variant-numeric:tabular-nums]">
-                            {originalAmountLabel}
+                            {accountAmountLabel}
                           </div>
                         ) : null}
                       </div>
