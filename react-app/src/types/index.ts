@@ -339,15 +339,15 @@ export interface SpendingBreakdownDto {
 export interface ForecastSummaryDto {
   optimisticTotal: number | null;
   riskTotal: number | null;
+  medianTotal: number | null;
   currentSpent: number | null;
   baselineLimit: number | null;
+  availableAmount: number | null;
 }
 
 export interface ForecastSeriesDto {
   days: number[];
   actual: Array<number | null>;
-  optimistic: Array<number | null>;
-  risk: Array<number | null>;
   baseline: number | null;
 }
 

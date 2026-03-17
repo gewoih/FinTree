@@ -171,6 +171,14 @@ public sealed class DashboardService(
         var forecast = await forecastService.BuildForecastAsync(
             year, month, monthlyResult.DailyTotals.ToDictionary(), baseCurrencyCode, ct);
 
+        // Only meaningful when income is tracked; null suppresses the callout on the frontend.
+        var availableAmount = monthlyResult.TotalIncome > 0 && forecast.Summary.MedianTotal.HasValue
+            ? MathService.Round2(monthlyResult.TotalIncome - forecast.Summary.MedianTotal.Value)
+            : (decimal?)null;
+
+        var updatedSummary = forecast.Summary with { AvailableAmount = availableAmount };
+        forecast = forecast with { Summary = updatedSummary };
+
         var spending = await spendingBreakdownService.BuildAsync(year, month, baseCurrencyCode, ct);
 
         return new AnalyticsDashboardDto(

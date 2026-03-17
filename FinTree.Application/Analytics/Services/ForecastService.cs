@@ -84,8 +84,7 @@ public class ForecastService(
 
         decimal? optimisticTotal = null;
         decimal? riskTotal = null;
-        decimal? optimisticDaily = null;
-        decimal? riskDaily = null;
+        decimal? medianTotal = null;
 
         // On the last day of the current month today is still in progress, so treat it as 1 remaining day.
         var remainingDays = isCurrentMonth && nowUtc.Day == daysInMonth
@@ -137,16 +136,12 @@ public class ForecastService(
 
             Array.Sort(simTotals);
             optimisticTotal = simTotals[3_500]; // P35
+            medianTotal = simTotals[6_000]; // P60
             riskTotal = simTotals[8_500]; // P85
-
-            optimisticDaily = (optimisticTotal.Value - observedCumulativeActual) / remainingDays;
-            riskDaily = (riskTotal.Value - observedCumulativeActual) / remainingDays;
         }
 
         var days = new List<int>(daysInMonth);
         var actual = new List<decimal?>(daysInMonth);
-        var optimistic = new List<decimal?>(daysInMonth);
-        var risk = new List<decimal?>(daysInMonth);
 
         var cumulative = 0m;
         var observedCumulative = 0m;
@@ -163,17 +158,6 @@ public class ForecastService(
                 actual.Add(null);
             else
                 actual.Add(MathService.Round2(cumulative));
-
-            optimistic.Add(BuildForecastScenarioPoint(
-                optimisticDaily,
-                isCurrentMonth,
-                day,
-                observedDays,
-                cumulative,
-                observedCumulative));
-
-            risk.Add(BuildForecastScenarioPoint(riskDaily, isCurrentMonth, day, observedDays, cumulative,
-                observedCumulative));
         }
 
         var currentSpent = isCurrentMonth
@@ -187,22 +171,8 @@ public class ForecastService(
             ? baselineDailyRate * GoalSimulationDefaults.AverageDaysInMonth
             : (decimal?)null;
 
-        var summary = new ForecastSummaryDto(optimisticTotal, riskTotal, currentSpent, baselineLimit);
-        var series = new ForecastSeriesDto(days, actual, optimistic, risk, baselineLimit);
+        var summary = new ForecastSummaryDto(optimisticTotal, riskTotal, medianTotal, currentSpent, baselineLimit, AvailableAmount: null);
+        var series = new ForecastSeriesDto(days, actual, baselineLimit);
         return new ForecastDto(summary, series);
-    }
-
-    private static decimal? BuildForecastScenarioPoint(decimal? projectedDaily, bool isCurrentMonth, int day,
-        int observedDays, decimal cumulativeActual, decimal observedCumulativeActual)
-    {
-        if (!projectedDaily.HasValue)
-            return null;
-
-        if (!isCurrentMonth)
-            return projectedDaily.Value * day;
-
-        return day <= observedDays
-            ? cumulativeActual
-            : observedCumulativeActual + projectedDaily.Value * (day - observedDays);
     }
 }

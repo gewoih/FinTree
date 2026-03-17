@@ -9,7 +9,7 @@ import {
   XAxis,
   YAxis,
 } from 'recharts';
-import { ArrowDown, ArrowUp, Info } from 'lucide-react';
+import { AlertTriangle, ArrowDown, ArrowUp, CheckCircle2, Info } from 'lucide-react';
 
 import { Skeleton } from '@/components/ui/skeleton';
 import type { ForecastDto } from '@/types';
@@ -45,8 +45,7 @@ interface ChartDataPoint {
   actual: number | null;
   corridorBase: number | null;
   corridorBand: number | null;
-  optimistic: number | null;
-  risk: number | null;
+  medianForecast: number | null;
 }
 
 function hasActualData(forecast: ForecastDto): boolean {
@@ -54,22 +53,49 @@ function hasActualData(forecast: ForecastDto): boolean {
 }
 
 function buildChartData(forecast: ForecastDto, showCorridor: boolean): ChartDataPoint[] {
-  const { days, actual, optimistic, risk } = forecast.series;
+  const { days, actual } = forecast.series;
+  const { optimisticTotal, riskTotal, medianTotal } = forecast.summary;
+
+  let lastActualIndex = -1;
+  for (let i = actual.length - 1; i >= 0; i--) {
+    if (actual[i] !== null) { lastActualIndex = i; break; }
+  }
+  const lastDay = days[days.length - 1];
+  const observedDay = lastActualIndex >= 0 ? days[lastActualIndex] : null;
+  const observedActual = lastActualIndex >= 0 ? actual[lastActualIndex] : null;
 
   return days.map((day, index) => {
-    const optimisticValue = showCorridor ? (optimistic[index] ?? null) : null;
-    const riskValue = showCorridor ? (risk[index] ?? null) : null;
+    let corridorBase: number | null = null;
+    let corridorBand: number | null = null;
+    let medianForecast: number | null = null;
+
+    if (
+      showCorridor &&
+      observedDay !== null &&
+      observedActual !== null &&
+      day >= observedDay &&
+      lastDay > observedDay
+    ) {
+      const t = (day - observedDay) / (lastDay - observedDay);
+
+      if (optimisticTotal !== null) {
+        corridorBase = observedActual + t * (optimisticTotal - observedActual);
+      }
+      if (optimisticTotal !== null && riskTotal !== null) {
+        const riskPoint = observedActual + t * (riskTotal - observedActual);
+        corridorBand = Math.max(0, riskPoint - corridorBase!);
+      }
+      if (medianTotal !== null) {
+        medianForecast = observedActual + t * (medianTotal - observedActual);
+      }
+    }
 
     return {
       day,
       actual: actual[index] ?? null,
-      corridorBase: optimisticValue,
-      corridorBand:
-        optimisticValue !== null && riskValue !== null
-          ? Math.max(0, riskValue - optimisticValue)
-          : null,
-      optimistic: optimisticValue,
-      risk: riskValue,
+      corridorBase,
+      corridorBand,
+      medianForecast,
     };
   });
 }
@@ -93,16 +119,26 @@ function formatYAxisTick(value: number, currency: string): string {
   return formatAnalyticsMetaMoney(value, currency);
 }
 
+function getChartMin(forecast: ForecastDto): number {
+  const values = forecast.series.actual.filter((v): v is number => v !== null);
+  if (values.length === 0) return 0;
+  const minValue = Math.min(...values);
+  if (minValue <= 0) return 0;
+  // Floor to the nearest step below 88% of the min value
+  const floored = minValue * 0.88;
+  if (floored <= 50_000) return Math.floor(floored / 5_000) * 5_000;
+  if (floored <= 150_000) return Math.floor(floored / 10_000) * 10_000;
+  return Math.floor(floored / 25_000) * 25_000;
+}
+
 function getChartMax(forecast: ForecastDto, showCorridor: boolean): number | undefined {
   const values = [
     ...forecast.series.actual.filter((value): value is number => value !== null),
   ];
 
   if (showCorridor) {
-    values.push(
-      ...forecast.series.optimistic.filter((value): value is number => value !== null),
-      ...forecast.series.risk.filter((value): value is number => value !== null),
-    );
+    if (forecast.summary.optimisticTotal !== null) values.push(forecast.summary.optimisticTotal);
+    if (forecast.summary.riskTotal !== null) values.push(forecast.summary.riskTotal);
   }
 
   if (forecast.series.baseline !== null) {
@@ -118,10 +154,10 @@ function getChartMax(forecast: ForecastDto, showCorridor: boolean): number | und
     return undefined;
   }
 
-  const padded = maxValue * 1.12;
+  const padded = maxValue * 1.05;
   if (padded <= 50_000) return Math.ceil(padded / 5_000) * 5_000;
   if (padded <= 150_000) return Math.ceil(padded / 10_000) * 10_000;
-  return Math.ceil(padded / 25_000) * 25_000;
+  return Math.ceil(padded / 10_000) * 10_000;
 }
 
 function buildBaselineNote(
@@ -129,10 +165,10 @@ function buildBaselineNote(
   currency: string,
   showForecastCorridor: boolean,
 ) {
-  const { optimisticTotal, riskTotal, baselineLimit, currentSpent } = forecast.summary;
+  const { baselineLimit, currentSpent } = forecast.summary;
   const comparisonTarget =
-    showForecastCorridor && optimisticTotal !== null && riskTotal !== null
-      ? (optimisticTotal + riskTotal) / 2
+    showForecastCorridor && forecast.summary.medianTotal !== null
+      ? forecast.summary.medianTotal
       : currentSpent;
 
   if (baselineLimit === null || comparisonTarget === null || baselineLimit <= 0) {
@@ -179,18 +215,27 @@ function ForecastTooltip({
         </p>
       )}
 
+      {showCorridor && point.medianForecast !== null && (
+        <p className="tabular-nums">
+          Медиана:{' '}
+          <span className="font-semibold">{formatAnalyticsMetaMoney(point.medianForecast, currency)}</span>
+        </p>
+      )}
+
       {showCorridor &&
-        point.optimistic !== null &&
-        point.risk !== null &&
-        point.risk !== point.optimistic && (
+        point.corridorBase !== null &&
+        point.corridorBand !== null &&
+        point.corridorBand > 0 && (
           <>
             <p className="tabular-nums">
               Нижняя граница:{' '}
-              <span className="font-semibold">{formatAnalyticsMetaMoney(point.optimistic, currency)}</span>
+              <span className="font-semibold">{formatAnalyticsMetaMoney(point.corridorBase, currency)}</span>
             </p>
             <p className="tabular-nums">
               Верхняя граница:{' '}
-              <span className="font-semibold">{formatAnalyticsMetaMoney(point.risk, currency)}</span>
+              <span className="font-semibold">
+                {formatAnalyticsMetaMoney(point.corridorBase + point.corridorBand, currency)}
+              </span>
             </p>
           </>
         )}
@@ -220,16 +265,29 @@ function ChartLegend({
       </span>
 
       {showCorridor && (
-        <span className="flex items-center gap-2">
-          <span
-            className="inline-block h-3 w-7 rounded-md border"
-            style={{
-              borderColor: 'var(--ft-success-400)',
-              backgroundColor: 'color-mix(in srgb, var(--ft-success-500) 14%, transparent)',
-            }}
-          />
-          Коридор прогноза
-        </span>
+        <>
+          <span className="flex items-center gap-2">
+            <span
+              className="inline-block h-0.5 w-7 rounded border-t-2"
+              style={{
+                borderStyle: 'dashed',
+                borderColor: 'var(--ft-chart-1)',
+                background: 'none',
+              }}
+            />
+            Медианный прогноз
+          </span>
+          <span className="flex items-center gap-2">
+            <span
+              className="inline-block h-3 w-7 rounded-md border"
+              style={{
+                borderColor: 'var(--ft-success-400)',
+                backgroundColor: 'color-mix(in srgb, var(--ft-success-500) 14%, transparent)',
+              }}
+            />
+            Коридор прогноза
+          </span>
+        </>
       )}
 
       {hasBaseline && (
@@ -342,19 +400,28 @@ export function ForecastCard({
   const showForecastCorridor =
     isCurrentMonth &&
     forecast.summary.optimisticTotal !== null &&
-    forecast.summary.riskTotal !== null;
+    forecast.summary.riskTotal !== null &&
+    forecast.summary.medianTotal !== null;
   const data = buildChartData(forecast, showForecastCorridor);
   const baseline = forecast.series.baseline;
   const xTicks = buildXAxisTicks(forecast.series.days);
+  const yMin = getChartMin(forecast);
   const yMax = getChartMax(forecast, showForecastCorridor);
   const heroLabel = showForecastCorridor ? 'До конца месяца' : 'Итог за месяц';
   const heroValue = showForecastCorridor
-    ? formatAnalyticsMoneyRange(
-        forecast.summary.optimisticTotal,
-        forecast.summary.riskTotal,
-        currency,
-      )
+    ? formatAnalyticsHeroMoney(forecast.summary.medianTotal, currency)
     : formatAnalyticsHeroMoney(forecast.summary.currentSpent, currency);
+
+  const heroRange =
+    showForecastCorridor &&
+    forecast.summary.optimisticTotal !== null &&
+    forecast.summary.riskTotal !== null
+      ? formatAnalyticsMoneyRange(
+          forecast.summary.optimisticTotal,
+          forecast.summary.riskTotal,
+          currency,
+        )
+      : null;
   const baselineNote = buildBaselineNote(forecast, currency, showForecastCorridor);
   const baselineValueLabel =
     forecast.summary.baselineLimit !== null
@@ -375,12 +442,36 @@ export function ForecastCard({
 
         <div className="space-y-3">
           <p className="text-base text-[var(--ft-text-secondary)]">{heroLabel}</p>
-          <p
-            className="text-[var(--ft-chart-1)]"
-            style={analyticsHeroStyle}
-          >
+          <p className="text-[var(--ft-chart-1)]" style={analyticsHeroStyle}>
             {heroValue}
           </p>
+
+          {heroRange && (
+            <p className="text-sm text-[var(--ft-text-secondary)] tabular-nums">{heroRange}</p>
+          )}
+
+          {forecast.summary.availableAmount !== null && showForecastCorridor && (
+            <div
+              className="flex items-center gap-2 text-sm font-medium"
+              style={{
+                color:
+                  forecast.summary.availableAmount >= 0
+                    ? 'var(--ft-success-400)'
+                    : 'var(--ft-warning-400)',
+              }}
+            >
+              {forecast.summary.availableAmount >= 0 ? (
+                <CheckCircle2 className="size-4" aria-hidden="true" />
+              ) : (
+                <AlertTriangle className="size-4" aria-hidden="true" />
+              )}
+              <span>
+                {forecast.summary.availableAmount >= 0
+                  ? `Останется ~${formatAnalyticsMetaMoney(forecast.summary.availableAmount, currency)}`
+                  : `Перерасход ~${formatAnalyticsMetaMoney(Math.abs(forecast.summary.availableAmount), currency)}`}
+              </span>
+            </div>
+          )}
 
           {baselineNote && (
             <div className="flex flex-wrap items-center gap-x-4 gap-y-2 text-sm">
@@ -433,7 +524,7 @@ export function ForecastCard({
                 interval={0}
               />
               <YAxis
-                domain={yMax != null ? [0, yMax] : [0, 'auto']}
+                domain={yMax != null ? [yMin, yMax] : [yMin, 'auto']}
                 tickFormatter={(value: number) => formatYAxisTick(value, currency)}
                 tick={{ fontSize: 13, fill: 'var(--ft-text-secondary)' }}
                 tickLine={false}
@@ -487,6 +578,20 @@ export function ForecastCard({
                     isAnimationActive={false}
                   />
                 </>
+              )}
+
+              {showForecastCorridor && (
+                <Line
+                  type="monotone"
+                  dataKey="medianForecast"
+                  stroke="var(--ft-chart-1)"
+                  strokeWidth={2}
+                  strokeDasharray="5 4"
+                  dot={false}
+                  activeDot={false}
+                  connectNulls={false}
+                  isAnimationActive={false}
+                />
               )}
 
               <Line

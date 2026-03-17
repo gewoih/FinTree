@@ -109,10 +109,6 @@
   **Fix:** (1) Add progress bars to all 4 metrics. (2) Show a small inline benchmark label near the progress bar ("цель: ≥20%", "норма: 6+ мес", "хорошо: ≤25%"). (3) Invert progress bar direction for the discretionary metric (lower = better).
   **Files:** `react-app/src/components/analytics/HealthScoreCard.tsx`, `react-app/src/components/analytics/models.ts`
 
-- [ ] `FT-TODO-076` ForecastCard hero shows a wide range (e.g. 118k–179k ₽) as the primary number — too wide to be actionable for most users.
-  **Fix:** Show P50 (mid-point) as the hero number; move the range to secondary gray text. Also add an "available until end of month" callout = projected income − forecast spend. This belongs in ForecastCard since both values share the same forward-looking context.
-  **Files:** `react-app/src/components/analytics/ForecastCard.tsx`, `react-app/src/api/analytics.ts`
-
 - [ ] `FT-TODO-077` CategoryDeltaCard bars have `min-width: 10%` — small deltas appear as large as big ones, making visual comparison misleading. Rows could also be more compact.
   **Fix:** Remove `min-width` constraint, use proportional widths with a minimum of 2px for visibility. Reduce row padding to fit more categories without scrolling.
   **Files:** `react-app/src/components/analytics/CategoryDeltaCard.tsx`
