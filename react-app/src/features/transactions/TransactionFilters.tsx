@@ -158,6 +158,23 @@ function FiltersContent({
         </Select>
       </div>
 
+      <div className="space-y-1.5">
+        <div className="text-sm font-semibold text-muted-foreground">Тип</div>
+        <Button
+          type="button"
+          variant={value.isMandatory === false ? 'default' : 'outline'}
+          className="h-11 w-full rounded-xl"
+          onClick={() =>
+            onChange({
+              isMandatory: value.isMandatory === false ? undefined : false,
+              page: 1,
+            })
+          }
+        >
+          Необязательные
+        </Button>
+      </div>
+
       {hasFilters ? (
         <Button
           type="button"

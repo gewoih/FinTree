@@ -29,13 +29,14 @@ public sealed class DashboardService(
             .ToDictionary(c => c.Id, c => new CategoryMeta(c.Name, c.Color, c.IsMandatory));
 
         const int requiredExpenseDays = 7;
-        const int requiredStabilityDays = 4;
+        const int requiredStabilityDays = 1;
         var observedExpenseDays = await transactionsService.GetDistinctExpenseDaysCountAsync(ct);
 
         var transactions = await transactionsService.GetTransactionSnapshotsAsync(
             fromUtc: deltaWindowStartUtc,
             toUtc: monthEndUtc,
             excludeTransfers: true,
+            excludeInvestmentAccounts: true,
             ct: ct);
 
         var rateByCurrencyAndDay = await currencyConverter.GetCrossRatesAsync(
@@ -98,7 +99,7 @@ public sealed class DashboardService(
             ? (netCashflow - previousNetCashflow) / Math.Abs(previousNetCashflow) * 100
             : (decimal?)null;
 
-        var peaks = PeakDaysService.Calculate(monthlyResult.DailyTotalsDiscretionary, monthlyResult.TotalExpenses, daysInMonth);
+        var peaks = PeakDaysService.Calculate(monthlyResult.DailyTotalsDiscretionary, monthlyResult.DiscretionaryTotal, daysInMonth);
 
         var priorMonthCount = Math.Max(monthlyResult.PriorMonthsWithData.Count, 1);
         var averagedPriorTotals = monthlyResult.PriorExpenseCategoryTotals
@@ -129,7 +130,7 @@ public sealed class DashboardService(
         var previousMonthDaysCount = DateTime.DaysInMonth(previousMonthStartUtc.Year, previousMonthStartUtc.Month);
         var previousMonthPeaks = PeakDaysService.Calculate(
             monthlyResult.PreviousMonthDailyTotalsDiscretionary,
-            monthlyResult.PreviousMonthExpenses,
+            monthlyResult.PreviousMonthDiscretionaryTotal,
             previousMonthDaysCount);
         var previousLiquidity = await liquidityService.ComputeLiquidity(baseCurrencyCode, monthStartUtc, ct);
         var previousTotalMonthScore = MonthlyScoreService.CalculateTotalMonthScore(
@@ -153,6 +154,7 @@ public sealed class DashboardService(
             StabilityScore: (int?)stability?.Score,
             StabilityStatus: stability?.Status,
             StabilityActionCode: stability?.ActionCode,
+            StabilityIsPreview: stability?.IsPreview ?? false,
             SavingsRate: savingsRate,
             NetCashflow: MathService.Round2(netCashflow),
             DiscretionaryTotal: MathService.Round2(monthlyResult.DiscretionaryTotal),
@@ -168,6 +170,14 @@ public sealed class DashboardService(
 
         var forecast = await forecastService.BuildForecastAsync(
             year, month, monthlyResult.DailyTotals.ToDictionary(), baseCurrencyCode, ct);
+
+        // Only meaningful when income is tracked; null suppresses the callout on the frontend.
+        var availableAmount = monthlyResult.TotalIncome > 0 && forecast.Summary.MedianTotal.HasValue
+            ? MathService.Round2(monthlyResult.TotalIncome - forecast.Summary.MedianTotal.Value)
+            : (decimal?)null;
+
+        var updatedSummary = forecast.Summary with { AvailableAmount = availableAmount };
+        forecast = forecast with { Summary = updatedSummary };
 
         var spending = await spendingBreakdownService.BuildAsync(year, month, baseCurrencyCode, ct);
 

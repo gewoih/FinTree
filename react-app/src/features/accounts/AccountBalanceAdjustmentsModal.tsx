@@ -19,7 +19,7 @@ import { Input } from '@/components/ui/input';
 import { toast } from 'sonner';
 import { resolveApiErrorMessage } from '@/utils/errors';
 import { formatCurrency } from '@/utils/format';
-import type { ManagedAccount } from './accountModels';
+import type { InvestmentAccountViewModel } from '@/features/investments/investmentModels';
 
 const balanceAdjustmentSchema = z.object({
   newBalance: z
@@ -33,7 +33,7 @@ type BalanceAdjustmentFormValues = z.infer<typeof balanceAdjustmentSchema>;
 
 interface AccountBalanceAdjustmentsModalProps {
   open: boolean;
-  account: ManagedAccount | null;
+  account: InvestmentAccountViewModel | null;
   readonly?: boolean;
   onClose: () => void;
   onSuccess?: () => void | Promise<void>;
@@ -79,9 +79,6 @@ export function AccountBalanceAdjustmentsModal({
         Number(values.newBalance)
       );
       await queryClient.invalidateQueries({ queryKey: queryKeys.accounts.all() });
-      await queryClient.invalidateQueries({
-        queryKey: queryKeys.accounts.adjustments(account.id),
-      });
       await onSuccess?.();
       toast.success('Баланс скорректирован');
       onClose();

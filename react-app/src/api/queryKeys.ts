@@ -11,8 +11,6 @@ export const queryKeys = {
     active: () => [...queryKeys.accounts.lists(), 'active'] as const,
     archived: () => [...queryKeys.accounts.lists(), 'archived'] as const,
     detail: (id: string) => [...queryKeys.accounts.all(), 'detail', id] as const,
-    adjustments: (accountId: string) =>
-      [...queryKeys.accounts.detail(accountId), 'adjustments'] as const,
   },
 
   // Transactions
@@ -78,7 +76,10 @@ export const queryKeys = {
   // Investments
   investments: {
     all: () => ['investments'] as const,
-    overview: () => [...queryKeys.investments.all(), 'overview'] as const,
+    overview: (archived = false) =>
+      [...queryKeys.investments.all(), 'overview', { archived }] as const,
+    accounts: (archived = false) =>
+      [...queryKeys.investments.all(), 'accounts', { archived }] as const,
   },
 
   // Admin

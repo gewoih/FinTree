@@ -15,6 +15,8 @@ interface InvestmentAccountCardProps {
   isLiquidityLoading?: boolean;
   isArchiveLoading?: boolean;
   onEdit: () => void;
+  onDeposit: () => void;
+  onWithdraw: () => void;
   onAdjustBalance: () => void;
   onLiquidityChange: (nextValue: boolean) => void;
   onArchive: () => void;
@@ -29,20 +31,22 @@ export function InvestmentAccountCard({
   isLiquidityLoading = false,
   isArchiveLoading = false,
   onEdit,
+  onDeposit,
+  onWithdraw,
   onAdjustBalance,
   onLiquidityChange,
   onArchive,
   onUnarchive,
 }: InvestmentAccountCardProps) {
   const showSecondaryBalance = account.currencyCode !== baseCurrencyCode;
-  const returnTone =
-    account.returnPercent == null
-      ? 'text-muted-foreground'
-      : account.returnPercent > 0
-        ? 'text-[var(--ft-success-400)]'
-        : account.returnPercent < 0
-          ? 'text-[var(--ft-danger-400)]'
-          : 'text-muted-foreground';
+  let returnTone = 'text-muted-foreground';
+  if (account.returnPercent != null) {
+    if (account.returnPercent > 0) {
+      returnTone = 'text-[var(--ft-success-400)]';
+    } else if (account.returnPercent < 0) {
+      returnTone = 'text-[var(--ft-danger-400)]';
+    }
+  }
 
   return (
     <article
@@ -104,6 +108,8 @@ export function InvestmentAccountCard({
           isArchived={account.isArchived}
           isLiquidityLoading={isLiquidityLoading}
           isArchiveLoading={isArchiveLoading}
+          onDeposit={onDeposit}
+          onWithdraw={onWithdraw}
           onAdjustBalance={onAdjustBalance}
           onRename={onEdit}
           onToggleLiquidity={() => onLiquidityChange(!account.isLiquid)}

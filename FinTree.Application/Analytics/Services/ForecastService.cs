@@ -25,7 +25,8 @@ public class ForecastService(
 
         var forecastStart = lastDate.AddDays(-GoalSimulationDefaults.HistoryWindowDays);
 
-        var forecastTransactions = await transactionsService.GetTransactionSnapshotsAsync(forecastStart, lastDate, true,
+        var forecastTransactions = await transactionsService.GetTransactionSnapshotsAsync(forecastStart, lastDate,
+            excludeTransfers: true, excludeInvestmentAccounts: true,
             type: TransactionType.Expense, ct: ct);
 
         var rateByCurrencyAndDay = await currencyConverter.GetCrossRatesAsync(
@@ -83,8 +84,7 @@ public class ForecastService(
 
         decimal? optimisticTotal = null;
         decimal? riskTotal = null;
-        decimal? optimisticDaily = null;
-        decimal? riskDaily = null;
+        decimal? medianTotal = null;
 
         // On the last day of the current month today is still in progress, so treat it as 1 remaining day.
         var remainingDays = isCurrentMonth && nowUtc.Day == daysInMonth
@@ -93,6 +93,11 @@ public class ForecastService(
 
         if (remainingDays > 0 && pool.Length >= 10)
         {
+            var winsorizedPool = BootstrapSamplerService.Winsorize(
+                pool,
+                GoalSimulationDefaults.ExpenseWinsorizeLowerQuantile,
+                GoalSimulationDefaults.ExpenseWinsorizeUpperQuantile);
+
             var simTotals = new decimal[BootstrapingSimulationsCount];
             var seedParts = new List<long>
             {
@@ -108,30 +113,35 @@ public class ForecastService(
                 GoalSimulationDefaults.ForecastDeterministicSeedBase,
                 seedParts);
 
-            var cdf = BootstrapSamplerService.BuildRecencyCdf(pool.Length, GoalSimulationDefaults.ForecastRecencyLambda);
+            var blockStartCount = BootstrapSamplerService.GetBlockStartCount(
+                winsorizedPool.Length,
+                GoalSimulationDefaults.BootstrapBlockDays);
+            var cdf = BootstrapSamplerService.BuildRecencyCdf(blockStartCount, GoalSimulationDefaults.ForecastRecencyLambda);
             var rng = new Random(seed);
 
             for (var s = 0; s < BootstrapingSimulationsCount; s++)
             {
                 var total = observedCumulativeActual;
-                for (var r = 0; r < remainingDays; r++)
-                    total += BootstrapSamplerService.SampleFromPool(pool, cdf, rng);
+                var r = 0;
+                while (r < remainingDays)
+                {
+                    var blockStart = BootstrapSamplerService.SampleBlockStartIndex(
+                        winsorizedPool.Length, cdf, GoalSimulationDefaults.BootstrapBlockDays, rng);
+                    for (var b = 0; b < GoalSimulationDefaults.BootstrapBlockDays && r < remainingDays; b++, r++)
+                        total += winsorizedPool[Math.Min(blockStart + b, winsorizedPool.Length - 1)];
+                }
 
                 simTotals[s] = total;
             }
 
             Array.Sort(simTotals);
             optimisticTotal = simTotals[3_500]; // P35
+            medianTotal = simTotals[6_000]; // P60
             riskTotal = simTotals[8_500]; // P85
-
-            optimisticDaily = (optimisticTotal.Value - observedCumulativeActual) / remainingDays;
-            riskDaily = (riskTotal.Value - observedCumulativeActual) / remainingDays;
         }
 
         var days = new List<int>(daysInMonth);
         var actual = new List<decimal?>(daysInMonth);
-        var optimistic = new List<decimal?>(daysInMonth);
-        var risk = new List<decimal?>(daysInMonth);
 
         var cumulative = 0m;
         var observedCumulative = 0m;
@@ -148,17 +158,6 @@ public class ForecastService(
                 actual.Add(null);
             else
                 actual.Add(MathService.Round2(cumulative));
-
-            optimistic.Add(BuildForecastScenarioPoint(
-                optimisticDaily,
-                isCurrentMonth,
-                day,
-                observedDays,
-                cumulative,
-                observedCumulative));
-
-            risk.Add(BuildForecastScenarioPoint(riskDaily, isCurrentMonth, day, observedDays, cumulative,
-                observedCumulative));
         }
 
         var currentSpent = isCurrentMonth
@@ -172,22 +171,8 @@ public class ForecastService(
             ? baselineDailyRate * GoalSimulationDefaults.AverageDaysInMonth
             : (decimal?)null;
 
-        var summary = new ForecastSummaryDto(optimisticTotal, riskTotal, currentSpent, baselineLimit);
-        var series = new ForecastSeriesDto(days, actual, optimistic, risk, baselineLimit);
+        var summary = new ForecastSummaryDto(optimisticTotal, riskTotal, medianTotal, currentSpent, baselineLimit, AvailableAmount: null);
+        var series = new ForecastSeriesDto(days, actual, baselineLimit);
         return new ForecastDto(summary, series);
-    }
-
-    private static decimal? BuildForecastScenarioPoint(decimal? projectedDaily, bool isCurrentMonth, int day,
-        int observedDays, decimal cumulativeActual, decimal observedCumulativeActual)
-    {
-        if (!projectedDaily.HasValue)
-            return null;
-
-        if (!isCurrentMonth)
-            return projectedDaily.Value * day;
-
-        return day <= observedDays
-            ? cumulativeActual
-            : observedCumulativeActual + projectedDaily.Value * (day - observedDays);
     }
 }

@@ -44,6 +44,10 @@ export async function getTransactions(
     params.search = query.search;
   }
 
+  if (query.isMandatory != null) {
+    params.isMandatory = String(query.isMandatory);
+  }
+
   if (query.page) {
     params.page = query.page;
   }

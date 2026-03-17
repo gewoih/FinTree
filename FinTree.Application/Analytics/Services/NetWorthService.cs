@@ -4,6 +4,7 @@ using FinTree.Application.Analytics.Shared;
 using FinTree.Application.Currencies;
 using FinTree.Application.Transactions;
 using FinTree.Application.Users;
+using FinTree.Domain.Accounts;
 using FinTree.Domain.Transactions;
 using FinTree.Domain.ValueObjects;
 
@@ -28,7 +29,10 @@ public sealed class NetWorthService(
 
         var baseCurrencyCode = await userService.GetCurrentUserBaseCurrencyCodeAsync(ct);
 
-        var accounts = await accountsService.GetAccountSnapshotsAsync(includeArchived: true, ct);
+        var accounts = await accountsService.GetAccountSnapshotsAsync(
+            includeArchived: true,
+            types: [AccountType.Crypto, AccountType.Brokerage, AccountType.Deposit],
+            ct);
         if (accounts.Count == 0)
             return [];
 

@@ -1,4 +1,5 @@
 using FinTree.Application.Accounts;
+using FinTree.Domain.Transactions;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
@@ -10,6 +11,7 @@ namespace FinTree.Api.Controllers;
 public class AccountsController(AccountsService accountsService) : ControllerBase
 {
     public sealed record CreateBalanceAdjustmentRequest(decimal Amount);
+    public sealed record CreateInvestmentCashFlowRequest(TransactionType Type, decimal Amount, DateTime OccurredAt, string? Description = null);
     public sealed record UpdateLiquidityRequest(bool IsLiquid);
     public sealed record UpdateAccountRequest(string Name);
 
@@ -24,9 +26,10 @@ public class AccountsController(AccountsService accountsService) : ControllerBas
     public async Task<IActionResult> GetInvestmentsOverview(
         [FromQuery] DateTime? from,
         [FromQuery] DateTime? to,
+        [FromQuery] bool archived = false,
         CancellationToken ct = default)
     {
-        var data = await accountsService.GetInvestmentsOverviewAsync(from, to, ct);
+        var data = await accountsService.GetInvestmentsOverviewAsync(from, to, archived, ct);
         return Ok(data);
     }
 
@@ -44,6 +47,16 @@ public class AccountsController(AccountsService accountsService) : ControllerBas
     {
         var adjustmentId = await accountsService.CreateBalanceAdjustmentAsync(accountId, request.Amount, ct);
         return Ok(adjustmentId);
+    }
+
+    [HttpPost("{accountId:guid}/cash-flows")]
+    public async Task<IActionResult> CreateInvestmentCashFlow(Guid accountId,
+        [FromBody] CreateInvestmentCashFlowRequest request,
+        CancellationToken ct = default)
+    {
+        var transactionId = await accountsService.CreateInvestmentCashFlowAsync(
+            accountId, request.Type, request.Amount, request.OccurredAt, request.Description, ct);
+        return Ok(transactionId);
     }
 
     [HttpPatch("{accountId:guid}/liquidity")]

@@ -100,7 +100,3 @@
   **Fix:** Extract page-level query/mutation orchestration into feature hooks and move repeated form/date/summary sections into focused presentational components.
   **Priority:** P2
   **Files:** `react-app/src/pages/AccountsPage.tsx`, `react-app/src/pages/TransactionsPage.tsx`, `react-app/src/features/transactions/TransactionFormModal.tsx`, `react-app/src/features/transactions/TransactionList.tsx`
-
-- [ ] `FT-TODO-073` Third-party scripts are injected globally from `index.html` and runtime widget code without visible consent/CSP hardening (`Yandex Metrika`, Telegram widget). This increases privacy/security review surface and makes strict CSP adoption harder later.
-  **Fix:** Add an explicit loading policy for third-party scripts (consent gate or documented exception), centralize script injection, and document the CSP allowances required for production.
-  **Files:** `react-app/index.html`, `react-app/src/components/auth/TelegramAuthWidget.tsx`

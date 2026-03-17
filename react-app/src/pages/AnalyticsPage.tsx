@@ -19,7 +19,6 @@ import { SummaryStrip } from '@/components/analytics/SummaryStrip';
 import { GlobalMonthScoreCard } from '@/components/analytics/GlobalMonthScoreCard';
 import { HealthScoreCard } from '@/components/analytics/HealthScoreCard';
 import { SpendingPieCard } from '@/components/analytics/SpendingPieCard';
-import { SpendingBarsCard } from '@/components/analytics/SpendingBarsCard';
 import { PeakDaysCard } from '@/components/analytics/PeakDaysCard';
 import { CategoryDeltaCard } from '@/components/analytics/CategoryDeltaCard';
 import { ForecastCard } from '@/components/analytics/ForecastCard';
@@ -41,7 +40,6 @@ import type { PathValues } from '@/router/paths';
 type ActiveTab = 'now' | 'evolution';
 type CategoryDatasetMode = 'expenses' | 'income';
 type CategoryScope = 'all' | 'mandatory' | 'discretionary';
-type ExpenseGranularity = 'days' | 'weeks' | 'months';
 
 function startOfMonth(date: Date): Date {
   return new Date(date.getFullYear(), date.getMonth(), 1);
@@ -82,7 +80,6 @@ export default function AnalyticsPage() {
   const [activeTab, setActiveTab] = useState<ActiveTab>('now');
   const [pieMode, setPieMode] = useState<CategoryDatasetMode>('expenses');
   const [pieScope, setPieScope] = useState<CategoryScope>('all');
-  const [granularity, setGranularity] = useState<ExpenseGranularity>('days');
   const [dismissedRetrospectiveBannerKey, setDismissedRetrospectiveBannerKey] = useState<string | null>(null);
   const [categoriesStepDone] = useState(
     () => sessionStorage.getItem('ft_categories_visited') === 'true',
@@ -175,7 +172,7 @@ export default function AnalyticsPage() {
   }, []);
 
   const openTransactions = useCallback(
-    (search: Record<string, string>) => {
+    (search: Record<string, string | boolean>) => {
       void navigate({
         to: '/transactions' as PathValues,
         search: search as never,
@@ -203,6 +200,7 @@ export default function AnalyticsPage() {
       openTransactions({
         dateFrom: value,
         dateTo: value,
+        isMandatory: false,
       });
     },
     [openTransactions],
@@ -431,6 +429,18 @@ export default function AnalyticsPage() {
             error={dashboardError}
             model={globalScoreModel}
             onRetry={() => dashboardQuery.refetch()}
+            detailFooter={
+              <PeakDaysCard
+                loading={dashboardQuery.isLoading}
+                error={dashboardError}
+                peaks={data?.peakDays ?? []}
+                summary={data?.peaks ?? { count: 0, total: 0, sharePercent: null, monthTotal: null }}
+                currency={currency}
+                onRetry={() => dashboardQuery.refetch()}
+                onPeakSelect={handlePeakSelect}
+                isCompact
+              />
+            }
           >
             {healthCards.length > 0 && (
               <>
@@ -445,6 +455,8 @@ export default function AnalyticsPage() {
                     accent={card.accent}
                     tooltip={card.tooltip}
                     progress={card.progress}
+                    benchmarkLabel={card.benchmarkLabel}
+                    isPreview={card.isPreview}
                   />
               ))}
             </>
@@ -473,32 +485,6 @@ export default function AnalyticsPage() {
               onCategorySelect={handleCategorySelect}
               onRetry={() => dashboardQuery.refetch()}
             />
-            <SpendingBarsCard
-              loading={dashboardQuery.isLoading}
-              error={dashboardError}
-              spending={data?.spending ?? null}
-              currency={currency}
-              granularity={granularity}
-              granularityOptions={[
-                { label: 'День', value: 'days' },
-                { label: 'Неделя', value: 'weeks' },
-                { label: 'Месяц', value: 'months' },
-              ]}
-              onGranularityChange={(value) => startTransition(() => setGranularity(value))}
-              onRetry={() => dashboardQuery.refetch()}
-            />
-          </div>
-
-          <div className="grid grid-cols-1 gap-5 xl:grid-cols-2">
-            <PeakDaysCard
-              loading={dashboardQuery.isLoading}
-              error={dashboardError}
-              peaks={data?.peakDays ?? []}
-              summary={data?.peaks ?? { count: 0, total: 0, sharePercent: null, monthTotal: null }}
-              currency={currency}
-              onRetry={() => dashboardQuery.refetch()}
-              onPeakSelect={handlePeakSelect}
-            />
             <CategoryDeltaCard
               loading={dashboardQuery.isLoading}
               error={dashboardError}
@@ -525,7 +511,14 @@ export default function AnalyticsPage() {
         </div>
 
         <div hidden={activeTab !== 'evolution'}>
-          <EvolutionTab isActive={activeTab === 'evolution'} />
+          <EvolutionTab
+            isActive={activeTab === 'evolution'}
+            spending={data?.spending ?? null}
+            currency={currency}
+            dashboardLoading={dashboardQuery.isLoading}
+            dashboardError={dashboardError}
+            onDashboardRetry={() => dashboardQuery.refetch()}
+          />
         </div>
       </div>
     </ErrorBoundary>

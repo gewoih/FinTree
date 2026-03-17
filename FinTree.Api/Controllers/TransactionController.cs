@@ -17,11 +17,12 @@ public class TransactionController(TransactionsService transactionsService) : Co
         [FromQuery] DateOnly? from,
         [FromQuery] DateOnly? to,
         [FromQuery] string? search,
+        [FromQuery] bool? isMandatory,
         [FromQuery] int page = 1,
         [FromQuery] int size = 50,
         CancellationToken ct = default)
     {
-        var filter = new TxFilter(accountId, categoryId, from, to, search, page, size);
+        var filter = new TxFilter(accountId, categoryId, from, to, search, isMandatory, page, size);
         var transactions = await transactionsService.GetTransactionsAsync(filter, ct);
         return Ok(transactions);
     }
@@ -38,20 +39,6 @@ public class TransactionController(TransactionsService transactionsService) : Co
     {
         var transactionId = await transactionsService.CreateAsync(command, ct);
         return Ok(transactionId);
-    }
-
-    [HttpPost("transfer")]
-    public async Task<IActionResult> CreateTransfer([FromBody] CreateTransfer command, CancellationToken ct)
-    {
-        var transferId = await transactionsService.CreateTransferAsync(command, ct);
-        return Ok(transferId);
-    }
-
-    [HttpPatch("transfer")]
-    public async Task<IActionResult> UpdateTransfer([FromBody] UpdateTransfer command, CancellationToken ct)
-    {
-        await transactionsService.UpdateTransferAsync(command, ct);
-        return Ok();
     }
 
     [HttpPatch]
@@ -75,10 +62,4 @@ public class TransactionController(TransactionsService transactionsService) : Co
         return Ok();
     }
 
-    [HttpDelete("transfer")]
-    public async Task<IActionResult> DeleteTransfer([FromQuery] Guid transferId, CancellationToken ct)
-    {
-        await transactionsService.DeleteTransferAsync(transferId, ct);
-        return Ok();
-    }
 }

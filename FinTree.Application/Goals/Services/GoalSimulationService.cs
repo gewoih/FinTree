@@ -307,28 +307,7 @@ public sealed class GoalSimulationService(
     }
 
     private static decimal[] Winsorize(IReadOnlyList<decimal> values, double lowerQuantile, double upperQuantile)
-    {
-        if (values.Count == 0)
-            return [];
-
-        var sorted = values.ToArray();
-        Array.Sort(sorted);
-
-        var lowerIndex = (int)Math.Floor((sorted.Length - 1) * lowerQuantile);
-        var upperIndex = (int)Math.Ceiling((sorted.Length - 1) * upperQuantile);
-
-        lowerIndex = Math.Clamp(lowerIndex, 0, sorted.Length - 1);
-        upperIndex = Math.Clamp(upperIndex, lowerIndex, sorted.Length - 1);
-
-        var lower = sorted[lowerIndex];
-        var upper = sorted[upperIndex];
-
-        var winsorized = new decimal[values.Count];
-        for (var index = 0; index < values.Count; index++)
-            winsorized[index] = Math.Clamp(values[index], lower, upper);
-
-        return winsorized;
-    }
+        => BootstrapSamplerService.Winsorize(values, lowerQuantile, upperQuantile);
 
     private static bool HasLowVariance(
         IReadOnlyList<decimal> pool,
@@ -418,12 +397,7 @@ public sealed class GoalSimulationService(
     }
 
     private static int GetBlockStartCount(int poolCount, int blockDays)
-    {
-        if (poolCount <= 0 || blockDays <= 0)
-            return 0;
-
-        return Math.Max(1, poolCount - blockDays + 1);
-    }
+        => BootstrapSamplerService.GetBlockStartCount(poolCount, blockDays);
 
     private static decimal ComputeExpectedBlockDailyAmount(
         IReadOnlyList<decimal> pool,
@@ -570,23 +544,7 @@ public sealed class GoalSimulationService(
     }
 
     private static int SampleBlockStartIndex(int poolLength, double[] cdf, int blockDays, Random rng)
-    {
-        if (poolLength <= 0)
-            return 0;
-
-        var maxStartIndex = Math.Max(poolLength - blockDays, 0);
-        var startCount = maxStartIndex + 1;
-
-        var randomValue = rng.NextDouble();
-        var startIndex = cdf.Length == startCount
-            ? Array.BinarySearch(cdf, randomValue)
-            : (int)Math.Floor(randomValue * startCount);
-
-        if (startIndex < 0)
-            startIndex = ~startIndex;
-
-        return Math.Clamp(startIndex, 0, maxStartIndex);
-    }
+        => BootstrapSamplerService.SampleBlockStartIndex(poolLength, cdf, blockDays, rng);
 
     private static int[] BuildSortedSuccessDays(int[] hitDays, int count)
     {

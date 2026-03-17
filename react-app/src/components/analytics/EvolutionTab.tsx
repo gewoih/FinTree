@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { startTransition, useMemo, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import {
   Area,
@@ -21,6 +21,9 @@ import {
   AnalyticsState,
 } from './analyticsTheme';
 import { analyticsHeroStyle } from './analyticsTokens';
+import { SpendingBarsCard } from './SpendingBarsCard';
+import { type ExpenseGranularity } from './chartModels';
+import type { SpendingBreakdownDto } from '@/types';
 import {
   buildEvolutionViewModel,
   EVOLUTION_KPI_META,
@@ -34,6 +37,11 @@ import {
 
 interface EvolutionTabProps {
   isActive: boolean;
+  spending?: SpendingBreakdownDto | null;
+  currency?: string;
+  dashboardLoading?: boolean;
+  dashboardError?: string | null;
+  onDashboardRetry?: () => void;
 }
 
 const RANGE_OPTIONS: Array<{ label: string; value: EvolutionRange }> = [
@@ -347,8 +355,16 @@ function EvolutionDetailedTable({
   );
 }
 
-export function EvolutionTab({ isActive }: EvolutionTabProps) {
+export function EvolutionTab({
+  isActive,
+  spending,
+  currency = 'RUB',
+  dashboardLoading,
+  dashboardError,
+  onDashboardRetry,
+}: EvolutionTabProps) {
   const [selectedRange, setSelectedRange] = useState<EvolutionRange>(6);
+  const [granularity, setGranularity] = useState<ExpenseGranularity>('days');
 
   const evolutionQuery = useQuery({
     queryKey: queryKeys.analytics.evolution(selectedRange),
@@ -361,39 +377,70 @@ export function EvolutionTab({ isActive }: EvolutionTabProps) {
   const withData = months.filter((month) => month.hasData);
   const viewModel = useMemo(() => buildEvolutionViewModel(withData), [withData]);
 
+  const spendingBarsCard = (
+    <SpendingBarsCard
+      loading={dashboardLoading ?? false}
+      error={dashboardError ?? null}
+      spending={spending ?? null}
+      currency={currency}
+      granularity={granularity}
+      granularityOptions={[
+        { label: 'День', value: 'days' },
+        { label: 'Неделя', value: 'weeks' },
+        { label: 'Месяц', value: 'months' },
+      ]}
+      onGranularityChange={(value) => startTransition(() => setGranularity(value))}
+      onRetry={onDashboardRetry ?? (() => {})}
+    />
+  );
+
   if (evolutionQuery.isLoading) {
-    return <EvolutionLoadingState />;
+    return (
+      <div className="flex flex-col gap-5">
+        {spendingBarsCard}
+        <EvolutionLoadingState />
+      </div>
+    );
   }
 
   if (evolutionQuery.error) {
     const errorMessage = evolutionQuery.error instanceof Error ? evolutionQuery.error.message : 'Ошибка загрузки';
     return (
-      <AnalyticsPanel>
-        <AnalyticsSectionHeader title="Динамика" />
-        <AnalyticsState title="Не удалось загрузить динамику" description={errorMessage} onRetry={() => evolutionQuery.refetch()} />
-      </AnalyticsPanel>
+      <div className="flex flex-col gap-5">
+        {spendingBarsCard}
+        <AnalyticsPanel>
+          <AnalyticsSectionHeader title="Динамика" />
+          <AnalyticsState title="Не удалось загрузить динамику" description={errorMessage} onRetry={() => evolutionQuery.refetch()} />
+        </AnalyticsPanel>
+      </div>
     );
   }
 
   if (withData.length === 0) {
     return (
-      <AnalyticsPanel>
-        <AnalyticsSectionHeader
-          title="Динамика"
-          actions={
-            <AnalyticsSegmentedControl
-              options={RANGE_OPTIONS}
-              value={selectedRange}
-              onChange={setSelectedRange}
-            />
-          }
-        />
-        <AnalyticsState title="Нет данных за выбранный период" description="Добавьте операции, чтобы построить динамику." />
-      </AnalyticsPanel>
+      <div className="flex flex-col gap-5">
+        {spendingBarsCard}
+        <AnalyticsPanel>
+          <AnalyticsSectionHeader
+            title="Динамика"
+            actions={
+              <AnalyticsSegmentedControl
+                options={RANGE_OPTIONS}
+                value={selectedRange}
+                onChange={setSelectedRange}
+              />
+            }
+          />
+          <AnalyticsState title="Нет данных за выбранный период" description="Добавьте операции, чтобы построить динамику." />
+        </AnalyticsPanel>
+      </div>
     );
   }
 
   return (
+    <div className="flex flex-col gap-5">
+      {spendingBarsCard}
+
     <AnalyticsPanel>
       <AnalyticsSectionHeader
         title="Динамика"
@@ -418,5 +465,6 @@ export function EvolutionTab({ isActive }: EvolutionTabProps) {
         <EvolutionDetailedTable rows={viewModel.tableRows} selectedRange={selectedRange} />
       </div>
     </AnalyticsPanel>
+    </div>
   );
 }

@@ -52,10 +52,12 @@ public sealed class TransactionsService(IAppDbContext context, ICurrentUser curr
 
         var userTransactionsQuery = context.Transactions
             .AsNoTracking()
-            .Where(t => t.Account.UserId == currentUserId);
+            .Where(t => t.Account.UserId == currentUserId && !t.IsTransfer);
 
         if (filter.AccountId.HasValue)
             userTransactionsQuery = userTransactionsQuery.Where(t => t.AccountId == filter.AccountId.Value);
+        else
+            userTransactionsQuery = userTransactionsQuery.Where(t => t.Account.Type == AccountType.Bank);
 
         if (filter.CategoryId.HasValue)
             userTransactionsQuery = userTransactionsQuery.Where(t => t.CategoryId == filter.CategoryId.Value);
@@ -72,6 +74,9 @@ public sealed class TransactionsService(IAppDbContext context, ICurrentUser curr
                 .AddDays(1);
             userTransactionsQuery = userTransactionsQuery.Where(t => t.OccurredAt < toExclusiveUtc);
         }
+
+        if (filter.IsMandatory.HasValue)
+            userTransactionsQuery = userTransactionsQuery.Where(t => t.IsMandatory == filter.IsMandatory.Value);
 
         if (!string.IsNullOrWhiteSpace(filter.Search))
         {
@@ -168,6 +173,7 @@ public sealed class TransactionsService(IAppDbContext context, ICurrentUser curr
             .AsNoTracking()
             .Where(t => t.Account.UserId == currentUserId &&
                         !t.IsTransfer &&
+                        t.Account.Type == AccountType.Bank &&
                         t.Type == TransactionType.Expense)
             .Select(t => t.OccurredAt.Date)
             .Distinct()
@@ -177,6 +183,7 @@ public sealed class TransactionsService(IAppDbContext context, ICurrentUser curr
     internal async Task<DateTime?> GetEarliestOccurredAtBeforeAsync(
         DateTime beforeUtc,
         bool excludeTransfers,
+        bool excludeInvestmentAccounts = false,
         TransactionType? type = null,
         CancellationToken ct = default)
     {
@@ -186,6 +193,9 @@ public sealed class TransactionsService(IAppDbContext context, ICurrentUser curr
 
         if (excludeTransfers)
             query = query.Where(t => !t.IsTransfer);
+
+        if (excludeInvestmentAccounts)
+            query = query.Where(t => t.Account.Type == AccountType.Bank);
 
         if (type.HasValue)
             query = query.Where(t => t.Type == type.Value);
@@ -201,6 +211,7 @@ public sealed class TransactionsService(IAppDbContext context, ICurrentUser curr
         DateTime? fromUtc = null,
         DateTime? toUtc = null,
         bool excludeTransfers = false,
+        bool excludeInvestmentAccounts = false,
         TransactionType? type = null,
         IReadOnlyCollection<Guid>? accountIds = null,
         bool excludeArchivedAccounts = false,
@@ -224,6 +235,9 @@ public sealed class TransactionsService(IAppDbContext context, ICurrentUser curr
 
         if (excludeTransfers)
             query = query.Where(t => !t.IsTransfer);
+
+        if (excludeInvestmentAccounts)
+            query = query.Where(t => t.Account.Type == AccountType.Bank);
 
         if (type.HasValue)
             query = query.Where(t => t.Type == type.Value);
@@ -257,219 +271,6 @@ public sealed class TransactionsService(IAppDbContext context, ICurrentUser curr
                 t.IsTransfer,
                 t.IsMandatory))
             .ToList();
-    }
-
-    public async Task<Guid> CreateTransferAsync(CreateTransfer command, CancellationToken ct)
-    {
-        if (command.FromAccountId == command.ToAccountId)
-            throw new DomainValidationException("Счет списания и счет зачисления должны быть разными.");
-        if (command.FromAmount <= 0)
-            throw new DomainValidationException("Сумма списания должна быть больше нуля.");
-        if (command.ToAmount <= 0)
-            throw new DomainValidationException("Сумма зачисления должна быть больше нуля.");
-        if (command.FeeAmount is < 0)
-            throw new DomainValidationException("Комиссия не может быть отрицательной.");
-
-        var currentUserId = currentUser.Id;
-        var accounts = await context.Accounts
-            .Where(a => a.UserId == currentUserId &&
-                        (a.Id == command.FromAccountId || a.Id == command.ToAccountId))
-            .ToListAsync(ct);
-
-        var fromAccount = accounts.FirstOrDefault(a => a.Id == command.FromAccountId);
-        if (fromAccount is null)
-            throw new NotFoundException(nameof(Account), command.FromAccountId);
-        EnsureAccountIsActive(fromAccount);
-
-        var toAccount = accounts.FirstOrDefault(a => a.Id == command.ToAccountId);
-        if (toAccount is null)
-            throw new NotFoundException(nameof(Account), command.ToAccountId);
-        EnsureAccountIsActive(toAccount);
-
-        var categories = await context.TransactionCategories
-            .AsNoTracking()
-            .Where(c => c.UserId == currentUserId)
-            .Select(c => new { c.Id, c.Name, c.IsDefault })
-            .ToListAsync(ct);
-
-        if (categories.Count == 0)
-            throw new ConflictException("Не удалось подобрать категорию для перевода.");
-
-        var transferCategoryId = categories
-                                     .FirstOrDefault(c => c.Name == "Без категории")?.Id
-                                 ?? categories.FirstOrDefault(c => c.IsDefault)?.Id
-                                 ?? categories[0].Id;
-
-        var feeCategoryId = categories
-                                .FirstOrDefault(c => c.Name == "Платежи")?.Id
-                            ?? transferCategoryId;
-
-        var transferId = Guid.NewGuid();
-        var description = string.IsNullOrWhiteSpace(command.Description) ? null : command.Description.Trim();
-
-        fromAccount.AddTransaction(
-            TransactionType.Expense,
-            transferCategoryId,
-            command.FromAmount,
-            command.OccurredAt,
-            description,
-            isMandatory: false,
-            isTransfer: true,
-            transferId: transferId);
-
-        toAccount.AddTransaction(
-            TransactionType.Income,
-            transferCategoryId,
-            command.ToAmount,
-            command.OccurredAt,
-            description,
-            isMandatory: false,
-            isTransfer: true,
-            transferId: transferId);
-
-        if (command.FeeAmount is > 0)
-        {
-            fromAccount.AddTransaction(
-                TransactionType.Expense,
-                feeCategoryId,
-                command.FeeAmount.Value,
-                command.OccurredAt,
-                description,
-                isMandatory: false,
-                isTransfer: false,
-                transferId: transferId);
-        }
-
-        await context.SaveChangesAsync(ct);
-        return transferId;
-    }
-
-    public async Task UpdateTransferAsync(UpdateTransfer command, CancellationToken ct)
-    {
-        if (command.TransferId == Guid.Empty)
-            throw new DomainValidationException("Не указан перевод для обновления.");
-        if (command.FromAccountId == command.ToAccountId)
-            throw new DomainValidationException("Счет списания и счет зачисления должны быть разными.");
-        if (command.FromAmount <= 0)
-            throw new DomainValidationException("Сумма списания должна быть больше нуля.");
-        if (command.ToAmount <= 0)
-            throw new DomainValidationException("Сумма зачисления должна быть больше нуля.");
-        if (command.FeeAmount is < 0)
-            throw new DomainValidationException("Комиссия не может быть отрицательной.");
-
-        var currentUserId = currentUser.Id;
-        var accounts = await context.Accounts
-            .Where(a => a.UserId == currentUserId &&
-                        (a.Id == command.FromAccountId || a.Id == command.ToAccountId))
-            .ToListAsync(ct);
-
-        var fromAccount = accounts.FirstOrDefault(a => a.Id == command.FromAccountId);
-        if (fromAccount is null)
-            throw new NotFoundException(nameof(Account), command.FromAccountId);
-        EnsureAccountIsActive(fromAccount);
-
-        var toAccount = accounts.FirstOrDefault(a => a.Id == command.ToAccountId);
-        if (toAccount is null)
-            throw new NotFoundException(nameof(Account), command.ToAccountId);
-        EnsureAccountIsActive(toAccount);
-
-        var categories = await context.TransactionCategories
-            .AsNoTracking()
-            .Where(c => c.UserId == currentUserId)
-            .Select(c => new { c.Id, c.Name, c.IsDefault })
-            .ToListAsync(ct);
-
-        if (categories.Count == 0)
-            throw new ConflictException("Не удалось подобрать категорию для перевода.");
-
-        var transferCategoryId = categories
-                                     .FirstOrDefault(c => c.Name == "Без категории")?.Id
-                                 ?? categories.FirstOrDefault(c => c.IsDefault)?.Id
-                                 ?? categories[0].Id;
-
-        var feeCategoryId = categories
-                                .FirstOrDefault(c => c.Name == "Платежи")?.Id
-                            ?? transferCategoryId;
-
-        var transferTransactions = await context.Transactions
-            .Include(t => t.Account)
-            .Where(t => t.TransferId == command.TransferId)
-            .ToListAsync(ct);
-
-        if (transferTransactions.Count == 0)
-            throw new NotFoundException("Перевод не найден", command.TransferId);
-
-        if (transferTransactions.Any(t => t.Account.UserId != currentUserId))
-            throw new ForbiddenException("Доступ запрещен");
-
-        var expenseTransfer = transferTransactions.FirstOrDefault(t =>
-            t.IsTransfer && t.Type == TransactionType.Expense);
-        var incomeTransfer = transferTransactions.FirstOrDefault(t =>
-            t.IsTransfer && t.Type == TransactionType.Income);
-
-        if (expenseTransfer is null || incomeTransfer is null)
-            throw new ConflictException("Перевод поврежден и не может быть обновлен.");
-
-        var description = string.IsNullOrWhiteSpace(command.Description) ? null : command.Description.Trim();
-
-        expenseTransfer.Update(
-            fromAccount.Id,
-            transferCategoryId,
-            new Money(fromAccount.CurrencyCode, command.FromAmount),
-            command.OccurredAt,
-            description,
-            false);
-
-        incomeTransfer.Update(
-            toAccount.Id,
-            transferCategoryId,
-            new Money(toAccount.CurrencyCode, command.ToAmount),
-            command.OccurredAt,
-            description,
-            false);
-
-        var feeTransactions = transferTransactions
-            .Where(t => !t.IsTransfer)
-            .ToList();
-
-        if (command.FeeAmount is > 0)
-        {
-            var feeMoney = new Money(fromAccount.CurrencyCode, command.FeeAmount.Value);
-
-            if (feeTransactions.Count > 0)
-            {
-                var feeTransaction = feeTransactions[0];
-                feeTransaction.Update(
-                    fromAccount.Id,
-                    feeCategoryId,
-                    feeMoney,
-                    command.OccurredAt,
-                    description,
-                    false);
-
-                foreach (var extra in feeTransactions.Skip(1))
-                    extra.Delete();
-            }
-            else
-            {
-                fromAccount.AddTransaction(
-                    TransactionType.Expense,
-                    feeCategoryId,
-                    command.FeeAmount.Value,
-                    command.OccurredAt,
-                    description,
-                    isMandatory: false,
-                    isTransfer: false,
-                    transferId: command.TransferId);
-            }
-        }
-        else
-        {
-            foreach (var fee in feeTransactions)
-                fee.Delete();
-        }
-
-        await context.SaveChangesAsync(ct);
     }
 
     public async Task<(byte[] Content, string FileName)> ExportAsync(CancellationToken ct)
@@ -645,29 +446,6 @@ public sealed class TransactionsService(IAppDbContext context, ICurrentUser curr
         }
 
         transaction.Delete();
-        await context.SaveChangesAsync(ct);
-    }
-
-    public async Task DeleteTransferAsync(Guid transferId, CancellationToken ct)
-    {
-        if (transferId == Guid.Empty)
-            throw new DomainValidationException("Перевод не найден.");
-
-        var currentUserId = currentUser.Id;
-        var transferTransactions = await context.Transactions
-            .Include(t => t.Account)
-            .Where(t => t.TransferId == transferId)
-            .ToListAsync(ct);
-
-        if (transferTransactions.Count == 0)
-            throw new NotFoundException("Перевод не найден", transferId);
-
-        if (transferTransactions.Any(t => t.Account.UserId != currentUserId))
-            throw new ForbiddenException("Доступ запрещен");
-
-        foreach (var item in transferTransactions)
-            item.Delete();
-
         await context.SaveChangesAsync(ct);
     }
 

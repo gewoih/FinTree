@@ -45,10 +45,8 @@ export function buildInvestmentAccounts(
       isLiquid: overviewItem?.isLiquid ?? account.isLiquid,
       isArchived: account.isArchived,
       isMain: account.isMain,
-      balance: Number(account.balance ?? 0),
-      balanceInBaseCurrency: Number(
-        overviewItem?.balanceInBaseCurrency ?? account.balanceInBaseCurrency ?? account.balance ?? 0
-      ),
+      balance: Number(overviewItem?.balance ?? 0),
+      balanceInBaseCurrency: Number(overviewItem?.balanceInBaseCurrency ?? 0),
       lastAdjustedAt: overviewItem?.lastAdjustedAt ?? null,
       returnPercent: overviewItem?.returnPercent ?? null,
     };

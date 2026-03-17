@@ -18,10 +18,17 @@ import {
   buildInvestmentSummaryMetrics,
   filterInvestmentAccounts,
 } from './investmentUtils';
-import type { InvestmentAccountViewModel, InvestmentsView } from './investmentModels';
+import type {
+  InvestmentAccountViewModel,
+  InvestmentsView,
+} from './investmentModels';
+import { INVESTMENT_ACCOUNT_TYPES } from './investmentModels';
 
 const EMPTY_CURRENCIES: Currency[] = [];
-const INVESTMENT_MODAL_TYPES = [2, 3, 4] as const;
+
+type CashFlowModalState =
+  | { type: 'closed' }
+  | { type: 'deposit' | 'withdrawal'; account: InvestmentAccountViewModel };
 
 function getAccountErrorMessage(error: unknown): string {
   return resolveApiErrorMessage(error, 'Не удалось загрузить инвестиционные счета.');
@@ -38,8 +45,13 @@ export function useInvestmentsPage() {
   const deferredSearch = useDeferredValue(searchInput);
   const [editingAccount, setEditingAccount] = useState<ManagedAccount | null>(null);
   const [isFormOpen, setIsFormOpen] = useState(false);
-  const [adjustmentsAccount, setAdjustmentsAccount] = useState<ManagedAccount | null>(null);
-  const [archiveTarget, setArchiveTarget] = useState<InvestmentAccountViewModel | null>(null);
+  const [adjustmentsAccount, setAdjustmentsAccount] =
+    useState<InvestmentAccountViewModel | null>(null);
+  const [archiveTarget, setArchiveTarget] =
+    useState<InvestmentAccountViewModel | null>(null);
+  const [cashFlowModal, setCashFlowModal] = useState<CashFlowModalState>({
+    type: 'closed',
+  });
 
   const currenciesQuery = useQuery({
     queryKey: queryKeys.currencies(),
@@ -48,20 +60,26 @@ export function useInvestmentsPage() {
   });
 
   const activeAccountsQuery = useQuery({
-    queryKey: queryKeys.accounts.active(),
-    queryFn: () => accountsApi.getAccounts(false),
+    queryKey: queryKeys.investments.accounts(false),
+    queryFn: () => accountsApi.getAccounts(false, INVESTMENT_ACCOUNT_TYPES),
     staleTime: 30_000,
   });
 
   const archivedAccountsQuery = useQuery({
-    queryKey: queryKeys.accounts.archived(),
-    queryFn: () => accountsApi.getAccounts(true),
+    queryKey: queryKeys.investments.accounts(true),
+    queryFn: () => accountsApi.getAccounts(true, INVESTMENT_ACCOUNT_TYPES),
     staleTime: 30_000,
   });
 
-  const overviewQuery = useQuery({
-    queryKey: queryKeys.investments.overview(),
-    queryFn: () => investmentsApi.getInvestmentsOverview(),
+  const activeOverviewQuery = useQuery({
+    queryKey: queryKeys.investments.overview(false),
+    queryFn: () => investmentsApi.getInvestmentsOverview(undefined, undefined, false),
+    staleTime: 30_000,
+  });
+
+  const archivedOverviewQuery = useQuery({
+    queryKey: queryKeys.investments.overview(true),
+    queryFn: () => investmentsApi.getInvestmentsOverview(undefined, undefined, true),
     staleTime: 30_000,
   });
 
@@ -74,36 +92,53 @@ export function useInvestmentsPage() {
   const currencies = currenciesQuery.data ?? EMPTY_CURRENCIES;
 
   const activeSourceAccounts = useMemo(
-    () => (activeAccountsQuery.data ?? []).map((account) => normalizeAccount(account, currencies)),
+    () =>
+      (activeAccountsQuery.data ?? []).map((account) =>
+        normalizeAccount(account, currencies)
+      ),
     [activeAccountsQuery.data, currencies]
   );
   const archivedSourceAccounts = useMemo(
-    () => (archivedAccountsQuery.data ?? []).map((account) => normalizeAccount(account, currencies)),
+    () =>
+      (archivedAccountsQuery.data ?? []).map((account) =>
+        normalizeAccount(account, currencies)
+      ),
     [archivedAccountsQuery.data, currencies]
   );
 
   const activeAccounts = useMemo(
-    () => buildInvestmentAccounts(activeSourceAccounts, overviewQuery.data),
-    [activeSourceAccounts, overviewQuery.data]
+    () =>
+      activeOverviewQuery.data
+        ? buildInvestmentAccounts(activeSourceAccounts, activeOverviewQuery.data)
+        : [],
+    [activeOverviewQuery.data, activeSourceAccounts]
   );
   const archivedAccounts = useMemo(
-    () => buildInvestmentAccounts(archivedSourceAccounts, overviewQuery.data),
-    [archivedSourceAccounts, overviewQuery.data]
+    () =>
+      archivedOverviewQuery.data
+        ? buildInvestmentAccounts(archivedSourceAccounts, archivedOverviewQuery.data)
+        : [],
+    [archivedOverviewQuery.data, archivedSourceAccounts]
   );
 
+  const currentAccountsQuery = view === 'active' ? activeAccountsQuery : archivedAccountsQuery;
+  const currentOverviewQuery = view === 'active' ? activeOverviewQuery : archivedOverviewQuery;
   const currentAccounts = view === 'active' ? activeAccounts : archivedAccounts;
   const filteredAccounts = useMemo(
     () => filterInvestmentAccounts(currentAccounts, deferredSearch),
     [currentAccounts, deferredSearch]
   );
-  const hasAnyInvestmentAccounts = activeAccounts.length + archivedAccounts.length > 0;
+  const hasAnyInvestmentAccounts =
+    activeSourceAccounts.length + archivedSourceAccounts.length > 0;
   const hasSearch = searchInput.trim().length > 0;
 
   const accountsError =
-    currenciesQuery.error ?? (view === 'active' ? activeAccountsQuery.error : archivedAccountsQuery.error);
+    currenciesQuery.error ?? currentAccountsQuery.error ?? currentOverviewQuery.error;
   const accountsErrorMessage = accountsError ? getAccountErrorMessage(accountsError) : null;
   const accountsLoading =
-    (currenciesQuery.isLoading || (view === 'active' ? activeAccountsQuery.isLoading : archivedAccountsQuery.isLoading)) &&
+    (currenciesQuery.isLoading ||
+      currentAccountsQuery.isLoading ||
+      currentOverviewQuery.isLoading) &&
     currentAccounts.length === 0;
   const showBlockingAccountsError =
     Boolean(accountsErrorMessage) && currentAccounts.length === 0 && !accountsLoading;
@@ -111,8 +146,13 @@ export function useInvestmentsPage() {
     Boolean(accountsErrorMessage) && currentAccounts.length > 0;
 
   const summaryMetrics = useMemo(
-    () => buildInvestmentSummaryMetrics(activeAccounts, overviewQuery.data, baseCurrencyCode),
-    [activeAccounts, overviewQuery.data, baseCurrencyCode]
+    () =>
+      buildInvestmentSummaryMetrics(
+        activeAccounts,
+        activeOverviewQuery.data,
+        baseCurrencyCode
+      ),
+    [activeAccounts, activeOverviewQuery.data, baseCurrencyCode]
   );
   const allocationSlices = useMemo(
     () => buildInvestmentAllocationSlices(activeAccounts),
@@ -123,28 +163,43 @@ export function useInvestmentsPage() {
     [netWorthQuery.data]
   );
 
-  const overviewError = overviewQuery.error
-    ? resolveApiErrorMessage(overviewQuery.error, 'Не удалось загрузить сводку по инвестициям.')
+  const overviewError = activeOverviewQuery.error
+    ? resolveApiErrorMessage(
+        activeOverviewQuery.error,
+        'Не удалось загрузить сводку по инвестициям.'
+      )
     : null;
   const netWorthError = netWorthQuery.error
     ? resolveApiErrorMessage(netWorthQuery.error, 'Не удалось загрузить динамику капитала.')
     : null;
 
-  async function refreshAllData() {
+  async function invalidateInvestmentData() {
     await Promise.all([
-      activeAccountsQuery.refetch(),
-      archivedAccountsQuery.refetch(),
-      overviewQuery.refetch(),
-      netWorthQuery.refetch(),
+      queryClient.invalidateQueries({ queryKey: queryKeys.investments.all() }),
+      queryClient.invalidateQueries({ queryKey: queryKeys.analytics.all() }),
     ]);
   }
 
-  async function refreshActiveData() {
+  async function invalidateAfterCashFlow() {
     await Promise.all([
-      activeAccountsQuery.refetch(),
-      overviewQuery.refetch(),
-      netWorthQuery.refetch(),
+      queryClient.invalidateQueries({ queryKey: queryKeys.transactions.all() }),
+      invalidateInvestmentData(),
     ]);
+  }
+
+  async function retryData() {
+    const requests: Array<Promise<unknown>> = [
+      currenciesQuery.refetch(),
+      activeAccountsQuery.refetch(),
+      activeOverviewQuery.refetch(),
+      netWorthQuery.refetch(),
+    ];
+
+    if (view === 'archived') {
+      requests.push(archivedAccountsQuery.refetch(), archivedOverviewQuery.refetch());
+    }
+
+    await Promise.all(requests);
   }
 
   const archiveMutation = useMutation({
@@ -152,7 +207,7 @@ export function useInvestmentsPage() {
     onSuccess: async () => {
       const archivedName = archiveTarget?.name;
       setArchiveTarget(null);
-      await refreshAllData();
+      await invalidateInvestmentData();
       toast.success(
         archivedName
           ? `Счёт «${archivedName}» перемещён в архив`
@@ -167,7 +222,7 @@ export function useInvestmentsPage() {
   const unarchiveMutation = useMutation({
     mutationFn: accountsApi.unarchiveAccount,
     onSuccess: async () => {
-      await refreshAllData();
+      await invalidateInvestmentData();
       toast.success('Счёт возвращён из архива');
     },
     onError: (error) => {
@@ -184,11 +239,7 @@ export function useInvestmentsPage() {
       isLiquid: boolean;
     }) => accountsApi.updateAccountLiquidity(accountId, isLiquid),
     onSuccess: async (_, variables) => {
-      await Promise.all([
-        activeAccountsQuery.refetch(),
-        overviewQuery.refetch(),
-        queryClient.invalidateQueries({ queryKey: queryKeys.accounts.all() }),
-      ]);
+      await invalidateInvestmentData();
       toast.success(
         variables.isLiquid ? 'Счёт помечен как ликвидный' : 'Счёт помечен как неликвидный'
       );
@@ -223,7 +274,9 @@ export function useInvestmentsPage() {
 
   function findSourceAccount(accountId: string): ManagedAccount | null {
     return (
-      [...activeSourceAccounts, ...archivedSourceAccounts].find((account) => account.id === accountId) ?? null
+      [...activeSourceAccounts, ...archivedSourceAccounts].find(
+        (account) => account.id === accountId
+      ) ?? null
     );
   }
 
@@ -247,13 +300,18 @@ export function useInvestmentsPage() {
       return;
     }
 
-    const sourceAccount = findSourceAccount(account.id);
-    if (!sourceAccount) {
-      toast.error('Не удалось загрузить счёт для корректировки.');
+    setAdjustmentsAccount(account);
+  }
+
+  function handleOpenCashFlow(
+    account: InvestmentAccountViewModel,
+    type: 'deposit' | 'withdrawal'
+  ) {
+    if (isReadOnlyMode || view === 'archived') {
       return;
     }
 
-    setAdjustmentsAccount(sourceAccount);
+    setCashFlowModal({ type, account });
   }
 
   function handleArchiveRequest(account: InvestmentAccountViewModel) {
@@ -266,37 +324,32 @@ export function useInvestmentsPage() {
 
   async function handleFormSuccess() {
     setEditingAccount(null);
-    await Promise.all([
-      queryClient.invalidateQueries({ queryKey: queryKeys.investments.all() }),
-      queryClient.invalidateQueries({ queryKey: queryKeys.analytics.netWorth() }),
-      activeAccountsQuery.refetch(),
-      archivedAccountsQuery.refetch(),
-    ]);
+    await invalidateInvestmentData();
   }
 
   async function handleAdjustmentSuccess() {
-    await Promise.all([
-      queryClient.invalidateQueries({ queryKey: queryKeys.investments.all() }),
-      queryClient.invalidateQueries({ queryKey: queryKeys.analytics.netWorth() }),
-      activeAccountsQuery.refetch(),
-    ]);
+    await invalidateInvestmentData();
+  }
+
+  async function handleCashFlowSuccess() {
+    await invalidateAfterCashFlow();
   }
 
   return {
-    activeAccounts,
-    activeCount: activeAccounts.length,
+    activeCount: activeSourceAccounts.length,
     adjustmentsAccount,
     allocationSlices,
-    allowedAccountTypes: INVESTMENT_MODAL_TYPES,
+    allowedAccountTypes: INVESTMENT_ACCOUNT_TYPES,
     archiveTarget,
-    archivedCount: archivedAccounts.length,
-    archivedAccounts,
+    archivedCount: archivedSourceAccounts.length,
     accountsErrorMessage,
     accountsLoading,
     baseCurrencyCode,
     canCreateAccount: !isReadOnlyMode && currencies.length > 0,
+    cashFlowModal,
     closeAdjustments: () => setAdjustmentsAccount(null),
     closeArchiveDialog: () => setArchiveTarget(null),
+    closeCashFlowModal: () => setCashFlowModal({ type: 'closed' }),
     closeForm: () => {
       setEditingAccount(null);
       setIsFormOpen(false);
@@ -311,12 +364,17 @@ export function useInvestmentsPage() {
       }
     },
     handleArchiveRequest,
+    handleCashFlowSuccess,
     handleEditAccount,
     handleFormSuccess,
     handleLiquidityChange: (account: InvestmentAccountViewModel, isLiquid: boolean) =>
       liquidityMutation.mutate({ accountId: account.id, isLiquid }),
     handleOpenAdjustments,
     handleOpenCreateAccount,
+    handleOpenDeposit: (account: InvestmentAccountViewModel) =>
+      handleOpenCashFlow(account, 'deposit'),
+    handleOpenWithdraw: (account: InvestmentAccountViewModel) =>
+      handleOpenCashFlow(account, 'withdrawal'),
     handleUnarchive: (account: InvestmentAccountViewModel) =>
       unarchiveMutation.mutate(account.id),
     hasAnyInvestmentAccounts,
@@ -331,14 +389,10 @@ export function useInvestmentsPage() {
     netWorthError,
     netWorthLoading: netWorthQuery.isLoading && netWorthPoints.length === 0,
     netWorthPoints,
-    openForm: () => setIsFormOpen(true),
     overviewError,
-    overviewLoading: overviewQuery.isLoading && !overviewQuery.data,
+    overviewLoading: activeOverviewQuery.isLoading && !activeOverviewQuery.data,
     retryCurrentAccountsView: () => {
-      void Promise.all([
-        currenciesQuery.refetch(),
-        view === 'active' ? refreshActiveData() : archivedAccountsQuery.refetch(),
-      ]);
+      void retryData();
     },
     searchInput,
     setSearchInput,

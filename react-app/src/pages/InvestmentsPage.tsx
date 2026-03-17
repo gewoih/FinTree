@@ -4,6 +4,7 @@ import { PageHeader } from '@/components/common/PageHeader';
 import { AccountBalanceAdjustmentsModal } from '@/features/accounts/AccountBalanceAdjustmentsModal';
 import { AccountFormModal } from '@/features/accounts/AccountFormModal';
 import { InvestmentsAccountsSection } from '@/features/investments/InvestmentsAccountsSection';
+import { InvestmentCashFlowModal } from '@/features/investments/InvestmentCashFlowModal';
 import { InvestmentsAllocationCard } from '@/features/investments/InvestmentsAllocationCard';
 import { InvestmentsSummary } from '@/features/investments/InvestmentsSummary';
 import { InvestmentsTrendCard } from '@/features/investments/InvestmentsTrendCard';
@@ -21,8 +22,10 @@ export default function InvestmentsPage() {
     accountsLoading,
     baseCurrencyCode,
     canCreateAccount,
+    cashFlowModal,
     closeAdjustments,
     closeArchiveDialog,
+    closeCashFlowModal,
     closeForm,
     currencies,
     editingAccount,
@@ -30,11 +33,14 @@ export default function InvestmentsPage() {
     handleAdjustmentSuccess,
     handleArchiveConfirm,
     handleArchiveRequest,
+    handleCashFlowSuccess,
     handleEditAccount,
     handleFormSuccess,
     handleLiquidityChange,
     handleOpenAdjustments,
     handleOpenCreateAccount,
+    handleOpenDeposit,
+    handleOpenWithdraw,
     handleUnarchive,
     hasAnyInvestmentAccounts,
     hasSearch,
@@ -117,6 +123,8 @@ export default function InvestmentsPage() {
               onViewChange={setView}
               onRetry={() => void retryCurrentAccountsView()}
               onEditAccount={handleEditAccount}
+              onDeposit={handleOpenDeposit}
+              onWithdraw={handleOpenWithdraw}
               onAdjustBalance={handleOpenAdjustments}
               onLiquidityChange={handleLiquidityChange}
               onArchive={handleArchiveRequest}
@@ -143,6 +151,16 @@ export default function InvestmentsPage() {
           onClose={closeAdjustments}
           onSuccess={handleAdjustmentSuccess}
         />
+
+        {cashFlowModal.type !== 'closed' ? (
+          <InvestmentCashFlowModal
+            open
+            accountId={cashFlowModal.account.id}
+            type={cashFlowModal.type}
+            onClose={closeCashFlowModal}
+            onSuccess={handleCashFlowSuccess}
+          />
+        ) : null}
 
         <ConfirmDialog
           open={archiveTarget !== null}

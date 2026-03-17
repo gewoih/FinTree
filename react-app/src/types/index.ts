@@ -59,8 +59,6 @@ export interface AccountDto {
   isLiquid: boolean;
   isArchived: boolean;
   isMain: boolean;
-  balance: number;
-  balanceInBaseCurrency: number;
   currency?: Currency | null;
 }
 
@@ -87,13 +85,6 @@ export interface AccountFormPayload {
 export interface UpdateAccountPayload {
   id: string;
   name: string;
-}
-
-export interface AccountBalanceAdjustmentDto {
-  id: string;
-  accountId: string;
-  amount: number;
-  occurredAt: string;
 }
 
 // ━━━ CATEGORIES ━━━
@@ -150,16 +141,12 @@ export interface TransactionDto {
   occurredAt: string;
   description: string | null;
   isMandatory: boolean;
-  isTransfer?: boolean;
-  transferId?: string | null;
 }
 
 export interface Transaction extends Omit<TransactionDto, 'type'> {
   type: TransactionType;
   account?: Account;
   category?: Category | null;
-  isTransfer?: boolean;
-  transferId?: string | null;
 }
 
 export interface TransactionsQuery {
@@ -168,6 +155,7 @@ export interface TransactionsQuery {
   from?: string | null;
   to?: string | null;
   search?: string | null;
+  isMandatory?: boolean | null;
   page?: number;
   size?: number;
 }
@@ -190,29 +178,6 @@ export interface UpdateTransactionPayload {
   occurredAt: string;
   description: string | null;
   isMandatory: boolean;
-}
-
-// ━━━ TRANSFERS ━━━
-
-export interface CreateTransferPayload {
-  fromAccountId: string;
-  toAccountId: string;
-  fromAmount: number;
-  toAmount: number;
-  occurredAt: string;
-  feeAmount?: number | null;
-  description?: string | null;
-}
-
-export interface UpdateTransferPayload {
-  transferId: string;
-  fromAccountId: string;
-  toAccountId: string;
-  fromAmount: number;
-  toAmount: number;
-  occurredAt: string;
-  feeAmount?: number | null;
-  description?: string | null;
 }
 
 // ━━━ USER & AUTH ━━━
@@ -304,6 +269,7 @@ export interface FinancialHealthSummaryDto {
   stabilityScore: number | null;
   stabilityStatus: StabilityStatusCode | null;
   stabilityActionCode: StabilityActionCode | null;
+  stabilityIsPreview: boolean;
   savingsRate: number | null;
   netCashflow: number | null;
   discretionaryTotal: number | null;
@@ -373,15 +339,15 @@ export interface SpendingBreakdownDto {
 export interface ForecastSummaryDto {
   optimisticTotal: number | null;
   riskTotal: number | null;
+  medianTotal: number | null;
   currentSpent: number | null;
   baselineLimit: number | null;
+  availableAmount: number | null;
 }
 
 export interface ForecastSeriesDto {
   days: number[];
   actual: Array<number | null>;
-  optimistic: Array<number | null>;
-  risk: Array<number | null>;
   baseline: number | null;
 }
 

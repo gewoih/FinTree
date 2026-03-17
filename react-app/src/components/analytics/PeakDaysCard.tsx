@@ -25,6 +25,7 @@ interface PeakDaysCardProps {
   currency: string;
   onRetry: () => void;
   onPeakSelect: (peak: PeakDayDto) => void;
+  isCompact?: boolean;
 }
 
 const DATE_FMT = new Intl.DateTimeFormat('ru-RU', { day: '2-digit', month: 'short' });
@@ -50,7 +51,7 @@ function resolveShareStyles(share: number | null) {
     };
   }
 
-  if (share <= 10) {
+  if (share <= 15) {
     return {
       value: 'var(--ft-success-400)',
       border: 'color-mix(in srgb, var(--ft-success-500) 45%, var(--ft-border-subtle))',
@@ -58,7 +59,7 @@ function resolveShareStyles(share: number | null) {
     };
   }
 
-  if (share <= 25) {
+  if (share <= 35) {
     return {
       value: 'var(--ft-warning-300)',
       border: 'color-mix(in srgb, var(--ft-warning-500) 45%, var(--ft-border-subtle))',
@@ -78,7 +79,7 @@ function PeakDaysSkeleton() {
     <div
       role="status"
       aria-busy="true"
-      aria-label="Загрузка пиковых дней"
+      aria-label="Загрузка импульсивных трат"
       className="space-y-4 px-7 pb-7"
     >
       <Skeleton className="h-[148px] rounded-lg" />
@@ -101,7 +102,7 @@ function SummaryBlock({
 
   return (
     <div
-      className="rounded-lg border px-6 py-6"
+      className="rounded-lg border px-4 py-4"
       style={{
         borderColor: styles.border,
         backgroundColor: styles.background,
@@ -109,16 +110,16 @@ function SummaryBlock({
     >
       <p
         className="text-foreground"
-        style={{ ...analyticsHeroStyle, color: styles.value, fontSize: 'var(--ft-text-4xl)' }}
+        style={{ ...analyticsHeroStyle, color: styles.value, fontSize: 'var(--ft-text-2xl)' }}
       >
         {shareLabel}
       </p>
 
-      <p className="mt-2 text-base font-medium text-[var(--ft-text-secondary)]">
-        расходов в пиковые дни
+      <p className="mt-1 text-sm font-medium text-[var(--ft-text-secondary)]">
+        необязательных расходов в импульсивные дни
       </p>
 
-      <p className="mt-3 text-sm text-[var(--ft-text-tertiary)]">
+      <p className="mt-2 text-sm text-[var(--ft-text-tertiary)]">
         {summary.count} {pluralizeDays(summary.count)} · {formatAnalyticsMetaMoney(summary.total, currency)} из{' '}
         {formatAnalyticsMetaMoney(summary.monthTotal, currency)}
       </p>
@@ -130,17 +131,20 @@ function PeakItem({
   peak,
   currency,
   onSelect,
+  isCompact,
 }: {
   peak: PeakDayDto;
   currency: string;
   onSelect: (peak: PeakDayDto) => void;
+  isCompact?: boolean;
 }) {
   return (
     <button
       type="button"
       onClick={() => onSelect(peak)}
       className={cn(
-        'grid min-h-[68px] w-full grid-cols-[minmax(0,1fr)_auto] items-center gap-4 px-5 py-4 text-left transition-colors',
+        'grid w-full grid-cols-[minmax(0,1fr)_auto] items-center gap-4 px-5 text-left transition-colors',
+        isCompact ? 'min-h-[52px] py-2.5' : 'min-h-[68px] py-4',
         'hover:bg-[color-mix(in_srgb,var(--ft-primary-400)_8%,transparent)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring',
       )}
     >
@@ -168,58 +172,78 @@ export function PeakDaysCard({
   currency,
   onRetry,
   onPeakSelect,
+  isCompact,
 }: PeakDaysCardProps) {
   const [expanded, setExpanded] = useState(false);
   const visiblePeaks = expanded ? peaks : peaks.slice(0, DEFAULT_VISIBLE);
   const hasMore = peaks.length > DEFAULT_VISIBLE;
 
+  const px = isCompact ? 'px-0' : 'px-7';
+  const pb = isCompact ? 'pb-0' : 'pb-7';
+
+  const content = loading ? (
+    <PeakDaysSkeleton />
+  ) : error ? (
+    <AnalyticsState title="Не удалось загрузить данные" description={error} onRetry={onRetry} className="min-h-[296px]" />
+  ) : peaks.length === 0 ? (
+    <div className={cn(px, pb)}>
+      <AnalyticsInset className="flex min-h-[120px] items-center justify-center px-8 text-center">
+        <p className="max-w-md text-base leading-7 text-[var(--ft-text-secondary)]">
+          Импульсивных трат нет. Необязательные расходы распределены по месяцу достаточно равномерно.
+        </p>
+      </AnalyticsInset>
+    </div>
+  ) : (
+    <div className={cn('space-y-4', px, pb)}>
+      <SummaryBlock summary={summary} currency={currency} />
+
+      <AnalyticsInset className="divide-y divide-[var(--ft-border-subtle)]">
+        {visiblePeaks.map((peak) => (
+          <PeakItem
+            key={`${peak.year}-${peak.month}-${peak.day}`}
+            peak={peak}
+            currency={currency}
+            onSelect={onPeakSelect}
+            isCompact={isCompact}
+          />
+        ))}
+      </AnalyticsInset>
+
+      {hasMore && (
+        <Button
+          variant="ghost"
+          className="min-h-[44px] w-full rounded-md text-[var(--ft-text-secondary)]"
+          onClick={() => setExpanded((prev) => !prev)}
+        >
+          {expanded ? 'Свернуть' : `Показать все (${peaks.length})`}
+        </Button>
+      )}
+    </div>
+  );
+
+  if (isCompact) {
+    return (
+      <div>
+        <AnalyticsSectionHeader
+          title="Импульсивные траты"
+          tooltip="Дни, когда необязательные расходы заметно превысили твой привычный темп. Это траты, которых можно было избежать."
+          ariaLabel="Подробнее об импульсивных тратах"
+          className="pb-4"
+        />
+        {content}
+      </div>
+    );
+  }
+
   return (
     <AnalyticsPanel>
       <AnalyticsSectionHeader
-        title="Пиковые дни"
-        tooltip="Дни, когда расходы заметно превысили привычный темп месяца."
-        ariaLabel="Подробнее о пиковых днях"
+        title="Импульсивные траты"
+        tooltip="Дни, когда необязательные расходы заметно превысили твой привычный темп. Это траты, которых можно было избежать."
+        ariaLabel="Подробнее об импульсивных тратах"
         className="pb-4"
       />
-
-      {loading ? (
-        <PeakDaysSkeleton />
-      ) : error ? (
-        <AnalyticsState title="Не удалось загрузить данные" description={error} onRetry={onRetry} className="min-h-[296px]" />
-      ) : peaks.length === 0 ? (
-        <div className="px-7 pb-7">
-          <AnalyticsInset className="flex min-h-[296px] items-center justify-center px-8 text-center">
-            <p className="max-w-md text-base leading-7 text-[var(--ft-text-secondary)]">
-              Пиковых дней нет. Расходы распределены по месяцу достаточно равномерно.
-            </p>
-          </AnalyticsInset>
-        </div>
-      ) : (
-        <div className="space-y-4 px-7 pb-7">
-          <SummaryBlock summary={summary} currency={currency} />
-
-          <AnalyticsInset className="divide-y divide-[var(--ft-border-subtle)]">
-            {visiblePeaks.map((peak) => (
-              <PeakItem
-                key={`${peak.year}-${peak.month}-${peak.day}`}
-                peak={peak}
-                currency={currency}
-                onSelect={onPeakSelect}
-              />
-            ))}
-          </AnalyticsInset>
-
-          {hasMore && (
-            <Button
-              variant="ghost"
-              className="min-h-[44px] w-full rounded-md text-[var(--ft-text-secondary)]"
-              onClick={() => setExpanded((prev) => !prev)}
-            >
-              {expanded ? 'Свернуть' : `Показать все (${peaks.length})`}
-            </Button>
-          )}
-        </div>
-      )}
+      {content}
     </AnalyticsPanel>
   );
 }

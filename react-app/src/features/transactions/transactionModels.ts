@@ -1,4 +1,4 @@
-import type { TransactionDto, UpdateTransferPayload } from '@/types';
+import type { TransactionDto } from '@/types';
 
 export interface TransactionFiltersValue {
   dateFrom?: string;
@@ -6,6 +6,7 @@ export interface TransactionFiltersValue {
   categoryId?: string;
   accountId?: string;
   search?: string;
+  isMandatory?: boolean;
   page: number;
   pageSize: number;
 }
@@ -13,39 +14,20 @@ export interface TransactionFiltersValue {
 export type TransactionModalMode =
   | { type: 'closed' }
   | { type: 'create' }
-  | { type: 'edit-transaction'; transaction: TransactionDto }
-  | { type: 'edit-transfer'; payload: UpdateTransferPayload };
+  | { type: 'edit-transaction'; transaction: TransactionDto };
 
-export type TransactionDisplayRow =
-  | {
-      kind: 'transaction';
-      id: string;
-      occurredAt: string;
-      title: string;
-      caption: string | null;
-      accountName: string;
-      amount: number;
-      currencyCode: string;
-      tone: 'Income' | 'Expense';
-      categoryName: string;
-      categoryColor: string;
-      categoryIcon: string;
-      transaction: TransactionDto;
-    }
-  | {
-      kind: 'transfer';
-      id: string;
-      transferId: string;
-      occurredAt: string;
-      title: string;
-      caption: string | null;
-      accountName: string;
-      primaryAmount: number;
-      primaryCurrencyCode: string;
-      secondaryAmount: number | null;
-      secondaryCurrencyCode: string | null;
-      feeAmount: number | null;
-    };
+export type TransactionDisplayRow = {
+  id: string;
+  occurredAt: string;
+  accountName: string;
+  amount: number;
+  currencyCode: string;
+  tone: 'Income' | 'Expense';
+  categoryName: string;
+  categoryColor: string;
+  categoryIcon: string;
+  transaction: TransactionDto;
+};
 
 export const DEFAULT_TRANSACTION_FILTERS: TransactionFiltersValue = {
   page: 1,

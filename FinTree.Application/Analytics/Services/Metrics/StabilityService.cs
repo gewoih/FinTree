@@ -2,13 +2,22 @@ using FinTree.Application.Analytics.Shared;
 
 namespace FinTree.Application.Analytics.Services.Metrics;
 
-public readonly record struct Stability(decimal? Index, decimal? Score, string? Status, string? ActionCode);
+public readonly record struct Stability(decimal? Index, decimal? Score, string? Status, string? ActionCode, bool IsPreview);
 
 public static class StabilityService
 {
+    private const int PreviewThreshold = 7;
+
     public static Stability? ComputeStability(IReadOnlyList<decimal> dailyTotals)
     {
-        var stabilityIndex = ComputeStabilityIndex(dailyTotals);
+        var positiveDailyTotals = dailyTotals
+            .Where(value => value > 0m)
+            .ToList();
+
+        if (positiveDailyTotals.Count == 0)
+            return null;
+
+        var stabilityIndex = ComputeStabilityIndex(positiveDailyTotals);
         if (!stabilityIndex.HasValue)
             return null;
 
@@ -20,33 +29,26 @@ public static class StabilityService
             <= 4.0m => 40m - (index - 2.0m) * 20m,
             _ => 0m
         };
-        
+
         var status = ResolveStabilityStatus(index);
         var actionCode = ResolveStabilityActionCode(status);
-        return new Stability(index, score, status, actionCode);
+        var isPreview = positiveDailyTotals.Count < PreviewThreshold;
+        return new Stability(index, score, status, actionCode, isPreview);
     }
-    
-    private static decimal? ComputeStabilityIndex(IReadOnlyList<decimal> dailyTotals)
+
+    private static decimal? ComputeStabilityIndex(IReadOnlyList<decimal> positiveDailyTotals)
     {
-        var positiveDailyTotals = dailyTotals
-            .Where(value => value > 0m)
-            .ToList();
-
-        if (positiveDailyTotals.Count < 4)
-            return null;
-
         var median = MathService.ComputeMedian(positiveDailyTotals);
         if (median is not > 0m)
             return null;
 
-        var q1 = MathService.ComputeQuantile(positiveDailyTotals, 0.25d);
-        var q3 = MathService.ComputeQuantile(positiveDailyTotals, 0.75d);
-        if (!q1.HasValue || !q3.HasValue)
+        var mad = MathService.ComputeMAD(positiveDailyTotals);
+        if (!mad.HasValue)
             return null;
 
-        return (q3.Value - q1.Value) / median.Value;
+        return mad.Value / median.Value;
     }
-    
+
     private static string? ResolveStabilityStatus(decimal? stabilityIndex)
     {
         return stabilityIndex switch

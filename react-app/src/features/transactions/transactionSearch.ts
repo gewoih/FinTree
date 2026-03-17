@@ -6,6 +6,7 @@ export interface TransactionsRouteSearch {
   categoryId?: string;
   accountId?: string;
   search?: string;
+  isMandatory?: boolean;
   page?: number;
 }
 
@@ -40,6 +41,7 @@ export function validateTransactionsRouteSearch(
     categoryId: getNonEmptyString(search.categoryId),
     accountId: getNonEmptyString(search.accountId),
     search: getNonEmptyString(search.search),
+    isMandatory: typeof search.isMandatory === 'boolean' ? search.isMandatory : undefined,
     page: getPositiveInteger(search.page),
   };
 }
@@ -54,6 +56,7 @@ export function getTransactionFiltersFromSearch(
     categoryId: search.categoryId,
     accountId: search.accountId,
     search: search.search,
+    isMandatory: search.isMandatory,
     page: search.page ?? DEFAULT_TRANSACTION_FILTERS.page,
   };
 }
@@ -67,6 +70,7 @@ export function getTransactionsRouteSearch(
     categoryId: filters.categoryId || undefined,
     accountId: filters.accountId || undefined,
     search: filters.search?.trim() || undefined,
+    isMandatory: filters.isMandatory,
     page:
       filters.page > DEFAULT_TRANSACTION_FILTERS.page
         ? filters.page
