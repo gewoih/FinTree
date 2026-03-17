@@ -108,7 +108,3 @@
 - [ ] `FT-TODO-075` HealthScoreCards lack benchmark context — users with low financial literacy don't know if 72.4% savings or 34.6% discretionary is good or bad. Progress bars are missing from some metrics.
   **Fix:** (1) Add progress bars to all 4 metrics. (2) Show a small inline benchmark label near the progress bar ("цель: ≥20%", "норма: 6+ мес", "хорошо: ≤25%"). (3) Invert progress bar direction for the discretionary metric (lower = better).
   **Files:** `react-app/src/components/analytics/HealthScoreCard.tsx`, `react-app/src/components/analytics/models.ts`
-
-- [ ] `FT-TODO-077` CategoryDeltaCard bars have `min-width: 10%` — small deltas appear as large as big ones, making visual comparison misleading. Rows could also be more compact.
-  **Fix:** Remove `min-width` constraint, use proportional widths with a minimum of 2px for visibility. Reduce row padding to fit more categories without scrolling.
-  **Files:** `react-app/src/components/analytics/CategoryDeltaCard.tsx`

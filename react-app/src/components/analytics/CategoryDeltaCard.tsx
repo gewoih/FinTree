@@ -71,7 +71,9 @@ function getMaxDelta(items: CategoryDeltaItemDto[]): number {
 
 function barWidth(item: CategoryDeltaItemDto, maxDelta: number): string {
   const ratio = maxDelta <= 0 ? 0 : Math.abs(item.deltaAmount) / maxDelta;
-  return `${Math.max(10, Math.min(100, ratio * 100))}%`;
+  const pct = Math.min(100, ratio * 100);
+  // Use max() so even a near-zero delta renders as a visible 2px sliver
+  return `max(2px, ${pct}%)`;
 }
 
 function formatDelta(item: CategoryDeltaItemDto, direction: 'up' | 'down', currency: string): string {
@@ -102,7 +104,7 @@ function DeltaRow({ item, currency, direction, maxDelta }: DeltaRowProps) {
   );
 
   return (
-    <div className="space-y-1">
+    <div className="space-y-0.5">
       <div className="grid grid-cols-[minmax(0,1fr)_minmax(6.5rem,7.5rem)] items-start gap-3">
         <div className="flex min-w-0 items-center gap-2">
           <span
@@ -115,12 +117,12 @@ function DeltaRow({ item, currency, direction, maxDelta }: DeltaRowProps) {
           </span>
         </div>
 
-        <div className="text-right" style={{ color: toneColor(direction) }}>
-          <p className="text-base font-semibold tabular-nums leading-5">
+        <div className="flex items-baseline justify-end gap-2" style={{ color: toneColor(direction) }}>
+          <p className="text-base font-semibold tabular-nums">
             {formatDelta(item, direction, currency)}
           </p>
           {percentLabel !== '—' && (
-            <p className="text-sm font-medium tabular-nums opacity-90">{percentLabel}</p>
+            <p className="text-sm font-medium tabular-nums opacity-75">{percentLabel}</p>
           )}
         </div>
       </div>
@@ -159,14 +161,17 @@ function DeltaSection({ title, items, currency, direction }: DeltaSectionProps) 
   return (
     <section className="space-y-3">
       <div
-        className="flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.08em]"
-        style={{ color: direction === 'up' ? 'var(--ft-danger-300)' : 'var(--ft-success-300)' }}
+        className="flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.08em] text-foreground"
       >
-        <Icon className="size-4" aria-hidden="true" />
+        <Icon
+          className="size-4 shrink-0"
+          style={{ color: direction === 'up' ? 'var(--ft-danger-300)' : 'var(--ft-success-300)' }}
+          aria-hidden="true"
+        />
         <span>{title}</span>
       </div>
 
-      <div className="space-y-3.5">
+      <div className="space-y-2.5">
         {items.map((item) => (
           <DeltaRow
             key={item.id}
