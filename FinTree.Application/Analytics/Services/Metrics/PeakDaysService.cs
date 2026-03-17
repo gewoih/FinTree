@@ -58,18 +58,15 @@ public sealed class PeakDaysService
 
     private static decimal ComputePeakThreshold(List<decimal> positiveDailyTotals, decimal medianDaily)
     {
-        if (positiveDailyTotals.Count < 10)
-            return medianDaily * 2m;
-
-        var p90 = MathService.ComputeQuantile(positiveDailyTotals, 0.90d) ?? medianDaily * 2m;
         var absoluteDeviations = positiveDailyTotals
             .Select(value => Math.Abs(value - medianDaily))
             .ToList();
-        
-        var mad = MathService.ComputeMedian(absoluteDeviations) ?? 0m;
-        var robustThreshold = medianDaily + 1.2m * mad;
 
-        return Math.Max(p90, robustThreshold);
+        var mad = MathService.ComputeMedian(absoluteDeviations) ?? 0m;
+
+        return mad > 0m
+            ? medianDaily + 1.5m * mad
+            : medianDaily * 1.5m;
     }
     
     private static PeakMetricsResult Empty(decimal monthTotal, int daysInMonth)

@@ -176,7 +176,7 @@ public sealed class EvolutionService(
             var stability = StabilityService.ComputeStability(dailyTotals.Values.ToList());
 
             var daysInMonth = DateTime.DaysInMonth(monthStart.Year, monthStart.Month);
-            var peakMetrics = PeakDaysService.Calculate(dailyDiscretionary, monthTotal, daysInMonth);
+            var peakMetrics = PeakDaysService.Calculate(dailyDiscretionary, discretionaryTotal, daysInMonth);
             var peakDayRatio = peakMetrics.PeakDayRatioPercent;
             var peakSpendSharePercent = peakMetrics.PeakSpendSharePercent;
 

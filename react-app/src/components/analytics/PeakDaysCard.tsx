@@ -50,7 +50,7 @@ function resolveShareStyles(share: number | null) {
     };
   }
 
-  if (share <= 10) {
+  if (share <= 15) {
     return {
       value: 'var(--ft-success-400)',
       border: 'color-mix(in srgb, var(--ft-success-500) 45%, var(--ft-border-subtle))',
@@ -58,7 +58,7 @@ function resolveShareStyles(share: number | null) {
     };
   }
 
-  if (share <= 25) {
+  if (share <= 35) {
     return {
       value: 'var(--ft-warning-300)',
       border: 'color-mix(in srgb, var(--ft-warning-500) 45%, var(--ft-border-subtle))',
@@ -78,7 +78,7 @@ function PeakDaysSkeleton() {
     <div
       role="status"
       aria-busy="true"
-      aria-label="Загрузка пиковых дней"
+      aria-label="Загрузка импульсивных трат"
       className="space-y-4 px-7 pb-7"
     >
       <Skeleton className="h-[148px] rounded-lg" />
@@ -115,7 +115,7 @@ function SummaryBlock({
       </p>
 
       <p className="mt-2 text-base font-medium text-[var(--ft-text-secondary)]">
-        расходов в пиковые дни
+        необязательных расходов в импульсивные дни
       </p>
 
       <p className="mt-3 text-sm text-[var(--ft-text-tertiary)]">
@@ -176,9 +176,9 @@ export function PeakDaysCard({
   return (
     <AnalyticsPanel>
       <AnalyticsSectionHeader
-        title="Пиковые дни"
-        tooltip="Дни, когда расходы заметно превысили привычный темп месяца."
-        ariaLabel="Подробнее о пиковых днях"
+        title="Импульсивные траты"
+        tooltip="Дни, когда необязательные расходы заметно превысили твой привычный темп. Это траты, которых можно было избежать."
+        ariaLabel="Подробнее об импульсивных тратах"
         className="pb-4"
       />
 
@@ -190,7 +190,7 @@ export function PeakDaysCard({
         <div className="px-7 pb-7">
           <AnalyticsInset className="flex min-h-[296px] items-center justify-center px-8 text-center">
             <p className="max-w-md text-base leading-7 text-[var(--ft-text-secondary)]">
-              Пиковых дней нет. Расходы распределены по месяцу достаточно равномерно.
+              Импульсивных трат нет. Необязательные расходы распределены по месяцу достаточно равномерно.
             </p>
           </AnalyticsInset>
         </div>

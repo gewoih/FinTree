@@ -21,6 +21,7 @@ export function toTransactionsQuery(
     from: filters.dateFrom ?? null,
     to: filters.dateTo ?? null,
     search: filters.search ?? null,
+    isMandatory: filters.isMandatory ?? null,
     page: filters.page,
     size: filters.pageSize,
   };
@@ -127,6 +128,7 @@ export function countActiveTransactionFilters(filters: TransactionFiltersValue):
     filters.categoryId,
     filters.accountId,
     filters.search,
+    filters.isMandatory !== undefined ? 'active' : undefined,
   ].filter(Boolean).length;
 }
 

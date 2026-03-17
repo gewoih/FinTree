@@ -6,6 +6,7 @@ export interface TransactionFiltersValue {
   categoryId?: string;
   accountId?: string;
   search?: string;
+  isMandatory?: boolean;
   page: number;
   pageSize: number;
 }

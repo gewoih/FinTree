@@ -175,7 +175,7 @@ export default function AnalyticsPage() {
   }, []);
 
   const openTransactions = useCallback(
-    (search: Record<string, string>) => {
+    (search: Record<string, string | boolean>) => {
       void navigate({
         to: '/transactions' as PathValues,
         search: search as never,
@@ -203,6 +203,7 @@ export default function AnalyticsPage() {
       openTransactions({
         dateFrom: value,
         dateTo: value,
+        isMandatory: false,
       });
     },
     [openTransactions],

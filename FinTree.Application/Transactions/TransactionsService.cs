@@ -75,6 +75,9 @@ public sealed class TransactionsService(IAppDbContext context, ICurrentUser curr
             userTransactionsQuery = userTransactionsQuery.Where(t => t.OccurredAt < toExclusiveUtc);
         }
 
+        if (filter.IsMandatory.HasValue)
+            userTransactionsQuery = userTransactionsQuery.Where(t => t.IsMandatory == filter.IsMandatory.Value);
+
         if (!string.IsNullOrWhiteSpace(filter.Search))
         {
             var search = filter.Search.Trim().ToLowerInvariant();

@@ -99,7 +99,7 @@ public sealed class DashboardService(
             ? (netCashflow - previousNetCashflow) / Math.Abs(previousNetCashflow) * 100
             : (decimal?)null;
 
-        var peaks = PeakDaysService.Calculate(monthlyResult.DailyTotalsDiscretionary, monthlyResult.TotalExpenses, daysInMonth);
+        var peaks = PeakDaysService.Calculate(monthlyResult.DailyTotalsDiscretionary, monthlyResult.DiscretionaryTotal, daysInMonth);
 
         var priorMonthCount = Math.Max(monthlyResult.PriorMonthsWithData.Count, 1);
         var averagedPriorTotals = monthlyResult.PriorExpenseCategoryTotals
@@ -130,7 +130,7 @@ public sealed class DashboardService(
         var previousMonthDaysCount = DateTime.DaysInMonth(previousMonthStartUtc.Year, previousMonthStartUtc.Month);
         var previousMonthPeaks = PeakDaysService.Calculate(
             monthlyResult.PreviousMonthDailyTotalsDiscretionary,
-            monthlyResult.PreviousMonthExpenses,
+            monthlyResult.PreviousMonthDiscretionaryTotal,
             previousMonthDaysCount);
         var previousLiquidity = await liquidityService.ComputeLiquidity(baseCurrencyCode, monthStartUtc, ct);
         var previousTotalMonthScore = MonthlyScoreService.CalculateTotalMonthScore(

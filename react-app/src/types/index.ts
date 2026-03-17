@@ -155,6 +155,7 @@ export interface TransactionsQuery {
   from?: string | null;
   to?: string | null;
   search?: string | null;
+  isMandatory?: boolean | null;
   page?: number;
   size?: number;
 }
