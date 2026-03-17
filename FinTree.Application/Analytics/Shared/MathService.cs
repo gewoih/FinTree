@@ -18,6 +18,19 @@ internal static class MathService
             : sorted[mid];
     }
 
+    public static decimal? ComputeMAD(IReadOnlyList<decimal> values)
+    {
+        if (values.Count == 0)
+            return null;
+
+        var median = ComputeMedian(values);
+        if (!median.HasValue)
+            return null;
+
+        var deviations = values.Select(v => Math.Abs(v - median.Value)).ToList();
+        return ComputeMedian(deviations);
+    }
+
     public static decimal? ComputeQuantile(IReadOnlyList<decimal> values, double quantile)
     {
         if (values.Count == 0)

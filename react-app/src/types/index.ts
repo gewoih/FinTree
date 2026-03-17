@@ -268,6 +268,7 @@ export interface FinancialHealthSummaryDto {
   stabilityScore: number | null;
   stabilityStatus: StabilityStatusCode | null;
   stabilityActionCode: StabilityActionCode | null;
+  stabilityIsPreview: boolean;
   savingsRate: number | null;
   netCashflow: number | null;
   discretionaryTotal: number | null;

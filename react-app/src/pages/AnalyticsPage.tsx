@@ -445,6 +445,7 @@ export default function AnalyticsPage() {
                     accent={card.accent}
                     tooltip={card.tooltip}
                     progress={card.progress}
+                    isPreview={card.isPreview}
                   />
               ))}
             </>

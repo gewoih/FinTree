@@ -9,6 +9,7 @@ public readonly record struct FinancialHealthSummaryDto(
     int? StabilityScore,
     string? StabilityStatus,
     string? StabilityActionCode,
+    bool StabilityIsPreview,
     decimal? SavingsRate,
     decimal? NetCashflow,
     decimal? DiscretionaryTotal,

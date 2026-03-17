@@ -56,6 +56,7 @@ export interface HealthMetricCardModel {
   accent: MetricAccent;
   tooltip: string;
   progress?: number;
+  isPreview?: boolean;
 }
 
 const STABILITY_ACTION_TEXTS: Record<StabilityActionCode, string> = {
@@ -346,6 +347,7 @@ export function buildHealthMetricCards(
       tooltip: stabilityReady
         ? 'Показывает, насколько стабильны ваши расходы за месяц. Чем выше балл, тем лучше.'
         : `Нужны расходы хотя бы в ${readiness.requiredStabilityDays} днях этого месяца. Сейчас: ${readiness.observedStabilityDaysInSelectedMonth} из ${readiness.requiredStabilityDays}.`,
+      isPreview: health.stabilityIsPreview,
     },
     {
       key: 'discretionary',

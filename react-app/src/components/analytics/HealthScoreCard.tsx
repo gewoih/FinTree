@@ -25,6 +25,7 @@ interface HealthScoreCardProps {
   accent: MetricAccent;
   tooltip: string;
   progress?: number;
+  isPreview?: boolean;
 }
 
 const ICON_MAP: Record<string, LucideIcon> = {
@@ -82,6 +83,7 @@ export function HealthScoreCard({
   accent,
   tooltip,
   progress,
+  isPreview,
 }: HealthScoreCardProps) {
   const color = accentColor(accent);
 
@@ -105,7 +107,20 @@ export function HealthScoreCard({
             {createElement(resolveIcon(icon), { className: 'size-5 shrink-0' })}
           </div>
 
-          <span className="pt-2 text-base font-semibold text-foreground">{title}</span>
+          <div className="flex flex-col gap-1 pt-2">
+            <span className="text-base font-semibold text-foreground">{title}</span>
+            {isPreview && (
+              <span
+                className="w-fit rounded px-1.5 py-0.5 text-xs font-medium"
+                style={{
+                  color: 'var(--ft-text-secondary)',
+                  backgroundColor: 'color-mix(in srgb, var(--ft-text-secondary) 12%, transparent)',
+                }}
+              >
+                мало данных
+              </span>
+            )}
+          </div>
         </div>
 
         <InfoTooltip

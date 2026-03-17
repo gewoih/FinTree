@@ -29,7 +29,7 @@ public sealed class DashboardService(
             .ToDictionary(c => c.Id, c => new CategoryMeta(c.Name, c.Color, c.IsMandatory));
 
         const int requiredExpenseDays = 7;
-        const int requiredStabilityDays = 4;
+        const int requiredStabilityDays = 1;
         var observedExpenseDays = await transactionsService.GetDistinctExpenseDaysCountAsync(ct);
 
         var transactions = await transactionsService.GetTransactionSnapshotsAsync(
@@ -154,6 +154,7 @@ public sealed class DashboardService(
             StabilityScore: (int?)stability?.Score,
             StabilityStatus: stability?.Status,
             StabilityActionCode: stability?.ActionCode,
+            StabilityIsPreview: stability?.IsPreview ?? false,
             SavingsRate: savingsRate,
             NetCashflow: MathService.Round2(netCashflow),
             DiscretionaryTotal: MathService.Round2(monthlyResult.DiscretionaryTotal),
