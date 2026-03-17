@@ -100,11 +100,3 @@
   **Fix:** Extract page-level query/mutation orchestration into feature hooks and move repeated form/date/summary sections into focused presentational components.
   **Priority:** P2
   **Files:** `react-app/src/pages/AccountsPage.tsx`, `react-app/src/pages/TransactionsPage.tsx`, `react-app/src/features/transactions/TransactionFormModal.tsx`, `react-app/src/features/transactions/TransactionList.tsx`
-
-- [ ] `FT-TODO-074` GlobalMonthScoreCard: sub-metrics (savings, cushion, stability, discretionary, peak days) are not visually connected to the overall score — users don't understand they are the score's components.
-  **Fix:** Restructure GlobalMonthScoreCard layout to make HealthScoreCards and PeakDaysCard visually subordinate to the score (e.g. collapsible section, "What makes up your score" divider, or nested inset). No new text explanations — visual hierarchy only.
-  **Files:** `react-app/src/components/analytics/GlobalMonthScoreCard.tsx`, `react-app/src/components/analytics/HealthScoreCard.tsx`, `react-app/src/components/analytics/PeakDaysCard.tsx`
-
-- [ ] `FT-TODO-075` HealthScoreCards lack benchmark context — users with low financial literacy don't know if 72.4% savings or 34.6% discretionary is good or bad. Progress bars are missing from some metrics.
-  **Fix:** (1) Add progress bars to all 4 metrics. (2) Show a small inline benchmark label near the progress bar ("цель: ≥20%", "норма: 6+ мес", "хорошо: ≤25%"). (3) Invert progress bar direction for the discretionary metric (lower = better).
-  **Files:** `react-app/src/components/analytics/HealthScoreCard.tsx`, `react-app/src/components/analytics/models.ts`

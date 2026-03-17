@@ -25,6 +25,7 @@ interface HealthScoreCardProps {
   accent: MetricAccent;
   tooltip: string;
   progress?: number;
+  benchmarkLabel?: string;
   isPreview?: boolean;
 }
 
@@ -83,6 +84,7 @@ export function HealthScoreCard({
   accent,
   tooltip,
   progress,
+  benchmarkLabel,
   isPreview,
 }: HealthScoreCardProps) {
   const color = accentColor(accent);
@@ -139,19 +141,24 @@ export function HealthScoreCard({
         </span>
 
         {progress !== undefined && (
-          <div
-            className="h-1 w-full overflow-hidden rounded-full"
-            style={{ backgroundColor: 'var(--ft-border-default)' }}
-            role="progressbar"
-            aria-valuenow={progress}
-            aria-valuemin={0}
-            aria-valuemax={100}
-            aria-label={`${title}: ${value}`}
-          >
+          <div className="space-y-1">
             <div
-              className="h-full rounded-full"
-              style={{ width: `${Math.min(100, Math.max(0, progress))}%`, backgroundColor: color }}
-            />
+              className="h-1 w-full overflow-hidden rounded-full"
+              style={{ backgroundColor: 'var(--ft-border-default)' }}
+              role="progressbar"
+              aria-valuenow={progress}
+              aria-valuemin={0}
+              aria-valuemax={100}
+              aria-label={`${title}: ${value}`}
+            >
+              <div
+                className="h-full rounded-full"
+                style={{ width: `${Math.min(100, Math.max(0, progress))}%`, backgroundColor: color }}
+              />
+            </div>
+            {benchmarkLabel && (
+              <p className="text-right text-xs text-[var(--ft-text-tertiary)]">{benchmarkLabel}</p>
+            )}
           </div>
         )}
 

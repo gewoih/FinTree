@@ -1,5 +1,5 @@
-import type { ReactNode } from 'react';
-import { AlertCircle, Info } from 'lucide-react';
+import { useState, type ReactNode } from 'react';
+import { AlertCircle, ChevronDown, Info } from 'lucide-react';
 
 import { cn } from '@/utils/cn';
 import { Button } from '@/components/ui/button';
@@ -14,6 +14,7 @@ interface GlobalMonthScoreCardProps {
   error: string | null;
   model: GlobalScoreModel;
   children?: ReactNode;
+  detailFooter?: ReactNode;
   onRetry: () => void;
 }
 
@@ -50,17 +51,13 @@ const CHILD_SKELETON_KEYS = ['sk-a', 'sk-b', 'sk-c', 'sk-d'] as const;
 function ScoreLoadingSkeleton() {
   return (
     <AnalyticsPanel ariaLabel="Загрузка данных">
-      <div className="grid grid-cols-1 gap-4 px-6 py-6 lg:grid-cols-[minmax(260px,0.9fr)_minmax(0,1.6fr)]">
-        <div className="flex h-full flex-col justify-center gap-5">
-          <div className="space-y-3">
-            <Skeleton className="h-4 w-40" />
-            <Skeleton className="h-16 w-44" />
-            <Skeleton className="h-8 w-full" />
-            <Skeleton className="h-8 w-3/4" />
-          </div>
-          <Skeleton className="h-6 w-44" />
+      <div className="flex flex-col gap-5 px-6 py-6">
+        <div className="space-y-3">
+          <Skeleton className="h-4 w-40" />
+          <Skeleton className="h-16 w-44" />
+          <Skeleton className="h-8 w-full" />
+          <Skeleton className="h-8 w-3/4" />
         </div>
-
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
           {CHILD_SKELETON_KEYS.map((key) => (
             <Skeleton key={key} className="h-[210px] rounded-lg" />
@@ -85,13 +82,40 @@ function EmptyState() {
   );
 }
 
-function ScoreMainBlock({ model }: { model: GlobalScoreModel }) {
+function ScoreMainBlock({
+  model,
+  hasDetail,
+  open,
+  onToggle,
+}: {
+  model: GlobalScoreModel;
+  hasDetail: boolean;
+  open: boolean;
+  onToggle: () => void;
+}) {
   return (
-    <div className="flex h-full min-w-0 flex-col justify-center gap-4">
+    <div className="flex min-w-0 flex-col gap-4">
       <div className="space-y-4">
-        <p className="text-xs font-semibold uppercase tracking-[0.08em] text-[var(--ft-text-secondary)]">
-          Общий рейтинг месяца
-        </p>
+        <div className="flex items-center justify-between gap-2">
+          <p className="text-xs font-semibold uppercase tracking-[0.08em] text-[var(--ft-text-secondary)]">
+            Общий рейтинг месяца
+          </p>
+          {hasDetail && (
+            <button
+              type="button"
+              onClick={onToggle}
+              aria-expanded={open}
+              className="flex shrink-0 items-center gap-1.5 rounded-md px-2.5 py-1 text-xs font-medium text-[var(--ft-text-secondary)] transition-colors hover:bg-[color-mix(in_srgb,var(--ft-text-primary)_6%,transparent)] hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+              style={{ backgroundColor: 'color-mix(in srgb, var(--ft-text-secondary) 8%, transparent)' }}
+            >
+              {open ? 'Свернуть' : 'Детали'}
+              <ChevronDown
+                className={cn('size-3.5 transition-transform duration-300', open && 'rotate-180')}
+                aria-hidden="true"
+              />
+            </button>
+          )}
+        </div>
 
         <div className="flex flex-wrap items-end gap-x-4 gap-y-2">
           <p
@@ -102,7 +126,17 @@ function ScoreMainBlock({ model }: { model: GlobalScoreModel }) {
               fontVariantNumeric: 'tabular-nums',
             }}
           >
-            {model.scoreLabel}
+            {model.scoreLabel.includes('/')
+              ? (() => {
+                  const [main, denom] = model.scoreLabel.split('/');
+                  return (
+                    <>
+                      {main}
+                      <span style={{ fontSize: '55%', opacity: 0.45, fontWeight: 600 }}>/{denom}</span>
+                    </>
+                  );
+                })()
+              : model.scoreLabel}
           </p>
 
           <span
@@ -115,7 +149,7 @@ function ScoreMainBlock({ model }: { model: GlobalScoreModel }) {
 
         {model.score !== null && (
           <div
-            className="h-1 w-full overflow-hidden rounded-full"
+            className="h-2 w-full overflow-hidden rounded-full"
             style={{ backgroundColor: 'var(--ft-border-default)' }}
             role="progressbar"
             aria-valuenow={model.score}
@@ -130,7 +164,7 @@ function ScoreMainBlock({ model }: { model: GlobalScoreModel }) {
           </div>
         )}
 
-        <p className="max-w-[24rem] text-base leading-7 text-[var(--ft-text-secondary)]">
+        <p className="max-w-[32rem] text-base leading-7 text-[var(--ft-text-secondary)]">
           {model.description}
         </p>
       </div>
@@ -143,8 +177,12 @@ export function GlobalMonthScoreCard({
   error,
   model,
   children,
+  detailFooter,
   onRetry,
 }: GlobalMonthScoreCardProps) {
+  const [open, setOpen] = useState(false);
+  const hasDetail = Boolean(children) || Boolean(detailFooter);
+
   if (loading) {
     return <ScoreLoadingSkeleton />;
   }
@@ -172,20 +210,37 @@ export function GlobalMonthScoreCard({
     );
   }
 
-  if (model.score === null && !children) {
+  if (model.score === null && !hasDetail) {
     return <EmptyState />;
   }
 
   return (
     <AnalyticsPanel>
-      <div className="grid grid-cols-1 gap-4 px-6 py-6 lg:grid-cols-[minmax(260px,0.9fr)_minmax(0,1.55fr)]">
-        <ScoreMainBlock model={model} />
+      <div className="px-6 py-6">
+        <ScoreMainBlock model={model} hasDetail={hasDetail} open={open} onToggle={() => setOpen((prev) => !prev)} />
 
-        {children && (
-          <div className={cn('grid grid-cols-1 gap-3.5 sm:grid-cols-2')}>
-            {children}
+        {/* Accordion — grid-rows trick for smooth height animation without JS measurement */}
+        <div
+          className={cn(
+            'grid transition-all duration-300 ease-in-out',
+            open ? 'grid-rows-[1fr]' : 'grid-rows-[0fr]',
+          )}
+        >
+          <div className="overflow-hidden">
+            <div className="pt-5">
+              {children && (
+                <div className="grid grid-cols-1 gap-3.5 sm:grid-cols-2 xl:grid-cols-4">
+                  {children}
+                </div>
+              )}
+              {detailFooter && (
+                <div className={cn(children && 'mt-5 border-t border-[var(--ft-border-subtle)] pt-5')}>
+                  {detailFooter}
+                </div>
+              )}
+            </div>
           </div>
-        )}
+        </div>
       </div>
     </AnalyticsPanel>
   );

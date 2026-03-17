@@ -56,6 +56,7 @@ export interface HealthMetricCardModel {
   accent: MetricAccent;
   tooltip: string;
   progress?: number;
+  benchmarkLabel?: string;
   isPreview?: boolean;
 }
 
@@ -322,6 +323,7 @@ export function buildHealthMetricCards(
       progress: health.savingsRate !== null && !Number.isNaN(health.savingsRate)
         ? Math.min(100, Math.max(0, health.savingsRate * 100))
         : undefined,
+      benchmarkLabel: 'цель: ≥20%',
     },
     {
       key: 'cushion',
@@ -333,6 +335,10 @@ export function buildHealthMetricCards(
       supportingLabel: 'сумма подушки',
       accent: resolveCushionAccent(health.liquidMonthsStatus),
       tooltip: 'На сколько месяцев жизни хватит средств из подушки безопасности.',
+      progress: health.liquidMonths !== null && !Number.isNaN(health.liquidMonths)
+        ? Math.min(100, Math.max(0, (health.liquidMonths / 6) * 100))
+        : undefined,
+      benchmarkLabel: 'норма: 6+ мес',
     },
     {
       key: 'stability',
@@ -344,6 +350,7 @@ export function buildHealthMetricCards(
       progress: health.stabilityScore !== null && !Number.isNaN(health.stabilityScore) && stabilityReady
         ? Math.min(100, Math.max(0, health.stabilityScore))
         : undefined,
+      benchmarkLabel: 'хорошо: ≥80',
       tooltip: stabilityReady
         ? 'Показывает, насколько стабильны ваши расходы за месяц. Чем выше балл, тем лучше.'
         : `Нужны расходы хотя бы в ${readiness.requiredStabilityDays} днях этого месяца. Сейчас: ${readiness.observedStabilityDaysInSelectedMonth} из ${readiness.requiredStabilityDays}.`,
@@ -361,6 +368,10 @@ export function buildHealthMetricCards(
       supportingLabel: 'сумма',
       accent: resolveDiscretionaryAccent(health.discretionarySharePercent),
       tooltip: 'Ваши необязательные расходы.',
+      progress: health.discretionarySharePercent !== null && !Number.isNaN(health.discretionarySharePercent)
+        ? Math.min(100, Math.max(0, 100 - health.discretionarySharePercent))
+        : undefined,
+      benchmarkLabel: 'хорошо: ≤25%',
     },
   ];
 }
