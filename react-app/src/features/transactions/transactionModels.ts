@@ -23,9 +23,9 @@ export type TransactionDisplayRow = {
   amount: number;
   currencyCode: string;
   tone: 'Income' | 'Expense';
-  categoryName: string;
+  categoryName: string | null;
   categoryColor: string;
-  categoryIcon: string;
+  categoryIcon: string | null;
   transaction: TransactionDto;
 };
 

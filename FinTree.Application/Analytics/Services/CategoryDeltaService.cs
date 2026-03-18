@@ -22,9 +22,8 @@ public static class CategoryDeltaService
             .ToHashSet();
 
         var monthsToUse = qualifyingMonths.Count > 0 ? qualifyingMonths : priorDaysByMonth.Keys.ToHashSet();
-        var monthCount = Math.Max(monthsToUse.Count, 1);
-
         var baselineTotals = new Dictionary<Guid, decimal>();
+        var activeMonthsPerCategory = new Dictionary<Guid, int>();
         foreach (var month in monthsToUse)
         {
             if (!priorTotalsByMonth.TryGetValue(month, out var monthTotals))
@@ -33,10 +32,17 @@ public static class CategoryDeltaService
             {
                 baselineTotals.TryGetValue(categoryId, out var existing);
                 baselineTotals[categoryId] = existing + amount;
+
+                activeMonthsPerCategory.TryGetValue(categoryId, out var activeCount);
+                activeMonthsPerCategory[categoryId] = activeCount + 1;
             }
         }
 
-        var averagedBaseline = baselineTotals.ToDictionary(kv => kv.Key, kv => kv.Value / monthCount);
+        // Divide by months where the category was active, not total window size.
+        // Avoids diluting infrequent categories: $300 in 1/3 months → baseline $300, not $100.
+        var averagedBaseline = baselineTotals.ToDictionary(
+            kv => kv.Key,
+            kv => kv.Value / Math.Max(activeMonthsPerCategory.GetValueOrDefault(kv.Key, 1), 1));
 
         return GetCategoryDeltas(
             currentTotals.ToDictionary(kv => kv.Key, kv => kv.Value.Total),

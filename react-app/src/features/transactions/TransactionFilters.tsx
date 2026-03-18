@@ -55,7 +55,7 @@ function FiltersContent({
   };
 
   return (
-    <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-[minmax(0,1.4fr)_minmax(0,1.1fr)_repeat(2,minmax(0,1fr))_auto]">
+    <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-[minmax(0,1.4fr)_minmax(0,1.1fr)_repeat(2,minmax(0,1fr))_auto_auto]">
       <div className="space-y-1.5">
         <div className="text-sm font-semibold text-muted-foreground">Поиск</div>
         <div className="relative">
@@ -179,7 +179,7 @@ function FiltersContent({
         <Button
           type="button"
           variant="outline"
-          className="min-h-[44px] rounded-xl"
+          className="min-h-[44px] self-end rounded-xl"
           onClick={onClear}
         >
           Сбросить

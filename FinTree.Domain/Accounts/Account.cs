@@ -36,10 +36,9 @@ public sealed class Account : Entity
         IsLiquid = isLiquid;
     }
 
-    public Transaction AddTransaction(TransactionType type, Guid categoryId, decimal amount, DateTime occuredAt,
+    public Transaction AddTransaction(TransactionType type, Guid? categoryId, decimal amount, DateTime occuredAt,
         string? description = null, bool isMandatory = false, bool isTransfer = false, Guid? transferId = null)
     {
-        ValidateTransaction(categoryId);
         if (IsArchived)
             throw new InvalidOperationException("Нельзя добавлять операции в архивный счет.");
 
@@ -70,10 +69,5 @@ public sealed class Account : Entity
     public void Unarchive()
     {
         IsArchived = false;
-    }
-
-    private static void ValidateTransaction(Guid categoryId)
-    {
-        ArgumentOutOfRangeException.ThrowIfEqual(categoryId, Guid.Empty);
     }
 }

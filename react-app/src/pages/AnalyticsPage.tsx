@@ -5,6 +5,7 @@ import { ChevronLeft, ChevronRight, X } from 'lucide-react';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 
 import * as analyticsApi from '@/api/analytics';
+import { UNCATEGORIZED_CATEGORY_ID } from '@/components/analytics/chartModels';
 import * as accountsApi from '@/api/accounts';
 import * as retrospectivesApi from '@/api/retrospectives';
 import * as userApi from '@/api/user';
@@ -184,7 +185,7 @@ export default function AnalyticsPage() {
   const handleCategorySelect = useCallback(
     (item: { id: string }) => {
       openTransactions({
-        categoryId: item.id,
+        categoryId: item.id === UNCATEGORIZED_CATEGORY_ID ? undefined : item.id,
         dateFrom: formatDateParam(new Date(selectedYear, selectedMonth - 1, 1)),
         dateTo: formatDateParam(new Date(selectedYear, selectedMonth, 0)),
       });

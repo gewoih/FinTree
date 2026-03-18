@@ -11,6 +11,7 @@ import type {
   TransactionFiltersValue,
 } from './transactionModels';
 import { normalizeCategoryIconKey } from '@/features/categories/categoryIcons';
+import { UNCATEGORIZED_COLOR, UNCATEGORIZED_NAME } from '@/constants/uncategorized';
 
 export function toTransactionsQuery(
   filters: TransactionFiltersValue
@@ -78,7 +79,8 @@ export function buildTransactionRows(
 
   for (const transaction of transactions) {
     const account = accountById.get(transaction.accountId);
-    const category = categoryById.get(transaction.categoryId);
+    const category = transaction.categoryId != null ? categoryById.get(transaction.categoryId) : undefined;
+    const isUncategorized = transaction.categoryId == null || category == null;
 
     rows.push({
       id: transaction.id,
@@ -87,9 +89,9 @@ export function buildTransactionRows(
       amount: transaction.amount,
       currencyCode: account?.currencyCode ?? transaction.originalCurrencyCode ?? 'RUB',
       tone: transaction.type === 'Income' ? 'Income' : 'Expense',
-      categoryName: category?.name ?? 'Без категории',
-      categoryColor: getCategoryColorToken(category?.id ?? category?.name ?? 'uncategorized'),
-      categoryIcon: normalizeCategoryIconKey(category?.icon),
+      categoryName: isUncategorized ? null : category!.name,
+      categoryColor: isUncategorized ? UNCATEGORIZED_COLOR : getCategoryColorToken(category!.id),
+      categoryIcon: isUncategorized ? null : normalizeCategoryIconKey(category!.icon),
       transaction,
     });
   }
@@ -140,4 +142,20 @@ export function getExpenseSummaryAmount(transactions: TransactionDto[]): number 
 
     return sum + (item.amountInBaseCurrency ?? item.amount);
   }, 0);
+}
+
+export function getVisiblePages(currentPage: number, totalPages: number): (number | 'ellipsis')[] {
+  if (totalPages <= 7) {
+    return Array.from({ length: totalPages }, (_, index) => index + 1);
+  }
+
+  if (currentPage <= 3) {
+    return [1, 2, 3, 4, 'ellipsis', totalPages];
+  }
+
+  if (currentPage >= totalPages - 2) {
+    return [1, 'ellipsis', totalPages - 3, totalPages - 2, totalPages - 1, totalPages];
+  }
+
+  return [1, 'ellipsis', currentPage - 1, currentPage, currentPage + 1, 'ellipsis', totalPages];
 }

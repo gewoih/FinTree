@@ -132,7 +132,7 @@ export interface UpdateCategoryPayload {
 export interface TransactionDto {
   id: string;
   accountId: string;
-  categoryId: string;
+  categoryId: string | null;
   amount: number;
   amountInBaseCurrency?: number | null;
   originalAmount?: number | null;
@@ -163,7 +163,7 @@ export interface TransactionsQuery {
 export interface NewTransactionPayload {
   type: TransactionType;
   accountId: string;
-  categoryId: string;
+  categoryId: string | null;
   amount: number;
   occurredAt: string;
   description: string | null;
@@ -173,7 +173,7 @@ export interface NewTransactionPayload {
 export interface UpdateTransactionPayload {
   id: string;
   accountId: string;
-  categoryId: string;
+  categoryId: string | null;
   amount: number;
   occurredAt: string;
   description: string | null;
@@ -300,7 +300,7 @@ export interface PeakDayDto {
 }
 
 export interface CategoryBreakdownItemDto {
-  id: string;
+  id: string | null;
   name: string;
   color: string;
   amount: number;

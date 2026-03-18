@@ -16,7 +16,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import type { CategoryBreakdownDto, CategoryBreakdownItemDto } from '@/types';
+import type { CategoryBreakdownDto } from '@/types';
 
 import {
   AnalyticsInset,
@@ -32,6 +32,7 @@ import {
   type AnalyticsCategorySlice,
   type CategoryScope,
 } from './chartModels';
+
 import { getTopAnchoredDonutAngles } from './donutAngles';
 import {
   formatAnalyticsHeroMoney,
@@ -52,7 +53,7 @@ interface SpendingPieCardProps {
   scopeOptions: Array<{ label: string; value: CategoryScope }>;
   onModeChange: (mode: CategoryDatasetMode) => void;
   onScopeChange: (scope: CategoryScope) => void;
-  onCategorySelect: (item: CategoryBreakdownItemDto) => void;
+  onCategorySelect: (item: AnalyticsCategorySlice) => void;
   onRetry: () => void;
 }
 
@@ -111,7 +112,7 @@ function LegendRow({
   currency: string;
   isActive: boolean;
   onHover: (id: string | null) => void;
-  onClick: (item: CategoryBreakdownItemDto) => void;
+  onClick: (item: AnalyticsCategorySlice) => void;
   isOther?: boolean;
   isChild?: boolean;
   isExpanded?: boolean;

@@ -1,11 +1,5 @@
-import { zodResolver } from '@hookform/resolvers/zod';
 import { Loader2, Trash2 } from 'lucide-react';
-import { useEffect, useState } from 'react';
-import { Controller, useForm, useWatch } from 'react-hook-form';
-import { useQueryClient } from '@tanstack/react-query';
-import { z } from 'zod';
-import * as transactionsApi from '@/api/transactions';
-import { queryKeys } from '@/api/queryKeys';
+import { Controller } from 'react-hook-form';
 import { ConfirmDialog } from '@/components/common/ConfirmDialog';
 import { FormField } from '@/components/common/FormField';
 import { Button } from '@/components/ui/button';
@@ -27,32 +21,12 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
-import { toast } from 'sonner';
 import type { AccountDto, TransactionCategoryDto, TransactionDto } from '@/types';
-import { resolveApiErrorMessage } from '@/utils/errors';
 import { DatePopoverField } from './DatePopoverField';
 import type { TransactionModalMode } from './transactionModels';
-import {
-  getTodayDateValue,
-  toDateInputValue,
-  toIsoDateAtNoon,
-} from './transactionUtils';
-
-const transactionSchema = z.object({
-  transactionType: z.enum(['Income', 'Expense']),
-  amount: z
-    .string()
-    .trim()
-    .min(1, 'Введите сумму')
-    .refine((value) => Number(value) > 0, 'Сумма должна быть больше 0'),
-  occurredAt: z.string().min(1, 'Выберите дату'),
-  categoryId: z.string().trim().min(1, 'Выберите категорию'),
-  accountId: z.string().trim().min(1, 'Выберите счёт'),
-  description: z.string().max(100, 'Не более 100 символов').optional(),
-  isMandatory: z.boolean(),
-});
-
-type TransactionFormValues = z.infer<typeof transactionSchema>;
+import { getTodayDateValue } from './transactionUtils';
+import { useTransactionForm } from './useTransactionForm';
+import { UNCATEGORIZED_SELECT_VALUE } from '@/constants/uncategorized';
 
 interface TransactionFormModalProps {
   open: boolean;
@@ -65,16 +39,6 @@ interface TransactionFormModalProps {
   onClose: () => void;
 }
 
-const DEFAULT_TRANSACTION_VALUES: TransactionFormValues = {
-  transactionType: 'Expense',
-  amount: '',
-  occurredAt: getTodayDateValue(),
-  categoryId: '',
-  accountId: '',
-  description: '',
-  isMandatory: false,
-};
-
 export function TransactionFormModal({
   open,
   mode,
@@ -85,109 +49,26 @@ export function TransactionFormModal({
   isDeletePending = false,
   onClose,
 }: TransactionFormModalProps) {
-  const queryClient = useQueryClient();
-  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
-
-  const form = useForm<TransactionFormValues>({
-    resolver: zodResolver(transactionSchema),
-    defaultValues: DEFAULT_TRANSACTION_VALUES,
+  const {
+    form,
+    transactionType,
+    transactionAccount,
+    filteredCategories,
+    isEditMode,
+    isDeleteDialogOpen,
+    setIsDeleteDialogOpen,
+    submitTransaction,
+    handleDelete,
+    amount,
+  } = useTransactionForm({
+    open,
+    mode,
+    accounts,
+    categories,
+    readonly,
+    onDeleteTransaction,
+    onClose,
   });
-
-  useEffect(() => {
-    if (!open) {
-      return;
-    }
-
-    if (mode.type === 'create') {
-      form.reset({
-        ...DEFAULT_TRANSACTION_VALUES,
-        accountId: accounts[0]?.id ?? '',
-        categoryId:
-          categories.find((item) => item.type === 'Expense')?.id ?? '',
-      });
-      return;
-    }
-
-    form.reset({
-      transactionType: mode.transaction.type === 'Income' ? 'Income' : 'Expense',
-      amount: String(mode.transaction.amount),
-      occurredAt: toDateInputValue(mode.transaction.occurredAt),
-      categoryId: mode.transaction.categoryId,
-      accountId: mode.transaction.accountId,
-      description: mode.transaction.description ?? '',
-      isMandatory: mode.transaction.isMandatory,
-    });
-  }, [accounts, categories, mode, open, form]);
-
-  const [transactionType, selectedAccountId, amount] = useWatch({
-    control: form.control,
-    name: ['transactionType', 'accountId', 'amount'],
-  });
-
-  const transactionAccount = accounts.find((item) => item.id === selectedAccountId);
-  const filteredCategories = categories.filter(
-    (item) => item.type === transactionType
-  );
-
-  const isEditMode = mode.type === 'edit-transaction';
-
-  const persistSuccess = async (message: string) => {
-    await Promise.all([
-      queryClient.invalidateQueries({ queryKey: queryKeys.transactions.all() }),
-      queryClient.invalidateQueries({ queryKey: queryKeys.accounts.all() }),
-      queryClient.invalidateQueries({ queryKey: queryKeys.analytics.all() }),
-    ]);
-    toast.success(message);
-    onClose();
-  };
-
-  const submitTransaction = form.handleSubmit(async (values) => {
-    if (readonly) {
-      toast.error('Изменение транзакций недоступно без активной подписки.');
-      return;
-    }
-
-    try {
-      if (mode.type === 'edit-transaction') {
-        await transactionsApi.updateTransaction({
-          id: mode.transaction.id,
-          accountId: values.accountId,
-          categoryId: values.categoryId,
-          amount: Number(values.amount),
-          occurredAt: toIsoDateAtNoon(values.occurredAt),
-          description: values.description?.trim() || null,
-          isMandatory: values.isMandatory,
-        });
-      } else {
-        await transactionsApi.createTransaction({
-          type: values.transactionType,
-          accountId: values.accountId,
-          categoryId: values.categoryId,
-          amount: Number(values.amount),
-          occurredAt: toIsoDateAtNoon(values.occurredAt),
-          description: values.description?.trim() || null,
-          isMandatory: values.isMandatory,
-        });
-      }
-
-      await persistSuccess('Транзакция сохранена');
-    } catch (error) {
-      toast.error(resolveApiErrorMessage(error, 'Не удалось сохранить транзакцию.'));
-    }
-  });
-
-  const handleDelete = async () => {
-    try {
-      if (mode.type === 'edit-transaction') {
-        await onDeleteTransaction?.(mode.transaction);
-      }
-
-      setIsDeleteDialogOpen(false);
-      onClose();
-    } catch {
-      // Error toast is handled by the page hook; keep the dialog open for a retry.
-    }
-  };
 
   return (
     <>
@@ -213,10 +94,7 @@ export function TransactionFormModal({
                   disabled={isEditMode}
                   onClick={() => {
                     form.setValue('transactionType', value);
-                    form.setValue(
-                      'categoryId',
-                      categories.find((item) => item.type === value)?.id ?? ''
-                    );
+                    form.setValue('categoryId', '');
                   }}
                 >
                   {value === 'Income' ? 'Доход' : 'Расход'}
@@ -266,18 +144,23 @@ export function TransactionFormModal({
 
             <FormField
               label="Категория"
-              required
               error={form.formState.errors.categoryId?.message}
             >
               <Controller
                 control={form.control}
                 name="categoryId"
                 render={({ field }) => (
-                  <Select value={field.value} onValueChange={field.onChange}>
+                  <Select
+                    value={field.value ?? UNCATEGORIZED_SELECT_VALUE}
+                    onValueChange={(v) =>
+                      field.onChange(v === UNCATEGORIZED_SELECT_VALUE ? undefined : v)
+                    }
+                  >
                     <SelectTrigger className="h-11 w-full rounded-xl">
-                      <SelectValue placeholder="Выберите категорию" />
+                      <SelectValue placeholder="Без категории" />
                     </SelectTrigger>
                     <SelectContent>
+                      <SelectItem value={UNCATEGORIZED_SELECT_VALUE}>Без категории</SelectItem>
                       {filteredCategories.map((category) => (
                         <SelectItem key={category.id} value={category.id}>
                           {category.name}

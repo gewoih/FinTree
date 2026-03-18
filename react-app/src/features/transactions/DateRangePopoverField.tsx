@@ -94,11 +94,11 @@ export function DateRangePopoverField({
           <Button
             type="button"
             variant="outline"
-            className="min-h-[44px] flex-1 justify-start rounded-xl px-3"
+            className="min-h-[44px] flex-1 justify-start overflow-hidden rounded-xl px-3"
             aria-label={triggerAriaLabel ?? label}
           >
-            <CalendarDays className="size-4 text-muted-foreground" />
-            <span className={cn(!hasValue && 'text-muted-foreground')}>
+            <CalendarDays className="size-4 shrink-0 text-muted-foreground" />
+            <span className={cn('truncate', !hasValue && 'text-muted-foreground')}>
               {getRangeDisplayLabel(label, from, to, placeholder)}
             </span>
           </Button>

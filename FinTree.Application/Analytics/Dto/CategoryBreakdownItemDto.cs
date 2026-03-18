@@ -1,7 +1,7 @@
 namespace FinTree.Application.Analytics.Dto;
 
 public readonly record struct CategoryBreakdownItemDto(
-    Guid Id,
+    Guid? Id,
     string Name,
     string Color,
     decimal Amount,

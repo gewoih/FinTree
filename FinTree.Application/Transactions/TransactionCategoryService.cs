@@ -2,7 +2,6 @@ using FinTree.Application.Abstractions;
 using FinTree.Application.Exceptions;
 using FinTree.Application.Transactions.Dto;
 using FinTree.Application.Users;
-using FinTree.Domain.Categories;
 using FinTree.Domain.Identity;
 using Microsoft.EntityFrameworkCore;
 
@@ -47,29 +46,17 @@ public sealed class TransactionCategoryService(IAppDbContext context, ICurrentUs
                 .FirstOrDefaultAsync(tc => tc.Id == id, cancellationToken: ct) ??
             throw new NotFoundException("Категория не найдена", id);
 
-        if (transactionCategory.IsDefault ||
-            string.Equals(transactionCategory.Name, "Без категории", StringComparison.OrdinalIgnoreCase))
-            throw new ConflictException("Категорию \"Без категории\" нельзя удалить.");
+        if (transactionCategory.IsDefault)
+            throw new ConflictException("Нельзя удалить категорию по умолчанию.");
 
-        await using var transaction = await context.BeginTransactionAsync(ct);
-
-        var fallbackCategory = await context.TransactionCategories
-            .Where(tc => tc.UserId == currentUser.Id && tc.Name == "Без категории")
-            .FirstOrDefaultAsync(ct);
-
-        if (fallbackCategory is null)
-        {
-            fallbackCategory = TransactionCategory.CreateDefault(currentUser.Id, "Без категории", "#9e9e9e");
-            await context.TransactionCategories.AddAsync(fallbackCategory, ct);
-            await context.SaveChangesAsync(ct);
-        }
+        await using var dbTransaction = await context.BeginTransactionAsync(ct);
 
         await context.Transactions
             .Where(t => t.CategoryId == transactionCategory.Id)
-            .ExecuteUpdateAsync(setters => setters.SetProperty(t => t.CategoryId, fallbackCategory.Id), ct);
+            .ExecuteUpdateAsync(setters => setters.SetProperty(t => t.CategoryId, (Guid?)null), ct);
 
         transactionCategory.Delete();
         await context.SaveChangesAsync(ct);
-        await transaction.CommitAsync(ct);
+        await dbTransaction.CommitAsync(ct);
     }
 }

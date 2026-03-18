@@ -9,7 +9,7 @@ public sealed class Transaction : Entity
 {
     public Account Account { get; private set; }
     public Guid AccountId { get; private set; }
-    public Guid CategoryId { get; private set; }
+    public Guid? CategoryId { get; private set; }
     public Money Money { get; private set; }
     public TransactionType Type { get; private set; }
     public DateTime OccurredAt { get; private set; }
@@ -22,10 +22,9 @@ public sealed class Transaction : Entity
     {
     }
 
-    internal Transaction(TransactionType type, Guid accountId, Guid categoryId, Money money, DateTime occurredAt,
+    internal Transaction(TransactionType type, Guid accountId, Guid? categoryId, Money money, DateTime occurredAt,
         string? description = null, bool isMandatory = false, bool isTransfer = false, Guid? transferId = null)
     {
-        ArgumentOutOfRangeException.ThrowIfEqual(categoryId, Guid.Empty, nameof(categoryId));
         ArgumentOutOfRangeException.ThrowIfEqual(accountId, Guid.Empty, nameof(accountId));
         ArgumentOutOfRangeException.ThrowIfGreaterThan(occurredAt, DateTime.UtcNow, nameof(occurredAt));
         if (isTransfer && transferId is null)
@@ -42,9 +41,8 @@ public sealed class Transaction : Entity
         TransferId = transferId;
     }
 
-    public void AssignCategory(Guid categoryId)
+    public void AssignCategory(Guid? categoryId)
     {
-        ArgumentOutOfRangeException.ThrowIfEqual(categoryId, Guid.Empty, nameof(categoryId));
         CategoryId = categoryId;
     }
 
@@ -60,9 +58,8 @@ public sealed class Transaction : Entity
         Money = new Money(newAccount.CurrencyCode, Money.Amount);
     }
 
-    public void Update(Guid categoryId, Money money, DateTime occurredAt, string? description, bool isMandatory)
+    public void Update(Guid? categoryId, Money money, DateTime occurredAt, string? description, bool isMandatory)
     {
-        ArgumentOutOfRangeException.ThrowIfEqual(categoryId, Guid.Empty, nameof(categoryId));
         ArgumentOutOfRangeException.ThrowIfGreaterThan(occurredAt, DateTime.UtcNow, nameof(occurredAt));
 
         if (money.Currency.Code != Account.CurrencyCode)

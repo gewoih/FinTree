@@ -11,19 +11,35 @@ public sealed class MonthlyScoreService
         decimal? discretionaryShare,
         decimal? peakSpendShare)
     {
+        // Each component is normalized to [0, 100].
+        // savingsRate floor is 0: deficit spending contributes 0, not a negative drag.
+        // liquidMonths saturates at CushionSaturationMonths: larger cushion doesn't inflate the score.
+        decimal? savingsComponent = savingsRate.HasValue
+            ? Math.Clamp(savingsRate.Value * 100m, 0m, 100m)
+            : null;
+
+        var liquidityComponent = Math.Clamp(liquidMonths / CushionSaturationMonths * 100m, 0m, 100m);
+
+        decimal? discretionaryComponent = discretionaryShare.HasValue
+            ? Math.Clamp(100m - discretionaryShare.Value, 0m, 100m)
+            : null;
+
+        decimal? peakComponent = peakSpendShare.HasValue
+            ? Math.Clamp(100m - peakSpendShare.Value, 0m, 100m)
+            : null;
+
         var normalizedScores = new List<decimal?>
         {
-            savingsRate * 100,
-            liquidMonths / CushionSaturationMonths * 100,
+            savingsComponent,
+            liquidityComponent,
             stabilityScore,
-            100 - discretionaryShare,
-            100 - peakSpendShare
+            discretionaryComponent,
+            peakComponent
         };
 
-        var weightedMean = normalizedScores.Average();
-        if (!weightedMean.HasValue || normalizedScores.Any(score => score is null))
+        if (normalizedScores.Any(score => score is null))
             return null;
-        
-        return weightedMean.Value;
+
+        return normalizedScores.Average()!.Value;
     }
 }

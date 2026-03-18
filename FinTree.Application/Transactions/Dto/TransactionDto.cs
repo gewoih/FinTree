@@ -6,7 +6,7 @@ public sealed record TransactionDto(
     Guid Id,
     Guid AccountId,
     decimal Amount,
-    Guid CategoryId,
+    Guid? CategoryId,
     string? Description,
     DateTime OccuredAt,
     bool IsMandatory,

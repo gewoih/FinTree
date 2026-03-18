@@ -5,12 +5,6 @@ namespace FinTree.Application.Analytics.Services;
 
 internal static class CategoryItemBuilder
 {
-    private static readonly CategoryMeta UnknownMeta = new(AnalyticsCommon.UnknownCategoryName,
-        AnalyticsCommon.UnknownCategoryColor, false);
-
-    private static CategoryMeta GetMeta(IReadOnlyDictionary<Guid, CategoryMeta> categories, Guid id)
-        => categories.GetValueOrDefault(id, UnknownMeta);
-
     internal static List<CategoryBreakdownItemDto> BuildExpenseItems(
         IReadOnlyDictionary<Guid, CategoryTotals> totals,
         IReadOnlyDictionary<Guid, CategoryMeta> categories,
@@ -33,21 +27,43 @@ internal static class CategoryItemBuilder
         IEnumerable<(Guid Id, decimal Total, decimal MandatoryTotal, decimal DiscretionaryTotal)> items,
         IReadOnlyDictionary<Guid, CategoryMeta> categories,
         decimal grandTotal)
-        => items
-            .Select(item =>
+    {
+        var result = new List<CategoryBreakdownItemDto>();
+
+        foreach (var item in items)
+        {
+            var percent = grandTotal > 0m ? (item.Total / grandTotal) * 100 : (decimal?)null;
+
+            // Guid.Empty is the sentinel for uncategorized transactions; id is returned as null to the client
+            if (item.Id == Guid.Empty)
             {
-                var meta = GetMeta(categories, item.Id);
-                var percent = grandTotal > 0m ? (item.Total / grandTotal) * 100 : (decimal?)null;
-                return new CategoryBreakdownItemDto(
-                    item.Id,
-                    meta.Name,
-                    meta.Color,
+                result.Add(new CategoryBreakdownItemDto(
+                    null,
+                    string.Empty,
+                    string.Empty,
                     MathService.Round2(item.Total),
                     MathService.Round2(item.MandatoryTotal),
                     MathService.Round2(item.DiscretionaryTotal),
                     percent,
-                    meta.IsMandatory);
-            })
-            .OrderByDescending(x => x.Amount)
-            .ToList();
+                    false));
+                continue;
+            }
+
+            if (!categories.TryGetValue(item.Id, out var meta))
+                continue;
+
+            result.Add(new CategoryBreakdownItemDto(
+                item.Id,
+                meta.Name,
+                meta.Color,
+                MathService.Round2(item.Total),
+                MathService.Round2(item.MandatoryTotal),
+                MathService.Round2(item.DiscretionaryTotal),
+                percent,
+                meta.IsMandatory));
+        }
+
+        result.Sort((a, b) => b.Amount.CompareTo(a.Amount));
+        return result;
+    }
 }

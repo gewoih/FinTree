@@ -57,15 +57,17 @@ internal static class MonthlyAggregator
             var isCurrentMonth = occurredUtc >= monthStartUtc && occurredUtc < monthEndUtc;
             var isPreviousMonth = occurredUtc >= previousMonthStartUtc && occurredUtc < monthStartUtc;
 
+            var categoryKey = txn.CategoryId ?? Guid.Empty;
+
             if (txn.Type == TransactionType.Income)
             {
                 if (isCurrentMonth)
                 {
                     totalIncome += amount;
-                    if (incomeCategoryTotals.TryGetValue(txn.CategoryId, out var currentIncome))
-                        incomeCategoryTotals[txn.CategoryId] = currentIncome + amount;
+                    if (incomeCategoryTotals.TryGetValue(categoryKey, out var currentIncome))
+                        incomeCategoryTotals[categoryKey] = currentIncome + amount;
                     else
-                        incomeCategoryTotals[txn.CategoryId] = amount;
+                        incomeCategoryTotals[categoryKey] = amount;
                 }
 
                 if (isPreviousMonth)
@@ -92,16 +94,16 @@ internal static class MonthlyAggregator
                         dailyTotalsDiscretionary[dateKey] = amount;
                 }
 
-                if (expenseCategoryTotals.TryGetValue(txn.CategoryId, out var categoryTotals))
+                if (expenseCategoryTotals.TryGetValue(categoryKey, out var categoryTotals))
                 {
-                    expenseCategoryTotals[txn.CategoryId] = new CategoryTotals(
+                    expenseCategoryTotals[categoryKey] = new CategoryTotals(
                         Total: categoryTotals.Total + amount,
                         MandatoryTotal: categoryTotals.MandatoryTotal + (txn.IsMandatory ? amount : 0m),
                         DiscretionaryTotal: categoryTotals.DiscretionaryTotal + (txn.IsMandatory ? 0m : amount));
                 }
                 else
                 {
-                    expenseCategoryTotals[txn.CategoryId] = new CategoryTotals(
+                    expenseCategoryTotals[categoryKey] = new CategoryTotals(
                         amount,
                         txn.IsMandatory ? amount : 0m,
                         txn.IsMandatory ? 0m : amount);
@@ -121,10 +123,10 @@ internal static class MonthlyAggregator
                     monthCategoryTotals = new Dictionary<Guid, decimal>();
                     priorExpenseCategoryTotalsByMonth[monthKey] = monthCategoryTotals;
                 }
-                if (monthCategoryTotals.TryGetValue(txn.CategoryId, out var priorTotal))
-                    monthCategoryTotals[txn.CategoryId] = priorTotal + amount;
+                if (monthCategoryTotals.TryGetValue(categoryKey, out var priorTotal))
+                    monthCategoryTotals[categoryKey] = priorTotal + amount;
                 else
-                    monthCategoryTotals[txn.CategoryId] = amount;
+                    monthCategoryTotals[categoryKey] = amount;
 
                 if (!priorExpenseDaysByMonth.TryGetValue(monthKey, out var days))
                 {

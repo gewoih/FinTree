@@ -8,7 +8,7 @@ public record struct CreateTransaction(
     Guid AccountId,
     decimal Amount,
     DateTime OccurredAt,
-    Guid CategoryId,
+    Guid? CategoryId,
     [property: StringLength(100)]
     string? Description = null,
     bool IsMandatory = false);

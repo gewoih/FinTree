@@ -5,7 +5,7 @@ namespace FinTree.Application.Transactions;
 
 internal readonly record struct TransactionAnalyticsSnapshot(
     Guid AccountId,
-    Guid CategoryId,
+    Guid? CategoryId,
     Money Money,
     DateTime OccurredAtUtc,
     TransactionType Type,

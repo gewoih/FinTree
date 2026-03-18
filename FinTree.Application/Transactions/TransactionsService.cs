@@ -9,8 +9,6 @@ using FinTree.Domain.Categories;
 using FinTree.Domain.Transactions;
 using FinTree.Domain.ValueObjects;
 using Microsoft.EntityFrameworkCore;
-using System.Globalization;
-using System.Text;
 
 namespace FinTree.Application.Transactions;
 
@@ -26,10 +24,12 @@ public sealed class TransactionsService(IAppDbContext context, ICurrentUser curr
                       throw new NotFoundException(nameof(Account), command.AccountId);
         
         if (account.UserId != currentUser.Id)
-            throw new ForbiddenException("Доступ запрещен");
+            throw new ForbiddenException();
+        
         EnsureAccountIsActive(account);
 
-        await ValidateCategoryForTransactionTypeAsync(command.CategoryId, command.Type, ct);
+        if (command.CategoryId.HasValue)
+            await ValidateCategoryForTransactionTypeAsync(command.CategoryId.Value, command.Type, ct);
 
         var newTransaction = account.AddTransaction(command.Type, command.CategoryId, command.Amount,
             command.OccurredAt, command.Description, command.IsMandatory);
@@ -272,105 +272,6 @@ public sealed class TransactionsService(IAppDbContext context, ICurrentUser curr
             .ToList();
     }
 
-    public async Task<(byte[] Content, string FileName)> ExportAsync(CancellationToken ct)
-    {
-        var currentUserId = currentUser.Id;
-
-        var accounts = await context.Accounts.AsNoTracking()
-            .Where(a => a.UserId == currentUserId)
-            .Select(a => new
-            {
-                a.Id,
-                a.Name,
-                a.CurrencyCode
-            })
-            .OrderBy(a => a.Name)
-            .ToListAsync(ct);
-
-        if (accounts.Count == 0)
-        {
-            const string emptyContent = "Транзакции отсутствуют.";
-            var emptyFileName = $"transactions_{DateTime.UtcNow:yyyy-MM-dd}.txt";
-            return (Encoding.UTF8.GetBytes(emptyContent), emptyFileName);
-        }
-
-        var accountIds = accounts.Select(a => a.Id).ToArray();
-
-        var categories = await context.TransactionCategories.AsNoTracking()
-            .Where(c => c.UserId == currentUserId)
-            .Select(c => new { c.Id, c.Name })
-            .ToListAsync(ct);
-
-        var categoryLookup = categories.ToDictionary(c => c.Id, c => c.Name);
-
-        var transactions = await context.Transactions.AsNoTracking()
-            .Where(t => accountIds.Contains(t.AccountId))
-            .Select(t => new
-            {
-                t.AccountId,
-                t.Money,
-                t.Type,
-                t.OccurredAt,
-                t.Description,
-                t.CategoryId
-            })
-            .OrderBy(t => t.OccurredAt)
-            .ToListAsync(ct);
-
-        if (transactions.Count == 0)
-        {
-            var emptyContent = "Транзакции отсутствуют.";
-            var emptyFileName = $"transactions_{DateTime.UtcNow:yyyy-MM-dd}.txt";
-            return (Encoding.UTF8.GetBytes(emptyContent), emptyFileName);
-        }
-
-        var transactionsByAccount = transactions
-            .GroupBy(t => t.AccountId)
-            .ToDictionary(g => g.Key, g => g.ToList());
-
-        var culture = CultureInfo.GetCultureInfo("ru-RU");
-        var content = new StringBuilder();
-
-        foreach (var account in accounts)
-        {
-            if (!transactionsByAccount.TryGetValue(account.Id, out var accountTransactions) ||
-                accountTransactions.Count == 0)
-            {
-                continue;
-            }
-
-            content.Append("Счет: ")
-                .Append(account.Name)
-                .Append(" (")
-                .Append(account.CurrencyCode.ToUpperInvariant())
-                .AppendLine(")");
-
-            foreach (var transaction in accountTransactions)
-            {
-                ct.ThrowIfCancellationRequested();
-
-                var note = transaction.Description?.Trim().Replace("\t", " ").Replace("\r", " ").Replace("\n", " ");
-                var dateLabel = transaction.OccurredAt.ToString("dd.MM.yyyy", culture);
-                var categoryLabel = categoryLookup[transaction.CategoryId];
-
-                content.Append(transaction.Money.Amount)
-                    .Append(' ')
-                    .Append(categoryLabel)
-                    .Append(' ');
-                    
-                if (!string.IsNullOrWhiteSpace(note))
-                    content.Append(note).Append(' ');
-                
-                content.Append(dateLabel).AppendLine();
-            }
-
-            content.AppendLine();
-        }
-
-        var fileName = $"transactions_{DateTime.UtcNow:yyyy-MM-dd}.txt";
-        return (Encoding.UTF8.GetBytes(content.ToString()), fileName);
-    }
-
     public async Task AssignCategoryAsync(AssignCategory command, CancellationToken ct)
     {
         var transaction = await context.Transactions
@@ -384,7 +285,8 @@ public sealed class TransactionsService(IAppDbContext context, ICurrentUser curr
         if (transaction.TransferId is not null)
             throw new ConflictException("Переводы нельзя редактировать как обычные транзакции.");
 
-        await ValidateCategoryForTransactionTypeAsync(command.CategoryId, transaction.Type, ct);
+        if (command.CategoryId.HasValue)
+            await ValidateCategoryForTransactionTypeAsync(command.CategoryId.Value, transaction.Type, ct);
 
         transaction.AssignCategory(command.CategoryId);
         await context.SaveChangesAsync(ct);
@@ -409,7 +311,8 @@ public sealed class TransactionsService(IAppDbContext context, ICurrentUser curr
             throw new ForbiddenException("Доступ запрещен");
         EnsureAccountIsActive(newAccount);
 
-        await ValidateCategoryForTransactionTypeAsync(command.CategoryId, transaction.Type, ct);
+        if (command.CategoryId.HasValue)
+            await ValidateCategoryForTransactionTypeAsync(command.CategoryId.Value, transaction.Type, ct);
 
         if (transaction.AccountId != newAccount.Id)
             transaction.MoveToAccount(newAccount);
@@ -451,9 +354,6 @@ public sealed class TransactionsService(IAppDbContext context, ICurrentUser curr
 
     private async Task<CategoryAccessMeta> EnsureCategoryAccessAsync(Guid categoryId, CancellationToken ct)
     {
-        if (categoryId == Guid.Empty)
-            throw new DomainValidationException("Категория не найдена");
-
         var categoryMeta = await context.TransactionCategories
             .AsNoTracking()
             .Where(c => c.Id == categoryId)
@@ -463,10 +363,9 @@ public sealed class TransactionsService(IAppDbContext context, ICurrentUser curr
         if (categoryMeta is null)
             throw new NotFoundException("Категория", categoryId);
 
-        if (categoryMeta.UserId != currentUser.Id)
-            throw new ForbiddenException();
-
-        return new CategoryAccessMeta(categoryMeta.IsMandatory, categoryMeta.Type);
+        return categoryMeta.UserId != currentUser.Id 
+            ? throw new ForbiddenException() 
+            : new CategoryAccessMeta(categoryMeta.IsMandatory, categoryMeta.Type);
     }
 
     private async Task ValidateCategoryForTransactionTypeAsync(Guid categoryId, TransactionType transactionType, CancellationToken ct)

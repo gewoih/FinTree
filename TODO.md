@@ -20,13 +20,6 @@
 
 ## Analytics Backend
 
-- [ ] `FT-TODO-043` Сделать `CategoryId` nullable на транзакции — текущий подход с fallback-категорией `"Без категории"` маскирует отсутствие категории как реальную сущность. Необходимо: (1) сделать `CategoryId` nullable в доменной модели `Transaction` и EF-конфигурации, (2) обновить `TransactionAnalyticsSnapshot` и все аналитические сервисы, (3) убрать `UnknownMeta` fallback из `CategoryItemBuilder` и `AnalyticsCommon`, (4) обновить API-контракты и фронт — показывать "без категории" как отдельное UI-состояние (серый чип / курсив) вместо fallback-записи.
-  **Требует EF-миграции.**
-  **Files:** `FinTree.Domain/Transactions/Transaction.cs`, `FinTree.Infrastructure/` (EF config), `FinTree.Application/Transactions/TransactionAnalyticsSnapshot.cs`, `FinTree.Application/Analytics/Services/CategoryItemBuilder.cs`, `FinTree.Application/Analytics/Shared/AnalyticsCommon.cs`, фронт (все компоненты с отображением категории транзакции).
-
-- [ ] `FT-TODO-041` Consolidate `"Без категории"` / `"#9e9e9e"` magic strings in `TransactionCategoryService` and `TransactionsService` to use `AnalyticsCommon` constants or a shared domain constant — currently these literals still appear in non-analytics code after the `AnalyticsCommon` consolidation.
-  **Files:** `FinTree.Application/Transactions/TransactionCategoryService.cs`, `FinTree.Application/Transactions/TransactionsService.cs`
-
 - [ ] `FT-TODO-042` Eliminate double DB fetch in `DashboardService` — `MonthlyAggregator` (2-month window) and `SpendingBreakdownService` (12-month window) each issue independent `GetTransactionSnapshotsAsync` + `GetCrossRatesAsync` calls per request. Consolidate via a shared pre-fetched dataset or result caching.
   **Files:** `FinTree.Application/Analytics/Services/DashboardService.cs`, `FinTree.Application/Analytics/Services/SpendingBreakdownService.cs`
 
@@ -36,8 +29,15 @@
   **Fix:** Consolidate `EvolutionTab` onto the shared analytics formatting contract or extract a single reusable formatting layer used by both `models.ts` and `evolutionModels.ts`.
   **Files:** `react-app/src/components/analytics/EvolutionTab.tsx`, `react-app/src/components/analytics/evolutionModels.ts`, `react-app/src/components/analytics/models.ts`
 
-- [ ] `FT-TODO-065` React migration for accounts/transactions needs one cleanup pass to split oversized orchestration files and modal sections into smaller feature components/hooks.
-  **Why:** `TransactionsPage`, `TransactionFormModal`, `TransactionList`, and `AccountsPage` now ship working behavior, but they exceed the block guideline of keeping components around 200 lines and will get harder to evolve in later migration blocks.
-  **Fix:** Extract page-level query/mutation orchestration into feature hooks and move repeated form/date/summary sections into focused presentational components.
+- [ ] `FT-TODO-066` Ряд страниц и компонентов превышает 400+ строк и требует разбивки на хуки/подкомпоненты для поддерживаемости.
+  **Why:** Крупные файлы затрудняют навигацию и эволюцию кода в будущих миграционных блоках.
+  **Fix:** По каждому файлу — вынести оркестрационную логику в feature-хук, тяжёлые секции JSX — в сфокусированные подкомпоненты.
   **Priority:** P2
-  **Files:** `react-app/src/pages/AccountsPage.tsx`, `react-app/src/pages/TransactionsPage.tsx`, `react-app/src/features/transactions/TransactionFormModal.tsx`, `react-app/src/features/transactions/TransactionList.tsx`
+  **Files:**
+  - `react-app/src/components/analytics/ForecastCard.tsx` (644 строки) — разбить на подкомпоненты секций/графика
+  - `react-app/src/pages/ProfilePage.tsx` (623 строки) — извлечь `useProfilePage` хук
+  - `react-app/src/pages/AnalyticsPage.tsx` (526 строк) — извлечь `useAnalyticsPage` хук
+  - `react-app/src/components/analytics/EvolutionTab.tsx` (470 строк) — разбить на подкомпоненты вкладок/секций
+  - `react-app/src/pages/RetroDetailPage.tsx` (415 строк) — извлечь `useRetroDetailPage` хук
+  - `react-app/src/components/analytics/SpendingPieCard.tsx` (396 строк) — разбить на подкомпоненты
+  - `react-app/src/features/categories/CategoryFormModal.tsx` (372 строки) — извлечь `useCategoryForm` хук

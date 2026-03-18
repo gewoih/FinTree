@@ -1,4 +1,5 @@
 import type { CategoryBreakdownDto, CategoryBreakdownItemDto, MonthlyExpenseDto } from '@/types';
+import { UNCATEGORIZED_COLOR, UNCATEGORIZED_NAME } from '@/constants/uncategorized';
 
 import {
   getAnalyticsCategoryColorByIndex,
@@ -8,7 +9,8 @@ import {
 export type CategoryScope = 'all' | 'mandatory' | 'discretionary';
 export type ExpenseGranularity = 'days' | 'weeks' | 'months';
 
-export interface AnalyticsCategorySlice extends CategoryBreakdownItemDto {
+export interface AnalyticsCategorySlice extends Omit<CategoryBreakdownItemDto, 'id'> {
+  id: string;
   displayAmount: number;
   displayPercent: number;
   displayColor: string;
@@ -41,6 +43,7 @@ export interface SpendingBarsModel {
 
 const SHORT_MONTH_FMT = new Intl.DateTimeFormat('ru-RU', { month: 'short' });
 const OTHER_CATEGORY_ID = '__other__';
+export const UNCATEGORIZED_CATEGORY_ID = '__uncategorized__';
 const OTHER_CATEGORY_THRESHOLD_PERCENT = 3;
 
 function getDisplayAmount(item: CategoryBreakdownItemDto, scope: CategoryScope): number {
@@ -66,7 +69,11 @@ export function buildAnalyticsCategoryModel(
   data: CategoryBreakdownDto | null,
   scope: CategoryScope,
 ): AnalyticsCategoryModel {
-  const items = data?.items ?? [];
+  const items = (data?.items ?? []).map((item) =>
+    item.id == null
+      ? { ...item, id: UNCATEGORIZED_CATEGORY_ID, name: UNCATEGORIZED_NAME, color: UNCATEGORIZED_COLOR }
+      : item
+  );
   const scopedItems = items
     .map((item) => ({
       ...item,

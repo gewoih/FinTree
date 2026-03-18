@@ -1,31 +1,22 @@
-import { Lock, LockOpen } from 'lucide-react';
 import { EmptyState } from '@/components/common/EmptyState';
 import { Button } from '@/components/ui/button';
-import {
-  Pagination,
-  PaginationContent,
-  PaginationEllipsis,
-  PaginationItem,
-  PaginationLink,
-  PaginationNext,
-  PaginationPrevious,
-} from '@/components/ui/pagination';
 import { Skeleton } from '@/components/ui/skeleton';
-import { cn } from '@/utils/cn';
-import { formatCurrency, formatDateTime } from '@/utils/format';
+import { formatCurrency } from '@/utils/format';
 import type {
   AccountDto,
   PagedResult,
   TransactionCategoryDto,
   TransactionDto,
 } from '@/types';
+import type { TransactionDisplayRow } from './transactionModels';
 import type { TransactionFiltersValue } from './transactionModels';
 import {
   buildTransactionRows,
   groupRowsByDate,
   hasActiveTransactionFilters,
 } from './transactionUtils';
-import { renderCategoryIcon } from '@/features/categories/categoryIcons';
+import { TransactionRow } from './TransactionRow';
+import { TransactionListPagination } from './TransactionListPagination';
 
 interface TransactionListProps {
   data: PagedResult<TransactionDto> | undefined;
@@ -45,20 +36,19 @@ interface TransactionListProps {
   onClear: () => void;
 }
 
-function getVisiblePages(currentPage: number, totalPages: number): (number | 'ellipsis')[] {
-  if (totalPages <= 7) {
-    return Array.from({ length: totalPages }, (_, index) => index + 1);
+function getSignedAmountLabel(amount: number, currencyCode: string): string {
+  if (amount === 0) {
+    return formatCurrency(0, currencyCode);
   }
 
-  if (currentPage <= 3) {
-    return [1, 2, 3, 4, 'ellipsis', totalPages];
-  }
+  return `${amount > 0 ? '+' : '−'}${formatCurrency(Math.abs(amount), currencyCode)}`;
+}
 
-  if (currentPage >= totalPages - 2) {
-    return [1, 'ellipsis', totalPages - 3, totalPages - 2, totalPages - 1, totalPages];
-  }
-
-  return [1, 'ellipsis', currentPage - 1, currentPage, currentPage + 1, 'ellipsis', totalPages];
+function getGroupNetAmount(items: TransactionDisplayRow[]): number {
+  return items.reduce((sum, row) => {
+    const baseAmount = row.transaction.amountInBaseCurrency ?? row.amount;
+    return sum + (row.tone === 'Income' ? baseAmount : -baseAmount);
+  }, 0);
 }
 
 export function TransactionList({
@@ -124,23 +114,6 @@ export function TransactionList({
 
   const rows = buildTransactionRows(data.items, accounts, categories);
   const groups = groupRowsByDate(rows);
-  const pageCount = Math.max(1, Math.ceil(data.total / filters.pageSize));
-  const rangeStart = (filters.page - 1) * filters.pageSize + 1;
-  const rangeEnd = Math.min(filters.page * filters.pageSize, data.total);
-
-  const getSignedAmountLabel = (amount: number, currencyCode: string) => {
-    if (amount === 0) {
-      return formatCurrency(0, currencyCode);
-    }
-
-    return `${amount > 0 ? '+' : '−'}${formatCurrency(Math.abs(amount), currencyCode)}`;
-  };
-
-  const getGroupNetAmount = (items: typeof rows) =>
-    items.reduce((sum, row) => {
-      const baseAmount = row.transaction.amountInBaseCurrency ?? row.amount;
-      return sum + (row.tone === 'Income' ? baseAmount : -baseAmount);
-    }, 0);
 
   return (
     <>
@@ -164,187 +137,29 @@ export function TransactionList({
               </header>
 
               <div className="divide-y divide-border/70">
-                {group.items.map((row) => {
-                  const isExpense = row.tone === 'Expense';
-                  const isMandatory = isExpense && row.transaction.isMandatory;
-                  const metaText = [row.accountName, row.transaction.description?.trim()]
-                    .filter(Boolean)
-                    .join(' · ');
-                  const accountAmountLabel =
-                    row.currencyCode !== baseCurrencyCode
-                      ? formatCurrency(Math.abs(row.amount), row.currencyCode)
-                      : null;
-                  const rowAriaLabel = `Открыть транзакцию ${row.categoryName}`;
-
-                  const rowBody = (
-                    <>
-                      <div className="flex min-w-0 flex-1 items-center gap-3 text-left">
-                        <span
-                          className="flex size-11 shrink-0 items-center justify-center rounded-md border border-border/80"
-                          style={{
-                            backgroundColor: `color-mix(in srgb, ${row.categoryColor} 16%, transparent)`,
-                            color: row.categoryColor,
-                          }}
-                          aria-hidden="true"
-                        >
-                          {renderCategoryIcon(row.categoryIcon, { className: 'size-4' })}
-                        </span>
-
-                        <div className="min-w-0">
-                          <div className="flex items-center gap-2">
-                            <span className="truncate text-base font-semibold text-foreground">
-                              {row.categoryName}
-                            </span>
-                            {isMandatory ? (
-                              <Lock
-                                className="size-4 shrink-0 text-[var(--ft-warning-400)]"
-                                aria-hidden="true"
-                              />
-                            ) : null}
-                          </div>
-
-                          <div className="truncate text-sm text-muted-foreground">
-                            {metaText || formatDateTime(row.occurredAt)}
-                          </div>
-                        </div>
-                      </div>
-
-                      <div className="shrink-0 text-right">
-                        <div
-                          className={cn(
-                            'text-base font-semibold [font-variant-numeric:tabular-nums]',
-                            row.tone === 'Income'
-                              ? 'text-[var(--ft-success-400)]'
-                              : 'text-[var(--ft-danger-400)]',
-                          )}
-                        >
-                          {row.tone === 'Income' ? '+' : '−'}
-                          {formatCurrency(
-                            Math.abs(row.transaction.amountInBaseCurrency ?? row.amount),
-                            row.transaction.amountInBaseCurrency != null
-                              ? baseCurrencyCode
-                              : row.currencyCode,
-                          )}
-                        </div>
-                        {accountAmountLabel ? (
-                          <div className="text-xs text-muted-foreground [font-variant-numeric:tabular-nums]">
-                            {accountAmountLabel}
-                          </div>
-                        ) : null}
-                      </div>
-                    </>
-                  );
-
-                  return (
-                    <div key={row.id} className="flex items-center gap-2 px-3 py-2">
-                      {readonly ? (
-                        <div className="flex min-w-0 flex-1 items-center justify-between gap-3 rounded-xl px-2 py-2">
-                          {rowBody}
-                        </div>
-                      ) : (
-                        <button
-                          type="button"
-                          className={cn(
-                            'flex min-w-0 flex-1 items-center justify-between gap-3 rounded-xl px-2 py-2 text-left transition-colors',
-                            'hover:bg-[var(--ft-table-row-hover-bg)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/60',
-                          )}
-                          aria-label={rowAriaLabel}
-                          onClick={() => onEdit(row.transaction)}
-                        >
-                          {rowBody}
-                        </button>
-                      )}
-
-                      {!readonly && isExpense ? (
-                        <Button
-                          type="button"
-                          variant="ghost"
-                          size="icon-sm"
-                          className={cn(
-                            'shrink-0 cursor-pointer rounded-xl border border-transparent text-muted-foreground',
-                            'hover:border-[var(--ft-warning-400)]/25 hover:bg-[color-mix(in_srgb,var(--ft-warning-500)_12%,transparent)] hover:text-[var(--ft-warning-400)]',
-                            'focus-visible:border-[var(--ft-warning-400)]/35',
-                            isMandatory && 'text-[var(--ft-warning-400)]',
-                          )}
-                          disabled={togglingMandatoryId === row.id || !onToggleMandatory}
-                          aria-label={
-                            row.transaction.isMandatory
-                              ? 'Снять признак обязательного платежа'
-                              : 'Пометить как обязательный платёж'
-                          }
-                          aria-pressed={row.transaction.isMandatory}
-                          title={
-                            row.transaction.isMandatory
-                              ? 'Снять признак обязательного платежа'
-                              : 'Пометить как обязательный платёж'
-                          }
-                          onClick={() =>
-                            onToggleMandatory?.(
-                              row.transaction,
-                              !row.transaction.isMandatory,
-                            )
-                          }
-                        >
-                          {row.transaction.isMandatory ? (
-                            <Lock className="size-4" />
-                          ) : (
-                            <LockOpen className="size-4" />
-                          )}
-                        </Button>
-                      ) : null}
-                    </div>
-                  );
-                })}
+                {group.items.map((row) => (
+                  <TransactionRow
+                    key={row.id}
+                    row={row}
+                    baseCurrencyCode={baseCurrencyCode}
+                    readonly={readonly}
+                    togglingMandatoryId={togglingMandatoryId}
+                    onEdit={onEdit}
+                    onToggleMandatory={onToggleMandatory}
+                  />
+                ))}
               </div>
             </section>
           );
         })}
       </div>
 
-      <div className="mx-auto flex w-full max-w-[960px] flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-        <div className="text-sm text-muted-foreground">
-          Показано {rangeStart}–{rangeEnd} из {data.total}
-        </div>
-
-        {pageCount > 1 ? (
-          <Pagination className="mx-0 w-auto justify-start sm:justify-end">
-            <PaginationContent>
-              <PaginationItem>
-                <PaginationPrevious
-                  onClick={() =>
-                    onFiltersChange({ page: Math.max(1, filters.page - 1) })
-                  }
-                  disabled={filters.page === 1}
-                />
-              </PaginationItem>
-
-              {getVisiblePages(filters.page, pageCount).map((item, index) => (
-                <PaginationItem key={`${item}-${index}`}>
-                  {item === 'ellipsis' ? (
-                    <PaginationEllipsis />
-                  ) : (
-                    <PaginationLink
-                      isActive={item === filters.page}
-                      onClick={() => onFiltersChange({ page: item })}
-                    >
-                      {item}
-                    </PaginationLink>
-                  )}
-                </PaginationItem>
-              ))}
-
-              <PaginationItem>
-                <PaginationNext
-                  onClick={() =>
-                    onFiltersChange({ page: Math.min(pageCount, filters.page + 1) })
-                  }
-                  disabled={filters.page === pageCount}
-                />
-              </PaginationItem>
-            </PaginationContent>
-          </Pagination>
-        ) : null}
-      </div>
+      <TransactionListPagination
+        total={data.total}
+        page={filters.page}
+        pageSize={filters.pageSize}
+        onPageChange={(page) => onFiltersChange({ page })}
+      />
     </>
   );
 }
