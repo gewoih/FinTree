@@ -14,20 +14,20 @@ public class TransactionCategoryController(TransactionCategoryService transactio
     public async Task<IActionResult> Post([FromBody] CreateTransactionCategory command, CancellationToken ct)
     {
         var categoryId = await transactionCategoryService.CreateCategoryAsync(command, ct);
-        return Ok(categoryId);
+        return StatusCode(201, categoryId);
     }
 
     [HttpPatch]
     public async Task<IActionResult> Patch([FromBody] UpdateTransactionCategory command, CancellationToken ct)
     {
         await transactionCategoryService.UpdateTransactionCategoryAsync(command, ct);
-        return Ok();
+        return NoContent();
     }
 
-    [HttpDelete]
-    public async Task<IActionResult> Delete([FromQuery] Guid id, CancellationToken ct)
+    [HttpDelete("{id:guid}")]
+    public async Task<IActionResult> Delete(Guid id, CancellationToken ct)
     {
         await transactionCategoryService.DeleteCategoryAsync(id, ct);
-        return Ok();
+        return NoContent();
     }
 }

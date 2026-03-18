@@ -19,7 +19,7 @@ public class AccountsController(AccountsService accountsService) : ControllerBas
     public async Task<IActionResult> CreateAsync([FromBody] CreateAccount command, CancellationToken ct = default)
     {
         var accountId = await accountsService.CreateAsync(command, ct);
-        return Ok(accountId);
+        return StatusCode(201, accountId);
     }
 
     [HttpGet("investments")]
@@ -46,7 +46,7 @@ public class AccountsController(AccountsService accountsService) : ControllerBas
         CancellationToken ct = default)
     {
         var adjustmentId = await accountsService.CreateBalanceAdjustmentAsync(accountId, request.Amount, ct);
-        return Ok(adjustmentId);
+        return StatusCode(201, adjustmentId);
     }
 
     [HttpPost("{accountId:guid}/cash-flows")]
@@ -56,7 +56,7 @@ public class AccountsController(AccountsService accountsService) : ControllerBas
     {
         var transactionId = await accountsService.CreateInvestmentCashFlowAsync(
             accountId, request.Type, request.Amount, request.OccurredAt, request.Description, ct);
-        return Ok(transactionId);
+        return StatusCode(201, transactionId);
     }
 
     [HttpPatch("{accountId:guid}/liquidity")]
@@ -65,7 +65,7 @@ public class AccountsController(AccountsService accountsService) : ControllerBas
         CancellationToken ct = default)
     {
         await accountsService.UpdateLiquidityAsync(accountId, request.IsLiquid, ct);
-        return Ok();
+        return NoContent();
     }
 
     [HttpPatch("{accountId:guid}")]
@@ -74,27 +74,27 @@ public class AccountsController(AccountsService accountsService) : ControllerBas
         CancellationToken ct = default)
     {
         await accountsService.UpdateAsync(accountId, new UpdateAccount(request.Name), ct);
-        return Ok();
+        return NoContent();
     }
 
     [HttpPatch("{accountId:guid}/archive")]
     public async Task<IActionResult> ArchiveAccount(Guid accountId, CancellationToken ct = default)
     {
         await accountsService.ArchiveAsync(accountId, ct);
-        return Ok();
+        return NoContent();
     }
 
     [HttpPatch("{accountId:guid}/unarchive")]
     public async Task<IActionResult> UnarchiveAccount(Guid accountId, CancellationToken ct = default)
     {
         await accountsService.UnarchiveAsync(accountId, ct);
-        return Ok();
+        return NoContent();
     }
 
     [HttpDelete("{accountId:guid}")]
     public async Task<IActionResult> DeleteAccount(Guid accountId, CancellationToken ct = default)
     {
         await accountsService.DeleteAsync(accountId, ct);
-        return Ok();
+        return NoContent();
     }
 }

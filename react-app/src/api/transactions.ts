@@ -99,7 +99,7 @@ export async function updateTransaction(
 }
 
 export async function deleteTransaction(id: string): Promise<void> {
-  await apiClient.delete('/Transaction', { params: { id } });
+  await apiClient.delete(`/Transaction/${id}`);
 }
 
 export async function exportTransactions(): Promise<{ blob: Blob; fileName: string }> {

@@ -38,28 +38,28 @@ public class TransactionController(TransactionsService transactionsService) : Co
     public async Task<IActionResult> Post([FromBody] CreateTransaction command, CancellationToken ct)
     {
         var transactionId = await transactionsService.CreateAsync(command, ct);
-        return Ok(transactionId);
+        return StatusCode(201, transactionId);
     }
 
     [HttpPatch]
     public async Task<IActionResult> Update([FromBody] UpdateTransaction command, CancellationToken ct)
     {
         await transactionsService.UpdateAsync(command, ct);
-        return Ok();
+        return NoContent();
     }
 
     [HttpPatch("category")]
     public async Task<IActionResult> Patch([FromBody] AssignCategory command, CancellationToken ct)
     {
         await transactionsService.AssignCategoryAsync(command, ct);
-        return Ok();
+        return NoContent();
     }
 
-    [HttpDelete]
-    public async Task<IActionResult> Delete([FromQuery] Guid id, CancellationToken ct)
+    [HttpDelete("{id:guid}")]
+    public async Task<IActionResult> Delete(Guid id, CancellationToken ct)
     {
         await transactionsService.DeleteAsync(id, ct);
-        return Ok();
+        return NoContent();
     }
 
 }

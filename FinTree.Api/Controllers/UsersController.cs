@@ -39,7 +39,7 @@ public class UsersController(AccountsService accountsService, UserService userSe
     public async Task<IActionResult> UpdateMainAccount([FromBody] Guid accountId, CancellationToken ct)
     {
         await userService.MarkAsMainAsync(accountId, ct);
-        return Ok();
+        return NoContent();
     }
 
     [HttpPost("me/skip-onboarding")]

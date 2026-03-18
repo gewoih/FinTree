@@ -20,5 +20,5 @@ export async function updateCategory(payload: UpdateCategoryPayload): Promise<vo
 }
 
 export async function deleteCategory(id: string): Promise<void> {
-  await apiClient.delete('/TransactionCategory', { params: { id } });
+  await apiClient.delete(`/TransactionCategory/${id}`);
 }

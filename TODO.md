@@ -1,15 +1,3 @@
-## Backend Audit
-
-### API / HTTP Conventions
-
-- [ ] `FT-TODO-044` DELETE-эндпоинты используют `[FromQuery] Guid id` вместо `[FromRoute]` — нарушает REST: ID ресурса должен быть в пути URL.
-  **Fix:** `[HttpDelete("{id:guid}")]` с параметром без атрибута.
-  **Files:** `FinTree.Api/Controllers/TransactionController.cs` (lines 72, 79), `FinTree.Api/Controllers/TransactionCategoryController.cs` (line 28)
-
-- [ ] `FT-TODO-045` Неверные HTTP status codes: POST возвращает 200 вместо 201, PUT/DELETE — 200 вместо 204.
-  **Fix:** Использовать `StatusCode(201, id)` для создания, `NoContent()` для обновлений/удалений.
-  **Files:** Все контроллеры в `FinTree.Api/Controllers/`
-
 ### Correctness
 
 - [ ] `FT-TODO-052` `CurrencyConverter`: при отсутствии курса на нужную дату используется ближайший более ранний курс без каких-либо сигналов пользователю. Конвертированная сумма может быть приближённой (особенно для старых транзакций), но пользователь об этом не знает.
