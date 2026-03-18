@@ -121,10 +121,9 @@ public sealed class AdminService(IAppDbContext context, UserManager<User> userMa
             userSnapshotsBase.AddRange(usersWithoutTransactions);
         }
 
-        var snapshotUserIds = userSnapshotsBase.Select(snapshot => snapshot.Id).ToArray();
-        var snapshotUsersById = await context.Users
-            .Where(user => snapshotUserIds.Contains(user.Id))
-            .ToDictionaryAsync(user => user.Id, ct);
+        var ownerIds = (await userManager.GetUsersInRoleAsync(AppRoleNames.Owner))
+            .Select(u => u.Id)
+            .ToHashSet();
 
         var userSnapshots = new List<AdminUserSnapshotDto>(userSnapshotsBase.Count);
         foreach (var userSnapshot in userSnapshotsBase)
@@ -134,11 +133,7 @@ public sealed class AdminService(IAppDbContext context, UserManager<User> userMa
             var isOnboardingCompleted =
                 userSnapshot.MainAccountId != null && isTelegramLinked && userSnapshot.TransactionsCount > 0;
 
-            var isOwner = false;
-            if (snapshotUsersById.TryGetValue(userSnapshot.Id, out var user))
-            {
-                isOwner = await userManager.IsInRoleAsync(user, AppRoleNames.Owner);
-            }
+            var isOwner = ownerIds.Contains(userSnapshot.Id);
 
             userSnapshots.Add(new AdminUserSnapshotDto(
                 userSnapshot.Id,

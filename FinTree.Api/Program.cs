@@ -33,7 +33,11 @@ using Serilog;
 using Telegram.Bot;
 
 var builder = WebApplication.CreateBuilder(args);
-builder.WebHost.ConfigureKestrel(options => options.AddServerHeader = false);
+builder.WebHost.ConfigureKestrel(options =>
+{
+    options.AddServerHeader = false;
+    options.Limits.MaxRequestBodySize = 10_485_760; // 10 MB
+});
 
 builder.Services.AddControllers().AddJsonOptions(options =>
 {
@@ -84,8 +88,8 @@ builder.Services.AddCors(options =>
     options.AddPolicy("VueFrontend", policy =>
     {
         policy.WithOrigins(allowedCorsOrigins)
-            .AllowAnyHeader()
-            .AllowAnyMethod()
+            .WithHeaders("Content-Type", "Authorization")
+            .WithMethods("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS")
             .AllowCredentials();
     });
 });

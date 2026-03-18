@@ -110,6 +110,19 @@ public sealed class NetWorthService(
             eventIndexByAccount,
             ct);
 
+        var rateRequests = new List<(string CurrencyCode, DateTime AtUtc)>();
+        for (var i = 0; i < monthsToBuild; i++)
+        {
+            var rateAtUtc = effectiveStartMonthUtc.AddMonths(i + 1).AddTicks(-1);
+            foreach (var code in distinctAccountCurrencies)
+            {
+                if (!string.Equals(code, baseCurrencyCode, StringComparison.OrdinalIgnoreCase))
+                    rateRequests.Add((code, rateAtUtc));
+            }
+        }
+
+        var crossRates = await currencyConverter.GetCrossRatesAsync(rateRequests, baseCurrencyCode, ct);
+
         var result = new List<NetWorthSnapshotDto>(monthsToBuild);
         for (var i = 0; i < monthsToBuild; i++)
         {
@@ -125,12 +138,8 @@ public sealed class NetWorthService(
                     continue;
                 }
 
-                var converted = await currencyConverter.ConvertAsync(
-                    new Money(code, 1m),
-                    baseCurrencyCode,
-                    rateAtUtc,
-                    ct);
-                rateByCurrency[code] = converted.Amount;
+                var rateKey = (code.Trim().ToUpperInvariant(), rateAtUtc.Date);
+                rateByCurrency[code] = crossRates.TryGetValue(rateKey, out var r) ? r : 1m;
             }
 
             AnalyticsBalanceTimeline.AdvanceBalancesToBoundary(

@@ -10,20 +10,6 @@
   **Fix:** Использовать `StatusCode(201, id)` для создания, `NoContent()` для обновлений/удалений.
   **Files:** Все контроллеры в `FinTree.Api/Controllers/`
 
-### Security
-
-- [ ] `FT-TODO-046` CORS: `AllowAnyHeader()` + `AllowAnyMethod()` нейтрализуют CORS как защиту.
-  **Fix:** Заменить на явный список методов (`GET, POST, PUT, PATCH, DELETE, OPTIONS`) и заголовков (`Content-Type, Authorization`).
-  **Files:** `FinTree.Api/Program.cs` ~line 86
-
-- [ ] `FT-TODO-047` Не настроен `MaxRequestBodySize` — Kestrel по умолчанию разрешает ~30 MB, что открывает вектор для DoS.
-  **Fix:** `builder.WebHost.ConfigureKestrel(o => o.Limits.MaxRequestBodySize = 10_485_760)`.
-  **Files:** `FinTree.Api/Program.cs`
-
-- [ ] `FT-TODO-048` Open redirect: `PhotoUrl` из Telegram login response не валидируется перед возвратом клиенту — контролируемый аккаунт Telegram может передать произвольный URL.
-  **Fix:** Проверять, что хост оканчивается на `.telegram.org` или `.t.me`; иначе обнулять поле.
-  **Files:** `FinTree.Application/Users/AuthService.cs` ~line 81
-
 ### Correctness
 
 - [ ] `FT-TODO-052` `CurrencyConverter`: при отсутствии курса на нужную дату используется ближайший более ранний курс без каких-либо сигналов пользователю. Конвертированная сумма может быть приближённой (особенно для старых транзакций), но пользователь об этом не знает.
@@ -32,21 +18,10 @@
 
 ### Performance
 
-- [ ] `FT-TODO-054` Отсутствует `.AsNoTracking()` на read-only EF-запросах — лишние allocations на change-tracking граф.
-  **Files:** `FinTree.Application/Users/UserService.cs` lines 26–29 и аналогичные места с `.Include()` без последующего изменения
-
 - [ ] `FT-TODO-055` Отсутствуют DB-индексы на высококардинальных полях — все аналитические запросы фильтруют по ним.
   **Fix:** Добавить в `OnModelCreating`: `Transaction.OccurredAt`, composite `(AccountId, OccurredAt)`, `CategoryId`.
   **Требует EF-миграции.**
   **Files:** `FinTree.Infrastructure/Database/AppDbContext.cs`
-
-- [ ] `FT-TODO-056` N+1 в `AdminService`: `IsInRoleAsync()` вызывается в цикле — каждый вызов = отдельный SQL-запрос.
-  **Fix:** Переписать через batch-запрос к таблице ролей или join в одном запросе.
-  **Files:** `FinTree.Application/Admin/AdminService.cs` lines 137–141
-
-- [ ] `FT-TODO-057` `NetWorthService` вызывает `currencyConverter.ConvertAsync()` внутри цикла по месяцам — N API-вызовов вместо одного предварительного.
-  **Fix:** Собрать все уникальные пары (валюта, дата) до цикла, получить курсы одним запросом.
-  **Files:** `FinTree.Application/Analytics/Services/NetWorthService.cs` lines 115–130
 
 ### Maintainability
 
@@ -54,7 +29,7 @@
   **Fix:** Рефакторить через фабрику или параметризованный сервис.
   **Files:** `FinTree.Application/Telegram/TelegramOperationsService.cs` lines 255, 265
 
-- [ ] `FT-TODO-061` Дублирование логики разрешения категорий при создании и обновлении переводов в `TransactionsService` — идентичные блоки.
+- [x] `FT-TODO-061` Дублирование логики разрешения категорий при создании и обновлении переводов в `TransactionsService` — идентичные блоки.
   **Fix:** Извлечь в приватный метод.
   **Files:** `FinTree.Application/Transactions/TransactionsService.cs` lines 285–297 и 372–388
 

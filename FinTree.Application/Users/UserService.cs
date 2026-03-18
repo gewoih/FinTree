@@ -153,6 +153,7 @@ public sealed class UserService(IAppDbContext context, ICurrentUser currentUser,
         ArgumentOutOfRangeException.ThrowIfEqual(userId, Guid.Empty, nameof(userId));
 
         var categoriesByUsage = await context.TransactionCategories
+            .AsNoTracking()
             .Where(tc => tc.UserId == userId)
             .GroupJoin(
                 context.Transactions.Where(t => t.Account.UserId == userId && !t.IsTransfer),
@@ -184,6 +185,7 @@ public sealed class UserService(IAppDbContext context, ICurrentUser currentUser,
         ArgumentOutOfRangeException.ThrowIfEqual(userId, Guid.Empty, nameof(userId));
 
         return await context.SubscriptionPayments
+            .AsNoTracking()
             .Where(x => x.UserId == userId)
             .OrderByDescending(x => x.PaidAtUtc)
             .ThenByDescending(x => x.CreatedAtUtc)

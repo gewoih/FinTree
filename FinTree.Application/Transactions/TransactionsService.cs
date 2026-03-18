@@ -29,8 +29,7 @@ public sealed class TransactionsService(IAppDbContext context, ICurrentUser curr
             throw new ForbiddenException("Доступ запрещен");
         EnsureAccountIsActive(account);
 
-        var categoryAccess = await EnsureCategoryAccessAsync(command.CategoryId, ct);
-        EnsureCategoryTypeMatchesTransactionType(categoryAccess.Type, command.Type);
+        await ValidateCategoryForTransactionTypeAsync(command.CategoryId, command.Type, ct);
 
         var newTransaction = account.AddTransaction(command.Type, command.CategoryId, command.Amount,
             command.OccurredAt, command.Description, command.IsMandatory);
@@ -385,8 +384,7 @@ public sealed class TransactionsService(IAppDbContext context, ICurrentUser curr
         if (transaction.TransferId is not null)
             throw new ConflictException("Переводы нельзя редактировать как обычные транзакции.");
 
-        var categoryAccess = await EnsureCategoryAccessAsync(command.CategoryId, ct);
-        EnsureCategoryTypeMatchesTransactionType(categoryAccess.Type, transaction.Type);
+        await ValidateCategoryForTransactionTypeAsync(command.CategoryId, transaction.Type, ct);
 
         transaction.AssignCategory(command.CategoryId);
         await context.SaveChangesAsync(ct);
@@ -411,8 +409,7 @@ public sealed class TransactionsService(IAppDbContext context, ICurrentUser curr
             throw new ForbiddenException("Доступ запрещен");
         EnsureAccountIsActive(newAccount);
 
-        var categoryAccess = await EnsureCategoryAccessAsync(command.CategoryId, ct);
-        EnsureCategoryTypeMatchesTransactionType(categoryAccess.Type, transaction.Type);
+        await ValidateCategoryForTransactionTypeAsync(command.CategoryId, transaction.Type, ct);
 
         if (transaction.AccountId != newAccount.Id)
             transaction.MoveToAccount(newAccount);
@@ -470,6 +467,12 @@ public sealed class TransactionsService(IAppDbContext context, ICurrentUser curr
             throw new ForbiddenException();
 
         return new CategoryAccessMeta(categoryMeta.IsMandatory, categoryMeta.Type);
+    }
+
+    private async Task ValidateCategoryForTransactionTypeAsync(Guid categoryId, TransactionType transactionType, CancellationToken ct)
+    {
+        var categoryAccess = await EnsureCategoryAccessAsync(categoryId, ct);
+        EnsureCategoryTypeMatchesTransactionType(categoryAccess.Type, transactionType);
     }
 
     private static void EnsureCategoryTypeMatchesTransactionType(CategoryType categoryType, TransactionType transactionType)
