@@ -37,7 +37,10 @@ public sealed class SpendingBreakdownService(
             ct.ThrowIfCancellationRequested();
 
             var rateKey = (expense.Money.CurrencyCode, expense.OccurredAtUtc.Date);
-            var amountInBaseCurrency = expense.Money.Amount * rateByCurrencyAndDay[rateKey];
+            if (!rateByCurrencyAndDay.TryGetValue(rateKey, out var rate))
+                throw new InvalidOperationException(
+                    $"Курс валюты {expense.Money.CurrencyCode} на {expense.OccurredAtUtc:yyyy-MM-dd} не найден в предзагруженных данных.");
+            var amountInBaseCurrency = expense.Money.Amount * rate;
 
             var dayKey = DateOnly.FromDateTime(expense.OccurredAtUtc);
             if (dailyTotals.TryGetValue(dayKey, out var current))

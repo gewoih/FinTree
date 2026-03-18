@@ -22,7 +22,7 @@ public sealed class DashboardService(
         var monthStartUtc = new DateTime(year, month, 1, 0, 0, 0, DateTimeKind.Utc);
         var monthEndUtc = monthStartUtc.AddMonths(1);
         var previousMonthStartUtc = monthStartUtc.AddMonths(-1);
-        var deltaWindowStartUtc = monthStartUtc.AddMonths(-1);
+        var deltaWindowStartUtc = monthStartUtc.AddDays(-90);
         var nowUtc = DateTime.UtcNow;
 
         var categories = (await userService.GetUserCategoriesAsync(ct))
@@ -101,13 +101,10 @@ public sealed class DashboardService(
 
         var peaks = PeakDaysService.Calculate(monthlyResult.DailyTotalsDiscretionary, monthlyResult.DiscretionaryTotal, daysInMonth);
 
-        var priorMonthCount = Math.Max(monthlyResult.PriorMonthsWithData.Count, 1);
-        var averagedPriorTotals = monthlyResult.PriorExpenseCategoryTotals
-            .ToDictionary(kv => kv.Key, kv => kv.Value / priorMonthCount);
-
         var categoryDelta = CategoryDeltaService.GetCategoryDeltas(
-            monthlyResult.ExpenseCategoryTotals.ToDictionary(kv => kv.Key, kv => kv.Value.Total),
-            averagedPriorTotals,
+            monthlyResult.ExpenseCategoryTotals,
+            monthlyResult.PriorExpenseCategoryTotalsByMonth,
+            monthlyResult.PriorExpenseDaysByMonth,
             categories);
 
         var liquidityAtUtc = isSelectedCurrentMonth ? nowUtc : monthEndUtc;

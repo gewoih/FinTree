@@ -48,14 +48,27 @@ public sealed class Transaction : Entity
         CategoryId = categoryId;
     }
 
-    public void Update(Guid accountId, Guid categoryId, Money money, DateTime occurredAt, string? description,
-        bool isMandatory)
+    public void MoveToAccount(Account newAccount)
+    {
+        if (newAccount.UserId != Account.UserId)
+            throw new InvalidOperationException("Нельзя перемещать транзакцию в счёт другого пользователя.");
+        if (newAccount.IsArchived)
+            throw new InvalidOperationException("Нельзя перемещать транзакцию в архивный счёт.");
+
+        AccountId = newAccount.Id;
+        Account = newAccount;
+        Money = new Money(newAccount.CurrencyCode, Money.Amount);
+    }
+
+    public void Update(Guid categoryId, Money money, DateTime occurredAt, string? description, bool isMandatory)
     {
         ArgumentOutOfRangeException.ThrowIfEqual(categoryId, Guid.Empty, nameof(categoryId));
-        ArgumentOutOfRangeException.ThrowIfEqual(accountId, Guid.Empty, nameof(accountId));
         ArgumentOutOfRangeException.ThrowIfGreaterThan(occurredAt, DateTime.UtcNow, nameof(occurredAt));
 
-        AccountId = accountId;
+        if (money.Currency.Code != Account.CurrencyCode)
+            throw new InvalidOperationException(
+                $"Валюта транзакции ({money.Currency.Code}) не совпадает с валютой счёта ({Account.CurrencyCode}).");
+
         CategoryId = categoryId;
         Money = money;
         OccurredAt = occurredAt;

@@ -24,26 +24,11 @@
   **Fix:** Проверять, что хост оканчивается на `.telegram.org` или `.t.me`; иначе обнулять поле.
   **Files:** `FinTree.Application/Users/AuthService.cs` ~line 81
 
-### Domain Invariants
-
-- [ ] `FT-TODO-049` `Transaction.Update()` позволяет менять `AccountId` на любой GUID без проверки принадлежности аккаунта тому же пользователю — транзакция может переехать в чужой аккаунт.
-  **Files:** `FinTree.Domain/Transactions/Transaction.cs` lines 51–64
-
-- [ ] `FT-TODO-050` `Account.AddTransaction()` не проверяет совпадение валюты транзакции и аккаунта — нарушен доменный инвариант (USD-транзакция добавляется в рублёвый аккаунт без ошибки).
-  **Files:** `FinTree.Domain/Accounts/Account.cs` lines 39–52
-
-- [ ] `FT-TODO-051` `FxUsdRate` не нормализует `DateTimeKind` в конструкторе — `AccountBalanceAdjustment` делает это через `NormalizeDate()`, `FxUsdRate` — нет. Несоответствие создаёт промахи при поиске курсов в словарях.
-  **Files:** `FinTree.Domain/Currencies/FxUsdRate.cs` lines 10–18
-
 ### Correctness
 
-- [ ] `FT-TODO-052` `CurrencyConverter`: при отсутствии курса на нужную дату используется **самый старый** курс в системе без каких-либо сигналов. Транзакция 2025 года может конвертироваться по курсу 2020-го.
-  **Fix:** Заменить на явный выброс или ограниченный fallback (±7 дней) с предупреждением в лог.
-  **Files:** `FinTree.Application/Currencies/CurrencyConverter.cs` lines 75–88
-
-- [ ] `FT-TODO-053` Прямой индексатор `rateByCurrencyAndDay[rateKey]` без защиты в нескольких сервисах — `KeyNotFoundException` если конвертер не вернул курс (edge case: новая валюта без исторических данных).
-  **Fix:** Заменить на `TryGetValue` + явный выброс с контекстом (валюта, дата).
-  **Files:** `FinTree.Application/Analytics/Services/SpendingBreakdownService.cs:39`, `CashflowAverageService.cs:64`, `ForecastService.cs:39`, `EvolutionService.cs:206`
+- [ ] `FT-TODO-052` `CurrencyConverter`: при отсутствии курса на нужную дату используется ближайший более ранний курс без каких-либо сигналов пользователю. Конвертированная сумма может быть приближённой (особенно для старых транзакций), но пользователь об этом не знает.
+  **Fix:** На фронте помечать сконвертированные суммы знаком `~` или тултипом "курс приближённый" когда бэкенд возвращает флаг приближённой конвертации. На бэке добавить поле `IsApproximate: bool` в ответ конвертера и проставлять `true` когда курс взят не с точной даты транзакции.
+  **Files:** `FinTree.Application/Currencies/CurrencyConverter.cs` lines 75–88, затронутые аналитические сервисы и фронт-компоненты с отображением сконвертированных сумм.
 
 ### Performance
 

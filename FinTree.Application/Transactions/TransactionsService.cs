@@ -414,8 +414,11 @@ public sealed class TransactionsService(IAppDbContext context, ICurrentUser curr
         var categoryAccess = await EnsureCategoryAccessAsync(command.CategoryId, ct);
         EnsureCategoryTypeMatchesTransactionType(categoryAccess.Type, transaction.Type);
 
+        if (transaction.AccountId != newAccount.Id)
+            transaction.MoveToAccount(newAccount);
+
         var money = new Money(newAccount.CurrencyCode, command.Amount);
-        transaction.Update(command.AccountId, command.CategoryId, money, command.OccurredAt,
+        transaction.Update(command.CategoryId, money, command.OccurredAt,
             command.Description, command.IsMandatory);
 
         await context.SaveChangesAsync(ct);

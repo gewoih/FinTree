@@ -61,18 +61,9 @@ function DeltaSkeleton() {
   );
 }
 
-function getMaxDelta(items: CategoryDeltaItemDto[]): number {
-  if (items.length === 0) {
-    return 1;
-  }
-
-  return Math.max(...items.map((item) => Math.abs(item.deltaAmount)), 1);
-}
-
-function barWidth(item: CategoryDeltaItemDto, maxDelta: number): string {
-  const ratio = maxDelta <= 0 ? 0 : Math.abs(item.deltaAmount) / maxDelta;
-  const pct = Math.min(100, ratio * 100);
-  // Use max() so even a near-zero delta renders as a visible 2px sliver
+function barWidth(item: CategoryDeltaItemDto): string {
+  if (item.deltaPercent === null) return '2px';
+  const pct = Math.min(100, Math.abs(item.deltaPercent));
   return `max(2px, ${pct}%)`;
 }
 
@@ -95,10 +86,9 @@ interface DeltaRowProps {
   item: CategoryDeltaItemDto;
   currency: string;
   direction: 'up' | 'down';
-  maxDelta: number;
 }
 
-function DeltaRow({ item, currency, direction, maxDelta }: DeltaRowProps) {
+function DeltaRow({ item, currency, direction }: DeltaRowProps) {
   const percentLabel = formatAnalyticsPercent(
     item.deltaPercent === null ? null : Math.abs(item.deltaPercent),
   );
@@ -134,7 +124,7 @@ function DeltaRow({ item, currency, direction, maxDelta }: DeltaRowProps) {
         <div
           className="h-full rounded-md"
           style={{
-            width: barWidth(item, maxDelta),
+            width: barWidth(item),
             backgroundColor: toneFill(direction),
           }}
         />
@@ -155,7 +145,6 @@ function DeltaSection({ title, items, currency, direction }: DeltaSectionProps) 
     return null;
   }
 
-  const maxDelta = getMaxDelta(items);
   const Icon = direction === 'up' ? ArrowUp : ArrowDown;
 
   return (
@@ -171,6 +160,10 @@ function DeltaSection({ title, items, currency, direction }: DeltaSectionProps) 
         <span>{title}</span>
       </div>
 
+      <p className="text-xs text-[var(--ft-text-secondary)]">
+        относительно среднего за 90 дней
+      </p>
+
       <div className="space-y-2.5">
         {items.map((item) => (
           <DeltaRow
@@ -178,7 +171,6 @@ function DeltaSection({ title, items, currency, direction }: DeltaSectionProps) 
             item={item}
             currency={currency}
             direction={direction}
-            maxDelta={maxDelta}
           />
         ))}
       </div>
@@ -201,7 +193,7 @@ export function CategoryDeltaCard({
     <AnalyticsPanel ariaLabel={`Изменения по категориям за ${periodLabel}`}>
       <AnalyticsSectionHeader
         title="Изменения по категориям"
-        tooltip="Какие категории выросли или снизились по сравнению с предыдущим месяцем."
+        tooltip="Сравниваем расходы текущего месяца со средними за последние 90 дней."
         ariaLabel="Подробнее об изменениях по категориям"
       />
 
@@ -218,7 +210,7 @@ export function CategoryDeltaCard({
         <div className="px-6 pb-6">
           <AnalyticsInset className="flex min-h-[320px] items-center justify-center px-8 text-center">
             <p className="max-w-md text-base leading-7 text-[var(--ft-text-secondary)]">
-              Нет данных для сравнения. Нужен предыдущий период расходов, чтобы показать заметные изменения по категориям.
+              Нет данных для сравнения. Нужны расходы за предыдущие периоды, чтобы определить твой обычный уровень трат.
             </p>
           </AnalyticsInset>
         </div>

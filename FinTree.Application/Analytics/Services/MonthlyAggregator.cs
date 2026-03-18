@@ -19,8 +19,8 @@ internal static class MonthlyAggregator
         IReadOnlyDictionary<DateOnly, decimal> PreviousMonthDailyTotalsDiscretionary,
         IReadOnlyDictionary<Guid, CategoryTotals> ExpenseCategoryTotals,
         IReadOnlyDictionary<Guid, decimal> IncomeCategoryTotals,
-        IReadOnlyDictionary<Guid, decimal> PriorExpenseCategoryTotals,
-        IReadOnlySet<(int Year, int Month)> PriorMonthsWithData);
+        IReadOnlyDictionary<(int Year, int Month), IReadOnlyDictionary<Guid, decimal>> PriorExpenseCategoryTotalsByMonth,
+        IReadOnlyDictionary<(int Year, int Month), int> PriorExpenseDaysByMonth);
 
     internal static Result Aggregate(
         IReadOnlyList<TransactionAnalyticsSnapshot> transactions,
@@ -37,8 +37,8 @@ internal static class MonthlyAggregator
         var previousMonthDailyTotalsDiscretionary = new Dictionary<DateOnly, decimal>();
         var expenseCategoryTotals = new Dictionary<Guid, CategoryTotals>();
         var incomeCategoryTotals = new Dictionary<Guid, decimal>();
-        var priorExpenseCategoryTotals = new Dictionary<Guid, decimal>();
-        var priorMonthsWithData = new HashSet<(int Year, int Month)>();
+        var priorExpenseCategoryTotalsByMonth = new Dictionary<(int Year, int Month), Dictionary<Guid, decimal>>();
+        var priorExpenseDaysByMonth = new Dictionary<(int Year, int Month), HashSet<DateOnly>>();
 
         var totalIncome = 0m;
         var totalExpenses = 0m;
@@ -113,12 +113,25 @@ internal static class MonthlyAggregator
 
             if (occurredUtc >= deltaWindowStartUtc && occurredUtc < monthStartUtc)
             {
-                if (priorExpenseCategoryTotals.TryGetValue(txn.CategoryId, out var priorTotal))
-                    priorExpenseCategoryTotals[txn.CategoryId] = priorTotal + amount;
-                else
-                    priorExpenseCategoryTotals[txn.CategoryId] = amount;
+                var monthKey = (occurredUtc.Year, occurredUtc.Month);
+                var dateKey = DateOnly.FromDateTime(occurredUtc);
 
-                priorMonthsWithData.Add((occurredUtc.Year, occurredUtc.Month));
+                if (!priorExpenseCategoryTotalsByMonth.TryGetValue(monthKey, out var monthCategoryTotals))
+                {
+                    monthCategoryTotals = new Dictionary<Guid, decimal>();
+                    priorExpenseCategoryTotalsByMonth[monthKey] = monthCategoryTotals;
+                }
+                if (monthCategoryTotals.TryGetValue(txn.CategoryId, out var priorTotal))
+                    monthCategoryTotals[txn.CategoryId] = priorTotal + amount;
+                else
+                    monthCategoryTotals[txn.CategoryId] = amount;
+
+                if (!priorExpenseDaysByMonth.TryGetValue(monthKey, out var days))
+                {
+                    days = new HashSet<DateOnly>();
+                    priorExpenseDaysByMonth[monthKey] = days;
+                }
+                days.Add(dateKey);
             }
 
             if (isPreviousMonth)
@@ -156,7 +169,9 @@ internal static class MonthlyAggregator
             PreviousMonthDailyTotalsDiscretionary: previousMonthDailyTotalsDiscretionary,
             ExpenseCategoryTotals: expenseCategoryTotals,
             IncomeCategoryTotals: incomeCategoryTotals,
-            PriorExpenseCategoryTotals: priorExpenseCategoryTotals,
-            PriorMonthsWithData: priorMonthsWithData);
+            PriorExpenseCategoryTotalsByMonth: priorExpenseCategoryTotalsByMonth
+                .ToDictionary(kv => kv.Key, kv => (IReadOnlyDictionary<Guid, decimal>)kv.Value),
+            PriorExpenseDaysByMonth: priorExpenseDaysByMonth
+                .ToDictionary(kv => kv.Key, kv => kv.Value.Count));
     }
 }

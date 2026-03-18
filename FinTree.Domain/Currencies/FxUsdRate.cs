@@ -13,7 +13,7 @@ public sealed class FxUsdRate
         ArgumentOutOfRangeException.ThrowIfNegativeOrZero(rate, nameof(rate));
         
         CurrencyCode = currencyCode;
-        EffectiveDate = effectiveDate;
+        EffectiveDate = DateTime.SpecifyKind(effectiveDate.Date, DateTimeKind.Utc);
         Rate = rate;
     }
 }

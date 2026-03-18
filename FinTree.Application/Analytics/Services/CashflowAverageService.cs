@@ -159,7 +159,10 @@ public sealed class CashflowAverageService(TransactionsService transactionsServi
         foreach (var transaction in transactions)
         {
             var rateKey = (transaction.Money.CurrencyCode, transaction.OccurredAtUtc.Date);
-            var amountInBaseCurrency = transaction.Money.Amount * rateByCurrencyAndDay[rateKey];
+            if (!rateByCurrencyAndDay.TryGetValue(rateKey, out var rate))
+                throw new InvalidOperationException(
+                    $"Курс валюты {transaction.Money.CurrencyCode} на {transaction.OccurredAtUtc:yyyy-MM-dd} не найден в предзагруженных данных.");
+            var amountInBaseCurrency = transaction.Money.Amount * rate;
             var day = DateOnly.FromDateTime(transaction.OccurredAtUtc);
 
             if (dailyTotals.TryGetValue(day, out var current))
@@ -225,7 +228,10 @@ public sealed class CashflowAverageService(TransactionsService transactionsServi
         foreach (var transaction in transactions)
         {
             var rateKey = (transaction.Money.CurrencyCode, transaction.OccurredAtUtc.Date);
-            var amountInBaseCurrency = transaction.Money.Amount * rateByCurrencyAndDay[rateKey];
+            if (!rateByCurrencyAndDay.TryGetValue(rateKey, out var rate))
+                throw new InvalidOperationException(
+                    $"Курс валюты {transaction.Money.CurrencyCode} на {transaction.OccurredAtUtc:yyyy-MM-dd} не найден в предзагруженных данных.");
+            var amountInBaseCurrency = transaction.Money.Amount * rate;
             var day = DateOnly.FromDateTime(transaction.OccurredAtUtc);
 
             if (dailyTotals.TryGetValue(day, out var current))

@@ -38,7 +38,10 @@ public class ForecastService(
         foreach (var txn in forecastTransactions)
         {
             var rateKey = (txn.Money.CurrencyCode, txn.OccurredAtUtc.Date);
-            var amountInBaseCurrency = txn.Money.Amount * rateByCurrencyAndDay[rateKey];
+            if (!rateByCurrencyAndDay.TryGetValue(rateKey, out var rate))
+                throw new InvalidOperationException(
+                    $"Курс валюты {txn.Money.CurrencyCode} на {txn.OccurredAtUtc:yyyy-MM-dd} не найден в предзагруженных данных.");
+            var amountInBaseCurrency = txn.Money.Amount * rate;
 
             var dateKey = DateOnly.FromDateTime(txn.OccurredAtUtc);
             if (forecastDailyTotals.TryGetValue(dateKey, out var current))
