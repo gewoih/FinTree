@@ -135,7 +135,7 @@ export default function TransactionsPage() {
             categories={categories}
             readonly={isReadOnlyMode}
             onDeleteTransaction={deleteTransaction}
-            isDeletePending={deletingId === activeModalDeleteId}
+            isDeletePending={activeModalDeleteId !== null && deletingId === activeModalDeleteId}
             onClose={closeModal}
           />
         ) : null}

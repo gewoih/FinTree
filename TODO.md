@@ -18,20 +18,13 @@
 
 ### Performance
 
-- [ ] `FT-TODO-055` Отсутствуют DB-индексы на высококардинальных полях — все аналитические запросы фильтруют по ним.
-  **Fix:** Добавить в `OnModelCreating`: `Transaction.OccurredAt`, composite `(AccountId, OccurredAt)`, `CategoryId`.
-  **Требует EF-миграции.**
-  **Files:** `FinTree.Infrastructure/Database/AppDbContext.cs`
+- [ ] `FT-TODO-055` Отсутствуют DB-индексы на высококардинальных полях.
 
 ### Maintainability
 
 - [ ] `FT-TODO-060` `TelegramOperationsService`: `AccountsService` и `UserService` создаются вручную через `new` в обход DI — нарушает тестируемость, жёстко привязывает конструкторы.
   **Fix:** Рефакторить через фабрику или параметризованный сервис.
   **Files:** `FinTree.Application/Telegram/TelegramOperationsService.cs` lines 255, 265
-
-- [x] `FT-TODO-061` Дублирование логики разрешения категорий при создании и обновлении переводов в `TransactionsService` — идентичные блоки.
-  **Fix:** Извлечь в приватный метод.
-  **Files:** `FinTree.Application/Transactions/TransactionsService.cs` lines 285–297 и 372–388
 
 - [ ] `FT-TODO-062` `RetrospectiveService`: (a) `ValidateRatings()` не сообщает какой именно рейтинг невалиден; (b) `HasMeaningfulContent()` дублируется для двух разных типов команды.
   **Fix:** Добавить значение/индекс в сообщение об ошибке; объединить дублированные методы через общий интерфейс или generic.

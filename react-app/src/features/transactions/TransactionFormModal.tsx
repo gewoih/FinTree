@@ -119,9 +119,9 @@ export function TransactionFormModal({
     });
   }, [accounts, categories, mode, open, form]);
 
-  const [transactionType, selectedAccountId] = useWatch({
+  const [transactionType, selectedAccountId, amount] = useWatch({
     control: form.control,
-    name: ['transactionType', 'accountId'],
+    name: ['transactionType', 'accountId', 'amount'],
   });
 
   const transactionAccount = accounts.find((item) => item.id === selectedAccountId);
@@ -360,7 +360,7 @@ export function TransactionFormModal({
               </Button>
               <Button
                 type="submit"
-                disabled={form.formState.isSubmitting || isDeletePending}
+                disabled={!amount || form.formState.isSubmitting || isDeletePending}
               >
                 {form.formState.isSubmitting && (
                   <Loader2 className="size-4 animate-spin" />
