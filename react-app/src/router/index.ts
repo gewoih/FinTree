@@ -35,9 +35,6 @@ const CategoriesPage = React.lazy(() => import('../pages/CategoriesPage'));
 const InvestmentsPage = React.lazy(() => import('../pages/InvestmentsPage'));
 const ReflectionsPage = React.lazy(() => import('../pages/ReflectionsPage'));
 const RetroDetailPage = React.lazy(() => import('../pages/RetroDetailPage'));
-const FreedomCalculatorPage = React.lazy(
-  () => import('../pages/FreedomCalculatorPage')
-);
 const GoalsPage = React.lazy(() => import('../pages/GoalsPage'));
 const ProfilePage = React.lazy(() => import('../pages/ProfilePage'));
 const AdminPage = React.lazy(() => import('../pages/AdminPage'));
@@ -231,12 +228,6 @@ function createRouteTree() {
     component: withSuspense(RetroDetailPage),
   });
 
-  const freedomRoute = createRoute({
-    getParentRoute: () => protectedLayoutRoute,
-    path: PATHS.FREEDOM,
-    component: withSuspense(FreedomCalculatorPage),
-  });
-
   const goalsRoute = createRoute({
     getParentRoute: () => protectedLayoutRoute,
     path: PATHS.GOALS,
@@ -269,16 +260,11 @@ function createRouteTree() {
       investmentsRoute,
       reflectionsRoute,
       retroDetailRoute,
-      freedomRoute,
       goalsRoute,
       profileRoute,
       adminRoute,
     ]),
   ]);
-}
-
-export function resetRouterBootstrapForTests() {
-  isAppBootstrapDone = false;
 }
 
 export function createAppRouter(options?: { history?: RouterHistory }) {
