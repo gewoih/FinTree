@@ -1,5 +1,5 @@
 using FinTree.Application.Analytics.Dto;
-using FinTree.Application.Transactions;
+using FinTree.Application.Analytics.Shared;
 using FinTree.Domain.Transactions;
 
 namespace FinTree.Application.Analytics.Services;
@@ -23,8 +23,7 @@ internal static class MonthlyAggregator
         IReadOnlyDictionary<(int Year, int Month), int> PriorExpenseDaysByMonth);
 
     internal static Result Aggregate(
-        IReadOnlyList<TransactionAnalyticsSnapshot> transactions,
-        IReadOnlyDictionary<(string CurrencyCode, DateTime Date), decimal> rates,
+        IReadOnlyList<ConvertedTransactionSnapshot> transactions,
         DateTime monthStartUtc,
         DateTime monthEndUtc,
         DateTime previousMonthStartUtc,
@@ -51,8 +50,7 @@ internal static class MonthlyAggregator
         {
             ct.ThrowIfCancellationRequested();
 
-            var rateKey = (txn.Money.CurrencyCode, txn.OccurredAtUtc.Date);
-            var amount = txn.Money.Amount * rates[rateKey];
+            var amount = txn.AmountInBaseCurrency;
             var occurredUtc = txn.OccurredAtUtc;
             var isCurrentMonth = occurredUtc >= monthStartUtc && occurredUtc < monthEndUtc;
             var isPreviousMonth = occurredUtc >= previousMonthStartUtc && occurredUtc < monthStartUtc;

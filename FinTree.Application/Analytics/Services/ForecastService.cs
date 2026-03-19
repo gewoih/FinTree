@@ -1,21 +1,20 @@
 using FinTree.Application.Analytics.Dto;
 using FinTree.Application.Analytics.Shared;
 using FinTree.Application.Goals.Services;
-using FinTree.Application.Currencies;
-using FinTree.Application.Transactions;
 using FinTree.Domain.Transactions;
 
 namespace FinTree.Application.Analytics.Services;
 
-public class ForecastService(
-    TransactionsService transactionsService,
-    CurrencyConverter currencyConverter,
-    CashflowAverageService cashflowAverageService)
+public class ForecastService(CashflowAverageService cashflowAverageService)
 {
     private const int BootstrapingSimulationsCount = 10_000;
 
-    public async Task<ForecastDto> BuildForecastAsync(int year, int month, Dictionary<DateOnly, decimal> dailyTotals,
-        string baseCurrencyCode, CancellationToken ct)
+    public async Task<ForecastDto> BuildForecastAsync(
+        int year, int month,
+        Dictionary<DateOnly, decimal> currentMonthDailyTotals,
+        AnalyticsDataset dataset,
+        string baseCurrencyCode,
+        CancellationToken ct)
     {
         var nowUtc = DateTime.UtcNow;
         var monthStartUtc = new DateTime(year, month, 1, 0, 0, 0, DateTimeKind.Utc);
@@ -25,29 +24,21 @@ public class ForecastService(
 
         var forecastStart = lastDate.AddDays(-GoalSimulationDefaults.HistoryWindowDays);
 
-        var forecastTransactions = await transactionsService.GetTransactionSnapshotsAsync(forecastStart, lastDate,
-            excludeTransfers: true, excludeInvestmentAccounts: true,
-            type: TransactionType.Expense, ct: ct);
-
-        var rateByCurrencyAndDay = await currencyConverter.GetCrossRatesAsync(
-            forecastTransactions.Select(txn => (txn.Money.CurrencyCode, txn.OccurredAtUtc)),
-            baseCurrencyCode,
-            ct);
-
         var forecastDailyTotals = new Dictionary<DateOnly, decimal>();
-        foreach (var txn in forecastTransactions)
+        foreach (var txn in dataset.Transactions)
         {
-            var rateKey = (txn.Money.CurrencyCode, txn.OccurredAtUtc.Date);
-            if (!rateByCurrencyAndDay.TryGetValue(rateKey, out var rate))
-                throw new InvalidOperationException(
-                    $"Курс валюты {txn.Money.CurrencyCode} на {txn.OccurredAtUtc:yyyy-MM-dd} не найден в предзагруженных данных.");
-            var amountInBaseCurrency = txn.Money.Amount * rate;
+            ct.ThrowIfCancellationRequested();
+
+            if (txn.Type != TransactionType.Expense
+                || txn.OccurredAtUtc < forecastStart
+                || txn.OccurredAtUtc >= lastDate)
+                continue;
 
             var dateKey = DateOnly.FromDateTime(txn.OccurredAtUtc);
             if (forecastDailyTotals.TryGetValue(dateKey, out var current))
-                forecastDailyTotals[dateKey] = current + amountInBaseCurrency;
+                forecastDailyTotals[dateKey] = current + txn.AmountInBaseCurrency;
             else
-                forecastDailyTotals[dateKey] = amountInBaseCurrency;
+                forecastDailyTotals[dateKey] = txn.AmountInBaseCurrency;
         }
 
         if (forecastDailyTotals.Count > 0)
@@ -79,7 +70,7 @@ public class ForecastService(
             for (var day = 1; day <= observedDays; day++)
             {
                 var dateKey = new DateOnly(year, month, day);
-                runningTotal += dailyTotals.GetValueOrDefault(dateKey, 0m);
+                runningTotal += currentMonthDailyTotals.GetValueOrDefault(dateKey, 0m);
             }
 
             observedCumulativeActual = runningTotal;
@@ -151,7 +142,7 @@ public class ForecastService(
         {
             days.Add(day);
             var dateKey = new DateOnly(year, month, day);
-            var dayAmount = dailyTotals.GetValueOrDefault(dateKey, 0m);
+            var dayAmount = currentMonthDailyTotals.GetValueOrDefault(dateKey, 0m);
             cumulative += dayAmount;
 
             if (isCurrentMonth && day > observedDays)

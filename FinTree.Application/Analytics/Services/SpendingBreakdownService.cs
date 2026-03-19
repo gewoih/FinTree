@@ -2,51 +2,33 @@ using System.Globalization;
 using FinTree.Application.Analytics.Dto;
 using FinTree.Application.Analytics.Shared;
 using FinTree.Application.Currencies;
-using FinTree.Application.Transactions;
 using FinTree.Domain.Transactions;
 
 namespace FinTree.Application.Analytics.Services;
 
-public sealed class SpendingBreakdownService(
-    TransactionsService transactionsService,
-    CurrencyConverter currencyConverter)
+public sealed class SpendingBreakdownService
 {
-    public async Task<SpendingBreakdownDto> BuildAsync(
-        int year, int month, string baseCurrencyCode, CancellationToken ct)
+    public SpendingBreakdownDto Build(int year, int month, AnalyticsDataset dataset, CancellationToken ct)
     {
         var monthStartUtc = new DateTime(year, month, 1, 0, 0, 0, DateTimeKind.Utc);
         var monthEndUtc = monthStartUtc.AddMonths(1);
         var monthsWindowStartUtc = monthStartUtc.AddMonths(-11);
 
-        var rawExpenses = await transactionsService.GetTransactionSnapshotsAsync(
-            fromUtc: monthsWindowStartUtc,
-            toUtc: monthEndUtc,
-            excludeTransfers: true,
-            excludeInvestmentAccounts: true,
-            type: TransactionType.Expense,
-            ct: ct);
-
-        var rateByCurrencyAndDay = await currencyConverter.GetCrossRatesAsync(
-            rawExpenses.Select(e => (e.Money.CurrencyCode, e.OccurredAtUtc)),
-            baseCurrencyCode,
-            ct);
-
         var dailyTotals = new Dictionary<DateOnly, decimal>();
-        foreach (var expense in rawExpenses)
+        foreach (var expense in dataset.Transactions)
         {
             ct.ThrowIfCancellationRequested();
 
-            var rateKey = (expense.Money.CurrencyCode, expense.OccurredAtUtc.Date);
-            if (!rateByCurrencyAndDay.TryGetValue(rateKey, out var rate))
-                throw new InvalidOperationException(
-                    $"Курс валюты {expense.Money.CurrencyCode} на {expense.OccurredAtUtc:yyyy-MM-dd} не найден в предзагруженных данных.");
-            var amountInBaseCurrency = expense.Money.Amount * rate;
+            if (expense.Type != TransactionType.Expense
+                || expense.OccurredAtUtc < monthsWindowStartUtc
+                || expense.OccurredAtUtc >= monthEndUtc)
+                continue;
 
             var dayKey = DateOnly.FromDateTime(expense.OccurredAtUtc);
             if (dailyTotals.TryGetValue(dayKey, out var current))
-                dailyTotals[dayKey] = current + amountInBaseCurrency;
+                dailyTotals[dayKey] = current + expense.AmountInBaseCurrency;
             else
-                dailyTotals[dayKey] = amountInBaseCurrency;
+                dailyTotals[dayKey] = expense.AmountInBaseCurrency;
         }
 
         var firstExpenseDate = dailyTotals.Count > 0 ? dailyTotals.Keys.Min() : (DateOnly?)null;

@@ -23,6 +23,11 @@ public sealed class DashboardService(
         var monthEndUtc = monthStartUtc.AddMonths(1);
         var previousMonthStartUtc = monthStartUtc.AddMonths(-1);
         var deltaWindowStartUtc = monthStartUtc.AddDays(-90);
+
+        // SpendingBreakdown нужен самый широкий диапазон — 12 месяцев.
+        // Остальные окна (MonthlyAggregator — 90 дней, Forecast — 180 дней) полностью входят в него.
+        var prefetchWindowStartUtc = monthStartUtc.AddMonths(-11);
+
         var nowUtc = DateTime.UtcNow;
 
         var categories = (await userService.GetUserCategoriesAsync(ct))
@@ -32,21 +37,45 @@ public sealed class DashboardService(
         const int requiredStabilityDays = 1;
         var observedExpenseDays = await transactionsService.GetDistinctExpenseDaysCountAsync(ct);
 
-        var transactions = await transactionsService.GetTransactionSnapshotsAsync(
-            fromUtc: deltaWindowStartUtc,
+        var rawTransactions = await transactionsService.GetTransactionSnapshotsAsync(
+            fromUtc: prefetchWindowStartUtc,
             toUtc: monthEndUtc,
             excludeTransfers: true,
             excludeInvestmentAccounts: true,
             ct: ct);
 
-        var rateByCurrencyAndDay = await currencyConverter.GetCrossRatesAsync(
-            transactions.Select(txn => (txn.Money.CurrencyCode, txn.OccurredAtUtc)),
+        var rates = await currencyConverter.GetCrossRatesAsync(
+            rawTransactions.Select(txn => (txn.Money.CurrencyCode, txn.OccurredAtUtc)),
             baseCurrencyCode,
             ct);
 
+        // Конвертируем все транзакции в базовую валюту один раз.
+        // Под-сервисы получают уже готовые суммы и не работают с курсами напрямую.
+        var convertedTransactions = rawTransactions
+            .Select(txn =>
+            {
+                var rateKey = (txn.Money.CurrencyCode, txn.OccurredAtUtc.Date);
+                if (!rates.TryGetValue(rateKey, out var rate))
+                    throw new InvalidOperationException(
+                        $"Курс валюты {txn.Money.CurrencyCode} на {txn.OccurredAtUtc:yyyy-MM-dd} не найден в предзагруженных данных.");
+                return new ConvertedTransactionSnapshot(
+                    txn.OccurredAtUtc,
+                    txn.Type,
+                    txn.Money.Amount * rate,
+                    txn.CategoryId,
+                    txn.IsMandatory);
+            })
+            .ToList();
+
+        var dataset = new AnalyticsDataset(convertedTransactions);
+
+        // MonthlyAggregator работает с окном 90 дней — фильтруем из предзагруженного набора
+        var aggregatorTransactions = convertedTransactions
+            .Where(t => t.OccurredAtUtc >= deltaWindowStartUtc && t.OccurredAtUtc < monthEndUtc)
+            .ToList();
+
         var monthlyResult = MonthlyAggregator.Aggregate(
-            transactions,
-            rateByCurrencyAndDay,
+            aggregatorTransactions,
             monthStartUtc,
             monthEndUtc,
             previousMonthStartUtc,
@@ -166,7 +195,7 @@ public sealed class DashboardService(
             BalanceMonthOverMonthChangePercent: balanceMoM);
 
         var forecast = await forecastService.BuildForecastAsync(
-            year, month, monthlyResult.DailyTotals.ToDictionary(), baseCurrencyCode, ct);
+            year, month, monthlyResult.DailyTotals.ToDictionary(), dataset, baseCurrencyCode, ct);
 
         // Only meaningful when income is tracked; null suppresses the callout on the frontend.
         var availableAmount = monthlyResult.TotalIncome > 0 && forecast.Summary.MedianTotal.HasValue
@@ -176,7 +205,7 @@ public sealed class DashboardService(
         var updatedSummary = forecast.Summary with { AvailableAmount = availableAmount };
         forecast = forecast with { Summary = updatedSummary };
 
-        var spending = await spendingBreakdownService.BuildAsync(year, month, baseCurrencyCode, ct);
+        var spending = spendingBreakdownService.Build(year, month, dataset, ct);
 
         return new AnalyticsDashboardDto(
             year,

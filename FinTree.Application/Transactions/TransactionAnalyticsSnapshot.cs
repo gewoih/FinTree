@@ -3,7 +3,7 @@ using FinTree.Domain.ValueObjects;
 
 namespace FinTree.Application.Transactions;
 
-internal readonly record struct TransactionAnalyticsSnapshot(
+public readonly record struct TransactionAnalyticsSnapshot(
     Guid AccountId,
     Guid? CategoryId,
     Money Money,
