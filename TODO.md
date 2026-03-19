@@ -15,7 +15,3 @@
 - [ ] `FT-TODO-064` `EvolutionTab` still formats and models KPI values through its own `evolutionModels.ts` pipeline instead of the shared analytics formatting layer. Direct `toFixed` calls are already gone, but the tab can still drift from the dashboard display contract because formatting rules now live in two places.
   **Fix:** Consolidate `EvolutionTab` onto the shared analytics formatting contract or extract a single reusable formatting layer used by both `models.ts` and `evolutionModels.ts`.
   **Files:** `react-app/src/components/analytics/EvolutionTab.tsx`, `react-app/src/components/analytics/evolutionModels.ts`, `react-app/src/components/analytics/models.ts`
-
-- [ ] `FT-TODO-067` `chartModels.ts`: pre-existing TypeScript ошибки — `id: string | null` несовместим с `AnalyticsCategorySlice.id: string`.
-  **Fix:** В `buildAnalyticsCategoryModel` заменить `id: string | null` на `id: string` (использовать fallback `id ?? ''` или отфильтровать null).
-  **Files:** `react-app/src/components/analytics/chartModels.ts` lines 110, 111, 130, 134, 135

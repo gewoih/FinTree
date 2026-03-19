@@ -92,7 +92,7 @@ export function buildAnalyticsCategoryModel(
     };
   }
 
-  const itemsWithPercent = scopedItems.map((item, index) => ({
+  const itemsWithPercent: AnalyticsCategorySlice[] = scopedItems.map((item, index) => ({
     ...item,
     displayPercent: (item.displayAmount / total) * 100,
     displayColor: getAnalyticsCategoryColorByIndex(index),
