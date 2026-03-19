@@ -22,13 +22,8 @@ public sealed class DatabaseInitializer(AppDbContext context)
         {
             foreach (var template in templates)
             {
-                var category = template.IsDefault
-                    ? TransactionCategory.CreateDefault(userId, template.Name, template.Color, template.Icon,
-                        template.Type, template.IsMandatory)
-                    : TransactionCategory.CreateUser(userId, template.Name, template.Color, template.Icon,
-                        template.Type, template.IsMandatory);
-
-                categories.Add(category);
+                categories.Add(TransactionCategory.CreateUser(userId, template.Name, template.Color, template.Icon,
+                    template.Type, template.IsMandatory));
             }
         }
 

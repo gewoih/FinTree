@@ -112,21 +112,8 @@ public sealed class AccountsService(
             throw new DomainValidationException("Операция доступна только для инвестиционных счетов.");
         EnsureAccountIsNotArchived(account);
 
-        var categories = await context.TransactionCategories
-            .AsNoTracking()
-            .Where(c => c.UserId == currentUserId)
-            .Select(c => new { c.Id, c.Name, c.IsDefault })
-            .ToListAsync(ct);
-
-        if (categories.Count == 0)
-            throw new ConflictException("Не удалось подобрать категорию для операции.");
-
-        var categoryId = categories.FirstOrDefault(c => c.Name == "Без категории")?.Id
-                         ?? categories.FirstOrDefault(c => c.IsDefault)?.Id
-                         ?? categories[0].Id;
-
         var desc = string.IsNullOrWhiteSpace(description) ? null : description.Trim();
-        var transaction = account.AddTransaction(type, categoryId, amount, occurredAt, desc, isMandatory: false);
+        var transaction = account.AddTransaction(type, null, amount, occurredAt, desc, isMandatory: false);
         await context.SaveChangesAsync(ct);
         return transaction.Id;
     }

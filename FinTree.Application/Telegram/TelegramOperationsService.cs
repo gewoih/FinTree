@@ -112,7 +112,7 @@ public sealed partial class TelegramOperationsService(
         DateTime OccurredAt,
         TransactionType Type,
         AccountRef Account,
-        CategoryRef Category,
+        CategoryRef? Category,
         decimal Amount,
         string? Description)
         : ResolvedOperation(LineNumber, OccurredAt);
@@ -520,17 +520,7 @@ public sealed partial class TelegramOperationsService(
                         ? ResolveExpenseCategory(categories, parsedTransaction.CategoryName)
                         : ResolveIncomeCategory(categories, parsedTransaction.CategoryName);
 
-                    if (category is null)
-                    {
-                        var kindLabel = parsedTransaction.Type == TransactionType.Expense ? "расхода" : "дохода";
-                        errorMessage =
-                            $"Строка {parsedTransaction.LineNumber}: не удалось подобрать категорию {kindLabel} «{parsedTransaction.CategoryName}».";
-                        return false;
-                    }
-
-                    var description = parsedTransaction.Type == TransactionType.Expense
-                        ? BuildExpenseDescription(parsedTransaction.CategoryName, parsedTransaction.Note, category.IsDefault)
-                        : NormalizeNote(parsedTransaction.Note);
+                    var description = NormalizeNote(parsedTransaction.Note);
 
                     resolvedOperations.Add(new ResolvedTransaction(
                         parsedTransaction.LineNumber,
@@ -685,7 +675,7 @@ public sealed partial class TelegramOperationsService(
         if (containsMatches.Count == 1)
             return containsMatches[0];
 
-        return categories.FirstOrDefault(c => c.IsDefault);
+        return null;
     }
 
     private static CategoryRef? ResolveIncomeCategory(IReadOnlyList<CategoryRef> categories, string categoryName)
@@ -711,19 +701,7 @@ public sealed partial class TelegramOperationsService(
         return containsMatches.Count == 1 ? containsMatches[0] : null;
     }
 
-    private static string? BuildExpenseDescription(string categoryName, string? note, bool isDefaultCategory)
-    {
-        var trimmedNote = NormalizeNote(note);
-        if (!isDefaultCategory)
-            return trimmedNote;
-
-        var normalizedCategory = categoryName.Trim();
-        return string.IsNullOrWhiteSpace(trimmedNote)
-            ? normalizedCategory
-            : $"{normalizedCategory} {trimmedNote}";
-    }
-
-    private async Task<List<OperationResult>> ExecuteOperationsAsync(
+private async Task<List<OperationResult>> ExecuteOperationsAsync(
         Guid userId,
         IReadOnlyList<ResolvedOperation> resolvedOperations,
         CancellationToken ct)
@@ -744,9 +722,9 @@ public sealed partial class TelegramOperationsService(
                             resolvedTransaction.Account.Id,
                             resolvedTransaction.Amount,
                             resolvedTransaction.OccurredAt,
-                            resolvedTransaction.Category.Id,
+                            resolvedTransaction.Category?.Id,
                             resolvedTransaction.Description,
-                            resolvedTransaction is { Type: TransactionType.Expense, Category.IsMandatory: true }),
+                            resolvedTransaction is { Type: TransactionType.Expense } && resolvedTransaction.Category?.IsMandatory == true),
                         ct);
 
                     results.Add(BuildTransactionResult(resolvedTransaction));
@@ -764,14 +742,15 @@ public sealed partial class TelegramOperationsService(
     private static OperationResult BuildTransactionResult(ResolvedTransaction transaction)
     {
         var operationLabel = transaction.Type == TransactionType.Expense ? "Расход" : "Доход";
+        var categoryName = transaction.Category?.Name ?? "Без категории";
         var summary =
-            $"[{transaction.LineNumber}] {operationLabel}: {transaction.Category.Name} — {FormatAmount(transaction.Account.CurrencyCode, transaction.Amount)} ({transaction.Account.Name})";
+            $"[{transaction.LineNumber}] {operationLabel}: {categoryName} — {FormatAmount(transaction.Account.CurrencyCode, transaction.Amount)} ({transaction.Account.Name})";
 
         var details = new List<string>
         {
             $"✅ {operationLabel} добавлен",
             $"💳 Счёт: {transaction.Account.Name} ({transaction.Account.CurrencyCode})",
-            $"📂 Категория: {transaction.Category.Name}",
+            $"📂 Категория: {categoryName}",
             $"💰 Сумма: {FormatAmount(transaction.Account.CurrencyCode, transaction.Amount)}",
             $"📅 Дата: {FormatDate(transaction.OccurredAt)}"
         };

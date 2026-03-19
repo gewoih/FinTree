@@ -225,11 +225,8 @@ public sealed class AuthService(
     private Task SeedDefaultCategoriesAsync(User user, CancellationToken ct)
     {
         var categories = DefaultTransactionCategories.All
-            .Select(template => template.IsDefault
-                ? TransactionCategory.CreateDefault(user.Id, template.Name, template.Color, template.Icon,
-                    template.Type, template.IsMandatory)
-                : TransactionCategory.CreateUser(user.Id, template.Name, template.Color, template.Icon,
-                    template.Type, template.IsMandatory))
+            .Select(template => TransactionCategory.CreateUser(user.Id, template.Name, template.Color, template.Icon,
+                template.Type, template.IsMandatory))
             .ToList();
 
         return context.TransactionCategories.AddRangeAsync(categories, ct);

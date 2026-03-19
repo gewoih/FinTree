@@ -12,8 +12,6 @@ public static class DefaultTransactionCategories
 {
     public static IReadOnlyList<TransactionCategoryTemplate> All { get; } =
     [
-        new TransactionCategoryTemplate("Без категории", "#9e9e9e", "pi-tag", CategoryType.Expense, true, false),
-
         new TransactionCategoryTemplate("Продукты", "#4caf50", "pi-shopping-cart", CategoryType.Expense, false, true),
         new TransactionCategoryTemplate("Кафе", "#ff7043", "pi-face-smile", CategoryType.Expense, false, false),
         new TransactionCategoryTemplate("Здоровье", "#e53935", "pi-heart", CategoryType.Expense, false, true),

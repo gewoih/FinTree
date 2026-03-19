@@ -16,7 +16,7 @@ public sealed class TransactionCategory : Entity
     private TransactionCategory(Guid userId, string name, string color, string icon,
         CategoryType type = CategoryType.Expense, bool isDefault = false, bool isMandatory = false)
     {
-        ArgumentOutOfRangeException.ThrowIfEqual(userId, Guid.Empty, nameof(userId));
+        ArgumentOutOfRangeException.ThrowIfEqual(userId, Guid.Empty);
         ArgumentException.ThrowIfNullOrWhiteSpace(name);
         ArgumentException.ThrowIfNullOrWhiteSpace(color);
         ArgumentException.ThrowIfNullOrWhiteSpace(icon);
@@ -28,12 +28,6 @@ public sealed class TransactionCategory : Entity
         Type = type;
         IsDefault = isDefault;
         IsMandatory = isMandatory;
-    }
-
-    public static TransactionCategory CreateDefault(Guid userId, string name, string color, string icon = "pi-tag",
-        CategoryType type = CategoryType.Expense, bool isMandatory = false)
-    {
-        return new TransactionCategory(userId, name, color, icon, type, true, isMandatory);
     }
 
     public static TransactionCategory CreateUser(Guid userId, string name, string color, string icon = "pi-tag",
