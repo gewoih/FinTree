@@ -307,6 +307,236 @@ function ChartLegend({
   );
 }
 
+function ForecastHeroSection({
+  forecast,
+  showForecastCorridor,
+  heroLabel,
+  heroValue,
+  heroRange,
+  currency,
+  baselineNote,
+}: {
+  forecast: ForecastDto;
+  showForecastCorridor: boolean;
+  heroLabel: string;
+  heroValue: string;
+  heroRange: string | null;
+  currency: string;
+  baselineNote: ReturnType<typeof buildBaselineNote>;
+}) {
+  return (
+    <div className="space-y-3">
+      <p className="text-base text-[var(--ft-text-secondary)]">{heroLabel}</p>
+      <p className="text-[var(--ft-chart-1)]" style={analyticsHeroStyle}>
+        {heroValue}
+      </p>
+
+      {heroRange && (
+        <p className="text-sm text-[var(--ft-text-secondary)] tabular-nums">{heroRange}</p>
+      )}
+
+      {forecast.summary.availableAmount !== null && showForecastCorridor && (
+        <div
+          className="flex items-center gap-2 text-sm font-medium"
+          style={{
+            color:
+              forecast.summary.availableAmount >= 0
+                ? 'var(--ft-success-400)'
+                : 'var(--ft-warning-400)',
+          }}
+        >
+          {forecast.summary.availableAmount >= 0 ? (
+            <CheckCircle2 className="size-4" aria-hidden="true" />
+          ) : (
+            <AlertTriangle className="size-4" aria-hidden="true" />
+          )}
+          <span>
+            {forecast.summary.availableAmount >= 0
+              ? `Останется ~${formatAnalyticsMetaMoney(forecast.summary.availableAmount, currency)}`
+              : `Перерасход ~${formatAnalyticsMetaMoney(Math.abs(forecast.summary.availableAmount), currency)}`}
+          </span>
+        </div>
+      )}
+
+      {baselineNote && (
+        <div className="flex flex-wrap items-center gap-x-4 gap-y-2 text-sm">
+          <div
+            className="flex items-center gap-2 font-medium"
+            style={{
+              color:
+                baselineNote.tone === 'below' ? 'var(--ft-success-400)' : 'var(--ft-warning-400)',
+            }}
+          >
+            {baselineNote.tone === 'below' ? (
+              <ArrowDown className="size-4" aria-hidden="true" />
+            ) : (
+              <ArrowUp className="size-4" aria-hidden="true" />
+            )}
+            <span>{baselineNote.text}</span>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+function ForecastChart({
+  data,
+  xTicks,
+  yMin,
+  yMax,
+  baseline,
+  baselineValueLabel,
+  showForecastCorridor,
+  currency,
+}: {
+  data: ChartDataPoint[];
+  xTicks: number[];
+  yMin: number;
+  yMax: number | undefined;
+  baseline: number | null;
+  baselineValueLabel: string | null;
+  showForecastCorridor: boolean;
+  currency: string;
+}) {
+  return (
+    <div role="img" aria-label="График расходов по дням месяца">
+      <ResponsiveContainer width="100%" height={showForecastCorridor ? 500 : 476}>
+        <ComposedChart data={data} margin={{ top: 24, right: 14, left: 4, bottom: 12 }}>
+          <defs>
+            <linearGradient id="ft-forecast-actual-fill" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%" stopColor="color-mix(in srgb, var(--ft-chart-1) 24%, transparent)" />
+              <stop offset="100%" stopColor="color-mix(in srgb, var(--ft-chart-1) 5%, transparent)" />
+            </linearGradient>
+          </defs>
+
+          <CartesianGrid
+            vertical={false}
+            stroke="color-mix(in srgb, var(--ft-border-subtle) 92%, transparent)"
+          />
+          <XAxis
+            dataKey="day"
+            ticks={xTicks}
+            tick={{ fontSize: 13, fill: 'var(--ft-text-secondary)' }}
+            tickLine={false}
+            axisLine={false}
+            interval={0}
+          />
+          <YAxis
+            domain={yMax != null ? [yMin, yMax] : [yMin, 'auto']}
+            tickFormatter={(value: number) => formatYAxisTick(value, currency)}
+            tick={{ fontSize: 13, fill: 'var(--ft-text-secondary)' }}
+            tickLine={false}
+            axisLine={false}
+            width={88}
+          />
+          <Tooltip
+            content={(props) => {
+              const { active, label, payload } = props as unknown as {
+                active?: boolean;
+                label?: number | string;
+                payload?: Array<{ payload: ChartDataPoint }>;
+              };
+              return (
+                <ForecastTooltip
+                  active={active}
+                  label={label}
+                  payload={payload}
+                  currency={currency}
+                  showCorridor={showForecastCorridor}
+                />
+              );
+            }}
+          />
+
+          <Area
+            type="monotone"
+            dataKey="actual"
+            stroke="none"
+            fill="url(#ft-forecast-actual-fill)"
+            isAnimationActive={false}
+          />
+
+          {showForecastCorridor && (
+            <>
+              <Area
+                type="monotone"
+                dataKey="corridorBase"
+                stackId="forecast"
+                stroke="none"
+                fill="transparent"
+                isAnimationActive={false}
+              />
+              <Area
+                type="monotone"
+                dataKey="corridorBand"
+                stackId="forecast"
+                stroke="none"
+                fill="color-mix(in srgb, var(--ft-success-500) 18%, transparent)"
+                isAnimationActive={false}
+              />
+            </>
+          )}
+
+          {showForecastCorridor && (
+            <Line
+              type="monotone"
+              dataKey="medianForecast"
+              stroke="var(--ft-chart-1)"
+              strokeWidth={2}
+              strokeDasharray="5 4"
+              dot={false}
+              activeDot={false}
+              connectNulls={false}
+              isAnimationActive={false}
+            />
+          )}
+
+          <Line
+            type="monotone"
+            dataKey="actual"
+            stroke="var(--ft-chart-1)"
+            strokeWidth={3}
+            connectNulls={false}
+            dot={{
+              r: 4,
+              fill: 'var(--ft-chart-1)',
+              stroke: 'var(--ft-surface-base)',
+              strokeWidth: 2,
+            }}
+            activeDot={{
+              r: 5.5,
+              fill: 'var(--ft-chart-1)',
+              stroke: 'var(--ft-surface-base)',
+              strokeWidth: 2,
+            }}
+            isAnimationActive={false}
+          />
+
+          {baseline !== null && (
+            <ReferenceLine
+              y={baseline}
+              stroke="var(--ft-chart-baseline)"
+              strokeDasharray="6 5"
+              label={
+                baselineValueLabel
+                  ? {
+                      value: baselineValueLabel,
+                      position: 'insideTopLeft',
+                      fill: 'var(--ft-chart-baseline)',
+                      fontSize: 12,
+                      fontWeight: 600,
+                    }
+                  : undefined
+              }
+            />
+          )}
+        </ComposedChart>
+      </ResponsiveContainer>
+    </div>
+  );
+}
+
 export function ForecastCard({
   loading,
   error,
@@ -332,7 +562,6 @@ export function ForecastCard({
           tooltip={tooltipText}
           ariaLabel="Подробнее о прогнозе расходов"
         />
-
         <div className="px-6 pb-6">
           <AnalyticsInset className="flex min-h-[280px] gap-3 p-5 text-base leading-7 text-[var(--ft-text-secondary)]">
             <Info className="mt-1 size-5 shrink-0" aria-hidden="true" />
@@ -383,7 +612,6 @@ export function ForecastCard({
           tooltip={tooltipText}
           ariaLabel="Подробнее о прогнозе расходов"
         />
-
         <div className="px-6 pb-6">
           <AnalyticsInset className="flex min-h-[280px] items-center justify-center px-8 text-center">
             <p className="max-w-md text-base leading-7 text-[var(--ft-text-secondary)]">
@@ -402,7 +630,7 @@ export function ForecastCard({
     forecast.summary.optimisticTotal !== null &&
     forecast.summary.riskTotal !== null &&
     forecast.summary.medianTotal !== null;
-  const data = buildChartData(forecast, showForecastCorridor);
+  const chartData = buildChartData(forecast, showForecastCorridor);
   const baseline = forecast.series.baseline;
   const xTicks = buildXAxisTicks(forecast.series.days);
   const yMin = getChartMin(forecast);
@@ -411,16 +639,11 @@ export function ForecastCard({
   const heroValue = showForecastCorridor
     ? formatAnalyticsHeroMoney(forecast.summary.medianTotal, currency)
     : formatAnalyticsHeroMoney(forecast.summary.currentSpent, currency);
-
   const heroRange =
     showForecastCorridor &&
     forecast.summary.optimisticTotal !== null &&
     forecast.summary.riskTotal !== null
-      ? formatAnalyticsMoneyRange(
-          forecast.summary.optimisticTotal,
-          forecast.summary.riskTotal,
-          currency,
-        )
+      ? formatAnalyticsMoneyRange(forecast.summary.optimisticTotal, forecast.summary.riskTotal, currency)
       : null;
   const baselineNote = buildBaselineNote(forecast, currency, showForecastCorridor);
   const baselineValueLabel =
@@ -440,202 +663,26 @@ export function ForecastCard({
           className="px-0 py-0"
         />
 
-        <div className="space-y-3">
-          <p className="text-base text-[var(--ft-text-secondary)]">{heroLabel}</p>
-          <p className="text-[var(--ft-chart-1)]" style={analyticsHeroStyle}>
-            {heroValue}
-          </p>
+        <ForecastHeroSection
+          forecast={forecast}
+          showForecastCorridor={showForecastCorridor}
+          heroLabel={heroLabel}
+          heroValue={heroValue}
+          heroRange={heroRange}
+          currency={currency}
+          baselineNote={baselineNote}
+        />
 
-          {heroRange && (
-            <p className="text-sm text-[var(--ft-text-secondary)] tabular-nums">{heroRange}</p>
-          )}
-
-          {forecast.summary.availableAmount !== null && showForecastCorridor && (
-            <div
-              className="flex items-center gap-2 text-sm font-medium"
-              style={{
-                color:
-                  forecast.summary.availableAmount >= 0
-                    ? 'var(--ft-success-400)'
-                    : 'var(--ft-warning-400)',
-              }}
-            >
-              {forecast.summary.availableAmount >= 0 ? (
-                <CheckCircle2 className="size-4" aria-hidden="true" />
-              ) : (
-                <AlertTriangle className="size-4" aria-hidden="true" />
-              )}
-              <span>
-                {forecast.summary.availableAmount >= 0
-                  ? `Останется ~${formatAnalyticsMetaMoney(forecast.summary.availableAmount, currency)}`
-                  : `Перерасход ~${formatAnalyticsMetaMoney(Math.abs(forecast.summary.availableAmount), currency)}`}
-              </span>
-            </div>
-          )}
-
-          {baselineNote && (
-            <div className="flex flex-wrap items-center gap-x-4 gap-y-2 text-sm">
-              <div
-                className="flex items-center gap-2 font-medium"
-                style={{
-                  color:
-                    baselineNote.tone === 'below'
-                      ? 'var(--ft-success-400)'
-                      : 'var(--ft-warning-400)',
-                }}
-              >
-                {baselineNote.tone === 'below' ? (
-                  <ArrowDown className="size-4" aria-hidden="true" />
-                ) : (
-                  <ArrowUp className="size-4" aria-hidden="true" />
-                )}
-                <span>{baselineNote.text}</span>
-              </div>
-            </div>
-          )}
-        </div>
-
-        <div role="img" aria-label="График расходов по дням месяца">
-          <ResponsiveContainer width="100%" height={showForecastCorridor ? 500 : 476}>
-            <ComposedChart data={data} margin={{ top: 24, right: 14, left: 4, bottom: 12 }}>
-              <defs>
-                <linearGradient id="ft-forecast-actual-fill" x1="0" y1="0" x2="0" y2="1">
-                  <stop
-                    offset="0%"
-                    stopColor="color-mix(in srgb, var(--ft-chart-1) 24%, transparent)"
-                  />
-                  <stop
-                    offset="100%"
-                    stopColor="color-mix(in srgb, var(--ft-chart-1) 5%, transparent)"
-                  />
-                </linearGradient>
-              </defs>
-
-              <CartesianGrid
-                vertical={false}
-                stroke="color-mix(in srgb, var(--ft-border-subtle) 92%, transparent)"
-              />
-              <XAxis
-                dataKey="day"
-                ticks={xTicks}
-                tick={{ fontSize: 13, fill: 'var(--ft-text-secondary)' }}
-                tickLine={false}
-                axisLine={false}
-                interval={0}
-              />
-              <YAxis
-                domain={yMax != null ? [yMin, yMax] : [yMin, 'auto']}
-                tickFormatter={(value: number) => formatYAxisTick(value, currency)}
-                tick={{ fontSize: 13, fill: 'var(--ft-text-secondary)' }}
-                tickLine={false}
-                axisLine={false}
-                width={88}
-              />
-              <Tooltip
-                content={(props) => {
-                  const { active, label, payload } = props as unknown as {
-                    active?: boolean;
-                    label?: number | string;
-                    payload?: Array<{ payload: ChartDataPoint }>;
-                  };
-
-                  return (
-                    <ForecastTooltip
-                      active={active}
-                      label={label}
-                      payload={payload}
-                      currency={currency}
-                      showCorridor={showForecastCorridor}
-                    />
-                  );
-                }}
-              />
-
-              <Area
-                type="monotone"
-                dataKey="actual"
-                stroke="none"
-                fill="url(#ft-forecast-actual-fill)"
-                isAnimationActive={false}
-              />
-
-              {showForecastCorridor && (
-                <>
-                  <Area
-                    type="monotone"
-                    dataKey="corridorBase"
-                    stackId="forecast"
-                    stroke="none"
-                    fill="transparent"
-                    isAnimationActive={false}
-                  />
-                  <Area
-                    type="monotone"
-                    dataKey="corridorBand"
-                    stackId="forecast"
-                    stroke="none"
-                    fill="color-mix(in srgb, var(--ft-success-500) 18%, transparent)"
-                    isAnimationActive={false}
-                  />
-                </>
-              )}
-
-              {showForecastCorridor && (
-                <Line
-                  type="monotone"
-                  dataKey="medianForecast"
-                  stroke="var(--ft-chart-1)"
-                  strokeWidth={2}
-                  strokeDasharray="5 4"
-                  dot={false}
-                  activeDot={false}
-                  connectNulls={false}
-                  isAnimationActive={false}
-                />
-              )}
-
-              <Line
-                type="monotone"
-                dataKey="actual"
-                stroke="var(--ft-chart-1)"
-                strokeWidth={3}
-                connectNulls={false}
-                dot={{
-                  r: 4,
-                  fill: 'var(--ft-chart-1)',
-                  stroke: 'var(--ft-surface-base)',
-                  strokeWidth: 2,
-                }}
-                activeDot={{
-                  r: 5.5,
-                  fill: 'var(--ft-chart-1)',
-                  stroke: 'var(--ft-surface-base)',
-                  strokeWidth: 2,
-                }}
-                isAnimationActive={false}
-              />
-
-              {baseline !== null && (
-                <ReferenceLine
-                  y={baseline}
-                  stroke="var(--ft-chart-baseline)"
-                  strokeDasharray="6 5"
-                  label={
-                    baselineValueLabel
-                      ? {
-                          value: baselineValueLabel,
-                          position: 'insideTopLeft',
-                          fill: 'var(--ft-chart-baseline)',
-                          fontSize: 12,
-                          fontWeight: 600,
-                        }
-                      : undefined
-                  }
-                />
-              )}
-            </ComposedChart>
-          </ResponsiveContainer>
-        </div>
+        <ForecastChart
+          data={chartData}
+          xTicks={xTicks}
+          yMin={yMin}
+          yMax={yMax}
+          baseline={baseline}
+          baselineValueLabel={baselineValueLabel}
+          showForecastCorridor={showForecastCorridor}
+          currency={currency}
+        />
 
         <ChartLegend hasBaseline={baseline !== null} showCorridor={showForecastCorridor} />
       </div>

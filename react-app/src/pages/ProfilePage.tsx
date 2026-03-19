@@ -1,26 +1,15 @@
-import { zodResolver } from '@hookform/resolvers/zod';
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { AlertCircle, Check, CreditCard, Shield } from 'lucide-react';
-import { useMemo, useState, type ReactNode } from 'react';
-import { Controller, useForm, useWatch } from 'react-hook-form';
-import { useNavigate } from '@tanstack/react-router';
-import { toast } from 'sonner';
-import { z } from 'zod';
-import * as userApi from '@/api/user';
-import { queryKeys } from '@/api/queryKeys';
-import { ErrorBoundary } from '@/components/common/ErrorBoundary';
-import { FormField } from '@/components/common/FormField';
-import { PageHeader } from '@/components/common/PageHeader';
-import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
-import { Skeleton } from '@/components/ui/skeleton';
-import { Input } from '@/components/ui/input';
+import { type ReactNode } from 'react';
 import {
   Accordion,
   AccordionContent,
   AccordionItem,
   AccordionTrigger,
 } from '@/components/ui/accordion';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { Skeleton } from '@/components/ui/skeleton';
+import { Input } from '@/components/ui/input';
 import {
   Select,
   SelectContent,
@@ -28,37 +17,19 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import {
-  setCurrentUserSnapshot,
-  useCurrentUserQuery,
-} from '@/features/auth/session';
-import { useHydrateFormValues } from '@/hooks/useHydrateFormValues';
-import { PATHS } from '@/router/paths';
-import type {
-  CurrentUserDto,
-  Currency,
-  SubscriptionPaymentDto,
-  SubscriptionPlan,
-} from '@/types';
+import { Controller } from 'react-hook-form';
+import { ErrorBoundary } from '@/components/common/ErrorBoundary';
+import { FormField } from '@/components/common/FormField';
+import { PageHeader } from '@/components/common/PageHeader';
+import type { CurrentUserDto, Currency, SubscriptionPaymentDto, SubscriptionPlan } from '@/types';
 import { resolveApiErrorMessage } from '@/utils/errors';
 import { formatCurrency } from '@/utils/format';
 import { cn } from '@/utils/cn';
-
-const profileSchema = z.object({
-  baseCurrencyCode: z.string().trim().min(1, 'Выберите базовую валюту'),
-  telegramUserId: z
-    .string()
-    .trim()
-    .refine((value) => value === '' || /^\d+$/.test(value), 'Введите только цифры'),
-});
-
-type ProfileFormValues = z.infer<typeof profileSchema>;
+import { PATHS } from '@/router/paths';
+import { useProfilePage } from '@/features/profile/useProfilePage';
 
 function formatDateLabel(value: string | null): string {
-  if (!value) {
-    return '—';
-  }
-
+  if (!value) return '—';
   return new Intl.DateTimeFormat('ru-RU', {
     day: '2-digit',
     month: 'long',
@@ -80,24 +51,13 @@ function getPlanTitle(plan: SubscriptionPlan): string {
   return plan === 'Year' ? '12 месяцев' : '1 месяц';
 }
 
-function getPlanHint(plan: SubscriptionPlan): string {
-  return plan === 'Year'
-    ? 'Подходит, если хотите зафиксировать цену и не продлевать вручную.'
-    : 'Базовый вариант для быстрого доступа ко всем разделам.';
-}
-
 function getPaymentStatusLabel(status: SubscriptionPaymentDto['status']): string {
   switch (status) {
-    case 'Succeeded':
-      return 'Успешно';
-    case 'Failed':
-      return 'Ошибка';
-    case 'Refunded':
-      return 'Возврат';
-    case 'Canceled':
-      return 'Отменено';
-    default:
-      return status;
+    case 'Succeeded': return 'Успешно';
+    case 'Failed': return 'Ошибка';
+    case 'Refunded': return 'Возврат';
+    case 'Canceled': return 'Отменено';
+    default: return status;
   }
 }
 
@@ -215,95 +175,24 @@ function PaymentHistoryList({
 }
 
 export default function ProfilePage() {
-  const navigate = useNavigate();
-  const queryClient = useQueryClient();
-  const currentUserQuery = useCurrentUserQuery();
-  const currentUser = currentUserQuery.data ?? null;
-  const [subscriptionError, setSubscriptionError] = useState<string | null>(null);
-  const hydratedFormValues = useMemo(
-    () => ({
-      baseCurrencyCode: currentUser?.baseCurrencyCode ?? '',
-      telegramUserId:
-        currentUser?.telegramUserId != null
-          ? String(currentUser.telegramUserId)
-          : '',
-    }),
-    [currentUser?.baseCurrencyCode, currentUser?.telegramUserId],
-  );
-
-  const form = useForm<ProfileFormValues>({
-    resolver: zodResolver(profileSchema),
-    defaultValues: hydratedFormValues,
-  });
-  const telegramUserIdValue = useWatch({
-    control: form.control,
-    name: 'telegramUserId',
-  });
-
-  useHydrateFormValues({
+  const {
+    navigate,
+    currentUserQuery,
+    currentUser,
     form,
-    values: hydratedFormValues,
-    identityKey: currentUser?.id,
-  });
-
-  const currenciesQuery = useQuery({
-    queryKey: queryKeys.currencies(),
-    queryFn: userApi.getCurrencies,
-    staleTime: Infinity,
-  });
-
-  const paymentsQuery = useQuery({
-    queryKey: queryKeys.subscription.payments(),
-    queryFn: userApi.getSubscriptionPayments,
-    staleTime: 60_000,
-    enabled: currentUser !== null,
-  });
-
-  const saveProfileMutation = useMutation({
-    mutationFn: userApi.updateUserProfile,
-    onSuccess: (updatedUser) => {
-      setCurrentUserSnapshot(updatedUser);
-      setSubscriptionError(null);
-      form.reset({
-        baseCurrencyCode: updatedUser.baseCurrencyCode,
-        telegramUserId: updatedUser.telegramUserId != null ? String(updatedUser.telegramUserId) : '',
-      });
-      toast.success('Настройки сохранены');
-    },
-  });
-
-  const simulatePaymentMutation = useMutation({
-    mutationFn: userApi.simulateSubscriptionPayment,
-    onSuccess: async (updatedUser) => {
-      setCurrentUserSnapshot(updatedUser);
-      setSubscriptionError(null);
-      await queryClient.invalidateQueries({ queryKey: queryKeys.subscription.payments() });
-      toast.success('Подписка активирована');
-    },
-  });
-
-  const handleProfileSubmit = form.handleSubmit(async (values) => {
-    form.clearErrors('root');
-    try {
-      await saveProfileMutation.mutateAsync({
-        baseCurrencyCode: values.baseCurrencyCode,
-        telegramUserId: values.telegramUserId.trim() ? Number(values.telegramUserId.trim()) : null,
-      });
-    } catch (error) {
-      form.setError('root', {
-        message: resolveApiErrorMessage(error, 'Не удалось сохранить настройки.'),
-      });
-    }
-  });
-
-  const handlePay = async (plan: SubscriptionPlan) => {
-    setSubscriptionError(null);
-    try {
-      await simulatePaymentMutation.mutateAsync(plan);
-    } catch (error) {
-      setSubscriptionError(resolveApiErrorMessage(error, 'Не удалось активировать подписку.'));
-    }
-  };
+    telegramUserIdValue,
+    currenciesQuery,
+    paymentsQuery,
+    saveProfileMutation,
+    simulatePaymentMutation,
+    handleProfileSubmit,
+    handlePay,
+    subscriptionError,
+    isReadOnlyMode,
+    isSubscriptionActive,
+    initials,
+    paymentPlans,
+  } = useProfilePage();
 
   if (currentUserQuery.isPending && !currentUser) {
     return (
@@ -325,12 +214,10 @@ export default function ProfilePage() {
           <PageHeader title="Настройки" className="mb-0" />
           <PageCard
             title="Не удалось загрузить настройки"
-            description={
-              resolveApiErrorMessage(
-                currentUserQuery.error,
-                'Попробуйте обновить данные пользователя ещё раз.',
-              )
-            }
+            description={resolveApiErrorMessage(
+              currentUserQuery.error,
+              'Попробуйте обновить данные пользователя ещё раз.',
+            )}
             actions={
               <Button
                 className="min-h-[44px] rounded-lg px-4"
@@ -349,27 +236,6 @@ export default function ProfilePage() {
       </ErrorBoundary>
     );
   }
-
-  const isReadOnlyMode = currentUser.subscription.isReadOnlyMode;
-  const isSubscriptionActive = currentUser.subscription.isActive;
-  const initials = (currentUser.name || currentUser.email || 'FT')
-    .trim()
-    .slice(0, 2)
-    .toUpperCase();
-  const paymentPlans: Array<{ plan: SubscriptionPlan; title: string; price: number; hint: string }> = [
-    {
-      plan: 'Month',
-      title: '1 месяц',
-      price: currentUser.subscription.monthPriceRub,
-      hint: getPlanHint('Month'),
-    },
-    {
-      plan: 'Year',
-      title: '12 месяцев',
-      price: currentUser.subscription.yearPriceRub,
-      hint: getPlanHint('Year'),
-    },
-  ];
 
   return (
     <ErrorBoundary>
@@ -398,10 +264,7 @@ export default function ProfilePage() {
           <div className="flex items-center gap-4">
             <div
               className="flex size-14 shrink-0 items-center justify-center rounded-full text-lg font-semibold shadow-[var(--ft-shadow-sm)]"
-              style={{
-                backgroundColor: 'var(--ft-primary-500)',
-                color: 'var(--ft-text-inverse)',
-              }}
+              style={{ backgroundColor: 'var(--ft-primary-500)', color: 'var(--ft-text-inverse)' }}
               aria-hidden="true"
             >
               {initials}
@@ -413,10 +276,7 @@ export default function ProfilePage() {
           </div>
         </PageCard>
 
-        <PageCard
-          title="Основные настройки"
-          description="Управляйте базовой валютой и Telegram-ботом."
-        >
+        <PageCard title="Основные настройки" description="Управляйте базовой валютой и Telegram-ботом.">
           <form className="space-y-5" onSubmit={handleProfileSubmit} noValidate>
             <div className="grid gap-4 lg:grid-cols-2">
               <FormField
@@ -477,12 +337,7 @@ export default function ProfilePage() {
                     variant="outline"
                     className="min-h-[44px] shrink-0 rounded-lg px-4"
                     disabled={!telegramUserIdValue || saveProfileMutation.isPending || isReadOnlyMode}
-                    onClick={() =>
-                      form.setValue('telegramUserId', '', {
-                        shouldDirty: true,
-                        shouldValidate: true,
-                      })
-                    }
+                    onClick={() => form.setValue('telegramUserId', '', { shouldDirty: true, shouldValidate: true })}
                   >
                     Очистить
                   </Button>
