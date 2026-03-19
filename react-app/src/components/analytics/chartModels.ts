@@ -72,8 +72,8 @@ export function buildAnalyticsCategoryModel(
   const items = (data?.items ?? []).map((item) =>
     item.id == null
       ? { ...item, id: UNCATEGORIZED_CATEGORY_ID, name: UNCATEGORIZED_NAME, color: UNCATEGORIZED_COLOR }
-      : item
-  );
+      : { ...item, id: item.id }
+  ) as (Omit<CategoryBreakdownItemDto, 'id'> & { id: string })[];
   const scopedItems = items
     .map((item) => ({
       ...item,

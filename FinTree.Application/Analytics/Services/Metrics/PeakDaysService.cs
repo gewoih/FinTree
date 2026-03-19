@@ -5,18 +5,49 @@ namespace FinTree.Application.Analytics.Services.Metrics;
 
 public sealed class PeakDaysService
 {
+    /// <summary>
+    /// Вычисляет порог пиковых дней из исторических данных и нормализует его
+    /// к масштабу текущего месяца. Возвращает null, если данных недостаточно.
+    /// </summary>
+    public static decimal? ComputeScaledThreshold(
+        IReadOnlyDictionary<DateOnly, decimal> baselineDailyTotals,
+        IReadOnlyDictionary<DateOnly, decimal> currentDailyTotals)
+    {
+        var baselinePositive = baselineDailyTotals.Values.Where(v => v > 0m).ToList();
+        if (baselinePositive.Count < 3)
+            return null;
+
+        var baselineMedian = MathService.ComputeMedian(baselinePositive);
+        if (baselineMedian is not > 0m)
+            return null;
+
+        var baselineThreshold = ComputePeakThreshold(baselinePositive, baselineMedian.Value);
+
+        var currentPositive = currentDailyTotals.Values.Where(v => v > 0m).ToList();
+        if (currentPositive.Count == 0)
+            return baselineThreshold;
+
+        var currentMedian = MathService.ComputeMedian(currentPositive);
+        if (currentMedian is not > 0m)
+            return baselineThreshold;
+
+        var scaleFactor = Math.Clamp(currentMedian.Value / baselineMedian.Value, 0.25m, 4.0m);
+        return baselineThreshold * scaleFactor;
+    }
+
     public static PeakMetricsResult Calculate(
         IReadOnlyDictionary<DateOnly, decimal> dailyTotals,
         decimal monthTotal,
-        int daysInMonth)
+        int daysInMonth,
+        decimal? externalThreshold = null)
     {
         if (monthTotal <= 0m || dailyTotals.Count == 0)
             return Empty(monthTotal, daysInMonth);
-        
+
         var positiveDailyTotals = dailyTotals.Values
             .Where(value => value > 0m)
             .ToList();
-        
+
         if (positiveDailyTotals.Count == 0)
             return Empty(monthTotal, daysInMonth);
 
@@ -24,32 +55,31 @@ public sealed class PeakDaysService
         if (medianDaily is not > 0m)
             return Empty(monthTotal, daysInMonth);
 
-        var threshold = ComputePeakThreshold(positiveDailyTotals, medianDaily.Value);
-        var peakDays = dailyTotals
-            .Where(kv => kv.Value >= threshold)
-            .Select(kv =>
-            {
-                var share = kv.Value / monthTotal * 100m;
-                return new PeakDayDto(
-                    kv.Key.Year,
-                    kv.Key.Month,
-                    kv.Key.Day,
-                    MathService.Round2(kv.Value),
-                    share);
-            })
+        var threshold = externalThreshold is > 0m
+            ? externalThreshold.Value
+            : ComputePeakThreshold(positiveDailyTotals, medianDaily.Value);
+
+        var rawPeakEntries = dailyTotals.Where(kv => kv.Value >= threshold).ToList();
+        var totalPeakAmount = rawPeakEntries.Sum(kv => kv.Value);
+        var peakSpendSharePercent = ResolvePeakSpendSharePercent(totalPeakAmount, monthTotal);
+
+        var peakDays = rawPeakEntries
+            .Select(kv => new PeakDayDto(
+                kv.Key.Year,
+                kv.Key.Month,
+                kv.Key.Day,
+                MathService.Round2(kv.Value),
+                kv.Value / monthTotal * 100m))
             .OrderByDescending(day => day.Amount)
             .ToList();
 
-        var totalPeakAmount = peakDays.Sum(day => day.Amount);
-        var peakSpendSharePercent = ResolvePeakSpendSharePercent(totalPeakAmount, monthTotal);
-
         var peakDayRatioPercent = daysInMonth > 0
-            ? MathService.Round2((decimal)peakDays.Count / daysInMonth * 100m)
+            ? (decimal)peakDays.Count / daysInMonth * 100m
             : (decimal?)null;
 
         var summary = new PeakDaysSummaryDto(
             peakDays.Count,
-            totalPeakAmount,
+            MathService.Round2(totalPeakAmount),
             peakSpendSharePercent,
             monthTotal);
 
@@ -65,10 +95,10 @@ public sealed class PeakDaysService
         var mad = MathService.ComputeMedian(absoluteDeviations) ?? 0m;
 
         return mad > 0m
-            ? medianDaily + 1.5m * mad
+            ? medianDaily + 2.5m * mad
             : medianDaily * 1.5m;
     }
-    
+
     private static PeakMetricsResult Empty(decimal monthTotal, int daysInMonth)
     {
         var peakSpendSharePercent = ResolvePeakSpendSharePercent(0m, monthTotal);

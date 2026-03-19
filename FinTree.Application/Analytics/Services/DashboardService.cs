@@ -4,6 +4,7 @@ using FinTree.Application.Analytics.Shared;
 using FinTree.Application.Currencies;
 using FinTree.Application.Transactions;
 using FinTree.Application.Users;
+using FinTree.Domain.Transactions;
 
 namespace FinTree.Application.Analytics.Services;
 
@@ -128,7 +129,19 @@ public sealed class DashboardService(
             ? (netCashflow - previousNetCashflow) / Math.Abs(previousNetCashflow) * 100
             : (decimal?)null;
 
-        var peaks = PeakDaysService.Calculate(monthlyResult.DailyTotalsDiscretionary, monthlyResult.DiscretionaryTotal, daysInMonth);
+        var baselineDailyDiscretionary = convertedTransactions
+            .Where(t => t.OccurredAtUtc >= deltaWindowStartUtc
+                        && t.OccurredAtUtc < monthStartUtc
+                        && t.Type == TransactionType.Expense
+                        && !t.IsMandatory)
+            .GroupBy(t => DateOnly.FromDateTime(t.OccurredAtUtc))
+            .ToDictionary(g => g.Key, g => g.Sum(t => t.AmountInBaseCurrency));
+
+        var scaledThreshold = PeakDaysService.ComputeScaledThreshold(
+            baselineDailyDiscretionary,
+            monthlyResult.DailyTotalsDiscretionary);
+
+        var peaks = PeakDaysService.Calculate(monthlyResult.DailyTotalsDiscretionary, monthlyResult.DiscretionaryTotal, daysInMonth, scaledThreshold);
 
         var categoryDelta = CategoryDeltaService.GetCategoryDeltas(
             monthlyResult.ExpenseCategoryTotals,

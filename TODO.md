@@ -16,15 +16,6 @@
   **Fix:** Consolidate `EvolutionTab` onto the shared analytics formatting contract or extract a single reusable formatting layer used by both `models.ts` and `evolutionModels.ts`.
   **Files:** `react-app/src/components/analytics/EvolutionTab.tsx`, `react-app/src/components/analytics/evolutionModels.ts`, `react-app/src/components/analytics/models.ts`
 
-- [ ] `FT-TODO-066` Ряд страниц и компонентов превышает 400+ строк и требует разбивки на хуки/подкомпоненты для поддерживаемости.
-  **Why:** Крупные файлы затрудняют навигацию и эволюцию кода в будущих миграционных блоках.
-  **Fix:** По каждому файлу — вынести оркестрационную логику в feature-хук, тяжёлые секции JSX — в сфокусированные подкомпоненты.
-  **Priority:** P2
-  **Files:**
-  - `react-app/src/components/analytics/ForecastCard.tsx` (644 строки) — разбить на подкомпоненты секций/графика
-  - `react-app/src/pages/ProfilePage.tsx` (623 строки) — извлечь `useProfilePage` хук
-  - `react-app/src/pages/AnalyticsPage.tsx` (526 строк) — извлечь `useAnalyticsPage` хук
-  - `react-app/src/components/analytics/EvolutionTab.tsx` (470 строк) — разбить на подкомпоненты вкладок/секций
-  - `react-app/src/pages/RetroDetailPage.tsx` (415 строк) — извлечь `useRetroDetailPage` хук
-  - `react-app/src/components/analytics/SpendingPieCard.tsx` (396 строк) — разбить на подкомпоненты
-  - `react-app/src/features/categories/CategoryFormModal.tsx` (372 строки) — извлечь `useCategoryForm` хук
+- [ ] `FT-TODO-067` `chartModels.ts`: pre-existing TypeScript ошибки — `id: string | null` несовместим с `AnalyticsCategorySlice.id: string`.
+  **Fix:** В `buildAnalyticsCategoryModel` заменить `id: string | null` на `id: string` (использовать fallback `id ?? ''` или отфильтровать null).
+  **Files:** `react-app/src/components/analytics/chartModels.ts` lines 110, 111, 130, 134, 135

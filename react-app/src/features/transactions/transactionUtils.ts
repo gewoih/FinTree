@@ -11,7 +11,7 @@ import type {
   TransactionFiltersValue,
 } from './transactionModels';
 import { normalizeCategoryIconKey } from '@/features/categories/categoryIcons';
-import { UNCATEGORIZED_COLOR, UNCATEGORIZED_NAME } from '@/constants/uncategorized';
+import { UNCATEGORIZED_COLOR } from '@/constants/uncategorized';
 
 export function toTransactionsQuery(
   filters: TransactionFiltersValue

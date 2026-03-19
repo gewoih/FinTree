@@ -9,7 +9,7 @@ import {
   XAxis,
   YAxis,
 } from 'recharts';
-import { AlertTriangle, ArrowDown, ArrowUp, CheckCircle2, Info } from 'lucide-react';
+import { ArrowDown, ArrowUp, CheckCircle2, Info } from 'lucide-react';
 
 import { Skeleton } from '@/components/ui/skeleton';
 import type { ForecastDto } from '@/types';
@@ -335,28 +335,28 @@ function ForecastHeroSection({
         <p className="text-sm text-[var(--ft-text-secondary)] tabular-nums">{heroRange}</p>
       )}
 
-      {forecast.summary.availableAmount !== null && showForecastCorridor && (
-        <div
-          className="flex items-center gap-2 text-sm font-medium"
-          style={{
-            color:
-              forecast.summary.availableAmount >= 0
-                ? 'var(--ft-success-400)'
-                : 'var(--ft-warning-400)',
-          }}
-        >
-          {forecast.summary.availableAmount >= 0 ? (
-            <CheckCircle2 className="size-4" aria-hidden="true" />
-          ) : (
-            <AlertTriangle className="size-4" aria-hidden="true" />
-          )}
-          <span>
-            {forecast.summary.availableAmount >= 0
-              ? `Останется ~${formatAnalyticsMetaMoney(forecast.summary.availableAmount, currency)}`
-              : `Перерасход ~${formatAnalyticsMetaMoney(Math.abs(forecast.summary.availableAmount), currency)}`}
-          </span>
-        </div>
-      )}
+      {showForecastCorridor &&
+        forecast.summary.medianTotal !== null &&
+        forecast.summary.currentSpent !== null && (() => {
+          const remaining = forecast.summary.medianTotal! - forecast.summary.currentSpent!;
+          return (
+            <div
+              className="flex items-center gap-2 text-sm font-medium"
+              style={{ color: remaining > 0 ? 'var(--ft-text-secondary)' : 'var(--ft-success-400)' }}
+            >
+              {remaining <= 0 ? (
+                <CheckCircle2 className="size-4" aria-hidden="true" />
+              ) : (
+                <Info className="size-4" aria-hidden="true" />
+              )}
+              <span>
+                {remaining > 0
+                  ? `До конца месяца ещё ~${formatAnalyticsMetaMoney(remaining, currency)}`
+                  : `Расходы на месяц уже достигнуты`}
+              </span>
+            </div>
+          );
+        })()}
 
       {baselineNote && (
         <div className="flex flex-wrap items-center gap-x-4 gap-y-2 text-sm">

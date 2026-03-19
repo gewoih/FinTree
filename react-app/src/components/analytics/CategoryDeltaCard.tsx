@@ -160,10 +160,6 @@ function DeltaSection({ title, items, currency, direction }: DeltaSectionProps) 
         <span>{title}</span>
       </div>
 
-      <p className="text-xs text-[var(--ft-text-secondary)]">
-        относительно среднего за 90 дней
-      </p>
-
       <div className="space-y-2.5">
         {items.map((item) => (
           <DeltaRow
