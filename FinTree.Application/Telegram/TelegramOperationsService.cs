@@ -4,14 +4,11 @@ using System.Text;
 using System.Text.RegularExpressions;
 using FinTree.Application.Abstractions;
 using FinTree.Application.Accounts;
-using FinTree.Application.Currencies;
 using FinTree.Application.Transactions;
 using FinTree.Application.Transactions.Dto;
 using FinTree.Application.Users;
 using FinTree.Domain.Categories;
-using FinTree.Domain.Identity;
 using FinTree.Domain.Transactions;
-using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 
@@ -19,8 +16,9 @@ namespace FinTree.Application.Telegram;
 
 public sealed partial class TelegramOperationsService(
     IAppDbContext context,
-    CurrencyConverter currencyConverter,
-    UserManager<User> userManager,
+    AccountsService accountsService,
+    UserService userService,
+    TransactionsService transactionsService,
     ILogger<TelegramOperationsService> logger)
 {
     private const string StartMessage =
@@ -252,8 +250,7 @@ public sealed partial class TelegramOperationsService(
 
     private async Task<List<AccountRef>> LoadAccountsAsync(Guid userId, CancellationToken ct)
     {
-        var accountsService = new AccountsService(context, new TelegramCurrentUser(userId), currencyConverter);
-        var accounts = await accountsService.GetAccounts(false, ct);
+        var accounts = await accountsService.GetAccountsAsync(userId, ct: ct);
 
         return accounts
             .Select(a => new AccountRef(a.Id, a.Name, a.CurrencyCode, a.IsMain))
@@ -262,8 +259,7 @@ public sealed partial class TelegramOperationsService(
 
     private async Task<List<CategoryRef>> LoadCategoriesAsync(Guid userId, CancellationToken ct)
     {
-        var userService = new UserService(context, new TelegramCurrentUser(userId), userManager);
-        var categories = await userService.GetUserCategoriesAsync(ct);
+        var categories = await userService.GetUserCategoriesAsync(userId, ct);
 
         var defaults = await context.TransactionCategories
             .AsNoTracking()
@@ -520,7 +516,10 @@ public sealed partial class TelegramOperationsService(
                         ? ResolveExpenseCategory(categories, parsedTransaction.CategoryName)
                         : ResolveIncomeCategory(categories, parsedTransaction.CategoryName);
 
-                    var description = NormalizeNote(parsedTransaction.Note);
+                    var rawNote = category is null
+                        ? $"{parsedTransaction.CategoryName} {parsedTransaction.Note}".Trim()
+                        : parsedTransaction.Note;
+                    var description = NormalizeNote(rawNote);
 
                     resolvedOperations.Add(new ResolvedTransaction(
                         parsedTransaction.LineNumber,
@@ -706,7 +705,6 @@ private async Task<List<OperationResult>> ExecuteOperationsAsync(
         IReadOnlyList<ResolvedOperation> resolvedOperations,
         CancellationToken ct)
     {
-        var transactionsService = new TransactionsService(context, new TelegramCurrentUser(userId), currencyConverter);
         var results = new List<OperationResult>(resolvedOperations.Count);
 
         await using var transaction = await context.BeginTransactionAsync(ct);
@@ -717,6 +715,7 @@ private async Task<List<OperationResult>> ExecuteOperationsAsync(
             {
                 case ResolvedTransaction resolvedTransaction:
                     await transactionsService.CreateAsync(
+                        userId,
                         new CreateTransaction(
                             resolvedTransaction.Type,
                             resolvedTransaction.Account.Id,
@@ -871,11 +870,6 @@ private async Task<List<OperationResult>> ExecuteOperationsAsync(
     private static string Escape(string value)
         => WebUtility.HtmlEncode(value);
 
-    private sealed class TelegramCurrentUser(Guid userId) : ICurrentUser
-    {
-        public Guid Id { get; } = userId;
-    }
-
-    [GeneratedRegex("^(?<value>[0-9]+(?:[.,][0-9]+)?)", RegexOptions.Compiled)]
+[GeneratedRegex("^(?<value>[0-9]+(?:[.,][0-9]+)?)", RegexOptions.Compiled)]
     private static partial Regex AmountRegexCompiled();
 }

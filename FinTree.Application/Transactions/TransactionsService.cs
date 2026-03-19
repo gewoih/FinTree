@@ -18,18 +18,21 @@ public sealed class TransactionsService(IAppDbContext context, ICurrentUser curr
     private const int MaxPageSize = 200;
     private readonly record struct CategoryAccessMeta(bool IsMandatory, CategoryType Type);
 
-    public async Task<Guid> CreateAsync(CreateTransaction command, CancellationToken ct)
+    public Task<Guid> CreateAsync(CreateTransaction command, CancellationToken ct)
+        => CreateAsync(currentUser.Id, command, ct);
+
+    internal async Task<Guid> CreateAsync(Guid userId, CreateTransaction command, CancellationToken ct)
     {
         var account = await context.Accounts.FirstOrDefaultAsync(a => a.Id == command.AccountId, ct) ??
                       throw new NotFoundException(nameof(Account), command.AccountId);
-        
-        if (account.UserId != currentUser.Id)
+
+        if (account.UserId != userId)
             throw new ForbiddenException();
-        
+
         EnsureAccountIsActive(account);
 
         if (command.CategoryId.HasValue)
-            await ValidateCategoryForTransactionTypeAsync(command.CategoryId.Value, command.Type, ct);
+            await ValidateCategoryForTransactionTypeAsync(userId, command.CategoryId.Value, command.Type, ct);
 
         var newTransaction = account.AddTransaction(command.Type, command.CategoryId, command.Amount,
             command.OccurredAt, command.Description, command.IsMandatory);
@@ -286,7 +289,7 @@ public sealed class TransactionsService(IAppDbContext context, ICurrentUser curr
             throw new ConflictException("Переводы нельзя редактировать как обычные транзакции.");
 
         if (command.CategoryId.HasValue)
-            await ValidateCategoryForTransactionTypeAsync(command.CategoryId.Value, transaction.Type, ct);
+            await ValidateCategoryForTransactionTypeAsync(currentUser.Id, command.CategoryId.Value, transaction.Type, ct);
 
         transaction.AssignCategory(command.CategoryId);
         await context.SaveChangesAsync(ct);
@@ -312,7 +315,7 @@ public sealed class TransactionsService(IAppDbContext context, ICurrentUser curr
         EnsureAccountIsActive(newAccount);
 
         if (command.CategoryId.HasValue)
-            await ValidateCategoryForTransactionTypeAsync(command.CategoryId.Value, transaction.Type, ct);
+            await ValidateCategoryForTransactionTypeAsync(currentUser.Id, command.CategoryId.Value, transaction.Type, ct);
 
         if (transaction.AccountId != newAccount.Id)
             transaction.MoveToAccount(newAccount);
@@ -352,7 +355,7 @@ public sealed class TransactionsService(IAppDbContext context, ICurrentUser curr
         await context.SaveChangesAsync(ct);
     }
 
-    private async Task<CategoryAccessMeta> EnsureCategoryAccessAsync(Guid categoryId, CancellationToken ct)
+    private async Task<CategoryAccessMeta> EnsureCategoryAccessAsync(Guid userId, Guid categoryId, CancellationToken ct)
     {
         var categoryMeta = await context.TransactionCategories
             .AsNoTracking()
@@ -363,14 +366,15 @@ public sealed class TransactionsService(IAppDbContext context, ICurrentUser curr
         if (categoryMeta is null)
             throw new NotFoundException("Категория", categoryId);
 
-        return categoryMeta.UserId != currentUser.Id 
-            ? throw new ForbiddenException() 
-            : new CategoryAccessMeta(categoryMeta.IsMandatory, categoryMeta.Type);
+        if (categoryMeta.UserId != userId)
+            throw new ForbiddenException();
+
+        return new CategoryAccessMeta(categoryMeta.IsMandatory, categoryMeta.Type);
     }
 
-    private async Task ValidateCategoryForTransactionTypeAsync(Guid categoryId, TransactionType transactionType, CancellationToken ct)
+    private async Task ValidateCategoryForTransactionTypeAsync(Guid userId, Guid categoryId, TransactionType transactionType, CancellationToken ct)
     {
-        var categoryAccess = await EnsureCategoryAccessAsync(categoryId, ct);
+        var categoryAccess = await EnsureCategoryAccessAsync(userId, categoryId, ct);
         EnsureCategoryTypeMatchesTransactionType(categoryAccess.Type, transactionType);
     }
 

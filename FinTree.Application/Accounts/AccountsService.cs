@@ -27,15 +27,21 @@ public sealed class AccountsService(
         decimal CapitalBase,
         decimal Profit);
 
-    public async Task<List<AccountDto>> GetAccounts(
+    public Task<List<AccountDto>> GetAccounts(
+        bool archived = false,
+        CancellationToken ct = default,
+        AccountType[]? types = null)
+        => GetAccountsAsync(currentUser.Id, archived, ct, types);
+
+    internal async Task<List<AccountDto>> GetAccountsAsync(
+        Guid userId,
         bool archived = false,
         CancellationToken ct = default,
         AccountType[]? types = null)
     {
-        var currentUserId = currentUser.Id;
         var mainAccountId = await context.Users
             .AsNoTracking()
-            .Where(u => u.Id == currentUserId)
+            .Where(u => u.Id == userId)
             .Select(u => u.MainAccountId)
             .SingleAsync(ct);
 
@@ -43,7 +49,7 @@ public sealed class AccountsService(
 
         var accounts = await context.Accounts
             .AsNoTracking()
-            .Where(a => a.UserId == currentUserId && a.IsArchived == archived && accountTypes.Contains(a.Type))
+            .Where(a => a.UserId == userId && a.IsArchived == archived && accountTypes.Contains(a.Type))
             .Select(a => new { a.Id, a.CurrencyCode, a.Name, a.Type, a.IsLiquid, a.IsArchived })
             .ToListAsync(ct);
 

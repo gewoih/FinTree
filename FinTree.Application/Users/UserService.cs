@@ -147,12 +147,14 @@ public sealed class UserService(IAppDbContext context, ICurrentUser currentUser,
         return MapMe(user, nowUtc, onboardingCompleted, onboardingSkipped, isOwner);
     }
 
-    public async Task<List<TransactionCategoryDto>> GetUserCategoriesAsync(CancellationToken ct)
+    public Task<List<TransactionCategoryDto>> GetUserCategoriesAsync(CancellationToken ct)
+        => GetUserCategoriesAsync(currentUser.Id, ct);
+
+    internal async Task<List<TransactionCategoryDto>> GetUserCategoriesAsync(Guid userId, CancellationToken ct)
     {
-        var userId = currentUser.Id;
         ArgumentOutOfRangeException.ThrowIfEqual(userId, Guid.Empty, nameof(userId));
 
-        var categoriesByUsage = await context.TransactionCategories
+        return await context.TransactionCategories
             .AsNoTracking()
             .Where(tc => tc.UserId == userId)
             .GroupJoin(
@@ -175,8 +177,6 @@ public sealed class UserService(IAppDbContext context, ICurrentUser currentUser,
                 x.Category.IsMandatory
             ))
             .ToListAsync(ct);
-
-        return categoriesByUsage;
     }
 
     public async Task<List<SubscriptionPaymentDto>> GetSubscriptionPaymentsAsync(CancellationToken ct)
