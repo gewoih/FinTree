@@ -15,4 +15,6 @@ public sealed record TransactionDto(
     Guid? TransferId,
     decimal AmountInBaseCurrency,
     decimal OriginalAmount,
-    string OriginalCurrencyCode);
+    string OriginalCurrencyCode,
+    bool IsApproximateConversion,
+    decimal ConversionRate);

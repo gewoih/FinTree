@@ -21,17 +21,26 @@ public sealed class CurrencyConverter(IAppDbContext context, IMemoryCache cache)
         string toCurrencyCode,
         CancellationToken ct = default)
     {
+        var withMeta = await GetCrossRatesWithMetaAsync(requests, toCurrencyCode, ct);
+        return withMeta.ToDictionary(kvp => kvp.Key, kvp => kvp.Value.Rate);
+    }
+
+    public async Task<Dictionary<(string CurrencyCode, DateTime DayStartUtc), (decimal Rate, bool IsApproximate)>> GetCrossRatesWithMetaAsync(
+        IEnumerable<(string CurrencyCode, DateTime AtUtc)> requests,
+        string toCurrencyCode,
+        CancellationToken ct = default)
+    {
         var normalizedRequests = requests
             .Select(request => (Normalize(request.CurrencyCode), NormalizeDayStartUtc(request.AtUtc)))
             .Distinct()
             .ToList();
 
-        var rates = new Dictionary<(string CurrencyCode, DateTime DayStartUtc), decimal>(normalizedRequests.Count);
+        var rates = new Dictionary<(string CurrencyCode, DateTime DayStartUtc), (decimal Rate, bool IsApproximate)>(normalizedRequests.Count);
         foreach (var request in normalizedRequests)
         {
             ct.ThrowIfCancellationRequested();
-            var rate = await GetCrossRateAsync(request.Item1, toCurrencyCode, request.Item2, ct);
-            rates[request] = rate;
+            var (rate, isApproximate) = await GetCrossRateWithMetaAsync(request.Item1, toCurrencyCode, request.Item2, ct);
+            rates[request] = (rate, isApproximate);
         }
 
         return rates;
@@ -40,11 +49,18 @@ public sealed class CurrencyConverter(IAppDbContext context, IMemoryCache cache)
     private async Task<decimal> GetCrossRateAsync(string fromCurrency, string toCurrency, DateTime atUtc,
         CancellationToken ct = default)
     {
+        var (rate, _) = await GetCrossRateWithMetaAsync(fromCurrency, toCurrency, atUtc, ct);
+        return rate;
+    }
+
+    private async Task<(decimal Rate, bool IsApproximate)> GetCrossRateWithMetaAsync(string fromCurrency, string toCurrency, DateTime atUtc,
+        CancellationToken ct = default)
+    {
         var from = Normalize(fromCurrency);
         var to = Normalize(toCurrency);
 
         if (from == to)
-            return 1m;
+            return (1m, false);
 
         var requestedAtUtc = atUtc.Kind switch
         {
@@ -54,47 +70,58 @@ public sealed class CurrencyConverter(IAppDbContext context, IMemoryCache cache)
         };
         var requestedDayStartUtc = requestedAtUtc.Date;
 
-        var fromUnitsPerUsd = await GetUnitsPerUsdAsync(from, requestedDayStartUtc, ct);
-        var toUnitsPerUsd = await GetUnitsPerUsdAsync(to, requestedDayStartUtc, ct);
+        var (fromUnitsPerUsd, fromApprox) = await GetUnitsPerUsdAsync(from, requestedDayStartUtc, ct);
+        var (toUnitsPerUsd, toApprox) = await GetUnitsPerUsdAsync(to, requestedDayStartUtc, ct);
 
-        return toUnitsPerUsd / fromUnitsPerUsd;
+        return (toUnitsPerUsd / fromUnitsPerUsd, fromApprox || toApprox);
     }
 
-    private async Task<decimal> GetUnitsPerUsdAsync(string currency, DateTime dateUtc, CancellationToken ct)
+    private async Task<(decimal Rate, bool IsApproximate)> GetUnitsPerUsdAsync(string currency, DateTime dateUtc, CancellationToken ct)
     {
         if (currency == "USD")
-            return 1m;
+            return (1m, false);
 
         var dayStartUtc = DateTime.SpecifyKind(dateUtc.Date, DateTimeKind.Utc);
         var dayEndUtcExclusive = dayStartUtc.AddDays(1);
         var key = (currency, dayStartUtc);
 
-        if (cache.TryGetValue(key, out decimal cached))
+        if (cache.TryGetValue(key, out (decimal Rate, bool IsApproximate) cached))
             return cached;
 
-        var rate = await context.FxUsdRates
+        var exactRate = await context.FxUsdRates
+            .Where(r => r.CurrencyCode == currency && r.EffectiveDate >= dayStartUtc && r.EffectiveDate < dayEndUtcExclusive)
+            .Select(r => (decimal?)r.Rate)
+            .FirstOrDefaultAsync(ct);
+
+        if (exactRate is not null)
+        {
+            cache.Set(key, (exactRate.Value, false), CacheTtl);
+            return (exactRate.Value, false);
+        }
+
+        var approximateRate = await context.FxUsdRates
             .Where(r => r.CurrencyCode == currency && r.EffectiveDate < dayEndUtcExclusive)
             .OrderByDescending(r => r.EffectiveDate)
             .Select(r => (decimal?)r.Rate)
             .FirstOrDefaultAsync(ct);
 
-        if (rate is null)
+        if (approximateRate is null)
         {
-            rate = await context.FxUsdRates
+            approximateRate = await context.FxUsdRates
                 .Where(r => r.CurrencyCode == currency)
                 .OrderBy(r => r.EffectiveDate)
                 .Select(r => (decimal?)r.Rate)
                 .FirstOrDefaultAsync(ct);
         }
 
-        if (rate is null)
+        if (approximateRate is null)
             throw new DomainValidationException(
                 $"Курс валюты {currency} не найден.",
                 "fx_rate_not_found",
                 new { currency, requestedAt = dayStartUtc });
 
-        cache.Set(key, rate.Value, CacheTtl);
-        return rate.Value;
+        cache.Set(key, (approximateRate.Value, true), CacheTtl);
+        return (approximateRate.Value, true);
     }
 
     private static string Normalize(string code)

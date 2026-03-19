@@ -134,7 +134,7 @@ public sealed class TransactionsService(IAppDbContext context, ICurrentUser curr
             };
         }).ToList();
 
-        var rateByCurrencyAndDay = await currencyConverter.GetCrossRatesAsync(
+        var rateByCurrencyAndDay = await currencyConverter.GetCrossRatesWithMetaAsync(
             normalizedTransactions.Select(t => (t.Money.CurrencyCode, t.OccurredAtUtc)),
             baseCurrencyCode,
             ct);
@@ -146,7 +146,7 @@ public sealed class TransactionsService(IAppDbContext context, ICurrentUser curr
             ct.ThrowIfCancellationRequested();
 
             var rateKey = (NormalizeCurrencyCode(transaction.Money.CurrencyCode), transaction.OccurredAtUtc.Date);
-            var rate = rateByCurrencyAndDay[rateKey];
+            var (rate, isApproximate) = rateByCurrencyAndDay[rateKey];
             var amountInBaseCurrency = transaction.Money.Amount * rate;
 
             userTransactions.Add(new TransactionDto(
@@ -162,7 +162,9 @@ public sealed class TransactionsService(IAppDbContext context, ICurrentUser curr
                 transaction.TransferId,
                 amountInBaseCurrency,
                 transaction.Money.Amount,
-                transaction.Money.CurrencyCode));
+                transaction.Money.CurrencyCode,
+                isApproximate,
+                rate));
         }
 
         return new PagedResult<TransactionDto>(userTransactions, page, size, total);

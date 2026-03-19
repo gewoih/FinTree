@@ -1,4 +1,4 @@
-import { Lock, LockOpen } from 'lucide-react';
+import { Info, Lock, LockOpen } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/utils/cn';
 import { formatCurrency, formatDateTime } from '@/utils/format';
@@ -69,7 +69,7 @@ export function TransactionRow({
       <div className="shrink-0 text-right">
         <div
           className={cn(
-            'text-base font-semibold [font-variant-numeric:tabular-nums]',
+            'inline-flex items-center gap-1 text-base font-semibold [font-variant-numeric:tabular-nums]',
             row.tone === 'Income'
               ? 'text-[var(--ft-success-400)]'
               : 'text-[var(--ft-danger-400)]',
@@ -82,6 +82,15 @@ export function TransactionRow({
               ? baseCurrencyCode
               : row.currencyCode,
           )}
+          {row.transaction.isApproximateConversion && row.transaction.conversionRate != null ? (
+            <span
+              title={`Приблизительный курс: 1 ${row.transaction.originalCurrencyCode ?? row.currencyCode} ≈ ${row.transaction.conversionRate.toFixed(4)} ${baseCurrencyCode}`}
+              className="cursor-help text-muted-foreground"
+              aria-label="Приблизительный курс конвертации"
+            >
+              <Info className="size-3" aria-hidden="true" />
+            </span>
+          ) : null}
         </div>
         {accountAmountLabel ? (
           <div className="text-xs text-muted-foreground [font-variant-numeric:tabular-nums]">

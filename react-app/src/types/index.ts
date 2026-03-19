@@ -137,6 +137,8 @@ export interface TransactionDto {
   amountInBaseCurrency?: number | null;
   originalAmount?: number | null;
   originalCurrencyCode?: string | null;
+  isApproximateConversion?: boolean | null;
+  conversionRate?: number | null;
   type: TransactionType | string | number;
   occurredAt: string;
   description: string | null;
