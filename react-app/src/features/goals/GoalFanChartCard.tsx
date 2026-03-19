@@ -120,7 +120,7 @@ export function GoalFanChartCard({
         </div>
       ) : (
         <div
-          className="h-[320px] w-full sm:h-[360px] lg:h-[460px] xl:h-[500px]"
+          className="h-[320px] w-full sm:h-[360px] lg:h-[460px] xl:h-[500px] [&_*:focus]:outline-none [&_*:focus-visible]:outline-none"
           role="img"
           aria-label={`График вероятностных сценариев достижения цели ${formatCurrency(
             targetAmount,

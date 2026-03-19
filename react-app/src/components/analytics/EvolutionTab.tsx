@@ -156,11 +156,11 @@ function EvolutionSparkline({
 
   return (
     <div
-      className={hero ? 'h-[220px] w-full' : 'h-[120px] w-full'}
+      className="w-full [&_*:focus]:outline-none [&_*:focus-visible]:outline-none"
       role="img"
       aria-label={`График показателя ${model.label}`}
     >
-      <ResponsiveContainer width="100%" height="100%">
+      <ResponsiveContainer width="100%" height={hero ? 220 : 120}>
         <LineChart data={data} margin={{ top: 10, right: 6, left: 0, bottom: 0 }}>
           <CartesianGrid
             vertical={false}

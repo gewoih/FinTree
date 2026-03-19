@@ -175,7 +175,7 @@ export function SpendingBarsCard({
 
       {!loading && !error && !isEmpty && (
         <div className="px-5 pb-6 sm:px-6">
-          <div role="img" aria-label="Столбчатая диаграмма расходов">
+          <div role="img" aria-label="Столбчатая диаграмма расходов" className="[&_*:focus]:outline-none [&_*:focus-visible]:outline-none">
             <ResponsiveContainer width="100%" height={376}>
               <BarChart data={chartData} margin={{ top: 42, right: 12, left: 10, bottom: 10 }}>
                 <CartesianGrid

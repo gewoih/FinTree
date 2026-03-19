@@ -120,7 +120,7 @@ export function InvestmentsAllocationCard({
         ) : (
           <div className="grid flex-1 gap-5 lg:grid-cols-[minmax(280px,1.05fr)_minmax(240px,0.95fr)] lg:items-center">
             <div
-              className="relative mx-auto min-h-[340px] w-full max-w-[320px]"
+              className="relative mx-auto min-h-[340px] w-full max-w-[320px] [&_*:focus]:outline-none [&_*:focus-visible]:outline-none"
               role="img"
               aria-label={`Распределение портфеля по счетам. Общая сумма ${formatCurrency(totalValue, baseCurrencyCode)}.`}
             >
@@ -132,9 +132,8 @@ export function InvestmentsAllocationCard({
                     nameKey="name"
                     innerRadius="64%"
                     outerRadius="100%"
-                    paddingAngle={2}
-                    stroke="var(--ft-surface-base)"
-                    strokeWidth={2}
+                    paddingAngle={1.2}
+                    stroke="none"
                     startAngle={startAngle}
                     endAngle={endAngle}
                     isAnimationActive={false}

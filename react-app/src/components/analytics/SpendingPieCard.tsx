@@ -315,7 +315,7 @@ export function SpendingPieCard({
       {!loading && !error && !isEmpty && (
         <div className="grid grid-cols-1 gap-5 px-5 pb-5 pt-1 lg:grid-cols-[minmax(320px,1.05fr)_minmax(280px,0.95fr)]">
           <div
-            className="relative min-h-[372px]"
+            className="relative min-h-[372px] [&_*:focus]:outline-none [&_*:focus-visible]:outline-none"
             role="img"
             aria-label="Кольцевая диаграмма распределения по категориям"
           >

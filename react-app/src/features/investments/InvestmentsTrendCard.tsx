@@ -107,7 +107,7 @@ export function InvestmentsTrendCard({
           </div>
         ) : (
           <div
-            className="min-h-[340px] w-full flex-1"
+            className="min-h-[340px] w-full flex-1 [&_*:focus]:outline-none [&_*:focus-visible]:outline-none"
             role="img"
             aria-label="Линейный график изменения инвестиционного капитала за последние двенадцать месяцев."
           >

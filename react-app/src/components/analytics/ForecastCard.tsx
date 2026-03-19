@@ -10,6 +10,7 @@ import {
   YAxis,
 } from 'recharts';
 import { ArrowDown, ArrowUp, CheckCircle2, Info } from 'lucide-react';
+import { useEffect, useState } from 'react';
 
 import { Skeleton } from '@/components/ui/skeleton';
 import type { ForecastDto } from '@/types';
@@ -100,12 +101,24 @@ function buildChartData(forecast: ForecastDto, showCorridor: boolean): ChartData
   });
 }
 
-function buildXAxisTicks(days: number[]): number[] {
+function useIsMobile(): boolean {
+  const [isMobile, setIsMobile] = useState(() => window.innerWidth < 640);
+  useEffect(() => {
+    const mq = window.matchMedia('(max-width: 639px)');
+    const handler = (e: MediaQueryListEvent) => setIsMobile(e.matches);
+    mq.addEventListener('change', handler);
+    return () => mq.removeEventListener('change', handler);
+  }, []);
+  return isMobile;
+}
+
+function buildXAxisTicks(days: number[], isMobile: boolean): number[] {
   if (days.length <= 1) {
     return days;
   }
 
-  const ticks = days.filter((day) => (day - 1) % 3 === 0);
+  const step = isMobile ? 6 : 3;
+  const ticks = days.filter((day) => (day - 1) % step === 0);
   const last = days[days.length - 1];
 
   if (ticks[ticks.length - 1] !== last) {
@@ -351,7 +364,7 @@ function ForecastHeroSection({
               )}
               <span>
                 {remaining > 0
-                  ? `До конца месяца ещё ~${formatAnalyticsMetaMoney(remaining, currency)}`
+                  ? `До конца месяца нужно ещё ~${formatAnalyticsMetaMoney(remaining, currency)}`
                   : `Расходы на месяц уже достигнуты`}
               </span>
             </div>
@@ -389,6 +402,7 @@ function ForecastChart({
   baselineValueLabel,
   showForecastCorridor,
   currency,
+  isMobile,
 }: {
   data: ChartDataPoint[];
   xTicks: number[];
@@ -398,11 +412,23 @@ function ForecastChart({
   baselineValueLabel: string | null;
   showForecastCorridor: boolean;
   currency: string;
+  isMobile: boolean;
 }) {
+  const chartHeight = isMobile ? 340 : showForecastCorridor ? 500 : 476;
+  const margin = isMobile
+    ? { top: 8, right: 4, left: 0, bottom: 4 }
+    : { top: 16, right: 8, left: 0, bottom: 8 };
+  const yAxisWidth = isMobile ? 70 : 82;
+  const axisFontSize = isMobile ? 11 : 13;
+
   return (
-    <div role="img" aria-label="График расходов по дням месяца">
-      <ResponsiveContainer width="100%" height={showForecastCorridor ? 500 : 476}>
-        <ComposedChart data={data} margin={{ top: 24, right: 14, left: 4, bottom: 12 }}>
+    <div
+      role="img"
+      aria-label="График расходов по дням месяца"
+      className="[&_*:focus]:outline-none [&_*:focus-visible]:outline-none"
+    >
+      <ResponsiveContainer width="100%" height={chartHeight}>
+        <ComposedChart data={data} margin={margin}>
           <defs>
             <linearGradient id="ft-forecast-actual-fill" x1="0" y1="0" x2="0" y2="1">
               <stop offset="0%" stopColor="color-mix(in srgb, var(--ft-chart-1) 24%, transparent)" />
@@ -417,7 +443,7 @@ function ForecastChart({
           <XAxis
             dataKey="day"
             ticks={xTicks}
-            tick={{ fontSize: 13, fill: 'var(--ft-text-secondary)' }}
+            tick={{ fontSize: axisFontSize, fill: 'var(--ft-text-secondary)' }}
             tickLine={false}
             axisLine={false}
             interval={0}
@@ -425,10 +451,10 @@ function ForecastChart({
           <YAxis
             domain={yMax != null ? [yMin, yMax] : [yMin, 'auto']}
             tickFormatter={(value: number) => formatYAxisTick(value, currency)}
-            tick={{ fontSize: 13, fill: 'var(--ft-text-secondary)' }}
+            tick={{ fontSize: axisFontSize, fill: 'var(--ft-text-secondary)' }}
             tickLine={false}
             axisLine={false}
-            width={88}
+            width={yAxisWidth}
           />
           <Tooltip
             content={(props) => {
@@ -498,7 +524,7 @@ function ForecastChart({
             stroke="var(--ft-chart-1)"
             strokeWidth={3}
             connectNulls={false}
-            dot={{
+            dot={isMobile ? false : {
               r: 4,
               fill: 'var(--ft-chart-1)',
               stroke: 'var(--ft-surface-base)',
@@ -549,6 +575,7 @@ export function ForecastCard({
   requiredExpenseDays,
   onRetry,
 }: ForecastCardProps) {
+  const isMobile = useIsMobile();
   const title = isCurrentMonth ? 'Прогноз расходов' : 'Расходы за месяц';
   const tooltipText = isCurrentMonth
     ? 'Прогноз до конца месяца на основе текущего темпа трат и исторического окна расходов.'
@@ -562,7 +589,7 @@ export function ForecastCard({
           tooltip={tooltipText}
           ariaLabel="Подробнее о прогнозе расходов"
         />
-        <div className="px-6 pb-6">
+        <div className="px-4 pb-4 sm:px-6 sm:pb-6">
           <AnalyticsInset className="flex min-h-[280px] gap-3 p-5 text-base leading-7 text-[var(--ft-text-secondary)]">
             <Info className="mt-1 size-5 shrink-0" aria-hidden="true" />
             <p>
@@ -578,7 +605,7 @@ export function ForecastCard({
   if (loading) {
     return (
       <AnalyticsPanel>
-        <div className="space-y-5 px-6 py-6">
+        <div className="space-y-4 px-4 py-4 sm:space-y-5 sm:px-6 sm:py-6">
           <div className="flex items-start gap-2">
             <Skeleton className="h-9 w-56" />
             <Skeleton className="mt-1 size-10 rounded-full" />
@@ -612,7 +639,7 @@ export function ForecastCard({
           tooltip={tooltipText}
           ariaLabel="Подробнее о прогнозе расходов"
         />
-        <div className="px-6 pb-6">
+        <div className="px-4 pb-4 sm:px-6 sm:pb-6">
           <AnalyticsInset className="flex min-h-[280px] items-center justify-center px-8 text-center">
             <p className="max-w-md text-base leading-7 text-[var(--ft-text-secondary)]">
               {isCurrentMonth
@@ -632,7 +659,7 @@ export function ForecastCard({
     forecast.summary.medianTotal !== null;
   const chartData = buildChartData(forecast, showForecastCorridor);
   const baseline = forecast.series.baseline;
-  const xTicks = buildXAxisTicks(forecast.series.days);
+  const xTicks = buildXAxisTicks(forecast.series.days, isMobile);
   const yMin = getChartMin(forecast);
   const yMax = getChartMax(forecast, showForecastCorridor);
   const heroLabel = showForecastCorridor ? 'До конца месяца' : 'Итог за месяц';
@@ -655,7 +682,7 @@ export function ForecastCard({
 
   return (
     <AnalyticsPanel>
-      <div className="space-y-5 px-6 py-6">
+      <div className="space-y-4 px-4 py-4 sm:space-y-5 sm:px-6 sm:py-6">
         <AnalyticsSectionHeader
           title={title}
           tooltip={tooltipText}
@@ -682,6 +709,7 @@ export function ForecastCard({
           baselineValueLabel={baselineValueLabel}
           showForecastCorridor={showForecastCorridor}
           currency={currency}
+          isMobile={isMobile}
         />
 
         <ChartLegend hasBaseline={baseline !== null} showCorridor={showForecastCorridor} />

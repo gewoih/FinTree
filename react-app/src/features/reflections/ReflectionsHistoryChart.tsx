@@ -81,7 +81,7 @@ export function ReflectionsHistoryChart({
 
       <CardContent className="space-y-5 pt-6">
         <div
-          className="h-[320px] w-full"
+          className="h-[320px] w-full [&_*:focus]:outline-none [&_*:focus-visible]:outline-none"
           role="img"
           aria-label="Столбчатая диаграмма истории самооценки по месяцам"
         >
