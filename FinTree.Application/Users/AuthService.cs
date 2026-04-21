@@ -241,7 +241,7 @@ public sealed class AuthService(
             throw new UnauthorizedAccessException("Invalid Telegram hash.");
 
         var authDate = DateTimeOffset.FromUnixTimeSeconds(request.AuthDate);
-        if (DateTimeOffset.UtcNow - authDate > TimeSpan.FromDays(1))
+        if (DateTimeOffset.UtcNow - authDate > TimeSpan.FromMinutes(5))
             throw new UnauthorizedAccessException("Telegram login expired.");
 
         var data = new SortedDictionary<string, string>

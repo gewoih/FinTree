@@ -4,7 +4,6 @@ import {
   Briefcase,
   List,
   Tags,
-  Target,
   Wallet,
 } from 'lucide-react';
 import type { ComponentType } from 'react';
@@ -22,7 +21,6 @@ export const PRIMARY_NAV_ITEMS: NavItem[] = [
   { label: 'Счета', icon: Wallet, to: PATHS.ACCOUNTS },
   { label: 'Транзакции', icon: List, to: PATHS.TRANSACTIONS },
   { label: 'Инвестиции', icon: Briefcase, to: PATHS.INVESTMENTS },
-  { label: 'Цели', icon: Target, to: PATHS.GOALS },
   { label: 'Рефлексии', icon: BookOpen, to: PATHS.REFLECTIONS },
 ];
 
@@ -33,7 +31,6 @@ export const SECONDARY_NAV_ITEMS: NavItem[] = [
 
 /** Items placed in the "More" overflow menu on mobile */
 export const MOBILE_MORE_ITEMS: NavItem[] = [
-  { label: 'Цели', icon: Target, to: PATHS.GOALS },
   { label: 'Рефлексии', icon: BookOpen, to: PATHS.REFLECTIONS },
 ];
 
