@@ -5,6 +5,12 @@ import { clearCurrentUserSnapshot } from '@/features/auth/session';
 import { PATHS } from '@/router/paths';
 import { router } from '@/router';
 
+declare global {
+  function ym(counterId: number, action: string, url?: string): void;
+}
+
+const YM_COUNTER_ID = 106951626;
+
 export function AppRuntimeEffects() {
   useEffect(() => {
     const handleAuthExpired = () => {
@@ -18,8 +24,15 @@ export function AppRuntimeEffects() {
 
     window.addEventListener(AUTH_EXPIRED_EVENT, handleAuthExpired);
 
+    const unsubscribeRouter = router.subscribe('onResolved', () => {
+      if (typeof ym !== 'undefined') {
+        ym(YM_COUNTER_ID, 'hit', window.location.href);
+      }
+    });
+
     return () => {
       window.removeEventListener(AUTH_EXPIRED_EVENT, handleAuthExpired);
+      unsubscribeRouter();
     };
   }, []);
 
