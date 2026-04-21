@@ -5,7 +5,9 @@ import {
   Bolt,
   ChevronRight,
   CreditCard,
+  Send,
   ShieldCheck,
+  TrendingDown,
   Wallet,
 } from 'lucide-react';
 import analyticsImage from '@/assets/landing/analytics.png';
@@ -39,19 +41,22 @@ const dashboardScreens = [
 
 const features = [
   {
-    icon: Bolt,
-    title: 'Быстрый старт без барьеров',
-    description: 'Регистрация занимает пару минут, а первый месяц вы пользуетесь бесплатно.',
+    icon: Send,
+    title: 'Запись через Telegram за 10 секунд',
+    description:
+      'Не нужно открывать приложение. Написали боту сумму — расход записан. Без форм, без лишних шагов.',
   },
   {
     icon: BarChart3,
-    title: 'Ясная картина расходов',
-    description: 'FinTree сразу показывает, куда уходит бюджет и где можно сэкономить.',
+    title: 'Детальная аналитика, а не просто диаграммы',
+    description:
+      'FinTree показывает тренды по категориям, прогноз до конца месяца и точки, где бюджет проседает.',
   },
   {
     icon: ShieldCheck,
-    title: 'Контроль и безопасность',
-    description: 'Вы сами управляете данными, без привязки банковской карты на старте.',
+    title: 'Без банковских интеграций',
+    description:
+      'Вы не привязываете карту и не даёте доступ к банку. Данные вводите вручную — полный контроль остаётся у вас.',
   },
 ] as const;
 
@@ -87,9 +92,27 @@ const pricing: PricingPlan[] = [
   },
 ];
 
+const howItWorksSteps = [
+  {
+    icon: Send,
+    title: 'Запишите расход в Telegram',
+    description: 'Напишите боту сумму и категорию. Он всё запомнит без форм и ручного ввода.',
+  },
+  {
+    icon: BarChart3,
+    title: 'Смотрите аналитику',
+    description: 'FinTree автоматически строит картину расходов по категориям, счетам и периодам.',
+  },
+  {
+    icon: TrendingDown,
+    title: 'Оптимизируйте бюджет',
+    description: 'Видите, где утечки, и принимаете решения на основе данных, а не ощущений.',
+  },
+] as const;
+
 const trustPoints = [
   { icon: ShieldCheck, label: 'Данные под защитой' },
-  { icon: Bolt, label: 'Запись расхода за 10 секунд' },
+  { icon: Send, label: 'Запись через Telegram за 10 секунд' },
   { icon: Wallet, label: 'Без банковских интеграций' },
 ] as const;
 
@@ -121,7 +144,7 @@ export default function LandingPage() {
       />
 
       <section className="mx-auto flex w-full max-w-6xl flex-col gap-16 px-4 py-12 sm:px-6 sm:py-16 lg:gap-24 lg:py-20">
-        <div className="grid items-center gap-10 lg:grid-cols-[minmax(0,1.08fr)_minmax(24rem,0.92fr)]">
+        <div className="grid items-start gap-10 lg:grid-cols-[minmax(0,1.08fr)_minmax(24rem,0.92fr)]">
           <div className="space-y-8">
             <div className="inline-flex items-center gap-2 rounded-full border border-border/70 bg-background/70 px-3 py-1 text-xs font-semibold tracking-[0.18em] uppercase text-primary shadow-[var(--ft-shadow-sm)] backdrop-blur-sm">
               <CreditCard className="size-3.5" />
@@ -133,8 +156,8 @@ export default function LandingPage() {
                 Поймите, куда уходят деньги, без сложных таблиц.
               </h1>
               <p className="max-w-xl text-base leading-7 text-muted-foreground sm:text-lg">
-                FinTree собирает расходы в одном месте и сразу показывает, где можно сократить траты,
-                чтобы бюджет перестал ощущаться хаосом.
+                FinTree собирает расходы в одном месте и сразу показывает, где можно сократить траты.
+                Расходы записываются через Telegram за 10 секунд — без таблиц и ручного ввода.
               </p>
             </div>
 
@@ -150,49 +173,9 @@ export default function LandingPage() {
               </Button>
             </div>
 
-            <div className="space-y-2 text-sm text-muted-foreground">
-              <p>Без привязки карты и скрытых условий.</p>
-              <p>Без карты • 2 минуты на старт • отмена в любой момент</p>
-            </div>
-
-            <div className="flex flex-wrap gap-3">
-              <button
-                type="button"
-                onClick={() => scrollToSection('screens')}
-                className="inline-flex min-h-11 items-center gap-2 rounded-full border border-border/70 bg-background/70 px-4 text-sm text-muted-foreground transition-colors hover:text-foreground"
-              >
-                Экраны
-                <ChevronRight className="size-4" />
-              </button>
-              <button
-                type="button"
-                onClick={() => scrollToSection('features')}
-                className="inline-flex min-h-11 items-center gap-2 rounded-full border border-border/70 bg-background/70 px-4 text-sm text-muted-foreground transition-colors hover:text-foreground"
-              >
-                Возможности
-                <ChevronRight className="size-4" />
-              </button>
-              <button
-                type="button"
-                onClick={() => scrollToSection('pricing')}
-                className="inline-flex min-h-11 items-center gap-2 rounded-full border border-border/70 bg-background/70 px-4 text-sm text-muted-foreground transition-colors hover:text-foreground"
-              >
-                Тарифы
-                <ChevronRight className="size-4" />
-              </button>
-            </div>
-
-            <div className="grid gap-3 sm:grid-cols-3">
-              {trustPoints.map((item) => (
-                <div
-                  key={item.label}
-                  className="rounded-2xl border border-border/60 bg-background/55 px-4 py-4 shadow-[var(--ft-shadow-sm)] backdrop-blur-sm"
-                >
-                  <item.icon className="mb-3 size-5 text-primary" aria-hidden="true" />
-                  <p className="text-sm font-medium text-foreground">{item.label}</p>
-                </div>
-              ))}
-            </div>
+            <p className="text-sm text-muted-foreground">
+              Без карты • 2 минуты на старт • отмена в любой момент
+            </p>
           </div>
 
           <Card
@@ -213,6 +196,90 @@ export default function LandingPage() {
             </CardContent>
           </Card>
         </div>
+
+        <div className="space-y-6">
+          <div className="flex flex-wrap justify-center gap-3">
+            <button
+              type="button"
+              onClick={() => scrollToSection('how-it-works')}
+              className="inline-flex min-h-11 items-center gap-2 rounded-full border border-border/70 bg-background/70 px-4 text-sm text-muted-foreground transition-colors hover:text-foreground"
+            >
+              Как работает
+              <ChevronRight className="size-4" />
+            </button>
+            <button
+              type="button"
+              onClick={() => scrollToSection('screens')}
+              className="inline-flex min-h-11 items-center gap-2 rounded-full border border-border/70 bg-background/70 px-4 text-sm text-muted-foreground transition-colors hover:text-foreground"
+            >
+              Экраны
+              <ChevronRight className="size-4" />
+            </button>
+            <button
+              type="button"
+              onClick={() => scrollToSection('features')}
+              className="inline-flex min-h-11 items-center gap-2 rounded-full border border-border/70 bg-background/70 px-4 text-sm text-muted-foreground transition-colors hover:text-foreground"
+            >
+              Возможности
+              <ChevronRight className="size-4" />
+            </button>
+            <button
+              type="button"
+              onClick={() => scrollToSection('pricing')}
+              className="inline-flex min-h-11 items-center gap-2 rounded-full border border-border/70 bg-background/70 px-4 text-sm text-muted-foreground transition-colors hover:text-foreground"
+            >
+              Тарифы
+              <ChevronRight className="size-4" />
+            </button>
+          </div>
+
+          <div className="grid gap-3 sm:grid-cols-3">
+            {trustPoints.map((item) => (
+              <div
+                key={item.label}
+                className="rounded-2xl border border-border/60 bg-background/55 px-4 py-4 shadow-[var(--ft-shadow-sm)] backdrop-blur-sm"
+              >
+                <item.icon className="mb-3 size-5 text-primary" aria-hidden="true" />
+                <p className="text-sm font-medium text-foreground">{item.label}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        <section id="how-it-works" className="space-y-6 scroll-mt-24">
+          <div className="max-w-2xl space-y-3">
+            <p className="text-sm font-semibold tracking-[0.18em] text-primary uppercase">
+              Как это работает
+            </p>
+            <h2 className="text-3xl font-semibold tracking-tight text-foreground sm:text-4xl">
+              Три шага до ясного бюджета.
+            </h2>
+          </div>
+
+          <div className="grid gap-5 md:grid-cols-3">
+            {howItWorksSteps.map((step, index) => (
+              <Card
+                key={step.title}
+                className="rounded-[1.5rem] border border-border/60 bg-[color-mix(in_srgb,var(--ft-surface-raised)_78%,transparent)] shadow-[var(--ft-shadow-md)]"
+              >
+                <CardContent className="space-y-4 p-5">
+                  <div className="flex items-center gap-3">
+                    <div className="flex size-12 items-center justify-center rounded-2xl bg-primary/15 text-primary">
+                      <step.icon className="size-5" aria-hidden="true" />
+                    </div>
+                    <span className="font-mono text-3xl font-semibold tracking-tight text-primary/40">
+                      {String(index + 1).padStart(2, '0')}
+                    </span>
+                  </div>
+                  <div className="space-y-2">
+                    <h3 className="text-lg font-semibold text-foreground">{step.title}</h3>
+                    <p className="text-sm leading-6 text-muted-foreground">{step.description}</p>
+                  </div>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        </section>
 
         <section id="screens" className="space-y-6 scroll-mt-24">
           <div className="max-w-2xl space-y-3">
@@ -300,12 +367,6 @@ export default function LandingPage() {
                 Первый месяц бесплатный для всех новых пользователей. Сначала пользуетесь, потом решаете,
                 какой режим оплаты удобнее.
               </p>
-              <div className="rounded-[1.35rem] border border-primary/20 bg-primary/10 px-4 py-4 text-sm text-foreground">
-                Сначала пользуетесь бесплатно, потом выбираете удобный тариф.
-              </div>
-              <Button asChild size="lg" className="min-h-12 rounded-xl px-5 shadow-[var(--ft-shadow-cta)]">
-                <Link to={PATHS.REGISTER}>Попробовать бесплатно</Link>
-              </Button>
             </div>
 
             <div className="grid gap-4 md:grid-cols-2">
@@ -348,6 +409,14 @@ export default function LandingPage() {
                     </div>
 
                     <p className="text-sm leading-6 text-muted-foreground">{plan.description}</p>
+                    <Button
+                      asChild
+                      size="lg"
+                      variant={plan.accent ? 'default' : 'secondary'}
+                      className="w-full rounded-xl"
+                    >
+                      <Link to={PATHS.REGISTER}>Начать бесплатно</Link>
+                    </Button>
                   </CardContent>
                 </Card>
               ))}

@@ -19,6 +19,9 @@ export default function PublicPageLayout() {
             <Button asChild className="hidden sm:inline-flex">
               <Link to={PATHS.REGISTER}>Попробовать</Link>
             </Button>
+            <Button asChild size="sm" className="sm:hidden">
+              <Link to={PATHS.REGISTER}>Попробовать</Link>
+            </Button>
             <ThemeToggle />
           </div>
         </div>
@@ -37,7 +40,11 @@ export default function PublicPageLayout() {
             Финансовый помощник для тех, кто хочет тратить осознанно.
           </p>
         </div>
-        <div className="mt-4 text-center text-xs text-muted-foreground">
+        <div className="mt-3 flex justify-center gap-4 text-xs text-muted-foreground">
+          <a href="#" className="transition-colors hover:text-foreground">Политика конфиденциальности</a>
+          <a href="#" className="transition-colors hover:text-foreground">Пользовательское соглашение</a>
+        </div>
+        <div className="mt-3 text-center text-xs text-muted-foreground">
           © {new Date().getFullYear()} FinTree
         </div>
       </footer>
