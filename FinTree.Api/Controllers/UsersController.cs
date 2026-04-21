@@ -36,9 +36,9 @@ public class UsersController(AccountsService accountsService, UserService userSe
     }
 
     [HttpPatch("main-account")]
-    public async Task<IActionResult> UpdateMainAccount([FromBody] Guid accountId, CancellationToken ct)
+    public async Task<IActionResult> UpdateMainAccount([FromBody] UpdateMainAccountRequest request, CancellationToken ct)
     {
-        await userService.MarkAsMainAsync(accountId, ct);
+        await userService.MarkAsMainAsync(request.AccountId, ct);
         return NoContent();
     }
 
