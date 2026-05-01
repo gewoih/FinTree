@@ -76,6 +76,7 @@ export function useTransactionForm({
     if (mode.type === 'create') {
       form.reset({
         ...DEFAULT_TRANSACTION_VALUES,
+        occurredAt: getTodayDateValue(),
         accountId: accounts[0]?.id ?? '',
       });
       return;

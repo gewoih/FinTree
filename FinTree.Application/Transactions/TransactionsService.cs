@@ -64,6 +64,9 @@ public sealed class TransactionsService(IAppDbContext context, ICurrentUser curr
         if (filter.CategoryId.HasValue)
             userTransactionsQuery = userTransactionsQuery.Where(t => t.CategoryId == filter.CategoryId.Value);
 
+        if (filter.Uncategorized == true)
+            userTransactionsQuery = userTransactionsQuery.Where(t => t.CategoryId == null);
+
         if (filter.From.HasValue)
         {
             var fromUtc = DateTime.SpecifyKind(filter.From.Value.ToDateTime(TimeOnly.MinValue), DateTimeKind.Utc);

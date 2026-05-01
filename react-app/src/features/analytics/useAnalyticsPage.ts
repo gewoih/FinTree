@@ -155,7 +155,9 @@ export function useAnalyticsPage() {
         dateFrom: formatDateParam(new Date(selectedYear, selectedMonth - 1, 1)),
         dateTo: formatDateParam(new Date(selectedYear, selectedMonth, 0)),
       };
-      if (item.id !== UNCATEGORIZED_CATEGORY_ID) {
+      if (item.id === UNCATEGORIZED_CATEGORY_ID) {
+        search.uncategorized = true;
+      } else {
         search.categoryId = item.id;
       }
       openTransactions(search);

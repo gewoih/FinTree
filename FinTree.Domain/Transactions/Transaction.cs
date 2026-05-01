@@ -26,7 +26,7 @@ public sealed class Transaction : Entity
         string? description = null, bool isMandatory = false, bool isTransfer = false, Guid? transferId = null)
     {
         ArgumentOutOfRangeException.ThrowIfEqual(accountId, Guid.Empty, nameof(accountId));
-        ArgumentOutOfRangeException.ThrowIfGreaterThan(occurredAt, DateTime.UtcNow, nameof(occurredAt));
+        ArgumentOutOfRangeException.ThrowIfGreaterThan(occurredAt, DateTime.UtcNow.AddHours(14), nameof(occurredAt));
         if (isTransfer && transferId is null)
             throw new ArgumentException("TransferId is required for transfer transactions.", nameof(transferId));
 
@@ -60,7 +60,7 @@ public sealed class Transaction : Entity
 
     public void Update(Guid? categoryId, Money money, DateTime occurredAt, string? description, bool isMandatory)
     {
-        ArgumentOutOfRangeException.ThrowIfGreaterThan(occurredAt, DateTime.UtcNow, nameof(occurredAt));
+        ArgumentOutOfRangeException.ThrowIfGreaterThan(occurredAt, DateTime.UtcNow.AddHours(14), nameof(occurredAt));
 
         if (money.Currency.Code != Account.CurrencyCode)
             throw new InvalidOperationException(

@@ -19,6 +19,7 @@ export function toTransactionsQuery(
   return {
     accountId: filters.accountId ?? null,
     categoryId: filters.categoryId ?? null,
+    uncategorized: filters.uncategorized ?? null,
     from: filters.dateFrom ?? null,
     to: filters.dateTo ?? null,
     search: filters.search ?? null,
@@ -55,12 +56,6 @@ export function toDateInputValue(value?: string | null): string {
 
 export function toIsoDateAtNoon(dateValue: string): string {
   const [year, month, day] = dateValue.split('-').map(Number);
-  const today = getTodayDateValue();
-
-  if (dateValue === today) {
-    return new Date().toISOString();
-  }
-
   return new Date(Date.UTC(year, month - 1, day, 12, 0, 0)).toISOString();
 }
 
@@ -128,6 +123,7 @@ export function countActiveTransactionFilters(filters: TransactionFiltersValue):
     filters.dateFrom,
     filters.dateTo,
     filters.categoryId,
+    filters.uncategorized ? 'active' : undefined,
     filters.accountId,
     filters.search,
     filters.isMandatory !== undefined ? 'active' : undefined,

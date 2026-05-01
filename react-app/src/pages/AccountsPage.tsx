@@ -7,7 +7,6 @@ import { PageHeader } from '@/components/common/PageHeader';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { resolveApiErrorMessage } from '@/utils/errors';
-import { cn } from '@/utils/cn';
 import { AccountCard } from '@/features/accounts/AccountCard';
 import { AccountFormModal } from '@/features/accounts/AccountFormModal';
 import { AccountsToolbar } from '@/features/accounts/AccountsToolbar';
@@ -21,7 +20,6 @@ export default function AccountsPage() {
     archiveMutation,
     archiveTarget,
     archivedCount,
-    compactGridMaxWidth,
     contentState,
     currentAccounts,
     currentError,
@@ -135,13 +133,7 @@ export default function AccountsPage() {
             )
           }
         >
-          <div
-            className={cn(
-              'grid gap-4 md:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4',
-              currentAccounts.length < 3 && 'justify-start',
-            )}
-            style={{ maxWidth: compactGridMaxWidth }}
-          >
+          <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4">
             {currentAccounts.map((account) => (
               <AccountCard
                 key={account.id}

@@ -73,7 +73,7 @@ export function TransactionFormModal({
   return (
     <>
       <Dialog open={open} onOpenChange={(nextOpen) => !nextOpen && onClose()}>
-        <DialogContent className="max-w-[calc(100vw-1rem)] sm:max-w-[520px]">
+        <DialogContent className="flex max-h-[calc(100dvh-2rem)] flex-col max-w-[calc(100vw-1rem)] sm:max-w-[520px]">
           <DialogHeader>
             <DialogTitle>
               {isEditMode ? 'Редактирование транзакции' : 'Добавить операцию'}
@@ -83,8 +83,9 @@ export function TransactionFormModal({
             </DialogDescription>
           </DialogHeader>
 
-          <form className="space-y-4" onSubmit={submitTransaction} noValidate>
-            <div className="grid grid-cols-2 gap-2">
+          <form className="flex min-h-0 flex-1 flex-col" onSubmit={submitTransaction} noValidate>
+            <div className="flex-1 space-y-4 overflow-y-auto pb-1">
+              <div className="grid grid-cols-2 gap-2">
               {(['Income', 'Expense'] as const).map((value) => (
                 <Button
                   key={value}
@@ -219,6 +220,7 @@ export function TransactionFormModal({
                 Обязательный платёж. Такие расходы отдельно учитываются в аналитике.
               </span>
             </label>
+            </div>
 
             <DialogFooter>
               {isEditMode ? (

@@ -32,6 +32,10 @@ export async function getTransactions(
     params.categoryId = query.categoryId;
   }
 
+  if (query.uncategorized) {
+    params.uncategorized = String(query.uncategorized);
+  }
+
   if (query.from) {
     params.from = query.from;
   }

@@ -14,6 +14,7 @@ import {
 } from '@/components/ui/select';
 import { useViewport } from '@/hooks/useViewport';
 import type { AccountDto, TransactionCategoryDto } from '@/types';
+import { UNCATEGORIZED_NAME, UNCATEGORIZED_SELECT_VALUE } from '@/constants/uncategorized';
 import { DateRangePopoverField } from './DateRangePopoverField';
 import type { TransactionFiltersValue } from './transactionModels';
 import {
@@ -96,19 +97,21 @@ function FiltersContent({
       <div className="space-y-1.5">
         <div className="text-sm font-semibold text-muted-foreground">Категория</div>
         <Select
-          value={value.categoryId ?? ALL_VALUE}
-          onValueChange={(nextValue) =>
-            onChange({
-              categoryId: nextValue === ALL_VALUE ? undefined : nextValue,
-              page: 1,
-            })
-          }
+          value={value.uncategorized ? UNCATEGORIZED_SELECT_VALUE : (value.categoryId ?? ALL_VALUE)}
+          onValueChange={(nextValue) => {
+            if (nextValue === UNCATEGORIZED_SELECT_VALUE) {
+              onChange({ categoryId: undefined, uncategorized: true, page: 1 });
+            } else {
+              onChange({ categoryId: nextValue === ALL_VALUE ? undefined : nextValue, uncategorized: undefined, page: 1 });
+            }
+          }}
         >
           <SelectTrigger className="h-11 w-full rounded-xl" aria-label="Фильтр по категории">
             <SelectValue placeholder="Все категории" />
           </SelectTrigger>
           <SelectContent>
             <SelectItem value={ALL_VALUE}>Все категории</SelectItem>
+            <SelectItem value={UNCATEGORIZED_SELECT_VALUE}>{UNCATEGORIZED_NAME}</SelectItem>
             {incomeCategories.length > 0 ? (
               <SelectGroup>
                 <SelectLabel>Доходы</SelectLabel>

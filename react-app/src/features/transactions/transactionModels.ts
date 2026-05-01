@@ -4,6 +4,7 @@ export interface TransactionFiltersValue {
   dateFrom?: string;
   dateTo?: string;
   categoryId?: string;
+  uncategorized?: boolean;
   accountId?: string;
   search?: string;
   isMandatory?: boolean;

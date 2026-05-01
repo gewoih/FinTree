@@ -4,6 +4,7 @@ export interface TransactionsRouteSearch {
   dateFrom?: string;
   dateTo?: string;
   categoryId?: string;
+  uncategorized?: boolean;
   accountId?: string;
   search?: string;
   isMandatory?: boolean;
@@ -39,6 +40,7 @@ export function validateTransactionsRouteSearch(
     dateFrom: getNonEmptyString(search.dateFrom),
     dateTo: getNonEmptyString(search.dateTo),
     categoryId: getNonEmptyString(search.categoryId),
+    uncategorized: typeof search.uncategorized === 'boolean' ? search.uncategorized : undefined,
     accountId: getNonEmptyString(search.accountId),
     search: getNonEmptyString(search.search),
     isMandatory: typeof search.isMandatory === 'boolean' ? search.isMandatory : undefined,
@@ -54,6 +56,7 @@ export function getTransactionFiltersFromSearch(
     dateFrom: search.dateFrom,
     dateTo: search.dateTo,
     categoryId: search.categoryId,
+    uncategorized: search.uncategorized,
     accountId: search.accountId,
     search: search.search,
     isMandatory: search.isMandatory,
@@ -68,6 +71,7 @@ export function getTransactionsRouteSearch(
     dateFrom: filters.dateFrom || undefined,
     dateTo: filters.dateTo || undefined,
     categoryId: filters.categoryId || undefined,
+    uncategorized: filters.uncategorized || undefined,
     accountId: filters.accountId || undefined,
     search: filters.search?.trim() || undefined,
     isMandatory: filters.isMandatory,

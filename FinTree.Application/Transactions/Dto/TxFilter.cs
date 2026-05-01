@@ -7,5 +7,6 @@ public sealed record TxFilter(
     DateOnly? To,
     string? Search,
     bool? IsMandatory = null,
+    bool? Uncategorized = null,
     int Page = 1,
     int Size = 50);

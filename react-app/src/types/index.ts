@@ -154,6 +154,7 @@ export interface Transaction extends Omit<TransactionDto, 'type'> {
 export interface TransactionsQuery {
   accountId?: string | null;
   categoryId?: string | null;
+  uncategorized?: boolean | null;
   from?: string | null;
   to?: string | null;
   search?: string | null;
