@@ -73,7 +73,7 @@ export function TransactionFormModal({
   return (
     <>
       <Dialog open={open} onOpenChange={(nextOpen) => !nextOpen && onClose()}>
-        <DialogContent className="flex max-h-[calc(100dvh-2rem)] flex-col max-w-[calc(100vw-1rem)] sm:max-w-[520px]">
+        <DialogContent className="flex max-h-[calc(100dvh-2rem)] flex-col max-w-[calc(100vw-1rem)] sm:max-w-[520px] max-sm:top-auto max-sm:translate-y-0 max-sm:bottom-[calc(64px+env(safe-area-inset-bottom,0px))] max-sm:max-h-[calc(100dvh-64px-env(safe-area-inset-bottom,0px)-2rem)]">
           <DialogHeader>
             <DialogTitle>
               {isEditMode ? 'Редактирование транзакции' : 'Добавить операцию'}
