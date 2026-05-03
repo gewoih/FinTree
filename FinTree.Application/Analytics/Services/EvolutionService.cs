@@ -25,6 +25,8 @@ public sealed class EvolutionService(
         var windowMonths = months > 0 ? months : 12;
         var windowStart = new DateTime(now.Year, now.Month, 1, 0, 0, 0, DateTimeKind.Utc)
             .AddMonths(-(windowMonths - 1));
+        // Baseline для peak threshold смотрит 90 дней до начала месяца — чтобы у самого раннего месяца тоже был baseline.
+        var baselineWindowStart = windowStart.AddDays(-90);
         var liquidityWindowStart = windowStart.AddDays(-180);
 
         var investmentTypes = new[] { AccountType.Crypto, AccountType.Brokerage, AccountType.Deposit };
@@ -44,8 +46,9 @@ public sealed class EvolutionService(
 
         var transactionSnapshots = await transactionsService.GetTransactionSnapshotsAsync(ct: ct);
 
+        // Берём данные с baselineWindowStart, чтобы peak-baseline самого раннего месяца не был пустым.
         var windowTransactions = transactionSnapshots
-            .Where(t => !t.IsTransfer && !investmentAccountIds.Contains(t.AccountId) && t.OccurredAtUtc >= windowStart)
+            .Where(t => !t.IsTransfer && !investmentAccountIds.Contains(t.AccountId) && t.OccurredAtUtc >= baselineWindowStart)
             .ToList();
 
         var liquidityExpenseTransactions = transactionSnapshots
@@ -160,34 +163,48 @@ public sealed class EvolutionService(
             var observedDays = dailyTotals.Count;
 
             var meanDaily = observedDays > 0 ? MathService.Round2(monthTotal / observedDays) : 0m;
-            var rawSavingsRate = monthIncome > 0
-                ? (monthIncome - monthTotal) / monthIncome
-                : (decimal?)null;
-            var savingsRate = rawSavingsRate.HasValue
-                ? MathService.Round2(rawSavingsRate.Value)
-                : (decimal?)null;
-            var rawDiscretionaryPercent = monthTotal > 0
-                ? discretionaryTotal / monthTotal * 100m
-                : (decimal?)null;
-            var discretionaryPercent = rawDiscretionaryPercent.HasValue
-                ? MathService.Round2(rawDiscretionaryPercent.Value)
-                : (decimal?)null;
-
-            var stability = StabilityService.ComputeStability(dailyTotals.Values.ToList());
 
             var daysInMonth = DateTime.DaysInMonth(monthStart.Year, monthStart.Month);
-            var peakMetrics = PeakDaysService.Calculate(dailyDiscretionary, discretionaryTotal, daysInMonth);
-            var peakDayRatio = peakMetrics.PeakDayRatioPercent;
-            var peakSpendSharePercent = peakMetrics.PeakSpendSharePercent;
+
+            var baselineWindowStartUtc = monthStart.AddDays(-90);
+            var baselineDailyDiscretionary = windowTransactions
+                .Where(t => t.Type == TransactionType.Expense
+                            && !t.IsMandatory
+                            && t.OccurredAtUtc >= baselineWindowStartUtc
+                            && t.OccurredAtUtc < monthStart)
+                .GroupBy(t => DateOnly.FromDateTime(t.OccurredAtUtc))
+                .ToDictionary(
+                    g => g.Key,
+                    g => g.Sum(t => ConvertAmount(t.Money.CurrencyCode, t.Money.Amount, t.OccurredAtUtc)));
+
+            // Liquidity для текущего месяца берётся «на сейчас», иначе на конец месяца — как в Dashboard.
+            var liquidityAtUtc = monthEnd > now ? now : monthEnd;
+            var liquidity = await liquidityService.ComputeLiquidity(baseCurrencyCode, liquidityAtUtc, ct);
+
+            var monthScore = MonthScoreBuilder.Build(new MonthScoreInputs(
+                MonthIncome: monthIncome,
+                MonthExpenses: monthTotal,
+                DiscretionaryTotal: discretionaryTotal,
+                DailyDiscretionary: dailyDiscretionary,
+                StabilityPositiveDailyValues: dailyTotals.Values.Where(v => v > 0m).ToList(),
+                DaysInMonth: daysInMonth,
+                LiquidMonths: liquidity.LiquidMonths,
+                BaselineDailyDiscretionary: baselineDailyDiscretionary));
+
+            var savingsRate = monthScore.SavingsRate.HasValue
+                ? MathService.Round2(monthScore.SavingsRate.Value)
+                : (decimal?)null;
+            var discretionaryPercent = monthScore.DiscretionarySharePercent.HasValue
+                ? MathService.Round2(monthScore.DiscretionarySharePercent.Value)
+                : (decimal?)null;
+            var stability = monthScore.Stability;
+            var peakDayRatio = monthScore.Peaks.PeakDayRatioPercent;
+            var peakSpendSharePercent = monthScore.Peaks.PeakSpendSharePercent;
 
             var rateAtUtc = monthEnd.AddTicks(-1);
             var netWorth = accountSnapshots.Sum(account =>
                 ConvertAmount(account.CurrencyCode, balancesByAccount[account.Id], rateAtUtc));
             netWorth = MathService.Round2(netWorth);
-
-            var liquidity = await liquidityService.ComputeLiquidity(baseCurrencyCode, monthEnd, ct);
-            var totalMonthScore = MonthlyScoreService.CalculateTotalMonthScore(rawSavingsRate, liquidity.LiquidMonths,
-                stability?.Score, rawDiscretionaryPercent, peakSpendSharePercent);
 
             result.Add(new EvolutionMonthDto(monthStart.Year,
                 monthStart.Month,
@@ -203,7 +220,7 @@ public sealed class EvolutionService(
                 meanDaily,
                 peakDayRatio,
                 peakSpendSharePercent,
-                (int?)totalMonthScore));
+                (int?)monthScore.TotalMonthScore));
         }
 
         return result;

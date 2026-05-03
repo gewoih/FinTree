@@ -109,13 +109,7 @@ public sealed class DashboardService(
             ? MathService.ComputeMedian(positiveObservedDailyValues)
             : null;
 
-        var stability = StabilityService.ComputeStability(positiveObservedDailyValues);
-
         var netCashflow = monthlyResult.TotalIncome - monthlyResult.TotalExpenses;
-        var savingsRate = monthlyResult.TotalIncome > 0m ? netCashflow / monthlyResult.TotalIncome : (decimal?)null;
-        var discretionaryShare = monthlyResult.TotalExpenses > 0m
-            ? (monthlyResult.DiscretionaryTotal / monthlyResult.TotalExpenses) * 100
-            : (decimal?)null;
         var monthOverMonth = monthlyResult.PreviousMonthExpenses > 0m
             ? (monthlyResult.TotalExpenses - monthlyResult.PreviousMonthExpenses) / monthlyResult.PreviousMonthExpenses * 100
             : (decimal?)null;
@@ -129,19 +123,28 @@ public sealed class DashboardService(
             ? (netCashflow - previousNetCashflow) / Math.Abs(previousNetCashflow) * 100
             : (decimal?)null;
 
-        var baselineDailyDiscretionary = convertedTransactions
-            .Where(t => t.OccurredAtUtc >= deltaWindowStartUtc
-                        && t.OccurredAtUtc < monthStartUtc
-                        && t.Type == TransactionType.Expense
-                        && !t.IsMandatory)
-            .GroupBy(t => DateOnly.FromDateTime(t.OccurredAtUtc))
-            .ToDictionary(g => g.Key, g => g.Sum(t => t.AmountInBaseCurrency));
+        var baselineDailyDiscretionary = BuildBaselineDailyDiscretionary(convertedTransactions, deltaWindowStartUtc, monthStartUtc);
+        var previousBaselineWindowStartUtc = previousMonthStartUtc.AddDays(-90);
+        var previousBaselineDailyDiscretionary = BuildBaselineDailyDiscretionary(convertedTransactions, previousBaselineWindowStartUtc, previousMonthStartUtc);
 
-        var scaledThreshold = PeakDaysService.ComputeScaledThreshold(
-            baselineDailyDiscretionary,
-            monthlyResult.DailyTotalsDiscretionary);
+        var liquidityAtUtc = isSelectedCurrentMonth ? nowUtc : monthEndUtc;
+        var liquidity = await liquidityService.ComputeLiquidity(baseCurrencyCode, liquidityAtUtc, ct);
 
-        var peaks = PeakDaysService.Calculate(monthlyResult.DailyTotalsDiscretionary, monthlyResult.DiscretionaryTotal, daysInMonth, scaledThreshold);
+        var monthScore = MonthScoreBuilder.Build(new MonthScoreInputs(
+            MonthIncome: monthlyResult.TotalIncome,
+            MonthExpenses: monthlyResult.TotalExpenses,
+            DiscretionaryTotal: monthlyResult.DiscretionaryTotal,
+            DailyDiscretionary: monthlyResult.DailyTotalsDiscretionary,
+            StabilityPositiveDailyValues: positiveObservedDailyValues,
+            DaysInMonth: daysInMonth,
+            LiquidMonths: liquidity.LiquidMonths,
+            BaselineDailyDiscretionary: baselineDailyDiscretionary));
+
+        var savingsRate = monthScore.SavingsRate;
+        var discretionaryShare = monthScore.DiscretionarySharePercent;
+        var stability = monthScore.Stability;
+        var peaks = monthScore.Peaks;
+        var totalMonthScoreValue = ToScoreValue(monthScore.TotalMonthScore);
 
         var categoryDelta = CategoryDeltaService.GetCategoryDeltas(
             monthlyResult.ExpenseCategoryTotals,
@@ -149,36 +152,21 @@ public sealed class DashboardService(
             monthlyResult.PriorExpenseDaysByMonth,
             categories);
 
-        var liquidityAtUtc = isSelectedCurrentMonth ? nowUtc : monthEndUtc;
-        var liquidity = await liquidityService.ComputeLiquidity(baseCurrencyCode, liquidityAtUtc, ct);
-
-        var totalMonthScore = MonthlyScoreService.CalculateTotalMonthScore(
-            savingsRate, liquidity.LiquidMonths, stability?.Score, discretionaryShare, peaks.PeakSpendSharePercent);
-        var totalMonthScoreValue = ToScoreValue(totalMonthScore);
-
-        var previousSavingsRate = monthlyResult.PreviousMonthIncome > 0m
-            ? previousNetCashflow / monthlyResult.PreviousMonthIncome
-            : (decimal?)null;
-        var previousDiscretionaryShare = monthlyResult.PreviousMonthExpenses > 0m
-            ? (monthlyResult.PreviousMonthDiscretionaryTotal / monthlyResult.PreviousMonthExpenses) * 100
-            : (decimal?)null;
+        var previousMonthDaysCount = DateTime.DaysInMonth(previousMonthStartUtc.Year, previousMonthStartUtc.Month);
         var previousMonthPositiveDailyValues = monthlyResult.PreviousMonthDailyTotals.Values
             .Where(value => value > 0m)
             .ToList();
-        var previousStability = StabilityService.ComputeStability(previousMonthPositiveDailyValues);
-        var previousMonthDaysCount = DateTime.DaysInMonth(previousMonthStartUtc.Year, previousMonthStartUtc.Month);
-        var previousMonthPeaks = PeakDaysService.Calculate(
-            monthlyResult.PreviousMonthDailyTotalsDiscretionary,
-            monthlyResult.PreviousMonthDiscretionaryTotal,
-            previousMonthDaysCount);
         var previousLiquidity = await liquidityService.ComputeLiquidity(baseCurrencyCode, monthStartUtc, ct);
-        var previousTotalMonthScore = MonthlyScoreService.CalculateTotalMonthScore(
-            previousSavingsRate,
-            previousLiquidity.LiquidMonths,
-            previousStability?.Score,
-            previousDiscretionaryShare,
-            previousMonthPeaks.PeakSpendSharePercent);
-        var previousTotalMonthScoreValue = ToScoreValue(previousTotalMonthScore);
+        var previousMonthScore = MonthScoreBuilder.Build(new MonthScoreInputs(
+            MonthIncome: monthlyResult.PreviousMonthIncome,
+            MonthExpenses: monthlyResult.PreviousMonthExpenses,
+            DiscretionaryTotal: monthlyResult.PreviousMonthDiscretionaryTotal,
+            DailyDiscretionary: monthlyResult.PreviousMonthDailyTotalsDiscretionary,
+            StabilityPositiveDailyValues: previousMonthPositiveDailyValues,
+            DaysInMonth: previousMonthDaysCount,
+            LiquidMonths: previousLiquidity.LiquidMonths,
+            BaselineDailyDiscretionary: previousBaselineDailyDiscretionary));
+        var previousTotalMonthScoreValue = ToScoreValue(previousMonthScore.TotalMonthScore);
         var totalMonthScoreDeltaPoints =
             totalMonthScoreValue.HasValue && previousTotalMonthScoreValue.HasValue
                 ? totalMonthScoreValue.Value - previousTotalMonthScoreValue.Value
@@ -239,4 +227,16 @@ public sealed class DashboardService(
 
     private static int? ToScoreValue(decimal? score)
         => score.HasValue ? (int?)score.Value : null;
+
+    private static IReadOnlyDictionary<DateOnly, decimal> BuildBaselineDailyDiscretionary(
+        IReadOnlyList<ConvertedTransactionSnapshot> convertedTransactions,
+        DateTime windowStartUtc,
+        DateTime windowEndUtc)
+        => convertedTransactions
+            .Where(t => t.OccurredAtUtc >= windowStartUtc
+                        && t.OccurredAtUtc < windowEndUtc
+                        && t.Type == TransactionType.Expense
+                        && !t.IsMandatory)
+            .GroupBy(t => DateOnly.FromDateTime(t.OccurredAtUtc))
+            .ToDictionary(g => g.Key, g => g.Sum(t => t.AmountInBaseCurrency));
 }

@@ -32,6 +32,7 @@ export const SECONDARY_NAV_ITEMS: NavItem[] = [
 /** Items placed in the "More" overflow menu on mobile */
 export const MOBILE_MORE_ITEMS: NavItem[] = [
   { label: 'Рефлексии', icon: BookOpen, to: PATHS.REFLECTIONS },
+  { label: 'Категории', icon: Tags, to: PATHS.CATEGORIES },
 ];
 
 /** The 4 tabs shown directly in the mobile bottom bar */
