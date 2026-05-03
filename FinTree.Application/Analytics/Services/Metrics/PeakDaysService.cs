@@ -95,8 +95,8 @@ public sealed class PeakDaysService
         var mad = MathService.ComputeMedian(absoluteDeviations) ?? 0m;
 
         return mad > 0m
-            ? medianDaily + 2.5m * mad
-            : medianDaily * 1.5m;
+            ? medianDaily + 3.5m * mad
+            : medianDaily * 2.0m;
     }
 
     private static PeakMetricsResult Empty(decimal monthTotal, int daysInMonth)

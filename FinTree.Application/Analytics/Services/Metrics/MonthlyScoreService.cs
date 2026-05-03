@@ -2,7 +2,10 @@ namespace FinTree.Application.Analytics.Services.Metrics;
 
 public sealed class MonthlyScoreService
 {
-    private const decimal CushionSaturationMonths = 12m;
+    private const decimal SavingsRateTarget = 0.30m;
+    private const decimal LiquidityMonthsTarget = 6m;
+    private const decimal DiscretionaryShareTargetPercent = 20m;
+    private const decimal PeakSpendShareTargetPercent = 15m;
 
     public static decimal? CalculateTotalMonthScore(
         decimal? savingsRate,
@@ -11,21 +14,20 @@ public sealed class MonthlyScoreService
         decimal? discretionaryShare,
         decimal? peakSpendShare)
     {
-        // Each component is normalized to [0, 100].
-        // savingsRate floor is 0: deficit spending contributes 0, not a negative drag.
-        // liquidMonths saturates at CushionSaturationMonths: larger cushion doesn't inflate the score.
+        // Каждая компонента нормализована в [0, 100]: 100 баллов = достигнут «отличный» порог, выше — cap.
+        // Пороги совпадают с теми, что показаны пользователю в UI как ориентиры «нормы/цели».
         decimal? savingsComponent = savingsRate.HasValue
-            ? Math.Clamp(savingsRate.Value * 100m, 0m, 100m)
+            ? Math.Clamp(savingsRate.Value / SavingsRateTarget * 100m, 0m, 100m)
             : null;
 
-        var liquidityComponent = Math.Clamp(liquidMonths / CushionSaturationMonths * 100m, 0m, 100m);
+        var liquidityComponent = Math.Clamp(liquidMonths / LiquidityMonthsTarget * 100m, 0m, 100m);
 
         decimal? discretionaryComponent = discretionaryShare.HasValue
-            ? Math.Clamp(100m - discretionaryShare.Value, 0m, 100m)
+            ? ScoreInversePercent(discretionaryShare.Value, DiscretionaryShareTargetPercent)
             : null;
 
         decimal? peakComponent = peakSpendShare.HasValue
-            ? Math.Clamp(100m - peakSpendShare.Value, 0m, 100m)
+            ? ScoreInversePercent(peakSpendShare.Value, PeakSpendShareTargetPercent)
             : null;
 
         var normalizedScores = new List<decimal?>
@@ -41,5 +43,13 @@ public sealed class MonthlyScoreService
             return null;
 
         return normalizedScores.Average()!.Value;
+    }
+
+    // Шкала «чем меньше, тем лучше»: 100 баллов при value ≤ target, 0 баллов при value ≥ 100%, линейно между.
+    private static decimal ScoreInversePercent(decimal valuePercent, decimal targetPercent)
+    {
+        if (valuePercent <= targetPercent) return 100m;
+        if (valuePercent >= 100m) return 0m;
+        return (100m - valuePercent) / (100m - targetPercent) * 100m;
     }
 }
