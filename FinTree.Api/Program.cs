@@ -1,5 +1,6 @@
 using System.ComponentModel.DataAnnotations;
 using System.Globalization;
+using System.Net;
 using System.Text;
 using System.Text.Json;
 using System.Text.Json.Serialization;
@@ -233,7 +234,37 @@ builder.Services.AddScoped<IAppDbContext>(sp => sp.GetRequiredService<AppDbConte
 
 var telegramToken = builder.Configuration["Telegram:BotToken"];
 if (!string.IsNullOrWhiteSpace(telegramToken))
-    builder.Services.AddSingleton<TelegramBotClient>(_ => new TelegramBotClient(telegramToken));
+{
+    var proxyUrl = builder.Configuration["Telegram:Proxy"];
+    builder.Services.AddSingleton<TelegramBotClient>(_ =>
+    {
+        var handler = new HttpClientHandler();
+        if (!string.IsNullOrWhiteSpace(proxyUrl))
+        {
+            var proxyUri = new Uri(proxyUrl);
+            var cleanProxy = new UriBuilder(proxyUri) { UserName = string.Empty, Password = string.Empty }.Uri;
+            var webProxy = new WebProxy(cleanProxy);
+
+            if (!string.IsNullOrEmpty(proxyUri.UserInfo))
+            {
+                var parts = proxyUri.UserInfo.Split(':', 2);
+                var user = Uri.UnescapeDataString(parts[0]);
+                var pass = parts.Length > 1 ? Uri.UnescapeDataString(parts[1]) : string.Empty;
+                webProxy.Credentials = new NetworkCredential(user, pass);
+            }
+
+            handler.Proxy = webProxy;
+            handler.UseProxy = true;
+        }
+
+        var http = new HttpClient(handler)
+        {
+            Timeout = TimeSpan.FromSeconds(35)
+        };
+
+        return new TelegramBotClient(telegramToken, http);
+    });
+}
 
 builder.Services.AddScoped<TransactionCategoryService>();
 builder.Services.AddScoped<TransactionsService>();

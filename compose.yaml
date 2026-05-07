@@ -29,6 +29,7 @@ services:
       Auth__AccessTokenLifetimeMinutes: ${AUTH_ACCESS_TOKEN_LIFETIME_MINUTES}
       Auth__RefreshTokenLifetimeDays: ${AUTH_REFRESH_TOKEN_LIFETIME_DAYS}
       Telegram__BotToken: ${TELEGRAM_BOT_TOKEN}
+      Telegram__Proxy: ${TELEGRAM_PROXY}
       ConnectionStrings__DefaultConnection: ${CONNECTION_STRINGS_DEFAULT}
       FxRates__ApiKey: ${FXRATES_API_KEY}
       Admin__OwnerEmailsCsv: ${ADMIN_OWNER_EMAILS}
