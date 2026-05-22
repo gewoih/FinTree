@@ -287,21 +287,6 @@ export interface FinancialHealthSummaryDto {
   balanceMonthOverMonthChangePercent: number | null;
 }
 
-export interface PeakDaysSummaryDto {
-  count: number;
-  total: number;
-  sharePercent: number | null;
-  monthTotal: number | null;
-}
-
-export interface PeakDayDto {
-  year: number;
-  month: number;
-  day: number;
-  amount: number;
-  sharePercent: number | null;
-}
-
 export interface CategoryBreakdownItemDto {
   id: string | null;
   name: string;
@@ -372,8 +357,6 @@ export interface AnalyticsDashboardDto {
   year: number;
   month: number;
   health: FinancialHealthSummaryDto;
-  peaks: PeakDaysSummaryDto;
-  peakDays: PeakDayDto[];
   categories: CategoryBreakdownDto;
   incomeCategories: CategoryBreakdownDto;
   spending: SpendingBreakdownDto;
@@ -400,8 +383,6 @@ export interface EvolutionMonthDto {
   netWorth: number | null;
   liquidMonths: number | null;
   meanDaily: number | null;
-  peakDayRatio: number | null;
-  peakSpendSharePercent: number | null;
   totalMonthScore: number | null;
 }
 

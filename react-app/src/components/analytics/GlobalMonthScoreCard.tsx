@@ -14,7 +14,6 @@ interface GlobalMonthScoreCardProps {
   error: string | null;
   model: GlobalScoreModel;
   children?: ReactNode;
-  detailFooter?: ReactNode;
   onRetry: () => void;
 }
 
@@ -177,11 +176,10 @@ export function GlobalMonthScoreCard({
   error,
   model,
   children,
-  detailFooter,
   onRetry,
 }: GlobalMonthScoreCardProps) {
   const [open, setOpen] = useState(false);
-  const hasDetail = Boolean(children) || Boolean(detailFooter);
+  const hasDetail = Boolean(children);
 
   if (loading) {
     return <ScoreLoadingSkeleton />;
@@ -231,11 +229,6 @@ export function GlobalMonthScoreCard({
               {children && (
                 <div className="grid grid-cols-1 gap-3.5 sm:grid-cols-2 xl:grid-cols-4">
                   {children}
-                </div>
-              )}
-              {detailFooter && (
-                <div className={cn(children && 'mt-5 border-t border-[var(--ft-border-subtle)] pt-5')}>
-                  {detailFooter}
                 </div>
               )}
             </div>

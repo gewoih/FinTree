@@ -23,7 +23,7 @@ public sealed class DashboardService(
         var monthStartUtc = new DateTime(year, month, 1, 0, 0, 0, DateTimeKind.Utc);
         var monthEndUtc = monthStartUtc.AddMonths(1);
         var previousMonthStartUtc = monthStartUtc.AddMonths(-1);
-        var deltaWindowStartUtc = monthStartUtc.AddDays(-90);
+        var categoryBaselineStartUtc = monthStartUtc.AddMonths(-6);
 
         // SpendingBreakdown нужен самый широкий диапазон — 12 месяцев.
         // Остальные окна (MonthlyAggregator — 90 дней, Forecast — 180 дней) полностью входят в него.
@@ -70,9 +70,9 @@ public sealed class DashboardService(
 
         var dataset = new AnalyticsDataset(convertedTransactions);
 
-        // MonthlyAggregator работает с окном 90 дней — фильтруем из предзагруженного набора
+        // MonthlyAggregator работает с текущим и предыдущим месяцем — фильтруем из предзагруженного набора
         var aggregatorTransactions = convertedTransactions
-            .Where(t => t.OccurredAtUtc >= deltaWindowStartUtc && t.OccurredAtUtc < monthEndUtc)
+            .Where(t => t.OccurredAtUtc >= previousMonthStartUtc && t.OccurredAtUtc < monthEndUtc)
             .ToList();
 
         var monthlyResult = MonthlyAggregator.Aggregate(
@@ -80,7 +80,6 @@ public sealed class DashboardService(
             monthStartUtc,
             monthEndUtc,
             previousMonthStartUtc,
-            deltaWindowStartUtc,
             ct);
 
         var daysInMonth = DateTime.DaysInMonth(year, month);
@@ -123,10 +122,6 @@ public sealed class DashboardService(
             ? (netCashflow - previousNetCashflow) / Math.Abs(previousNetCashflow) * 100
             : (decimal?)null;
 
-        var baselineDailyDiscretionary = BuildBaselineDailyDiscretionary(convertedTransactions, deltaWindowStartUtc, monthStartUtc);
-        var previousBaselineWindowStartUtc = previousMonthStartUtc.AddDays(-90);
-        var previousBaselineDailyDiscretionary = BuildBaselineDailyDiscretionary(convertedTransactions, previousBaselineWindowStartUtc, previousMonthStartUtc);
-
         var liquidityAtUtc = isSelectedCurrentMonth ? nowUtc : monthEndUtc;
         var liquidity = await liquidityService.ComputeLiquidity(baseCurrencyCode, liquidityAtUtc, ct);
 
@@ -134,25 +129,20 @@ public sealed class DashboardService(
             MonthIncome: monthlyResult.TotalIncome,
             MonthExpenses: monthlyResult.TotalExpenses,
             DiscretionaryTotal: monthlyResult.DiscretionaryTotal,
-            DailyDiscretionary: monthlyResult.DailyTotalsDiscretionary,
             StabilityPositiveDailyValues: positiveObservedDailyValues,
-            DaysInMonth: daysInMonth,
-            LiquidMonths: liquidity.LiquidMonths,
-            BaselineDailyDiscretionary: baselineDailyDiscretionary));
+            LiquidMonths: liquidity.LiquidMonths));
 
         var savingsRate = monthScore.SavingsRate;
         var discretionaryShare = monthScore.DiscretionarySharePercent;
         var stability = monthScore.Stability;
-        var peaks = monthScore.Peaks;
         var totalMonthScoreValue = ToScoreValue(monthScore.TotalMonthScore);
 
+        var categoryBaseline = BuildCategoryBaseline(convertedTransactions, categoryBaselineStartUtc, monthStartUtc);
         var categoryDelta = CategoryDeltaService.GetCategoryDeltas(
             monthlyResult.ExpenseCategoryTotals,
-            monthlyResult.PriorExpenseCategoryTotalsByMonth,
-            monthlyResult.PriorExpenseDaysByMonth,
+            categoryBaseline,
             categories);
 
-        var previousMonthDaysCount = DateTime.DaysInMonth(previousMonthStartUtc.Year, previousMonthStartUtc.Month);
         var previousMonthPositiveDailyValues = monthlyResult.PreviousMonthDailyTotals.Values
             .Where(value => value > 0m)
             .ToList();
@@ -161,11 +151,8 @@ public sealed class DashboardService(
             MonthIncome: monthlyResult.PreviousMonthIncome,
             MonthExpenses: monthlyResult.PreviousMonthExpenses,
             DiscretionaryTotal: monthlyResult.PreviousMonthDiscretionaryTotal,
-            DailyDiscretionary: monthlyResult.PreviousMonthDailyTotalsDiscretionary,
             StabilityPositiveDailyValues: previousMonthPositiveDailyValues,
-            DaysInMonth: previousMonthDaysCount,
-            LiquidMonths: previousLiquidity.LiquidMonths,
-            BaselineDailyDiscretionary: previousBaselineDailyDiscretionary));
+            LiquidMonths: previousLiquidity.LiquidMonths));
         var previousTotalMonthScoreValue = ToScoreValue(previousMonthScore.TotalMonthScore);
         var totalMonthScoreDeltaPoints =
             totalMonthScoreValue.HasValue && previousTotalMonthScoreValue.HasValue
@@ -212,8 +199,6 @@ public sealed class DashboardService(
             year,
             month,
             health,
-            peaks.Summary,
-            peaks.Days,
             new CategoryBreakdownDto(
                 CategoryItemBuilder.BuildExpenseItems(monthlyResult.ExpenseCategoryTotals, categories, monthlyResult.TotalExpenses),
                 categoryDelta),
@@ -228,15 +213,41 @@ public sealed class DashboardService(
     private static int? ToScoreValue(decimal? score)
         => score.HasValue ? (int?)score.Value : null;
 
-    private static IReadOnlyDictionary<DateOnly, decimal> BuildBaselineDailyDiscretionary(
+    private const decimal AverageDaysInMonth = 30.44m;
+
+    // База для виджета «Изменения по категориям»: среднемесячный расход по каждой категории.
+    // Окно категории — от её первой транзакции, но не раньше начала 6-месячного окна (Formula C).
+    // Так недавно начатая категория не получает заниженную базу из-за месяцев, когда трат не было.
+    private static IReadOnlyDictionary<Guid, decimal> BuildCategoryBaseline(
         IReadOnlyList<ConvertedTransactionSnapshot> convertedTransactions,
         DateTime windowStartUtc,
         DateTime windowEndUtc)
-        => convertedTransactions
-            .Where(t => t.OccurredAtUtc >= windowStartUtc
-                        && t.OccurredAtUtc < windowEndUtc
-                        && t.Type == TransactionType.Expense
-                        && !t.IsMandatory)
-            .GroupBy(t => DateOnly.FromDateTime(t.OccurredAtUtc))
-            .ToDictionary(g => g.Key, g => g.Sum(t => t.AmountInBaseCurrency));
+    {
+        // Категории с расходами раньше окна — «устоявшиеся»: для них окно = полные 6 месяцев.
+        var establishedCategories = convertedTransactions
+            .Where(t => t.Type == TransactionType.Expense && t.OccurredAtUtc < windowStartUtc)
+            .Select(t => t.CategoryId ?? Guid.Empty)
+            .ToHashSet();
+
+        var baseline = new Dictionary<Guid, decimal>();
+        var windowExpenses = convertedTransactions
+            .Where(t => t.Type == TransactionType.Expense
+                        && t.OccurredAtUtc >= windowStartUtc
+                        && t.OccurredAtUtc < windowEndUtc)
+            .GroupBy(t => t.CategoryId ?? Guid.Empty);
+
+        foreach (var group in windowExpenses)
+        {
+            var sum = group.Sum(t => t.AmountInBaseCurrency);
+            var categoryWindowStart = establishedCategories.Contains(group.Key)
+                ? windowStartUtc
+                : group.Min(t => t.OccurredAtUtc).Date;
+            var windowDays = (decimal)(windowEndUtc - categoryWindowStart).TotalDays;
+            baseline[group.Key] = windowDays > 0m
+                ? sum / windowDays * AverageDaysInMonth
+                : 0m;
+        }
+
+        return baseline;
+    }
 }

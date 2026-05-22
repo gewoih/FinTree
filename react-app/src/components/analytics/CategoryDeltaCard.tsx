@@ -189,7 +189,7 @@ export function CategoryDeltaCard({
     <AnalyticsPanel ariaLabel={`Изменения по категориям за ${periodLabel}`}>
       <AnalyticsSectionHeader
         title="Изменения по категориям"
-        tooltip="Сравниваем расходы текущего месяца со средними за последние 90 дней."
+        tooltip="Сравниваем расходы текущего месяца со среднемесячными за последние 6 месяцев."
         ariaLabel="Подробнее об изменениях по категориям"
       />
 

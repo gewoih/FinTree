@@ -10,7 +10,6 @@ import { SummaryStrip } from '@/components/analytics/SummaryStrip';
 import { GlobalMonthScoreCard } from '@/components/analytics/GlobalMonthScoreCard';
 import { HealthScoreCard } from '@/components/analytics/HealthScoreCard';
 import { SpendingPieCard } from '@/components/analytics/SpendingPieCard';
-import { PeakDaysCard } from '@/components/analytics/PeakDaysCard';
 import { CategoryDeltaCard } from '@/components/analytics/CategoryDeltaCard';
 import { ForecastCard } from '@/components/analytics/ForecastCard';
 import { EvolutionTab } from '@/components/analytics/EvolutionTab';
@@ -40,7 +39,6 @@ export default function AnalyticsPage() {
     handleMonthSelect,
     handleSkipOnboarding,
     handleCategorySelect,
-    handlePeakSelect,
     handlePieModeChange,
     handlePieScopeChange,
     onboardingSteps,
@@ -185,18 +183,6 @@ export default function AnalyticsPage() {
             error={dashboardError}
             model={globalScoreModel}
             onRetry={() => dashboardQuery.refetch()}
-            detailFooter={
-              <PeakDaysCard
-                loading={dashboardQuery.isLoading}
-                error={dashboardError}
-                peaks={data?.peakDays ?? []}
-                summary={data?.peaks ?? { count: 0, total: 0, sharePercent: null, monthTotal: null }}
-                currency={currency}
-                onRetry={() => dashboardQuery.refetch()}
-                onPeakSelect={handlePeakSelect}
-                isCompact
-              />
-            }
           >
             {healthCards.length > 0 && (
               <>
@@ -234,7 +220,7 @@ export default function AnalyticsPage() {
               scopeOptions={[
                 { label: 'Все', value: 'all' },
                 { label: 'Обязательные', value: 'mandatory' },
-                { label: 'По желанию', value: 'discretionary' },
+                { label: 'Необязательные', value: 'discretionary' },
               ]}
               onModeChange={handlePieModeChange}
               onScopeChange={handlePieScopeChange}

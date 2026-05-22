@@ -1,26 +1,20 @@
-using FinTree.Application.Analytics.Dto;
-
 namespace FinTree.Application.Analytics.Services.Metrics;
 
 public readonly record struct MonthScoreInputs(
     decimal MonthIncome,
     decimal MonthExpenses,
     decimal DiscretionaryTotal,
-    IReadOnlyDictionary<DateOnly, decimal> DailyDiscretionary,
     IReadOnlyList<decimal> StabilityPositiveDailyValues,
-    int DaysInMonth,
-    decimal LiquidMonths,
-    IReadOnlyDictionary<DateOnly, decimal> BaselineDailyDiscretionary);
+    decimal LiquidMonths);
 
 public readonly record struct MonthScoreResult(
     decimal? SavingsRate,
     decimal? DiscretionarySharePercent,
     Stability? Stability,
-    PeakMetricsResult Peaks,
     decimal? TotalMonthScore);
 
 // Единая точка расчёта месячных метрик и общего скора. Используется и Dashboard, и Evolution,
-// чтобы оба сервиса работали на идентичных формулах и порогах (включая scaled peak threshold).
+// чтобы оба сервиса работали на идентичных формулах и порогах.
 public static class MonthScoreBuilder
 {
     public static MonthScoreResult Build(MonthScoreInputs inputs)
@@ -35,23 +29,12 @@ public static class MonthScoreBuilder
 
         var stability = StabilityService.ComputeStability(inputs.StabilityPositiveDailyValues);
 
-        var scaledThreshold = PeakDaysService.ComputeScaledThreshold(
-            inputs.BaselineDailyDiscretionary,
-            inputs.DailyDiscretionary);
-
-        var peaks = PeakDaysService.Calculate(
-            inputs.DailyDiscretionary,
-            inputs.DiscretionaryTotal,
-            inputs.DaysInMonth,
-            scaledThreshold);
-
         var totalScore = MonthlyScoreService.CalculateTotalMonthScore(
             savingsRate,
             inputs.LiquidMonths,
             stability?.Score,
-            discretionaryShare,
-            peaks.PeakSpendSharePercent);
+            discretionaryShare);
 
-        return new MonthScoreResult(savingsRate, discretionaryShare, stability, peaks, totalScore);
+        return new MonthScoreResult(savingsRate, discretionaryShare, stability, totalScore);
     }
 }

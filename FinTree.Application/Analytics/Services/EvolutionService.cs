@@ -25,8 +25,6 @@ public sealed class EvolutionService(
         var windowMonths = months > 0 ? months : 12;
         var windowStart = new DateTime(now.Year, now.Month, 1, 0, 0, 0, DateTimeKind.Utc)
             .AddMonths(-(windowMonths - 1));
-        // Baseline для peak threshold смотрит 90 дней до начала месяца — чтобы у самого раннего месяца тоже был baseline.
-        var baselineWindowStart = windowStart.AddDays(-90);
         var liquidityWindowStart = windowStart.AddDays(-180);
 
         var investmentTypes = new[] { AccountType.Crypto, AccountType.Brokerage, AccountType.Deposit };
@@ -46,9 +44,8 @@ public sealed class EvolutionService(
 
         var transactionSnapshots = await transactionsService.GetTransactionSnapshotsAsync(ct: ct);
 
-        // Берём данные с baselineWindowStart, чтобы peak-baseline самого раннего месяца не был пустым.
         var windowTransactions = transactionSnapshots
-            .Where(t => !t.IsTransfer && !investmentAccountIds.Contains(t.AccountId) && t.OccurredAtUtc >= baselineWindowStart)
+            .Where(t => !t.IsTransfer && !investmentAccountIds.Contains(t.AccountId) && t.OccurredAtUtc >= windowStart)
             .ToList();
 
         var liquidityExpenseTransactions = transactionSnapshots
@@ -138,7 +135,7 @@ public sealed class EvolutionService(
             if (monthExpenses.Count == 0 && monthIncomeTransactions.Count == 0)
             {
                 result.Add(new EvolutionMonthDto(monthStart.Year, monthStart.Month, false,
-                    null, null, null, null, null, null, null, null, null, null, null, null));
+                    null, null, null, null, null, null, null, null, null, null));
                 continue;
             }
 
@@ -164,19 +161,6 @@ public sealed class EvolutionService(
 
             var meanDaily = observedDays > 0 ? MathService.Round2(monthTotal / observedDays) : 0m;
 
-            var daysInMonth = DateTime.DaysInMonth(monthStart.Year, monthStart.Month);
-
-            var baselineWindowStartUtc = monthStart.AddDays(-90);
-            var baselineDailyDiscretionary = windowTransactions
-                .Where(t => t.Type == TransactionType.Expense
-                            && !t.IsMandatory
-                            && t.OccurredAtUtc >= baselineWindowStartUtc
-                            && t.OccurredAtUtc < monthStart)
-                .GroupBy(t => DateOnly.FromDateTime(t.OccurredAtUtc))
-                .ToDictionary(
-                    g => g.Key,
-                    g => g.Sum(t => ConvertAmount(t.Money.CurrencyCode, t.Money.Amount, t.OccurredAtUtc)));
-
             // Liquidity для текущего месяца берётся «на сейчас», иначе на конец месяца — как в Dashboard.
             var liquidityAtUtc = monthEnd > now ? now : monthEnd;
             var liquidity = await liquidityService.ComputeLiquidity(baseCurrencyCode, liquidityAtUtc, ct);
@@ -185,11 +169,8 @@ public sealed class EvolutionService(
                 MonthIncome: monthIncome,
                 MonthExpenses: monthTotal,
                 DiscretionaryTotal: discretionaryTotal,
-                DailyDiscretionary: dailyDiscretionary,
                 StabilityPositiveDailyValues: dailyTotals.Values.Where(v => v > 0m).ToList(),
-                DaysInMonth: daysInMonth,
-                LiquidMonths: liquidity.LiquidMonths,
-                BaselineDailyDiscretionary: baselineDailyDiscretionary));
+                LiquidMonths: liquidity.LiquidMonths));
 
             var savingsRate = monthScore.SavingsRate.HasValue
                 ? MathService.Round2(monthScore.SavingsRate.Value)
@@ -198,8 +179,6 @@ public sealed class EvolutionService(
                 ? MathService.Round2(monthScore.DiscretionarySharePercent.Value)
                 : (decimal?)null;
             var stability = monthScore.Stability;
-            var peakDayRatio = monthScore.Peaks.PeakDayRatioPercent;
-            var peakSpendSharePercent = monthScore.Peaks.PeakSpendSharePercent;
 
             var rateAtUtc = monthEnd.AddTicks(-1);
             var netWorth = accountSnapshots.Sum(account =>
@@ -218,8 +197,6 @@ public sealed class EvolutionService(
                 netWorth,
                 liquidity.LiquidMonths,
                 meanDaily,
-                peakDayRatio,
-                peakSpendSharePercent,
                 (int?)monthScore.TotalMonthScore));
         }
 

@@ -5,8 +5,7 @@ export type EvolutionKpi =
   | 'savingsRate'
   | 'stabilityScore'
   | 'discretionaryPercent'
-  | 'liquidMonths'
-  | 'peakDayRatio';
+  | 'liquidMonths';
 
 export type EvolutionRange = 6 | 12 | 0;
 export type EvolutionDirection = 'higher-better' | 'lower-better';
@@ -60,7 +59,6 @@ export const EVOLUTION_KPI_ORDER: EvolutionKpi[] = [
   'stabilityScore',
   'discretionaryPercent',
   'liquidMonths',
-  'peakDayRatio',
 ];
 
 export const EVOLUTION_KPI_META: Record<EvolutionKpi, EvolutionKpiMeta> = {
@@ -99,15 +97,6 @@ export const EVOLUTION_KPI_META: Record<EvolutionKpi, EvolutionKpiMeta> = {
     direction: 'higher-better',
     valueKind: 'score',
     precision: 0,
-  },
-  peakDayRatio: {
-    key: 'peakDayRatio',
-    label: 'Доля пиковых дней',
-    description: 'Процент дней с аномально высокими расходами.',
-    directionHint: 'Цель: ниже',
-    direction: 'lower-better',
-    valueKind: 'percent',
-    precision: 1,
   },
   liquidMonths: {
     key: 'liquidMonths',

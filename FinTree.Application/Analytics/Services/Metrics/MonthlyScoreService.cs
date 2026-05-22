@@ -5,14 +5,12 @@ public sealed class MonthlyScoreService
     private const decimal SavingsRateTarget = 0.30m;
     private const decimal LiquidityMonthsTarget = 6m;
     private const decimal DiscretionaryShareTargetPercent = 20m;
-    private const decimal PeakSpendShareTargetPercent = 15m;
 
     public static decimal? CalculateTotalMonthScore(
         decimal? savingsRate,
         decimal liquidMonths,
         decimal? stabilityScore,
-        decimal? discretionaryShare,
-        decimal? peakSpendShare)
+        decimal? discretionaryShare)
     {
         // Каждая компонента нормализована в [0, 100]: 100 баллов = достигнут «отличный» порог, выше — cap.
         // Пороги совпадают с теми, что показаны пользователю в UI как ориентиры «нормы/цели».
@@ -26,17 +24,12 @@ public sealed class MonthlyScoreService
             ? ScoreInversePercent(discretionaryShare.Value, DiscretionaryShareTargetPercent)
             : null;
 
-        decimal? peakComponent = peakSpendShare.HasValue
-            ? ScoreInversePercent(peakSpendShare.Value, PeakSpendShareTargetPercent)
-            : null;
-
         var normalizedScores = new List<decimal?>
         {
             savingsComponent,
             liquidityComponent,
             stabilityScore,
-            discretionaryComponent,
-            peakComponent
+            discretionaryComponent
         };
 
         if (normalizedScores.Any(score => score is null))

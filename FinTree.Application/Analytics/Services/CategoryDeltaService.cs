@@ -4,49 +4,17 @@ namespace FinTree.Application.Analytics.Services;
 
 public static class CategoryDeltaService
 {
-    private const int DeltaCategoriesSize = 3;
-
-    private const int MinDaysPerMonth = 7;
+    private const int DeltaCategoriesSize = 5;
 
     public static CategoryDeltaDto GetCategoryDeltas(
         IReadOnlyDictionary<Guid, CategoryTotals> currentTotals,
-        IReadOnlyDictionary<(int Year, int Month), IReadOnlyDictionary<Guid, decimal>> priorTotalsByMonth,
-        IReadOnlyDictionary<(int Year, int Month), int> priorDaysByMonth,
+        IReadOnlyDictionary<Guid, decimal> baseline,
         Dictionary<Guid, CategoryMeta> categories)
     {
-        // Only months with enough activity are representative baselines.
-        // Fall back to all months if none qualify (e.g. brand-new user).
-        var qualifyingMonths = priorDaysByMonth
-            .Where(kv => kv.Value >= MinDaysPerMonth)
-            .Select(kv => kv.Key)
-            .ToHashSet();
-
-        var monthsToUse = qualifyingMonths.Count > 0 ? qualifyingMonths : priorDaysByMonth.Keys.ToHashSet();
-        var baselineTotals = new Dictionary<Guid, decimal>();
-        var activeMonthsPerCategory = new Dictionary<Guid, int>();
-        foreach (var month in monthsToUse)
-        {
-            if (!priorTotalsByMonth.TryGetValue(month, out var monthTotals))
-                continue;
-            foreach (var (categoryId, amount) in monthTotals)
-            {
-                baselineTotals.TryGetValue(categoryId, out var existing);
-                baselineTotals[categoryId] = existing + amount;
-
-                activeMonthsPerCategory.TryGetValue(categoryId, out var activeCount);
-                activeMonthsPerCategory[categoryId] = activeCount + 1;
-            }
-        }
-
-        // Divide by months where the category was active, not total window size.
-        // Avoids diluting infrequent categories: $300 in 1/3 months → baseline $300, not $100.
-        var averagedBaseline = baselineTotals.ToDictionary(
-            kv => kv.Key,
-            kv => kv.Value / Math.Max(activeMonthsPerCategory.GetValueOrDefault(kv.Key, 1), 1));
-
+        // baseline — среднемесячный расход по категории за окно 6 месяцев, посчитан в DashboardService.
         return GetCategoryDeltas(
             currentTotals.ToDictionary(kv => kv.Key, kv => kv.Value.Total),
-            averagedBaseline,
+            baseline.ToDictionary(kv => kv.Key, kv => kv.Value),
             categories);
     }
 

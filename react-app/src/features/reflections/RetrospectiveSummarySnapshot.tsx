@@ -11,7 +11,6 @@ import { cn } from '@/utils/cn';
 import type { AnalyticsDashboardDto } from '@/types';
 import { formatCurrency, formatNumber } from '@/utils/format';
 import {
-  formatPeakSummary,
   getStabilityActionLabel,
   getSummaryDeltaLabel,
   getSummaryScoreStatus,
@@ -181,12 +180,6 @@ export function RetrospectiveSummarySnapshot({
       ? {
           label: 'Медианный день',
           value: formatCurrency(summary.health.medianDaily, currencyCode),
-        }
-      : null,
-    formatPeakSummary(summary, currencyCode)
-      ? {
-          label: 'Пиковые дни',
-          value: formatPeakSummary(summary, currencyCode) as string,
         }
       : null,
   ].filter((item): item is { label: string; value: string } => item !== null);

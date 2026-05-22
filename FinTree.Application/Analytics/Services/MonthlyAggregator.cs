@@ -14,30 +14,21 @@ internal static class MonthlyAggregator
         decimal DiscretionaryTotal,
         decimal PreviousMonthDiscretionaryTotal,
         IReadOnlyDictionary<DateOnly, decimal> DailyTotals,
-        IReadOnlyDictionary<DateOnly, decimal> DailyTotalsDiscretionary,
         IReadOnlyDictionary<DateOnly, decimal> PreviousMonthDailyTotals,
-        IReadOnlyDictionary<DateOnly, decimal> PreviousMonthDailyTotalsDiscretionary,
         IReadOnlyDictionary<Guid, CategoryTotals> ExpenseCategoryTotals,
-        IReadOnlyDictionary<Guid, decimal> IncomeCategoryTotals,
-        IReadOnlyDictionary<(int Year, int Month), IReadOnlyDictionary<Guid, decimal>> PriorExpenseCategoryTotalsByMonth,
-        IReadOnlyDictionary<(int Year, int Month), int> PriorExpenseDaysByMonth);
+        IReadOnlyDictionary<Guid, decimal> IncomeCategoryTotals);
 
     internal static Result Aggregate(
         IReadOnlyList<ConvertedTransactionSnapshot> transactions,
         DateTime monthStartUtc,
         DateTime monthEndUtc,
         DateTime previousMonthStartUtc,
-        DateTime deltaWindowStartUtc,
         CancellationToken ct)
     {
         var dailyTotals = new Dictionary<DateOnly, decimal>();
-        var dailyTotalsDiscretionary = new Dictionary<DateOnly, decimal>();
         var previousMonthDailyTotals = new Dictionary<DateOnly, decimal>();
-        var previousMonthDailyTotalsDiscretionary = new Dictionary<DateOnly, decimal>();
         var expenseCategoryTotals = new Dictionary<Guid, CategoryTotals>();
         var incomeCategoryTotals = new Dictionary<Guid, decimal>();
-        var priorExpenseCategoryTotalsByMonth = new Dictionary<(int Year, int Month), Dictionary<Guid, decimal>>();
-        var priorExpenseDaysByMonth = new Dictionary<(int Year, int Month), HashSet<DateOnly>>();
 
         var totalIncome = 0m;
         var totalExpenses = 0m;
@@ -84,14 +75,6 @@ internal static class MonthlyAggregator
                 else
                     dailyTotals[dateKey] = amount;
 
-                if (!txn.IsMandatory)
-                {
-                    if (dailyTotalsDiscretionary.TryGetValue(dateKey, out var currentDisc))
-                        dailyTotalsDiscretionary[dateKey] = currentDisc + amount;
-                    else
-                        dailyTotalsDiscretionary[dateKey] = amount;
-                }
-
                 if (expenseCategoryTotals.TryGetValue(categoryKey, out var categoryTotals))
                 {
                     expenseCategoryTotals[categoryKey] = new CategoryTotals(
@@ -111,29 +94,6 @@ internal static class MonthlyAggregator
                     discretionaryTotal += amount;
             }
 
-            if (occurredUtc >= deltaWindowStartUtc && occurredUtc < monthStartUtc)
-            {
-                var monthKey = (occurredUtc.Year, occurredUtc.Month);
-                var dateKey = DateOnly.FromDateTime(occurredUtc);
-
-                if (!priorExpenseCategoryTotalsByMonth.TryGetValue(monthKey, out var monthCategoryTotals))
-                {
-                    monthCategoryTotals = new Dictionary<Guid, decimal>();
-                    priorExpenseCategoryTotalsByMonth[monthKey] = monthCategoryTotals;
-                }
-                if (monthCategoryTotals.TryGetValue(categoryKey, out var priorTotal))
-                    monthCategoryTotals[categoryKey] = priorTotal + amount;
-                else
-                    monthCategoryTotals[categoryKey] = amount;
-
-                if (!priorExpenseDaysByMonth.TryGetValue(monthKey, out var days))
-                {
-                    days = new HashSet<DateOnly>();
-                    priorExpenseDaysByMonth[monthKey] = days;
-                }
-                days.Add(dateKey);
-            }
-
             if (isPreviousMonth)
             {
                 previousMonthExpenses += amount;
@@ -145,14 +105,7 @@ internal static class MonthlyAggregator
                     previousMonthDailyTotals[previousDateKey] = amount;
 
                 if (!txn.IsMandatory)
-                {
-                    if (previousMonthDailyTotalsDiscretionary.TryGetValue(previousDateKey, out var currentPreviousDisc))
-                        previousMonthDailyTotalsDiscretionary[previousDateKey] = currentPreviousDisc + amount;
-                    else
-                        previousMonthDailyTotalsDiscretionary[previousDateKey] = amount;
-
                     previousMonthDiscretionaryTotal += amount;
-                }
             }
         }
 
@@ -164,14 +117,8 @@ internal static class MonthlyAggregator
             DiscretionaryTotal: discretionaryTotal,
             PreviousMonthDiscretionaryTotal: previousMonthDiscretionaryTotal,
             DailyTotals: dailyTotals,
-            DailyTotalsDiscretionary: dailyTotalsDiscretionary,
             PreviousMonthDailyTotals: previousMonthDailyTotals,
-            PreviousMonthDailyTotalsDiscretionary: previousMonthDailyTotalsDiscretionary,
             ExpenseCategoryTotals: expenseCategoryTotals,
-            IncomeCategoryTotals: incomeCategoryTotals,
-            PriorExpenseCategoryTotalsByMonth: priorExpenseCategoryTotalsByMonth
-                .ToDictionary(kv => kv.Key, kv => (IReadOnlyDictionary<Guid, decimal>)kv.Value),
-            PriorExpenseDaysByMonth: priorExpenseDaysByMonth
-                .ToDictionary(kv => kv.Key, kv => kv.Value.Count));
+            IncomeCategoryTotals: incomeCategoryTotals);
     }
 }

@@ -165,15 +165,6 @@ export function useAnalyticsPage() {
     [openTransactions, selectedMonth, selectedYear],
   );
 
-  const handlePeakSelect = useCallback(
-    (peak: { year: number; month: number; day: number }) => {
-      const date = new Date(peak.year, peak.month - 1, peak.day);
-      const value = formatDateParam(date);
-      openTransactions({ dateFrom: value, dateTo: value, isMandatory: false });
-    },
-    [openTransactions],
-  );
-
   const handlePieModeChange = useCallback(
     (value: CategoryDatasetMode) => startTransition(() => setPieMode(value)),
     [],
@@ -292,7 +283,6 @@ export function useAnalyticsPage() {
     handleMonthSelect,
     handleSkipOnboarding,
     handleCategorySelect,
-    handlePeakSelect,
     handlePieModeChange,
     handlePieScopeChange,
     onboardingSteps,

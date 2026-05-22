@@ -62,8 +62,6 @@ function resolveKpiColor(kpi: EvolutionKpi): string {
       return 'var(--ft-chart-category-3)';
     case 'liquidMonths':
       return 'var(--ft-chart-category-5)';
-    case 'peakDayRatio':
-      return 'var(--ft-chart-category-8)';
     default:
       return 'var(--ft-chart-1)';
   }

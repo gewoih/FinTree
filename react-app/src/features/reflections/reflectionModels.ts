@@ -1,10 +1,9 @@
 import type {
-  AnalyticsDashboardDto,
   RetrospectiveListItemDto,
   StabilityActionCode,
   UpsertRetrospectivePayload,
 } from '@/types';
-import { formatCurrency, formatNumber } from '@/utils/format';
+import { formatNumber } from '@/utils/format';
 
 export type ReflectionChartRange = 6 | 12 | 0;
 export type ReflectionRatingField =
@@ -338,19 +337,4 @@ export function getStabilityActionLabel(
   }
 
   return null;
-}
-
-export function formatPeakSummary(
-  summary: AnalyticsDashboardDto,
-  currencyCode: string
-): string | null {
-  if (!summary.peaks.count || summary.peaks.total == null) {
-    return null;
-  }
-
-  const share = summary.peaks.sharePercent != null
-    ? ` • ${formatNumber(summary.peaks.sharePercent, 1)}%`
-    : '';
-
-  return `${summary.peaks.count} дн. • ${formatCurrency(summary.peaks.total, currencyCode)}${share}`;
 }

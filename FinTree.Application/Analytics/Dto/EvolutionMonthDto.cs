@@ -13,7 +13,5 @@ public sealed record EvolutionMonthDto(
     decimal? NetWorth,
     decimal? LiquidMonths,
     decimal? MeanDaily,
-    decimal? PeakDayRatio,
-    decimal? PeakSpendSharePercent,
     int? TotalMonthScore
 );
