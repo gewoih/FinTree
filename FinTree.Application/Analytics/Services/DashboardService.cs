@@ -151,7 +151,8 @@ public sealed class DashboardService(
                 HealthThresholds.DiscretionaryShareAveragePercent)
             : null;
 
-        var categoryBaseline = BuildCategoryBaseline(convertedTransactions, categoryBaselineStartUtc, monthStartUtc);
+        var categoryBaseline = BuildCategoryBaseline(
+            convertedTransactions, categoryBaselineStartUtc, monthStartUtc, observedDaysInMonth);
         var categoryDelta = CategoryDeltaService.GetCategoryDeltas(
             monthlyResult.ExpenseCategoryTotals,
             categoryBaseline,
@@ -233,13 +234,14 @@ public sealed class DashboardService(
 
     private const decimal AverageDaysInMonth = 30.44m;
 
-    // База для виджета «Изменения по категориям»: среднемесячный расход по каждой категории.
+    // База для виджета «Изменения по категориям»: ожидаемый расход категории
+    // за уже прошедшие дни выбранного месяца.
     // Окно категории — от её первой транзакции, но не раньше начала 6-месячного окна (Formula C).
-    // Так недавно начатая категория не получает заниженную базу из-за месяцев, когда трат не было.
     private static IReadOnlyDictionary<Guid, decimal> BuildCategoryBaseline(
         IReadOnlyList<ConvertedTransactionSnapshot> convertedTransactions,
         DateTime windowStartUtc,
-        DateTime windowEndUtc)
+        DateTime windowEndUtc,
+        int observedDaysInMonth)
     {
         // Категории с расходами раньше окна — «устоявшиеся»: для них окно = полные 6 месяцев.
         var establishedCategories = convertedTransactions
@@ -261,9 +263,12 @@ public sealed class DashboardService(
                 ? windowStartUtc
                 : group.Min(t => t.OccurredAtUtc).Date;
             var windowDays = (decimal)(windowEndUtc - categoryWindowStart).TotalDays;
-            baseline[group.Key] = windowDays > 0m
-                ? sum / windowDays * AverageDaysInMonth
-                : 0m;
+
+            // Делитель не опускается ниже месяца: короткое окно (категория появилась
+            // недавно) иначе раздуло бы среднемесячный расход экстраполяцией.
+            // Множитель observedDaysInMonth приводит базу к числу уже прошедших дней
+            // месяца — чтобы частичный текущий месяц сравнивался с базой за тот же период.
+            baseline[group.Key] = sum * observedDaysInMonth / Math.Max(windowDays, AverageDaysInMonth);
         }
 
         return baseline;
