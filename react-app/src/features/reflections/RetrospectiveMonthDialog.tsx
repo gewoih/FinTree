@@ -1,5 +1,6 @@
 import {
   Dialog,
+  DialogBody,
   DialogContent,
   DialogDescription,
   DialogFooter,
@@ -52,7 +53,7 @@ export function RetrospectiveMonthDialog({
           </DialogDescription>
         </DialogHeader>
 
-        <div className="space-y-4 px-6 pb-2">
+        <DialogBody className="space-y-4 px-6 pb-2">
           {loading ? (
             <div className="rounded-xl border border-border/70 bg-background/30 px-4 py-4 text-sm text-muted-foreground">
               Загружаем доступные месяцы…
@@ -95,7 +96,7 @@ export function RetrospectiveMonthDialog({
               {submitError}
             </div>
           ) : null}
-        </div>
+        </DialogBody>
 
         <DialogFooter className="mt-2 border-t border-border/70 bg-background/20 px-6 py-4">
           <Button variant="outline" onClick={() => onOpenChange(false)}>

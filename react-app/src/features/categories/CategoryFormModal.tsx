@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import {
   Dialog,
+  DialogBody,
   DialogContent,
   DialogDescription,
   DialogFooter,
@@ -74,7 +75,12 @@ export function CategoryFormModal({
           </DialogDescription>
         </DialogHeader>
 
-        <form className="space-y-5" onSubmit={handleSubmit} noValidate>
+        <form
+          className="flex min-h-0 flex-1 flex-col"
+          onSubmit={handleSubmit}
+          noValidate
+        >
+          <DialogBody className="space-y-5 pb-1">
           <div className="grid gap-4 sm:grid-cols-2">
             <FormField
               label="Название"
@@ -254,6 +260,7 @@ export function CategoryFormModal({
               </Button>
             </div>
           ) : null}
+          </DialogBody>
 
           <DialogFooter>
             <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>

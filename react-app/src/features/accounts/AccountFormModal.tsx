@@ -9,6 +9,7 @@ import { FormField } from '@/components/common/FormField';
 import { Button } from '@/components/ui/button';
 import {
   Dialog,
+  DialogBody,
   DialogContent,
   DialogDescription,
   DialogFooter,
@@ -139,7 +140,12 @@ export function AccountFormModal({
           </DialogDescription>
         </DialogHeader>
 
-        <form className="space-y-4" onSubmit={handleSubmit} noValidate>
+        <form
+          className="flex min-h-0 flex-1 flex-col"
+          onSubmit={handleSubmit}
+          noValidate
+        >
+          <DialogBody className="space-y-4 pb-1">
           <FormField
             label="Название"
             required
@@ -213,6 +219,7 @@ export function AccountFormModal({
               </FormField>
             </>
           )}
+          </DialogBody>
 
           <DialogFooter>
             <Button type="button" variant="outline" onClick={onClose}>

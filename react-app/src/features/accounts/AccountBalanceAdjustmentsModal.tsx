@@ -9,6 +9,7 @@ import { FormField } from '@/components/common/FormField';
 import { Button } from '@/components/ui/button';
 import {
   Dialog,
+  DialogBody,
   DialogContent,
   DialogDescription,
   DialogFooter,
@@ -104,7 +105,12 @@ export function AccountBalanceAdjustmentsModal({
           </DialogDescription>
         </DialogHeader>
 
-        <form className="space-y-4" onSubmit={handleSubmit} noValidate>
+        <form
+          className="flex min-h-0 flex-1 flex-col"
+          onSubmit={handleSubmit}
+          noValidate
+        >
+          <DialogBody className="space-y-4 pb-1">
           <div className="rounded-2xl border border-border bg-muted/30 p-4">
             <div className="text-sm text-muted-foreground">Текущий баланс</div>
             <div className="mt-1 text-xl font-semibold [font-variant-numeric:tabular-nums]">
@@ -126,6 +132,7 @@ export function AccountBalanceAdjustmentsModal({
               {...form.register('newBalance')}
             />
           </FormField>
+          </DialogBody>
 
           <DialogFooter>
             <Button type="button" variant="outline" onClick={onClose}>

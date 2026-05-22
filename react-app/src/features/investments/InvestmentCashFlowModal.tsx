@@ -7,6 +7,7 @@ import { FormField } from '@/components/common/FormField';
 import { Button } from '@/components/ui/button';
 import {
   Dialog,
+  DialogBody,
   DialogContent,
   DialogDescription,
   DialogFooter,
@@ -104,7 +105,12 @@ export function InvestmentCashFlowModal({
           <DialogDescription>{DESCRIPTIONS[type]}</DialogDescription>
         </DialogHeader>
 
-        <form className="space-y-4" onSubmit={handleSubmit} noValidate>
+        <form
+          className="flex min-h-0 flex-1 flex-col"
+          onSubmit={handleSubmit}
+          noValidate
+        >
+          <DialogBody className="space-y-4 pb-1">
           <div className="grid gap-4 sm:grid-cols-2">
             <FormField
               label="Сумма"
@@ -152,6 +158,7 @@ export function InvestmentCashFlowModal({
               {...form.register('description')}
             />
           </FormField>
+          </DialogBody>
 
           <DialogFooter>
             <Button

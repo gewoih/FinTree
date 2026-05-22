@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import {
   Dialog,
+  DialogBody,
   DialogContent,
   DialogDescription,
   DialogFooter,
@@ -73,7 +74,7 @@ export function TransactionFormModal({
   return (
     <>
       <Dialog open={open} onOpenChange={(nextOpen) => !nextOpen && onClose()}>
-        <DialogContent className="flex max-h-[calc(100dvh-2rem)] flex-col max-w-[calc(100vw-1rem)] sm:max-w-[520px] max-sm:top-auto max-sm:translate-y-0 max-sm:bottom-[calc(64px+env(safe-area-inset-bottom,0px))] max-sm:max-h-[calc(100dvh-64px-env(safe-area-inset-bottom,0px)-2rem)]">
+        <DialogContent className="max-w-[calc(100vw-1rem)] sm:max-w-[520px]">
           <DialogHeader>
             <DialogTitle>
               {isEditMode ? 'Редактирование транзакции' : 'Добавить операцию'}
@@ -84,7 +85,7 @@ export function TransactionFormModal({
           </DialogHeader>
 
           <form className="flex min-h-0 flex-1 flex-col" onSubmit={submitTransaction} noValidate>
-            <div className="flex-1 space-y-4 overflow-y-auto pb-1">
+            <DialogBody className="space-y-4 pb-1">
               <div className="grid grid-cols-2 gap-2">
               {(['Income', 'Expense'] as const).map((value) => (
                 <Button
@@ -220,7 +221,7 @@ export function TransactionFormModal({
                 Обязательный платёж. Такие расходы отдельно учитываются в аналитике.
               </span>
             </label>
-            </div>
+            </DialogBody>
 
             <DialogFooter>
               {isEditMode ? (
