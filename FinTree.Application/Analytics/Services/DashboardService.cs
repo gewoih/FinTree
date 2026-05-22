@@ -232,45 +232,38 @@ public sealed class DashboardService(
                 HealthThresholds.StabilityGoodScore));
     }
 
-    private const decimal AverageDaysInMonth = 30.44m;
-
     // База для виджета «Изменения по категориям»: ожидаемый расход категории
-    // за уже прошедшие дни выбранного месяца.
-    // Окно категории — от её первой транзакции, но не раньше начала 6-месячного окна (Formula C).
+    // за уже прошедшие дни выбранного месяца, исходя из среднего за 6-месячное окно.
+    // Окно — общее для всех категорий: от первой расходной транзакции пользователя
+    // (но не раньше 6 месяцев назад) до начала выбранного месяца.
     private static IReadOnlyDictionary<Guid, decimal> BuildCategoryBaseline(
         IReadOnlyList<ConvertedTransactionSnapshot> convertedTransactions,
         DateTime windowStartUtc,
         DateTime windowEndUtc,
         int observedDaysInMonth)
     {
-        // Категории с расходами раньше окна — «устоявшиеся»: для них окно = полные 6 месяцев.
-        var establishedCategories = convertedTransactions
-            .Where(t => t.Type == TransactionType.Expense && t.OccurredAtUtc < windowStartUtc)
-            .Select(t => t.CategoryId ?? Guid.Empty)
-            .ToHashSet();
+        var expenses = convertedTransactions
+            .Where(t => t.Type == TransactionType.Expense && t.OccurredAtUtc < windowEndUtc)
+            .ToList();
 
-        var baseline = new Dictionary<Guid, decimal>();
-        var windowExpenses = convertedTransactions
-            .Where(t => t.Type == TransactionType.Expense
-                        && t.OccurredAtUtc >= windowStartUtc
-                        && t.OccurredAtUtc < windowEndUtc)
-            .GroupBy(t => t.CategoryId ?? Guid.Empty);
+        if (expenses.Count == 0)
+            return new Dictionary<Guid, decimal>();
 
-        foreach (var group in windowExpenses)
-        {
-            var sum = group.Sum(t => t.AmountInBaseCurrency);
-            var categoryWindowStart = establishedCategories.Contains(group.Key)
-                ? windowStartUtc
-                : group.Min(t => t.OccurredAtUtc).Date;
-            var windowDays = (decimal)(windowEndUtc - categoryWindowStart).TotalDays;
+        // Обрезаем окно по первой расходной транзакции: у нового пользователя
+        // нельзя делить на все 6 месяцев — столько истории ещё нет.
+        var firstExpenseUtc = expenses.Min(t => t.OccurredAtUtc);
+        var effectiveStartUtc = firstExpenseUtc > windowStartUtc ? firstExpenseUtc.Date : windowStartUtc;
+        var windowDays = (decimal)(windowEndUtc - effectiveStartUtc).TotalDays;
+        if (windowDays <= 0m)
+            return new Dictionary<Guid, decimal>();
 
-            // Делитель не опускается ниже месяца: короткое окно (категория появилась
-            // недавно) иначе раздуло бы среднемесячный расход экстраполяцией.
-            // Множитель observedDaysInMonth приводит базу к числу уже прошедших дней
-            // месяца — чтобы частичный текущий месяц сравнивался с базой за тот же период.
-            baseline[group.Key] = sum * observedDaysInMonth / Math.Max(windowDays, AverageDaysInMonth);
-        }
-
-        return baseline;
+        // base = суммаОкна / дниОкна * observedDaysInMonth — среднедневной расход
+        // категории за окно, приведённый к числу уже прошедших дней месяца.
+        return expenses
+            .Where(t => t.OccurredAtUtc >= effectiveStartUtc)
+            .GroupBy(t => t.CategoryId ?? Guid.Empty)
+            .ToDictionary(
+                g => g.Key,
+                g => g.Sum(t => t.AmountInBaseCurrency) * observedDaysInMonth / windowDays);
     }
 }
