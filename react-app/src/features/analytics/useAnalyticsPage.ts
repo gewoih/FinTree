@@ -238,7 +238,12 @@ export function useAnalyticsPage() {
   const healthCards = useMemo(
     () =>
       dashboardQuery.data
-        ? buildHealthMetricCards(dashboardQuery.data.health, dashboardQuery.data.readiness, currency)
+        ? buildHealthMetricCards(
+            dashboardQuery.data.health,
+            dashboardQuery.data.readiness,
+            currency,
+            dashboardQuery.data.benchmarks,
+          )
         : [],
     [dashboardQuery.data, currency],
   );

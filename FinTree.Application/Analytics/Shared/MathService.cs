@@ -5,6 +5,10 @@ internal static class MathService
     public static decimal Round2(decimal value)
         => Math.Round(value, 2, MidpointRounding.AwayFromZero);
 
+    // Приводит балл (0–100) к целому округлением, а не обрезанием: 79.9 → 80, не 79.
+    public static int? ToScore(decimal? value)
+        => value.HasValue ? (int)Math.Round(value.Value, MidpointRounding.AwayFromZero) : null;
+
     public static decimal? ComputeMedian(IReadOnlyList<decimal> values)
     {
         if (values.Count == 0)

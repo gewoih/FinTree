@@ -8,4 +8,5 @@ public readonly record struct AnalyticsDashboardDto(
     CategoryBreakdownDto IncomeCategories,
     SpendingBreakdownDto Spending,
     ForecastDto Forecast,
-    AnalyticsReadinessDto Readiness);
+    AnalyticsReadinessDto Readiness,
+    HealthBenchmarksDto Benchmarks);

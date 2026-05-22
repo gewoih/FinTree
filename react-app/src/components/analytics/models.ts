@@ -1,8 +1,9 @@
 import type {
   AnalyticsReadinessDto,
   FinancialHealthSummaryDto,
+  HealthBenchmarksDto,
+  MetricStatus,
   StabilityActionCode,
-  StabilityStatusCode,
 } from '@/types';
 import { formatNumber } from '@/utils/format';
 
@@ -161,47 +162,12 @@ function formatPercentValue(value: number | null, fractionDigits = 1): string {
   return formatAnalyticsPercent(value, fractionDigits);
 }
 
-function resolveSavingsAccent(
-  savingsRate: number | null,
-  monthIncome: number | null,
-  monthTotal: number | null,
-): MetricAccent {
-  if (savingsRate === null || Number.isNaN(savingsRate)) {
-    if ((monthIncome ?? 0) <= 0 && (monthTotal ?? 0) > 0) {
-      return 'poor';
-    }
-
-    return 'neutral';
-  }
-
-  if (savingsRate >= 0.2) return 'good';
-  if (savingsRate >= 0.1) return 'warning';
-  return 'poor';
-}
-
-function resolveCushionAccent(status: FinancialHealthSummaryDto['liquidMonthsStatus']): MetricAccent {
+// Единое отображение статуса карточки (его считает бэкенд) в акцентный цвет.
+function statusToAccent(status: MetricStatus | null): MetricAccent {
   if (status === 'good') return 'good';
   if (status === 'average') return 'warning';
   if (status === 'poor') return 'poor';
   return 'neutral';
-}
-
-function resolveStabilityAccent(
-  status: StabilityStatusCode | null,
-  hasStabilityData: boolean,
-): MetricAccent {
-  if (!hasStabilityData) return 'neutral';
-  if (status === 'good') return 'good';
-  if (status === 'average') return 'warning';
-  if (status === 'poor') return 'poor';
-  return 'neutral';
-}
-
-function resolveDiscretionaryAccent(value: number | null): MetricAccent {
-  if (value === null || Number.isNaN(value)) return 'neutral';
-  if (value <= 25) return 'good';
-  if (value <= 45) return 'warning';
-  return 'poor';
 }
 
 function resolveScoreAccent(score: number | null): GlobalScoreAccent {
@@ -302,6 +268,7 @@ export function buildHealthMetricCards(
   health: FinancialHealthSummaryDto,
   readiness: AnalyticsReadinessDto,
   currency: string,
+  benchmarks: HealthBenchmarksDto,
 ): HealthMetricCardModel[] {
   const stabilityReady = readiness.hasStabilityDataForSelectedMonth;
   const stabilityAdvice = stabilityReady
@@ -318,12 +285,12 @@ export function buildHealthMetricCards(
       value: formatRatioPercent(health.savingsRate),
       supportingValue: formatSignedCurrency(health.netCashflow, currency),
       supportingLabel: 'сохранено',
-      accent: resolveSavingsAccent(health.savingsRate, health.monthIncome, health.monthTotal),
+      accent: statusToAccent(health.savingsStatus),
       tooltip: 'Ваша сэкономленная часть от доходов.',
       progress: health.savingsRate !== null && !Number.isNaN(health.savingsRate)
         ? Math.min(100, Math.max(0, health.savingsRate * 100))
         : undefined,
-      benchmarkLabel: 'цель: ≥20%',
+      benchmarkLabel: `цель: ≥${formatNumber(benchmarks.savingsRateTargetPercent, 0)}%`,
     },
     {
       key: 'cushion',
@@ -333,12 +300,12 @@ export function buildHealthMetricCards(
       supportingValue:
         health.liquidAssets === null ? undefined : formatAnalyticsMetaMoney(health.liquidAssets, currency),
       supportingLabel: 'сумма подушки',
-      accent: resolveCushionAccent(health.liquidMonthsStatus),
+      accent: statusToAccent(health.liquidMonthsStatus),
       tooltip: 'На сколько месяцев жизни хватит средств из подушки безопасности.',
       progress: health.liquidMonths !== null && !Number.isNaN(health.liquidMonths)
-        ? Math.min(100, Math.max(0, (health.liquidMonths / 6) * 100))
+        ? Math.min(100, Math.max(0, (health.liquidMonths / benchmarks.liquidityMonthsTarget) * 100))
         : undefined,
-      benchmarkLabel: 'норма: 6+ мес',
+      benchmarkLabel: `норма: ${formatNumber(benchmarks.liquidityMonthsTarget, 0)}+ мес`,
     },
     {
       key: 'stability',
@@ -346,11 +313,11 @@ export function buildHealthMetricCards(
       icon: 'ChartNoAxesColumnIncreasing',
       value: formatAnalyticsScore(health.stabilityScore),
       supportingLabel: stabilityAdvice,
-      accent: resolveStabilityAccent(health.stabilityStatus, stabilityReady),
+      accent: stabilityReady ? statusToAccent(health.stabilityStatus) : 'neutral',
       progress: health.stabilityScore !== null && !Number.isNaN(health.stabilityScore) && stabilityReady
         ? Math.min(100, Math.max(0, health.stabilityScore))
         : undefined,
-      benchmarkLabel: 'хорошо: ≥80',
+      benchmarkLabel: `хорошо: ≥${formatNumber(benchmarks.stabilityGoodScore, 0)}`,
       tooltip: stabilityReady
         ? 'Показывает, насколько стабильны ваши расходы за месяц. Чем выше балл, тем лучше.'
         : `Нужны расходы хотя бы в ${readiness.requiredStabilityDays} днях этого месяца. Сейчас: ${readiness.observedStabilityDaysInSelectedMonth} из ${readiness.requiredStabilityDays}.`,
@@ -366,12 +333,12 @@ export function buildHealthMetricCards(
           ? undefined
           : formatAnalyticsMetaMoney(health.discretionaryTotal, currency),
       supportingLabel: 'сумма',
-      accent: resolveDiscretionaryAccent(health.discretionarySharePercent),
+      accent: statusToAccent(health.discretionaryStatus),
       tooltip: 'Ваши необязательные расходы.',
       progress: health.discretionarySharePercent !== null && !Number.isNaN(health.discretionarySharePercent)
         ? Math.min(100, Math.max(0, 100 - health.discretionarySharePercent))
         : undefined,
-      benchmarkLabel: 'хорошо: ≤25%',
+      benchmarkLabel: `цель: ≤${formatNumber(benchmarks.discretionaryShareTargetPercent, 0)}%`,
     },
   ];
 }

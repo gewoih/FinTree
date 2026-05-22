@@ -135,7 +135,21 @@ public sealed class DashboardService(
         var savingsRate = monthScore.SavingsRate;
         var discretionaryShare = monthScore.DiscretionarySharePercent;
         var stability = monthScore.Stability;
-        var totalMonthScoreValue = ToScoreValue(monthScore.TotalMonthScore);
+        var totalMonthScoreValue = MathService.ToScore(monthScore.TotalMonthScore);
+
+        // Статусы карточек считаются из тех же порогов, что и баллы оценки месяца.
+        var savingsStatus = savingsRate.HasValue
+            ? HealthStatus.HigherIsBetter(
+                savingsRate.Value * 100m,
+                HealthThresholds.SavingsRateTargetPercent,
+                HealthThresholds.SavingsRateAveragePercent)
+            : null;
+        var discretionaryStatus = discretionaryShare.HasValue
+            ? HealthStatus.LowerIsBetter(
+                discretionaryShare.Value,
+                HealthThresholds.DiscretionaryShareTargetPercent,
+                HealthThresholds.DiscretionaryShareAveragePercent)
+            : null;
 
         var categoryBaseline = BuildCategoryBaseline(convertedTransactions, categoryBaselineStartUtc, monthStartUtc);
         var categoryDelta = CategoryDeltaService.GetCategoryDeltas(
@@ -153,7 +167,7 @@ public sealed class DashboardService(
             DiscretionaryTotal: monthlyResult.PreviousMonthDiscretionaryTotal,
             StabilityPositiveDailyValues: previousMonthPositiveDailyValues,
             LiquidMonths: previousLiquidity.LiquidMonths));
-        var previousTotalMonthScoreValue = ToScoreValue(previousMonthScore.TotalMonthScore);
+        var previousTotalMonthScoreValue = MathService.ToScore(previousMonthScore.TotalMonthScore);
         var totalMonthScoreDeltaPoints =
             totalMonthScoreValue.HasValue && previousTotalMonthScoreValue.HasValue
                 ? totalMonthScoreValue.Value - previousTotalMonthScoreValue.Value
@@ -165,14 +179,16 @@ public sealed class DashboardService(
             MeanDaily: meanDaily.HasValue ? MathService.Round2(meanDaily.Value) : null,
             MedianDaily: medianDaily.HasValue ? MathService.Round2(medianDaily.Value) : null,
             StabilityIndex: stability?.Index,
-            StabilityScore: (int?)stability?.Score,
+            StabilityScore: MathService.ToScore(stability?.Score),
             StabilityStatus: stability?.Status,
             StabilityActionCode: stability?.ActionCode,
             StabilityIsPreview: stability?.IsPreview ?? false,
             SavingsRate: savingsRate,
+            SavingsStatus: savingsStatus,
             NetCashflow: MathService.Round2(netCashflow),
             DiscretionaryTotal: MathService.Round2(monthlyResult.DiscretionaryTotal),
             DiscretionarySharePercent: discretionaryShare,
+            DiscretionaryStatus: discretionaryStatus,
             MonthOverMonthChangePercent: monthOverMonth,
             LiquidAssets: MathService.Round2(liquidity.LiquidAssets),
             LiquidMonths: liquidity.LiquidMonths,
@@ -207,11 +223,13 @@ public sealed class DashboardService(
                 new CategoryDeltaDto([], [])),
             spending,
             forecast,
-            readiness);
+            readiness,
+            new HealthBenchmarksDto(
+                HealthThresholds.SavingsRateTargetPercent,
+                HealthThresholds.DiscretionaryShareTargetPercent,
+                HealthThresholds.LiquidityMonthsTarget,
+                HealthThresholds.StabilityGoodScore));
     }
-
-    private static int? ToScoreValue(decimal? score)
-        => score.HasValue ? (int?)score.Value : null;
 
     private const decimal AverageDaysInMonth = 30.44m;
 

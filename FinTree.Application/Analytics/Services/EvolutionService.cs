@@ -190,14 +190,14 @@ public sealed class EvolutionService(
                 true,
                 savingsRate,
                 stability?.Index,
-                (int?)stability?.Score,
+                MathService.ToScore(stability?.Score),
                 stability?.Status,
                 stability?.ActionCode,
                 discretionaryPercent,
                 netWorth,
                 liquidity.LiquidMonths,
                 meanDaily,
-                (int?)monthScore.TotalMonthScore));
+                MathService.ToScore(monthScore.TotalMonthScore)));
         }
 
         return result;

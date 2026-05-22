@@ -22,6 +22,8 @@ export type TransactionType =
   (typeof TRANSACTION_TYPE)[keyof typeof TRANSACTION_TYPE];
 
 export type StabilityStatusCode = 'good' | 'average' | 'poor';
+/** Статус карточки здоровья — приходит с бэкенда, единый для всех 4 метрик. */
+export type MetricStatus = 'good' | 'average' | 'poor';
 export type StabilityActionCode =
   | 'keep_routine'
   | 'smooth_spikes'
@@ -274,13 +276,15 @@ export interface FinancialHealthSummaryDto {
   stabilityActionCode: StabilityActionCode | null;
   stabilityIsPreview: boolean;
   savingsRate: number | null;
+  savingsStatus: MetricStatus | null;
   netCashflow: number | null;
   discretionaryTotal: number | null;
   discretionarySharePercent: number | null;
+  discretionaryStatus: MetricStatus | null;
   monthOverMonthChangePercent: number | null;
   liquidAssets: number | null;
   liquidMonths: number | null;
-  liquidMonthsStatus: 'good' | 'average' | 'poor' | null;
+  liquidMonthsStatus: MetricStatus | null;
   totalMonthScore: number | null;
   totalMonthScoreDeltaPoints: number | null;
   incomeMonthOverMonthChangePercent: number | null;
@@ -353,6 +357,14 @@ export interface AnalyticsReadinessDto {
   requiredStabilityDays: number;
 }
 
+/** Пороги-ориентиры для карточек здоровья. Единый источник — бэкенд (HealthThresholds). */
+export interface HealthBenchmarksDto {
+  savingsRateTargetPercent: number;
+  discretionaryShareTargetPercent: number;
+  liquidityMonthsTarget: number;
+  stabilityGoodScore: number;
+}
+
 export interface AnalyticsDashboardDto {
   year: number;
   month: number;
@@ -362,6 +374,7 @@ export interface AnalyticsDashboardDto {
   spending: SpendingBreakdownDto;
   forecast: ForecastDto;
   readiness: AnalyticsReadinessDto;
+  benchmarks: HealthBenchmarksDto;
 }
 
 export interface NetWorthSnapshotDto {

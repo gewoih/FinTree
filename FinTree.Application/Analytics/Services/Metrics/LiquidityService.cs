@@ -127,14 +127,12 @@ public sealed class LiquidityService(
         return MathService.Round2(total);
     }
 
+    // «good» при достижении цели (ровно 6 мес уже считается нормой — совпадает со 100 баллами оценки).
     private static string? ResolveLiquidStatus(decimal? liquidMonths)
-    {
-        return liquidMonths switch
-        {
-            null => null,
-            > 6m => "good",
-            >= 3m => "average",
-            _ => "poor"
-        };
-    }
+        => liquidMonths.HasValue
+            ? HealthStatus.HigherIsBetter(
+                liquidMonths.Value,
+                HealthThresholds.LiquidityMonthsTarget,
+                HealthThresholds.LiquidityMonthsAverage)
+            : null;
 }

@@ -30,7 +30,7 @@ public static class StabilityService
             _ => 0m
         };
 
-        var status = ResolveStabilityStatus(index);
+        var status = ResolveStabilityStatus(score);
         var actionCode = ResolveStabilityActionCode(status);
         var isPreview = positiveDailyTotals.Count < PreviewThreshold;
         return new Stability(index, score, status, actionCode, isPreview);
@@ -49,16 +49,10 @@ public static class StabilityService
         return mad.Value / median.Value;
     }
 
-    private static string? ResolveStabilityStatus(decimal? stabilityIndex)
-    {
-        return stabilityIndex switch
-        {
-            null => null,
-            <= 1.0m => "good",
-            <= 2.0m => "average",
-            _ => "poor"
-        };
-    }
+    // Статус берётся из балла (а не из индекса), чтобы карточка и подпись «хорошо: ≥80»
+    // всегда соответствовали друг другу.
+    private static string ResolveStabilityStatus(decimal score)
+        => HealthStatus.HigherIsBetter(score, HealthThresholds.StabilityGoodScore, HealthThresholds.StabilityAverageScore);
 
     private static string? ResolveStabilityActionCode(string? stabilityStatus)
         => stabilityStatus switch

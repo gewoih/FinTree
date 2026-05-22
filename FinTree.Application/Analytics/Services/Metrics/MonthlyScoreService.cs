@@ -2,10 +2,6 @@ namespace FinTree.Application.Analytics.Services.Metrics;
 
 public sealed class MonthlyScoreService
 {
-    private const decimal SavingsRateTarget = 0.30m;
-    private const decimal LiquidityMonthsTarget = 6m;
-    private const decimal DiscretionaryShareTargetPercent = 20m;
-
     public static decimal? CalculateTotalMonthScore(
         decimal? savingsRate,
         decimal liquidMonths,
@@ -15,13 +11,13 @@ public sealed class MonthlyScoreService
         // Каждая компонента нормализована в [0, 100]: 100 баллов = достигнут «отличный» порог, выше — cap.
         // Пороги совпадают с теми, что показаны пользователю в UI как ориентиры «нормы/цели».
         decimal? savingsComponent = savingsRate.HasValue
-            ? Math.Clamp(savingsRate.Value / SavingsRateTarget * 100m, 0m, 100m)
+            ? Math.Clamp(savingsRate.Value / (HealthThresholds.SavingsRateTargetPercent / 100m) * 100m, 0m, 100m)
             : null;
 
-        var liquidityComponent = Math.Clamp(liquidMonths / LiquidityMonthsTarget * 100m, 0m, 100m);
+        var liquidityComponent = Math.Clamp(liquidMonths / HealthThresholds.LiquidityMonthsTarget * 100m, 0m, 100m);
 
         decimal? discretionaryComponent = discretionaryShare.HasValue
-            ? ScoreInversePercent(discretionaryShare.Value, DiscretionaryShareTargetPercent)
+            ? ScoreInversePercent(discretionaryShare.Value, HealthThresholds.DiscretionaryShareTargetPercent)
             : null;
 
         var normalizedScores = new List<decimal?>
