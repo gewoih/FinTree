@@ -244,7 +244,7 @@ export default function AnalyticsPage() {
             forecast={data?.forecast ?? null}
             currency={currency}
             isCurrentMonth={isCurrentMonth}
-            readinessMet={data?.readiness.hasForecastAndStabilityData ?? false}
+            readinessMet={data?.readiness.hasForecastData ?? false}
             readinessMessage="Недостаточно данных, продолжайте добавлять транзакции"
             observedExpenseDays={data?.readiness.observedExpenseDays ?? 0}
             requiredExpenseDays={data?.readiness.requiredExpenseDays ?? 7}

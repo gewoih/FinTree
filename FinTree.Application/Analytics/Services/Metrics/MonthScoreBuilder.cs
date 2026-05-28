@@ -4,13 +4,11 @@ public readonly record struct MonthScoreInputs(
     decimal MonthIncome,
     decimal MonthExpenses,
     decimal DiscretionaryTotal,
-    IReadOnlyList<decimal> StabilityPositiveDailyValues,
     decimal LiquidMonths);
 
 public readonly record struct MonthScoreResult(
     decimal? SavingsRate,
     decimal? DiscretionarySharePercent,
-    Stability? Stability,
     decimal? TotalMonthScore);
 
 // Единая точка расчёта месячных метрик и общего скора. Используется и Dashboard, и Evolution,
@@ -27,14 +25,11 @@ public static class MonthScoreBuilder
             ? inputs.DiscretionaryTotal / inputs.MonthExpenses * 100m
             : (decimal?)null;
 
-        var stability = StabilityService.ComputeStability(inputs.StabilityPositiveDailyValues);
-
         var totalScore = MonthlyScoreService.CalculateTotalMonthScore(
             savingsRate,
             inputs.LiquidMonths,
-            stability?.Score,
             discretionaryShare);
 
-        return new MonthScoreResult(savingsRate, discretionaryShare, stability, totalScore);
+        return new MonthScoreResult(savingsRate, discretionaryShare, totalScore);
     }
 }

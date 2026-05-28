@@ -21,13 +21,8 @@ export const TRANSACTION_TYPE = {
 export type TransactionType =
   (typeof TRANSACTION_TYPE)[keyof typeof TRANSACTION_TYPE];
 
-export type StabilityStatusCode = 'good' | 'average' | 'poor';
-/** Статус карточки здоровья — приходит с бэкенда, единый для всех 4 метрик. */
+/** Статус карточки здоровья — приходит с бэкенда, единый для всех метрик. */
 export type MetricStatus = 'good' | 'average' | 'poor';
-export type StabilityActionCode =
-  | 'keep_routine'
-  | 'smooth_spikes'
-  | 'cap_impulse_spend';
 export type SubscriptionPlan = 'Month' | 'Year';
 export type SubscriptionPaymentStatus =
   | 'Succeeded'
@@ -270,11 +265,6 @@ export interface FinancialHealthSummaryDto {
   monthTotal: number | null;
   meanDaily: number | null;
   medianDaily: number | null;
-  stabilityIndex: number | null;
-  stabilityScore: number | null;
-  stabilityStatus: StabilityStatusCode | null;
-  stabilityActionCode: StabilityActionCode | null;
-  stabilityIsPreview: boolean;
   savingsRate: number | null;
   savingsStatus: MetricStatus | null;
   netCashflow: number | null;
@@ -351,12 +341,9 @@ export interface ForecastDto {
 }
 
 export interface AnalyticsReadinessDto {
-  hasForecastAndStabilityData: boolean;
+  hasForecastData: boolean;
   observedExpenseDays: number;
   requiredExpenseDays: number;
-  hasStabilityDataForSelectedMonth: boolean;
-  observedStabilityDaysInSelectedMonth: number;
-  requiredStabilityDays: number;
 }
 
 /** Пороги-ориентиры для карточек здоровья. Единый источник — бэкенд (HealthThresholds). */
@@ -364,7 +351,6 @@ export interface HealthBenchmarksDto {
   savingsRateTargetPercent: number;
   discretionaryShareTargetPercent: number;
   liquidityMonthsTarget: number;
-  stabilityGoodScore: number;
 }
 
 export interface AnalyticsDashboardDto {
@@ -390,10 +376,6 @@ export interface EvolutionMonthDto {
   month: number;
   hasData: boolean;
   savingsRate: number | null;
-  stabilityIndex: number | null;
-  stabilityScore: number | null;
-  stabilityStatus: StabilityStatusCode | null;
-  stabilityActionCode: StabilityActionCode | null;
   discretionaryPercent: number | null;
   netWorth: number | null;
   liquidMonths: number | null;

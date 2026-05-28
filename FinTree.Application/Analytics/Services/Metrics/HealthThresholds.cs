@@ -9,11 +9,9 @@ public static class HealthThresholds
     public const decimal SavingsRateTargetPercent = 30m;
     public const decimal DiscretionaryShareTargetPercent = 20m;
     public const decimal LiquidityMonthsTarget = 6m;
-    public const decimal StabilityGoodScore = 80m;
 
     // Нижняя граница статуса «average»: ниже неё метрика получает статус «poor».
     public const decimal SavingsRateAveragePercent = 15m;
     public const decimal DiscretionaryShareAveragePercent = 50m;
     public const decimal LiquidityMonthsAverage = 3m;
-    public const decimal StabilityAverageScore = 40m;
 }

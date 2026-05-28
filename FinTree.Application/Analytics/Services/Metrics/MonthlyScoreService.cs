@@ -5,7 +5,6 @@ public sealed class MonthlyScoreService
     public static decimal? CalculateTotalMonthScore(
         decimal? savingsRate,
         decimal liquidMonths,
-        decimal? stabilityScore,
         decimal? discretionaryShare)
     {
         // Каждая компонента нормализована в [0, 100]: 100 баллов = достигнут «отличный» порог, выше — cap.
@@ -24,7 +23,6 @@ public sealed class MonthlyScoreService
         {
             savingsComponent,
             liquidityComponent,
-            stabilityScore,
             discretionaryComponent
         };
 

@@ -11,7 +11,6 @@ import { cn } from '@/utils/cn';
 import type { AnalyticsDashboardDto } from '@/types';
 import { formatCurrency, formatNumber } from '@/utils/format';
 import {
-  getStabilityActionLabel,
   getSummaryDeltaLabel,
   getSummaryScoreStatus,
   getReflectionScoreTone,
@@ -131,17 +130,6 @@ export function RetrospectiveSummarySnapshot({
           ? `+${formatCurrency(summary.health.netCashflow, currencyCode)} сохранено`
           : 'Новая динамика появится после доходов и расходов месяца.',
       tone: 'good' as const,
-    },
-    {
-      label: 'Стабильность трат',
-      value:
-        summary.health.stabilityScore != null
-          ? `${formatNumber(summary.health.stabilityScore, 0)}/100`
-          : '—',
-      sub:
-        getStabilityActionLabel(summary.health.stabilityActionCode) ??
-        'Появится, когда накопится достаточно расходных дней.',
-      tone: summary.health.stabilityStatus,
     },
     {
       label: 'Необязательные расходы',

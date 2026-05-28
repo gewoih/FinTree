@@ -1,9 +1,8 @@
-import type { EvolutionMonthDto, StabilityActionCode, StabilityStatusCode } from '@/types';
+import type { EvolutionMonthDto } from '@/types';
 
 export type EvolutionKpi =
   | 'totalMonthScore'
   | 'savingsRate'
-  | 'stabilityScore'
   | 'discretionaryPercent'
   | 'liquidMonths';
 
@@ -56,7 +55,6 @@ export interface EvolutionTableRowModel {
 export const EVOLUTION_KPI_ORDER: EvolutionKpi[] = [
   'totalMonthScore',
   'savingsRate',
-  'stabilityScore',
   'discretionaryPercent',
   'liquidMonths',
 ];
@@ -89,15 +87,6 @@ export const EVOLUTION_KPI_META: Record<EvolutionKpi, EvolutionKpiMeta> = {
     valueKind: 'percent',
     precision: 1,
   },
-  stabilityScore: {
-    key: 'stabilityScore',
-    label: 'Стабильность трат',
-    description: 'Показывает, насколько ровно распределены траты по месяцу.',
-    directionHint: 'Цель: выше',
-    direction: 'higher-better',
-    valueKind: 'score',
-    precision: 0,
-  },
   liquidMonths: {
     key: 'liquidMonths',
     label: 'Финансовая подушка',
@@ -118,18 +107,6 @@ const monthLongFormatter = new Intl.DateTimeFormat('ru-RU', {
   month: 'long',
   year: 'numeric',
 });
-
-const STABILITY_ACTION_LABELS: Record<StabilityActionCode, string> = {
-  keep_routine: 'Расходы стабильны. Продолжайте сохранять текущий ритм.',
-  smooth_spikes: 'Редкие всплески расходов. Старайтесь контролировать ваши траты.',
-  cap_impulse_spend: 'Расходы хаотичны. Уделите внимание импульсивным тратам.',
-};
-
-const STABILITY_STATUS_LABELS: Record<StabilityStatusCode, string> = {
-  good: 'Ровная динамика',
-  average: 'Есть всплески',
-  poor: 'Траты скачут',
-};
 
 export function formatEvolutionMonthShort(year: number, month: number): string {
   return monthShortFormatter.format(new Date(year, month - 1, 1)).replace(/\s*г\.$/i, '').trim();
@@ -340,14 +317,8 @@ function buildCardModel(months: EvolutionMonthDto[], kpi: EvolutionKpi): Evoluti
     currentValueLabel: formatKpiValue(meta, latestPoint?.currentValue ?? null),
     deltaLabel: formatKpiDelta(meta, latestPoint?.delta ?? null),
     deltaTone: resolveDeltaTone(meta, latestPoint?.delta ?? null),
-    statusLabel:
-      kpi === 'stabilityScore' && latestPoint?.currentMonth.stabilityStatus
-        ? STABILITY_STATUS_LABELS[latestPoint.currentMonth.stabilityStatus]
-        : null,
-    actionLabel:
-      kpi === 'stabilityScore' && latestPoint?.currentMonth.stabilityActionCode
-        ? STABILITY_ACTION_LABELS[latestPoint.currentMonth.stabilityActionCode]
-        : null,
+    statusLabel: null,
+    actionLabel: null,
     trendVerdict: kpi === 'totalMonthScore' ? resolveTrendVerdict(series.values) : null,
   };
 }

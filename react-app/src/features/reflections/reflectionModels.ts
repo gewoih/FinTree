@@ -1,6 +1,5 @@
 import type {
   RetrospectiveListItemDto,
-  StabilityActionCode,
   UpsertRetrospectivePayload,
 } from '@/types';
 import { formatNumber } from '@/utils/format';
@@ -321,20 +320,3 @@ export function isSummaryDeltaPositive(
   return (value ?? 0) < 0;
 }
 
-export function getStabilityActionLabel(
-  code: StabilityActionCode | null
-): string | null {
-  if (code === 'keep_routine') {
-    return 'Поддерживайте ритм';
-  }
-
-  if (code === 'smooth_spikes') {
-    return 'Сгладьте всплески';
-  }
-
-  if (code === 'cap_impulse_spend') {
-    return 'Контролируйте импульсы';
-  }
-
-  return null;
-}

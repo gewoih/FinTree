@@ -3,7 +3,6 @@ import type {
   FinancialHealthSummaryDto,
   HealthBenchmarksDto,
   MetricStatus,
-  StabilityActionCode,
 } from '@/types';
 import { formatNumber } from '@/utils/format';
 
@@ -48,7 +47,7 @@ export interface GlobalScoreModel {
 }
 
 export interface HealthMetricCardModel {
-  key: 'savings' | 'cushion' | 'stability' | 'discretionary';
+  key: 'savings' | 'cushion' | 'discretionary';
   title: string;
   icon: string;
   value: string;
@@ -60,12 +59,6 @@ export interface HealthMetricCardModel {
   benchmarkLabel?: string;
   isPreview?: boolean;
 }
-
-const STABILITY_ACTION_TEXTS: Record<StabilityActionCode, string> = {
-  keep_routine: 'Расходы стабильны. Продолжайте сохранять текущий ритм.',
-  smooth_spikes: 'Редкие всплески расходов. Старайтесь контролировать ваши траты.',
-  cap_impulse_spend: 'Расходы хаотичны. Уделите особое внимание импульсивным тратам.',
-};
 
 function formatAnalyticsCurrency(
   value: number,
@@ -275,17 +268,10 @@ export function buildGlobalScoreModel(health: FinancialHealthSummaryDto): Global
 
 export function buildHealthMetricCards(
   health: FinancialHealthSummaryDto,
-  readiness: AnalyticsReadinessDto,
+  _readiness: AnalyticsReadinessDto,
   currency: string,
   benchmarks: HealthBenchmarksDto,
 ): HealthMetricCardModel[] {
-  const stabilityReady = readiness.hasStabilityDataForSelectedMonth;
-  const stabilityAdvice = stabilityReady
-    ? health.stabilityActionCode
-      ? STABILITY_ACTION_TEXTS[health.stabilityActionCode]
-      : 'Добавляйте расходы регулярно, чтобы получить подсказку.'
-    : `${readiness.observedStabilityDaysInSelectedMonth} из ${readiness.requiredStabilityDays} дней с расходами`;
-
   return [
     {
       key: 'savings',
@@ -315,22 +301,6 @@ export function buildHealthMetricCards(
         ? Math.min(100, Math.max(0, (health.liquidMonths / benchmarks.liquidityMonthsTarget) * 100))
         : undefined,
       benchmarkLabel: `норма: ${formatNumber(benchmarks.liquidityMonthsTarget, 0)}+ мес`,
-    },
-    {
-      key: 'stability',
-      title: 'Стабильность трат',
-      icon: 'ChartNoAxesColumnIncreasing',
-      value: formatAnalyticsScore(health.stabilityScore),
-      supportingLabel: stabilityAdvice,
-      accent: stabilityReady ? statusToAccent(health.stabilityStatus) : 'neutral',
-      progress: health.stabilityScore !== null && !Number.isNaN(health.stabilityScore) && stabilityReady
-        ? Math.min(100, Math.max(0, health.stabilityScore))
-        : undefined,
-      benchmarkLabel: `хорошо: ≥${formatNumber(benchmarks.stabilityGoodScore, 0)}`,
-      tooltip: stabilityReady
-        ? 'Показывает, насколько стабильны ваши расходы за месяц. Чем выше балл, тем лучше.'
-        : `Нужны расходы хотя бы в ${readiness.requiredStabilityDays} днях этого месяца. Сейчас: ${readiness.observedStabilityDaysInSelectedMonth} из ${readiness.requiredStabilityDays}.`,
-      isPreview: health.stabilityIsPreview,
     },
     {
       key: 'discretionary',

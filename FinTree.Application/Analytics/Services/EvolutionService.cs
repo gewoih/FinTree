@@ -135,7 +135,7 @@ public sealed class EvolutionService(
             if (monthExpenses.Count == 0 && monthIncomeTransactions.Count == 0)
             {
                 result.Add(new EvolutionMonthDto(monthStart.Year, monthStart.Month, false,
-                    null, null, null, null, null, null, null, null, null, null));
+                    null, null, null, null, null, null));
                 continue;
             }
 
@@ -169,7 +169,6 @@ public sealed class EvolutionService(
                 MonthIncome: monthIncome,
                 MonthExpenses: monthTotal,
                 DiscretionaryTotal: discretionaryTotal,
-                StabilityPositiveDailyValues: dailyTotals.Values.Where(v => v > 0m).ToList(),
                 LiquidMonths: liquidity.LiquidMonths));
 
             var savingsRate = monthScore.SavingsRate.HasValue
@@ -178,7 +177,6 @@ public sealed class EvolutionService(
             var discretionaryPercent = monthScore.DiscretionarySharePercent.HasValue
                 ? MathService.Round2(monthScore.DiscretionarySharePercent.Value)
                 : (decimal?)null;
-            var stability = monthScore.Stability;
 
             var rateAtUtc = monthEnd.AddTicks(-1);
             var netWorth = accountSnapshots.Sum(account =>
@@ -189,10 +187,6 @@ public sealed class EvolutionService(
                 monthStart.Month,
                 true,
                 savingsRate,
-                stability?.Index,
-                MathService.ToScore(stability?.Score),
-                stability?.Status,
-                stability?.ActionCode,
                 discretionaryPercent,
                 netWorth,
                 liquidity.LiquidMonths,

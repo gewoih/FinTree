@@ -35,7 +35,6 @@ public sealed class DashboardService(
             .ToDictionary(c => c.Id, c => new CategoryMeta(c.Name, c.Color, c.IsMandatory));
 
         const int requiredExpenseDays = 7;
-        const int requiredStabilityDays = 1;
         var observedExpenseDays = await transactionsService.GetDistinctExpenseDaysCountAsync(ct);
 
         var rawTransactions = await transactionsService.GetTransactionSnapshotsAsync(
@@ -93,15 +92,11 @@ public sealed class DashboardService(
             .ToList();
 
         var positiveObservedDailyValues = observedDailyValues.Where(v => v > 0m).ToList();
-        var observedStabilityDaysInSelectedMonth = positiveObservedDailyValues.Count;
 
         var readiness = new AnalyticsReadinessDto(
             observedExpenseDays >= requiredExpenseDays,
             observedExpenseDays,
-            requiredExpenseDays,
-            observedStabilityDaysInSelectedMonth >= requiredStabilityDays,
-            observedStabilityDaysInSelectedMonth,
-            requiredStabilityDays);
+            requiredExpenseDays);
 
         var meanDaily = observedDailyValues.Count > 0 ? observedDailyValues.Average() : (decimal?)null;
         var medianDaily = positiveObservedDailyValues.Count > 0
@@ -129,12 +124,10 @@ public sealed class DashboardService(
             MonthIncome: monthlyResult.TotalIncome,
             MonthExpenses: monthlyResult.TotalExpenses,
             DiscretionaryTotal: monthlyResult.DiscretionaryTotal,
-            StabilityPositiveDailyValues: positiveObservedDailyValues,
             LiquidMonths: liquidity.LiquidMonths));
 
         var savingsRate = monthScore.SavingsRate;
         var discretionaryShare = monthScore.DiscretionarySharePercent;
-        var stability = monthScore.Stability;
         var totalMonthScoreValue = MathService.ToScore(monthScore.TotalMonthScore);
 
         // Статусы карточек считаются из тех же порогов, что и баллы оценки месяца.
@@ -158,15 +151,11 @@ public sealed class DashboardService(
             categoryBaseline,
             categories);
 
-        var previousMonthPositiveDailyValues = monthlyResult.PreviousMonthDailyTotals.Values
-            .Where(value => value > 0m)
-            .ToList();
         var previousLiquidity = await liquidityService.ComputeLiquidity(baseCurrencyCode, monthStartUtc, ct);
         var previousMonthScore = MonthScoreBuilder.Build(new MonthScoreInputs(
             MonthIncome: monthlyResult.PreviousMonthIncome,
             MonthExpenses: monthlyResult.PreviousMonthExpenses,
             DiscretionaryTotal: monthlyResult.PreviousMonthDiscretionaryTotal,
-            StabilityPositiveDailyValues: previousMonthPositiveDailyValues,
             LiquidMonths: previousLiquidity.LiquidMonths));
         var previousTotalMonthScoreValue = MathService.ToScore(previousMonthScore.TotalMonthScore);
         var totalMonthScoreDeltaPoints =
@@ -194,11 +183,6 @@ public sealed class DashboardService(
             MonthTotal: MathService.Round2(monthlyResult.TotalExpenses),
             MeanDaily: meanDaily.HasValue ? MathService.Round2(meanDaily.Value) : null,
             MedianDaily: medianDaily.HasValue ? MathService.Round2(medianDaily.Value) : null,
-            StabilityIndex: stability?.Index,
-            StabilityScore: MathService.ToScore(stability?.Score),
-            StabilityStatus: stability?.Status,
-            StabilityActionCode: stability?.ActionCode,
-            StabilityIsPreview: stability?.IsPreview ?? false,
             SavingsRate: savingsRate,
             SavingsStatus: savingsStatus,
             NetCashflow: MathService.Round2(netCashflow),
@@ -247,8 +231,7 @@ public sealed class DashboardService(
             new HealthBenchmarksDto(
                 HealthThresholds.SavingsRateTargetPercent,
                 HealthThresholds.DiscretionaryShareTargetPercent,
-                HealthThresholds.LiquidityMonthsTarget,
-                HealthThresholds.StabilityGoodScore));
+                HealthThresholds.LiquidityMonthsTarget));
     }
 
     // Минимальное число «качественных» месяцев, при котором медиана базы

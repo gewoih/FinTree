@@ -1,9 +1,6 @@
 namespace FinTree.Application.Analytics.Dto;
 
 public readonly record struct AnalyticsReadinessDto(
-    bool HasForecastAndStabilityData,
+    bool HasForecastData,
     int ObservedExpenseDays,
-    int RequiredExpenseDays,
-    bool HasStabilityDataForSelectedMonth,
-    int ObservedStabilityDaysInSelectedMonth,
-    int RequiredStabilityDays);
+    int RequiredExpenseDays);

@@ -5,5 +5,4 @@ namespace FinTree.Application.Analytics.Dto;
 public readonly record struct HealthBenchmarksDto(
     decimal SavingsRateTargetPercent,
     decimal DiscretionaryShareTargetPercent,
-    decimal LiquidityMonthsTarget,
-    decimal StabilityGoodScore);
+    decimal LiquidityMonthsTarget);

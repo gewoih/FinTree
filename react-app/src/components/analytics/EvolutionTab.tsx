@@ -56,8 +56,6 @@ function resolveKpiColor(kpi: EvolutionKpi): string {
       return 'var(--ft-chart-1)';
     case 'savingsRate':
       return 'var(--ft-chart-category-4)';
-    case 'stabilityScore':
-      return 'var(--ft-chart-category-2)';
     case 'discretionaryPercent':
       return 'var(--ft-chart-category-3)';
     case 'liquidMonths':
