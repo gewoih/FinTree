@@ -149,7 +149,7 @@ const SKELETON_KEYS = ['alpha', 'beta', 'gamma'] as const;
 function StripSkeleton() {
   return (
     <AnalyticsPanel role="status" aria-busy="true" ariaLabel="Загрузка метрик">
-      <div className="grid grid-cols-1 divide-y divide-[var(--ft-border-subtle)] md:grid-cols-2 md:divide-x lg:grid-cols-4 [&>*:nth-child(2)]:md:border-t-0 [&>*:nth-child(-n+2)]:md:divide-y-0">
+      <div className="grid grid-cols-1 divide-y divide-[var(--ft-border-subtle)] md:grid-cols-4 md:divide-x md:divide-y-0">
         {SKELETON_KEYS.map((key) => (
           <div key={key} className="flex min-h-[126px] items-center gap-3 px-5 py-4">
             <Skeleton className="size-12 rounded-lg" />
@@ -196,7 +196,7 @@ export function SummaryStrip({ loading, error, metrics, onRetry }: SummaryStripP
 
   return (
     <AnalyticsPanel>
-      <div className="grid grid-cols-1 divide-y divide-[var(--ft-border-subtle)] md:grid-cols-2 md:divide-x lg:grid-cols-4 [&>*:nth-child(2)]:md:border-t-0 [&>*:nth-child(-n+2)]:md:divide-y-0">
+      <div className="grid grid-cols-1 divide-y divide-[var(--ft-border-subtle)] md:grid-cols-4 md:divide-x md:divide-y-0">
         {metrics.map((metric) => (
           <MetricCard key={metric.key} metric={metric} />
         ))}
