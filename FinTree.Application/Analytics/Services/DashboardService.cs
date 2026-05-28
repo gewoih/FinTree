@@ -174,6 +174,21 @@ public sealed class DashboardService(
                 ? totalMonthScoreValue.Value - previousTotalMonthScoreValue.Value
                 : (int?)null;
 
+        // Неснижаемая база: медиана ежемесячных сумм обязательных трат
+        // за 6 полных месяцев, предшествующих выбранному. MoM-дельта — окно,
+        // сдвинутое на месяц назад. Окна берутся завершёнными, чтобы текущий
+        // (возможно неполный) месяц не занижал базу.
+        var essentialBaselineMonthly = ComputeEssentialBaseline(
+            convertedTransactions, monthStartUtc.AddMonths(-6), monthStartUtc);
+        var previousEssentialBaselineMonthly = ComputeEssentialBaseline(
+            convertedTransactions, monthStartUtc.AddMonths(-7), monthStartUtc.AddMonths(-1));
+        var essentialBaselineChangePercent = essentialBaselineMonthly.HasValue
+            && previousEssentialBaselineMonthly.HasValue
+            && previousEssentialBaselineMonthly.Value > 0m
+                ? (essentialBaselineMonthly.Value - previousEssentialBaselineMonthly.Value)
+                    / previousEssentialBaselineMonthly.Value * 100m
+                : (decimal?)null;
+
         var health = new FinancialHealthSummaryDto(
             MonthIncome: MathService.Round2(monthlyResult.TotalIncome),
             MonthTotal: MathService.Round2(monthlyResult.TotalExpenses),
@@ -197,7 +212,11 @@ public sealed class DashboardService(
             TotalMonthScore: totalMonthScoreValue,
             TotalMonthScoreDeltaPoints: totalMonthScoreDeltaPoints,
             IncomeMonthOverMonthChangePercent: incomeMoM,
-            BalanceMonthOverMonthChangePercent: balanceMoM);
+            BalanceMonthOverMonthChangePercent: balanceMoM,
+            EssentialBaselineMonthly: essentialBaselineMonthly.HasValue
+                ? MathService.Round2(essentialBaselineMonthly.Value)
+                : null,
+            EssentialBaselineMonthlyChangePercent: essentialBaselineChangePercent);
 
         var forecast = await forecastService.BuildForecastAsync(
             year, month, monthlyResult.DailyTotals.ToDictionary(), dataset, baseCurrencyCode, ct);
@@ -230,6 +249,67 @@ public sealed class DashboardService(
                 HealthThresholds.DiscretionaryShareTargetPercent,
                 HealthThresholds.LiquidityMonthsTarget,
                 HealthThresholds.StabilityGoodScore));
+    }
+
+    // Минимальное число «качественных» месяцев, при котором медиана базы
+    // имеет смысл. Меньше 3 — медиана легко искажается одним выбросом
+    // (годовая страховка, нетипичный месяц), и метрика вводит в заблуждение.
+    private const int EssentialBaselineMinMonths = 3;
+
+    // Неснижаемая база: медиана сумм обязательных расходов по «качественным»
+    // месяцам окна. Месяц считается качественным, если:
+    //   1) история пользователя началась до его начала (хотя бы одна транзакция
+    //      раньше первого числа) — иначе месяц частичный и занижает базу;
+    //   2) в нём есть хотя бы одна транзакция — иначе вероятен пропуск
+    //      ведения (отпуск/забыл), и подмена реальной базы нулём.
+    // Медиана выбрана осознанно: устойчива к разовым годовым платежам
+    // (страховка, налоги), которые попадают в 1 месяц из 6.
+    private static decimal? ComputeEssentialBaseline(
+        IReadOnlyList<ConvertedTransactionSnapshot> convertedTransactions,
+        DateTime windowStartUtc,
+        DateTime windowEndUtc)
+    {
+        if (convertedTransactions.Count == 0)
+            return null;
+
+        // Самая ранняя транзакция в наборе — приближение к началу истории.
+        // Prefetch покрывает 11 месяцев назад от выбранного, шире нашего
+        // 6-месячного окна; если у пользователя истории больше — earliestUtc
+        // будет заведомо раньше windowStartUtc и все месяцы окна — полные.
+        var earliestUtc = convertedTransactions.Min(t => t.OccurredAtUtc);
+
+        var hasAnyByMonth = new Dictionary<(int Year, int Month), bool>();
+        var mandatoryByMonth = new Dictionary<(int Year, int Month), decimal>();
+
+        foreach (var txn in convertedTransactions)
+        {
+            if (txn.OccurredAtUtc < windowStartUtc || txn.OccurredAtUtc >= windowEndUtc)
+                continue;
+
+            var monthStartUtc = new DateTime(
+                txn.OccurredAtUtc.Year, txn.OccurredAtUtc.Month, 1, 0, 0, 0, DateTimeKind.Utc);
+            // Месяц «полный» только если у пользователя была активность ДО его начала.
+            if (earliestUtc >= monthStartUtc)
+                continue;
+
+            var key = (txn.OccurredAtUtc.Year, txn.OccurredAtUtc.Month);
+            hasAnyByMonth[key] = true;
+
+            if (txn.Type != TransactionType.Expense || !txn.IsMandatory)
+                continue;
+
+            mandatoryByMonth.TryGetValue(key, out var existing);
+            mandatoryByMonth[key] = existing + txn.AmountInBaseCurrency;
+        }
+
+        if (hasAnyByMonth.Count < EssentialBaselineMinMonths)
+            return null;
+
+        var monthlyTotals = hasAnyByMonth.Keys
+            .Select(key => mandatoryByMonth.GetValueOrDefault(key, 0m))
+            .ToList();
+
+        return MathService.ComputeMedian(monthlyTotals);
     }
 
     // База для виджета «Изменения по категориям»: ожидаемый расход категории

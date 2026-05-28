@@ -247,6 +247,15 @@ export function buildSummaryMetrics(
       tooltip: 'Доходы минус расходы.',
       secondary: formatSignedPercentValue(health.balanceMonthOverMonthChangePercent),
     },
+    {
+      key: 'essentialBaseline',
+      label: 'Неснижаемая база',
+      value: formatAnalyticsHeroMoney(health.essentialBaselineMonthly, currency),
+      icon: 'ShieldCheck',
+      accent: 'neutral',
+      tooltip: 'Базовые обязательные расходы за последние 6 месяцев.',
+      secondary: formatSignedPercentValue(health.essentialBaselineMonthlyChangePercent),
+    },
   ];
 }
 

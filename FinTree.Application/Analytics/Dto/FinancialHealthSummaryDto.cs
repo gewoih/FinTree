@@ -23,4 +23,6 @@ public readonly record struct FinancialHealthSummaryDto(
     int? TotalMonthScore,
     int? TotalMonthScoreDeltaPoints,
     decimal? IncomeMonthOverMonthChangePercent,
-    decimal? BalanceMonthOverMonthChangePercent);
+    decimal? BalanceMonthOverMonthChangePercent,
+    decimal? EssentialBaselineMonthly,
+    decimal? EssentialBaselineMonthlyChangePercent);

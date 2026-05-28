@@ -289,6 +289,8 @@ export interface FinancialHealthSummaryDto {
   totalMonthScoreDeltaPoints: number | null;
   incomeMonthOverMonthChangePercent: number | null;
   balanceMonthOverMonthChangePercent: number | null;
+  essentialBaselineMonthly: number | null;
+  essentialBaselineMonthlyChangePercent: number | null;
 }
 
 export interface CategoryBreakdownItemDto {
