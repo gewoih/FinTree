@@ -192,7 +192,7 @@ export function SpendingBarsCard({
                   height={76}
                 />
                 <YAxis
-                  domain={cap !== null ? [0, cap] : ['auto', 'auto']}
+                  domain={[0, cap ?? 'auto']}
                   tickFormatter={(value: number) => formatYTick(value, currency)}
                   tick={{ fontSize: 13, fill: 'var(--ft-text-secondary)' }}
                   axisLine={false}
