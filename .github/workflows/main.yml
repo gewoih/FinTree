@@ -21,3 +21,9 @@ jobs:
       - name: Build & up via docker compose
         run: |
           docker compose --env-file /opt/fintree/.env up -d --build
+
+      - name: Prune old Docker images & build cache
+        if: always()
+        run: |
+          docker image prune -af --filter "until=168h"
+          docker builder prune -af --filter "until=168h"
