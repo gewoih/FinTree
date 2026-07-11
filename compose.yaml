@@ -62,13 +62,22 @@ services:
       - fintree-net
 
   certbot:
-    image: certbot/certbot:latest
+    build:
+      context: deploy/certbot
+    image: fintree.certbot:local
     restart: unless-stopped
     volumes:
       - certbot-etc:/etc/letsencrypt
       - certbot-var:/var/lib/letsencrypt
       - certbot-www:/var/www/certbot
-    entrypoint: /bin/sh -c "trap exit TERM; while :; do certbot renew --webroot -w /var/www/certbot; sleep 12h; done"
+      - /var/run/docker.sock:/var/run/docker.sock
+    entrypoint: >
+      /bin/sh -c "trap exit TERM;
+      while :; do
+        certbot renew --webroot -w /var/www/certbot
+          --deploy-hook 'docker exec fintree-nginx nginx -s reload';
+        sleep 12h;
+      done"
     networks:
       - fintree-net
 
