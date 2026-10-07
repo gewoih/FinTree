@@ -52,7 +52,7 @@ services:
     image: fintree.nginx:local
     ports:
       - "80:80"
-      - "443:443"
+      - "127.0.0.1:8444:443"
     volumes:
       - certbot-etc:/etc/letsencrypt
       - certbot-var:/var/lib/letsencrypt
