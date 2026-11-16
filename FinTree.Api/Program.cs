@@ -6,6 +6,7 @@ using System.Text.Json;
 using System.Text.Json.Serialization;
 using System.Threading.RateLimiting;
 using FinTree.Api;
+using FinTree.Api.PersonalAccess;
 using FinTree.Application.Abstractions;
 using FinTree.Application.Accounts;
 using FinTree.Application.Admin;
@@ -22,6 +23,7 @@ using FinTree.Domain.Identity;
 using FinTree.Infrastructure;
 using FinTree.Infrastructure.Database;
 using FinTree.Infrastructure.Telegram;
+using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Diagnostics;
 using Microsoft.AspNetCore.HttpOverrides;
@@ -106,6 +108,17 @@ const int apiRequestsPerMinute = 180;
 builder.Services.AddRateLimiter(options =>
 {
     options.RejectionStatusCode = StatusCodes.Status429TooManyRequests;
+    // Сообщения себе в Telegram: эндпоинт доступен только по личному токену (единицы токенов на инстанс),
+    // поэтому достаточно общего окна; лимитер стоит до аутентификации, ключа по пользователю здесь нет.
+    options.AddPolicy(AuthPolicies.SelfNotifyRateLimit, _ => RateLimitPartition.GetFixedWindowLimiter(
+        partitionKey: AuthPolicies.SelfNotifyRateLimit,
+        factory: _ => new FixedWindowRateLimiterOptions
+        {
+            PermitLimit = 30,
+            Window = TimeSpan.FromHours(1),
+            QueueLimit = 0,
+            AutoReplenishment = true
+        }));
     options.OnRejected = async (context, cancellationToken) =>
     {
         context.HttpContext.Response.ContentType = "application/json";
@@ -170,6 +183,7 @@ builder.Services.Configure<AuthOptions>(options =>
 });
 builder.Services.Configure<TelegramAuthOptions>(builder.Configuration.GetSection("Telegram"));
 builder.Services.Configure<AdminOptions>(builder.Configuration.GetSection("Admin"));
+builder.Services.Configure<PersonalAccessTokenOptions>(builder.Configuration.GetSection("PersonalAccess"));
 
 builder.Services.AddIdentity<User, Role>(o =>
     {
@@ -185,9 +199,17 @@ builder.Services.AddIdentity<User, Role>(o =>
 
 builder.Services.AddAuthentication(options =>
     {
-        options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
-        options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
+        options.DefaultAuthenticateScheme = PersonalAccessTokenDefaults.SelectorScheme;
+        options.DefaultChallengeScheme = PersonalAccessTokenDefaults.SelectorScheme;
     })
+    .AddPolicyScheme(PersonalAccessTokenDefaults.SelectorScheme, "JWT or personal access token", options =>
+    {
+        options.ForwardDefaultSelector = context =>
+            PersonalAccessTokenAuthenticationHandler.IsPersonalAccessTokenHeader(context.Request.Headers.Authorization.ToString())
+                ? PersonalAccessTokenDefaults.Scheme
+                : JwtBearerDefaults.AuthenticationScheme;
+    })
+    .AddScheme<AuthenticationSchemeOptions, PersonalAccessTokenAuthenticationHandler>(PersonalAccessTokenDefaults.Scheme, _ => { })
     .AddJwtBearer(options =>
     {
         options.TokenValidationParameters = new TokenValidationParameters
@@ -217,6 +239,8 @@ builder.Services.AddAuthentication(options =>
 builder.Services.AddAuthorization(options =>
 {
     options.AddPolicy(AuthPolicies.OwnerOnly, policy => policy.RequireRole(AppRoleNames.Owner));
+    options.AddPolicy(AuthPolicies.PersonalAccessTokenOnly, policy => policy.RequireClaim(
+        PersonalAccessTokenDefaults.AuthMethodClaim, PersonalAccessTokenDefaults.AuthMethodValue));
 });
 
 builder.Services.AddHttpContextAccessor();
@@ -264,6 +288,11 @@ if (!string.IsNullOrWhiteSpace(telegramToken))
 
         return new TelegramBotClient(telegramToken, http);
     });
+    builder.Services.AddSingleton<ITelegramNotifier, TelegramNotifier>();
+}
+else
+{
+    builder.Services.AddSingleton<ITelegramNotifier, UnavailableTelegramNotifier>();
 }
 
 builder.Services.AddScoped<TransactionCategoryService>();
@@ -276,6 +305,7 @@ builder.Services.AddScoped<RetrospectiveService>();
 builder.Services.AddScoped<AdminService>();
 builder.Services.AddScoped<CurrencyConverter>();
 builder.Services.AddScoped<TelegramOperationsService>();
+builder.Services.AddScoped<SelfNotificationService>();
 builder.Services.AddScoped<DatabaseInitializer>();
 builder.Services.AddScoped<OwnerRoleBootstrapper>();
 
@@ -355,6 +385,7 @@ app.UseExceptionHandler(b =>
 app.UseCors("VueFrontend");
 app.UseRateLimiter();
 app.UseAuthentication();
+app.UseMiddleware<PersonalAccessScopeMiddleware>();
 app.UseMiddleware<SubscriptionWriteAccessMiddleware>();
 app.UseAuthorization();
 

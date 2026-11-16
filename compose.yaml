@@ -34,6 +34,13 @@ services:
       ConnectionStrings__DefaultConnection: ${CONNECTION_STRINGS_DEFAULT}
       FxRates__ApiKey: ${FXRATES_API_KEY}
       Admin__OwnerEmailsCsv: ${ADMIN_OWNER_EMAILS}
+      # Личный токен советника: хэш SHA-256 и UserId — в серверном .env; пусто = выключено
+      PersonalAccess__Tokens__0__Name: advisor
+      PersonalAccess__Tokens__0__TokenHash: ${FINTREE_PAT_0_HASH:-}
+      PersonalAccess__Tokens__0__UserId: ${FINTREE_PAT_0_USER_ID:-}
+      PersonalAccess__Tokens__0__Scopes__0: read
+      PersonalAccess__Tokens__0__Scopes__1: retro:write
+      PersonalAccess__Tokens__0__Scopes__2: notify
       Cors__AllowedOrigins__0: ${CORS_ALLOWED_ORIGIN_0}
       Cors__AllowedOrigins__1: ${CORS_ALLOWED_ORIGIN_1}
     depends_on:
