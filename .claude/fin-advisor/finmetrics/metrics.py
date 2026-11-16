@@ -224,6 +224,8 @@ def sustained_trends(txs: list[Tx], cfg: Config, today: date) -> list[Trend]:
             by_cat_month[t.category][month_key(t.day)] += t.amount
 
     recent_months = _last_full_months(today, TREND_MONTHS)
+    if recent_months[0] < month_key(cfg.start_date):
+        return []  # тренды считаются только по месяцам после старта правила
     trends = []
     for category, months in by_cat_month.items():
         baseline = sum(months.get(m, 0.0) for m in cfg.baseline_months) / max(len(cfg.baseline_months), 1)

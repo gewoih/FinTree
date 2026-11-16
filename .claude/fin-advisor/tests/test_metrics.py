@@ -196,7 +196,7 @@ class TrendTests(unittest.TestCase):
         return [expense(date(2026, m, 10), 10000, "Кафе") for m in (2, 3, 4, 5)]
 
     def test_sustained_trend_needs_three_months(self):
-        cfg = make_cfg()
+        cfg = make_cfg(start_date=date(2026, 9, 1))
         not_trend = self.cafe_baseline() + [
             expense(date(2026, 9, 10), 20000, "Кафе"),
             expense(date(2026, 10, 10), 9000, "Кафе"),
@@ -211,8 +211,14 @@ class TrendTests(unittest.TestCase):
         self.assertEqual(result[0].recent_avg, 20000)
         self.assertEqual(result[0].baseline_avg, 10000)
 
-    def test_small_excess_is_not_trend(self):
+    def test_no_trends_from_months_before_start(self):
+        # Старт правила 2026-11-01: август–октябрь (до старта) не должны давать «трендов»
         cfg = make_cfg()
+        txs = self.cafe_baseline() + [expense(date(2026, m, 10), 20000, "Кафе") for m in (8, 9, 10)]
+        self.assertEqual(sustained_trends(txs, cfg, today=date(2026, 11, 16)), [])
+
+    def test_small_excess_is_not_trend(self):
+        cfg = make_cfg(start_date=date(2026, 9, 1))
         txs = [expense(date(2026, m, 10), 1000, "Кафе") for m in (2, 3, 4, 5)] + \
               [expense(date(2026, m, 10), 2000, "Кафе") for m in (9, 10, 11)]
         self.assertEqual(sustained_trends(txs, cfg, today=date(2026, 12, 5)), [])
