@@ -90,6 +90,33 @@ class ApiTests(unittest.TestCase):
             client.categories()
         self.assertEqual(len(calls), 5)
 
+    def test_retrospective_returns_dict(self):
+        seen = []
+        client = FinTreeClient("https://x.test", "t",
+                               fetch=lambda url: seen.append(url) or {"month": "2026-11", "nextMonthPlan": "p"})
+        self.assertEqual(client.retrospective("2026-11")["nextMonthPlan"], "p")
+        self.assertEqual(seen, ["https://x.test/api/retrospectives/2026-11"])
+
+    def test_retrospective_404_returns_none(self):
+        def missing(url):
+            raise ApiError("404", status=404)
+
+        client = FinTreeClient("https://x.test", "t", fetch=missing, sleep=lambda s: None)
+        self.assertIsNone(client.retrospective("2026-11"))
+
+    def test_retrospective_other_errors_propagate(self):
+        def denied(url):
+            raise ApiError("401", status=401)
+
+        client = FinTreeClient("https://x.test", "t", fetch=denied, sleep=lambda s: None)
+        with self.assertRaises(ApiError):
+            client.retrospective("2026-11")
+
+    def test_retrospective_rejects_bad_month(self):
+        client = FinTreeClient("https://x.test", "t", fetch=lambda url: {})
+        with self.assertRaises(ValueError):
+            client.retrospective("2026/11")
+
     def test_page_size_is_200(self):
         seen = []
         client = FinTreeClient("https://x.test", "t",

@@ -24,9 +24,8 @@ class Config:
     salary_category: str
     expected_salary: list[tuple[str, float]]
     baseline_months: list[str]
-    probation_until: date | None
-    min_cushion_months: float
     fi: FiParams
+    fx_currency: str | None = None  # валюта, курс которой показываем в сводке; None — выключено
 
 
 def load_config(path: str | None) -> Config:
@@ -43,7 +42,6 @@ def load_config(path: str | None) -> Config:
 
 def _from_dict(raw: dict) -> Config:
     fi = raw["fi"]
-    probation = raw.get("probation_until")
     return Config(
         save_rate=float(raw["save_rate"]),
         start_date=date.fromisoformat(raw["start_date"]),
@@ -52,12 +50,11 @@ def _from_dict(raw: dict) -> Config:
         salary_category=raw["salary_category"],
         expected_salary=sorted((e["from"], float(e["monthly"])) for e in raw.get("expected_salary", [])),
         baseline_months=list(raw.get("baseline_months", [])),
-        probation_until=date.fromisoformat(probation) if probation else None,
-        min_cushion_months=float(raw.get("min_cushion_months", 6)),
         fi=FiParams(
             target_capital=float(fi["target_capital"]),
             start_capital=float(fi["start_capital"]),
             real_return=float(fi["real_return"]),
             salary_growth=float(fi["salary_growth"]),
         ),
+        fx_currency=raw.get("fx_currency") or None,
     )

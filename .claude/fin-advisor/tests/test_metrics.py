@@ -8,9 +8,7 @@ from finmetrics.config import Config, FiParams, load_config
 from finmetrics.metrics import (
     Tx,
     carried_gap,
-    cushion,
     expected_monthly_salary,
-    fi_shift_days,
     month_outlook,
     parse_transactions,
     payoff_months,
@@ -33,8 +31,6 @@ def make_cfg(**overrides) -> Config:
         salary_category=SALARY,
         expected_salary=[("2026-11", 300000.0)],
         baseline_months=["2026-02", "2026-03", "2026-04", "2026-05"],
-        probation_until=date(2027, 3, 1),
-        min_cushion_months=6.0,
         fi=FiParams(target_capital=30_000_000.0, start_capital=1_000_000.0, real_return=0.04, salary_growth=0.03),
     )
     values.update(overrides)
@@ -59,15 +55,12 @@ class ConfigTests(unittest.TestCase):
             "salary_category": SALARY,
             "expected_salary": [{"from": "2026-11", "monthly": 300000}],
             "baseline_months": ["2026-02"],
-            "probation_until": "2027-03-01",
-            "min_cushion_months": 6,
             "fi": {"target_capital": 1, "start_capital": 2, "real_return": 0.04, "salary_growth": 0.03},
         }
         with mock.patch.dict(os.environ, {"FIN_CONFIG_JSON": json.dumps(raw)}):
             cfg = load_config(None)
         self.assertEqual(cfg.start_date, date(2026, 11, 1))
         self.assertEqual(cfg.expected_salary, [("2026-11", 300000.0)])
-        self.assertEqual(cfg.probation_until, date(2027, 3, 1))
         self.assertEqual(cfg.fi.start_capital, 2.0)
 
 
@@ -224,31 +217,3 @@ class TrendTests(unittest.TestCase):
         self.assertEqual(sustained_trends(txs, cfg, today=date(2026, 12, 5)), [])
 
 
-class FiTests(unittest.TestCase):
-    def test_fi_shift_days_sign(self):
-        cfg = make_cfg()
-        self.assertGreater(fi_shift_days(cfg, 100000, "2026-11"), 0)
-        self.assertLess(fi_shift_days(cfg, -100000, "2026-11"), 0)
-        self.assertEqual(fi_shift_days(cfg, 0, "2026-11"), 0)
-
-
-class CushionTests(unittest.TestCase):
-    def test_cushion_unknown_when_liquid_assets_missing(self):
-        c = cushion(None, 150000, make_cfg(), today=date(2026, 11, 16))
-        self.assertIsNone(c.months)
-        self.assertFalse(c.below_min)
-
-    def test_cushion_below_min_during_probation(self):
-        c = cushion(500000, 150000, make_cfg(), today=date(2026, 11, 16))
-        self.assertAlmostEqual(c.months, 3.33, places=2)
-        self.assertTrue(c.below_min)
-        self.assertTrue(c.probation_active)
-
-    def test_cushion_not_flagged_after_probation(self):
-        c = cushion(500000, 150000, make_cfg(), today=date(2027, 4, 1))
-        self.assertFalse(c.below_min)
-        self.assertFalse(c.probation_active)
-
-
-if __name__ == "__main__":
-    unittest.main()

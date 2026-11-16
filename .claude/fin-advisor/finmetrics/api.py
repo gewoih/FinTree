@@ -16,9 +16,10 @@ USER_AGENT = "fintree-advisor"
 
 
 class ApiError(Exception):
-    def __init__(self, message: str, transient: bool = False):
+    def __init__(self, message: str, transient: bool = False, status: int | None = None):
         super().__init__(message)
         self.transient = transient  # обрыв соединения / 5xx — имеет смысл повторить
+        self.status = status  # HTTP-код ответа; None — ответа не было
 
 
 class FinTreeClient:
@@ -60,11 +61,19 @@ class FinTreeClient:
     def categories(self) -> dict[str, str]:
         return {c["id"]: c["name"] for c in self._fetch(f"{self._base}/api/users/categories")}
 
-    def dashboard(self, year: int, month: int) -> dict:
-        return self._fetch(f"{self._base}/api/analytics/dashboard?{urlencode({'year': year, 'month': month})}")
-
     def retrospectives(self) -> list[dict]:
         return self._fetch(f"{self._base}/api/retrospectives")
+
+    def retrospective(self, month: str) -> dict | None:
+        """Ретроспектива месяца или None, если её нет (404)."""
+        if not re.fullmatch(r"\d{4}-\d{2}", month):
+            raise ValueError("Месяц должен быть в формате YYYY-MM")
+        try:
+            return self._fetch(f"{self._base}/api/retrospectives/{month}")
+        except ApiError as e:
+            if e.status == 404:
+                return None
+            raise
 
     def notify(self, text: str) -> None:
         """Отправить себе сообщение в Telegram обычным текстом (без HTML/Markdown)."""
@@ -102,6 +111,6 @@ class FinTreeClient:
                 return json.load(response) if parse else None
         except urllib.error.HTTPError as e:
             raise ApiError(f"FinTree API ответил {e.code} на {url.split('?')[0]}",
-                           transient=e.code in (502, 503, 504)) from None
+                           transient=e.code in (502, 503, 504), status=e.code) from None
         except (urllib.error.URLError, ConnectionError, TimeoutError) as e:
             raise ApiError(f"FinTree API недоступен: {getattr(e, 'reason', e)}", transient=True) from None

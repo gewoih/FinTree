@@ -6,7 +6,6 @@
   "salary_category": "Зарплата",
   "expected_salary": [{ "from": "2026-01", "monthly": 100000 }],
   "baseline_months": ["2025-09", "2025-10", "2025-11"],
-  "probation_until": null,
-  "min_cushion_months": 6,
-  "fi": { "target_capital": 30000000, "start_capital": 1000000, "real_return": 0.04, "salary_growth": 0.03 }
+  "fi": { "target_capital": 30000000, "start_capital": 1000000, "real_return": 0.04, "salary_growth": 0.03 },
+  "fx_currency": null
 }

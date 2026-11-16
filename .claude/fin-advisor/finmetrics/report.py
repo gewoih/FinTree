@@ -7,25 +7,43 @@ from .config import Config
 from .metrics import (
     Tx,
     carried_gap,
-    cushion,
-    fi_shift_days,
+    fx_effect,
+    category_history,
     month_key,
     month_outlook,
+    ops_context,
     payoff_months,
     expected_monthly_salary,
     savings_counter,
     sustained_trends,
     typical_month_spend,
+    week_operations,
     week_summary,
 )
 
-STALE_BALANCES_WARNING = (
-    "Размер подушки взят из FinTree: переводы между счетами не записываются, балансы могут быть неточными."
-)
 WEEKS_PER_MONTH = 4.33
 RECENT_SALARY_DAYS = 3  # сегодня и 2 предыдущих дня
 
-MISSING_LIQUID_WARNING = "FinTree не вернул ликвидные активы — размер подушки неизвестен."
+
+
+INVEST_MARKER = "[пополнения]"  # служебная строка плана пополнений в nextMonthPlan ретроспективы
+
+
+def parse_invest_split(plan_text: str | None) -> list[tuple[str, int]] | None:
+    """Доли пополнения из последней строки `[пополнения] Имя=17; Имя=83`; None, если строки нет или она испорчена."""
+    if not isinstance(plan_text, str):
+        return None
+    lines = [ln.strip() for ln in plan_text.splitlines() if ln.strip().startswith(INVEST_MARKER)]
+    if not lines:
+        return None
+    pairs: list[tuple[str, int]] = []
+    for part in lines[-1][len(INVEST_MARKER):].split(";"):
+        name, sep, value = part.rpartition("=")
+        value = value.strip()
+        if not sep or not name.strip() or not (value.isascii() and value.isdigit()):
+            return None
+        pairs.append((name.strip(), int(value)))
+    return pairs if sum(p for _, p in pairs) == 100 else None
 
 
 def _round(value):
@@ -42,13 +60,12 @@ def _plain(obj):
     return _round(obj)
 
 
-def build_report(txs: list[Tx], cfg: Config, today: date, liquid_assets: float | None) -> dict:
+def build_report(txs: list[Tx], cfg: Config, today: date, invest_plan: str | None = None) -> dict:
     counter = savings_counter(txs, cfg, until=today)
     typical = typical_month_spend(txs, cfg)
     carried = carried_gap(txs, cfg, today)
     month = month_key(today)
     outlook = month_outlook(txs, cfg, today)
-    pillow = cushion(liquid_assets, typical, cfg, today)
     # Отставание для вердикта: долг прошлых месяцев + перерасход текущего месяца относительно его цели.
     # counter.gap внутри месяца не учитывает ещё не пришедшую зарплату и поэтому для вердикта не годится.
     verdict_gap = carried + max(0.0, -outlook.can_spend)
@@ -57,9 +74,11 @@ def build_report(txs: list[Tx], cfg: Config, today: date, liquid_assets: float |
     recent_salary = sum(t.amount for t in txs if t.kind == "Income" and t.category == cfg.salary_category
                         and recent_start <= t.day <= today)
 
-    warnings = [STALE_BALANCES_WARNING]
-    if liquid_assets is None:
-        warnings.append(MISSING_LIQUID_WARNING)
+    fx = fx_effect(txs, cfg, today)
+    split = parse_invest_split(invest_plan)
+    invest_split = None if split is None else [
+        {"name": name, "percent": percent, "amount": recent_salary * cfg.save_rate * percent / 100}
+        for name, percent in split]
 
     return _plain({
         "today": today,
@@ -73,8 +92,11 @@ def build_report(txs: list[Tx], cfg: Config, today: date, liquid_assets: float |
         "outlook": asdict(outlook),
         "week": asdict(week_summary(txs, cfg, today)),
         "trends": [asdict(t) for t in sustained_trends(txs, cfg, today)],
-        "fi_shift_days": fi_shift_days(cfg, verdict_gap, month),
-        "cushion": asdict(pillow),
         "typical_month": typical,
-        "warnings": warnings,
+        "invest_split": invest_split,
+        "fx": asdict(fx) if fx else None,
+        "ops": [asdict(o) for o in week_operations(txs, today)],
+        "ops_context": ops_context(txs, today),
+        "category_history": category_history(txs, today),
+        "rule_active": today >= cfg.start_date,
     })

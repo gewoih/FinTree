@@ -9,7 +9,6 @@ from typing import Literal
 
 from .config import Config
 
-DAYS_PER_MONTH = 30.44
 TREND_RATIO = 1.3
 TREND_MIN_EXCESS = 3000.0
 TREND_MONTHS = 3
@@ -22,6 +21,9 @@ class Tx:
     amount: float
     category: str
     description: str
+    currency: str = ""  # валюта операции (код); пусто — неизвестна
+    original: float = 0.0  # сумма в этой валюте
+    exact_rate: bool = False  # курс пересчёта в базовую валюту точный (не «приблизительный»)
 
 
 @dataclass(frozen=True)
@@ -60,13 +62,6 @@ class Trend:
     baseline_avg: float
 
 
-@dataclass(frozen=True)
-class Cushion:
-    months: float | None
-    below_min: bool
-    probation_active: bool
-
-
 # --- разбор данных ---------------------------------------------------------------
 
 def parse_transactions(raw: list[dict], categories: dict[str, str], tz_offset_hours: int) -> list[Tx]:
@@ -82,6 +77,9 @@ def parse_transactions(raw: list[dict], categories: dict[str, str], tz_offset_ho
             amount=float(item["amountInBaseCurrency"]),
             category=categories.get(item.get("categoryId") or "", "-"),
             description=(item.get("description") or "").strip(),
+            currency=item.get("originalCurrencyCode") or "",
+            original=float(item.get("originalAmount") or 0.0),
+            exact_rate=item.get("isApproximateConversion") is False,
         ))
     return result
 
@@ -209,6 +207,121 @@ def week_summary(txs: list[Tx], cfg: Config, today: date) -> Week:
                 typical=typical_week_spend(txs, cfg), top=top)
 
 
+HISTORY_WEEKS = 8
+HISTORY_MAX_CATEGORIES = 12
+
+
+@dataclass(frozen=True)
+class WeekOp:
+    day: date
+    kind: str
+    category: str
+    amount: float
+    description: str
+    currency: str | None  # валюта операции, только если был пересчёт
+    original: float | None  # сумма в этой валюте
+
+
+def _last_full_week(today: date) -> tuple[date, date]:
+    end = today - timedelta(days=today.weekday() + 1)  # прошлое воскресенье
+    return end - timedelta(days=6), end
+
+
+def week_operations(txs: list[Tx], today: date) -> list[WeekOp]:
+    """Все операции прошлой полной недели (расходы и доходы) с заметками — сырьё для поиска паттернов."""
+    start, end = _last_full_week(today)
+    ops = []
+    for t in sorted(_between(txs, start, end), key=lambda t: t.day):
+        converted = t.original > 0 and abs(t.original - t.amount) > 0.5
+        ops.append(WeekOp(t.day, t.kind, t.category, t.amount, t.description,
+                          t.currency if converted else None, t.original if converted else None))
+    return ops
+
+
+CONTEXT_DAYS = 91  # 13 недель
+
+
+def ops_context(txs: list[Tx], today: date, days: int = CONTEXT_DAYS) -> list[str]:
+    """Операции за `days` дней до прошлой полной недели одной строкой каждая — контекст для поиска связей и серий.
+    Формат: «2026-11-02 -1200 Кафе: кофе» (минус — расход, плюс — доход, заметка после двоеточия, если есть)."""
+    week_start, _ = _last_full_week(today)
+    lines = []
+    for t in sorted(_between(txs, week_start - timedelta(days=days), week_start - timedelta(days=1)), key=lambda t: t.day):
+        sign = "+" if t.kind == "Income" else "-"
+        note = f": {t.description}" if t.description else ""
+        lines.append(f"{t.day.isoformat()} {sign}{round(t.amount)} {t.category}{note}")
+    return lines
+
+
+def category_history(txs: list[Tx], today: date, weeks: int = HISTORY_WEEKS) -> dict:
+    """Число и сумма расходов по категориям за последние `weeks` полных недель (от старой к новой), крупнейшие категории."""
+    last_start, last_end = _last_full_week(today)
+    first_start = last_start - timedelta(days=7 * (weeks - 1))
+    counts: dict[str, list[int]] = defaultdict(lambda: [0] * weeks)
+    sums: dict[str, list[float]] = defaultdict(lambda: [0.0] * weeks)
+    for t in _between(txs, first_start, last_end):
+        if t.kind != "Expense":
+            continue
+        index = (t.day - first_start).days // 7
+        counts[t.category][index] += 1
+        sums[t.category][index] += t.amount
+    top = sorted(sums, key=lambda c: sum(sums[c]), reverse=True)[:HISTORY_MAX_CATEGORIES]
+    return {
+        "weeks": [(first_start + timedelta(days=7 * i)).isoformat() for i in range(weeks)],
+        "categories": {c: {"count": counts[c], "spent": sums[c]} for c in top},
+    }
+
+
+FX_WINDOW_DAYS = 28
+FX_MIN_OPERATIONS = 3
+FX_MIN_CHANGE_PCT = 2.0
+FX_MIN_EFFECT = 1000.0
+
+
+@dataclass(frozen=True)
+class FxEffect:
+    currency: str
+    rate_now: float
+    rate_prev: float
+    change_pct: float
+    spent_foreign: float
+    effect_rub: float
+
+
+def _exact_rate(txs: list[Tx], currency: str, start: date, end: date) -> float | None:
+    """Средний курс по точным пересчётам расходов в валюте за период; None, если операций мало."""
+    ops = [t for t in _between(txs, start, end)
+           if t.kind == "Expense" and t.currency == currency and t.exact_rate and t.original > 0]
+    if len(ops) < FX_MIN_OPERATIONS:
+        return None
+    return sum(t.amount for t in ops) / sum(t.original for t in ops)
+
+
+def fx_effect(txs: list[Tx], cfg: Config, today: date) -> FxEffect | None:
+    """Как изменение курса валюты повлияло на траты прошлой недели в ней (по точным курсам, 4 недели к предыдущим 4).
+    None — функция выключена, данных мало или эффект слишком мал, чтобы о нём говорить."""
+    if not cfg.fx_currency:
+        return None
+    week_end = today - timedelta(days=today.weekday() + 1)
+    week_start = week_end - timedelta(days=6)
+    now_start = week_end - timedelta(days=FX_WINDOW_DAYS - 1)
+    prev_end = now_start - timedelta(days=1)
+    prev_start = prev_end - timedelta(days=FX_WINDOW_DAYS - 1)
+
+    rate_now = _exact_rate(txs, cfg.fx_currency, now_start, week_end)
+    rate_prev = _exact_rate(txs, cfg.fx_currency, prev_start, prev_end)
+    if rate_now is None or rate_prev is None:
+        return None
+
+    spent_foreign = sum(t.original for t in _between(txs, week_start, week_end)
+                        if t.kind == "Expense" and t.currency == cfg.fx_currency)
+    change_pct = (rate_now / rate_prev - 1) * 100
+    effect = spent_foreign * (rate_now - rate_prev)
+    if abs(change_pct) < FX_MIN_CHANGE_PCT or abs(effect) < FX_MIN_EFFECT:
+        return None
+    return FxEffect(cfg.fx_currency, rate_now, rate_prev, change_pct, spent_foreign, effect)
+
+
 def _last_full_months(today: date, count: int) -> list[str]:
     months, cursor = [], _prev_month_end(today)
     for _ in range(count):
@@ -236,9 +349,9 @@ def sustained_trends(txs: list[Tx], cfg: Config, today: date) -> list[Trend]:
     return sorted(trends, key=lambda tr: tr.recent_avg - tr.baseline_avg, reverse=True)
 
 
-# --- финансовая независимость и подушка ---------------------------------------------
+# --- срок до финансовой независимости (используется разбором портфеля) --------------
 
-def _months_to_fi(cfg: Config, capital: float, monthly_saving: float) -> float:
+def months_to_fi(cfg: Config, capital: float, monthly_saving: float) -> float:
     rate = cfg.fi.real_return / 12
     for month in range(1, 12 * 100 + 1):
         before = capital
@@ -248,21 +361,3 @@ def _months_to_fi(cfg: Config, capital: float, monthly_saving: float) -> float:
         if month % 12 == 0:
             monthly_saving *= 1 + cfg.fi.salary_growth
     return float(12 * 100)
-
-
-def fi_shift_days(cfg: Config, gap: float, month: str) -> int:
-    if gap == 0:
-        return 0
-    saving = expected_monthly_salary(cfg, month) * cfg.save_rate
-    plan = _months_to_fi(cfg, cfg.fi.start_capital, saving)
-    actual = _months_to_fi(cfg, cfg.fi.start_capital - gap, saving)
-    return round((actual - plan) * DAYS_PER_MONTH)
-
-
-def cushion(liquid_assets: float | None, typical_month: float, cfg: Config, today: date) -> Cushion:
-    probation = cfg.probation_until is not None and today < cfg.probation_until
-    if liquid_assets is None or typical_month <= 0:
-        return Cushion(months=None, below_min=False, probation_active=probation)
-    months = liquid_assets / typical_month
-    return Cushion(months=months, below_min=probation and months < cfg.min_cushion_months,
-                   probation_active=probation)

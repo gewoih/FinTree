@@ -18,8 +18,8 @@ from pathlib import Path
 
 from .api import ApiError, FinTreeClient
 from .config import load_config
-from .metrics import parse_transactions
-from .report import build_report
+from .metrics import _last_full_months, parse_transactions
+from .report import build_report, parse_invest_split
 
 FINANCE_DIR = Path(__file__).resolve().parents[2] / "finance"  # .claude/finance
 DEFAULT_BASE_URL = "https://fin-tree.ru"
@@ -83,6 +83,19 @@ def main(argv: list[str] | None = None) -> int:
         return 2
 
 
+def _invest_plan(client: FinTreeClient, today: date) -> str | None:
+    """Текст `nextMonthPlan` с планом пополнений: прошлый месяц, иначе позапрошлый; старше не смотрим."""
+    for month in reversed(_last_full_months(today, 2)):
+        try:
+            retro = client.retrospective(month)
+        except ApiError:
+            continue  # план нужен только для подсказки «куда направить»; отчёт из-за него не падает
+        text = (retro or {}).get("nextMonthPlan")
+        if parse_invest_split(text) is not None:
+            return text
+    return None
+
+
 def _report(client: FinTreeClient, args) -> int:
     cfg = load_config(_config_path(args.config))
     today = (date.fromisoformat(args.today) if args.today
@@ -91,11 +104,9 @@ def _report(client: FinTreeClient, args) -> int:
     first_month = min([*cfg.baseline_months, cfg.start_date.strftime("%Y-%m")])
     categories = client.categories()
     raw = client.transactions(date.fromisoformat(f"{first_month}-01"))
-    dashboard = client.dashboard(today.year, today.month)
 
     txs = [t for t in parse_transactions(raw, categories, cfg.tz_offset_hours) if t.day <= today]
-    liquid = (dashboard.get("health") or {}).get("liquidAssets")
-    result = build_report(txs, cfg, today, float(liquid) if liquid is not None else None)
+    result = build_report(txs, cfg, today, invest_plan=_invest_plan(client, today))
     print(json.dumps(result, ensure_ascii=False, indent=2))
     return 0
 
