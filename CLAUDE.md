@@ -16,6 +16,7 @@
 - Never run `dotnet build`, `dotnet test`, `dotnet run`, or `dotnet publish`
 - When you encounter a bug, inconsistency, incorrect pattern, or technical debt while working on any task — you must either fix it in place or add a concise item to `TODO.md` immediately
 - Do not write or run any tests in backend/frontend unless the user explicitly asks
+- If the GitNexus MCP tools are not connected in the session, say so and do the impact analysis by finding the symbol's callers with code search; report the same blast radius and do not skip the step silently
 
 <!-- gitnexus:start -->
 # GitNexus — Code Intelligence
