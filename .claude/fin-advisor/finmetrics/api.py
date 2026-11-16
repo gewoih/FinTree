@@ -2,31 +2,49 @@
 
 import json
 import re
+import time
 import urllib.error
 import urllib.request
 from collections.abc import Callable
 from datetime import date
 from urllib.parse import urlencode
 
-PAGE_SIZE = 50
+PAGE_SIZE = 200  # максимум, который принимает API
+RETRY_DELAYS = (2, 4, 8, 16)  # секунды между попытками; всего попыток = len + 1
 MAX_MESSAGE_LENGTH = 4096
 USER_AGENT = "fintree-advisor"
 
 
 class ApiError(Exception):
-    pass
+    def __init__(self, message: str, transient: bool = False):
+        super().__init__(message)
+        self.transient = transient  # обрыв соединения / 5xx — имеет смысл повторить
 
 
 class FinTreeClient:
     def __init__(self, base_url: str, token: str,
                  fetch: Callable[[str], object] | None = None,
                  post: Callable[[str, dict], None] | None = None,
-                 put: Callable[[str, dict], None] | None = None):
+                 put: Callable[[str, dict], None] | None = None,
+                 sleep: Callable[[float], None] = time.sleep):
         self._base = base_url.rstrip("/")
         self._token = token
-        self._fetch = fetch or self._http_get
-        self._post = post or self._http_post
-        self._put = put or self._http_put
+        self._sleep = sleep
+        self._fetch = self._retrying(fetch or self._http_get)
+        self._post = self._retrying(post or self._http_post)
+        self._put = self._retrying(put or self._http_put)
+
+    def _retrying(self, call):
+        # Сеть облачных задач периодически рвёт соединения с сайтом — повторяем с паузой.
+        def wrapper(*args):
+            for delay in (*RETRY_DELAYS, None):
+                try:
+                    return call(*args)
+                except ApiError as e:
+                    if not e.transient or delay is None:
+                        raise
+                    self._sleep(delay)
+        return wrapper
 
     def transactions(self, from_day: date) -> list[dict]:
         items: list[dict] = []
@@ -83,6 +101,7 @@ class FinTreeClient:
             with urllib.request.urlopen(request, timeout=30) as response:
                 return json.load(response) if parse else None
         except urllib.error.HTTPError as e:
-            raise ApiError(f"FinTree API ответил {e.code} на {url.split('?')[0]}") from None
-        except urllib.error.URLError as e:
-            raise ApiError(f"FinTree API недоступен: {e.reason}") from None
+            raise ApiError(f"FinTree API ответил {e.code} на {url.split('?')[0]}",
+                           transient=e.code in (502, 503, 504)) from None
+        except (urllib.error.URLError, ConnectionError, TimeoutError) as e:
+            raise ApiError(f"FinTree API недоступен: {getattr(e, 'reason', e)}", transient=True) from None
