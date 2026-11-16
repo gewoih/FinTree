@@ -63,6 +63,10 @@ public sealed class SubscriptionWriteAccessMiddleware(RequestDelegate next)
         if (path.StartsWith("/api/auth", StringComparison.OrdinalIgnoreCase))
             return true;
 
+        // Сообщение себе в Telegram не меняет данные — подписка не нужна
+        if (path.Equals("/api/users/me/notify", StringComparison.OrdinalIgnoreCase))
+            return true;
+
         if (path.Equals("/api/users/subscription/pay", StringComparison.OrdinalIgnoreCase) ||
             path.Equals("/api/users/subscription/pay/", StringComparison.OrdinalIgnoreCase))
             return true;

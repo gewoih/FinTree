@@ -128,15 +128,8 @@ public sealed class TelegramBotHostedService(
 
     private async Task SendResponseAsync(long chatId, TelegramResponse response, CancellationToken ct)
     {
-        var parseMode = response.Format switch
-        {
-            TelegramTextFormat.Markdown => ParseMode.Markdown,
-            TelegramTextFormat.Html => ParseMode.Html,
-            TelegramTextFormat.Plain => ParseMode.None,
-            _ => throw new ArgumentOutOfRangeException()
-        };
-
-        await botClient.SendMessage(chatId, response.Message, parseMode: parseMode, cancellationToken: ct);
+        await botClient.SendMessage(chatId, response.Message, parseMode: TelegramParseModes.From(response.Format),
+            cancellationToken: ct);
     }
 
     private async Task RegisterCommandsAsync(CancellationToken ct)

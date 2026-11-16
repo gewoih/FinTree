@@ -1,15 +1,20 @@
 using FinTree.Application.Accounts;
+using FinTree.Application.Telegram;
 using FinTree.Application.Users;
 using FinTree.Domain.Accounts;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.RateLimiting;
 
 namespace FinTree.Api.Controllers;
 
 [Authorize]
 [Route("api/[controller]")]
 [ApiController]
-public class UsersController(AccountsService accountsService, UserService userService) : ControllerBase
+public class UsersController(
+    AccountsService accountsService,
+    UserService userService,
+    SelfNotificationService selfNotificationService) : ControllerBase
 {
     [HttpGet("me")]
     public async Task<IActionResult> GetMeAsync(CancellationToken ct)
@@ -39,6 +44,15 @@ public class UsersController(AccountsService accountsService, UserService userSe
     public async Task<IActionResult> UpdateMainAccount([FromBody] UpdateMainAccountRequest request, CancellationToken ct)
     {
         await userService.MarkAsMainAsync(request.AccountId, ct);
+        return NoContent();
+    }
+
+    [HttpPost("me/notify")]
+    [Authorize(Policy = AuthPolicies.PersonalAccessTokenOnly)]
+    [EnableRateLimiting(AuthPolicies.SelfNotifyRateLimit)]
+    public async Task<IActionResult> NotifySelf([FromBody] NotifySelfRequest request, CancellationToken ct)
+    {
+        await selfNotificationService.NotifyCurrentUserAsync(request.Text, request.Format, ct);
         return NoContent();
     }
 

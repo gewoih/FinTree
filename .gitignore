@@ -489,3 +489,6 @@ $RECYCLE.BIN/
 
 # Git worktrees
 .worktrees/
+
+# Personal finance profile (private, never commit)
+.claude/finance/
