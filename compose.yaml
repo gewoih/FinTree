@@ -72,12 +72,14 @@ services:
       - certbot-var:/var/lib/letsencrypt
       - certbot-www:/var/www/certbot
       - /var/run/docker.sock:/var/run/docker.sock
+    # Folded scalar: keep every line at the same indent — more-indented lines
+    # keep their newline and would split the shell command.
     entrypoint: >
       /bin/sh -c "trap exit TERM;
       while :; do
-        certbot renew --webroot -w /var/www/certbot
-          --deploy-hook 'docker exec fintree-nginx nginx -s reload';
-        sleep 12h;
+      certbot renew --webroot -w /var/www/certbot
+      --deploy-hook 'docker exec fintree-nginx nginx -s reload';
+      sleep 12h & wait $${!};
       done"
     networks:
       - fintree-net

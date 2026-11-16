@@ -25,3 +25,22 @@
 - [ ] `FT-TODO-069` `ForecastService` использует жёстко зашитые индексы перцентилей (`simTotals[3_500/6_000/8_500]`), завязанные на `BootstrapingSimulationsCount = 10_000`. При смене константы прогноз тихо сломается.
   **Fix:** Вычислять индекс перцентиля от фактической длины массива симуляций.
   **Files:** `FinTree.Application/Analytics/Services/ForecastService.cs` lines 132–134
+
+- [ ] `FT-TODO-070` Деплой срабатывает на push в `main`, а основная ветка — `master`: автодеплоя по push нет, только ручной `workflow_dispatch`.
+  **Fix:** Решить, какая ветка деплоится, и привести `on.push.branches` в соответствие.
+  **Files:** `.github/workflows/main.yml`
+
+- [ ] `FT-TODO-071` Образы собираются прямо на прод-сервере (`up -d --build`): build cache и слои забивают диск 14G и грузят 2GB RAM без swap. Логин в Docker Hub уже есть, но не используется.
+  **Fix:** Собирать и пушить образы в CI (GitHub-hosted runner), на сервере только `docker compose pull && up -d`.
+  **Files:** `.github/workflows/main.yml`, `compose.yaml`
+
+- [ ] `FT-TODO-072` Нет регулярных бэкапов прод-БД (`fintree_pgdata`).
+  **Fix:** Ежедневный `pg_dump` с ротацией и копией вне сервера.
+
+- [ ] `FT-TODO-073` Контейнер certbot: образ `certbot/certbot:latest` без версии, и в него смонтирован `docker.sock`, то есть root-доступ к хосту только ради reload nginx.
+  **Fix:** Закрепить версию образа. Reload делать без сокета, например периодическим `nginx -s reload` внутри контейнера nginx.
+  **Files:** `deploy/certbot/Dockerfile`, `compose.yaml`
+
+- [ ] `FT-TODO-074` Локальный build-выход `FinTree.Api/bin/Debug/net10.0/` рекурсивно содержит сам себя (`bin/Debug/net10.0/bin/Debug/...`, >100 уровней) — ломает grep/индексацию. Причина не выяснена (вероятно, glob в csproj или IDE-настройка).
+  **Fix:** Найти, что копирует `bin` в output, и исключить; удалить `FinTree.Api/bin`.
+  **Files:** `FinTree.Api/FinTree.Api.csproj`
