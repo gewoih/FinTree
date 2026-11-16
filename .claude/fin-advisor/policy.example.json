@@ -1,0 +1,15 @@
+{
+  "reserve_target": 100000,
+  "sale_threshold_pp": 10,
+  "sale_fix_months": 12,
+  "issuer_limit": 0.05,
+  "classes": [
+    {"id": "a", "name": "Акции", "target": 0.5, "tolerance_pp": 5, "new_money": true, "never_sell": false,
+     "stress_drop": 0.35, "expected_real_return": 0.06},
+    {"id": "b", "name": "Облигации", "target": 0.3, "tolerance_pp": 3, "new_money": true, "never_sell": false,
+     "stress_drop": 0.10, "expected_real_return": 0.02},
+    {"id": "c", "name": "Крипта", "target": 0.2, "tolerance_pp": 3, "new_money": false, "never_sell": true,
+     "stress_drop": 0.60, "expected_real_return": 0.0}
+  ],
+  "tax": {"default_rate": 0.13, "alt_rate": 0.30, "status": "не проверено", "source": "", "checked": "2026-01-01"}
+}

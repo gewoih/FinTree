@@ -1,0 +1,17 @@
+{
+  "date": "2026-01-31",
+  "fx": {"USD": 80.0},
+  "accounts": [
+    {"name": "Счёт 1", "currency": "RUB", "stated_total": 780000,
+     "positions": [
+       {"name": "Фонд ликвидности", "ticker": "LQ", "class": "reserve", "value": 80000, "cost": null, "issuer": null},
+       {"name": "Фонд акций", "ticker": "EQ", "class": "a", "value": 400000, "cost": 350000, "issuer": null},
+       {"name": "Облигация X", "ticker": "X1", "class": "b", "value": 300000, "cost": null, "issuer": "X"}
+     ]},
+    {"name": "Биржа", "currency": "USD", "stated_total": null,
+     "positions": [
+       {"name": "BTC", "ticker": "BTC", "class": "c", "value": 3750, "cost": null, "issuer": null},
+       {"name": "Заблокировано", "ticker": "ZZ", "class": "frozen", "value": 625, "cost": null, "issuer": null}
+     ]}
+  ]
+}
