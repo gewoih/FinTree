@@ -184,6 +184,7 @@ builder.Services.Configure<AuthOptions>(options =>
 builder.Services.Configure<TelegramAuthOptions>(builder.Configuration.GetSection("Telegram"));
 builder.Services.Configure<AdminOptions>(builder.Configuration.GetSection("Admin"));
 builder.Services.Configure<PersonalAccessTokenOptions>(builder.Configuration.GetSection("PersonalAccess"));
+builder.Services.Configure<SalaryAdviceOptions>(builder.Configuration.GetSection("SalaryAdvice"));
 
 builder.Services.AddIdentity<User, Role>(o =>
     {

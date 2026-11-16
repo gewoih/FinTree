@@ -50,3 +50,7 @@
   **Files:** `react-app/src/components/analytics/models.ts:166-205`, backend-расчёт global score
 
 - [ ] `FT-TODO-076` Deploy-workflow `.github/workflows/main.yml` срабатывает на push в `main`, а в репозитории только `master` — автодеплой не запускается, работает только ручной `workflow_dispatch`. Если автодеплой нужен — поменять ветку на `master`; если нет — убрать триггер `push`, чтобы не вводил в заблуждение.
+
+- [ ] `FT-TODO-077` Личный инструмент `.claude/fin-advisor/finportfolio`: слабая валидация входов и погрешности на границах (по независимому ревью 16.11.2026): `fx` = 0, строковые `stated_total`/`cost`, NaN в стоимости и `--contribution`, пустой `accounts`, отрицательный `target`, `"new_money": "false"` читается как `True`; деление на ноль при `target: 0` и `tolerance_pp: 0`; доля ровно на границе допуска (0.55 при цели 0.5 и допуске 5) из-за float даёт `over` вместо `ok`; `_invest_plan` при недоступном API добавляет до ~60 с повторов к отчёту.
+  **Fix:** Строгая проверка типов и диапазонов в `model.py`, округление отклонения перед сравнением в `calc.py`, один запрос ретроспективы без повторов в `_invest_plan`.
+  **Files:** `.claude/fin-advisor/finportfolio/model.py`, `.claude/fin-advisor/finportfolio/calc.py`, `.claude/fin-advisor/finmetrics/__main__.py`

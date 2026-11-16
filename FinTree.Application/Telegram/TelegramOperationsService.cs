@@ -11,6 +11,7 @@ using FinTree.Domain.Categories;
 using FinTree.Domain.Transactions;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
 
 namespace FinTree.Application.Telegram;
 
@@ -19,6 +20,7 @@ public sealed partial class TelegramOperationsService(
     AccountsService accountsService,
     UserService userService,
     TransactionsService transactionsService,
+    IOptions<SalaryAdviceOptions> salaryAdviceOptions,
     ILogger<TelegramOperationsService> logger)
 {
     private const string StartMessage =
@@ -210,16 +212,73 @@ public sealed partial class TelegramOperationsService(
             return new TelegramResponse(resolveError);
         }
 
+        List<OperationResult> results;
         try
         {
-            var results = await ExecuteOperationsAsync(user.UserId, resolvedOperations, ct);
-            return BuildSuccessResponse(results);
+            results = await ExecuteOperationsAsync(user.UserId, resolvedOperations, ct);
         }
         catch (Exception ex)
         {
             logger.LogError(ex, "Ошибка при сохранении операций из Telegram");
             return new TelegramResponse(SaveFailedMessage);
         }
+
+        // Операции уже сохранены: ошибка совета не должна превращаться в «не удалось сохранить».
+        var advice = await TryBuildSalaryAdviceAsync(user.UserId, resolvedOperations, ct);
+        return BuildSuccessResponse(results, advice);
+    }
+
+    private async Task<string?> TryBuildSalaryAdviceAsync(
+        Guid userId,
+        IReadOnlyList<ResolvedOperation> resolvedOperations,
+        CancellationToken ct)
+    {
+        try
+        {
+            var settings = SalaryAdvice.ParseSettings(salaryAdviceOptions.Value);
+            if (settings is null || settings.UserId != userId)
+                return null;
+
+            var salaries = resolvedOperations
+                .OfType<ResolvedTransaction>()
+                .Where(t => t.Type == TransactionType.Income
+                            && t.Category is not null
+                            && string.Equals(t.Category.Name, settings.Category, StringComparison.OrdinalIgnoreCase))
+                .ToList();
+            if (salaries.Count == 0)
+                return null;
+
+            // Зарплаты в разных валютах не суммируем: берём валюту первой записи.
+            var currencyCode = salaries[0].Account.CurrencyCode;
+            var amount = salaries.Where(t => t.Account.CurrencyCode == currencyCode).Sum(t => t.Amount);
+
+            var split = await LoadInvestSplitAsync(userId, salaries.Max(t => t.OccurredAt), ct);
+            return split is null ? null : SalaryAdvice.BuildMessage(amount, currencyCode, settings.SaveRate, split);
+        }
+        catch (Exception ex)
+        {
+            logger.LogWarning(ex, "Не удалось собрать совет по зарплате для ответа бота");
+            return null;
+        }
+    }
+
+    /// <summary>План пополнения из ретроспективы прошлого месяца, иначе позапрошлого; старше не смотрим.</summary>
+    private async Task<IReadOnlyList<SalaryAdvice.SplitItem>?> LoadInvestSplitAsync(
+        Guid userId,
+        DateTime salaryDate,
+        CancellationToken ct)
+    {
+        var month = new DateOnly(salaryDate.Year, salaryDate.Month, 1);
+        var candidateMonths = new[] { month.AddMonths(-1), month.AddMonths(-2) };
+
+        var plans = await context.Retrospectives
+            .AsNoTracking()
+            .Where(r => r.UserId == userId && candidateMonths.Contains(r.MonthDate))
+            .OrderByDescending(r => r.MonthDate)
+            .Select(r => r.NextMonthPlan)
+            .ToListAsync(ct);
+
+        return plans.Select(SalaryAdvice.ParseSplit).FirstOrDefault(split => split is not null);
     }
 
     private static bool HasActiveSubscription(DateTime? expiresAtUtc)
@@ -782,18 +841,24 @@ private async Task<List<OperationResult>> ExecuteOperationsAsync(
         return new OperationResult(transfer.LineNumber, summary, details);
     }
 
-    private static TelegramResponse BuildSuccessResponse(IReadOnlyList<OperationResult> results)
+    private static TelegramResponse BuildSuccessResponse(IReadOnlyList<OperationResult> results, string? advice)
     {
         if (results.Count == 1)
         {
             var result = results[0];
             var lines = new List<string>();
             lines.AddRange(result.Details.Select(Escape));
+            if (advice is not null)
+                lines.Add(Escape(advice));
+
             return new TelegramResponse(string.Join("\n", lines), TelegramTextFormat.Html);
         }
 
         var batchLines = new List<string> { $"✅ Добавлено операций: {results.Count}" };
         batchLines.AddRange(results.OrderBy(r => r.LineNumber).Select(r => $"• {Escape(r.Summary)}"));
+        if (advice is not null)
+            batchLines.Add(Escape(advice));
+
         return new TelegramResponse(string.Join("\n", batchLines), TelegramTextFormat.Html);
     }
 

@@ -41,6 +41,10 @@ services:
       PersonalAccess__Tokens__0__Scopes__0: read
       PersonalAccess__Tokens__0__Scopes__1: retro:write
       PersonalAccess__Tokens__0__Scopes__2: notify
+      # Совет «сколько и куда отложить» в ответе бота после записи зарплаты; пустые значения = выключено
+      SalaryAdvice__UserId: ${SALARY_ADVICE_USER_ID:-}
+      SalaryAdvice__SaveRate: ${SALARY_ADVICE_SAVE_RATE:-}
+      SalaryAdvice__Category: ${SALARY_ADVICE_CATEGORY:-}
       Cors__AllowedOrigins__0: ${CORS_ALLOWED_ORIGIN_0}
       Cors__AllowedOrigins__1: ${CORS_ALLOWED_ORIGIN_1}
     depends_on:
