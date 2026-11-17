@@ -11,11 +11,7 @@ from finmetrics.metrics import (
     expected_monthly_salary,
     month_outlook,
     parse_transactions,
-    payoff_months,
     savings_counter,
-    sustained_trends,
-    typical_month_spend,
-    typical_week_spend,
     week_summary,
 )
 
@@ -30,7 +26,6 @@ def make_cfg(**overrides) -> Config:
         paydays=[10, 25],
         salary_category=SALARY,
         expected_salary=[("2026-11", 300000.0)],
-        baseline_months=["2026-02", "2026-03", "2026-04", "2026-05"],
         fi=FiParams(target_capital=30_000_000.0, start_capital=1_000_000.0, real_return=0.04, salary_growth=0.03),
     )
     values.update(overrides)
@@ -54,7 +49,6 @@ class ConfigTests(unittest.TestCase):
             "paydays": [10, 25],
             "salary_category": SALARY,
             "expected_salary": [{"from": "2026-11", "monthly": 300000}],
-            "baseline_months": ["2026-02"],
             "fi": {"target_capital": 1, "start_capital": 2, "real_return": 0.04, "salary_growth": 0.03},
         }
         with mock.patch.dict(os.environ, {"FIN_CONFIG_JSON": json.dumps(raw)}):
@@ -144,76 +138,11 @@ class OutlookTests(unittest.TestCase):
         self.assertEqual(o.can_spend, 50000)
 
 
-class PayoffTests(unittest.TestCase):
-    def test_payoff_months(self):
-        cfg = make_cfg()
-        self.assertEqual(payoff_months(64000, cfg, "2026-12", typical_month=118000), 2.0)
-        self.assertIsNone(payoff_months(64000, cfg, "2026-12", typical_month=150000))
-        self.assertEqual(payoff_months(-1, cfg, "2026-12", typical_month=118000), 0.0)
-
-
-class BaselineTests(unittest.TestCase):
-    def test_typical_month_spend_median(self):
-        cfg = make_cfg(baseline_months=["2026-02", "2026-03", "2026-04"])
-        txs = [expense(date(2026, 2, 10), 100000), expense(date(2026, 3, 10), 150000),
-               expense(date(2026, 4, 10), 120000), expense(date(2026, 6, 10), 999999)]
-        self.assertEqual(typical_month_spend(txs, cfg), 120000)
-
-    def test_typical_week_spend_uses_full_weeks_inside_baseline(self):
-        cfg = make_cfg(baseline_months=["2026-02"])
-        # Полные недели Пн–Вс внутри февраля 2026: 2–8, 9–15, 16–22 (23 фев–1 мар выходит за месяц)
-        txs = [expense(date(2026, 2, 3), 7000), expense(date(2026, 2, 10), 3000),
-               expense(date(2026, 2, 17), 5000), expense(date(2026, 2, 24), 90000)]
-        self.assertEqual(typical_week_spend(txs, cfg), 5000)
-
+class WeekSummaryTests(unittest.TestCase):
     def test_week_summary_last_full_week(self):
-        cfg = make_cfg(baseline_months=["2026-02"])
         txs = [expense(date(2026, 11, 8), 777, "Кафе"), expense(date(2026, 11, 9), 1000, "Кафе"),
-               expense(date(2026, 11, 15), 5000, "Дом"), expense(date(2026, 11, 16), 999, "Кафе"),
-               expense(date(2026, 2, 3), 4000), expense(date(2026, 2, 10), 4000),
-               expense(date(2026, 2, 17), 4000)]
-        w = week_summary(txs, cfg, today=date(2026, 11, 19))
+               expense(date(2026, 11, 15), 5000, "Дом"), expense(date(2026, 11, 16), 999, "Кафе")]
+        w = week_summary(txs, make_cfg(), today=date(2026, 11, 19))
         self.assertEqual((w.start, w.end), (date(2026, 11, 9), date(2026, 11, 15)))
         self.assertEqual(w.spent, 6000)
         self.assertEqual(w.top, [("Дом", 5000), ("Кафе", 1000)])
-        self.assertEqual(w.typical, 4000)
-
-    def test_typical_week_counts_weeks_without_expenses(self):
-        cfg = make_cfg(baseline_months=["2026-02"])
-        txs = [expense(date(2026, 2, 3), 9000)]
-        self.assertEqual(typical_week_spend(txs, cfg), 0)
-
-
-class TrendTests(unittest.TestCase):
-    def cafe_baseline(self):
-        return [expense(date(2026, m, 10), 10000, "Кафе") for m in (2, 3, 4, 5)]
-
-    def test_sustained_trend_needs_three_months(self):
-        cfg = make_cfg(start_date=date(2026, 9, 1))
-        not_trend = self.cafe_baseline() + [
-            expense(date(2026, 9, 10), 20000, "Кафе"),
-            expense(date(2026, 10, 10), 9000, "Кафе"),
-            expense(date(2026, 11, 10), 20000, "Кафе"),
-        ]
-        self.assertEqual(sustained_trends(not_trend, cfg, today=date(2026, 12, 5)), [])
-
-        trend = self.cafe_baseline() + [expense(date(2026, m, 10), 20000, "Кафе") for m in (9, 10, 11)]
-        result = sustained_trends(trend, cfg, today=date(2026, 12, 5))
-        self.assertEqual(len(result), 1)
-        self.assertEqual(result[0].category, "Кафе")
-        self.assertEqual(result[0].recent_avg, 20000)
-        self.assertEqual(result[0].baseline_avg, 10000)
-
-    def test_no_trends_from_months_before_start(self):
-        # Старт правила 2026-11-01: август–октябрь (до старта) не должны давать «трендов»
-        cfg = make_cfg()
-        txs = self.cafe_baseline() + [expense(date(2026, m, 10), 20000, "Кафе") for m in (8, 9, 10)]
-        self.assertEqual(sustained_trends(txs, cfg, today=date(2026, 11, 16)), [])
-
-    def test_small_excess_is_not_trend(self):
-        cfg = make_cfg(start_date=date(2026, 9, 1))
-        txs = [expense(date(2026, m, 10), 1000, "Кафе") for m in (2, 3, 4, 5)] + \
-              [expense(date(2026, m, 10), 2000, "Кафе") for m in (9, 10, 11)]
-        self.assertEqual(sustained_trends(txs, cfg, today=date(2026, 12, 5)), [])
-
-

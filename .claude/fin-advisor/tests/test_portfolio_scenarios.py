@@ -1,6 +1,9 @@
 import unittest
 from datetime import date
 
+from dataclasses import replace
+
+from finmetrics.config import _from_dict
 from finportfolio.calc import allocation
 from finportfolio.model import Position, Snapshot
 from finportfolio.scenarios import fi_compare, sale_tax, stress
@@ -47,6 +50,20 @@ class ScenarioTests(unittest.TestCase):
         self.assertAlmostEqual(result["current_return"], 0.03)
         self.assertAlmostEqual(result["target_return"], 0.036)
         self.assertLess(result["years_target"], result["years_current"])
+
+
+class WithoutFiParamsTests(unittest.TestCase):
+    RAW = {"save_rate": 0.4, "start_date": "2026-11-01", "salary_category": "Зарплата"}
+
+    def test_config_loads_without_fi_block(self):
+        cfg = _from_dict(self.RAW)
+        self.assertIsNone(cfg.fi)
+        self.assertEqual(cfg.save_rate, 0.4)
+
+    def test_fi_compare_is_none_without_fi_params(self):
+        pol = policy()
+        cfg = replace(make_cfg(), fi=None)
+        self.assertIsNone(fi_compare(cfg, allocation(snapshot(), pol), pol, monthly_saving=100000))
 
 
 def _snapshot_with_costs() -> Snapshot:

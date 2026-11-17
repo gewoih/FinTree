@@ -23,6 +23,7 @@ from .report import build_report, parse_invest_split
 
 FINANCE_DIR = Path(__file__).resolve().parents[2] / "finance"  # .claude/finance
 DEFAULT_BASE_URL = "https://fin-tree.ru"
+FETCH_DAYS = 120  # контекст операций (13 недель) и история категорий с запасом; счётчик правила берёт данные от start_date
 
 
 def load_local_secrets(path: str | os.PathLike) -> None:
@@ -101,9 +102,8 @@ def _report(client: FinTreeClient, args) -> int:
     today = (date.fromisoformat(args.today) if args.today
              else datetime.now(timezone(timedelta(hours=cfg.tz_offset_hours))).date())
 
-    first_month = min([*cfg.baseline_months, cfg.start_date.strftime("%Y-%m")])
     categories = client.categories()
-    raw = client.transactions(date.fromisoformat(f"{first_month}-01"))
+    raw = client.transactions(min(cfg.start_date, today - timedelta(days=FETCH_DAYS)))
 
     txs = [t for t in parse_transactions(raw, categories, cfg.tz_offset_hours) if t.day <= today]
     result = build_report(txs, cfg, today, invest_plan=_invest_plan(client, today))

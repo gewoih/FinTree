@@ -4,15 +4,9 @@ import re
 from collections import defaultdict
 from dataclasses import dataclass
 from datetime import date, datetime, timedelta, timezone
-from statistics import median
 from typing import Literal
 
 from .config import Config
-
-TREND_RATIO = 1.3
-TREND_MIN_EXCESS = 3000.0
-TREND_MONTHS = 3
-
 
 @dataclass(frozen=True)
 class Tx:
@@ -51,15 +45,7 @@ class Week:
     start: date
     end: date
     spent: float
-    typical: float
     top: list[tuple[str, float]]
-
-
-@dataclass(frozen=True)
-class Trend:
-    category: str
-    recent_avg: float
-    baseline_avg: float
 
 
 # --- разбор данных ---------------------------------------------------------------
@@ -160,41 +146,6 @@ def month_outlook(txs: list[Tx], cfg: Config, today: date) -> Outlook:
     )
 
 
-def payoff_months(gap: float, cfg: Config, month: str, typical_month: float) -> float | None:
-    if gap <= 0:
-        return 0.0
-    repay = expected_monthly_salary(cfg, month) * (1 - cfg.save_rate) - typical_month
-    if repay <= 0:
-        return None
-    return round(gap / repay, 1)
-
-
-# --- норма трат --------------------------------------------------------------------
-
-def typical_month_spend(txs: list[Tx], cfg: Config) -> float:
-    totals = [_sum(txs, "Expense", lambda t, m=m: month_key(t.day) == m) for m in cfg.baseline_months]
-    return float(median(totals)) if totals else 0.0
-
-
-def _weeks_inside(month: str) -> list[date]:
-    year, mon = map(int, month.split("-"))
-    first = date(year, mon, 1)
-    day = first + timedelta(days=(7 - first.weekday()) % 7)  # первый понедельник
-    mondays = []
-    while (day + timedelta(days=6)).month == mon and day.year == year:
-        mondays.append(day)
-        day += timedelta(days=7)
-    return mondays
-
-
-def typical_week_spend(txs: list[Tx], cfg: Config) -> float:
-    totals = []
-    for month in cfg.baseline_months:
-        for monday in _weeks_inside(month):
-            totals.append(_sum(_between(txs, monday, monday + timedelta(days=6)), "Expense"))
-    return float(median(totals)) if totals else 0.0
-
-
 def week_summary(txs: list[Tx], cfg: Config, today: date) -> Week:
     end = today - timedelta(days=today.weekday() + 1)  # прошлое воскресенье
     start = end - timedelta(days=6)
@@ -203,8 +154,7 @@ def week_summary(txs: list[Tx], cfg: Config, today: date) -> Week:
     for t in week:
         by_category[t.category] += t.amount
     top = sorted(by_category.items(), key=lambda kv: kv[1], reverse=True)[:3]
-    return Week(start=start, end=end, spent=sum(t.amount for t in week),
-                typical=typical_week_spend(txs, cfg), top=top)
+    return Week(start=start, end=end, spent=sum(t.amount for t in week), top=top)
 
 
 HISTORY_WEEKS = 8
@@ -253,6 +203,19 @@ def ops_context(txs: list[Tx], today: date, days: int = CONTEXT_DAYS) -> list[st
     return lines
 
 
+def weekly_totals(txs: list[Tx], today: date, weeks: int = CONTEXT_DAYS // 7) -> list[dict]:
+    """Расходы по каждой из `weeks` недель до прошлой полной недели (от старой к новой). Что считать «обычной» неделей,
+    решает агент по этим фактам: скрипт никакой нормы не задаёт."""
+    last_start, _ = _last_full_week(today)
+    first_start = last_start - timedelta(days=7 * weeks)
+    rows = []
+    for i in range(weeks):
+        start = first_start + timedelta(days=7 * i)
+        spent = sum(t.amount for t in _between(txs, start, start + timedelta(days=6)) if t.kind == "Expense")
+        rows.append({"week_start": start.isoformat(), "spent": spent})
+    return rows
+
+
 def category_history(txs: list[Tx], today: date, weeks: int = HISTORY_WEEKS) -> dict:
     """Число и сумма расходов по категориям за последние `weeks` полных недель (от старой к новой), крупнейшие категории."""
     last_start, last_end = _last_full_week(today)
@@ -297,29 +260,40 @@ def _exact_rate(txs: list[Tx], currency: str, start: date, end: date) -> float |
     return sum(t.amount for t in ops) / sum(t.original for t in ops)
 
 
+def _main_foreign_currency(txs: list[Tx], start: date, end: date) -> str | None:
+    """Иностранная валюта с наибольшими расходами за период (операция «иностранная», если её пересчитывали)."""
+    spent: dict[str, float] = defaultdict(float)
+    for t in _between(txs, start, end):
+        if t.kind == "Expense" and t.currency and t.original > 0 and abs(t.original - t.amount) > 0.5:
+            spent[t.currency] += t.amount
+    return max(spent, key=spent.__getitem__) if spent else None
+
+
 def fx_effect(txs: list[Tx], cfg: Config, today: date) -> FxEffect | None:
-    """Как изменение курса валюты повлияло на траты прошлой недели в ней (по точным курсам, 4 недели к предыдущим 4).
-    None — функция выключена, данных мало или эффект слишком мал, чтобы о нём говорить."""
-    if not cfg.fx_currency:
-        return None
+    """Как изменение курса главной иностранной валюты недели повлияло на траты в ней (по точным курсам, 4 недели к
+    предыдущим 4). Валюта определяется по операциям прошлой недели, настроек не требуется.
+    None — иностранных трат на неделе нет, данных мало или эффект слишком мал, чтобы о нём говорить."""
     week_end = today - timedelta(days=today.weekday() + 1)
     week_start = week_end - timedelta(days=6)
+    currency = _main_foreign_currency(txs, week_start, week_end)
+    if currency is None:
+        return None
     now_start = week_end - timedelta(days=FX_WINDOW_DAYS - 1)
     prev_end = now_start - timedelta(days=1)
     prev_start = prev_end - timedelta(days=FX_WINDOW_DAYS - 1)
 
-    rate_now = _exact_rate(txs, cfg.fx_currency, now_start, week_end)
-    rate_prev = _exact_rate(txs, cfg.fx_currency, prev_start, prev_end)
+    rate_now = _exact_rate(txs, currency, now_start, week_end)
+    rate_prev = _exact_rate(txs, currency, prev_start, prev_end)
     if rate_now is None or rate_prev is None:
         return None
 
     spent_foreign = sum(t.original for t in _between(txs, week_start, week_end)
-                        if t.kind == "Expense" and t.currency == cfg.fx_currency)
+                        if t.kind == "Expense" and t.currency == currency)
     change_pct = (rate_now / rate_prev - 1) * 100
     effect = spent_foreign * (rate_now - rate_prev)
     if abs(change_pct) < FX_MIN_CHANGE_PCT or abs(effect) < FX_MIN_EFFECT:
         return None
-    return FxEffect(cfg.fx_currency, rate_now, rate_prev, change_pct, spent_foreign, effect)
+    return FxEffect(currency, rate_now, rate_prev, change_pct, spent_foreign, effect)
 
 
 def _last_full_months(today: date, count: int) -> list[str]:
@@ -328,25 +302,6 @@ def _last_full_months(today: date, count: int) -> list[str]:
         months.append(month_key(cursor))
         cursor = _prev_month_end(cursor)
     return list(reversed(months))
-
-
-def sustained_trends(txs: list[Tx], cfg: Config, today: date) -> list[Trend]:
-    by_cat_month: dict[str, dict[str, float]] = defaultdict(lambda: defaultdict(float))
-    for t in txs:
-        if t.kind == "Expense":
-            by_cat_month[t.category][month_key(t.day)] += t.amount
-
-    recent_months = _last_full_months(today, TREND_MONTHS)
-    if recent_months[0] < month_key(cfg.start_date):
-        return []  # тренды считаются только по месяцам после старта правила
-    trends = []
-    for category, months in by_cat_month.items():
-        baseline = sum(months.get(m, 0.0) for m in cfg.baseline_months) / max(len(cfg.baseline_months), 1)
-        recent = [months.get(m, 0.0) for m in recent_months]
-        recent_avg = sum(recent) / len(recent)
-        if all(v > TREND_RATIO * baseline for v in recent) and recent_avg - baseline >= TREND_MIN_EXCESS:
-            trends.append(Trend(category=category, recent_avg=recent_avg, baseline_avg=baseline))
-    return sorted(trends, key=lambda tr: tr.recent_avg - tr.baseline_avg, reverse=True)
 
 
 # --- срок до финансовой независимости (используется разбором портфеля) --------------

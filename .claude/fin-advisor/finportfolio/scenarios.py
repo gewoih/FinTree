@@ -38,8 +38,11 @@ def sale_tax(snapshot: Snapshot, policy: Policy) -> list[dict]:
     return rows
 
 
-def fi_compare(cfg: Config, alloc: Allocation, policy: Policy, monthly_saving: float) -> dict:
-    """Срок до независимости при доходности по текущим и по целевым долям (по допущениям из политики)."""
+def fi_compare(cfg: Config, alloc: Allocation, policy: Policy, monthly_saving: float) -> dict | None:
+    """Срок до независимости при доходности по текущим и по целевым долям (по допущениям из политики).
+    None, если в конфиге нет параметров модели независимости."""
+    if cfg.fi is None:
+        return None
     returns = {c.id: c.expected_real_return for c in policy.classes}
     current = sum(s.share * returns[s.id] for s in alloc.classes)
     target = sum(s.target * returns[s.id] for s in alloc.classes)

@@ -12,11 +12,9 @@ from .metrics import (
     month_key,
     month_outlook,
     ops_context,
-    payoff_months,
+    weekly_totals,
     expected_monthly_salary,
     savings_counter,
-    sustained_trends,
-    typical_month_spend,
     week_operations,
     week_summary,
 )
@@ -62,7 +60,6 @@ def _plain(obj):
 
 def build_report(txs: list[Tx], cfg: Config, today: date, invest_plan: str | None = None) -> dict:
     counter = savings_counter(txs, cfg, until=today)
-    typical = typical_month_spend(txs, cfg)
     carried = carried_gap(txs, cfg, today)
     month = month_key(today)
     outlook = month_outlook(txs, cfg, today)
@@ -85,18 +82,16 @@ def build_report(txs: list[Tx], cfg: Config, today: date, invest_plan: str | Non
         "counter": asdict(counter),
         "carried_gap": carried,
         "verdict_gap": verdict_gap,
-        "payoff_months": payoff_months(verdict_gap, cfg, month, typical),
         "suggested_weekly_limit": weekly_limit,
         "recent_salary": recent_salary,
         "recent_salary_to_save": recent_salary * cfg.save_rate,
         "outlook": asdict(outlook),
         "week": asdict(week_summary(txs, cfg, today)),
-        "trends": [asdict(t) for t in sustained_trends(txs, cfg, today)],
-        "typical_month": typical,
         "invest_split": invest_split,
         "fx": asdict(fx) if fx else None,
         "ops": [asdict(o) for o in week_operations(txs, today)],
         "ops_context": ops_context(txs, today),
+        "weekly_totals": weekly_totals(txs, today),
         "category_history": category_history(txs, today),
         "rule_active": today >= cfg.start_date,
     })

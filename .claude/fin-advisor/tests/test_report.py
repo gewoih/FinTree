@@ -43,9 +43,9 @@ class ReportTests(unittest.TestCase):
         report = build_report(txs, make_cfg(), today=date(2026, 11, 16))
         self.assertEqual(
             set(report),
-            {"today", "counter", "carried_gap", "verdict_gap", "payoff_months", "suggested_weekly_limit",
-             "recent_salary", "recent_salary_to_save", "outlook", "week", "trends",
-             "typical_month", "invest_split", "fx", "ops", "ops_context", "category_history", "rule_active"},
+            {"today", "counter", "carried_gap", "verdict_gap", "suggested_weekly_limit",
+             "recent_salary", "recent_salary_to_save", "outlook", "week",
+             "invest_split", "fx", "ops", "ops_context", "weekly_totals", "category_history", "rule_active"},
         )
         self.assertEqual(report["counter"]["gap"], 20000)
         self.assertEqual(report["today"], "2026-11-16")
@@ -60,7 +60,6 @@ class ReportTests(unittest.TestCase):
     def test_on_plan_mid_month_is_not_behind(self):
         report = build_report(self.on_plan_december(), make_cfg(), today=date(2026, 12, 7))
         self.assertEqual(report["verdict_gap"], 0)
-        self.assertEqual(report["payoff_months"], 0.0)
 
     def test_overspend_this_month_counts_in_verdict_gap(self):
         txs = self.on_plan_december() + [expense(date(2026, 12, 15), 60000)]

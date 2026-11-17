@@ -23,9 +23,7 @@ class Config:
     paydays: list[int]
     salary_category: str
     expected_salary: list[tuple[str, float]]
-    baseline_months: list[str]
-    fi: FiParams
-    fx_currency: str | None = None  # валюта, курс которой показываем в сводке; None — выключено
+    fi: FiParams | None = None  # модель независимости: нужна только разбору портфеля, сводкам по тратам — нет
 
 
 def load_config(path: str | None) -> Config:
@@ -41,7 +39,7 @@ def load_config(path: str | None) -> Config:
 
 
 def _from_dict(raw: dict) -> Config:
-    fi = raw["fi"]
+    fi = raw.get("fi")
     return Config(
         save_rate=float(raw["save_rate"]),
         start_date=date.fromisoformat(raw["start_date"]),
@@ -49,12 +47,10 @@ def _from_dict(raw: dict) -> Config:
         paydays=[int(d) for d in raw.get("paydays", [])],
         salary_category=raw["salary_category"],
         expected_salary=sorted((e["from"], float(e["monthly"])) for e in raw.get("expected_salary", [])),
-        baseline_months=list(raw.get("baseline_months", [])),
         fi=FiParams(
             target_capital=float(fi["target_capital"]),
             start_capital=float(fi["start_capital"]),
             real_return=float(fi["real_return"]),
             salary_growth=float(fi["salary_growth"]),
-        ),
-        fx_currency=raw.get("fx_currency") or None,
+        ) if fi else None,
     )
