@@ -1,7 +1,7 @@
 """CLI советника.
 
 python3 -m finmetrics report [--config PATH] [--today YYYY-MM-DD]   # JSON с метриками в stdout
-python3 -m finmetrics notify --file message.txt                   # себе в Telegram (обычный текст)
+python3 -m finmetrics notify --file message.txt [--html]          # себе в Telegram (по умолчанию обычный текст; --html — Telegram-HTML)
 python3 -m finmetrics retro-put YYYY-MM --file retro.json         # записать ретроспективу месяца
 
 Секреты: env FINTREE_PAT / FINTREE_BASE_URL; локально подхватываются из .claude/finance/secrets.env.
@@ -59,6 +59,7 @@ def main(argv: list[str] | None = None) -> int:
     report.add_argument("--today", help="дата отчёта YYYY-MM-DD (по умолчанию — сегодня в часовом поясе из конфига)")
     notify = sub.add_parser("notify", help="отправить текст себе в Telegram")
     notify.add_argument("--file", required=True, help="файл с текстом сообщения")
+    notify.add_argument("--html", action="store_true", help="текст в Telegram-HTML (проверяется до отправки)")
     retro = sub.add_parser("retro-put", help="записать ретроспективу месяца")
     retro.add_argument("month", help="YYYY-MM")
     retro.add_argument("--file", required=True, help="JSON с полями ретроспективы")
@@ -73,7 +74,7 @@ def main(argv: list[str] | None = None) -> int:
 
     try:
         if args.command == "notify":
-            client.notify(_read_text(args.file))
+            client.notify(_read_text(args.file), html=args.html)
             return 0
         if args.command == "retro-put":
             client.put_retrospective(args.month, json.loads(_read_text(args.file)))

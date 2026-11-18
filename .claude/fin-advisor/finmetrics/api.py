@@ -13,6 +13,34 @@ PAGE_SIZE = 200  # максимум, который принимает API
 RETRY_DELAYS = (2, 4, 8, 16)  # секунды между попытками; всего попыток = len + 1
 MAX_MESSAGE_LENGTH = 4096
 USER_AGENT = "fintree-advisor"
+HTML_TAGS = {"b", "strong", "i", "em", "u", "ins", "s", "strike", "del", "code", "pre", "a", "blockquote", "tg-spoiler"}
+_TAG_RE = re.compile(r"<(/?)([A-Za-z][\w-]*)([^<>]*)>")
+_BAD_AMP_RE = re.compile(r"&(?!(?:lt|gt|amp|quot);)")
+
+
+def validate_telegram_html(text: str) -> None:
+    """Проверить, что Telegram разберёт HTML: только его теги, они закрыты, а <, > и & вне тегов экранированы.
+
+    Иначе Telegram отклонит сообщение целиком, поэтому лучше упасть до отправки с понятной причиной.
+    """
+    stack: list[str] = []
+    for m in _TAG_RE.finditer(text):
+        closing, name, attrs = m.group(1) == "/", m.group(2).lower(), m.group(3)
+        if name not in HTML_TAGS:
+            raise ValueError(f"Тег <{name}> не поддерживается Telegram; разрешены: {', '.join(sorted(HTML_TAGS))}")
+        if name == "a" and not closing and "href=" not in attrs:
+            raise ValueError("У тега <a> нет href")
+        if not closing:
+            stack.append(name)
+        elif not stack or stack.pop() != name:
+            raise ValueError(f"Тег </{name}> закрыт не там, где открыт")
+    if stack:
+        raise ValueError(f"Не закрыт тег <{stack[-1]}>")
+    plain = _TAG_RE.sub("", text)
+    if "<" in plain or ">" in plain:
+        raise ValueError("Символы < и > вне тегов нужно писать как &lt; и &gt;")
+    if _BAD_AMP_RE.search(plain):
+        raise ValueError("Символ & вне тегов нужно писать как &amp;")
 
 
 class ApiError(Exception):
@@ -75,11 +103,13 @@ class FinTreeClient:
                 return None
             raise
 
-    def notify(self, text: str) -> None:
-        """Отправить себе сообщение в Telegram обычным текстом (без HTML/Markdown)."""
+    def notify(self, text: str, html: bool = False) -> None:
+        """Отправить себе сообщение в Telegram: обычным текстом или (html=True) в Telegram-HTML."""
         if not text.strip() or len(text) > MAX_MESSAGE_LENGTH:
             raise ValueError(f"Текст должен быть от 1 до {MAX_MESSAGE_LENGTH} символов")
-        self._post(f"{self._base}/api/users/me/notify", {"text": text, "format": "Plain"})
+        if html:
+            validate_telegram_html(text)
+        self._post(f"{self._base}/api/users/me/notify", {"text": text, "format": "Html" if html else "Plain"})
 
     def put_retrospective(self, month: str, fields: dict) -> None:
         if not re.fullmatch(r"\d{4}-\d{2}", month):
