@@ -2,8 +2,13 @@ name: Deploy (self-hosted)
 
 on:
   push:
-    branches: [ main ]
+    branches: [ master ]
   workflow_dispatch:
+
+# Один деплой за раз: два пуша подряд не должны гонять docker compose параллельно.
+concurrency:
+  group: deploy-production
+  cancel-in-progress: false
 
 jobs:
   deploy:
